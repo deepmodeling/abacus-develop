@@ -1,6 +1,9 @@
 #include "source_io/write_init.h"
 #include "source_io/cube_io.h"
 
+#include <sstream>
+#include <cassert>
+
 void ModuleIO::write_chg_init(
     const UnitCell& ucell,
     const Parallel_Grid &para_grid,

@@ -30,11 +30,9 @@
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_io/to_qo.h" // use toQO
 
-namespace ModuleIO
-{
 
 template <typename TK, typename TR>
-void ctrl_scf_lcao(UnitCell& ucell,
+void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<TK>* pelec, 
@@ -53,10 +51,38 @@ void ctrl_scf_lcao(UnitCell& ucell,
 		rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<TK> &deepks,
 		Exx_NAO<TK> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+
+    //*****
+    // if istep_in = -1, istep will not appear in file name
+    // if iter_in = -1, iter will not appear in file name
+    int istep_in = -1;
+    int iter_in = -1;
+    bool out_flag = false;
+    if (inp.out_freq_ion>0) // default value of out_freq_ion is 0
+    {
+        if (istep % inp.out_freq_ion == 0)
+        {
+            istep_in = istep;
+            out_flag = true;
+        }
+    }
+    else if(conv_esolver || scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
+    {
+        out_flag = true;
+    }
+
+	if(!out_flag)
+	{
+		return;
+	}
+
+    //*****
 
     const bool out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
@@ -432,11 +458,11 @@ void ctrl_scf_lcao(UnitCell& ucell,
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 }
 
-} // End ModuleIO
 
 
 // For gamma only
-template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<double, double>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<double>* pelec, 
@@ -455,10 +481,13 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell,
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<double> &deepks,
 		Exx_NAO<double> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
 
 // For multiple k-points
-template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -477,9 +506,12 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& uc
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
 
-template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -498,5 +530,6 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
-
