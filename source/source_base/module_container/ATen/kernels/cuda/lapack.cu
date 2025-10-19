@@ -147,11 +147,19 @@ struct lapack_hegvd<T, DEVICE_GPU> {
     {
         const int itype = 1;
         const char jobz = 'V';
-        const char uplo = 'U';
+        const char uplo = 'L';
         cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+
+        // prevent B from being overwritten by Cholesky
+        T *d_B_backup = nullptr;
+        cudaErrcheck(cudaMalloc(&d_B_backup, sizeof(T) * dim * lda));
+        cudaErrcheck(cudaMemcpy(d_B_backup, Mat_B, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+
         cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
-                eigen_vec, lda, Mat_B, lda,
+                eigen_vec, lda,
+                d_B_backup, lda,
                 eigen_val);
+        cudaErrcheck(cudaFree(d_B_backup));
     }
 };
 
@@ -172,6 +180,9 @@ struct lapack_hegvx<T, DEVICE_GPU> {
         const char range = 'I';
         const char uplo = 'U';
         int meig = 0;
+
+        // this hegvdx will protect the input A, B from being overwritten
+        // and write the eigenvectors into eigen_vec.
         cuSolverConnector::hegvdx(cusolver_handle,
             itype, jobz, range, uplo,
             n, lda, A, B,

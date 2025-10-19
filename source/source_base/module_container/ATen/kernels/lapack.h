@@ -76,7 +76,7 @@ struct lapack_heevx {
      *
      * @note
      * See LAPACK ZHEEVX or CHEEVX documentation for more details.
-     *
+     * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
      */
     void operator()(
         const int dim,
@@ -137,6 +137,7 @@ struct lapack_hegvx {
      *
      * @note
      * See LAPACK ZHEGVX doc for more details.
+     * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
      */
     void operator()(
         const int n,

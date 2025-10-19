@@ -215,6 +215,9 @@ struct lapack_hegvd<T, DEVICE_CPU> {
         // eigen_vec = Mat_A
         std::copy(Mat_A, Mat_A + dim*lda, eigen_vec);
 
+        Tensor aux_B(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {dim * lda});
+        std::copy(Mat_B, Mat_B + dim * lda, aux_B.data<T>());
+
         const int itype = 1;
         const char jobz = 'V';
         const char uplo = 'L';
@@ -232,7 +235,7 @@ struct lapack_hegvd<T, DEVICE_CPU> {
         iwork.zero();
 
         // After this, eigen_vec will contain the matrix Z of eigenvectors
-        lapackConnector::hegvd(itype, jobz, uplo, dim, eigen_vec, lda, Mat_B, lda, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::hegvd(itype, jobz, uplo, dim, eigen_vec, lda, aux_B.data<T>(), lda, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         if (info != 0) {
             throw std::runtime_error("hegvd failed with info = " + std::to_string(info));
         }
