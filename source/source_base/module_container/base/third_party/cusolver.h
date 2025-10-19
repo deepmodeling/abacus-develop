@@ -593,206 +593,373 @@ void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     cudaErrcheck(cudaFree(d_work));
 }
 
-// -----------------------------
-// CUDA hegvx implementations
-// -----------------------------
+// =====================================================================================================
+// hegvd x: Compute selected eigenvalues and eigenvectors of generalized Hermitian-definite eigenproblem
+//          A * x = lambda * B * x
+// =====================================================================================================
 
-// static inline
-// void hegvx(cusolverDnHandle_t& cusolver_handle,
-//            const int& itype,
-//            const char& jobz,
-//            const char& uplo,
-//            const int& n,
-//            float* A,
-//            const int& lda,
-//            float* B,
-//            const int& ldb,
-//            const int& il,
-//            const int& iu,
-//            const float& abstol,
-//            int& m_out,
-//            float* W,
-//            float* Z,
-//            const int& ldz) {
-//     // Step 1: Query workspace size
-//     int lwork = 0;
-//     cusolverErrcheck(cusolverDnSsygvdx_bufferSize(
-//         cusolver_handle,
-//         cublas_eig_type(itype),       // itype
-//         cublas_eig_mode(jobz),        // jobz
-//         cublas_fill_mode(uplo),       // uplo
-//         n, A, lda, B, ldb,
-//         il, iu,                       // range: index interval
-//         abstol,                       // tolerance
-//         &m_out,                       // output: number of eigenvalues found
-//         W,                            // eigenvalues
-//         Z, ldz,                       // eigenvectors
-//         &lwork));                      // workspace size
+// --- float ---
+static inline
+void hegvdx(
+    cusolverDnHandle_t& cusolver_handle,
+    const int itype,           // 1: A*x = lambda*B*x
+    const char jobz,           // 'V' or 'N'
+    const char range,          // 'I', 'V', 'A'
+    const char uplo,           // 'U' or 'L'
+    const int n,
+    const int lda,
+    float* d_A,                // Input matrix A (device)
+    float* d_B,                // Input matrix B (device)
+    const float vl,            // for RANGE='V'
+    const float vu,
+    const int il,              // for RANGE='I'
+    const int iu,
+    int* h_meig,               // output: number of eigenvalues found
+    float* d_eigen_val,        // output: eigenvalues
+    float* d_eigen_vec         // output: eigenvectors (if jobz='V'), size ldz × m
+) {
+    int lwork = 0;
+    int *d_info = nullptr;
+    float *d_work = nullptr;
 
-//     // Step 2: Allocate workspace and info
-//     float* d_work = nullptr;
-//     int*   d_info  = nullptr;
-//     cudaErrcheck(cudaMalloc(&d_work, sizeof(float) * lwork));
-//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+    // Allocate device info
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
-//     // Step 3: Call the solver
-//     cusolverErrcheck(cusolverDnSsygvdx(
-//         cusolver_handle,
-//         cublas_eig_type(itype),
-//         cublas_eig_mode(jobz),
-//         cublas_fill_mode(uplo),
-//         n, A, lda, B, ldb,
-//         il, iu, abstol, &m_out, W, Z, ldz, d_work, lwork, d_info));
+    // Copy A and B to temporary buffers since sygvdx may modify them
+    float *d_A_copy = nullptr, *d_B_copy = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_A_copy, sizeof(float) * n * lda));
+    cudaErrcheck(cudaMalloc((void**)&d_B_copy, sizeof(float) * n * lda));
+    cudaErrcheck(cudaMemcpy(d_A_copy, d_A, sizeof(float) * n * lda, cudaMemcpyDeviceToDevice));
+    cudaErrcheck(cudaMemcpy(d_B_copy, d_B, sizeof(float) * n * lda, cudaMemcpyDeviceToDevice));
 
-//     // Step 4: Check result
-//     int h_info = 0;
-//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-//     if (h_info != 0) {
-//         throw std::runtime_error("hegvx: cusolverDnSsygvdx failed with info = " + std::to_string(h_info));
-//     }
+    // Set parameters
+    cusolverEigType_t itype_t = cublas_eig_type(itype);
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
 
-//     // Cleanup
-//     cudaErrcheck(cudaFree(d_work));
-//     cudaErrcheck(cudaFree(d_info));
-// }
+    // Query workspace size
+    cusolverErrcheck(cusolverDnSsygvdx_bufferSize(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
 
-// Double precision
-// static inline
-// void hegvx(cusolverDnHandle_t& cusolver_handle,
-//            const int& itype,
-//            const char& jobz,
-//            const char& uplo,
-//            const int& n,
-//            double* A,
-//            const int& lda,
-//            double* B,
-//            const int& ldb,
-//            const int& il,
-//            const int& iu,
-//            const double& abstol,
-//            int& m_out,
-//            double* W,
-//            double* Z,
-//            const int& ldz) {
-//     int lwork = 0;
-//     cusolverErrcheck(cusolverDnDsygvdx_bufferSize(
-//         cusolver_handle, itype, jobz, uplo, n, A, lda, B, ldb,
-//         il, iu, abstol, &m_out, W, Z, ldz, &lwork));
+    // Allocate workspace
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
 
-//     double* d_work = nullptr;
-//     int*    d_info  = nullptr;
-//     cudaErrcheck(cudaMalloc(&d_work, sizeof(double) * lwork));
-//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+    // Main call
+    cusolverErrcheck(cusolverDnSsygvdx(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
 
-//     cusolverErrcheck(cusolverDnDsygvdx(
-//         cusolver_handle, itype, jobz, uplo, n, A, lda, B, ldb,
-//         il, iu, abstol, &m_out, W, Z, ldz, d_work, lwork, d_info));
+    // Check result
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info < 0) {
+        throw std::runtime_error("hegvdx (float): illegal argument #" + std::to_string(-h_info));
+    } else if (h_info > 0) {
+        // If h_info <= n: convergence issue in tridiag solver (no vec) OR
+        // If h_info > n: B's leading minor of order (h_info - n) is not positive definite
+        if (jobz_t == CUSOLVER_EIG_MODE_NOVECTOR && h_info <= n) {
+            throw std::runtime_error("hegvdx (float): failed to converge, " + std::to_string(h_info) + " off-diagonal elements didn't converge");
+        } else if (h_info > n) {
+            throw std::runtime_error("hegvdx (float): leading minor of order " + std::to_string(h_info - n) + " of B is not positive definite");
+        }
+    }
 
-//     int h_info = 0;
-//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-//     if (h_info != 0) {
-//         throw std::runtime_error("hegvx: cusolverDnDsygvdx failed with info = " + std::to_string(h_info));
-//     }
+    // If jobz == 'V', copy eigenvectors from A (which now contains Z) to output
+    if (jobz == 'V') {
+        const int m = (*h_meig); // number of eigenvectors computed
+        cudaErrcheck(cudaMemcpy(d_eigen_vec, d_A_copy, sizeof(float) * n * m, cudaMemcpyDeviceToDevice));
+    }
 
-//     cudaErrcheck(cudaFree(d_work));
-//     cudaErrcheck(cudaFree(d_info));
-// }
+    // Cleanup
+    cudaFree(d_info);
+    cudaFree(d_work);
+    cudaFree(d_A_copy);
+    cudaFree(d_B_copy);
+}
 
-// // Complex single precision
-// static inline
-// void hegvx(cusolverDnHandle_t& cusolver_handle,
-//            const int& itype,
-//            const char& jobz,
-//            const char& uplo,
-//            const int& n,
-//            cuComplex* A,
-//            const int& lda,
-//            cuComplex* B,
-//            const int& ldb,
-//            const int& il,
-//            const int& iu,
-//            const float& abstol,
-//            int& m_out,
-//            float* W,
-//            cuComplex* Z,
-//            const int& ldz) {
-//     int lwork = 0;
-//     cusolverErrcheck(cusolverDnChegvdx_bufferSize(
-//         cusolver_handle, itype, jobz, uplo, n,
-//         reinterpret_cast<cuFloatComplex*>(A), lda,
-//         reinterpret_cast<cuFloatComplex*>(B), ldb,
-//         il, iu, abstol, &m_out, W,
-//         reinterpret_cast<cuFloatComplex*>(Z), ldz, &lwork));
 
-//     cuComplex* d_work = nullptr;
-//     int*       d_info  = nullptr;
-//     cudaErrcheck(cudaMalloc(&d_work, sizeof(cuComplex) * lwork));
-//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+// --- double ---
+static inline
+void hegvdx(
+    cusolverDnHandle_t& cusolver_handle,
+    const int itype,
+    const char jobz,
+    const char range,
+    const char uplo,
+    const int n,
+    const int lda,
+    double* d_A,
+    double* d_B,
+    const double vl,
+    const double vu,
+    const int il,
+    const int iu,
+    int* h_meig,
+    double* d_eigen_val,
+    double* d_eigen_vec
+) {
+    int lwork = 0;
+    int *d_info = nullptr;
+    double *d_work = nullptr;
 
-//     cusolverErrcheck(cusolverDnChegvdx(
-//         cusolver_handle, itype, jobz, uplo, n,
-//         reinterpret_cast<cuFloatComplex*>(A), lda,
-//         reinterpret_cast<cuFloatComplex*>(B), ldb,
-//         il, iu, abstol, &m_out, W,
-//         reinterpret_cast<cuFloatComplex*>(Z), ldz, d_work, lwork, d_info));
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
-//     int h_info = 0;
-//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-//     if (h_info != 0) {
-//         throw std::runtime_error("hegvx: cusolverDnChegvdx failed with info = " + std::to_string(h_info));
-//     }
+    double *d_A_copy = nullptr, *d_B_copy = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_A_copy, sizeof(double) * n * lda));
+    cudaErrcheck(cudaMalloc((void**)&d_B_copy, sizeof(double) * n * lda));
+    cudaErrcheck(cudaMemcpy(d_A_copy, d_A, sizeof(double) * n * lda, cudaMemcpyDeviceToDevice));
+    cudaErrcheck(cudaMemcpy(d_B_copy, d_B, sizeof(double) * n * lda, cudaMemcpyDeviceToDevice));
 
-//     cudaErrcheck(cudaFree(d_work));
-//     cudaErrcheck(cudaFree(d_info));
-// }
+    cusolverEigType_t itype_t = cublas_eig_type(itype);
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
 
-// // Complex double precision
-// static inline
-// void hegvx(cusolverDnHandle_t& cusolver_handle,
-//            const int& itype,
-//            const char& jobz,
-//            const char& uplo,
-//            const int& n,
-//            cuDoubleComplex* A,
-//            const int& lda,
-//            cuDoubleComplex* B,
-//            const int& ldb,
-//            const int& il,
-//            const int& iu,
-//            const double& abstol,
-//            int& m_out,
-//            double* W,
-//            cuDoubleComplex* Z,
-//            const int& ldz) {
-//     int lwork = 0;
-//     cusolverErrcheck(cusolverDnZhegvdx_bufferSize(
-//         cusolver_handle, itype, jobz, uplo, n,
-//         reinterpret_cast<cuDoubleComplex*>(A), lda,
-//         reinterpret_cast<cuDoubleComplex*>(B), ldb,
-//         il, iu, abstol, &m_out, W,
-//         reinterpret_cast<cuDoubleComplex*>(Z), ldz, &lwork));
+    cusolverErrcheck(cusolverDnDsygvdx_bufferSize(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
 
-//     cuDoubleComplex* d_work = nullptr;
-//     int*             d_info  = nullptr;
-//     cudaErrcheck(cudaMalloc(&d_work, sizeof(cuDoubleComplex) * lwork));
-//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
 
-//     cusolverErrcheck(cusolverDnZhegvdx(
-//         cusolver_handle, itype, jobz, uplo, n,
-//         reinterpret_cast<cuDoubleComplex*>(A), lda,
-//         reinterpret_cast<cuDoubleComplex*>(B), ldb,
-//         il, iu, abstol, &m_out, W,
-//         reinterpret_cast<cuDoubleComplex*>(Z), ldz, d_work, lwork, d_info));
+    cusolverErrcheck(cusolverDnDsygvdx(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
 
-//     int h_info = 0;
-//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-//     if (h_info != 0) {
-//         throw std::runtime_error("hegvx: cusolverDnZhegvdx failed with info = " + std::to_string(h_info));
-//     }
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info < 0) {
+        throw std::runtime_error("hegvdx (double): illegal argument #" + std::to_string(-h_info));
+    } else if (h_info > 0) {
+        if (jobz_t == CUSOLVER_EIG_MODE_NOVECTOR && h_info <= n) {
+            throw std::runtime_error("hegvdx (double): failed to converge, " + std::to_string(h_info) + " off-diagonal elements didn't converge");
+        } else if (h_info > n) {
+            throw std::runtime_error("hegvdx (double): leading minor of order " + std::to_string(h_info - n) + " of B is not positive definite");
+        }
+    }
 
-//     cudaErrcheck(cudaFree(d_work));
-//     cudaErrcheck(cudaFree(d_info));
-// }
+    if (jobz == 'V') {
+        const int m = (*h_meig);
+        cudaErrcheck(cudaMemcpy(d_eigen_vec, d_A_copy, sizeof(double) * n * m, cudaMemcpyDeviceToDevice));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+    cudaFree(d_A_copy);
+    cudaFree(d_B_copy);
+}
+
+
+// --- complex<float> ---
+static inline
+void hegvdx(
+    cusolverDnHandle_t& cusolver_handle,
+    const int itype,
+    const char jobz,
+    const char range,
+    const char uplo,
+    const int n,
+    const int lda,
+    std::complex<float>* d_A,
+    std::complex<float>* d_B,
+    const float vl,
+    const float vu,
+    const int il,
+    const int iu,
+    int* h_meig,
+    float* d_eigen_val,
+    std::complex<float>* d_eigen_vec
+) {
+    int lwork = 0;
+    int *d_info = nullptr;
+    cuComplex *d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cuComplex *d_A_copy = nullptr, *d_B_copy = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_A_copy, sizeof(cuComplex) * n * lda));
+    cudaErrcheck(cudaMalloc((void**)&d_B_copy, sizeof(cuComplex) * n * lda));
+    cudaErrcheck(cudaMemcpy(d_A_copy, reinterpret_cast<cuComplex*>(d_A), sizeof(cuComplex) * n * lda, cudaMemcpyDeviceToDevice));
+    cudaErrcheck(cudaMemcpy(d_B_copy, reinterpret_cast<cuComplex*>(d_B), sizeof(cuComplex) * n * lda, cudaMemcpyDeviceToDevice));
+
+    cusolverEigType_t itype_t = cublas_eig_type(itype);
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+
+    cusolverErrcheck(cusolverDnChegvdx_bufferSize(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
+
+    cusolverErrcheck(cusolverDnChegvdx(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info < 0) {
+        throw std::runtime_error("hegvdx (complex<float>): illegal argument #" + std::to_string(-h_info));
+    } else if (h_info > 0) {
+        if (jobz_t == CUSOLVER_EIG_MODE_NOVECTOR && h_info <= n) {
+            throw std::runtime_error("hegvdx (complex<float>): failed to converge, " + std::to_string(h_info) + " off-diagonal elements didn't converge");
+        } else if (h_info > n) {
+            throw std::runtime_error("hegvdx (complex<float>): leading minor of order " + std::to_string(h_info - n) + " of B is not positive definite");
+        }
+    }
+
+    if (jobz == 'V') {
+        const int m = (*h_meig);
+        cudaErrcheck(cudaMemcpy(reinterpret_cast<cuComplex*>(d_eigen_vec), d_A_copy, sizeof(cuComplex) * n * m, cudaMemcpyDeviceToDevice));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+    cudaFree(d_A_copy);
+    cudaFree(d_B_copy);
+}
+
+
+// --- complex<double> ---
+static inline
+void hegvdx(
+    cusolverDnHandle_t& cusolver_handle,
+    const int itype,
+    const char jobz,
+    const char range,
+    const char uplo,
+    const int n,
+    const int lda,
+    std::complex<double>* d_A,
+    std::complex<double>* d_B,
+    const double vl,
+    const double vu,
+    const int il,
+    const int iu,
+    int* h_meig,
+    double* d_eigen_val,
+    std::complex<double>* d_eigen_vec
+) {
+    int lwork = 0;
+    int *d_info = nullptr;
+    cuDoubleComplex *d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cuDoubleComplex *d_A_copy = nullptr, *d_B_copy = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_A_copy, sizeof(cuDoubleComplex) * n * lda));
+    cudaErrcheck(cudaMalloc((void**)&d_B_copy, sizeof(cuDoubleComplex) * n * lda));
+    cudaErrcheck(cudaMemcpy(d_A_copy, reinterpret_cast<cuDoubleComplex*>(d_A), sizeof(cuDoubleComplex) * n * lda, cudaMemcpyDeviceToDevice));
+    cudaErrcheck(cudaMemcpy(d_B_copy, reinterpret_cast<cuDoubleComplex*>(d_B), sizeof(cuDoubleComplex) * n * lda, cudaMemcpyDeviceToDevice));
+
+    cusolverEigType_t itype_t = cublas_eig_type(itype);
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+
+    cusolverErrcheck(cusolverDnZhegvdx_bufferSize(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+
+    cusolverErrcheck(cusolverDnZhegvdx(
+        cusolver_handle,
+        itype_t, jobz_t, range_t, uplo_t,
+        n,
+        d_A_copy, lda,
+        d_B_copy, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info < 0) {
+        throw std::runtime_error("hegvdx (complex<double>): illegal argument #" + std::to_string(-h_info));
+    } else if (h_info > 0) {
+        if (jobz_t == CUSOLVER_EIG_MODE_NOVECTOR && h_info <= n) {
+            throw std::runtime_error("hegvdx (complex<double>): failed to converge, " + std::to_string(h_info) + " off-diagonal elements didn't converge");
+        } else if (h_info > n) {
+            throw std::runtime_error("hegvdx (complex<double>): leading minor of order " + std::to_string(h_info - n) + " of B is not positive definite");
+        }
+    }
+
+    if (jobz == 'V') {
+        const int m = (*h_meig);
+        cudaErrcheck(cudaMemcpy(reinterpret_cast<cuDoubleComplex*>(d_eigen_vec), d_A_copy, sizeof(cuDoubleComplex) * n * m, cudaMemcpyDeviceToDevice));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+    cudaFree(d_A_copy);
+    cudaFree(d_B_copy);
+}
+
 
 // --- getrf
 static inline

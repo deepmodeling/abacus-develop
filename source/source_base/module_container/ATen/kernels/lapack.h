@@ -115,38 +115,38 @@ struct lapack_hegvd {
         T *eigen_vec);
 };
 
-// template <typename T, typename Device>
-// struct lapack_hegvx {
-//     using Real = typename GetTypeReal<T>::type;
-//     /**
-//      * @ brief hegvx computes the first m eigenvalues and their corresponding eigenvectors of
-//      * a complex generalized Hermitian-definite eigenproblem.
-//      *
-//      * In this op, the CPU version is implemented through the `hegvx` interface, and the CUDA version
-//      * is implemented through the `evd` interface and acquires the first m eigenpairs
-//      *
-//      * hegvx 'V' 'I' 'U'  is used to compute the first m eigenpairs of the problem
-//      *
-//      * @param n The order of the matrices A and B. n >= 0.
-//      * @param lda The leading dimension of the array A and B. lda >= max(1, n).
-//      * @param A On entry, the Hermitian matrix A. On exit, if info = 0, A contains the matrix Z of eigenvectors.
-//      * @param B On entry, the Hermitian positive definite matrix B. On exit, the triangular factor from the Cholesky factorization of B.
-//      * @param m The number of eigenvalues and eigenvectors to be found. 0 < m <= n.
-//      * @param eigen_val The first m eigenvalues in ascending order.
-//      * @param eigen_vec The first m columns contain the orthonormal eigenvectors of the matrix A corresponding to the selected eigenvalues.
-//      *
-//      * @note
-//      * See LAPACK ZHEGVX doc for more details.
-//      */
-//     void operator()(
-//         const int n,
-//         const int lda,
-//         T *A,
-//         T *B,
-//         const int m,
-//         Real *eigen_val,
-//         T *eigen_vec);
-// };
+template <typename T, typename Device>
+struct lapack_hegvx {
+    using Real = typename GetTypeReal<T>::type;
+    /**
+     * @ brief hegvx computes the first m eigenvalues and their corresponding eigenvectors of
+     * a complex generalized Hermitian-definite eigenproblem.
+     *
+     * In this op, the CPU version is implemented through the `hegvx` interface, and the CUDA version
+     * is implemented through the `evd` interface and acquires the first m eigenpairs
+     *
+     * hegvx 'V' 'I' 'U'  is used to compute the first m eigenpairs of the problem
+     *
+     * @param n The order of the matrices A and B. n >= 0.
+     * @param lda The leading dimension of the array A and B. lda >= max(1, n).
+     * @param A On entry, the Hermitian matrix A. On exit, if info = 0, A contains the matrix Z of eigenvectors.
+     * @param B On entry, the Hermitian positive definite matrix B. On exit, the triangular factor from the Cholesky factorization of B.
+     * @param m The number of eigenvalues and eigenvectors to be found. 0 < m <= n.
+     * @param eigen_val The first m eigenvalues in ascending order.
+     * @param eigen_vec The first m columns contain the orthonormal eigenvectors of the matrix A corresponding to the selected eigenvalues.
+     *
+     * @note
+     * See LAPACK ZHEGVX doc for more details.
+     */
+    void operator()(
+        const int n,
+        const int lda,
+        T *Mat_A,
+        T *Mat_B,
+        const int m,
+        Real *eigen_val,
+        T *eigen_vec);
+};
 
 
 template <typename T, typename Device>

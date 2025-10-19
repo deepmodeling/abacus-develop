@@ -217,7 +217,7 @@ struct lapack_hegvd<T, DEVICE_CPU> {
 
         const int itype = 1;
         const char jobz = 'V';
-        const char uplo = 'U';
+        const char uplo = 'L';
         int info = 0;
         int lwork = std::max(2 * dim + dim * dim, 1 + 6 * dim + 2 * dim * dim);
         Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
@@ -240,80 +240,105 @@ struct lapack_hegvd<T, DEVICE_CPU> {
 };
 
 
-// template <typename T>
-// struct lapack_hegvx<T, DEVICE_CPU> {
-//     using Real = typename GetTypeReal<T>::type;
-//     void operator()(
-//         const int n,
-//         const int lda,
-//         T *A,
-//         T *B,
-//         const int m,
-//         Real *eigen_val,
-//         T *eigen_vec)
-//     {
-//         int info = 0;
+template <typename T>
+struct lapack_hegvx<T, DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T *Mat_A,
+        T *Mat_B,
+        const int m,
+        Real *eigen_val,
+        T *eigen_vec)
+    {
+        // first copy Mat_A and Mat_B to auxiliary memory
+        // to avoid the origin block being overwritten by hegvx
+        Tensor aux_A(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
+        std::copy(Mat_A, Mat_A + n * lda, aux_A.data<T>());
+        Tensor aux_B(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
+        std::copy(Mat_B, Mat_B + n * lda, aux_B.data<T>());
 
-//         int mm = m;
+        const int itype = 1;    // ITYPE = 1:  A*x = (lambda)*B*x
+        const char jobz = 'V';// JOBZ = 'V':  Compute eigenvalues and eigenvectors.
+        const char range = 'I'; // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
+        const char uplo = 'L'; // UPLO = 'L':  Lower triangles of A and B are stored.
 
-//         int lwork = -1;
+        const int il = 1;
+        const int iu = m;
+        int found = m; // Found, should be iu - il + 1
+        int info = 0;
 
-//         T *work = new T[1];
-//         Real *rwork = new Real[7 * n];
-//         int *iwork = new int[5 * n];
-//         int *ifail = new int[n];
+        int lwork = -1;
 
-//         // set lwork = -1 to query optimal work size
-//         lapackConnector::hegvx(1, // ITYPE = 1:  A*x = (lambda)*B*x
-//             'V', 'I', 'U',
-//             n, A, lda, B, lda,
-//             0.0, 0.0,
-//             1, m, 0.0, mm,
-//             eigen_val, eigen_vec, lda,
-//             work,
-//             lwork,      // lwork = 1, query optimal size.
-//             rwork, iwork, ifail,
-//             info);
+        T work_query;
+        Real rwork_query;
 
-//         // !>  If LWORK = -1, then a workspace query is assumed; the routine
-//         // !>  only calculates the optimal size of the WORK array, returns
-//         // !>  this value as the first entry of the WORK array.
-//         lwork = int(get_real(work[0]));
-//         delete[] work;
-//         work = new T[lwork];
+        // set lwork = -1 to query optimal work size
+        lapackConnector::hegvx(
+                    itype, jobz, range, uplo,
+                    n,
+                    aux_A.data<T>(), lda,        // A (in/out)
+                    aux_B.data<T>(), lda,        // B (in/out)
+                    0.0, 0.0,                    // VL, VU (not used)
+                    il, iu,                      // IL, IU
+                    Real(0.0),                   // ABSTOL
+                    found,                       // M (output)
+                    eigen_val,                   // W (output)
+                    eigen_vec, lda,              // Z (output)
+                    &work_query,                 // WORK (query)
+                    lwork,
+                    &rwork_query,                // RWORK (query)
+                    static_cast<int*>(nullptr),  // IWORK (query)
+                    static_cast<int*>(nullptr),  // IFAIL (query)
+                    info);
 
-//         lapackConnector::hegvx(
-//             1, // ITYPE = 1:  A*x = (lambda)*B*x
-//             'V',    // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
-//             'I',    // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-//             'U',    // UPLO = 'U':  Upper triangles of A and B are stored.
-//             n,      // order of the matrices A and B.
-//             A,      // A is COMPLEX*16 array  dimension (LDA, N)
-//             lda,    // leading dimension of the array A.
-//             B,      // B is COMPLEX*16 array, dimension (LDB, N)
-//             lda,    // assume that leading dimension of B is the same as A.
-//             0.0,    // VL, Not referenced if RANGE = 'A' or 'I'.
-//             0.0,    // VU, Not referenced if RANGE = 'A' or 'I'.
-//             1,      // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
-//             m,      // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
-//             0.0,    // ABSTOL
-//             mm,     // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
-//             eigen_val,  // W store eigenvalues
-//             eigen_vec,  // Z store eigenvector
-//             lda,        // LDZ: The leading dimension of the array Z.
-//             work,
-//             lwork,
-//             rwork,
-//             iwork,
-//             ifail,
-//             info);
+        // !>  If LWORK = -1, then a workspace query is assumed; the routine
+        // !>  only calculates the optimal size of the WORK array, returns
+        // !>  this value as the first entry of the WORK array.
+        lwork = static_cast<int>(get_real(work_query));
+        lwork = std::max(lwork, 1);
 
-//         delete[] work;
-//         delete[] rwork;
-//         delete[] iwork;
-//         delete[] ifail;
-//     }
-// };
+        // work space
+        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
+        work.zero();
+
+        const int lrwork = 7 * n;
+        Tensor rwork(DataTypeToEnum<Real>::value, DeviceType::CpuDevice, {lrwork});
+        rwork.zero();
+
+        const int liwork = 5 * n;
+        Tensor iwork(DataType::DT_INT, DeviceType::CpuDevice, {liwork});
+        iwork.zero();
+
+        std::vector<int> ifail(n);
+
+        lapackConnector::hegvx(
+                    itype, jobz, range, uplo,
+                    n,
+                    aux_A.data<T>(), lda,        // A
+                    aux_B.data<T>(), lda,        // B
+                    0.0, 0.0,                    // VL, VU
+                    il, iu,                      // IL, IU
+                    Real(0.0),                   // ABSTOL
+                    found,                       // M (output)
+                    eigen_val,                   // W
+                    eigen_vec, lda,              // Z (output)
+                    work.data<T>(),              // WORK
+                    lwork,
+                    rwork.data<Real>(),          // RWORK
+                    iwork.data<int>(),           // IWORK
+                    ifail.data(),                // IFAIL
+                    info);
+
+        if (info < 0) {
+            throw std::runtime_error("hegvx failed: illegal argument #" + std::to_string(-info));
+        }
+        if (info > 0) {
+            throw std::runtime_error("hegvx failed to converge. Number of converged eigenvalues: " + std::to_string(info));
+        }
+    }
+};
 
 template <typename T>
 struct lapack_getrf<T, DEVICE_CPU> {
@@ -399,6 +424,11 @@ template struct lapack_hegvd<float,  DEVICE_CPU>;
 template struct lapack_hegvd<double, DEVICE_CPU>;
 template struct lapack_hegvd<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_hegvd<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_hegvx<float,  DEVICE_CPU>;
+template struct lapack_hegvx<double, DEVICE_CPU>;
+template struct lapack_hegvx<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_hegvx<std::complex<double>, DEVICE_CPU>;
 
 template struct lapack_getrf<float,  DEVICE_CPU>;
 template struct lapack_getrf<double, DEVICE_CPU>;

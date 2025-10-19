@@ -149,26 +149,40 @@ struct lapack_hegvd<T, DEVICE_GPU> {
         const char jobz = 'V';
         const char uplo = 'U';
         cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
-        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim, eigen_vec, lda, Mat_B, lda, eigen_val);
+        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
+                eigen_vec, lda, Mat_B, lda,
+                eigen_val);
     }
 };
 
-// template <typename T>
-// struct lapack_hegvx<T, DEVICE_GPU> {
-//     using Real = typename GetTypeReal<T>::type;
-//     void operator()(
-//         const int n,
-//         const int lda,
-//         T *A,
-//         T *B,
-//         const int m,
-//         Real *eigen_val,
-//         T *eigen_vec)
-//     {
-//         cuSolverConnector::hegvx(cusolver_handle, n, lda, A, B, m, eigen_val, eigen_vec);
-//     }
-// };
-//
+template <typename T>
+struct lapack_hegvx<T, DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T *A,
+        T *B,
+        const int m,
+        Real *eigen_val,
+        T *eigen_vec)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char range = 'I';
+        const char uplo = 'U';
+        int meig = 0;
+        cuSolverConnector::hegvdx(cusolver_handle,
+            itype, jobz, range, uplo,
+            n, lda, A, B,
+            Real(0), Real(0),
+            1, m, &meig,
+            eigen_val, eigen_vec);
+    }
+};
+
+
+
 template <typename T>
 struct lapack_getrf<T, DEVICE_GPU> {
     void operator()(
@@ -241,6 +255,11 @@ template struct lapack_hegvd<float,  DEVICE_GPU>;
 template struct lapack_hegvd<double, DEVICE_GPU>;
 template struct lapack_hegvd<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_hegvd<std::complex<double>, DEVICE_GPU>;
+
+template struct lapack_hegvx<float,  DEVICE_GPU>;
+template struct lapack_hegvx<double, DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<double>, DEVICE_GPU>;
 
 template struct lapack_getrf<float,  DEVICE_GPU>;
 template struct lapack_getrf<double, DEVICE_GPU>;
