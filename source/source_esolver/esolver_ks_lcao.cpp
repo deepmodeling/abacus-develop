@@ -20,7 +20,7 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
-#include "source_psi/setup_psi_lcao.h" // mohan add 20251019
+#include "source_psi/setup_psi.h" // mohan add 20251019
 
 namespace ModuleESolver
 {
@@ -75,7 +75,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 5) init electronic wave function psi
-    Setup_Psi_LCAO::before_runner();
+    Setup_Psi<TK>::allocate_psi(this->psi, this->pelec->ekb, this->pelec->wg, this->kv, this->pv, PARAM.inp);
 
     // 7) init DMK, but DMR is constructed in before_scf()
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);

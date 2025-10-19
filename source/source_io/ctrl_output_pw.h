@@ -4,7 +4,7 @@
 #include "source_base/module_device/device.h" // use Device
 #include "source_psi/psi.h"                   // define psi
 #include "source_estate/elecstate_lcao.h"     // use pelec
-#include "source_psi/setup_psi.h" // use Setup_Psi class
+#include "source_psi/setup_psi_pw.h" // use Setup_Psi class
 
 namespace ModuleIO
 {
@@ -29,7 +29,7 @@ void ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis *pw_rho,
 		const ModulePW::PW_Basis *pw_rhod,
 		const ModulePW::PW_Basis_Big *pw_big,
-        Setup_Psi<T, Device> &stp,
+        Setup_Psi_pw<T, Device> &stp,
         const Device* ctx,
         const base_device::AbacusDevice_t &device, // mohan add 2025-10-15
         const Parallel_Grid &para_grid,
@@ -44,7 +44,7 @@ void ctrl_runner_pw(UnitCell& ucell,
         ModulePW::PW_Basis* pw_rhod,
 		Charge &chr,
         K_Vectors &kv,
-        Setup_Psi<T, Device> &stp,
+        Setup_Psi_pw<T, Device> &stp,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,

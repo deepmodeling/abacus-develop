@@ -155,7 +155,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
                                     this->pv,
                                     *(this->psi),
-                                    this->pelec,
+									this->pelec->ekb,
+									this->pelec->wg,
                                     this->pelec->klist->ik2iktot,
                                     this->pelec->klist->get_nkstot(),
                                     PARAM.inp.nspin))

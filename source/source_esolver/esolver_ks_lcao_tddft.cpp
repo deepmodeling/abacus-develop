@@ -102,9 +102,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
 					this->pv, 
 					*(this->psi), 
-					this->pelec, 
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
+					this->pelec->ekb,
+                    this->pelec->wg, 
+                    this->kv.ik2iktot,
+                    this->kv.get_nkstot(),
 					PARAM.inp.nspin,
                     0,
                     TD_info::estep_shift))

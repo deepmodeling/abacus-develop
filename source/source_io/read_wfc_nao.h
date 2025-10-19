@@ -3,6 +3,7 @@
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
+#include "source_base/matrix.h"
 
 // mohan add 2010-09-09
 namespace ModuleIO

@@ -7,6 +7,8 @@
 #include "write_wfc_nao.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/filename.h"
+#include "source_base/tool_title.h" // use title
+#include "source_base/global_function.h" // use READ_VALUE
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 {

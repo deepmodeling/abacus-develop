@@ -752,7 +752,8 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
 #endif
     }
 	else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, 
-				this->pelec,
+				this->pelec->ekb,
+                this->pelec->wg,
 				this->pelec->klist->ik2iktot,
 				this->pelec->klist->get_nkstot(),
 				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
