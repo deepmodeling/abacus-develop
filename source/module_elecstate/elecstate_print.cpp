@@ -146,7 +146,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
     {
         buf += FmtCore::format(td_fmt[i].c_str(), values[i]);
     }
-    std::cout << buf<< std::fflush;
+    std::cout << buf;
+    std::cout.flush();
 }
 /// @brief print and check for band energy and occupations
 /// @param ofs
