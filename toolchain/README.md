@@ -151,21 +151,21 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 ## Supported Toolchains
 
 ### GNU Toolchain
-- **Compilers**: System GCC (≥5.0)
+- **Compilers**: System GCC (≥5.0) or installed GCC
 - **MPI**: OpenMPI or MPICH
 - **Math**: OpenBLAS + ScaLAPACK
 - **Features**: Most stable, widely compatible
 
 ### Intel Toolchain
-- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort)
+- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort) with system/installed GCC (≥5.0) 
 - **MPI**: Intel MPI
 - **Math**: Intel MKL
-- **Features**: Optimized performance, EXX support
+- **Features**: Optimized performance for Intel Machine
 
 ### AMD Toolchain
-- **Compilers**: AMD AOCC or GCC
+- **Compilers**: AMD AOCC or system/installed GCC
 - **Math**: AMD AOCL (Optimized math libraries)
-- **Features**: AMD processor optimization
+- **Features**: AMD processor optimization (e.g., Zen3+)
 
 ## Dependencies
 
