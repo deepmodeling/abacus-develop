@@ -188,19 +188,6 @@ TYPED_TEST(LapackTest, heevx) {
     // check that A*V = E*V
     E = E.to_device<DEVICE_CPU>();
     V = V.to_device<DEVICE_CPU>();
-    std::cout << "Eigenvalues E: ";
-    for (int i = 0; i < neig; i++) {
-        std::cout << E.data<Real>()[i] << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Eigenvectors V:" << std::endl;
-    for (int i = 0; i < dim; i++) {
-        for (int j = 0; j < neig; j++) {
-            std::cout << V.data<Type>()[i + j * dim] << " ";
-        }
-        std::cout << std::endl;
-    }
 
     EXPECT_EQ(expected_C1, expected_C2);
 }
