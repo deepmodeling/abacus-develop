@@ -1,6 +1,5 @@
 #include "ABFs_Construct-PCA.h"
 
-#include "exx_abfs-abfs_index.h"
 #include "../../source_base/module_external/lapack_connector.h"
 #include "../../source_base/global_function.h"
 #include "../../source_base/element_basis_index.h"
@@ -81,12 +80,12 @@ namespace PCA
 		ModuleBase::TITLE("ABFs_Construct::PCA::cal_PCA");
 		
 		const ModuleBase::Element_Basis_Index::Range
-			range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
+			range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
 		const ModuleBase::Element_Basis_Index::IndexLNM
 			index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
 
 		const ModuleBase::Element_Basis_Index::Range
-			range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
+			range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 		const ModuleBase::Element_Basis_Index::IndexLNM
 			index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 

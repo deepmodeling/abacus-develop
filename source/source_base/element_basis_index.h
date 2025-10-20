@@ -8,6 +8,10 @@
 
 #include <cstddef>
 #include <vector>
+
+	class Numerical_Orbital_Lm;
+	class LCAO_Orbitals;
+
 namespace ModuleBase
 {
 
@@ -37,10 +41,13 @@ private:
 	
 public:
 	
-	typedef std::vector<std::vector<NM>> Range; 								// range[T][L]
+	typedef std::vector<std::vector<NM>> Range; 						// range[T][L]
 	typedef std::vector<Index_T> IndexLNM;								// index[T][L][N][M]
 	
 	static IndexLNM construct_index( const Range &range );
+
+	static Range construct_range( const LCAO_Orbitals &orb );	
+	static Range construct_range( const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb );
 };
 
 }
