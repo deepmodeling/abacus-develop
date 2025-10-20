@@ -1,8 +1,14 @@
 #ifndef DIAG_CUSOLVER_CUH
 #define DIAG_CUSOLVER_CUH
-
+#include <cuda.h>
 #include <complex>
+
+#if CUDA_VERSION < 12090
 #include "nvToolsExt.h"
+#else
+#include "nvtx3/nvToolsExt.h"
+#endif
+
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 
