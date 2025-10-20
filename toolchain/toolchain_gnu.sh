@@ -72,6 +72,7 @@ LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
 SCALAPACK_VERSION="main"    # main=2.2.2, alt=2.2.1
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+# Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
 # ============================================================================
 # Execute Installation (DO NOT MODIFY BELOW THIS LINE)
