@@ -1,29 +1,10 @@
 #!/bin/bash -e
 
-# TODO: Review and if possible fix shellcheck errors.
+# TODO: Remove this deprecated script in the future.
 # shellcheck disable=all
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
-
-# +---------------------------------------------------------------------------+
-# |   ABACUS: (Atomic-orbital Based Ab-initio Computation at UStc)            |
-# |   -- an open-source package based on density functional theory(DFT)       |
-# |   Copyright 2004-2022 ABACUS developers group                             |
-# |   <https://github.com/deepmodeling/abacus-develop>                        |
-# |                                                                           |
-# |   SPDX-License-Identifier: GPL-2.0-or-later                               |
-# +---------------------------------------------------------------------------+
-#
-#
-# *****************************************************************************
-#> \brief    This script will compile and install or link existing tools and
-#>           libraries ABACUS depends on and generate setup files that
-#>           can be used to compile and use ABACUS
-#> \history  Created on Friday, 2023/08/18
-#            Update for Intel (18.08.2023, MK)
-#> \author   Zhaoqing Liu (Quantum Misaka) quanmisaka@stu.pku.edu.cn
-# *****************************************************************************
 
 # ------------------------------------------------------------------------
 # Work directories and used files

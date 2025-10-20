@@ -1,15 +1,14 @@
 #!/bin/bash -e
 
 # ============================================================================
-# ABACUS Toolchain Installation Script (New Version - Enhanced UI)
+# ABACUS Toolchain Installation Script (New refractored version)
 # ============================================================================
 # This is the new refactored version of the ABACUS toolchain installation script.
-# It provides the same functionality as the original script but with improved
-# modularity, maintainability, extensibility, and beautiful terminal output.
+# It provides the most main functionality as the original script but with 
+# improved modularity, maintainability, extensibility, and beautiful terminal output.
 #
 # Author: Quantum Misaka by Trae SOLO
 # Date: 2025-10-16
-# Enhanced: Beautiful terminal UI with harmonious color scheme
 # ============================================================================
 
 # Set script name for error reporting
