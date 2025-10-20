@@ -138,6 +138,59 @@ TYPED_TEST(LapackTest, heevd) {
     EXPECT_EQ(expected_C1, expected_C2);
 }
 
+TYPED_TEST(LapackTest, heevx) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Real = typename GetTypeReal<Type>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemm<Type, Device> gemmCalculator;
+    blas_axpy<Type, Device> axpyCalculator;
+    lapack_heevx<Type, Device> heevxCalculator;
+
+    const int dim = 3;
+    const int neig = 2;  // Compute first 2 eigenvalues
+
+    Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
+
+    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
+    Tensor V = A;
+    Tensor expected_C1 = std::move(Tensor({static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                           static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0)}).to_device<Device>());
+    Tensor expected_C2 = expected_C1;
+    expected_C1.zero();
+    expected_C2.zero();
+
+    const char trans = 'N';
+    const int m = 3;
+    const int n = neig;
+    const int k = 3;
+    const Type alpha = static_cast<Type>(1.0);
+    const Type beta  = static_cast<Type>(0.0);
+
+    // Compute first neig eigenvalues and eigenvectors using heevx
+    heevxCalculator(dim, dim, A.data<Type>(), neig, E.data<Real>(), V.data<Type>());
+
+    E = E.to_device<ct::DEVICE_CPU>();
+    const Tensor Alpha = std::move(Tensor({
+            static_cast<Type>(E.data<Real>()[0]),
+            static_cast<Type>(E.data<Real>()[1])}));
+
+    // Check the eigenvalues and eigenvectors
+    // A * x = lambda * x for the first neig eigenvectors
+    // get A*V
+    gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), m, V.data<Type>(), k, &beta, expected_C1.data<Type>(), m);
+    // get E*V
+    for (int ii = 0; ii < neig; ii++) {
+        axpyCalculator(dim, Alpha.data<Type>() + ii, V.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
+    }
+    // check that A*V = E*V
+    E = E.to_device<DEVICE_CPU>();
+    V = V.to_device<DEVICE_CPU>();
+
+    EXPECT_EQ(expected_C1, expected_C2);
+}
 
 TYPED_TEST(LapackTest, hegvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
@@ -189,5 +242,7 @@ TYPED_TEST(LapackTest, hegvd) {
     EXPECT_EQ(expected_C1, expected_C2);
 }
 
-} // namespace op
+
+
+} // namespace kernels
 } // namespace container

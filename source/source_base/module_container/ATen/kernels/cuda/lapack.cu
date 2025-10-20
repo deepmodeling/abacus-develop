@@ -6,6 +6,9 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
+#include <cassert>
+
+
 namespace container {
 namespace kernels {
 
@@ -112,6 +115,7 @@ struct lapack_heevx<T, DEVICE_GPU> {
         Real *d_eigen_val,
         T *d_eigen_vec)
     {
+        assert(n <= lda);
         // copy d_Mat to d_eigen_vec, and results will be overwritten into d_eigen_vec
         // by cuSolver
         cudaErrcheck(cudaMemcpy(d_eigen_vec, d_Mat, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
