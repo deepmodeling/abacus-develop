@@ -70,6 +70,7 @@ ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+# Note: main(2.1.2) version of LibTorch need glibc > 2.27
 # Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
 # Note: GCC-AOCL toolchain uses AOCL for math libraries (FFTW, ScaLAPACK)
