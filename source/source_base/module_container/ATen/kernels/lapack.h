@@ -105,6 +105,7 @@ struct lapack_hegvd {
      * @note
      * See LAPACK ZHEGVD or CHEGVD documentation for more details.
      * This function assumes that A and B have the same leading dimensions, lda.
+     * This function copies B to auxiliary memory to avoid being overwritten.
      */
     void operator()(
         const int n,

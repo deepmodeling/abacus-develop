@@ -21,7 +21,7 @@ endif()
 
 add_library(container STATIC ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
-target_link_libraries(container PUBLIC 
+target_link_libraries(container PUBLIC
   ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS} ${ATen_ROCM_DEPENDENCY_LIBS})
 
 if(ENABLE_COVERAGE)
@@ -31,5 +31,6 @@ endif()
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
+    add_subdirectory(ATen/kernels/test)
   endif()
 endif()
