@@ -141,6 +141,7 @@ case "$with_elpa" in
                         --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
                         --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
                         --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
+                        --enable-nvidia-cub --with-cusolver \
                         OMPI_MCA_plm_rsh_agent=/bin/false \
                         FC=${MPIFC} \
                         CC=${MPICC} \
@@ -172,6 +173,7 @@ case "$with_elpa" in
                         --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
                         --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
                         --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
+                        --enable-nvidia-cub --with-cusolver \
                         FC=${MPIFC} \
                         CC=${MPICC} \
                         CXX=${MPICXX} \
