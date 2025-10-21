@@ -978,7 +978,7 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" 2>/dev/null; then
+      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
