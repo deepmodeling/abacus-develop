@@ -10,6 +10,17 @@ namespace container {
 namespace kernels {
 
 template <typename T, typename Device>
+struct blas_copy {
+    void operator()(
+        const int n,
+        const T *x,
+        const int incx,
+        T *y,
+        const int incy);
+};
+
+
+template <typename T, typename Device>
 struct blas_dot {
     void operator()(
         const int& n,

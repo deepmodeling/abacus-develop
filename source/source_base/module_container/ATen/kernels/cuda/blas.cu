@@ -22,6 +22,18 @@ void destroyGpuBlasHandle() {
     }
 }
 
+template <typename T>
+struct blas_copy<T, DEVICE_GPU> {
+    void operator()(
+        const int n,
+        const T * x,
+        const int incx,
+        T *y,
+        const int incy)
+    {
+        cuBlasConnector::copy(cublas_handle, n, x, incx, y, incy);
+    }
+};
 
 template <typename T>
 struct blas_dot<T, DEVICE_GPU> {
@@ -76,7 +88,7 @@ struct blas_gemv<T, DEVICE_GPU> {
         const int& incx,
         const T* beta,
         T* y,
-        const int& incy) 
+        const int& incy)
     {
         cuBlasConnector::gemv(cublas_handle, trans, m, n, *alpha, A, lda, x, incx, *beta, y, incy);
     }
@@ -196,6 +208,12 @@ struct blas_gemm_batched_strided<T, DEVICE_GPU> {
 };
 
 // Explicitly instantiate functors for the types of functor registered.
+
+template struct blas_copy<float , DEVICE_GPU>;
+template struct blas_copy<double, DEVICE_GPU>;
+template struct blas_copy<std::complex<float> , DEVICE_GPU>;
+template struct blas_copy<std::complex<double>, DEVICE_GPU>;
+
 template struct blas_dot<float , DEVICE_GPU>;
 template struct blas_dot<double, DEVICE_GPU>;
 template struct blas_dot<std::complex<float> , DEVICE_GPU>;
