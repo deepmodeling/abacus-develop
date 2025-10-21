@@ -10,47 +10,8 @@
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #endif
 
-#ifndef TGINT_H
-#define TGINT_H
-template <typename T>
-struct TGint;
-
-template <>
-struct TGint<double>
-{
-    using type = Gint_Gamma;
-};
-
-template <>
-struct TGint<std::complex<double>>
-{
-    using type = Gint_k;
-};
-#endif
-
 namespace ModuleIO
 {
-
-#ifndef SET_GINT_POINTER_H
-#define SET_GINT_POINTER_H
-template <typename T>
-void set_gint_pointer(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<T>::type*& gint);
-
-template <>
-void set_gint_pointer<double>(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<double>::type*& gint)
-{
-    gint = &gint_gamma;
-}
-
-template <>
-void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
-                                            Gint_k& gint_k,
-                                            typename TGint<std::complex<double>>::type*& gint)
-{
-    gint = &gint_k;
-}
-#endif
-
 template <typename TR> std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
 {
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -97,8 +58,6 @@ void write_Vxc_R(const int nspin,
     const ModulePW::PW_Basis& rhod_basis,
     const ModuleBase::matrix& vloc,
     const Charge& chg,
-    Gint_Gamma& gint_gamma,
-    Gint_k& gint_k,
     const K_Vectors& kv,
     const std::vector<double>& orb_cutoff,
     Grid_Driver& gd,
@@ -144,12 +103,10 @@ const double sparse_thr=1e-10)
 
     // 3. calculate the Vxc(R)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
-    typename TGint<TK>::type* gint = nullptr;
-    set_gint_pointer<TK>(gint_gamma, gint_k, gint);
     std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> vxcs_op_ao(nspin0);
     for (int is = 0; is < nspin0; ++is)
     {
-        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
+        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(
             &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
         vxcs_op_ao[is]->contributeHR();
 #ifdef __EXX
