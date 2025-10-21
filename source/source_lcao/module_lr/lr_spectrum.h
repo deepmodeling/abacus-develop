@@ -1,6 +1,5 @@
 #pragma once
 #include "source_cell/klist.h"
-#include "source_lcao/module_lr/utils/gint_template.h"
 #include "source_psi/psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/utils/lr_util.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
-#include "source_lcao/module_lr/utils/gint_template.h"
 #include "source_lcao/module_gint/grid_technique.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
