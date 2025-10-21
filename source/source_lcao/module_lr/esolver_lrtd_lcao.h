@@ -11,9 +11,6 @@
 #include <memory>
 
 #include "source_esolver/esolver_ks_lcao.h" //for the move constructor
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
@@ -90,10 +87,6 @@ namespace LR
         bool openshell = false;
         std::string xc_kernel;
 
-        Grid_Technique gt_;
-        Gint_Gamma gint_g_;
-        Gint_k gint_k_;
-        typename TGint<T>::type* gint_ = nullptr;
         std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
         void set_gint();
 
