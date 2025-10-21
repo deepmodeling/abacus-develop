@@ -58,8 +58,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
-                           const ModuleBase::matrix& v_eff,
-                           Gint_k& gint_k)
+                           const ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
