@@ -8,8 +8,6 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/hs_matrix_k.hpp"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
@@ -39,9 +37,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
-    HamiltLCAO(Gint_Gamma* GG_in,
-               Gint_k* GK_in,
-               const UnitCell& ucell,
+    HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
 			   const Parallel_Orbitals* paraV,
 			   elecstate::Potential* pot_in,
