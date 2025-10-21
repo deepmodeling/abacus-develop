@@ -24,107 +24,105 @@ mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
 case "${with_intelmpi}" in
-  __INSTALL__)
-    echo "==================== Installing Intel MPI ===================="
-    echo '__INSTALL__ is not supported; please manually install Intel MPI'
-    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+    __INSTALL__)
+        echo "==================== Installing Intel MPI ===================="
+        report_error ${LINENO} "To install Intel MPI, please contact your system administrator."
         exit 1
-    fi
-    ;;
-  __SYSTEM__)
-    echo "==================== Finding Intel MPI from system paths ===================="
-    if [ "${PACK_RUN}" = "__TRUE__" ]; then
-        echo "--pack-run mode specified, skip system check"
-    else
-    check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
-    if [ "${intel_classic}" = "yes" ]; then
-    # if intel compiler used as classic, so as intelmpi
-        export INTELMPI_CLASSIC="yes"
-    fi
-    if [ "${with_intel}" != "__DONTUSE__" ]; then
-        if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
-            check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
-            check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
-            check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+        ;;
+    __SYSTEM__)
+        echo "==================== Finding Intel MPI from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
         else
-            check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicx))" || exit 1
-            check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpx))" || exit 1
-            if [ "${WITH_IFX}" == "yes" ]; then
-                check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
-            else
-                check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+            check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
+            if [ "${intel_classic}" = "yes" ]; then
+                # if intel compiler used as classic, so as intelmpi
+                export INTELMPI_CLASSIC="yes"
             fi
-        fi
-    else
-      echo "The use of Intel MPI is only supported with the Intel compiler"
-      exit 1
-    fi
-    MPIFORT="${MPIFC}"
-    MPIF77="${MPIFC}"
-    # include path is already handled by compiler wrapper scripts (can cause wrong mpi.mod with GNU Fortran)
-    # add_include_from_paths INTELMPI_CFLAGS "mpi.h" $INCLUDE_PATHS
-    add_lib_from_paths INTELMPI_LDFLAGS "libmpi.*" $LIB_PATHS
-    check_lib -lmpi "intelmpi"
-    check_lib -lmpicxx "intelmpi"
-    fi
-    ;;
-  __DONTUSE__)
-    # Nothing to do
-    ;;
-  *)
-    echo "==================== Linking INTELMPI to user paths ===================="
-    pkg_install_dir="${with_intelmpi}"
-    check_dir "${pkg_install_dir}/bin"
-    check_dir "${pkg_install_dir}/lib"
-    check_dir "${pkg_install_dir}/include"
-    check_command ${pkg_install_dir}/bin/mpiexec "intel" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
-    if [ "${with_intel}" != "__DONTUSE__" ]; then
-        if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
-            check_command ${pkg_install_dir}/bin/mpiicc "intel" && MPICC="${pkg_install_dir}/bin/mpiicc" || exit 1
-            check_command ${pkg_install_dir}/bin/mpiicpc "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpc" || exit 1
-            check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
-        else
-            check_command ${pkg_install_dir}/bin/mpiicx "intel" && MPICC="${pkg_install_dir}/bin/mpiicx" || exit 1
-            check_command ${pkg_install_dir}/bin/mpiicpx "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpx" || exit 1
-            if [ "${WITH_IFX}" = "yes" ]; then
-                check_command ${pkg_install_dir}/bin/mpiifx "intel" && MPIFC="${pkg_install_dir}/bin/mpiifx" || exit 1
+            if [ "${with_intel}" != "__DONTUSE__" ]; then
+                if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
+                    check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
+                    check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
+                    check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+                else
+                    check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicx))" || exit 1
+                    check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpx))" || exit 1
+                    if [ "${WITH_IFX}" == "yes" ]; then
+                        check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
+                    else
+                        check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+                    fi
+                fi
             else
+                echo "The use of Intel MPI is only supported with the Intel compiler"
+                exit 1
+            fi
+            MPIFORT="${MPIFC}"
+            MPIF77="${MPIFC}"
+            # include path is already handled by compiler wrapper scripts (can cause wrong mpi.mod with GNU Fortran)
+            # add_include_from_paths INTELMPI_CFLAGS "mpi.h" $INCLUDE_PATHS
+            add_lib_from_paths INTELMPI_LDFLAGS "libmpi.*" $LIB_PATHS
+            check_lib -lmpi "intelmpi"
+            check_lib -lmpicxx "intelmpi"
+        fi
+        ;;
+    __DONTUSE__)
+        # Nothing to do
+        ;;
+    *)
+        echo "==================== Linking INTELMPI to user paths ===================="
+        pkg_install_dir="${with_intelmpi}"
+        check_dir "${pkg_install_dir}/bin"
+        check_dir "${pkg_install_dir}/lib"
+        check_dir "${pkg_install_dir}/include"
+        check_command ${pkg_install_dir}/bin/mpiexec "intel" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
+        if [ "${with_intel}" != "__DONTUSE__" ]; then
+            if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
+                check_command ${pkg_install_dir}/bin/mpiicc "intel" && MPICC="${pkg_install_dir}/bin/mpiicc" || exit 1
+                check_command ${pkg_install_dir}/bin/mpiicpc "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpc" || exit 1
                 check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
+            else
+                check_command ${pkg_install_dir}/bin/mpiicx "intel" && MPICC="${pkg_install_dir}/bin/mpiicx" || exit 1
+                check_command ${pkg_install_dir}/bin/mpiicpx "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpx" || exit 1
+                if [ "${WITH_IFX}" = "yes" ]; then
+                    check_command ${pkg_install_dir}/bin/mpiifx "intel" && MPIFC="${pkg_install_dir}/bin/mpiifx" || exit 1
+                else
+                    check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
+                fi
             fi
+        else
+            echo "The use of Intel MPI is only supported with the Intel compiler"
+            exit 1
         fi
-    else
-      echo "The use of Intel MPI is only supported with the Intel compiler"
-      exit 1
-    fi
-    MPIFORT="${MPIFC}"
-    MPIF77="${MPIFC}"
-    # include path is already handled by compiler wrapper scripts (can cause wrong mpi.mod with GNU Fortran)
-    INTELMPI_CFLAGS="-I'${pkg_install_dir}/include'"
-    INTELMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-    ;;
+        MPIFORT="${MPIFC}"
+        MPIF77="${MPIFC}"
+        # include path is already handled by compiler wrapper scripts (can cause wrong mpi.mod with GNU Fortran)
+        INTELMPI_CFLAGS="-I'${pkg_install_dir}/include'"
+        INTELMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+        ;;
 esac
 if [ "${with_intelmpi}" != "__DONTUSE__" ]; then
-  if [ "${intel_classic}" = "yes" ]; then
-    I_MPI_CXX="icpc"
-    I_MPI_CC="icc"
-    I_MPI_FC="ifort"
-  else
-    I_MPI_CXX="icpx"
-    I_MPI_CC="icx"
-    if [ "${WITH_IFX}" = "yes" ]; then
-      I_MPI_FC="ifx"
+    if [ "${intel_classic}" = "yes" ]; then
+        I_MPI_CXX="icpc"
+        I_MPI_CC="icc"
+        I_MPI_FC="ifort"
     else
-      I_MPI_FC="ifort"
+        I_MPI_CXX="icpx"
+        I_MPI_CC="icx"
+        if [ "${WITH_IFX}" = "yes" ]; then
+            I_MPI_FC="ifx"
+        else
+            I_MPI_FC="ifort"
+        fi
     fi
-  fi
-  INTELMPI_LIBS="-lmpi -lmpicxx"
-  echo "I_MPI_CXX is ${I_MPI_CXX}"
-  echo "I_MPI_CC  is ${I_MPI_CC}"
-  echo "I_MPI_FC  is ${I_MPI_FC}"
-  echo "MPICXX    is ${MPICXX}"
-  echo "MPICC     is ${MPICC}"
-  echo "MPIFC     is ${MPIFC}"
-  cat << EOF > "${BUILDDIR}/setup_intelmpi"
+    INTELMPI_LIBS="-lmpi -lmpicxx"
+    echo "I_MPI_CXX is ${I_MPI_CXX}"
+    echo "I_MPI_CC  is ${I_MPI_CC}"
+    echo "I_MPI_FC  is ${I_MPI_FC}"
+    echo "MPICXX    is ${MPICXX}"
+    echo "MPICC     is ${MPICC}"
+    echo "MPIFC     is ${MPIFC}"
+    cat << EOF > "${BUILDDIR}/setup_intelmpi"
 export I_MPI_CXX="${I_MPI_CXX}"
 export I_MPI_CC="${I_MPI_CC}"
 export I_MPI_FC="${I_MPI_FC}"
@@ -146,8 +144,8 @@ export CP_CFLAGS="\${CP_CFLAGS} IF_MPI(${INTELMPI_CFLAGS}|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${INTELMPI_LDFLAGS}|)"
 export CP_LIBS="\${CP_LIBS} IF_MPI(${INTELMPI_LIBS}|)"
 EOF
-  if [ "${with_intelmpi}" != "__SYSTEM__" ]; then
-    cat << EOF >> "${BUILDDIR}/setup_intelmpi"
+    if [ "${with_intelmpi}" != "__SYSTEM__" ]; then
+        cat << EOF >> "${BUILDDIR}/setup_intelmpi"
 prepend_path PATH "${pkg_install_dir}/bin"
 export PATH="${pkg_install_dir}/bin":\${PATH}
 export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
@@ -155,8 +153,8 @@ export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
 export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
 export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
-  fi
-  cat "${BUILDDIR}/setup_intelmpi" >> ${SETUPFILE}
+    fi
+    cat "${BUILDDIR}/setup_intelmpi" >> ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_intelmpi"
