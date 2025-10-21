@@ -70,14 +70,7 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
-#ifdef __OLD_GINT
-            gg.initialize_pvpR(*ucell_in, GridD_in, nspin);
-            gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
-            Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
-            gg.cal_gint(&inout);
-#else
             ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
-#endif
 
             // A solution to replace the original implementation of the following code:
             // pelec->charge->save_rho_before_sum_band();
@@ -169,14 +162,7 @@ void Get_pchg_lcao::begin(Gint_k& gk,
 
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
-#ifdef __OLD_GINT
-                    gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
-                    gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                    Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
-                    gk.cal_gint(&inout);
-#else
                     ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
-#endif
                 
 
                     // Using std::vector to replace the original double** rho_save
@@ -216,14 +202,7 @@ void Get_pchg_lcao::begin(Gint_k& gk,
 
                 DM.init_DMR(GridD_in, ucell_in);
                 DM.cal_DMR();
-#ifdef __OLD_GINT
-                gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
-                gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
-                gk.cal_gint(&inout);
-#else
                 ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
-#endif
                 // Using std::vector to replace the original double** rho_save
                 std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
 
