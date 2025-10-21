@@ -1,8 +1,6 @@
 #ifndef GET_WF_LCAO_H
 #define GET_WF_LCAO_H
 
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/elecstate.h"
 
 class Get_wf_lcao
@@ -17,7 +15,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_Gamma& gg,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
@@ -35,7 +32,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_k& gg,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
@@ -56,7 +52,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_k& gk,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
@@ -74,7 +69,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_Gamma& gk,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
