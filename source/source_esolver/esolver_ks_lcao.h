@@ -4,8 +4,6 @@
 #include "esolver_ks.h"
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
-#include "source_lcao/module_gint/gint_gamma.h" // gint for gamma-only k-points
-#include "source_lcao/module_gint/gint_k.h" // gint for multi k-points
 #include "source_lcao/module_gint/temp_gint/gint.h" // gint
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
@@ -67,15 +65,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     //! NAO orbitals: 2d block-cyclic distribution info
     Parallel_Orbitals pv;
 
-    //! Grid integration: used for k-point-dependent algorithm
-    Gint_k GK;
-
-    //! Grid integration: used for gamma only algorithms.
-    Gint_Gamma GG;
-
-    //! Grid integration: used to store some basic information
-    Grid_Technique GridT;
-
     //! GintInfo: used to store some basic infomation about module_gint
     std::unique_ptr<ModuleGint::GintInfo> gint_info_;
 
@@ -107,9 +96,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     const Record_adj & get_RA() const { return RA; }
     const Grid_Driver & get_gd() const { return gd; }
     const Parallel_Orbitals & get_pv() const { return pv; }
-    const Gint_k & get_GK() const { return GK; }
-    const Gint_Gamma & get_GG() const { return GG; }
-    const Grid_Technique & get_GridT() const { return GridT; }
     const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
     const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
     const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
