@@ -45,11 +45,12 @@ TYPED_TEST(BlasTest, Nrm2) {
     const int n = 3;
     const Tensor x = std::move(Tensor({static_cast<Type>(3.0), static_cast<Type>(4.0), static_cast<Type>(0.0)}).to_device<Device>());
 
-    Type result = {};
-    nrm2Calculator(n, x.data<Type>(), 1, &result);
-    const Type expected = static_cast<Type>(5.0);
+    using Real = typename GetTypeReal<Type>::type;
+    Real result = {};
+    result = nrm2Calculator(n, x.data<Type>(), 1);
+    const Real expected = static_cast<Real>(5.0);
 
-    EXPECT_NEAR(result, expected, static_cast<Type>(1e-6));
+    EXPECT_NEAR(result, expected, static_cast<Real>(1e-6));
 }
 
 TYPED_TEST(BlasTest, Dot) {
