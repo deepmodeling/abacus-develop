@@ -70,9 +70,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 }
 
 template <typename TK, typename TR>
-HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
-                               Gint_k* GK_in,
-                               const UnitCell& ucell,
+HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
                                elecstate::Potential* pot_in,
