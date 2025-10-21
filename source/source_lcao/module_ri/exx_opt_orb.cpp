@@ -5,7 +5,7 @@
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
-#include "source_base/element_basis_index.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_ri/Matrix_Orbs11.h"
 #include "source_lcao/module_ri/Matrix_Orbs21.h"
