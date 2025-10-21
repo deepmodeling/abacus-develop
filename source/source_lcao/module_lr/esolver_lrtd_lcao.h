@@ -94,9 +94,7 @@ namespace LR
         Gint_Gamma gint_g_;
         Gint_k gint_k_;
         typename TGint<T>::type* gint_ = nullptr;
-        #ifndef __OLD_GINT
         std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
-        #endif
         void set_gint();
 
         /// @brief variables for parallel distribution of KS orbitals

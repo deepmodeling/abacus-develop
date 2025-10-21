@@ -110,9 +110,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     const Gint_k & get_GK() const { return GK; }
     const Gint_Gamma & get_GG() const { return GG; }
     const Grid_Technique & get_GridT() const { return GridT; }
-  #ifndef __OLD_GINT
     const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
-  #endif
     const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
     const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
     const LCAO_Orbitals & get_orb() const { return orb_; }

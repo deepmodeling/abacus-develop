@@ -4,10 +4,8 @@
 #include "source_io/write_wfc_pw.h"
 #include "source_base/memory.h"
 
-#ifndef __OLD_GINT
 #include "source_lcao/module_gint/temp_gint/gint_env_gamma.h"
 #include "source_lcao/module_gint/temp_gint/gint_env_k.h"
-#endif
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
