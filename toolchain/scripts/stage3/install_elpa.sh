@@ -114,9 +114,11 @@ case "$with_elpa" in
                 fi
             fi
             for TARGET in "cpu" "nvidia"; do
-                [ "$TARGET" = "nvidia" ] && [ "$ENABLE_CUDA" != "__TRUE__" ] && continue
+                # Accept both uppercase and lowercase GPU enable flags for compatibility
+                gpu_enabled="${ENABLE_CUDA:-${enable_cuda}}"
+                [ "$TARGET" = "nvidia" ] && [ "$gpu_enabled" != "__TRUE__" ] && continue
                 # disable cpu if cuda is enabled, only install one
-                [ "$TARGET" != "nvidia" ] && [ "$ENABLE_CUDA" = "__TRUE__" ] && continue
+                [ "$TARGET" != "nvidia" ] && [ "$gpu_enabled" = "__TRUE__" ] && continue
                 # extend the pkg_install_dir by TARGET
                 # this linking method is totally different from cp2k toolchain
                 # for cp2k, ref https://github.com/cp2k/cp2k/commit/6fe2fc105b8cded84256248f68c74139dd8fc2e9
