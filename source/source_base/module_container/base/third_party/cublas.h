@@ -30,6 +30,27 @@ void copy(cublasHandle_t& handle, const int& n, const std::complex<double> *x, c
 }
 
 static inline
+void nrm2(cublasHandle_t& handle, const int& n, const float *x, const int& incx, float* result)
+{
+    cublasErrcheck(cublasSnrm2(handle, n, x, incx, result));
+}
+static inline
+void nrm2(cublasHandle_t& handle, const int& n, const double *x, const int& incx, double* result)
+{
+    cublasErrcheck(cublasDnrm2(handle, n, x, incx, result));
+}
+static inline
+void nrm2(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, float* result)
+{
+    cublasErrcheck(cublasScnrm2(handle, n, reinterpret_cast<const cuComplex*>(x), incx, result));
+}
+static inline
+void nrm2(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, double* result)
+{
+    cublasErrcheck(cublasDznrm2(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, result));
+}
+
+static inline
 void dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy, float* result)
 {
     cublasErrcheck(cublasSdot(handle, n, x, incx, y, incy, result));

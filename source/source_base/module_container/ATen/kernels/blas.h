@@ -19,6 +19,14 @@ struct blas_copy {
         const int incy);
 };
 
+template <typename T, typename Device>
+struct blas_nrm2 {
+    using Real = typename GetTypeReal<T>::type;
+    Real operator()(
+        const int n,
+        const T *x,
+        const int incx);
+};
 
 template <typename T, typename Device>
 struct blas_dot {

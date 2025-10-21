@@ -3,6 +3,7 @@
 namespace container {
 namespace kernels {
 
+
 template <typename T>
 struct blas_copy<T, DEVICE_CPU> {
     void operator()(
@@ -13,6 +14,18 @@ struct blas_copy<T, DEVICE_CPU> {
         const int incy)
     {
         BlasConnector::copy(n, x, incx, y, incy);
+    }
+};
+
+template <typename T>
+struct blas_nrm2<T, DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    Real operator()(
+        const int n,
+        const T *x,
+        const int incx)
+    {
+        return BlasConnector::nrm2(n, x, incx);
     }
 };
 
@@ -193,6 +206,11 @@ template struct blas_copy<float , DEVICE_CPU>;
 template struct blas_copy<double, DEVICE_CPU>;
 template struct blas_copy<std::complex<float >, DEVICE_CPU>;
 template struct blas_copy<std::complex<double>, DEVICE_CPU>;
+
+template struct blas_nrm2<float , DEVICE_CPU>;
+template struct blas_nrm2<double, DEVICE_CPU>;
+template struct blas_nrm2<std::complex<float >, DEVICE_CPU>;
+template struct blas_nrm2<std::complex<double>, DEVICE_CPU>;
 
 template struct blas_dot<float , DEVICE_CPU>;
 template struct blas_dot<double, DEVICE_CPU>;

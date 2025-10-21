@@ -43,6 +43,7 @@ double ddot_(const int *N, const double *x, const int *incx, const double *y, co
 // Peize Lin add ?nrm2 2018-06-12, to compute out = ||x||_2 = \sqrt{ \sum_i x_i**2 }
 float snrm2_( const int *n, const float *x, const int *incx );
 double dnrm2_( const int *n, const double *x, const int *incx );
+double scnrm2_( const int *n, const std::complex<float> *x, const int *incx );
 double dznrm2_( const int *n, const std::complex<double> *x, const int *incx );
 
 // level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
@@ -332,6 +333,11 @@ static inline
 double nrm2( const int n, const double *x, const int incx )
 {
     return dnrm2_( &n, x, &incx );
+}
+static inline
+double nrm2( const int n, const std::complex<float> *x, const int incx )
+{
+    return scnrm2_( &n, x, &incx );
 }
 static inline
 double nrm2( const int n, const std::complex<double> *x, const int incx )

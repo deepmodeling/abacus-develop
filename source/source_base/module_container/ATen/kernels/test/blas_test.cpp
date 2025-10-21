@@ -36,6 +36,22 @@ TYPED_TEST(BlasTest, Copy) {
     EXPECT_EQ(y, expected);
 }
 
+TYPED_TEST(BlasTest, Nrm2) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_nrm2<Type, Device> nrm2Calculator;
+
+    const int n = 3;
+    const Tensor x = std::move(Tensor({static_cast<Type>(3.0), static_cast<Type>(4.0), static_cast<Type>(0.0)}).to_device<Device>());
+
+    Type result = {};
+    nrm2Calculator(n, x.data<Type>(), 1, &result);
+    const Type expected = static_cast<Type>(5.0);
+
+    EXPECT_NEAR(result, expected, static_cast<Type>(1e-6));
+}
+
 TYPED_TEST(BlasTest, Dot) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
