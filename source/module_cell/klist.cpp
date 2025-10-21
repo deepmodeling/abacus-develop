@@ -788,7 +788,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     std::vector<int> ibz2bz(this->nkstot);
 
     // nkstot is the total input k-points number.
-    const double weight = 1.0 / static_cast<double>(nkstot);
+    double weight = 1.0 / static_cast<double>(nkstot);
 
     ModuleBase::Vector3<double> kvec_rot;
     ModuleBase::Vector3<double> kvec_rot_k;
@@ -822,6 +822,8 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     // search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
+        if (!is_mp) { weight = wk[i]; } // use the input weight, instead of 1/nkstot
+
         // restrict to [0, 1)
         restrict_kpt(kvec_d[i]);
 
