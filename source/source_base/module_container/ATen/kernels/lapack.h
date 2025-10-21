@@ -40,7 +40,18 @@ struct lapack_potrf {
         const int& lda);
 };
 
-
+// ============================================================================
+// Standard Hermitian Eigenvalue Problem Solvers
+// ============================================================================
+// The following structures (lapack_heevd and lapack_heevx) implement solvers
+// for standard Hermitian eigenvalue problems of the form:
+//      A * x = lambda * x
+// where:
+//   - A is a Hermitian matrix
+//   - lambda are the eigenvalues to be computed
+//   - x are the corresponding eigenvectors
+//
+// ============================================================================
 template <typename T, typename Device>
 struct lapack_heevd {
     using Real = typename GetTypeReal<T>::type;
@@ -61,18 +72,15 @@ struct lapack_heevx {
      * This function solves the problem A*x = lambda*x, where A is a Hermitian matrix.
      * It computes a subset of eigenvalues and, optionally, the corresponding eigenvectors.
      *
-     * @param jobz  'N': Compute eigenvalues only; 'V': Compute eigenvalues and eigenvectors.
-     * @param range 'A': All eigenvalues; 'V': Eigenvalues in the half-open interval (vl, vu]; 'I': Eigenvalues with indices il through iu.
-     * @param uplo  'U': Upper triangle of A is stored; 'L': Lower triangle is stored.
      * @param dim   The order of the matrix A. dim >= 0.
-     * @param Mat   On entry, the Hermitian matrix A. On exit, it may be overwritten.
-     * @param vl    Lower bound of the interval to search for eigenvalues if range == 'V'.
-     * @param vu    Upper bound of the interval to search for eigenvalues if range == 'V'.
-     * @param il    Index of the smallest eigenvalue to be returned if range == 'I'.
-     * @param iu    Index of the largest eigenvalue to be returned if range == 'I'.
-     * @param m     Output: The total number of found eigenvalues.
-     * @param eigen_val Array to store the computed eigenvalues in ascending order.
-     * @param eigen_vec If not nullptr and jobz == 'V', array to store the computed eigenvectors.
+     * @param lda   The leading dimension of the array Mat. lda >= max(1, dim).
+     * @param Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     * @param neig  The number of eigenvalues to be found. 0 <= neig <= dim.
+     * @param eigen_val On normal exit, the first \p neig elements contain the selected
+     *                  eigenvalues in ascending order.
+     * @param eigen_vec If eigen_vec is not nullptr, then on exit it contains the
+     *                  orthonormal eigenvectors of the matrix A. The eigenvectors are stored in
+     *                  the columns of eigen_vec, in the same order as the eigenvalues.
      *
      * @note
      * See LAPACK ZHEEVX or CHEEVX documentation for more details.
@@ -86,6 +94,21 @@ struct lapack_heevx {
         Real *eigen_val,
         T *eigen_vec);
 };
+
+
+// ============================================================================
+// Generalized Hermitian-definite Eigenvalue Problem Solvers
+// ============================================================================
+// The following structures (lapack_hegvd and lapack_hegvx) implement solvers
+// for generalized Hermitian-definite eigenvalue problems of the form:
+//      A * x = lambda * B * x
+// where:
+//   - A is a Hermitian matrix
+//   - B is a Hermitian positive definite matrix
+//   - lambda are the eigenvalues to be computed
+//   - x are the corresponding eigenvectors
+//
+// ============================================================================
 
 template <typename T, typename Device>
 struct lapack_hegvd {

@@ -3,7 +3,6 @@
 
 #include <base/third_party/lapack.h>
 
-// #include <cstring> // std::memcpy
 #include <algorithm> // std::copy
 #include <complex>
 #include <stdexcept>
@@ -208,10 +207,6 @@ struct lapack_hegvd<T, DEVICE_CPU> {
         // first copy Mat_A to eigen_vec
         // then pass as argument "A" in lapack hegvd
         // and this block of memory will be overwritten by eigenvectors
-        // for (int i = 0; i < dim * lda; ++i){
-        //     eigen_vec[i] = Mat_A[i];
-        // }
-        // std::memcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda);
         // eigen_vec = Mat_A
         std::copy(Mat_A, Mat_A + dim*lda, eigen_vec);
 

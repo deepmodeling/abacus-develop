@@ -92,6 +92,9 @@ TYPED_TEST(LapackTest, Potrf) {
     EXPECT_EQ(A, C);
 }
 
+// Test for lapack_heevd and lapack_heevx:
+// Solve a standard eigenvalue problem
+// and check that A*V = V*E
 TYPED_TEST(LapackTest, heevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
@@ -179,19 +182,19 @@ TYPED_TEST(LapackTest, heevx) {
 
     // Check the eigenvalues and eigenvectors
     // A * x = lambda * x for the first neig eigenvectors
-    // get A*V
+    // check that A * V = V * E
+    // get A * V
     gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), m, V.data<Type>(), k, &beta, expected_C1.data<Type>(), m);
-    // get E*V
+    // get V * E
     for (int ii = 0; ii < neig; ii++) {
         axpyCalculator(dim, Alpha.data<Type>() + ii, V.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
-    }
-    // check that A*V = E*V
-    E = E.to_device<DEVICE_CPU>();
-    V = V.to_device<DEVICE_CPU>();
 
     EXPECT_EQ(expected_C1, expected_C2);
 }
 
+// Test for lapack_hegvd and lapack_hegvx
+// Solve a generalized eigenvalue problem
+// and check that A * v = e * B * v
 TYPED_TEST(LapackTest, hegvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
@@ -288,7 +291,8 @@ TYPED_TEST(LapackTest, hegvx) {
 
     // Check the eigenvalues and eigenvectors
     // A * x = lambda * B * x for the first neig eigenvectors
-    // get A*V
+    // check that A * V = E * B * V
+    // get A * V
     gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), m, V.data<Type>(), k, &beta, expected_C1.data<Type>(), m);
     // get E * B * V
     // where B is 2 * eye(3,3)
@@ -298,10 +302,6 @@ TYPED_TEST(LapackTest, hegvx) {
     for (int ii = 0; ii < neig; ii++) {
         axpyCalculator(dim, Alpha.data<Type>() + ii, C_temp.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
     }
-    // check that A*V = E*V
-    E = E.to_device<DEVICE_CPU>();
-    V = V.to_device<DEVICE_CPU>();
-
 
     EXPECT_EQ(expected_C1, expected_C2);
 }
