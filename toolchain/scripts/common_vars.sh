@@ -14,7 +14,7 @@ ARCH_FILE_TEMPLATE=${ARCH_FILE_TEMPLATE:-"${SCRIPTDIR}/arch_base.tmpl"}
 VERSION_FILE=${VERSION_FILE:-"${SCRIPTDIR}/VERSION"}
 
 # system arch gotten from OpenBLAS prebuild
-OPENBLAS_ARCH=${OPENBLAS_ARCH:-"x86_64"}
+OPENBLAS_ARCH=${OPENBLAS_ARCH:-''}
 OPENBLAS_LIBCORE=${OPENBLAS_LIBCORE:-''}
 
 # search paths
@@ -30,5 +30,11 @@ ENABLE_HIP=${ENABLE_HIP:-"__FALSE__"}
 ENABLE_CRAY=${ENABLE_CRAY:-"__FALSE__"}
 MPI_MODE=${MPI_MODE:-openmpi}
 MATH_MODE=${MATH_MODE:-openblas}
+
+# default for log file dump size
+export LOG_LINES="200"
+
+# download configuration
+DOWNLOAD_CERT_POLICY=${DOWNLOAD_CERT_POLICY:-"smart"}  # strict|smart|skip
 
 export NVCC=${NVCC:-nvcc}
