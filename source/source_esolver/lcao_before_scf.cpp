@@ -41,70 +41,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
       this->gd, ucell, search_radius, PARAM.inp.test_atom_input);
 
     //! 4) initialize NAO basis set 
-#ifdef __OLD_GINT
-    double dr_uniform = 0.001;
-    std::vector<double> rcuts;
-    std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
-
-    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
-
-    //! 5) set periodic boundary conditions
-    this->GridT.set_pbc_grid(this->pw_rho->nx,
-                             this->pw_rho->ny,
-                             this->pw_rho->nz,
-                             this->pw_big->bx,
-                             this->pw_big->by,
-                             this->pw_big->bz,
-                             this->pw_big->nbx,
-                             this->pw_big->nby,
-                             this->pw_big->nbz,
-                             this->pw_big->nbxx,
-                             this->pw_big->nbzp_start,
-                             this->pw_big->nbzp,
-                             this->pw_rho->ny,
-                             this->pw_rho->nplane,
-                             this->pw_rho->startz_current,
-                             ucell,
-                             this->gd,
-                             dr_uniform,
-                             rcuts,
-                             psi_u,
-                             dpsi_u,
-                             d2psi_u,
-                             PARAM.inp.nstream);
-    
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
-
-    //! 6) prepare grid integral
-#else
     // here new is a unique pointer, which will be deleted automatically
     gint_info_.reset(
         new ModuleGint::GintInfo(
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbz,
-        this->pw_rho->nx,
-        this->pw_rho->ny,
-        this->pw_rho->nz,
-        0,
-        0,
-        this->pw_big->nbzp_start,
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbzp,
-        orb_.Phi,
-        ucell,
-        this->gd));
+        this->pw_big->nbx, this->pw_big->nby, this->pw_big->nbz,
+        this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+        0, 0, this->pw_big->nbzp_start,
+        this->pw_big->nbx, this->pw_big->nby, this->pw_big->nbzp,
+        orb_.Phi, ucell, this->gd));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
-#endif
 
     // 7) For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).

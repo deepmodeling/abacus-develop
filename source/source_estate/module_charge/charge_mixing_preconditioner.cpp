@@ -56,7 +56,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
             amin = this->mixing_beta;
         }
 
-        gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
+        gg0 = std::pow(fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
 
         const double gg0_amin = this->mixing_gg0_min / amin;
 
@@ -138,7 +138,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             amin = this->mixing_beta;
         }
         
-        gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
+        gg0 = std::pow(fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
 
         const int is_idx = is * this->rhopw->npw;
         const double gg0_amin = this->mixing_gg0_min / amin;

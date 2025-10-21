@@ -83,7 +83,7 @@ void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&,
+void Charge::init_rho(elecstate::Efermi&,
                       const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
@@ -266,7 +266,7 @@ TEST_F(ElecStateTest, InitSCF)
     Charge* charge = new Charge;
     elecstate->charge = charge;
     elecstate->pot = new elecstate::Potential;
-    elecstate::efermi efermi;
+    elecstate::Efermi efermi;
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;

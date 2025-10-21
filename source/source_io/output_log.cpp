@@ -224,7 +224,7 @@ void print_force(std::ofstream& ofs_running,
     double fac = 1.0;
     if (!ry)
     {
-        fac = ModuleBase::Ry_to_eV / 0.529177;
+        fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
     }
 
     std::vector<std::string> atom_label;

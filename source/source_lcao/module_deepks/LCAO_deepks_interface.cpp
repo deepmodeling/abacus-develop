@@ -305,6 +305,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
             // Calculate the bandgap for each k point
             ModuleBase::matrix o_tot(nks, range);
+            if (nocc + PARAM.inp.deepks_band_range[0] < 0 || nocc + PARAM.inp.deepks_band_range[1] >= ekb.nc)
+            {
+                ModuleBase::WARNING_QUIT("out_deepks_labels", "DeePKS band index out of range! Please check if `deepks_band_range` is reasonable!");
+            }
             for (int iks = 0; iks < nks; ++iks)
             {
                 int ib = 0;

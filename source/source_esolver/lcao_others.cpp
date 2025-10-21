@@ -8,8 +8,6 @@
 #include "source_io/berryphase.h"
 #include "source_io/get_pchg_lcao.h"
 #include "source_io/get_wf_lcao.h"
-#include "source_io/to_wannier90_lcao.h"
-#include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS_R.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
@@ -92,47 +90,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     // (3) Periodic condition search for each grid.
-#ifdef __OLD_GINT
-    double dr_uniform = 0.001;
-    std::vector<double> rcuts;
-    std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
-
-    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
-    this->GridT.set_pbc_grid(this->pw_rho->nx,
-                             this->pw_rho->ny,
-                             this->pw_rho->nz,
-                             this->pw_big->bx,
-                             this->pw_big->by,
-                             this->pw_big->bz,
-                             this->pw_big->nbx,
-                             this->pw_big->nby,
-                             this->pw_big->nbz,
-                             this->pw_big->nbxx,
-                             this->pw_big->nbzp_start,
-                             this->pw_big->nbzp,
-                             this->pw_rho->ny,
-                             this->pw_rho->nplane,
-                             this->pw_rho->startz_current,
-                             ucell,
-                             this->gd,
-                             dr_uniform,
-                             rcuts,
-                             psi_u,
-                             dpsi_u,
-                             d2psi_u,
-                             PARAM.inp.nstream);
-        
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
-    // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
-#else
     gint_info_.reset(
         new ModuleGint::GintInfo(
         this->pw_big->nbx,
@@ -151,7 +108,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         ucell,
         this->gd));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
-#endif
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).

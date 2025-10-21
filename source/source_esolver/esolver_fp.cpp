@@ -13,10 +13,11 @@
 #include "source_io/print_info.h"
 #include "source_io/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/ctrl_output_fp.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
+#include "source_io/ctrl_output_fp.h"
+#include "source_io/write_init.h" // write_chg_init, write_pot_init
 
 namespace ModuleESolver
 {
@@ -145,64 +146,9 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! set direction of magnetism, used in non-collinear case 
     elecstate::cal_ux(ucell);
 
-    //! output the initial charge density
-    const int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.out_chg[0] == 2)
-    {
-        for (int is = 0; is < nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "chg";
-
-			if(nspin==1)
-			{
-				ss << "ini.cube";
-			}
-			else if(nspin==2 || nspin==4)
-			{
-				ss << "s" << is + 1 << "ini.cube";
-			}
-
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->chr.rho[is],
-                                          is,
-                                          nspin,
-                                          istep,
-                                          ss.str(),
-                                          this->pelec->eferm.ef,
-                                          &(ucell));
-        }
-    }
-
-    //! output total local potential of the initial charge density
-    if (PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "pot";
-
-			if(nspin==1)
-			{
-				ss << "ini.cube";
-			}
-			else if(nspin==2 || nspin==4)
-			{
-				ss << "s" << is + 1 << "ini.cube";
-			}
-
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->pot->get_effective_v(is),
-                                          is,
-                                          nspin,
-                                          istep,
-                                          ss.str(),
-                                          0.0, // efermi
-                                          &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
-        }
-    }
+    //! output the initial charge density and potential
+    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep, PARAM.inp);
+//    ModuleIO::write_pot_init(ucell, this->Pgrid, this->pelec, istep, PARAM.inp); 
 
     return;
 }

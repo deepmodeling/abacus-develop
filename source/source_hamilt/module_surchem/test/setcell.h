@@ -50,7 +50,7 @@ class Setcell
         ucell.atoms[1].ncpp.psd = "O";
 
         ucell.lat0 = 1;
-        ucell.lat0_angstrom = ucell.lat0 * 0.529177;
+        ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;
         ucell.tpiba = ModuleBase::TWO_PI / ucell.lat0;
         ucell.tpiba2 = ucell.tpiba * ucell.tpiba;
 
