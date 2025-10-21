@@ -13,7 +13,6 @@
 #include "source_psi/psi.h"
 #include "source_lcao/setup_deepks.h"
 
-
 template <typename T>
 class Force_Stress_LCAO;
 
