@@ -10,24 +10,6 @@
 #include "source_io/write_HS.h"
 #include "source_io/filename.h" // use filename_output function
 
-#ifndef TGINT_H
-#define TGINT_H
-template <typename T>
-struct TGint;
-
-template <>
-struct TGint<double>
-{
-    using type = Gint_Gamma;
-};
-
-template <>
-struct TGint<std::complex<double>>
-{
-    using type = Gint_k;
-};
-#endif
-
 namespace ModuleIO
 {
 
@@ -125,29 +107,6 @@ std::vector<double> orbital_energy(const int ik, const int nbands, const std::ve
     return e;
 }
 
-#ifndef SET_GINT_POINTER_H
-#define SET_GINT_POINTER_H
-// mohan update 2024-04-01
-template <typename T>
-void set_gint_pointer(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<T>::type*& gint);
-
-// mohan update 2024-04-01
-template <>
-void set_gint_pointer<double>(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<double>::type*& gint)
-{
-    gint = &gint_gamma;
-}
-
-// mohan update 2024-04-01
-template <>
-void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
-                                            Gint_k& gint_k,
-                                            typename TGint<std::complex<double>>::type*& gint)
-{
-    gint = &gint_k;
-}
-#endif
-
 inline void write_orb_energy(const K_Vectors& kv,
     const int nspin0, const int nbands,
     const std::vector<std::vector<double>>& e_orb,
@@ -187,8 +146,6 @@ void write_Vxc(const int nspin,
                const ModulePW::PW_Basis& rhod_basis,
                const ModuleBase::matrix& vloc,
                const Charge& chg,
-               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-               Gint_k& gint_k,         // mohan add 2024-04-01
                const K_Vectors& kv,
                const std::vector<double>& orb_cutoff,
                const ModuleBase::matrix& wg,
@@ -227,14 +184,11 @@ void write_Vxc(const int nspin,
 
     // 3. allocate operators and contribute HR
     // op (corresponding to hR)
-    typename TGint<TK>::type* gint = nullptr;
-
-    set_gint_pointer<TK>(gint_gamma, gint_k, gint);
 
     std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> vxcs_op_ao(nspin0);
     for (int is = 0; is < nspin0; ++is)
     {
-        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
+        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(
             &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
 
         vxcs_op_ao[is]->contributeHR();
