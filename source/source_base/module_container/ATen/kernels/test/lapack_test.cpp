@@ -188,6 +188,7 @@ TYPED_TEST(LapackTest, heevx) {
     // get V * E
     for (int ii = 0; ii < neig; ii++) {
         axpyCalculator(dim, Alpha.data<Type>() + ii, V.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
+    }
 
     EXPECT_EQ(expected_C1, expected_C2);
 }
