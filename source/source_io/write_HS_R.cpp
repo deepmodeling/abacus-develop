@@ -126,7 +126,6 @@ void ModuleIO::output_dSR(const int& istep,
 
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
-                          Gint_k& gint_k, // mohan add 2024-04-01
                           const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
@@ -161,8 +160,7 @@ void ModuleIO::output_dHR(const int& istep,
 				orb,
 				cspin,
 				sparse_thr,
-                v_eff,
-				gint_k);
+                v_eff);
 	} 
 	else if (nspin == 2) 
 	{
@@ -176,8 +174,7 @@ void ModuleIO::output_dHR(const int& istep,
                                   orb,
                                   cspin,
                                   sparse_thr,
-                                  v_eff,
-                                  gint_k);
+                                  v_eff);
         }
     }
     // mohan update 2024-04-01
