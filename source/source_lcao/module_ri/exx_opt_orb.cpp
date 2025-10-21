@@ -2,10 +2,10 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "exx_abfs.h"
-#include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_ri/Matrix_Orbs11.h"
 #include "source_lcao/module_ri/Matrix_Orbs21.h"
@@ -53,13 +53,13 @@ void Exx_Opt_Orb::generate_matrix(
 	for(const auto &orb_T : jle)
 		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(orb_T.size())-1 ); }
 
-	const ModuleBase::Element_Basis_Index::Range    range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
+	const ModuleBase::Element_Basis_Index::Range    range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
 
-	const ModuleBase::Element_Basis_Index::Range    range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
+	const ModuleBase::Element_Basis_Index::Range    range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	const ModuleBase::Element_Basis_Index::Range    range_jys = Exx_Abfs::Abfs_Index::construct_range( jle );
+	const ModuleBase::Element_Basis_Index::Range    range_jys = ModuleBase::Element_Basis_Index::construct_range( jle );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_jys = ModuleBase::Element_Basis_Index::construct_index( range_jys );
 
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs, GlobalV::ofs_running);

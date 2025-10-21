@@ -28,8 +28,8 @@ void destroyGpuSolverHandle() {
 template <typename T>
 __global__ void set_matrix_kernel(
     const char uplo,
-    T* A, 
-    const int dim) 
+    T* A,
+    const int dim)
 {
     int bid = blockIdx.x;
     int tid = threadIdx.x;
@@ -64,7 +64,7 @@ struct lapack_trtri<T, DEVICE_GPU> {
         const char& diag,
         const int& dim,
         T* Mat,
-        const int& lda) 
+        const int& lda)
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
@@ -82,8 +82,8 @@ struct lapack_potrf<T, DEVICE_GPU> {
     void operator()(
         const char& uplo,
         const int& dim,
-        T* Mat, 
-        const int& lda) 
+        T* Mat,
+        const int& lda)
     {
         // hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
         std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
@@ -118,15 +118,18 @@ template <typename T>
 struct lapack_hegvd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
+        const int dim,
+        const int lda,
         T* Mat_A,
         T* Mat_B,
-        const int& dim,
-        Real* eigen_val)
+        Real* eigen_val,
+        T *eigen_vec)
     {
-        hipSolverConnector::hegvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        hipErrcheck(hipMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, hipMemcpyDeviceToDevice));
+        hipSolverConnector::hegvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, lda, Mat_B, lda, eigen_val);
     }
 };
 

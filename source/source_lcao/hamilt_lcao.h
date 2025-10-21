@@ -105,9 +105,17 @@ class HamiltLCAO : public Hamilt<TK>
     {
         return this->hR;
     }
+    const HContainer<TR>* getHR() const
+    {
+        return this->hR;
+    }
 
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
     HContainer<TR>*& getSR()
+    {
+        return this->sR;
+    }
+    const HContainer<TR>* getSR() const
     {
         return this->sR;
     }

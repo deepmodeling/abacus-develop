@@ -1,7 +1,6 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -146,7 +145,7 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
 /**
  * @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
  * a complex generalized Hermitian-definite eigenproblem.
- * 
+ *
  * both heevx and syevx are implemented through the `evx` interface of LAPACK.
  * wrapped in LapackWrapper::xheevx
  */
@@ -178,7 +177,6 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         // When lwork = -1, the demension of work will be assumed
         // Assume the denmension of work by output work[0]
         lapackConnector::heevx(
-            1,          // ITYPE = 1:  A*x = (lambda)*B*x
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.
@@ -212,7 +210,6 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
         lapackConnector::heevx(
-            1,          // ITYPE = 1:  A*x = (lambda)*B*x
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.

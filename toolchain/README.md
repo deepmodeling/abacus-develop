@@ -151,21 +151,21 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 ## Supported Toolchains
 
 ### GNU Toolchain
-- **Compilers**: System GCC (≥5.0)
+- **Compilers**: System GCC (≥5.0) or installed GCC
 - **MPI**: OpenMPI or MPICH
 - **Math**: OpenBLAS + ScaLAPACK
 - **Features**: Most stable, widely compatible
 
 ### Intel Toolchain
-- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort)
+- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort) with system/installed GCC (≥5.0) 
 - **MPI**: Intel MPI
 - **Math**: Intel MKL
-- **Features**: Optimized performance, EXX support
+- **Features**: Optimized performance for Intel Machine
 
 ### AMD Toolchain
-- **Compilers**: AMD AOCC or GCC
+- **Compilers**: AMD AOCC or system/installed GCC
 - **Math**: AMD AOCL (Optimized math libraries)
-- **Features**: AMD processor optimization
+- **Features**: AMD processor optimization (e.g., Zen3+)
 
 ## Dependencies
 
@@ -193,7 +193,7 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | LibComm | master | EXX calculations | GPL-3.0 | Install |
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
 | LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
-| NEP | main | Neural network potential | MIT | Optional |
+| NEP | main | Neuroevolution potential | MIT | Optional |
 
 Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html) and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and [AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to system option, but one should install them manually by server administrator.
 

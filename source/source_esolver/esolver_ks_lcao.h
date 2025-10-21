@@ -101,6 +101,24 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     friend class LR::ESolver_LR<double, double>;
     friend class LR::ESolver_LR<std::complex<double>, double>;
+
+
+  public:
+    const Record_adj & get_RA() const { return RA; }
+    const Grid_Driver & get_gd() const { return gd; }
+    const Parallel_Orbitals & get_pv() const { return pv; }
+    const Gint_k & get_GK() const { return GK; }
+    const Gint_Gamma & get_GG() const { return GG; }
+    const Grid_Technique & get_GridT() const { return GridT; }
+  #ifndef __OLD_GINT
+    const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
+  #endif
+    const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
+    const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
+    const LCAO_Orbitals & get_orb() const { return orb_; }
+    const ModuleBase::matrix & get_scs() const { return scs; }
+    const Setup_DeePKS<TK> & get_deepks() const { return deepks; }
+    const Exx_NAO<TK> & get_exx_nao() const { return exx_nao; }
 };
 } // namespace ModuleESolver
 #endif

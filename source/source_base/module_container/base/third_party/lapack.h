@@ -3,9 +3,9 @@
  * @brief This is a direct wrapper of some LAPACK routines.
  * \b Column-Major version.
  * Direct wrapping of standard LAPACK routines. (Column-Major, fortran style)
- * 
+ *
  * @warning For Row-major version, please refer to \c source/source_base/module_external/lapack_connector.h.
- * 
+ *
  * @note
  * Some slight modification are made to fit the C++ style for overloading purpose.
  * You can find some function with different parameter list than the original LAPACK routine.
@@ -294,7 +294,7 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
 
 // wrap function of fortran lapack routine zheevx.
 static inline
-void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              float* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, float* z, const int ldz,
@@ -307,11 +307,11 @@ void heevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-             double* a, const int lda,
-             const double vl, const double vu, const int il, const int iu, const double abstol,
-             const int m, double* w, double* z, const int ldz,
-             double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+void heevx(const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
 {
     dsyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
@@ -319,7 +319,7 @@ void heevx( const int itype, const char jobz, const char range, const char uplo,
             work, &lwork, rwork, iwork, ifail, &info);
 }
 static inline
-void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<float>* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, std::complex<float>* z, const int ldz,
@@ -332,7 +332,7 @@ void heevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<double>* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              const int m, double* w, std::complex<double>* z, const int ldz,
@@ -399,17 +399,17 @@ static inline
 void potrf( const char &uplo, const int &n, float* A, const int &lda, int &info )
 {
 	spotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, double* A, const int &lda, int &info )
 {
 	dpotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, std::complex<float>* A, const int &lda, int &info )
 {
 	cpotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, std::complex<double>* A, const int &lda, int &info )
 {

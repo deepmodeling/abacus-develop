@@ -121,6 +121,29 @@ static inline cusolverEigType_t cublas_eig_type(const int& itype)
         throw std::runtime_error("cublas_eig_mode: unknown diag");
 }
 
+/**
+ * @brief Converts a character specifying eigenvalue range to cuSOLVER enum.
+ *
+ *        'A' or 'a' -> CUSOLVER_EIG_RANGE_ALL: all eigenvalues
+ *        'V' or 'v' -> CUSOLVER_EIG_RANGE_V:  values in [vl, vu]
+ *        'I' or 'i' -> CUSOLVER_EIG_RANGE_I:  indices in [il, iu]
+ *
+ * @param range Character indicating selection mode ('A', 'V', 'I')
+ * @return Corresponding cusolverEigRange_t enum value
+ * @throws std::runtime_error if character is invalid
+ */
+static inline cusolverEigRange_t cublas_eig_range(const char& range)
+{
+    if (range == 'A' || range == 'a')
+        return CUSOLVER_EIG_RANGE_ALL;
+    else if (range == 'V' || range == 'v')
+        return CUSOLVER_EIG_RANGE_V;
+    else if (range == 'I' || range == 'i')
+        return CUSOLVER_EIG_RANGE_I;
+    else
+        throw std::runtime_error("cublas_eig_range: unknown range '" + std::string(1, range) + "'");
+}
+
 // cuSOLVER API errors
 static const char* cusolverGetErrorEnum(cusolverStatus_t error)
 {

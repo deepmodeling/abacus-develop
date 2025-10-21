@@ -5,6 +5,8 @@
 #include "source_base/module_device/device.h"   // base_device
 #include "source_base/module_device/memory_op.h"// base_device::memory"
 
+#include "source_base/module_container/ATen/kernels/lapack.h"
+
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diag_const_nums.h"
 
@@ -188,6 +190,10 @@ class Diago_DavSubspace
     using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+
+    // Note that ct_Device is different from base_device!
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    // using hegvd_op = container::kernels::lapack_hegvd<T, ct_Device>;
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
