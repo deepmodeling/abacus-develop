@@ -40,13 +40,17 @@ void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
 method. */
-    if (ucell.atoms[0].ncpp.xc_func == "HF"
-        || ucell.atoms[0].ncpp.xc_func == "PBE0"
-        || ucell.atoms[0].ncpp.xc_func == "HSE") {
+    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "HSE" 
+        || ucell.atoms[0].ncpp.xc_func == "PBE0"|| ucell.atoms[0].ncpp.xc_func == "LC_PBE" 
+        || ucell.atoms[0].ncpp.xc_func == "LC_WPBE" || ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" 
+        || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH") {
         XC_Functional::set_xc_type("pbe");
     }
     else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
         XC_Functional::set_xc_type("scan");
+    }
+    else if (ucell.atoms[0].ncpp.xc_func == "B3LYP") {
+        XC_Functional::set_xc_type("blyp");
     }
 }
 
@@ -65,8 +69,8 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     scaling_factor_xc.clear(); // added by jghan, 2024-07-07
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
-	if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
-	{
+    if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
+    {
         func_id.push_back(XC_LDA_X);
         func_id.push_back(XC_LDA_C_PZ);
         func_type = 1;
@@ -84,7 +88,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
             }
         }
 #endif
-	}
+    }
     else if (xc_func == "PWLDA")
     {
         func_id.push_back(XC_LDA_X);
@@ -96,8 +100,8 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 }
 #endif
     }
-	else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
-	{
+    else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
+    {
         func_id.push_back(XC_GGA_X_PBE);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
@@ -106,17 +110,17 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,11);
 }
 #endif
-	}
-	else if ( xc_func == "PBESOL") //PBX_S+PBC_S
-	{
+    }
+    else if ( xc_func == "PBESOL") //PBX_S+PBC_S
+    {
         func_id.push_back(XC_GGA_X_PBE_SOL);
         func_id.push_back(XC_GGA_C_PBE_SOL);
         func_type = 2;
         use_libxc = false;
-	}
-	else if( xc_func == "REVPBE" ) //PBX_r+PBC
-	{
-		func_id.push_back(XC_GGA_X_PBE_R);
+    }
+    else if( xc_func == "REVPBE" ) //PBX_r+PBC
+    {
+        func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
@@ -124,76 +128,106 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,14);
 }
 #endif
-	}
-	else if ( xc_func == "WC") //WC+PBC
-	{
+    }
+    else if ( xc_func == "WC") //WC+PBC
+    {
         func_id.push_back(XC_GGA_X_WC);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "BLYP") //B88+LYP
-	{
+    }
+    else if ( xc_func == "BLYP") //B88+LYP
+    {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_LYP);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "BP") //B88+P86
-	{
+    }
+    else if ( xc_func == "BP") //B88+P86
+    {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_P86);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "PW91") //PW91_X+PW91_C
-	{
+    }
+    else if ( xc_func == "PW91") //PW91_X+PW91_C
+    {
         func_id.push_back(XC_GGA_X_PW91);
         func_id.push_back(XC_GGA_C_PW91);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
-	{
+    }
+    else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
+    {
         func_id.push_back(XC_GGA_X_HCTH_A);
         func_id.push_back(XC_GGA_C_HCTH_A);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "OLYP") //OPTX+LYP
-	{
+    }
+    else if ( xc_func == "OLYP") //OPTX+LYP
+    {
         func_id.push_back(XC_GGA_X_OPTX);
         func_id.push_back(XC_GGA_C_LYP);
         func_type = 2;
         use_libxc = false;
-	}
+    }
 #ifdef USE_LIBXC
-	else if ( xc_func == "SCAN")
-	{
+    else if ( xc_func == "SCAN")
+    {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 3;
         use_libxc = true;
-	}
+    }
     else if ( xc_func == "SCAN0")
-	{
+    {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 5;
         use_libxc = true;
-	}
+    }
+    else if( xc_func == "LC_PBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LC_WPBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LC_WPBE);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LRC_WPBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LRC_WPBE);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LRC_WPBEH")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LRC_WPBEH);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "CAM_PBEH")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_CAM_PBEH);
+        func_type = 4;
+        use_libxc = true;
+    }
 #endif
     else if( xc_func == "HF")
     {
         func_type = 4;
         use_libxc = false;
     }
-   	else if( xc_func == "PBE0")
-	{
+    else if( xc_func == "PBE0")
+    {
         func_id.push_back(XC_HYB_GGA_XC_PBEH);
         func_type = 4;
         use_libxc = false;
-	}
+    }
     else if( xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
     {
         // not doing anything
@@ -252,6 +286,12 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = true;
     }
+    else if (xc_func == "B3LYP")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_B3LYP);
+        func_type = 4;
+        use_libxc = true;
+    }
 #endif
     else
     {
@@ -270,10 +310,10 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
     }
 
-	if (func_id[0] == XC_GGA_X_OPTX)
-	{
-		std::cerr << "\n OPTX untested please test,";
-	}
+    if (func_id[0] == XC_GGA_X_OPTX)
+    {
+        std::cerr << "\n OPTX untested please test,";
+    }
 
     if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
     {
@@ -297,9 +337,11 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
-        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22")
+        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
+        xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
+        xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, or HSE, LIBXC is required");
+        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...) or CAM_PBEH LIBXC is required");
     }
     use_libxc = false;
 #endif
