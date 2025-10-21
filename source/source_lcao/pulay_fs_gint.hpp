@@ -18,7 +18,6 @@ namespace PulayForceStress
         const bool& set_dmr_gint)
     {
         const int nspin = PARAM.inp.nspin;
-
         std::vector<const double*> vr_eff(nspin, nullptr);
         std::vector<const double*> vofk_eff(nspin, nullptr);
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
