@@ -102,8 +102,7 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
 }
 
 // For multi-k
-void Get_pchg_lcao::begin(Gint_k& gk,
-                          double** rho,
+void Get_pchg_lcao::begin(double** rho,
                           std::complex<double>** rhog,
                           const ModuleBase::matrix& wg,
                           const std::vector<double>& ef_all_spin,
