@@ -12,6 +12,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 #include <map>
 #include <set>
