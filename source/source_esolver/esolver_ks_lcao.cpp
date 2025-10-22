@@ -56,7 +56,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     {
         // TK stands for double and std::complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), &(this->kv),
-          this->kv.get_nks(), &(this->GG), &(this->GK), this->pw_rho, this->pw_big);
+          this->kv.get_nks(), this->pw_rho, this->pw_big);
     }
 
     // 3) read LCAO orbitals/projectors and construct the interpolation tables.
@@ -134,7 +134,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 16) init rdmft, added by jghan
     if (inp.rdmft == true)
     {
-        rdmft_solver.init(this->GG, this->GK, this->pv, ucell,
+        rdmft_solver.init(this->pv, ucell,
           this->gd, this->kv, *(this->pelec), this->orb_,
           two_center_bundle_, inp.dft_functional, inp.rdmft_power_alpha);
     }
@@ -196,8 +196,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         elecstate::DensityMatrix<TK, double>* DM = estate->get_DM();
 
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
             two_center_bundle_, orb_, DM, this->deepks, istep, exx_nao);
     }
@@ -357,7 +355,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
 		  PARAM.inp, this->kv, estate, this->pv, this->Pgrid, 
 		  this->gd, this->psi, this->chr, hamilt_lcao,
-          this->two_center_bundle_, this->GG, this->GK,
+          this->two_center_bundle_,
           this->orb_, this->pw_rho, this->pw_rhod,
           this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
 
@@ -618,9 +616,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
             PARAM.inp, this->kv, estate, this->pv,
             this->gd, this->psi, hamilt_lcao,
-            this->two_center_bundle_, this->GK,
+            this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho,
-            this->GridT, this->pw_big, this->sf,
+            this->pw_big, this->sf,
             this->rdmft_solver, this->deepks, this->exx_nao, 
             this->conv_esolver, this->scf_nmax_flag,
             istep);

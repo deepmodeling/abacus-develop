@@ -41,11 +41,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 		psi::Psi<TK>* psi,
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
@@ -219,7 +217,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 			istep,
 			pelec->pot->get_effective_v(),
 			pv,
-			gk,
 			two_center_bundle,
 			orb,
 			ucell,
@@ -329,7 +326,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&pv);
-        bp.lcao_init(ucell, gd, kv, gt, orb);
+        bp.lcao_init(ucell, gd, kv, orb);
         // additional step before calling macroscopic_polarization
         bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
@@ -471,11 +468,9 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
 		psi::Psi<double>* psi,
 		hamilt::HamiltLCAO<double, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
@@ -496,11 +491,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
@@ -520,11 +513,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT

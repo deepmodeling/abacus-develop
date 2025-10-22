@@ -9,7 +9,6 @@
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
-#include "source_lcao/module_gint/gint_k.h" // use Gint_k
 #include "source_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "source_pw/module_pwdft/structure_factor.h" // use Structure_Factor 
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
@@ -30,11 +29,9 @@ namespace ModuleIO
 				psi::Psi<TK>* psi,
 				hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 				TwoCenterBundle &two_center_bundle,
-				Gint_k &gk,
 				LCAO_Orbitals &orb,
 				const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 				const ModulePW::PW_Basis* pw_rho, // for berryphase
-				Grid_Technique &gt, // for berryphase
 				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 				const Structure_Factor& sf, // for Wannier90
 				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT

@@ -71,9 +71,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 }
 
 template <typename TK, typename TR>
-HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
-                               Gint_k* GK_in,
-                               const UnitCell& ucell,
+HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
                                elecstate::Potential* pot_in,
@@ -181,8 +179,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // effective potential term
-                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(GG_in,
-                                                                    this->hsk,
+                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     pot_in,
                                                                     this->hR, // no explicit call yet
@@ -251,8 +248,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // Veff term
-                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(GK_in,
-                                                                     this->hsk,
+                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                      this->kv->kvec_d,
                                                                      pot_in,
                                                                      this->hR,

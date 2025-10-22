@@ -30,7 +30,6 @@
 
 #ifdef __LCAO
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_psi/psi_initializer.h"
 
 class toWannier90_LCAO_IN_PW : public toWannier90_PW

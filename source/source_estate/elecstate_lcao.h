@@ -3,8 +3,6 @@
 
 #include "elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 
 #include <vector>
 
@@ -20,14 +18,10 @@ class ElecStateLCAO : public ElecState
     ElecStateLCAO(Charge* chg_in,
                   const K_Vectors* klist_in,
                   int nks_in,
-                  Gint_Gamma* gint_gamma_in, // mohan add 2024-04-01
-                  Gint_k* gint_k_in,         // mohan add 2024-04-01
                   ModulePW::PW_Basis* rhopw_in,
                   ModulePW::PW_Basis_Big* bigpw_in)
     {
         init_ks(chg_in, klist_in, nks_in, rhopw_in, bigpw_in);
-        this->gint_gamma = gint_gamma_in; // mohan add 2024-04-01
-        this->gint_k = gint_k_in;         // mohan add 2024-04-01
         this->classname = "ElecStateLCAO";
     }
 
@@ -85,8 +79,6 @@ class ElecStateLCAO : public ElecState
     // calcualte rho for each k
     // void rhoBandK(const psi::Psi<std::complex<double>>& psi);
 
-    Gint_Gamma* gint_gamma = nullptr; // mohan add 2024-04-01
-    Gint_k* gint_k = nullptr;         // mohan add 2024-04-01
 };
 
 template <typename TK>

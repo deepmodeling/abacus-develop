@@ -53,8 +53,6 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
                                                                          &(this->kv),
                                                                          this->kv.get_nks(),
-                                                                         nullptr, // mohan add 2024-04-01
-                                                                         nullptr, // mohan add 2024-04-01
                                                                          this->pw_rho,
                                                                          this->pw_big);
     }

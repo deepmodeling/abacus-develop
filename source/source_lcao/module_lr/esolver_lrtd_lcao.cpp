@@ -1,5 +1,4 @@
 #include "esolver_lrtd_lcao.h"
-#include "utils/gint_move.hpp"
 #include "utils/lr_util.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
@@ -44,8 +43,6 @@ void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<d
     throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
-template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }
-template<>void LR::ESolver_LR<std::complex<double>>::set_gint() { this->gint_ = &this->gint_k_; this->gint_k_.gridt = &this->gt_; }
 
 inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 {   // only for nspin=2
@@ -241,23 +238,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
         reset_dim_spin2();
     }
-#ifdef __OLD_GINT
-    //grid integration
-    this->gt_ = std::move(ks_sol.GridT);
-
-	if (std::is_same<T, double>::value) 
-	{ 
-		this->gint_g_ = std::move(ks_sol.GG); 
-	}
-	else 
-	{ 
-		this->gint_k_ = std::move(ks_sol.GK); 
-	}
-    this->set_gint();
-    this->gint_->reset_DMRGint(1);
-#else
     this->gint_info_ = std::move(ks_sol.gint_info_);
-#endif
     // move pw basis
     if (this->pw_rho_flag)
     {
@@ -395,66 +376,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
                          this->ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
-#ifdef __OLD_GINT
-    this->set_gint();
-    this->gint_->gridt = &this->gt_;
-
-    // (3) Periodic condition search for each grid.
-    double dr_uniform = 0.001;
-    std::vector<double> rcuts;
-    std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
-
-    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb, psi_u, dpsi_u, d2psi_u);
-    this->gt_.set_pbc_grid(this->pw_rho->nx,
-                           this->pw_rho->ny,
-                           this->pw_rho->nz,
-                           this->pw_big->bx,
-                           this->pw_big->by,
-                           this->pw_big->bz,
-                           this->pw_big->nbx,
-                           this->pw_big->nby,
-                           this->pw_big->nbz,
-                           this->pw_big->nbxx,
-                           this->pw_big->nbzp_start,
-                           this->pw_big->nbzp,
-                           this->pw_rho->ny,
-                           this->pw_rho->nplane,
-                           this->pw_rho->startz_current,
-                           ucell,
-                           this->gd,
-                           dr_uniform,
-                           rcuts,
-                           psi_u,
-                           dpsi_u,
-                           d2psi_u,
-                           PARAM.inp.nstream);
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
-
-    this->gint_->prep_grid(this->gt_,
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbzp,
-        this->pw_big->nbzp_start,
-        this->pw_rho->nxyz,
-        this->pw_big->bx,
-        this->pw_big->by,
-        this->pw_big->bz,
-        this->pw_big->bxyz,
-        this->pw_big->nbxx,
-        this->pw_rho->ny,
-        this->pw_rho->nplane,
-        this->pw_rho->startz_current,
-        &ucell,
-        &orb);
-    this->gint_->initialize_pvpR(ucell, &this->gd, 1); // always use nspin=1 for transition density
-#else
     gint_info_.reset(
         new ModuleGint::GintInfo(
         this->pw_big->nbx,
@@ -473,7 +394,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         ucell,
         this->gd));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
-#endif
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")
@@ -533,7 +453,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                               this->exx_lri,
                               this->exx_info.info_global.hybrid_alpha,
 #endif
-                              this->gint_,
                               this->pot,
                               this->kv,
                               this->paraX_,
@@ -564,7 +483,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                                 this->exx_lri,
                                 this->exx_info.info_global.hybrid_alpha,
 #endif
-                                this->gint_,
                                 this->pot[is],
                                 this->kv,
                                 this->paraX_,
@@ -621,7 +539,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
     auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) : std::vector<std::string>({ "updown" });
     for (int is = 0;is < this->X.size();++is)
     {
-        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, this->gint_, *this->pw_rho, *this->psi_ks,
+        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
             this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,

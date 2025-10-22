@@ -62,7 +62,6 @@ VPATH=./src_global:\
 ./source_lcao/module_deltaspin:\
 ./source_lcao/module_operator_lcao:\
 ./source_lcao/module_gint:\
-./source_lcao/module_gint/temp_gint:\
 ./source_relax:\
 ./source_hamilt/module_vdw:\
 ./source_io:\
@@ -282,32 +281,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_dm2rho.o\
       esolver_double_xc.o\
 
-OBJS_GINT=gint_old.o\
-      gint_gamma_env.o\
-      gint_gamma_vl.o\
-      gint_fvl_old.o\
-      gint_rho_old.o\
-      gint_tau_old.o\
-      gint_vl_old.o\
-      gint_k_env.o\
-      gint_k_sparse1.o\
-      gint_k_pvpr.o\
-      gint_k_pvdpr.o\
-      gint_tools.o\
-      grid_bigcell.o\
-      grid_meshball.o\
-      grid_meshcell.o\
-      grid_meshk.o\
-      grid_technique.o\
-      gint_force_cpu_interface.o\
-      gint_rho_cpu_interface.o\
-      gint_vl_cpu_interface.o\
-      cal_psir_ylm.o\
-      cal_dpsir_ylm.o\
-      cal_ddpsir_ylm.o\
-      mult_psi_dmr.o\
-      init_orb.o\
-      batch_biggrid.o\
+OBJS_GINT=batch_biggrid.o\
       big_grid.o\
       biggrid_info.o\
       divide_info.o\
@@ -655,7 +629,6 @@ OBJS_LCAO=evolve_elec.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
-	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
       spar_hsr.o\
