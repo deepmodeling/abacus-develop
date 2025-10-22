@@ -153,16 +153,10 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->two_center_bundle_,
             this->orb_,
             DM,
-            this->deepks
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
-#endif
-        );
-    }
+			this->deepks,
+			istep,
+			this->exx_nao);
+	}
 
     XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
     this->pelec_base->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);

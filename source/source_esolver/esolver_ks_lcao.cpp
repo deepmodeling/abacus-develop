@@ -3,7 +3,6 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_io/read_wfc_nao.h"
 #include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
-#include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
@@ -200,15 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
             PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, DM, this->deepks
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
-#endif
-        );
+            two_center_bundle_, orb_, DM, this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -319,10 +310,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
 }
 
-//------------------------------------------------------------------------------
-//! the 7th function of ESolver_KS_LCAO: cal_stress
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
@@ -407,7 +394,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= GlobalC::exx_info.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
+				= GlobalC::exx_info.info_ri.real_number ? 
+                  this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
 		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
@@ -646,7 +634,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 }
-
 
 template class ESolver_KS_LCAO<double, double>;
 template class ESolver_KS_LCAO<std::complex<double>, double>;
