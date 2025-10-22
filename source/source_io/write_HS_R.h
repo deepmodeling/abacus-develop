@@ -6,6 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/global.h"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 
 namespace ModuleIO
 {
