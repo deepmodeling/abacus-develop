@@ -250,8 +250,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            get_pchg.begin(this->GK,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->chr.rhog,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
