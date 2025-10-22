@@ -198,8 +198,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         elecstate::DensityMatrix<TK, double>* DM = estate->get_DM();
 
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
             two_center_bundle_, orb_, DM, this->deepks
 #ifdef __EXX
@@ -639,9 +637,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
             PARAM.inp, this->kv, estate, this->pv,
             this->gd, this->psi, hamilt_lcao,
-            this->two_center_bundle_, this->GK,
+            this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho,
-            this->GridT, this->pw_big, this->sf,
+            this->pw_big, this->sf,
             this->rdmft_solver, this->deepks, this->exx_nao, 
             this->conv_esolver, this->scf_nmax_flag,
             istep);
