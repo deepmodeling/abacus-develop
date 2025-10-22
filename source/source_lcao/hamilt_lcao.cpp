@@ -416,13 +416,13 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 
 		if(GlobalC::exx_info.info_ri.real_number)
 		{
-            exx_two_level_step = exx_nao.exd->two_level_step;
-			Hexxd = exx_nao.exd->get_Hexxs();
+            exx_two_level_step = &exx_nao.exd->two_level_step;
+			Hexxd = &exx_nao.exd->get_Hexxs();
 		}
 		else
 		{
-            exx_two_level_step = exx_nao.exc->two_level_step;
-			Hexxc = exx_nao.exc->get_Hexxs();
+            exx_two_level_step = &exx_nao.exc->two_level_step;
+			Hexxc = &exx_nao.exc->get_Hexxs();
 		}
 
         // Peize Lin add 2016-12-03
