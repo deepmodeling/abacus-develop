@@ -28,7 +28,7 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "openblas" "$version_suffix"
-openblas_pkg="openblas-${openblas_ver}.tar.gz"
+openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
 
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
