@@ -51,8 +51,6 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
         this->pelec_base = new elecstate::ElecStateLCAO<TK>(&(this->chr_base), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       &(this->GG),
-                                                       &(this->GK),
                                                        this->pw_rho,
                                                        this->pw_big);
     }    
@@ -145,8 +143,6 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)->get_DM();
 
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
             this->gd,
             &this->pv,
