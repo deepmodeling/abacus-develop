@@ -64,7 +64,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
       inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax, ucell, two_center_bundle_, orb_);
 
     // 4) setup EXX calculations
-    if (PARAM.inp.calculation == "gen_opt_abfs")
+    if (inp.calculation == "gen_opt_abfs")
     {
 #ifdef __EXX
         Exx_Opt_Orb exx_opt_orb;
@@ -76,14 +76,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 5) init electronic wave function psi
-    Setup_Psi<TK>::allocate_psi(this->psi, this->kv, this->pv, PARAM.inp);
+    Setup_Psi<TK>::allocate_psi(this->psi, this->kv, this->pv, inp);
 
     //! read psi from file
     if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
     {
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
              this->pv, *this->psi, this->pelec->ekb, this->pelec->wg, this->kv.ik2iktot,
-             this->kv.get_nkstot(), PARAM.inp.nspin))
+             this->kv.get_nkstot(), inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
         }
@@ -94,7 +94,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
 
     // 8) init exact exchange calculations
-    this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, PARAM.inp);
+    this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, inp);
 
     // 9) initialize DFT+U
     if (inp.dft_plus_u)
@@ -120,7 +120,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 13) init deepks
-    this->deepks.before_runner(ucell, this->kv.get_nks(), this->orb_, this->pv, PARAM.inp);
+    this->deepks.before_runner(ucell, this->kv.get_nks(), this->orb_, this->pv, inp);
 
     // 14) set occupations, tddft does not need to set occupations in the first scf
     if (inp.ocp && inp.esolver_type != "tddft")
