@@ -1,5 +1,4 @@
 #include "esolver_lrtd_lcao.h"
-#include "utils/gint_move.hpp"
 #include "utils/lr_util.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
@@ -44,8 +43,6 @@ void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<d
     throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
-template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }
-template<>void LR::ESolver_LR<std::complex<double>>::set_gint() { this->gint_ = &this->gint_k_; this->gint_k_.gridt = &this->gt_; }
 
 inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 {   // only for nspin=2
@@ -456,7 +453,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                               this->exx_lri,
                               this->exx_info.info_global.hybrid_alpha,
 #endif
-                              this->gint_,
                               this->pot,
                               this->kv,
                               this->paraX_,
@@ -487,7 +483,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                                 this->exx_lri,
                                 this->exx_info.info_global.hybrid_alpha,
 #endif
-                                this->gint_,
                                 this->pot[is],
                                 this->kv,
                                 this->paraX_,
@@ -544,7 +539,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
     auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) : std::vector<std::string>({ "updown" });
     for (int is = 0;is < this->X.size();++is)
     {
-        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, this->gint_, *this->pw_rho, *this->psi_ks,
+        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
             this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,
