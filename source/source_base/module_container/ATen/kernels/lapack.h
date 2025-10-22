@@ -20,6 +20,7 @@ struct set_matrix {
 };
 
 
+// --- 1. Matrix Decomposition ---
 template <typename T, typename Device>
 struct lapack_trtri {
     void operator()(
@@ -39,6 +40,47 @@ struct lapack_potrf {
         T* Mat,
         const int& lda);
 };
+
+template <typename T, typename Device>
+struct lapack_getrf {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* Mat,
+        const int& lda,
+        int* ipiv);
+};
+
+
+template <typename T, typename Device>
+struct lapack_getri {
+    void operator()(
+        const int& n,
+        T* Mat,
+        const int& lda,
+        const int* ipiv,
+        T* work,
+        const int& lwork);
+};
+
+
+// --- 2. Linear System Solvers ---
+template <typename T, typename Device>
+struct lapack_getrs {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb);
+};
+
+
+
+// --- 3. Standard & Generalized Eigenvalue ---
 
 // ============================================================================
 // Standard Hermitian Eigenvalue Problem Solvers
@@ -173,41 +215,6 @@ struct lapack_hegvx {
         T *eigen_vec);
 };
 
-
-template <typename T, typename Device>
-struct lapack_getrf {
-    void operator()(
-        const int& m,
-        const int& n,
-        T* Mat,
-        const int& lda,
-        int* ipiv);
-};
-
-
-template <typename T, typename Device>
-struct lapack_getri {
-    void operator()(
-        const int& n,
-        T* Mat,
-        const int& lda,
-        const int* ipiv,
-        T* work,
-        const int& lwork);
-};
-
-template <typename T, typename Device>
-struct lapack_getrs {
-    void operator()(
-        const char& trans,
-        const int& n,
-        const int& nrhs,
-        T* A,
-        const int& lda,
-        const int* ipiv,
-        T* B,
-        const int& ldb);
-};
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles

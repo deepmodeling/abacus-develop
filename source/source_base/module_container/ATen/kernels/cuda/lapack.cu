@@ -62,6 +62,9 @@ struct set_matrix<T, DEVICE_GPU> {
     }
 };
 
+
+
+// --- 1. Matrix Decomposition ---
 template <typename T>
 struct lapack_trtri<T, DEVICE_GPU> {
     void operator()(
@@ -90,6 +93,53 @@ struct lapack_potrf<T, DEVICE_GPU> {
     }
 };
 
+template <typename T>
+struct lapack_getrf<T, DEVICE_GPU> {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* Mat,
+        const int& lda,
+        int* ipiv)
+    {
+        cuSolverConnector::getrf(cusolver_handle, m, n, Mat, lda, ipiv);
+    }
+};
+
+template <typename T>
+struct lapack_getri<T, DEVICE_GPU> {
+    void operator()(
+        const int& n,
+        T* Mat,
+        const int& lda,
+        const int* ipiv,
+        T* work,
+        const int& lwork)
+    {
+        throw std::runtime_error("cuSOLVER does not provide LU-based matrix inversion interface (getri). To compute the inverse on GPU, use getrs instead.");
+    }
+};
+
+
+// --- 2. Linear System Solvers ---
+template <typename T>
+struct lapack_getrs<T, DEVICE_GPU> {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb)
+    {
+        cuSolverConnector::getrs(cusolver_handle, trans, n, nrhs, A, lda, ipiv, B, ldb);
+    }
+};
+
+
+// --- 3. Standard & Generalized Eigenvalue ---
 template <typename T>
 struct lapack_heevd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
@@ -198,49 +248,6 @@ struct lapack_hegvx<T, DEVICE_GPU> {
 
 
 
-template <typename T>
-struct lapack_getrf<T, DEVICE_GPU> {
-    void operator()(
-        const int& m,
-        const int& n,
-        T* Mat,
-        const int& lda,
-        int* ipiv)
-    {
-        cuSolverConnector::getrf(cusolver_handle, m, n, Mat, lda, ipiv);
-    }
-};
-
-template <typename T>
-struct lapack_getri<T, DEVICE_GPU> {
-    void operator()(
-        const int& n,
-        T* Mat,
-        const int& lda,
-        const int* ipiv,
-        T* work,
-        const int& lwork)
-    {
-        throw std::runtime_error("cuSOLVER does not provide LU-based matrix inversion interface (getri). To compute the inverse on GPU, use getrs instead.");
-    }
-};
-
-template <typename T>
-struct lapack_getrs<T, DEVICE_GPU> {
-    void operator()(
-        const char& trans,
-        const int& n,
-        const int& nrhs,
-        T* A,
-        const int& lda,
-        const int* ipiv,
-        T* B,
-        const int& ldb)
-    {
-        cuSolverConnector::getrs(cusolver_handle, trans, n, nrhs, A, lda, ipiv, B, ldb);
-    }
-};
-
 template struct set_matrix<float,  DEVICE_GPU>;
 template struct set_matrix<double, DEVICE_GPU>;
 template struct set_matrix<std::complex<float>,  DEVICE_GPU>;
@@ -255,6 +262,13 @@ template struct lapack_potrf<float,  DEVICE_GPU>;
 template struct lapack_potrf<double, DEVICE_GPU>;
 template struct lapack_potrf<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_potrf<std::complex<double>, DEVICE_GPU>;
+
+
+template struct lapack_getrs<float,  DEVICE_GPU>;
+template struct lapack_getrs<double, DEVICE_GPU>;
+template struct lapack_getrs<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_getrs<std::complex<double>, DEVICE_GPU>;
+
 
 template struct lapack_heevd<float,  DEVICE_GPU>;
 template struct lapack_heevd<double, DEVICE_GPU>;
@@ -286,10 +300,7 @@ template struct lapack_getri<double, DEVICE_GPU>;
 template struct lapack_getri<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_getri<std::complex<double>, DEVICE_GPU>;
 
-template struct lapack_getrs<float,  DEVICE_GPU>;
-template struct lapack_getrs<double, DEVICE_GPU>;
-template struct lapack_getrs<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_getrs<std::complex<double>, DEVICE_GPU>;
+
 
 } // namespace kernels
 } // namespace container
