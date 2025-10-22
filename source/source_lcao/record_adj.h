@@ -2,6 +2,8 @@
 #define RECORD_ADJ_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/unitcell.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 //---------------------------------------------------
 // FUNCTION: record the adjacent atoms for each atom

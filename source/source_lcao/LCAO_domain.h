@@ -9,6 +9,7 @@
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/force_stress_arrays.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 namespace LCAO_domain
 {
