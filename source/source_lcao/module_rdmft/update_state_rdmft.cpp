@@ -132,12 +132,6 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
 
         if (XC_Functional::get_ked_flag())
         {
-            // for (int is = 0; is < nspin; is++)
-            // {
-            //     ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
-            // }
-            // Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau);
-            // GK->cal_gint(&inout1);
             this->pelec->cal_tau(wfc);
         }
 

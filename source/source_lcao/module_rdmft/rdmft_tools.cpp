@@ -308,7 +308,6 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
     }
 
     // get HR for 2D-block parallel format
-    // this->GK->transfer_pvpR(this->hR);
 
     if(this->nspin == 2) 
     { 
@@ -333,7 +332,6 @@ void Veff_rdmft<double, double>::contributeHR()
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-    // this->GK->reset_spin(this->current_spin);
 
     double* vr_eff_rdmft = nullptr;
 
