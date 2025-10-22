@@ -62,7 +62,6 @@ VPATH=./src_global:\
 ./source_lcao/module_deltaspin:\
 ./source_lcao/module_operator_lcao:\
 ./source_lcao/module_gint:\
-./source_lcao/module_gint/temp_gint:\
 ./source_relax:\
 ./source_hamilt/module_vdw:\
 ./source_io:\

@@ -1,6 +1,6 @@
 #pragma once
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_gint/temp_gint/gint_info.h"
+#include "source_lcao/module_gint/gint_info.h"
 
 namespace ModuleGint
 {

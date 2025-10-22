@@ -8,7 +8,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 
 #include <vector>
 

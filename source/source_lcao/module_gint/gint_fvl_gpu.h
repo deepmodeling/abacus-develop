@@ -6,7 +6,7 @@
 #include "source_base/matrix.h"
 #include "gint.h"
 #include "gint_info.h"
-#include "source_lcao/module_gint/temp_gint/kernel/cuda_mem_wrapper.h"
+#include "source_lcao/module_gint/kernel/cuda_mem_wrapper.h"
 
 namespace ModuleGint
 {

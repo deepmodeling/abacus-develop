@@ -2,7 +2,7 @@
 #include <memory>
 #include <cuda_runtime.h>
 
-#include "source_lcao/module_gint/temp_gint/batch_biggrid.h"
+#include "source_lcao/module_gint/batch_biggrid.h"
 #include "gint_helper.cuh"
 #include "gint_gpu_vars.h"
 #include "cuda_mem_wrapper.h"

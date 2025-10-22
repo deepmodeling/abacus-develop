@@ -14,7 +14,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
-#include "source_lcao/module_gint/temp_gint/gint_info.h"
+#include "source_lcao/module_gint/gint_info.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "source_lcao/module_ri/Exx_LRI.h"
