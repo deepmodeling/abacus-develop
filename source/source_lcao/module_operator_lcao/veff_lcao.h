@@ -40,7 +40,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const std::vector<double>& orb_cutoff,
                                const Grid_Driver* GridD_in,
                                const int& nspin)
-        : GK(GK_in), orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
+        : orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
           gd(GridD_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_gint;
@@ -58,7 +58,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const std::vector<double>& orb_cutoff,
                                const Grid_Driver* GridD_in,
                                const int& nspin)
-        : GG(GG_in), orb_cutoff_(orb_cutoff), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
+        :orb_cutoff_(orb_cutoff), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_gint;
         this->initialize_HR(ucell_in, GridD_in);
