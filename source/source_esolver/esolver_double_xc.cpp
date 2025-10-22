@@ -90,7 +90,6 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
 
     // 10) inititlize the charge density
     this->chr_base.allocate(PARAM.inp.nspin);
-    this->pelec_base->omega = ucell.omega;
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
@@ -116,7 +115,6 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     ESolver_KS_LCAO<TK,TR>::before_scf(ucell, istep);
 
-    this->pelec_base->omega = ucell.omega;
     //----------------------------------------------------------
     //! calculate D2 or D3 vdW
     //----------------------------------------------------------

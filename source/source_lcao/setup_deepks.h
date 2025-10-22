@@ -7,6 +7,7 @@
 #include "source_basis/module_ao/ORB_read.h" // orb
 #include "source_basis/module_nao/two_center_integrator.h" // overlap_orb_alpha 
 #include "source_cell/module_neighbor/sltk_grid_driver.h" // grid driver
+#include "source_cell/klist.h" // k-points
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
@@ -40,6 +41,13 @@ class Setup_DeePKS
 		const Parallel_Orbitals &pv,
 		const Grid_Driver &gd,
         TwoCenterIntegrator &overlap_orb_alpha,
+		const Input_para &inp);
+
+    void delta_e(
+        const K_Vectors &kv,
+	    const Parallel_Orbitals &pv, // parallel orbitals
+		const Grid_Driver &gd,
+		const std::vector<std::vector<TK>>& dm_vec,
 		const Input_para &inp);
 
     void write_forces(

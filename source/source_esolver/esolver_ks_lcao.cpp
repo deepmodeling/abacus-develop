@@ -110,7 +110,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 11) init charge density
     this->chr.allocate(inp.nspin);
-    this->pelec->omega = ucell.omega;
 
     // 12) init potentials
     if (this->pelec->pot == nullptr)
@@ -565,15 +564,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
-#ifdef __MLALGO
-    if (PARAM.inp.deepks_scf)
-    {
-        this->deepks.ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
-        DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, this->deepks.ld.dm_r);
-        estate->f_en.edeepks_scf = this->deepks.ld.E_delta - this->deepks.ld.e_delta_band;
-        estate->f_en.edeepks_delta = this->deepks.ld.E_delta;
-    }
-#endif
+    this->deepks.delta_e(this->kv, this->pv, this->gd, dm_vec, PARAM.inp);
 
     // 3) for delta spin
     if (PARAM.inp.sc_mag_switch)

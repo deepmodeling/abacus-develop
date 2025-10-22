@@ -39,9 +39,6 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
         }
     }
 
-    //! Set the cell volume variable in pelec
-    pelec->omega = ucell.omega;
-
     //! Inititlize the charge density.
     chr.allocate(inp.nspin);
 

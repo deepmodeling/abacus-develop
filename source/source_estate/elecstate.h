@@ -114,7 +114,6 @@ class ElecState
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
-    double omega = 0.0;                            ///< volume
     Potential* pot = nullptr;                      ///< pointer to potential
     Charge* charge = nullptr;                      ///< pointer to charge density
     const K_Vectors* klist = nullptr;              ///< pointer to k points lists
