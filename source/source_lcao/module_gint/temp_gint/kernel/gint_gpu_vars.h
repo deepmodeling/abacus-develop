@@ -7,7 +7,6 @@
 #include "source_cell/atom_spec.h"
 #include "source_lcao/module_gint/temp_gint/biggrid_info.h"
 #include "gint_helper.cuh"
-#include "source_lcao/module_gint/kernels/cuda/gemm_selector.cuh"
 
 namespace ModuleGint
 {
@@ -39,7 +38,6 @@ class GintGpuVars
 
     // the index of gpu device
     int dev_id_ = 0;
-    matrix_multiple_func_type fastest_matrix_mul;
 
 };
 

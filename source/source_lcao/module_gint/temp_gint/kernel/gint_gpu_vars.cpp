@@ -101,8 +101,6 @@ GintGpuVars::GintGpuVars(std::shared_ptr<const BigGridInfo> biggrid_info,
     
     checkCuda(cudaMalloc((void**)&iat2it_d, sizeof(int) * ucell.nat));
     checkCuda(cudaMemcpy(iat2it_d, ucell.iat2it, sizeof(int) * ucell.nat, cudaMemcpyHostToDevice));
-
-    gemm_algo_selector(mgrid_num, fastest_matrix_mul, ucell);
 }
 
 GintGpuVars::~GintGpuVars()
