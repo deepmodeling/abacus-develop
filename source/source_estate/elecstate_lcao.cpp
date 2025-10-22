@@ -5,7 +5,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
