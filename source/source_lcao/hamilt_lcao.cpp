@@ -184,8 +184,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // effective potential term
-                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(GG_in,
-                                                                    this->hsk,
+                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     pot_in,
                                                                     this->hR, // no explicit call yet
@@ -254,8 +253,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // Veff term
-                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(GK_in,
-                                                                     this->hsk,
+                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                      this->kv->kvec_d,
                                                                      pot_in,
                                                                      this->hR,
