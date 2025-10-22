@@ -175,8 +175,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
             this->gd,
             &this->pv,
@@ -235,8 +233,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         Get_pchg_lcao get_pchg(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            get_pchg.begin(this->GG,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
                            this->pw_rhod->nrxx,
@@ -286,7 +283,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GG,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
@@ -305,7 +301,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GK,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
