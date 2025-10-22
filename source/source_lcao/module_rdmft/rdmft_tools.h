@@ -281,30 +281,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
         this->initialize_HR(ucell_in, GridD_in);
     }
-    Veff_rdmft(hamilt::HS_Matrix_K<TK>* hsk_in,
-               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-               elecstate::Potential* pot_in,
-               hamilt::HContainer<TR>* hR_in,
-               const UnitCell* ucell_in,
-               const std::vector<double>& orb_cutoff,
-               const Grid_Driver* GridD_in,
-               const int& nspin,
-               const Charge* charge_in,
-               const ModulePW::PW_Basis* rho_basis_in,
-               const ModuleBase::matrix* vloc_in,
-               const ModuleBase::ComplexMatrix* sf_in,
-               const std::string potential_in,
-               double* etxc_in = nullptr,
-               double* vtxc_in = nullptr)
-        : orb_cutoff_(orb_cutoff), pot(pot_in), hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-          ucell(ucell_in), gd(GridD_in), charge_(charge_in), rho_basis_(rho_basis_in), vloc_(vloc_in), sf_(sf_in),
-          potential_(potential_in), etxc(etxc_in), vtxc(vtxc_in)
-    {
-        this->cal_type = hamilt::calculation_type::lcao_gint;
-
-        this->initialize_HR(ucell_in, GridD_in);
-    }
-
+    
     ~Veff_rdmft<TK, TR>(){};
 
     /**
