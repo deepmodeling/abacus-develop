@@ -20,8 +20,7 @@ class Get_pchg_lcao
     ~Get_pchg_lcao();
 
     // For gamma_only
-    void begin(Gint_Gamma& gg,
-               double** rho,
+    void begin(double** rho,
                const ModuleBase::matrix& wg,
                const std::vector<double>& ef_all_spin,
                const int rhopw_nrxx,
