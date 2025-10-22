@@ -186,7 +186,6 @@ class RDMFT
     const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
 
     /****** these parameters are passed in from outside, don't need delete ******/
-    // GK and GG are used for multi-k grid integration and gamma only algorithms respectively
     Charge* charge = nullptr;
 
     // update after ion step
