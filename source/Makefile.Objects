@@ -228,11 +228,12 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
+    elecstate_tools.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
+    rho_tau_lcao.o\
     elecstate_op.o\
-    elecstate_tools.o\
     efield.o\
     gatefield.o\
     potential_new.o\

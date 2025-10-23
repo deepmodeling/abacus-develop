@@ -51,7 +51,10 @@ class DensityMatrix
      * @param nk number of k-points, not always equal to K_Vectors::get_nks()/nspin_dm.
      *               it will be set to kvec_d.size() if the value is invalid
      */
-    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk);
+	DensityMatrix(const Parallel_Orbitals* _paraV, 
+			const int nspin, 
+			const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
+			const int nk);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
