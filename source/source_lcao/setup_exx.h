@@ -6,6 +6,7 @@
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
 #include "source_basis/module_ao/ORB_read.h" // orb
+#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 
 // for EXX
 #ifdef __EXX
@@ -33,6 +34,14 @@ class Exx_NAO
 			K_Vectors &kv, // k points
             const LCAO_Orbitals &orb, // orbital info
 			const Parallel_Orbitals &pv, // parallel orbitals
+			const Input_para& inp);
+
+	void before_scf(
+			const UnitCell &ucell, // unitcell
+			const K_Vectors &kv,
+			const LCAO_Orbitals &orb, // orbital info
+			Charge_Mixing* p_chgmix,
+			const int istep,
 			const Input_para& inp);
 
 };

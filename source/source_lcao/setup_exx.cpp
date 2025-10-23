@@ -62,5 +62,34 @@ void Exx_NAO<TK>::before_runner(
 #endif
 }
 
+template <typename TK>
+void Exx_NAO<TK>::before_scf(
+		const UnitCell &ucell, // unitcell
+		const K_Vectors &kv,
+		const LCAO_Orbitals &orb, // orbital info
+		Charge_Mixing* p_chgmix,
+		const int istep,
+		const Input_para& inp)
+{
+#ifdef __EXX
+    if (PARAM.inp.calculation != "nscf")
+    {
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->exd->exx_beforescf(istep, kv, *p_chgmix, ucell, orb);
+        }
+        else
+        {
+            this->exc->exx_beforescf(istep, kv, *p_chgmix, ucell, orb);
+        }
+	}
+	else
+	{
+		// do nothing
+	}
+#endif
+}
+
+
 template class Exx_NAO<double>;
 template class Exx_NAO<std::complex<double>>;

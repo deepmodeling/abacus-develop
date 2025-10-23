@@ -1,7 +1,6 @@
 #include "esolver_ks_lcao.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_io/read_wfc_nao.h"
 #include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
@@ -214,19 +213,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-#ifdef __EXX
-    if (PARAM.inp.calculation != "nscf")
-    {
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            this->exx_nao.exd->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
-        }
-        else
-        {
-            this->exx_nao.exc->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
-        }
-    }
-#endif
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
     // 12) init_scf, should be before_scf? mohan add 2025-03-10
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
