@@ -42,10 +42,11 @@
 //"xxx" specifies the type of problem, for example:
 //  - gv stands for generalized eigenvalue
 
+// The following declarations cover only a subset of LAPACK routines.
+// If you need a LAPACK function that is not included here, feel free to add its declaration as needed.
 extern "C"
 {
 // === Generalized Hermitian-definite eigenproblems ===
-
 void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              double* a, const int* lda,
              double* b, const int* ldb,

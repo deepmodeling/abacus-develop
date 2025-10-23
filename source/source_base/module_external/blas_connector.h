@@ -8,6 +8,8 @@
 // These still need to be linked in the header file
 // Because quite a lot of code will directly use the original cblas kernels.
 
+// The following declarations cover only a subset of BLAS routines.
+// If you need a BLAS function that is not included here, feel free to add its declaration as needed.
 extern "C"
 {
 // Level 1 BLAS
