@@ -171,6 +171,19 @@ void ztrsm_(const char *side, const char *uplo, const char *transa, const char *
             const std::complex<double> *alpha,
             const std::complex<double> *a, const int *lda,
             std::complex<double> *b, const int *ldb);
+
+// === Hermitian rank-k update ===
+void cherk_(const char* uplo, const char* trans, const int* n, const int* k,
+            const float* alpha,
+            const std::complex<float>* a, const int* lda,
+            const float* beta,
+            std::complex<float>* c, const int* ldc);
+
+void zherk_(const char* uplo, const char* trans, const int* n, const int* k,
+            const double* alpha,
+            const std::complex<double>* a, const int* lda,
+            const double* beta,
+            std::complex<double>* c, const int* ldc);
 }
 
 // Class BlasConnector provide the connector to fortran lapack routine.

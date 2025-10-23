@@ -17,7 +17,7 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
                     const int nstart,
                     const int ldh,
                     const T* hcc,
-                    const T* scc,
+                    T* scc,
                     Real* eigenvalue,
                     T* vcc)
     {
