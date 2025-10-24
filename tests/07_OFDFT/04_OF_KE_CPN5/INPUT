@@ -5,7 +5,6 @@ calculation     scf
 esolver_type    ofdft
 ntype			1
 symmetry		1
-out_chg                 1
 pseudo_dir      ../../PP_ORB/
 pseudo_rcut     16
 
