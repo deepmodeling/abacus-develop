@@ -232,7 +232,6 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
-    rho_tau_lcao.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -644,6 +643,7 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
+      rho_tau_lcao.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
