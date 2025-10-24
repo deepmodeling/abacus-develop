@@ -15,13 +15,13 @@ class ElecStateLCAO : public ElecState
     ElecStateLCAO()
     {
     } // will be called by ElecStateLCAO_TDDFT
-    ElecStateLCAO(Charge* chg_in,
+    ElecStateLCAO(Charge* chr_in,
                   const K_Vectors* klist_in,
                   int nks_in,
                   ModulePW::PW_Basis* rhopw_in,
                   ModulePW::PW_Basis_Big* bigpw_in)
     {
-        init_ks(chg_in, klist_in, nks_in, rhopw_in, bigpw_in);
+        init_ks(chr_in, klist_in, nks_in, rhopw_in, bigpw_in);
         this->classname = "ElecStateLCAO";
     }
 
