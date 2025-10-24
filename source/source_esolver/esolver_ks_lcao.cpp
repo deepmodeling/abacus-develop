@@ -469,7 +469,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     if (!skip_solve)
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->chr, PARAM.inp.nspin, skip_charge);
     }
 
     // 4) EXX

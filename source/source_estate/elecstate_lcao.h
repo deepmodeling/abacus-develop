@@ -33,15 +33,6 @@ class ElecStateLCAO : public ElecState
         }
     }
 
-    // void init(Charge* chg_in):charge(chg_in){} override;
-
-    // interface for HSolver to calculate rho from Psi
-    virtual void psiToRho(const psi::Psi<TK>& psi) override;
-    // virtual void psiToRho(const psi::Psi<double>& psi) override;
-    //  return current electronic density rho, as a input for constructing Hamiltonian
-    //  const double* getRho(int spin) const override;
-    virtual void cal_tau(const psi::Psi<TK>& psi) override;
-
     // update charge density for next scf step
     // void getNewRho() override;
 
@@ -65,19 +56,10 @@ class ElecStateLCAO : public ElecState
      * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be
      * stored in DensityMatrix::pexsi_EDM
      */
-    void dmToRho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
+    void dm2Rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
 #endif
 
     DensityMatrix<TK, double>* DM = nullptr;
-
-  protected:
-    // calculate electronic charge density on grid points or density matrix in real space
-    // the consequence charge density rho saved into rho_out, preparing for charge mixing.
-    // void updateRhoK(const psi::Psi<std::complex<double>>& psi) ;//override;
-    // sum over all pools for rho and ebands
-    // void parallelK();
-    // calcualte rho for each k
-    // void rhoBandK(const psi::Psi<std::complex<double>>& psi);
 
 };
 

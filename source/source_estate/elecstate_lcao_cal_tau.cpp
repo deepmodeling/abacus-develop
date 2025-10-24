@@ -6,6 +6,7 @@
 namespace elecstate
 {
 
+/*
 // calculate the kinetic energy density tau, multi-k case
 template <>
 void ElecStateLCAO<std::complex<double>>::cal_tau(const psi::Psi<std::complex<double>>& psi)
@@ -36,4 +37,6 @@ void ElecStateLCAO<double>::cal_tau(const psi::Psi<double>& psi)
     ModuleBase::timer::tick("ElecStateLCAO", "cal_tau");
     return;
 }
+*/
+
 }

@@ -4,19 +4,22 @@
 
 void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
-    Charge* chg)
+    Charge* chr)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2rho");
     ModuleBase::timer::tick("LCAO_domain", "dm2rho");
 
     for (int is = 0; is < nspin; is++)
     {
-        ModuleBase::GlobalFunc::ZEROS(chg->rho[is], chg->nrxx);
+        ModuleBase::GlobalFunc::ZEROS(chr->rho[is], chr->nrxx);
     }
 
-    ModuleGint::cal_gint_rho(dmr, nspin, chg->rho);
+    ModuleGint::cal_gint_rho(dmr, nspin, chr->rho);
 
-    chg->renormalize_rho();
+    chr->renormalize_rho();
+
+    // should be moved somewhere else, mohan 20251024
+    dm2tau(dmr, nspin, chr);
 
     // symmetrize of charge density should be here, mohan 20251023
 
@@ -27,7 +30,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 
 void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
-    Charge* chg)
+    Charge* chr)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2tau");
     ModuleBase::timer::tick("LCAO_domain", "dm2tau");
@@ -36,12 +39,10 @@ void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
     {
         for (int is = 0; is < nspin; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(chg->kin_r[is], chg->nrxx);
+            ModuleBase::GlobalFunc::ZEROS(chr->kin_r[is], chr->nrxx);
         }
-        ModuleGint::cal_gint_tau(dmr, nspin, chg->kin_r);
+        ModuleGint::cal_gint_tau(dmr, nspin, chr->kin_r);
     }
 
     ModuleBase::timer::tick("LCAO_domain", "dm2tau");
 }
-
-

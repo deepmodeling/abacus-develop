@@ -9,11 +9,11 @@ namespace LCAO_domain
 {
 	void dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 			const int nspin,
-			Charge* chg);
+			Charge* chr);
 
 	void dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
 			const int nspin,
-			Charge* chg);
+			Charge* chr);
 
 }
 
