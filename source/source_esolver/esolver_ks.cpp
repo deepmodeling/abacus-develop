@@ -347,12 +347,14 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
     
+/*
     // 1) calculate the kinetic energy density tau
     if (PARAM.inp.out_elf[0] > 0)
     {
         assert(this->psi != nullptr);
         this->pelec->cal_tau(*(this->psi));
     }
+*/
     
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);

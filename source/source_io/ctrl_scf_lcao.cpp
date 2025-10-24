@@ -371,10 +371,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     // 14) calculate the kinetic energy density tau
     // mohan add 2025-10-24
-    if (inp.out_elf[0] > 0)
-	{
-		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
-	}
+//    if (inp.out_elf[0] > 0)
+//	{
+//		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
+//	}
 
 #ifdef __EXX
     //------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #include "source_psi/setup_psi.h" // mohan add 20251019
 #include "source_io/read_wfc_nao.h" 
 #include "source_io/print_info.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 
 namespace ModuleESolver
 {
@@ -583,9 +584,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
-    //! 1) call after_scf() of ESolver_KS
-    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
-
     auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
 
@@ -598,6 +596,15 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","p_hamilt does not exist");
     }
+
+    if (PARAM.inp.out_elf[0] > 0)
+	{
+		LCAO_domain::dm2tau(estate->DM->get_DMR_vector(), PARAM.inp.nspin, estate->charge);
+	}
+
+    //! 1) call after_scf() of ESolver_KS
+    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
+
 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
