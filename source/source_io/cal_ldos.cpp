@@ -3,7 +3,7 @@
 #include "cal_dos.h"
 #include "cube_io.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 
 #include <type_traits>
 
@@ -60,12 +60,7 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
         }
 
     // calculate ldos
-#ifdef __OLD_GINT
-        ModuleBase::WARNING_QUIT("Cal_ldos::dm2ldos",
-                                 "do not support old grid integral, please recompile with __NEW_GINT");
-#else
         ModuleGint::cal_gint_rho(dm_ldos.get_DMR_vector(), PARAM.inp.nspin, ldos);
-#endif
 
         // I'm not sure whether ldos should be output for each spin or not
         // ldos[0] += ldos[1] for nspin_dm == 2

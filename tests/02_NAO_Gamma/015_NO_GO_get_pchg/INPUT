@@ -1,5 +1,6 @@
 INPUT_PARAMETERS
 basis_type		lcao 	
+nspin           1
 gamma_only		1
 calculation     get_pchg
 

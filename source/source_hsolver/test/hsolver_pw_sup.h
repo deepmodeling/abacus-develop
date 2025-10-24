@@ -4,7 +4,6 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(
     const double lat0_in, // unit length (unit in bohr)
     const ModuleBase::Matrix3
@@ -69,7 +68,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool) {

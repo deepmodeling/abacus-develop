@@ -153,10 +153,15 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
             hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
             hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
             assert(overlap_1->get_col_size() == overlap_2->get_col_size());
-            ModuleBase::Vector3<int> dR = dR1 - dR2;
+            ModuleBase::Vector3<int> dR = dR2 - dR1;
             int iRx = DeePKS_domain::mapping_R(dR.x);
             int iRy = DeePKS_domain::mapping_R(dR.y);
             int iRz = DeePKS_domain::mapping_R(dR.z);
+            // Make sure the index is in range we need to save
+            if (iRx >= R_size || iRy >= R_size || iRz >= R_size)
+            {
+                return; // to next loop
+            }
 
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {

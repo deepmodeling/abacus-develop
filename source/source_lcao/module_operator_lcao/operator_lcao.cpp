@@ -31,6 +31,8 @@ void OperatorLCAO<double, double>::get_hs_pointers() {
         const int inc = 1;
         BlasConnector::copy(this->hsk->get_size(), this->hsk->get_sk(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
+        // DecomposedState may be changed after diagnolization, with smatrix_k changed too
+        // for example, when DecomposedState equals 1, smatrix_k is an identity matrix, different from the original this->hsk->get_sk()
         hsolver::DiagoElpa<double>::DecomposedState = 0;
         hsolver::DiagoElpaNative<double>::DecomposedState = 0;
 #endif

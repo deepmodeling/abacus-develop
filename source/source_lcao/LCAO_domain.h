@@ -9,9 +9,7 @@
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/force_stress_arrays.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
-#include "source_lcao/module_gint/grid_technique.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 namespace LCAO_domain
 {
@@ -34,17 +32,6 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            const LCAO_Orbitals& orb,
                            const TwoCenterIntegrator& intor_orb_beta,
                            const Grid_Driver* GridD);
-
-/**
- * @brief prepare gird integration
- */
-void grid_prepare(const Grid_Technique& gt,
-                  Gint_Gamma& gint_gamma,
-                  Gint_k& gint_k,
-                  const UnitCell& ucell,
-                  const LCAO_Orbitals& orb,
-                  const ModulePW::PW_Basis& rhopw,
-                  const ModulePW::PW_Basis_Big& bigpw);
 
 /**
  * @brief set the elements of force-related matrices in LCAO method

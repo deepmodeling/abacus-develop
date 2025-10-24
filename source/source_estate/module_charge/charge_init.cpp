@@ -18,7 +18,7 @@
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
 
-void Charge::init_rho(elecstate::efermi& eferm_iout,
+void Charge::init_rho(elecstate::Efermi& eferm_iout,
                       const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,
@@ -59,8 +59,18 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         {
             for (int is = 0; is < nspin; ++is)
             {
-                std::stringstream ssc;
-                ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				std::stringstream ssc; 
+
+				if(nspin==1)
+				{
+                    ssc << PARAM.globalv.global_readin_dir << "chg.cube";
+				}
+				else
+				{               
+					ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				}
+
+
                 if (ModuleIO::read_vdata_palgrid(pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,

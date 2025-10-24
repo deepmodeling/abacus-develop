@@ -1,5 +1,5 @@
 #include "elecstate_lcao.h"
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 
 #include "source_base/timer.h"
 
@@ -16,12 +16,7 @@ void ElecStateLCAO<std::complex<double>>::cal_tau(const psi::Psi<std::complex<do
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
     }
-#ifdef __OLD_GINT
-    Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
-    this->gint_k->cal_gint(&inout1);
-#else
     ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
-#endif
     ModuleBase::timer::tick("ElecStateLCAO", "cal_tau");
     return;
 }
@@ -36,12 +31,7 @@ void ElecStateLCAO<double>::cal_tau(const psi::Psi<double>& psi)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
     }
-#ifdef __OLD_GINT
-    Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
-    this->gint_gamma->cal_gint(&inout1);
-#else
     ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
-#endif
 
     ModuleBase::timer::tick("ElecStateLCAO", "cal_tau");
     return;

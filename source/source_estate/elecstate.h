@@ -51,8 +51,6 @@ class ElecState
     {
         return;
     }
-    // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
-    // virtual void updateRhoK(const psi::Psi<double> &psi)=0
     virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
     {
         return;
@@ -77,12 +75,9 @@ class ElecState
         return;
     }
 
-
-
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
     
-
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();
@@ -155,7 +150,7 @@ class ElecState
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
-    efermi eferm; ///< fermi energies
+    Efermi eferm; ///< fermi energies
 
     // below defines the bandgap:
 

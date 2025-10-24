@@ -26,7 +26,7 @@ mixing_beta     0.7
 mixing_gg0      0.0
 
 out_wfc_lcao	1
-out_interval	2
+out_freq_ion	2
 out_app_flag	0
 
 md_type          nve

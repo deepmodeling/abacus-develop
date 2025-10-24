@@ -53,7 +53,9 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void construct_ace() const;
 
-    bool first_iter = false;
+    bool first_iter = true;
+
+    static std::vector<Real> fock_div, erfc_div;
 
   private:
     const int* isk = nullptr;
@@ -61,17 +63,12 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
-//    Real exx_div = 0;
     Real tpiba = 0;
     
     std::vector<int> get_q_points(const int ik) const;
     const T *get_pw(const int m, const int iq) const;
 
     void multiply_potential(T *density_recip, int ik, int iq) const;
-
-    double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type, double erfc_omega = 0) const;
-
-    void get_potential() const;
 
     void act_op(const int nbands,
                 const int nbasis,
@@ -163,6 +160,38 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     bool gamma_extrapolation = true;
 
 };
+
+template <typename Real, typename Device>
+void get_exx_potential(const K_Vectors* kv,
+                       const ModulePW::PW_Basis_K* wfcpw,
+                       ModulePW::PW_Basis* rhopw_dev,
+                       Real* pot,
+                       double tpiba,
+                       bool gamma_extrapolation,
+                       double ucell_omega,
+                       int ik,
+                       int iq,
+                       bool is_stress = false);
+
+template <typename Real, typename Device>
+void get_exx_stress_potential(const K_Vectors* kv,
+                              const ModulePW::PW_Basis_K* wfcpw,
+                              ModulePW::PW_Basis* rhopw_dev,
+                              Real* pot,
+                              double tpiba,
+                              bool gamma_extrapolation,
+                              double ucell_omega,
+                              int ik,
+                              int iq);
+
+double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
+                      double erfc_omega,
+                      const K_Vectors* kv,
+                      const ModulePW::PW_Basis_K* wfcpw,
+                      ModulePW::PW_Basis* rhopw_dev,
+                      double tpiba,
+                      bool gamma_extrapolation,
+                      double ucell_omega);
 
 } // namespace hamilt
 

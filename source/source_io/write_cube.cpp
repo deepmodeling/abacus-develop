@@ -214,6 +214,9 @@ void ModuleIO::write_cube(const std::string& file,
 
     std::ofstream ofs(file);
 
+    // mohan add 2025-09-10
+    GlobalV::ofs_running << " Write data to file: " << file << std::endl;
+
     for (int i = 0; i < 2; ++i)
     {
         ofs << comment[i] << "\n";

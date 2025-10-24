@@ -32,7 +32,9 @@ template <typename T>
 void Output_HContainer<T>::write(bool write_empty)
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
-    int rx, ry, rz;
+    int rx=0;
+    int ry=0;
+    int rz=0;
     int R_range[2] = {0, 0};
     // find the range of R
     for (int iR = 0; iR < size_for_loop_R; iR++)

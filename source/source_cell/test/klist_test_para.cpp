@@ -86,6 +86,10 @@ Soc::~Soc()
 Fcoef::~Fcoef()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 
 /************************************************

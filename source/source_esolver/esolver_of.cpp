@@ -11,9 +11,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 #include "source_estate/cal_ux.h"
-//-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
-//-----stress------------------
 #include "source_pw/module_ofdft/of_stress_pw.h"
 
 namespace ModuleESolver
@@ -27,7 +25,10 @@ ESolver_OF::ESolver_OF()
 
 ESolver_OF::~ESolver_OF()
 {
-    delete psi_;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_;
     delete[] this->pphi_;
 
     for (int i = 0; i < PARAM.inp.nspin; ++i)
@@ -92,7 +93,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     // print information
     // mohan add 2021-01-30
-    ModuleIO::setup_parameters(ucell, kv);
+    ModuleIO::print_parameters(ucell, kv, inp);
 
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves
@@ -494,17 +495,16 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->kedf_manager_->get_energy_density(this->chr.rho, this->pphi_, this->pw_rho, this->chr.kin_r);
     }
 
-    //------------------------------------------------------------------
-    // 2) call after_scf() of ESolver_FP
-    //------------------------------------------------------------------
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
-
-
     // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
         this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
     }
+
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_FP
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
 #ifdef __MLALGO
     //------------------------------------------------------------------

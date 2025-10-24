@@ -29,11 +29,28 @@ class DiagoIterAssist
     static int SCF_ITER;
 
     // for psi::Psi structure
-    static void diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
-                               const psi::Psi<T, Device>& psi,
-                               psi::Psi<T, Device>& evc,
-                               Real* en,
-                               int n_band = 0);
+     /**
+     * @brief Diagonalizes the Hamiltonian in a subspace defined by the given wavefunction.
+     *
+     * This static function computes the eigenvalues and eigenvectors of the Hamiltonian
+     * within the subspace spanned by the provided wavefunction `psi`. The resulting eigenvectors
+     * are stored in `evc`, and the corresponding eigenvalues are written to `en`.
+     *
+     * @tparam T      Data type for computation (e.g., float, double).
+     * @tparam Device Device type for computation (e.g., CPU, GPU).
+     * @param pHamilt Pointer to the Hamiltonian object.
+     * @param psi     Input wavefunction defining the subspace.
+     * @param evc     Output container for computed eigenvectors.
+     * @param en      Output array for computed eigenvalues.
+     * @param n_band  Number of bands (eigenvalues/eigenvectors) to compute. Default is 0 (all).
+     * @param is_S_orthogonal If true, assumes the input wavefunction is already orthogonalized.
+     */
+    static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
+                              const psi::Psi<T, Device>& psi,
+                              psi::Psi<T, Device>& evc,
+                              Real *en,
+                              int n_band = 0,
+                              const bool is_S_orthogonal = false);
 
     /// @brief use LAPACK to diagonalize the Hamiltonian matrix
     /// @param pHamilt interface to hamiltonian
@@ -44,7 +61,7 @@ class DiagoIterAssist
     /// @param en eigenenergies
     /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
     /// and return all - zero eigenenergies.
-    static void diagH_subspace_init(
+    static void diag_subspace_init(
             hamilt::Hamilt<T, Device>* pHamilt,
             const T* psi,
             int psi_nr,
@@ -54,13 +71,19 @@ class DiagoIterAssist
             const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
             const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
 
-    static void diagH_LAPACK(const int nstart,
-                             const int nbands,
-                             const T* hcc,
-                             const T* sc,
-                             const int ldh, // nstart
-                             Real* e,
-                             T* vcc);
+    static void diag_heevx(const int nstart,
+                            const int nbands,
+                            const T *hcc,
+                            const int ldh,
+                            Real *e,
+                            T *vcc);
+    static void diag_hegvd(const int nstart,
+                            const int nbands,
+                            const T *hcc,
+                            const T *sc,
+                            const int ldh, // nstart
+                            Real *e,
+                            T *vcc);
 
     /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
     /// @param pHamilt : hamiltonian operator carrier

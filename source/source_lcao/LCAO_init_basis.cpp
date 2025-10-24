@@ -1,6 +1,7 @@
 #include "LCAO_domain.h"
 
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/parallel_comm.h"
 /// once the GlobalC::exx_info has been deleted, this include can be gone 
 /// mohan note 2024-07-21
 #ifdef __EXX

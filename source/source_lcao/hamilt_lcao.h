@@ -8,15 +8,11 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/hs_matrix_k.hpp"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
 
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#endif
+#include "source_lcao/setup_deepks.h" // mohan add 20251008
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"
@@ -41,20 +37,15 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
-    HamiltLCAO(Gint_Gamma* GG_in,
-               Gint_k* GK_in,
-               const UnitCell& ucell,
+    HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
 			   const Parallel_Orbitals* paraV,
 			   elecstate::Potential* pot_in,
 			   const K_Vectors& kv_in,
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-               elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __MLALGO
-               ,
-               LCAO_Deepks<TK>* ld_in
-#endif
+			   elecstate::DensityMatrix<TK, double>* DM_in,
+			   Setup_DeePKS<TK> &deepks
 #ifdef __EXX
                ,
                const int istep,
@@ -110,9 +101,17 @@ class HamiltLCAO : public Hamilt<TK>
     {
         return this->hR;
     }
+    const HContainer<TR>* getHR() const
+    {
+        return this->hR;
+    }
 
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
     HContainer<TR>*& getSR()
+    {
+        return this->sR;
+    }
+    const HContainer<TR>* getSR() const
     {
         return this->sR;
     }

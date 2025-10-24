@@ -23,6 +23,28 @@ void ReadInput::item_deepks()
                 para.input.deepks_out_freq_elec = 0;
             }
         };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_out_freq_elec > 0 && para.input.deepks_out_base == "none")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_freq_elec, please set deepks_out_base ");
+            }            
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("deepks_out_base");
+        item.annotation = "base functional for output files, with dft_functional as target functional";
+        read_sync_string(input.deepks_out_base);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_out_base != "none" && para.input.deepks_out_labels == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_base, please set deepks_out_labels > 0 ");
+            }
+            if (para.input.deepks_out_base != "none" && para.input.deepks_bandgap > 0 )
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "outputting bandgap labels during electronic steps is not implemented yet ");
+            }
+        };
         this->add_item(item);
     }
     {

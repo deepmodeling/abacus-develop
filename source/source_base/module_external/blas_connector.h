@@ -24,7 +24,9 @@ extern "C"
 	void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<float> *X, const int *incX, std::complex<float> *Y, const int *incY);
 	void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *X, const int *incX, std::complex<double> *Y, const int *incY);
 
+	void scopy_(long const *n, const float *a, int const *incx, float *b, int const *incy);
 	void dcopy_(long const *n, const double *a, int const *incx, double *b, int const *incy);
+	void ccopy_(long const *n, const std::complex<float> *a, int const *incx, std::complex<float> *b, int const *incy);
 	void zcopy_(long const *n, const std::complex<double> *a, int const *incx, std::complex<double> *b, int const *incy);
 
 	//reason for passing results as argument instead of returning it:
@@ -339,6 +341,12 @@ public:
 	// copies a into b
 	static
 	void copy(const long n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void copy(const long n, const float *a, const int incx, float *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void copy(const long n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
 	static
 	void copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);

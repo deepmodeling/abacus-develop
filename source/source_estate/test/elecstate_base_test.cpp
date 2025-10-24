@@ -7,6 +7,7 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/module_fft/fft_bundle.h"
 #undef protected
 #undef private
 
@@ -52,6 +53,10 @@ InfoNonlocal::InfoNonlocal()
 InfoNonlocal::~InfoNonlocal()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #include "source_cell/klist.h"
 
 ModulePW::PW_Basis::PW_Basis()
@@ -63,7 +68,6 @@ ModulePW::PW_Basis::~PW_Basis()
 ModulePW::PW_Basis_Sup::~PW_Basis_Sup()
 {
 }
-ModulePW::FFT_Bundle::~FFT_Bundle() {};
 void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
 {
 }
@@ -79,7 +83,7 @@ void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&,
+void Charge::init_rho(elecstate::Efermi&,
                       const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
@@ -262,7 +266,7 @@ TEST_F(ElecStateTest, InitSCF)
     Charge* charge = new Charge;
     elecstate->charge = charge;
     elecstate->pot = new elecstate::Potential;
-    elecstate::efermi efermi;
+    elecstate::Efermi efermi;
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;

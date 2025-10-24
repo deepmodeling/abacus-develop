@@ -59,7 +59,7 @@ struct fenergy
  * @struct efermi
  * @brief Fermi energies
  */
-struct efermi
+struct Efermi
 {
     double ef = 0.0;         ///< Fermi energy
     double ef_up = 0.0;      ///< spin up Fermi energy

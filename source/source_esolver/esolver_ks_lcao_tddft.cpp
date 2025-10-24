@@ -57,7 +57,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 {
-    delete psi_laststep;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_laststep;
     if (Hk_laststep != nullptr)
     {
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
@@ -99,9 +102,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
 					this->pv, 
 					*(this->psi), 
-					this->pelec, 
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
+					this->pelec->ekb,
+                    this->pelec->wg, 
+                    this->kv.ik2iktot,
+                    this->kv.get_nkstot(),
 					PARAM.inp.nspin,
                     0,
                     TD_info::estep_shift))
@@ -334,15 +338,19 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
     }
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
+
+    this->save2(ucell, istep, iter, conv_esolver);
+
 }
 
 template <typename TR, typename Device>
-void ESolver_KS_LCAO_TDDFT<TR, Device>::update_pot(UnitCell& ucell, 
+void ESolver_KS_LCAO_TDDFT<TR, Device>::save2(UnitCell& ucell, 
 		const int istep, 
 		const int iter, 
 		const bool conv_esolver)
 {
     // Calculate new potential according to new Charge Density
+/*
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
@@ -353,6 +361,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::update_pot(UnitCell& ucell,
     {
         this->pelec->cal_converged();
     }
+*/
 
     const int nloc = this->pv.nloc;
     const int ncol_nbands = this->pv.ncol_bands;
@@ -524,10 +533,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot <<std::endl;
 
     // (4) output file for restart
-    if(istep % PARAM.inp.out_interval == 0)
-    {
-        td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
-    }
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if(istep % PARAM.inp.out_freq_ion == 0)
+		{
+			td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
+		}
+	}
     
     ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
 }

@@ -68,6 +68,17 @@ namespace ModuleSymmetry
             const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
             const TCdouble& posd_a1, const TCdouble& posd_a2)const;
 
+        // Getting calculated return lattice
+        TCdouble get_return_lattice(const int iat, const int isym) const
+        {
+            if (iat < 0 || iat >= static_cast<int>(this->return_lattice_.size())) {
+                throw std::out_of_range("Invalid atom index in get_return_lattice");
+            }
+            if (isym < 0 || isym >= static_cast<int>(this->return_lattice_[iat].size())) {
+                throw std::out_of_range("Invalid symmetry index in get_return_lattice");
+            }
+            return this->return_lattice_[iat][isym];
+        }
     protected:
         void cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st);
 

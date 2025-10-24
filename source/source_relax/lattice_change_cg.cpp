@@ -165,21 +165,7 @@ CG_begin:
                           flag); // we use the last direction ,the last grad and the grad now to get the direction now
             ncggrad++;
 
-            double norm = 0.0;
-            for (int i = 0; i < dim; ++i)
-            {
-                norm += pow(cg_grad[i], 2);
-            }
-            norm = sqrt(norm);
-
-            if (norm != 0.0)
-            {
-                for (int i = 0; i < dim; ++i)
-                {
-                    cg_gradn[i] = cg_grad[i] / norm;
-                }
-            }
-
+            normalize(cg_gradn, cg_grad, dim);
             setup_move(move0, cg_gradn, steplength); // move the atom position
             Lattice_Change_Basic::change_lattice(ucell, move0, lat);
 
@@ -214,21 +200,7 @@ CG_begin:
                     goto CG_begin;
                 }
 
-                double norm = 0.0;
-                for (int i = 0; i < dim; ++i)
-                {
-                    norm += pow(cg_grad0[i], 2);
-                }
-                norm = sqrt(norm);
-
-                if (norm != 0.0)
-                {
-                    for (int i = 0; i < dim; ++i)
-                    {
-                        cg_gradn[i] = cg_grad0[i] / norm;
-                    }
-                }
-
+                normalize(cg_gradn, cg_grad0, dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
                 if (best_x > 6 * xb || best_x < (-xb))
@@ -279,21 +251,7 @@ CG_begin:
                         goto CG_begin;
                     }
 
-                    double norm = 0.0;
-                    for (int i = 0; i < dim; ++i)
-                    {
-                        norm += pow(cg_grad0[i], 2);
-                    }
-                    norm = sqrt(norm);
-
-                    if (norm != 0.0)
-                    {
-                        for (int i = 0; i < dim; ++i)
-                        {
-                            cg_gradn[i] = cg_grad0[i] / norm;
-                        }
-                    }
-
+                    normalize(cg_gradn, cg_grad0, dim);
                     setup_move(move, cg_gradn, best_x);
                     Lattice_Change_Basic::change_lattice(ucell, move, lat);
 
@@ -509,6 +467,25 @@ void Lattice_Change_CG::setup_move(double *move, double *cg_gradn, const double 
     for (int i = 0; i < dim; ++i)
     {
         move[i] = -cg_gradn[i] * trust_radius;
+    }
+    return;
+}
+
+void Lattice_Change_CG::normalize(double *cg_gradn, const double *cg_grad, int dim)
+{
+    double norm = 0.0;
+    for (int i = 0; i < dim; ++i)
+    {
+        norm += pow(cg_grad[i], 2);
+    }
+    norm = sqrt(norm);
+
+    if (norm != 0.0)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            cg_gradn[i] = cg_grad[i] / norm;
+        }
     }
     return;
 }

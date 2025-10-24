@@ -83,7 +83,7 @@ TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction)
     std::vector<ModuleBase::Vector3<double>> search = {
         {0.0, 0.0, 40}
     };
-    double alpha_trial = 0.1 / 13.605698;
+    double alpha_trial = 0.1 / ModuleBase::Ry_to_eV;
     testing::internal::CaptureStdout();
     sc.check_restriction(search, alpha_trial);
     std::string output = testing::internal::GetCapturedStdout();

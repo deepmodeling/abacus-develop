@@ -154,13 +154,6 @@ void ORB_gaunt_table::init_Ylm_Gaunt
 }
 */
 
-int ORB_gaunt_table::get_lm_index(
-	const int l, 
-	const int m)
-{
-	return l*l+m;
-}
-
 
 ///effective pointers
 int ORB_gaunt_table::EP_EL(const int& L)

@@ -10,7 +10,7 @@ void write_elf(
     const int& nbz,
 #endif
     const std::string& out_dir,
-    const int& istep,
+    const int& istep_in,
     const int& nspin,
     const double* const* rho,
     const double* const* tau,
@@ -94,14 +94,14 @@ void write_elf(
 
     if (nspin == 1)
     {
-        std::string fn = out_dir + "/ELF.cube";
+        std::string fn = out_dir + "/elf.cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
             elf[0].data(),
             is,
             nspin,
-            istep,
+            istep_in,
             fn,
             ef_tmp,
             ucell_,
@@ -112,14 +112,17 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is + 1) + ".cube";
+            std::string fn_temp = out_dir + "/elf";
+
+            fn_temp += std::to_string(is + 1) + ".cube";
+
             int ispin = is + 1;
 
             ModuleIO::write_vdata_palgrid(pgrid,
                 elf[is].data(),
                 ispin,
                 nspin,
-                istep,
+                istep_in,
                 fn_temp,
                 ef_tmp,
                 ucell_,
@@ -133,14 +136,14 @@ void write_elf(
             elf_tot[ir] = (tau[0][ir] + tau[1][ir] - tau_vw[0][ir] - tau_vw[1][ir]) / (tau_TF[0][ir] + tau_TF[1][ir]);
             elf_tot[ir] = 1. / (1. + elf_tot[ir] * elf_tot[ir]);
         }
-        std::string fn = out_dir + "/ELF.cube";
+        std::string fn = out_dir + "/elf.cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
             elf_tot.data(),
             is,
             nspin,
-            istep,
+            istep_in,
             fn,
             ef_tmp,
             ucell_,

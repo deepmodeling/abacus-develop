@@ -4,7 +4,6 @@
 #ifdef __LCAO
 #include "unk_overlap_lcao.h"
 #endif
-//#include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_psi/psi.h"
@@ -40,7 +39,6 @@ class berryphase
     void lcao_init(const UnitCell& ucell,
                    const Grid_Driver& gd,
                    const K_Vectors& kv,
-                   const Grid_Technique& grid_tech,
                    const LCAO_Orbitals& orb);
 #endif
     void set_kpoints(const K_Vectors& kv, const int direction);

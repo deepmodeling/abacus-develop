@@ -4,24 +4,26 @@
 //==========================================================
 
 #include "element_basis_index.h"
+
 namespace ModuleBase
 {
 
-Element_Basis_Index::IndexLNM Element_Basis_Index::construct_index( const Range &range )
+Element_Basis_Index::IndexLNM
+Element_Basis_Index::construct_index( const Range &range )
 {
 	IndexLNM index;
 	index.resize( range.size() );
-	for( size_t T=0; T!=range.size(); ++T )
+	for( std::size_t T=0; T!=range.size(); ++T )
 	{
-		size_t count=0;
+		std::size_t count=0;
 		index[T].resize( range[T].size() );
-		for( size_t L=0; L!=range[T].size(); ++L )
+		for( std::size_t L=0; L!=range[T].size(); ++L )
 		{
 			index[T][L].resize( range[T][L].N );
-			for( size_t N=0; N!=range[T][L].N; ++N )
+			for( std::size_t N=0; N!=range[T][L].N; ++N )
 			{
 				index[T][L][N].resize( range[T][L].M );
-				for( size_t M=0; M!=range[T][L].M; ++M )
+				for( std::size_t M=0; M!=range[T][L].M; ++M )
 				{
 					index[T][L][N][M] = count;
 					++count;

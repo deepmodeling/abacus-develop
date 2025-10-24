@@ -5,6 +5,7 @@
 #include "../../source_cell/unitcell.h"
 #include "../../source_base/mathzone.h"
 #include "../../source_base/math_sphbes.h" // mohan add 2021-05-06
+#include "source_base/tool_title.h"
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 Exx_Abfs::Jle::init_jle(
@@ -13,15 +14,19 @@ Exx_Abfs::Jle::init_jle(
 	const UnitCell& ucell,
 	const LCAO_Orbitals& orb)
 {
+	ModuleBase::TITLE("Exx_Abfs::Jle","init_jle");
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> jle( ucell.ntype );
 
 	for(int T=0; T<ucell.ntype; ++T)
 	{
-		jle[T].resize( info.abfs_Lmax+1 );
+		if(info.abfs_Lmax+1>0)
+			{ jle[T].resize( info.abfs_Lmax+1 ); }
 		for(int L=0; L<=info.abfs_Lmax; ++L)
 		{
 			const size_t ecut_number 
 				= static_cast<size_t>( std::sqrt( info.ecut_exx ) * orb.Phi[T].getRcut() / ModuleBase::PI ); // Rydberg Unit.
+			if(ecut_number<=0)
+				{ continue; }
 
 			jle[T][L].resize( ecut_number );
 

@@ -16,7 +16,7 @@ void write_dos_lcao(
         const UnitCell& ucell,
 		const K_Vectors& kv,
 		const int nbands,
-		const elecstate::efermi &energy_fermi,
+		const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
@@ -69,7 +69,8 @@ void write_dos_lcao(
 				kv.isk,
 				nbands,
 				ekb,
-				wg);
+				wg,
+				istep);
 	}
 
 
@@ -112,7 +113,7 @@ template void write_dos_lcao(
         const UnitCell& ucell,
 		const K_Vectors& kv,
 		const int nbands,
-		const elecstate::efermi &energy_fermi,
+		const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
@@ -130,7 +131,7 @@ template void write_dos_lcao(
         const UnitCell& ucell,
 		const K_Vectors& kv,
 		const int nbands,
-		const elecstate::efermi &energy_fermi,
+		const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,

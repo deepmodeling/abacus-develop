@@ -145,7 +145,7 @@ public:
             std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out.data<std::complex<double>>());
         };
 
-        auto subspace_func = [] (const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
+        auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool S_orth) { /*do nothing*/ };
 
         auto spsi_func = [this] (const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
             const auto ndim = psi_in.shape().ndim();

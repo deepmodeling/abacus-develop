@@ -11,8 +11,9 @@ namespace ModuleIO
 		const K_Vectors& kv);
 
 	void write_eig_file(const ModuleBase::matrix &ekb,
-		const ModuleBase::matrix &wg,
-		const K_Vectors& kv);
+			const ModuleBase::matrix &wg,
+			const K_Vectors& kv,
+			const int istep);
 }
 
 #endif

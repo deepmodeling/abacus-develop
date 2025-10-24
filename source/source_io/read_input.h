@@ -108,6 +108,8 @@ class ReadInput
     // items for real time tddft
     void item_rt_tddft();
     // items for linear response tddft
+    void item_tdofdft();
+    // items for td-ofdft
     void item_lr_tddft();
     // items for output
     void item_output();
