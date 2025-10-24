@@ -48,7 +48,9 @@ class Setup_DeePKS
 		const Input_para &inp);
 
     void delta_e(
+		const UnitCell& ucell,
         const K_Vectors &kv,
+		const LCAO_Orbitals& orb,
 	    const Parallel_Orbitals &pv, // parallel orbitals
 		const Grid_Driver &gd,
 		const std::vector<std::vector<TK>>& dm_vec,

@@ -537,7 +537,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
-    this->deepks.delta_e(this->kv, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
+    this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
 
     // 3) for delta spin
     if (PARAM.inp.sc_mag_switch)
