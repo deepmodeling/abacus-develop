@@ -81,7 +81,7 @@ void ElecStateLCAO<double>::dm2Rho(std::vector<double*> pexsi_DM, std::vector<do
 }
 
 template <>
-void ElecStateLCAO<std::complex<double>>::dm2Rho(std::vector<std::complex<double>*> pexsi_DM,
+void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double>*> pexsi_DM,
                                                   std::vector<std::complex<double>*> pexsi_EDM)
 {
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");

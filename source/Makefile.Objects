@@ -252,7 +252,7 @@ OBJS_ELECSTAT=elecstate.o\
     update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      setup_dm.o\
+      init_dm.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\

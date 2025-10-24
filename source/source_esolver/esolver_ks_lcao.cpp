@@ -14,7 +14,7 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
-#include "source_estate/module_dm/setup_dm.h" // setup dm from electronic wave functions
+#include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -383,7 +383,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+		elecstate::init_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
 	}
 
 #ifdef __EXX

@@ -19,7 +19,10 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     chr->renormalize_rho();
 
     // should be moved somewhere else, mohan 20251024
-    dm2tau(dmr, nspin, chr);
+	if (XC_Functional::get_ked_flag())
+	{
+		dm2tau(dmr, nspin, chr);
+	}
 
     // symmetrize of charge density should be here, mohan 20251023
 
@@ -35,14 +38,11 @@ void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
     ModuleBase::TITLE("LCAO_domain", "dm2tau");
     ModuleBase::timer::tick("LCAO_domain", "dm2tau");
 
-    if (XC_Functional::get_ked_flag())
-    {
-        for (int is = 0; is < nspin; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(chr->kin_r[is], chr->nrxx);
-        }
-        ModuleGint::cal_gint_tau(dmr, nspin, chr->kin_r);
-    }
+	for (int is = 0; is < nspin; is++)
+	{
+		ModuleBase::GlobalFunc::ZEROS(chr->kin_r[is], chr->nrxx);
+	}
+	ModuleGint::cal_gint_tau(dmr, nspin, chr->kin_r);
 
     ModuleBase::timer::tick("LCAO_domain", "dm2tau");
 }

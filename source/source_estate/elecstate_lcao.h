@@ -56,7 +56,7 @@ class ElecStateLCAO : public ElecState
      * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be
      * stored in DensityMatrix::pexsi_EDM
      */
-    void dm2Rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
+    void dm2rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
 #endif
 
     DensityMatrix<TK, double>* DM = nullptr;
