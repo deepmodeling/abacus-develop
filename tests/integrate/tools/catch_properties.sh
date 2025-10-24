@@ -373,13 +373,20 @@ if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
 fi
 
 #---------------------------------------
+# Charge density
+#---------------------------------------
+#echo $out_chg
+if ! test -z "$out_chg"  && [  $out_chg == 1 ]; then
+	python3 $COMPARE_SCRIPT chg.cube.ref OUT.autotest/chg.cube 8
+	echo "chg.cube_pass $?" >>$1
+fi
+
+#---------------------------------------
 # SCAN exchange-correlation information
 #echo $has_scan
 #---------------------------------------
 if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
        ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 $COMPARE_SCRIPT chg.cube.ref OUT.autotest/chg.cube 8
-    echo "chg.cube_pass $?" >>$1
     python3 $COMPARE_SCRIPT tau.cube.ref OUT.autotest/tau.cube 8
     echo "tau.cube_pass $?" >>$1
 fi
