@@ -15,7 +15,7 @@ scf_nmax           30
 device             gpu
 ks_solver          cusolver
 basis_type         lcao
-out_chg            1
+# out_chg            1
 gamma_only         0
 md_nstep           2
 
