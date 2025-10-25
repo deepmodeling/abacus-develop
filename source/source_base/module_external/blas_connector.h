@@ -186,6 +186,14 @@ void zherk_(const char* uplo, const char* trans, const int* n, const int* k,
             const std::complex<double>* a, const int* lda,
             const double* beta,
             std::complex<double>* c, const int* ldc);
+
+// === Symmetric rank-k update ===
+void dsyrk_(const char* uplo, const char* trans, const int* n, const int* k,
+            const double* alpha,
+            const double* a, const int* lda,
+            const double* beta, 
+            double* c,
+            const int* ldc);
 }
 
 // Class BlasConnector provide the connector to fortran lapack routine.
