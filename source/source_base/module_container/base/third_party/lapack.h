@@ -338,7 +338,7 @@ void heevx(const char jobz, const char range, const char uplo, const int n,
     ssyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
             &abstol, &m, w, z, &ldz,
-            work, &lwork, rwork, iwork, ifail, &info);
+            work, &lwork,  iwork, ifail, &info);
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
