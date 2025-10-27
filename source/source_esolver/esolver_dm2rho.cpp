@@ -67,7 +67,7 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
         ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
     }
 
-    // it's dangrous to design psiToRho function like this, mohan note 20251024
+    // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
     LCAO_domain::dm2rho(estate->DM->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 
