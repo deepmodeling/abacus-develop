@@ -181,7 +181,6 @@ void dgetri_(const int* n, double* A, const int* lda, const int* ipiv, double* w
 void cgetri_(const int* n, std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* work, const int* lwork, int* info);
 void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
 
-<<<<<<< Updated upstream
 // Solve linear system using LU factorization
 void sgetrs_(const char* trans, const int* n, const int* nrhs,
              const float* A, const int* lda, const int* ipiv,
@@ -195,23 +194,19 @@ void cgetrs_(const char* trans, const int* n, const int* nrhs,
 void zgetrs_(const char* trans, const int* n, const int* nrhs,
              const std::complex<double>* A, const int* lda, const int* ipiv,
              std::complex<double>* B, const int* ldb, int* info);
-=======
-void sgetrs_(const char* trans, const int* n, const int* nrhs, const float* A, const int* lda, const int* ipiv, float* B, const int* ldb, int* info);
-void dgetrs_(const char* trans, const int* n, const int* nrhs, const double* A, const int* lda, const int* ipiv, double* B, const int* ldb, int* info);
-void cgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* B, const int* ldb, int* info);
-void zgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* B, const int* ldb, int* info);
 
+// QR factorization
+// build R and Householder
 void sgeqrf_(const int* m, const int* n, float* A, const int* lda, float* tau, float *work, const int* lwork, int* info);
 void dgeqrf_(const int* m, const int* n, double* A, const int* lda, double* tau, double *work, const int* lwork, int* info);
 void cgeqrf_(const int* m, const int* n, std::complex<float>* A, const int* lda, std::complex<float>* tau, std::complex<float> *work, const int* lwork, int* info);
 void zgeqrf_(const int* m, const int* n, std::complex<double>* A, const int* lda, std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
-
+// make explicit Q
 void sorgqr_(const int* m, const int* n, const int* k, float* A, const int* lda, const float* tau, float* work, const int* lwork, int* info);
 void dorgqr_(const int* m, const int* n, const int* k, double* A, const int* lda, const double* tau, double* work, const int* lwork, int* info);
 void cungqr_(const int* m, const int* n, const int* k, std::complex<float>* A, const int* lda, const std::complex<float>* tau, std::complex<float> *work, const int* lwork, int* info);
 void zunqrf_(const int* m, const int* n, const int* k, std::complex<double>* A, const int* lda, const std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
 
->>>>>>> Stashed changes
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.
