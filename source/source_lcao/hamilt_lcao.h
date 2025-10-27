@@ -17,6 +17,9 @@
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
+
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
+
 namespace hamilt
 {
 
@@ -45,15 +48,9 @@ class HamiltLCAO : public Hamilt<TK>
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
 			   elecstate::DensityMatrix<TK, double>* DM_in,
-			   Setup_DeePKS<TK> &deepks
-#ifdef __EXX
-               ,
-               const int istep,
-               int* exx_two_level_step = nullptr,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
-#endif
-    );
+			   Setup_DeePKS<TK> &deepks,
+			   const int istep, 
+			   Exx_NAO<TK> &exx_nao);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer

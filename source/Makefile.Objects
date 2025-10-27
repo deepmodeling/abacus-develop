@@ -228,11 +228,11 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
+    elecstate_tools.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     elecstate_op.o\
-    elecstate_tools.o\
     efield.o\
     gatefield.o\
     potential_new.o\
@@ -252,8 +252,7 @@ OBJS_ELECSTAT=elecstate.o\
     update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      elecstate_lcao_cal_tau.o\
-      setup_dm.o\
+      init_dm.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\
@@ -643,6 +642,7 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
+      rho_tau_lcao.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

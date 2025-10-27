@@ -23,7 +23,10 @@ void Magnetism::compute_mag(const double& omega,
 		const double* const * rho, 
 		double* nelec_spin)
 {
+    assert(omega>0.0);
     assert(nxyz>0);
+
+    const double fac = omega / nxyz;
 
     if (PARAM.inp.nspin==2)
     {
@@ -40,8 +43,8 @@ void Magnetism::compute_mag(const double& omega,
         Parallel_Reduce::reduce_pool(this->tot_mag);
         Parallel_Reduce::reduce_pool(this->abs_mag);
 #endif
-        this->tot_mag *= omega / nxyz;
-        this->abs_mag *= omega / nxyz;
+        this->tot_mag *= fac;
+        this->abs_mag *= fac;
 
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total magnetism (Bohr mag/cell)",this->tot_mag);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Absolute magnetism (Bohr mag/cell)",this->abs_mag);
@@ -82,7 +85,7 @@ void Magnetism::compute_mag(const double& omega,
 #endif
 		for(int i=0;i<3;i++) 
 		{
-			this->tot_mag_nc[i] *= omega/ nxyz;
+			this->tot_mag_nc[i] *= fac;
             // mohan add 2025-06-21
 			if( std::abs(this->tot_mag_nc[i]) < 1.0e-16)
 			{
@@ -90,7 +93,7 @@ void Magnetism::compute_mag(const double& omega,
 			}
 		}
 
-		this->abs_mag *= omega/ nxyz;
+		this->abs_mag *= fac;
 
         // mohan update 2025-06-21
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total magnetism (Bohr mag/cell)",

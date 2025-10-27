@@ -41,6 +41,7 @@
 #include "module_operator_lcao/td_pot_hybrid.h"
 #include "module_operator_lcao/veff_lcao.h"
 
+
 namespace hamilt
 {
 
@@ -78,15 +79,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
                                elecstate::DensityMatrix<TK, double>* DM_in,
-                               Setup_DeePKS<TK> &deepks
-#ifdef __EXX
-                               ,
-                               const int istep,
-                               int* exx_two_level_step,
-                               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-                               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
-#endif
-)
+                               Setup_DeePKS<TK> &deepks,
+							   const int istep, 
+							   Exx_NAO<TK> &exx_nao)
 {
     this->classname = "HamiltLCAO";
 
@@ -411,6 +406,21 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
+	    int* exx_two_level_step = nullptr;
+	    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
+	    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr;
+
+		if(GlobalC::exx_info.info_ri.real_number)
+		{
+            exx_two_level_step = &exx_nao.exd->two_level_step;
+			Hexxd = &exx_nao.exd->get_Hexxs();
+		}
+		else
+		{
+            exx_two_level_step = &exx_nao.exc->two_level_step;
+			Hexxc = &exx_nao.exc->get_Hexxs();
+		}
+
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs

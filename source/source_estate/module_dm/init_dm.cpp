@@ -1,17 +1,17 @@
-#include "source_estate/module_dm/setup_dm.h"
+#include "source_estate/module_dm/init_dm.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/cal_ux.h"
 
 template <typename TK>
-void elecstate::setup_dm(UnitCell& ucell,
+void elecstate::init_dm(UnitCell& ucell,
 		elecstate::ElecStateLCAO<TK>* pelec,
         psi::Psi<TK>* psi,
 		Charge &chr,
         const int iter,
         const int exx_two_level_step)
 {
-    ModuleBase::TITLE("elecstate", "setup_dm");
+    ModuleBase::TITLE("elecstate", "init_dm");
 
 	if (iter == 1 && exx_two_level_step == 0)
 	{
@@ -49,14 +49,14 @@ void elecstate::setup_dm(UnitCell& ucell,
 }
 
 
-template void elecstate::setup_dm<double>(UnitCell& ucell,
+template void elecstate::init_dm<double>(UnitCell& ucell,
 		elecstate::ElecStateLCAO<double>* pelec,
         psi::Psi<double>* psi,
 		Charge &chr,
         const int iter,
         const int exx_two_level_step);
 
-template void elecstate::setup_dm<std::complex<double>>(UnitCell& ucell,
+template void elecstate::init_dm<std::complex<double>>(UnitCell& ucell,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec,
         psi::Psi<std::complex<double>>* psi,
 		Charge &chr,

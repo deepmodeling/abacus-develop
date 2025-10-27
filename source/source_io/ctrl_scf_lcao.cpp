@@ -29,6 +29,7 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_io/to_qo.h" // use toQO
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
 
 template <typename TK, typename TR>
@@ -368,10 +369,16 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 		std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 	}
 
+    // 14) calculate the kinetic energy density tau
+    // mohan add 2025-10-24
+//    if (inp.out_elf[0] > 0)
+//	{
+//		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
+//	}
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 14) Output Hexx matrix in LCAO basis
+    //! 15) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (inp.out_chg[0])
@@ -392,7 +399,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 15) Write RPA information in LCAO basis
+    //! 16) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (inp.rpa)
     {
@@ -408,7 +415,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 16) Perform RDMFT calculations, added by jghan, 2024-10-17
+    //! 17) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
     if (inp.rdmft == true)
     {

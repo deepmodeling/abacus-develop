@@ -1,9 +1,7 @@
 #include "esolver_ks_lcao.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_io/read_wfc_nao.h"
 #include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
-#include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
@@ -16,13 +14,14 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
-#include "source_estate/module_dm/setup_dm.h" // setup dm from electronic wave functions
+#include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_psi/setup_psi.h" // mohan add 20251019
 #include "source_io/read_wfc_nao.h" 
 #include "source_io/print_info.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 
 namespace ModuleESolver
 {
@@ -110,7 +109,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 11) init charge density
     this->chr.allocate(inp.nspin);
-    this->pelec->omega = ucell.omega;
 
     // 12) init potentials
     if (this->pelec->pot == nullptr)
@@ -199,15 +197,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, DM, this->deepks
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
-#endif
-        );
+            two_center_bundle_, orb_, DM, this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -224,19 +214,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-#ifdef __EXX
-    if (PARAM.inp.calculation != "nscf")
-    {
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            this->exx_nao.exd->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
-        }
-        else
-        {
-            this->exx_nao.exc->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
-        }
-    }
-#endif
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
     // 12) init_scf, should be before_scf? mohan add 2025-03-10
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
@@ -318,10 +296,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
 }
 
-//------------------------------------------------------------------------------
-//! the 7th function of ESolver_KS_LCAO: cal_stress
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
@@ -406,10 +380,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= GlobalC::exx_info.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
+				= GlobalC::exx_info.info_ri.real_number ? 
+                  this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+		elecstate::init_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
 	}
 
 #ifdef __EXX
@@ -495,7 +470,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     if (!skip_solve)
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->chr, PARAM.inp.nspin, skip_charge);
     }
 
     // 4) EXX
@@ -563,15 +538,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
-#ifdef __MLALGO
-    if (PARAM.inp.deepks_scf)
-    {
-        this->deepks.ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
-        DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, this->deepks.ld.dm_r);
-        estate->f_en.edeepks_scf = this->deepks.ld.E_delta - this->deepks.ld.e_delta_band;
-        estate->f_en.edeepks_delta = this->deepks.ld.E_delta;
-    }
-#endif
+    this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
 
     // 3) for delta spin
     if (PARAM.inp.sc_mag_switch)
@@ -617,9 +584,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
-    //! 1) call after_scf() of ESolver_KS
-    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
-
     auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
 
@@ -632,6 +596,15 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","p_hamilt does not exist");
     }
+
+    if (PARAM.inp.out_elf[0] > 0)
+	{
+		LCAO_domain::dm2tau(estate->DM->get_DMR_vector(), PARAM.inp.nspin, estate->charge);
+	}
+
+    //! 1) call after_scf() of ESolver_KS
+    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
+
 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
@@ -653,7 +626,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 }
-
 
 template class ESolver_KS_LCAO<double, double>;
 template class ESolver_KS_LCAO<std::complex<double>, double>;

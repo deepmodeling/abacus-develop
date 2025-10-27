@@ -33,7 +33,7 @@ jobs:
           fi
 
           # Verify that the version in version.h matches the tag
-          if [[ "${{ steps.versions.outputs.current_tag }}" != "v${CODE_VERSION}" ]]; then
+          if [[ "${{ steps.versions.outputs.current_tag }}" != "${CODE_VERSION}" ]]; then
             echo "::error::Version mismatch: tag=${{ steps.versions.outputs.current_tag }} ≠ code=${CODE_VERSION}"
             exit 1
           fi

@@ -22,7 +22,6 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
         this->chr.allocate(PARAM.inp.nspin);
     }
-    this->pelec->omega = ucell.omega;
 
     delete this->pelec->pot;
     this->pelec->pot = new elecstate::Potential(this->pw_rhod,

@@ -1,5 +1,5 @@
-#ifndef SETUP_DM_H
-#define SETUP_DM_H
+#ifndef INIT_DM_H
+#define INIT_DM_H
 
 #include "source_cell/unitcell.h" // use unitcell
 #include "source_estate/elecstate_lcao.h"// use ElecStateLCAO
@@ -10,7 +10,7 @@ namespace elecstate
 {
 
 template <typename TK> 
-void setup_dm(UnitCell& ucell,
+void init_dm(UnitCell& ucell,
 		ElecStateLCAO<TK>* pelec,
         psi::Psi<TK>* psi,
 		Charge &chr,
