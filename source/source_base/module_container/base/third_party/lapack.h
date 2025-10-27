@@ -275,7 +275,7 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
             float* a, const int lda, float* b, const int ldb,
             const float vl, const float vu, const int il, const int iu, const float abstol,
             int m, float* w, float* z, const int ldz,
-            float* work, int lwork, float* rwork, int* iwork, int* ifail, int& info)
+            float* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
 {
     ssygvx_(&itype, &jobz, &range, &uplo, &n,
             a, &lda, b, &ldb,
@@ -289,7 +289,7 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
             double* a, const int lda, double* b, const int ldb,
             const double vl, const double vu, const int il, const int iu, const double abstol,
             int m, double* w, double* z, const int ldz,
-            double* work, int lwork, double* rwork, int* iwork, int* ifail, int& info)
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
 {
     dsygvx_(&itype, &jobz, &range, &uplo, &n,
             a, &lda, b, &ldb,
@@ -303,7 +303,7 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
             std::complex<float>* a, const int lda, std::complex<float>* b, const int ldb,
             const float vl, const float vu, const int il, const int iu, const float abstol,
             int m, float* w, std::complex<float>* z, const int ldz,
-            std::complex<float>* work, int lwork, float* rwork, int* iwork, int* ifail, int& info)
+            std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
 {
     chegvx_(&itype, &jobz, &range, &uplo, &n,
             a, &lda, b, &ldb,
@@ -317,7 +317,7 @@ void hegvx(const int itype, const char jobz, const char range, const char uplo, 
             std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
             const double vl, const double vu, const int il, const int iu, const double abstol,
             int m, double* w, std::complex<double>* z, const int ldz,
-            std::complex<double>* work, int lwork, double* rwork, int* iwork, int* ifail, int& info)
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
 {
     zhegvx_(&itype, &jobz, &range, &uplo, &n,
             a, &lda, b, &ldb,
@@ -333,7 +333,7 @@ void heevx(const char jobz, const char range, const char uplo, const int n,
              float* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              int m, float* w, float* z, const int ldz,
-             float* work, int lwork, float* rwork, int* iwork, int* ifail, int info)
+             float* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
 {
     ssyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
@@ -346,7 +346,7 @@ void heevx(const char jobz, const char range, const char uplo, const int n,
             double* a, const int lda,
             const double vl, const double vu, const int il, const int iu, const double abstol,
             int m, double* w, double* z, const int ldz,
-            double* work, int lwork, double* rwork, int* iwork, int* ifail, int info)
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
 {
     dsyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
@@ -358,7 +358,7 @@ void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<float>* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              int m, float* w, std::complex<float>* z, const int ldz,
-             std::complex<float>* work, int lwork, float* rwork, int* iwork, int* ifail, int info)
+             std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
 {
     cheevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
@@ -371,7 +371,7 @@ void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<double>* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              int m, double* w, std::complex<double>* z, const int ldz,
-             std::complex<double>* work, int lwork, double* rwork, int* iwork, int* ifail, int info)
+             std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
 {
     zheevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
