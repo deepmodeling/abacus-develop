@@ -1136,6 +1136,34 @@ void getrs(cusolverDnHandle_t& cusolver_handle, const char& trans, const int& n,
     cudaErrcheck(cudaFree(d_info));
 }
 
+// QR decomposition
+// geqrf, orgqr
+// Note:
+// there are two cusolver geqrf
+// one is cusolverDn<t>geqrf
+// one is cusolverDnXgeqrf
+// which one is better?
+static inline
+void geqrf(cusolverDnHandle_t& cusolver_handle, const int m, const int n, std::complex<float>* A, const int lda, std::complex<float>* tau)
+{
+    // first allocate memory for workspace
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnCgeqrf_bufferSize(cusolver_handle, m, n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
+
+    std::complex<float>* d_work = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_work, lwork * sizeof(std::complex<float>)));
+
+    // compute QR decomposition
+    cusolverErrcheck(cusolverDnCgeqrf(cusolver_handle, m, n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(tau), d_work, lwork, d_info));
+
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        throw std::runtime_error("geqrf: failed to compute QR decomposition");
+    }
+
+    cudaErrcheck(cudaFree(d_work));
+}
+
 } // namespace cuSolverConnector
 } // namespace container
 

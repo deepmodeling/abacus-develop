@@ -110,6 +110,64 @@ struct lapack_getri<T, DEVICE_CPU> {
     }
 };
 
+template <typename T>
+struct lapack_geqrf_inplace<T, DEVICE_CPU> {
+    void operator()(
+        const int m,
+        const int n,
+        T *A,
+        const int lda)
+    {
+        // Tensor or vector?
+        // 1. tau for storing the Householder reflectors
+        // tau should be dimension min(m, n)
+        int k = std::min(m, n);
+        Tensor tau(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {k});
+        tau.zero();
+
+        int info = 0;
+
+        // 2. query for workspace size
+        int lwork = -1;
+        T work_query;
+        lapackConnector::geqrf(m, n, A, lda, tau.data<T>(), &work_query, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("geqrf workspace query failed with info = " + std::to_string(info));
+        }
+        // allocate workspace
+        lwork = static_cast<int>(get_real(work_query));
+        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
+        work.zero();
+
+        // 3. perform QR decomposition
+        // and A is overwritten with upper R.
+        // Lower A + tau => Q
+        lapackConnector::geqrf(m, n, A, lda, tau.data<T>(), work.data<T>(), lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("geqrf failed with info = " + std::to_string(info));
+        }
+
+        // 4. use orgqr to compute Q
+        // workspace query
+        lwork = -1;
+        lapackConnector::orgqr(m, n, k, A, lda, tau.data<T>(), &work_query, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("orgqr workspace query failed with info = " + std::to_string(info));
+        }
+        // allocate workspace
+        lwork = static_cast<int>(get_real(work_query));
+        work.resize({lwork});
+
+        // compute Q
+        lapackConnector::orgqr(m, n, k, A, lda, tau.data<T>(), work.data<T>(), lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("orgqr failed with info = " + std::to_string(info));
+        }
+
+        // now, A should be overwritten with Q, columns orthogonal
+
+    }
+};
 
 // --- 2. Linear System Solvers ---
 template <typename T>

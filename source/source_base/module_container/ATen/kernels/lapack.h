@@ -63,6 +63,41 @@ struct lapack_getri {
         const int& lwork);
 };
 
+// This is QR factorization in-place
+// that will change input Mat A to orthogonal/unitary matrix Q
+template <typename T, typename Device>
+struct lapack_geqrf_inplace {
+    void operator()(
+        const int m,
+        const int n,
+        T *A,
+        const int lda);
+};
+
+// This is QR factorization
+// where [in]Mat will be kept and the results are stored in separate matrix Q
+// template <typename T, typename Device>
+// struct lapack_geqrf{
+//     /**
+//      * Perform QR factorization of a matrix using LAPACK's geqrf function.
+//      *
+//      * @param m The number of rows in the matrix.
+//      * @param n The number of columns in the matrix.
+//      * @param Mat The matrix to be factorized.
+//      *        On exit, the upper triangle contains the upper triangular matrix R,
+//      *        and the elements below the diagonal, with the array TAU, represent
+//      *        the unitary matrix Q as a product of min(m,n) elementary reflectors.
+//      * @param lda The leading dimension of the matrix.
+//      * @param tau Array of size min(m,n) containing the Householder reflectors.
+//      */
+//     void operator()(
+//         const int m,
+//         const int n,
+//         T *Mat,
+//         const int lda,
+//         T *tau);
+// };
+
 
 // --- 2. Linear System Solvers ---
 template <typename T, typename Device>
