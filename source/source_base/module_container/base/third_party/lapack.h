@@ -110,7 +110,7 @@ void ssyevx_(const char* jobz, const char* range, const char* uplo, const int* n
              float* a, const int* lda,
              const float* vl, const float* vu, const int* il, const int* iu,
              const float* abstol, int* m, float* w, float* z, const int* ldz,
-             float* work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+             float* work, const int* lwork,  int* iwork, int* ifail, int* info);
 
 void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
              double* a, const int* lda,
