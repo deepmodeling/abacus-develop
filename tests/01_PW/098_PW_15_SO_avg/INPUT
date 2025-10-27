@@ -14,7 +14,7 @@ relax_nmax       1
 force_thr_ev     0.001
 out_level        ie
 relax_method     cg
-out_chg          1
+# out_chg          1
 #out_band        1
 #init_chg        file
 

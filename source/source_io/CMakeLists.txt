@@ -61,7 +61,6 @@ if(ENABLE_LCAO)
       get_pchg_lcao.cpp
       get_wf_lcao.cpp
       read_wfc_nao.cpp
-      read_wfc_lcao.cpp
       write_wfc_nao.cpp
       write_dmk.cpp
       write_dmr.cpp

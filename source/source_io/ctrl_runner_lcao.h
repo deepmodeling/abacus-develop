@@ -7,7 +7,6 @@
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
-#include "source_lcao/module_gint/gint_k.h" // use Gint_k
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
 
 namespace ModuleIO
@@ -25,8 +24,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 

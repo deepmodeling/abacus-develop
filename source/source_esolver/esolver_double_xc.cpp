@@ -51,8 +51,6 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
         this->pelec_base = new elecstate::ElecStateLCAO<TK>(&(this->chr_base), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       &(this->GG),
-                                                       &(this->GK),
                                                        this->pw_rho,
                                                        this->pw_big);
     }    
@@ -90,7 +88,6 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
 
     // 10) inititlize the charge density
     this->chr_base.allocate(PARAM.inp.nspin);
-    this->pelec_base->omega = ucell.omega;
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
@@ -116,7 +113,6 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     ESolver_KS_LCAO<TK,TR>::before_scf(ucell, istep);
 
-    this->pelec_base->omega = ucell.omega;
     //----------------------------------------------------------
     //! calculate D2 or D3 vdW
     //----------------------------------------------------------
@@ -145,8 +141,6 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)->get_DM();
 
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
             this->gd,
             &this->pv,
@@ -155,16 +149,10 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->two_center_bundle_,
             this->orb_,
             DM,
-            this->deepks
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
-#endif
-        );
-    }
+			this->deepks,
+			istep,
+			this->exx_nao);
+	}
 
     XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
     this->pelec_base->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
@@ -399,8 +387,6 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->pv,
                        this->pelec_base,
                        this->psi,
-                       this->GG, // mohan add 2024-04-01
-                       this->GK, // mohan add 2024-04-01
                        this->two_center_bundle_,
                        this->orb_,
                        force_base,

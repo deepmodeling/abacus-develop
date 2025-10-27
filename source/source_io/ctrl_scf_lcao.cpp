@@ -29,12 +29,11 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_io/to_qo.h" // use toQO
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
-namespace ModuleIO
-{
 
 template <typename TK, typename TR>
-void ctrl_scf_lcao(UnitCell& ucell,
+void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<TK>* pelec, 
@@ -43,20 +42,46 @@ void ctrl_scf_lcao(UnitCell& ucell,
 		psi::Psi<TK>* psi,
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<TK> &deepks,
 		Exx_NAO<TK> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+
+    //*****
+    // if istep_in = -1, istep will not appear in file name
+    // if iter_in = -1, iter will not appear in file name
+    int istep_in = -1;
+    int iter_in = -1;
+    bool out_flag = false;
+    if (inp.out_freq_ion>0) // default value of out_freq_ion is 0
+    {
+        if (istep % inp.out_freq_ion == 0)
+        {
+            istep_in = istep;
+            out_flag = true;
+        }
+    }
+    else if(conv_esolver || scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
+    {
+        out_flag = true;
+    }
+
+	if(!out_flag)
+	{
+		return;
+	}
+
+    //*****
 
     const bool out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
@@ -193,7 +218,6 @@ void ctrl_scf_lcao(UnitCell& ucell,
 			istep,
 			pelec->pot->get_effective_v(),
 			pv,
-			gk,
 			two_center_bundle,
 			orb,
 			ucell,
@@ -303,7 +327,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&pv);
-        bp.lcao_init(ucell, gd, kv, gt, orb);
+        bp.lcao_init(ucell, gd, kv, orb);
         // additional step before calling macroscopic_polarization
         bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
@@ -345,10 +369,16 @@ void ctrl_scf_lcao(UnitCell& ucell,
 		std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 	}
 
+    // 14) calculate the kinetic energy density tau
+    // mohan add 2025-10-24
+//    if (inp.out_elf[0] > 0)
+//	{
+//		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
+//	}
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 14) Output Hexx matrix in LCAO basis
+    //! 15) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (inp.out_chg[0])
@@ -369,7 +399,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 15) Write RPA information in LCAO basis
+    //! 16) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (inp.rpa)
     {
@@ -385,7 +415,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 16) Perform RDMFT calculations, added by jghan, 2024-10-17
+    //! 17) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
     if (inp.rdmft == true)
     {
@@ -432,11 +462,11 @@ void ctrl_scf_lcao(UnitCell& ucell,
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 }
 
-} // End ModuleIO
 
 
 // For gamma only
-template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<double, double>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<double>* pelec, 
@@ -445,20 +475,21 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell,
 		psi::Psi<double>* psi,
 		hamilt::HamiltLCAO<double, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<double> &deepks,
 		Exx_NAO<double> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
 
 // For multiple k-points
-template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -467,19 +498,20 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& uc
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
 
-template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(
+        UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -488,15 +520,14 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
-		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
-		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
 		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
+        const bool conv_esolver,
+        const bool scf_nmax_flag,
 		const int istep);
-

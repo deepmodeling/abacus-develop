@@ -34,6 +34,8 @@
 #include "source_hsolver/parallel_k2d.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+
 namespace hsolver
 {
 
@@ -41,6 +43,8 @@ template <typename T, typename Device>
 void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
                                    psi::Psi<T>& psi,
                                    elecstate::ElecState* pes,
+                                   Charge &chr,
+                                   const int nspin,
                                    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
@@ -97,9 +101,8 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
         if (!skip_charge)
         {
-            // used in scf calculation
-            // calculate charge by eigenpairs(eigenvalues and eigenvectors)
-            pes->psiToRho(psi);
+            // compute charge density from density matrix, mohan update 20251024
+            LCAO_domain::dm2rho(_pes_lcao->DM->get_DMR_vector(), nspin, &chr);
         }
         else
         {
@@ -121,7 +124,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
-        _pes->dmToRho(pe.DM, pe.EDM);
+        _pes->dm2rho(pe.DM, pe.EDM);
 #endif
     }
 

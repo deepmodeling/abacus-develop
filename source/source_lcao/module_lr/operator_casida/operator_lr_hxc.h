@@ -1,8 +1,6 @@
 #pragma once
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
-#include "source_lcao/module_lr/utils/gint_template.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
@@ -21,7 +19,6 @@ namespace LR
                     const std::vector<int>& nvirt,
                     const psi::Psi<T, Device>& psi_ks_in,
                     std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans_in,
-                    typename TGint<T>::type* gint_in,
                     std::weak_ptr<PotHxcLR> pot_in,
                     const UnitCell& ucell_in,
                     const std::vector<double>& orb_cutoff,
@@ -32,7 +29,7 @@ namespace LR
                     const Parallel_Orbitals& pmat_in,
                     const std::vector<int>& ispin_ks = {0})
           : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin), psi_ks(psi_ks_in),
-            DM_trans(DM_trans_in), gint(gint_in), pot(pot_in), ucell(ucell_in), orb_cutoff_(orb_cutoff), gd(gd_in),
+            DM_trans(DM_trans_in), pot(pot_in), ucell(ucell_in), orb_cutoff_(orb_cutoff), gd(gd_in),
             kv(kv_in), pX(pX_in), pc(pc_in), pmat(pmat_in), ispin_ks(ispin_ks)
       {
           ModuleBase::TITLE("OperatorLRHxc", "OperatorLRHxc");
@@ -81,8 +78,6 @@ namespace LR
         const Parallel_Orbitals& pmat;
 
         std::weak_ptr<PotHxcLR> pot;
-
-        typename TGint<T>::type* gint = nullptr;
 
         const UnitCell& ucell;
         std::vector<double> orb_cutoff_;

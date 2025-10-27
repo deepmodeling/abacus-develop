@@ -40,8 +40,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
-                                          Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                                          Gint_k& gint_k,         // mohan add 2024-04-01
                                           const TwoCenterBundle& two_center_bundle,
                                           const LCAO_Orbitals& orb,
                                           ModuleBase::matrix& fcs,
@@ -137,8 +135,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     this->integral_part(PARAM.globalv.gamma_only_local, isforce, isstress,
                         ucell, gd, fsr, pelec, psi, foverlap, ftvnl_dphi,
                         fvnl_dbeta, fvl_dphi, soverlap, stvnl_dphi, svnl_dbeta,
-                        svl_dphi, fvnl_dalpha, svnl_dalpha, deepks, gint_gamma,
-                        gint_k, two_center_bundle, orb, pv, kv);
+                        svl_dphi, fvnl_dalpha, svnl_dalpha, deepks, 
+                        two_center_bundle, orb, pv, kv);
 
     // calculate force and stress for Nonlocal part
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
@@ -732,8 +730,6 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
                                               Setup_DeePKS<double>& deepks,
-                                              Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                                              Gint_k& gint_k,         // mohan add 2024-04-01
                                               const TwoCenterBundle& two_center_bundle,
                                               const LCAO_Orbitals& orb,
                                               const Parallel_Orbitals& pv,
@@ -743,8 +739,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,
                soverlap, stvnl_dphi, svnl_dbeta, svl_dphi,
-               fvnl_dalpha, svnl_dalpha, deepks, gint_gamma,
-               two_center_bundle, orb, pv);
+               fvnl_dalpha, svnl_dalpha, deepks, two_center_bundle, orb, pv);
     return;
 }
 
@@ -768,8 +763,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
                                                             Setup_DeePKS<std::complex<double>>& deepks,
-                                                            Gint_Gamma& gint_gamma,
-                                                            Gint_k& gint_k,
                                                             const TwoCenterBundle& two_center_bundle,
                                                             const LCAO_Orbitals& orb,
                                                             const Parallel_Orbitals& pv,
@@ -778,7 +771,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,
                soverlap, stvnl_dphi, svnl_dbeta, svl_dphi,
-               fvnl_dalpha, svnl_dalpha, deepks, gint_k,
+               fvnl_dalpha, svnl_dalpha, deepks,
                two_center_bundle, orb, pv, &kv, this->RA);
     return;
 }

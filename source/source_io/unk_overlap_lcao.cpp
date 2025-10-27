@@ -25,7 +25,6 @@ unkOverlap_lcao::~unkOverlap_lcao()
 }
 
 void unkOverlap_lcao::init(const UnitCell& ucell,
-                           const Grid_Technique& gt, 
                            const int nkstot, 
                            const LCAO_Orbitals& orb)
 {

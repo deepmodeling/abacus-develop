@@ -14,6 +14,7 @@
 #include "source_io/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_io/print_info.h" // print_parameters
+#include "source_psi/setup_psi.h" // mohan add 20251009
 
 namespace ModuleESolver
 {
@@ -28,7 +29,8 @@ ESolver_KS<T, Device>::~ESolver_KS()
 	//****************************************************
 	// do not add any codes in this deconstructor funcion
 	//****************************************************
-	delete this->psi;
+    Setup_Psi<T>::deallocate_psi(this->psi);
+
     delete this->p_hamilt;
     delete this->p_chgmix;
     this->ppcell.release_memory();
@@ -345,12 +347,14 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
     
+/*
     // 1) calculate the kinetic energy density tau
     if (PARAM.inp.out_elf[0] > 0)
     {
         assert(this->psi != nullptr);
         this->pelec->cal_tau(*(this->psi));
     }
+*/
     
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);

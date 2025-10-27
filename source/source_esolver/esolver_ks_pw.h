@@ -1,7 +1,7 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "source_psi/setup_psi.h" // mohan add 20251012
+#include "source_psi/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
@@ -53,7 +53,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     virtual void deallocate_hamilt();
 
     // Electronic wave function psi
-    Setup_Psi<T, Device> stp;
+    Setup_Psi_pw<T, Device> stp;
 
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;

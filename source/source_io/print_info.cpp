@@ -387,4 +387,32 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
     GlobalV::ofs_running << " ================================================================" << std::endl;
 }
 
+
+void print_kpar(const int &nks, const int &kpar_lcao)
+{
+    assert(nks>0);
+    assert(kpar_lcao>0);
+
+    // 15) if kpar is not divisible by nks, print a warning
+    if (kpar_lcao > 1)
+    {
+        if (nks % kpar_lcao != 0)
+        {
+            ModuleBase::WARNING("ModuleIO::print_kpar", "nks is not divisible by kpar.");
+            std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                         "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                         "%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                      << std::endl;
+            std::cout << " Warning: nks (" << nks << ") is not divisible by kpar ("
+                      << kpar_lcao << ")." << std::endl;
+            std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
+            std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;
+            std::cout << " you want, please ignore this warning." << std::endl;
+            std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                         "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                         "%%%%%%%%%%%%\n";
+        }
+    }
+}
+
 } // namespace ModuleIO

@@ -359,6 +359,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->stp.psi_cpu[0]);
+        this->pelec->cal_tau(*(this->psi));
     }
 
     // Call 'after_scf' of ESolver_KS

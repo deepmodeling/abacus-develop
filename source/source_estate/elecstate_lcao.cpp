@@ -5,90 +5,15 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 
 #include <vector>
 
 namespace elecstate
 {
-
-// multi-k case
-template <>
-void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<double>>& psi)
-{
-    ModuleBase::TITLE("ElecStateLCAO", "psiToRho");
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
-                                      this->charge->nrxx); // mohan 2009-11-10
-    }
-
-    //------------------------------------------------------------
-    // calculate the charge density on real space grid.
-    //------------------------------------------------------------
-
-    ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-#ifdef __OLD_GINT
-    this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer dm2d to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
-    this->gint_k->cal_gint(&inout);
-#else
-    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
-#endif
-
-    if (XC_Functional::get_ked_flag())
-    {
-        this->cal_tau(psi);
-    }
-
-    this->charge->renormalize_rho();
-
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-    return;
-}
-
-// Gamma_only case
-template <>
-void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
-{
-    ModuleBase::TITLE("ElecStateLCAO", "psiToRho");
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
-                                      this->charge->nrxx); // mohan 2009-11-10
-    }
-
-    //------------------------------------------------------------
-    // calculate the charge density on real space grid.
-    //------------------------------------------------------------
-    ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-
-#ifdef __OLD_GINT 
-    this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer dm2d to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
-    this->gint_gamma->cal_gint(&inout);
-#else
-    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
-#endif
-
-    if (XC_Functional::get_ked_flag())
-    {
-        this->cal_tau(psi);
-    }
-
-    this->charge->renormalize_rho();
-
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-    return;
-}
 
 template <typename TK>
 void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
@@ -114,9 +39,9 @@ double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 
 #ifdef __PEXSI
 template <>
-void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<double*> pexsi_EDM)
+void ElecStateLCAO<double>::dm2Rho(std::vector<double*> pexsi_DM, std::vector<double*> pexsi_EDM)
 {
-    ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
+    ModuleBase::timer::tick("ElecStateLCAO", "dm2Rho");
 
     int nspin = PARAM.inp.nspin;
     if (PARAM.inp.nspin == 4)
@@ -139,35 +64,24 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-#ifdef __OLD_GINT
-    this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer dm2d to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
-    this->gint_gamma->cal_gint(&inout);
-#else
     ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
-#endif
     if (XC_Functional::get_ked_flag())
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-#ifdef __OLD_GINT
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_gamma->cal_gint(&inout1);
-#else
         ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
-#endif
     }
 
     this->charge->renormalize_rho();
 
-    ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
+    ModuleBase::timer::tick("ElecStateLCAO", "dm2Rho");
     return;
 }
 
 template <>
-void ElecStateLCAO<std::complex<double>>::dmToRho(std::vector<std::complex<double>*> pexsi_DM,
+void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double>*> pexsi_DM,
                                                   std::vector<std::complex<double>*> pexsi_EDM)
 {
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");

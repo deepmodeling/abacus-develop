@@ -2,6 +2,7 @@
 #define SPARSE_FORMAT_HSR_H
 
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 
 namespace sparse_format
 {

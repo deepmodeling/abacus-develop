@@ -28,7 +28,6 @@ if(ENABLE_LCAO)
         FORCE_k.cpp
         stress_tools.cpp
         edm.cpp
-        grid_init.cpp
         spar_dh.cpp
         spar_exx.cpp
         spar_hsr.cpp
@@ -43,6 +42,7 @@ if(ENABLE_LCAO)
         LCAO_init_basis.cpp
         setup_exx.cpp
         setup_deepks.cpp
+        rho_tau_lcao.cpp
 		record_adj.cpp
         center2_orb.cpp
         center2_orb-orb11.cpp

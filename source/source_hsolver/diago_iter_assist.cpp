@@ -422,7 +422,7 @@ template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
                                               const int nbands,
                                               const T *hcc,
-                                              const T *scc,
+                                              T *scc,
                                               const int ldh, // nstart
                                               Real *e,       // always in CPU
                                               T *vcc)
@@ -540,7 +540,7 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
 
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diag_responce( const T* hcc,
-                                                const T* scc,
+                                                T* scc,
                                                 const int nbands,
                                                 const T* mat_in,           // [out] target matrix to be multiplied
                                                 T* mat_out,
@@ -583,7 +583,7 @@ void DiagoIterAssist<T, Device>::diag_responce( const T* hcc,
 
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
-                              const T* scc,
+                              T* scc,
                               const int dim_subspace,
                               psi::Psi<T, Device>& evc,
                               Real* en

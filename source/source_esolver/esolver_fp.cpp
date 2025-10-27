@@ -108,8 +108,6 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         this->locpp.init_vloc(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-        this->pelec->omega = ucell.omega;
-
         // perform symmetry analysis
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {

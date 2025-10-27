@@ -1,68 +1,52 @@
-#ifndef GINT_RHO_H
-#define GINT_RHO_H
-#include <cublas_v2.h>
-#include <cuda.h> // for CUDA_VERSION
-#include <cuda_runtime.h>
+#pragma once
 
-#include "source_lcao/module_gint/gint.h"
-#include "source_lcao/module_gint/grid_technique.h"
+#include <memory>
+#include <vector>
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "gint.h"
+#include "gint_info.h"
+#include "source_lcao/module_gint/kernel/cuda_mem_wrapper.h"
 
-namespace GintKernel
+namespace ModuleGint
 {
 
-/**
- * calculate the rho by GPU
- *
- * @param dm density matrix.
- * @param ylmcoef_now coefficients for the spherical harmonics expansion.
- * @param dr The grid spacing.
- * @param rcut Pointer to the cutoff radius array.
- * @param gridt Grid_Technique object containing grid information.
- * @param ucell UnitCell.
- * @param rho rho.
- */
-void gint_rho_gpu(const hamilt::HContainer<double>* dm,
-                        const double* ylmcoef_now,
-                        const double dr,
-                        const double* rcut,
-                        const Grid_Technique& gridt,
-                        const UnitCell& ucell,
-                        double* rho);
+class Gint_rho_gpu: public Gint
+{
+    public:
+    Gint_rho_gpu(
+        const std::vector<HContainer<double>*>& dm_vec,
+        const int nspin,
+        double **rho,
+        bool is_dm_symm = true)
+        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho), is_dm_symm_(is_dm_symm) {}
+    
+    void cal_gint();
 
-void gtask_rho(const Grid_Technique& gridt,
-               const int grid_index_ij,
-               const UnitCell& ucell,
-               double* dr_part,
-               uint8_t* atoms_type,
-               int* atoms_num_info,
-               int& atoms_per_z);
+    private:
+    void init_dm_gint_();
 
-void alloc_mult_dot_rho(const hamilt::HContainer<double>* dm,
-                        const Grid_Technique& gridt,
-                        const UnitCell& ucell,
-                        const int grid_index_ij,
-                        const int max_atom,
-                        const int lgd,
-                        const int nczp,
-                        const int* atoms_num_info,
-                        double* const psir_ylm_g,
-                        double* const psir_dm_g,
-                        double* const dm_matrix_g,
-                        double* mat_alpha,
-                        int* mat_m,
-                        int* mat_n,
-                        int* mat_k,
-                        int* mat_lda,
-                        int* mat_ldb,
-                        int* mat_ldc,
-                        double** mat_A,
-                        double** mat_B,
-                        double** mat_C,
-                        int& max_m,
-                        int& max_n,
-                        int& atom_pair_num,
-                        double* rho_g,
-                        double** dot_product);
+    void cal_rho_();
 
-} // namespace GintKernel
-#endif
+    void transfer_cpu_to_gpu_();
+
+    void transfer_gpu_to_cpu_();
+
+    // input
+    const std::vector<HContainer<double>*> dm_vec_;
+    const int nspin_;
+
+    // if true, it means the DMR matrix is symmetric,
+    // which leads to faster computations compared to the asymmetric case.
+    const bool is_dm_symm_;
+
+    // output
+    double **rho_;
+
+    // Intermediate variables
+    std::vector<HContainer<double>> dm_gint_vec_;
+
+    std::vector<CudaMemWrapper<double>> dm_gint_d_vec_;
+    std::vector<CudaMemWrapper<double>> rho_d_vec_;
+};
+
+}
