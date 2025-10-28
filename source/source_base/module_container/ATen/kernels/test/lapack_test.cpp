@@ -133,22 +133,31 @@ TYPED_TEST(LapackTest, GeqrfInPlace) {
          &beta,
          QtQ.data<Type>(), n);
 
-    // Test code: print A
-    std::cout << "A = " << std::endl;
-    for (int i = 0; i < m; ++i) {
-        for (int j = 0; j < n; ++j) {
-            std::cout << A_input.to_device<DEVICE_CPU>().data<Type>()[i + j * m] << " ";
-        }
-        std::cout << std::endl;
-    }
-    // Test code: print QtQ
-    std::cout << "QtQ = " << std::endl;
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            std::cout << QtQ.data<Type>()[i + j * n] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // To print value: first to_device CPU, then print
+    // // Test code: print A
+    // std::cout << "A = " << std::endl;
+    // for (int i = 0; i < m; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << A_input.to_device<DEVICE_CPU>().data<Type>()[i + j * m] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // // Test code: print Q
+    // std::cout << "Q = " << std::endl;
+    // for (int i = 0; i < m; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << Q.data<Type>()[i + j * m] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // // Test code: print QtQ
+    // std::cout << "QtQ = " << std::endl;
+    // for (int i = 0; i < n; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << QtQ.data<Type>()[i + j * n] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     // check QtQ
     for (int i = 0; i < n; ++i) {
