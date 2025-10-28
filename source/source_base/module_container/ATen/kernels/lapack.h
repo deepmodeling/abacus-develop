@@ -67,6 +67,20 @@ struct lapack_getri {
 // that will change input Mat A to orthogonal/unitary matrix Q
 template <typename T, typename Device>
 struct lapack_geqrf_inplace {
+    /**
+     * @brief Perform in-place QR factorization of a matrix using LAPACK's geqrf function.
+     *
+     * This function computes the QR factorization of an m-by-n matrix A as A = Q * R,
+     * where Q is an orthogonal/unitary matrix and R is an upper triangular matrix.
+     * The factorization is performed in-place, meaning the input matrix A will be modified.
+     *
+     * On exit: A is overwritten with the QR factorization Q orthogonal/unitary matrix
+     *
+     * @param m The number of rows in the matrix A. m >= 0
+     * @param n The number of columns in the matrix A. n >= 0
+     * @param A Pointer to the matrix A to be factorized. On exit, contains the QR factorization
+     * @param lda The leading dimension of the matrix A. lda >= max(1, m)
+     */
     void operator()(
         const int m,
         const int n,

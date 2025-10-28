@@ -26,7 +26,7 @@ void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<f
 void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx, std::complex<double> *y, const int *incy);
 
 void scopy_(const int *n, const float *a, const int *incx, float *b, int const *incy);
-void dcopy_(const int *n, const double *a, const *incx, double *b, int const *incy);
+void dcopy_(const int *n, const double *a, const int *incx, double *b, int const *incy);
 void ccopy_(const int *n, const std::complex<float> *a, const int *incx, std::complex<float> *b, int const *incy);
 void zcopy_(const int *n, const std::complex<double> *a, const int *incx, std::complex<double> *b, int const *incy);
 

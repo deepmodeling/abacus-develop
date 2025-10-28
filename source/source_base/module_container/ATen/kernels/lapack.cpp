@@ -493,6 +493,10 @@ template struct lapack_getrs<double, DEVICE_CPU>;
 template struct lapack_getrs<std::complex<float>, DEVICE_CPU>;
 template struct lapack_getrs<std::complex<double>, DEVICE_CPU>;
 
+template struct lapack_geqrf_inplace<float,  DEVICE_CPU>;
+template struct lapack_geqrf_inplace<double, DEVICE_CPU>;
+template struct lapack_geqrf_inplace<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_geqrf_inplace<std::complex<double>, DEVICE_CPU>;
 
 template struct lapack_heevd<float,  DEVICE_CPU>;
 template struct lapack_heevd<double, DEVICE_CPU>;

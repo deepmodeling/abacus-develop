@@ -122,93 +122,89 @@ struct lapack_getri<T, DEVICE_GPU> {
 
 
 template <typename T>
-struct lapack_getrf_inplace<T, DEVICE_GPU> {
-    void operator(){
+struct lapack_geqrf_inplace<T, DEVICE_GPU> {
+    void operator()(
         const int m,
         const int n,
-        T *A,
+        T *d_A,
         const int lda)
     {
         const int k = std::min(m, n);
 
-        // 1. Allocate tau on device
+        // Allocate tau on device
         T *d_tau;
         cudaErrcheck(cudaMalloc(&d_tau, sizeof(T) * k));
 
-        // 2. Query for workspace size
-        int lwork = 0;
-        int *d_info;
-        cudaErrcheck(cudaMalloc(&d_info, sizeof(int)));
+        cuSolverConnector::geqrf(cusolver_handle, m, n, d_A, lda, d_tau);
 
-        // geqrf: workspace query
-        cuSolverConnector::geqrf(cusolverH, m, n, d_A, lda, d_tau, nullptr, -1, d_info);
-        // Note: cuSOLVER uses nullptr for query, result returned via lwork
-        // But we need to call it with real pointer to get lwork
-        T work_query;
-        cuSolverConnector::geqrf(cusolverH, m, n, d_A, lda, d_tau, &work_query, -1, d_info);
+        cuSolverConnector::orgqr(cusolver_handle, m, n, k, d_A, lda, d_tau);
 
-        // In practice, we use helper function to get lwork
-        // Or use magma for better interface
-        // Let's assume we have a way to get lwork
-        // For now, do a dummy call to get it
-        size_t workspaceInBytes = 0;
-        cusolverErrcheck(cusolverDnXgeqrf_bufferSize(
-            cusolverH, m, n,
-            getCudaDataType<T>::type, d_A, lda,
-            getCudaDataType<T>::type, // for tau
-            CUDA_R_32F, // numerical precision
-            CUSOLVER_WORKSPACE_QUERY_USE_MAX, &workspaceInBytes));
-
-        lwork = static_cast<int>(workspaceInBytes / sizeof(T));
-
-        // Allocate workspace
-        T *d_work;
-        cudaErrcheck(cudaMalloc(&d_work, sizeof(T) * lwork));
-
-        // 3. Perform geqrf
-        cusolverErrcheck(cusolverDnXgeqrf(
-            cusolverH, m, n,
-            getCudaDataType<T>::type, d_A, lda,
-            d_tau,
-            getCudaDataType<T>::type,
-            d_work, lwork * sizeof(T),
-            d_info));
-
-        int info;
-        cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-        if (info != 0) {
-            throw std::runtime_error("cuSOLVER geqrf failed with info = " + std::to_string(info));
-        }
-
-        // 4. Generate Q using orgqr
-        // Query workspace for orgqr
-        cusolverErrcheck(cusolverDnXorgqr_bufferSize(
-            cusolverH, m, n, k,
-            getCudaDataType<T>::type, d_A, lda,
-            getCudaDataType<T>::type, d_tau,
-            CUDA_R_32F,
-            CUSOLVER_WORKSPACE_QUERY_USE_MAX, &workspaceInBytes));
-
-        lwork = static_cast<int>(workspaceInBytes / sizeof(T));
-        cudaErrcheck(cudaRealloc(&d_work, sizeof(T) * lwork)); // or realloc
-
-        // orgqr: generate Q
-        cusolverErrcheck(cusolverDnXorgqr(
-            cusolverH, m, n, k,
-            getCudaDataType<T>::type, d_A, lda,
-            getCudaDataType<T>::type, d_tau,
-            d_work, lwork * sizeof(T),
-            d_info));
-
-        cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
-        if (info != 0) {
-            throw std::runtime_error("cuSOLVER orgqr failed with info = " + std::to_string(info));
-        }
-
-        // Clean up
         cudaErrcheck(cudaFree(d_tau));
-        cudaErrcheck(cudaFree(d_work));
-        cudaErrcheck(cudaFree(d_info));
+
+        // // geqrf: workspace query
+
+        // // In practice, we use helper function to get lwork
+        // // Or use magma for better interface
+        // // Let's assume we have a way to get lwork
+        // // For now, do a dummy call to get it
+        // size_t workspaceInBytes = 0;
+        // cusolverErrcheck(cusolverDnXgeqrf_bufferSize(
+        //     cusolverH, m, n,
+        //     getCudaDataType<T>::type, d_A, lda,
+        //     getCudaDataType<T>::type, // for tau
+        //     CUDA_R_32F, // numerical precision
+        //     CUSOLVER_WORKSPACE_QUERY_USE_MAX, &workspaceInBytes));
+
+        // lwork = static_cast<int>(workspaceInBytes / sizeof(T));
+
+        // // Allocate workspace
+        // T *d_work;
+        // cudaErrcheck(cudaMalloc(&d_work, sizeof(T) * lwork));
+
+        // // 3. Perform geqrf
+        // cusolverErrcheck(cusolverDnXgeqrf(
+        //     cusolverH, m, n,
+        //     getCudaDataType<T>::type, d_A, lda,
+        //     d_tau,
+        //     getCudaDataType<T>::type,
+        //     d_work, lwork * sizeof(T),
+        //     d_info));
+
+        // int info;
+        // cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+        // if (info != 0) {
+        //     throw std::runtime_error("cuSOLVER geqrf failed with info = " + std::to_string(info));
+        // }
+
+        // // 4. Generate Q using orgqr
+        // // Query workspace for orgqr
+        // cusolverErrcheck(cusolverDnXorgqr_bufferSize(
+        //     cusolverH, m, n, k,
+        //     getCudaDataType<T>::type, d_A, lda,
+        //     getCudaDataType<T>::type, d_tau,
+        //     CUDA_R_32F,
+        //     CUSOLVER_WORKSPACE_QUERY_USE_MAX, &workspaceInBytes));
+
+        // lwork = static_cast<int>(workspaceInBytes / sizeof(T));
+        // cudaErrcheck(cudaRealloc(&d_work, sizeof(T) * lwork)); // or realloc
+
+        // // orgqr: generate Q
+        // cusolverErrcheck(cusolverDnXorgqr(
+        //     cusolverH, m, n, k,
+        //     getCudaDataType<T>::type, d_A, lda,
+        //     getCudaDataType<T>::type, d_tau,
+        //     d_work, lwork * sizeof(T),
+        //     d_info));
+
+        // cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+        // if (info != 0) {
+        //     throw std::runtime_error("cuSOLVER orgqr failed with info = " + std::to_string(info));
+        // }
+
+        // // Clean up
+        // cudaErrcheck(cudaFree(d_tau));
+        // cudaErrcheck(cudaFree(d_work));
+        // cudaErrcheck(cudaFree(d_info));
     }
 };
 
@@ -391,7 +387,10 @@ template struct lapack_getri<double, DEVICE_GPU>;
 template struct lapack_getri<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_getri<std::complex<double>, DEVICE_GPU>;
 
-
+template struct lapack_geqrf_inplace<float,  DEVICE_GPU>;
+template struct lapack_geqrf_inplace<double, DEVICE_GPU>;
+template struct lapack_geqrf_inplace<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_geqrf_inplace<std::complex<double>, DEVICE_GPU>;
 
 } // namespace kernels
 } // namespace container

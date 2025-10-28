@@ -205,7 +205,7 @@ void zgeqrf_(const int* m, const int* n, std::complex<double>* A, const int* lda
 void sorgqr_(const int* m, const int* n, const int* k, float* A, const int* lda, const float* tau, float* work, const int* lwork, int* info);
 void dorgqr_(const int* m, const int* n, const int* k, double* A, const int* lda, const double* tau, double* work, const int* lwork, int* info);
 void cungqr_(const int* m, const int* n, const int* k, std::complex<float>* A, const int* lda, const std::complex<float>* tau, std::complex<float> *work, const int* lwork, int* info);
-void zunqrf_(const int* m, const int* n, const int* k, std::complex<double>* A, const int* lda, const std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
+void zungqr_(const int* m, const int* n, const int* k, std::complex<double>* A, const int* lda, const std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
 
 }
 
@@ -588,7 +588,7 @@ void orgqr(const int m, const int n, const int k, std::complex<float>* A, const 
 static inline
 void orgqr(const int m, const int n, const int k, std::complex<double>* A, const int lda, const std::complex<double>* tau, std::complex<double>* work, const int lwork, int& info)
 {
-    zunqrf_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
+    zungqr_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
 }
 
 } // namespace lapackConnector
