@@ -1,38 +1,19 @@
 #include "esolver_ks_lcao_tddft.h"
 
-#include "source_estate/elecstate_tools.h"
-#include "source_io/cal_r_overlap_R.h"
+//----------------IO-----------------
 #include "source_io/dipole_io.h"
-#include "source_io/td_current_io.h"
-#include "source_io/read_wfc_nao.h"
-#include "source_io/write_HS.h"
-#include "source_io/write_HS_R.h"
 #include "source_io/output_log.h"
-
-//--------------temporary----------------------------
-#include "source_base/module_external/blas_connector.h"
-#include "source_base/global_function.h"
-#include "source_base/module_external/scalapack_connector.h"
+#include "source_io/read_wfc_nao.h"
+#include "source_io/td_current_io.h"
+//------LCAO HSolver ElecState-------
+#include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "source_estate/occupy.h"
-#include "source_io/print_info.h"
-#include "source_lcao/module_rt/evolve_elec.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-
-//-----HSolver ElecState Hamilt--------
-#include "source_io/module_parameter/parameter.h"
-#include "source_estate/cal_ux.h"
-#include "source_estate/elecstate_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "source_lcao/hamilt_lcao.h"
-#include "source_psi/psi.h"
-
-#include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_lcao/rho_tau_lcao.h"
 
 
 namespace ModuleESolver

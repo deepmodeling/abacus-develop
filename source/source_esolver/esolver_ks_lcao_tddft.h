@@ -3,10 +3,8 @@
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
-#include "source_lcao/record_adj.h"
-#include "source_psi/psi.h"
-#include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/velocity_op.h"
 
 namespace ModuleESolver
 {
@@ -103,5 +101,4 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 };
 
 } // namespace ModuleESolver
-#endif
-
+#endif // ESOLVER_KS_LCAO_TDDFT_H
