@@ -56,7 +56,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         {
             tau1 = atom1->tau[ia];
             grid_neigh.Find_atom(ucell, tau1, it, ia);
-            for (int ad = 0; ad < grid_neigh.getAdjacentNum(); ++ad)
+            for (int ad = 0; ad < grid_neigh.getAdjacentNum() + 1; ++ad)
             {
                 tau2 = grid_neigh.getAdjacentTau(ad);
                 int it2 = grid_neigh.getType(ad);
