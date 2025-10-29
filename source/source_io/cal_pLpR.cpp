@@ -198,7 +198,7 @@ void ModuleIO::AngularMomentumCalculator::kernel(
         {
             ri = atyp_i.tau[ia];
             neighbor_searcher_->Find_atom(ucell, ri, it, ia);
-            for (int ia_adj = 0; ia_adj < neighbor_searcher_->getAdjacentNum(); ia_adj++)
+            for (int ia_adj = 0; ia_adj < neighbor_searcher_->getAdjacentNum() + 1; ia_adj++)
             {
                 rj = neighbor_searcher_->getAdjacentTau(ia_adj);
                 int jt = neighbor_searcher_->getType(ia_adj);
