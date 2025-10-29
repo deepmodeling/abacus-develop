@@ -65,7 +65,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         };
 #endif
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T>::diagH_subspace_init(
+        hsolver::DiagoIterAssist<T>::diag_subspace_init(
             pHamilt,                 // interface to hamilt
             transform.get_pointer(), // transform matrix between lcao and pw
             transform.get_nbands(),

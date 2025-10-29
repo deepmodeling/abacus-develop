@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 namespace hamilt
 {
 
@@ -68,20 +68,6 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
-#ifdef __OLD_GINT
-    if(XC_Functional::get_ked_flag())
-    {
-        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
-    }
-    else
-    {
-        Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
-        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
-    }
-    this->GG->transfer_pvpR(this->hR,this->ucell);
-    this->new_e_iteration = false;
-#else
     if(XC_Functional::get_ked_flag())
     {
         ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
@@ -90,7 +76,6 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     {
         ModuleGint::cal_gint_vl(vr_eff1, this->hR);
     }
-#endif
 
     if(this->nspin == 2) 
     { 
@@ -113,23 +98,6 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
-#ifdef __OLD_GINT
-    // if you change the place of the following code,
-    // rememeber to delete the #include
-    if(XC_Functional::get_ked_flag())
-    {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-        this->GK->cal_gint(&inout);
-    }
-    else
-    {
-        // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-        Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
-        this->GK->cal_gint(&inout);
-    }
-
-    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
-#else
     if(XC_Functional::get_ked_flag())
     {
         ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
@@ -138,7 +106,6 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     {
         ModuleGint::cal_gint_vl(vr_eff1, this->hR);
     }
-#endif
 
     if(this->nspin == 2) 
     { 
@@ -155,30 +122,6 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-#ifdef __OLD_GINT
-    double* vr_eff1 = nullptr;
-    double* vofk_eff1 = nullptr;
-    for (int is = 0; is < 4; is++)
-    {
-        vr_eff1 = this->pot->get_effective_v(is);
-        if(XC_Functional::get_ked_flag())
-        {
-            vofk_eff1 = this->pot->get_effective_vofk(is);
-        }
-        
-        if(XC_Functional::get_ked_flag())
-        {
-            Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
-            this->GK->cal_gint(&inout);
-        }
-        else
-        {
-            Gint_inout inout(vr_eff1, is, Gint_Tools::job_type::vlocal);
-            this->GK->cal_gint(&inout);
-        }
-    }
-    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
-#else
     std::vector<const double*> vr_eff(4, nullptr);
     std::vector<const double*> vofk_eff(4, nullptr);
     for (int is = 0; is < 4; is++)
@@ -196,7 +139,6 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     {
         ModuleGint::cal_gint_vl(vr_eff, this->hR);
     }
-#endif
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;

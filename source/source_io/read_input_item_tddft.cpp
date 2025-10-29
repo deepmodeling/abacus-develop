@@ -306,6 +306,22 @@ void ReadInput::item_rt_tddft()
 
 
 }
+void ReadInput::item_tdofdft()
+{
+    // TD-OFDFT
+    {
+        Input_Item item("of_cd");
+        item.annotation = "add CD Potential or not";
+        read_sync_bool(input.of_cd);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("of_mcd_alpha");
+        item.annotation = "parameter of modified CD Potential";
+        read_sync_double(input.of_mCD_alpha);
+        this->add_item(item);
+    }
+}
 void ReadInput::item_lr_tddft()
 {
     // Linear Responce TDDFT

@@ -6,6 +6,7 @@
 #include "source_base/global_variable.h"
 #include "unitcell.h"
 #include "bcast_cell.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/read_stru.h"
 #include "source_base/atom_in.h"
@@ -13,6 +14,7 @@
 #include "source_base/global_file.h"
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/sep_cell.h"
 
 #ifdef __MPI
 #include "mpi.h"
@@ -23,14 +25,14 @@
 #endif
 
 #include "update_cell.h"
-UnitCell::UnitCell() 
+UnitCell::UnitCell()
 {
     itia2iat.create(1, 1);
 }
 
-UnitCell::~UnitCell() 
+UnitCell::~UnitCell()
 {
-    if (set_atom_flag) 
+    if (set_atom_flag)
     {
         delete[] atoms;
     }
@@ -181,7 +183,7 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) 
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
@@ -200,6 +202,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     bool ok = true;
     bool ok2 = true;
 
+    bool ok3 = true; // for sep potential in DFT-1/2
+
     // (3) read in atom information
     this->atom_mass.resize(ntype);
     this->atom_label.resize(ntype);
@@ -207,17 +211,17 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     this->pseudo_type.resize(ntype);
     this->orbital_fn.resize(ntype);
 
-    if (GlobalV::MY_RANK == 0) 
+    if (GlobalV::MY_RANK == 0)
     {
         // open "atom_unitcell" file.
         std::ifstream ifa(fn.c_str(), std::ios::in);
-        if (!ifa) 
+        if (!ifa)
         {
             GlobalV::ofs_warning << fn;
             ok = false;
         }
 
-        if (ok) 
+        if (ok)
         {
             log << "\n\n";
             log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -245,6 +249,16 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             //========================
             const bool read_lattice_constant = unitcell::read_lattice_constant(ifa, log ,this->lat);
             //==========================
+            // readl sep potential, currently using the pseudopotential folder (pseudo_dir in INPUT)
+            //==========================
+            if (PARAM.inp.dfthalf_type > 0) {
+                // GlobalC::sep_cell.init(this->ntype);
+                // ok3 = GlobalC::sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
+
+                sep_cell.init(this->ntype);
+                ok3 = sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
+            }
+            //==========================
             // call read_atom_positions
             //==========================
             ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning);
@@ -253,6 +267,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 #ifdef __MPI
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
+    Parallel_Common::bcast_bool(ok3);
 #endif
     if (!ok) {
         ModuleBase::WARNING_QUIT(
@@ -263,9 +278,14 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
         ModuleBase::WARNING_QUIT("UnitCell::setup_cell",
                                  "Something wrong during read_atom_positions.");
     }
+    if (!ok3) {
+        ModuleBase::WARNING_QUIT("UnitCell::setup_cell", "Something wrong during read_sep_potentials");
+    }
 
 #ifdef __MPI
     unitcell::bcast_unitcell(*this);
+    // GlobalC::sep_cell.bcast_sep_cell();
+    sep_cell.bcast_sep_cell();
 #endif
 
     //========================================================
@@ -282,11 +302,11 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         std::cout << " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << 
+        GlobalV::ofs_warning <<
         "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << 
+        GlobalV::ofs_warning <<
         " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
-        GlobalV::ofs_warning << 
+        GlobalV::ofs_warning <<
         "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         this->omega = std::abs(this->omega);
     }
@@ -329,11 +349,14 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     //===================================
     this->set_iat2itia();
 
+    // GlobalC::sep_cell.set_omega(this->omega, this->tpiba2);
+    sep_cell.set_omega(this->omega, this->tpiba2);
+
     return;
 }
 
 
-void UnitCell::set_iat2iwt(const int& npol_in) 
+void UnitCell::set_iat2iwt(const int& npol_in)
 {
 #ifdef __DEBUG
     assert(npol_in == 1 || npol_in == 2);
@@ -345,9 +368,9 @@ void UnitCell::set_iat2iwt(const int& npol_in)
     int iat = 0;
     int iwt = 0;
 
-    for (int it = 0; it < this->ntype; it++) 
+    for (int it = 0; it < this->ntype; it++)
     {
-        for (int ia = 0; ia < atoms[it].na; ia++) 
+        for (int ia = 0; ia < atoms[it].na; ia++)
         {
             this->iat2iwt[iat] = iwt;
             iwt += atoms[it].nw * this->npol;
@@ -360,14 +383,14 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 
 
 // check if any atom can be moved
-bool UnitCell::if_atoms_can_move() const 
+bool UnitCell::if_atoms_can_move() const
 {
-    for (int it = 0; it < this->ntype; it++) 
+    for (int it = 0; it < this->ntype; it++)
     {
         Atom* atom = &atoms[it];
-		for (int ia = 0; ia < atom->na; ia++) 
+		for (int ia = 0; ia < atom->na; ia++)
 		{
-			if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) 
+			if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
 			{
 				return true;
 			}
@@ -377,10 +400,10 @@ bool UnitCell::if_atoms_can_move() const
 }
 
 // check if lattice vector can be changed
-bool UnitCell::if_cell_can_change() const 
+bool UnitCell::if_cell_can_change() const
 {
 	// need to be fixed next
-	if (this->lc[0] || this->lc[1] || this->lc[2]) 
+	if (this->lc[0] || this->lc[1] || this->lc[2])
 	{
 		return true;
 	}
@@ -457,7 +480,7 @@ void UnitCell::setup(const std::string& latname_in,
 }
 
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) 
+void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2)
 {
     if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {
@@ -475,26 +498,26 @@ void UnitCell::compare_atom_labels(const std::string &label1, const std::string 
         {
             std::string stru_label = "";
             std::string psuedo_label = "";
-			for (int ip = 0; ip < label1.length(); ip++) 
+			for (int ip = 0; ip < label1.length(); ip++)
 			{
-				if (!(isdigit(label1[ip]) || label1[ip] == '_')) 
+				if (!(isdigit(label1[ip]) || label1[ip] == '_'))
 				{
 					stru_label += label1[ip];
-				} 
-				else 
+				}
+				else
 				{
 					break;
 				}
 			}
 			stru_label[0] = toupper(stru_label[0]);
 
-			for (int ip = 0; ip < label2.length(); ip++) 
+			for (int ip = 0; ip < label2.length(); ip++)
 			{
-				if (!(isdigit(label2[ip]) || label2[ip] == '_')) 
+				if (!(isdigit(label2[ip]) || label2[ip] == '_'))
 				{
 					psuedo_label += label2[ip];
-				} 
-				else 
+				}
+				else
 				{
 					break;
 				}

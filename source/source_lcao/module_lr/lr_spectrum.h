@@ -1,6 +1,5 @@
 #pragma once
 #include "source_cell/klist.h"
-#include "source_lcao/module_lr/utils/gint_template.h"
 #include "source_psi/psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
@@ -13,14 +12,14 @@ namespace LR
     {
     public:
         LR_Spectrum(const int& nspin_global, const int& naos, const std::vector<int>& nocc, const std::vector<int>& nvirt,
-            typename TGint<T>::type* gint, const ModulePW::PW_Basis& rho_basis, psi::Psi<T>& psi_ks_in,
+            const ModulePW::PW_Basis& rho_basis, psi::Psi<T>& psi_ks_in,
             const UnitCell& ucell, const K_Vectors& kv_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
             const TwoCenterBundle& two_center_bundle_,
             const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
             const double* eig, const T* X, const int& nstate, const bool& openshell,
             const std::string& gauge = "length") :
             nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin_global),
-            gint(gint), rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
+            rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
             eig(eig), X(X), nstate(nstate),
@@ -75,7 +74,6 @@ namespace LR
         const std::vector<Parallel_2D>& pX;
         const Parallel_2D& pc;
         const Parallel_Orbitals& pmat;
-        typename TGint<T>::type* gint = nullptr;
         const ModulePW::PW_Basis& rho_basis;
         const Grid_Driver& gd_;
         const UnitCell& ucell;

@@ -28,7 +28,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool)
@@ -54,7 +54,7 @@ DiagoCG<T, Device>::~DiagoCG()
 }
 
 template <typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in,
+void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
                                    ct::Tensor& psi,
                                    ct::Tensor& eigen,
                                    const std::vector<double>& ethr_band)
@@ -569,7 +569,7 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
     // In non-self consistent calculation, do until totally converged.
     const bool f2 = !scf && notconv > 0;
     // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
+    // using diag_subspace and cg method again. ntry++
     const bool f3 = scf && notconv > 5;
     return f1 && (f2 || f3);
 }
@@ -592,16 +592,29 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
     ct::Tensor psi_temp = psi.slice({0, 0}, {int(psi.shape().dim_size(0)), int(prec.shape().dim_size(0))});
     do
     {
-        if (need_subspace_ || ntry > 0)
+        // subspace diagonalization to get a better starting guess
+        // for cg diagonalization, restart from current psi approximation
+        // Note: if not the first try, then psi is already S-orthogonalized by CG iterations!
+        // Otherwise, if the first try, then psi is not assumed to be S-orthogonalized
+        if (ntry > 0)
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
-            this->subspace_func_(psi_temp, psi_map);
+            const bool assume_S_orthogonal = true;
+            this->subspace_func_(psi_temp, psi_map, assume_S_orthogonal);
+            psi_temp.sync(psi_map);
+        }
+        else if (need_subspace_)
+        {
+            ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
+            const bool assume_S_orthogonal = false;
+            this->subspace_func_(psi_temp, psi_map, assume_S_orthogonal);
             psi_temp.sync(psi_map);
         }
 
+
         ++ntry;
         avg_iter_ += 1.0;
-        this->diag_mock(prec, psi_temp, eigen, ethr_band);
+        this->diag_once(prec, psi_temp, eigen, ethr_band);
     } while (this->test_exit_cond(ntry, this->notconv_));
 
     if (this->notconv_ > std::max(5, this->n_band_ / 4))

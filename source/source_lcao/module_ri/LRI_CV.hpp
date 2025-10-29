@@ -8,9 +8,9 @@
 
 #include "LRI_CV.h"
 #include "LRI_CV_Tools.h"
-#include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
 #include "RI_Util.h"
+#include "../../source_basis/module_ao/element_basis_index-ORB.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
 #include "../../source_pw/module_pwdft/global.h"
@@ -62,11 +62,11 @@ void LRI_CV<Tdata>::set_orbitals(
         = Exx_Abfs::Construct_Orbs::get_Rmax(this->abfs_ccp);
 
 	const ModuleBase::Element_Basis_Index::Range
-		range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
+		range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
 	this->index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
 
 	const ModuleBase::Element_Basis_Index::Range
-		range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
+		range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
     int Lmax_v = std::numeric_limits<double>::min();

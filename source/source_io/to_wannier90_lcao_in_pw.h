@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TO_WANNIER90_LCAO_IN_PW_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TO_WANNIER90_LCAO_IN_PW_H
+#ifndef TO_WANNIER90_LCAO_IN_PW_H
+#define TO_WANNIER90_LCAO_IN_PW_H
 
 #include "source_base/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
@@ -30,7 +30,6 @@
 
 #ifdef __LCAO
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_gint/grid_technique.h"
 #include "source_psi/psi_initializer.h"
 
 class toWannier90_LCAO_IN_PW : public toWannier90_PW

@@ -43,6 +43,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -129,7 +133,7 @@ void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&,
+void Charge::init_rho(elecstate::Efermi&,
                       const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,

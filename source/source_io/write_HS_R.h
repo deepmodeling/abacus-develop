@@ -5,8 +5,8 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_pw/module_pwdft/global.h"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 
 namespace ModuleIO
 {
@@ -31,7 +31,6 @@ namespace ModuleIO
 
 	void output_dHR(const int& istep,
 			const ModuleBase::matrix& v_eff,
-			Gint_k& gint_k, // mohan add 2024-04-01
 			const UnitCell& ucell,
 			const Parallel_Orbitals& pv,
 			LCAO_HS_Arrays& HS_Arrays,

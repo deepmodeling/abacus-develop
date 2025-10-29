@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/elecstate_lcao.h"
 #include "source_base/memory.h"
 #include "source_io/module_parameter/parameter.h"
 template<>

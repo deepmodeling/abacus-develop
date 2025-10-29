@@ -17,6 +17,9 @@ class ESolver
 
     virtual ~ESolver()
     {
+        //****************************************************
+        // do not add any codes in this deconstructor funcion
+        //****************************************************
     }
 
     //! initialize the energy solver by using input parameters and cell modules

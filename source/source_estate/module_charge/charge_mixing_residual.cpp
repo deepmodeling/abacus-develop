@@ -9,11 +9,13 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
     ModuleBase::TITLE("Charge_Mixing", "get_drho");
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
     double drho = 0.0;
 
     if (PARAM.inp.scf_thr_type == 1)
     {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
             chr->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
@@ -23,15 +25,15 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
-        std::vector<std::complex<double>> drhog(PARAM.inp.nspin * this->rhopw->npw);
+        std::vector<std::complex<double>> drhog(nspin * this->rhopw->npw);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                drhog[is * rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
+                drhog[is * this->rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
             }
         }
 
@@ -42,7 +44,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     {
         // Note: Maybe it is wrong.
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < nspin; is++)
         {
             if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {

@@ -22,7 +22,6 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
         this->chr.allocate(PARAM.inp.nspin);
     }
-    this->pelec->omega = ucell.omega;
 
     delete this->pelec->pot;
     this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -220,7 +219,7 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
  * @brief Rotate and renormalize the direction |d>,
  * make it orthogonal to phi (<d|phi> = 0), and <d|d> = nelec
  */
-void ESolver_OF::adjust_direction()
+void ESolver_OF::adjust_direction(void)
 {
     // filter the high frequency term in direction if of_full_pw = false
     if (!PARAM.inp.of_full_pw)

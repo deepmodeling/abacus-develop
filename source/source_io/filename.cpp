@@ -16,7 +16,8 @@ std::string filename_output(
 			const int out_type,
 			const bool out_app_flag,
 			const bool gamma_only,
-			const int istep)
+			const int istep,
+            const int iter)
 {
     // output filename = "{PARAM.globalv.global_out_dir}/property{s}{spin index}
     // {k(optional)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
@@ -44,9 +45,10 @@ std::string filename_output(
 	// ik0 is the k-point index, starting from 0
 	int ik0 = ik2iktot[ik_local];
 
+	// spin part
+	std::string spin_block;
 	if(nspin == 1)
 	{
-		is0 = 1;
 	}
 	else if(nspin == 2)
 	{
@@ -60,15 +62,14 @@ std::string filename_output(
 		{
 			is0 = 1;
 		}
+        spin_block = "s" + std::to_string(is0);
 	}
 	else if(nspin==4)
 	{
-		is0 = 12;
+		is0 = 4;
+        spin_block = "s" + std::to_string(is0);
 	}
 
-	// spin part
-	std::string spin_block;
-    spin_block = "s" + std::to_string(is0);
 
     // k-point part
     std::string kpoint_block;
@@ -78,12 +79,25 @@ std::string filename_output(
     }
     else
     {
-        kpoint_block = "k" + std::to_string(ik0+1);
+        // mohan add 20250921
+		if(property=="hk" || property=="sk" || property=="tk")
+		{
+			kpoint_block = std::to_string(ik0+1);
+		}
+		else
+		{
+			kpoint_block = "k" + std::to_string(ik0+1);
+		}
     }
 
     std::string istep_block
         = (istep >= 0 && (!out_app_flag))
-              ? "g" + std::to_string(istep + 1)
+              ? "g" + std::to_string(istep + 1) // istep starts from 0
+              : ""; // only when istep >= 0 and out_app_flag is false will write each wfc to a separate file
+
+    std::string iter_block
+        = (iter >= 0 && (!out_app_flag))
+              ? "e" + std::to_string(iter) // iter starts from 1
               : ""; // only when istep >= 0 and out_app_flag is false will write each wfc to a separate file
 
     std::string suffix_block;
@@ -102,8 +116,8 @@ std::string filename_output(
     }
 
     std::string fn_out
-        = directory + property + spin_block + kpoint_block 
-          + istep_block + "_" + basis + suffix_block;
+        = directory + property + kpoint_block + spin_block
+          + istep_block + iter_block + "_" + basis + suffix_block;
 
     return fn_out;
 }

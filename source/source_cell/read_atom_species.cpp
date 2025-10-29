@@ -112,6 +112,16 @@ bool read_atom_species(std::ifstream& ifa,
                 std::string ofile;
                 ifa >> ofile;
                 GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
+                GlobalC::exx_info.info_opt_abfs.files_abfs.push_back(ofile);
+            }
+        }
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
+        {
+            for(int i=0; i<ntype; i++)
+            {
+                std::string ofile;
+                ifa >> ofile;
+                GlobalC::exx_info.info_opt_abfs.files_jles.push_back(ofile);
             }
         }
     }
@@ -140,7 +150,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         {
             ModuleBase::WARNING_QUIT("read_atom_species","Lattice constant <= 0.0");
         }
-        lat0_angstrom = lat0 * 0.529177;
+        lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Bohr)",lat0);
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Angstrom)",lat0_angstrom);
         lat.tpiba  = ModuleBase::TWO_PI / lat0;

@@ -5,6 +5,8 @@
 #include "source_hamilt/hamilt.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
+#include "source_estate/module_charge/charge.h" // mohan add 20251024
+
 namespace hsolver
 {
 
@@ -17,7 +19,9 @@ class HSolverLCAO
     void solve(hamilt::Hamilt<T>* pHamilt,
                psi::Psi<T>& psi,
                elecstate::ElecState* pes,
-               const bool skip_charge);
+			   Charge &chr, // charge density
+			   const int nspin,
+			   const bool skip_charge);
 
   private:
     void hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue); // for kpar_lcao == 1

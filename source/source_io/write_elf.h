@@ -13,7 +13,7 @@ void write_elf(
     const int& nbz,
 #endif
     const std::string& out_dir,
-    const int& istep,
+    const int& istep_in,
     const int& nspin,
     const double* const* rho,
     const double* const* tau,

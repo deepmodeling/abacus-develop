@@ -6,6 +6,9 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
+#include <cassert>
+
+
 namespace container {
 namespace kernels {
 
@@ -88,7 +91,7 @@ struct lapack_potrf<T, DEVICE_GPU> {
 };
 
 template <typename T>
-struct lapack_dnevd<T, DEVICE_GPU> {
+struct lapack_heevd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
@@ -97,25 +100,103 @@ struct lapack_dnevd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        cuSolverConnector::dnevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        cuSolverConnector::heevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
     }
 };
 
 template <typename T>
-struct lapack_dngvd<T, DEVICE_GPU> {
+struct lapack_heevx<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
-        T* Mat_A,
-        T* Mat_B,
-        const int& dim,
-        Real* eigen_val)
+        const int n,
+        const int lda,
+        const T *d_Mat,
+        const int neig,
+        Real *d_eigen_val,
+        T *d_eigen_vec)
     {
-        cuSolverConnector::dngvd(cusolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        assert(n <= lda);
+        // copy d_Mat to d_eigen_vec, and results will be overwritten into d_eigen_vec
+        // by cuSolver
+        cudaErrcheck(cudaMemcpy(d_eigen_vec, d_Mat, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
+
+        int meig = 0;
+
+        cuSolverConnector::heevdx(
+            cusolver_handle,
+            n,
+            lda,
+            d_eigen_vec,
+            'V',        // jobz: compute vectors
+            'L',        // uplo: lower triangle
+            'I',        // range: by index
+            1, neig,    // il, iu
+            Real(0), Real(0), // vl, vu (unused)
+            d_eigen_val,
+            &meig
+        );
+
     }
 };
+template <typename T>
+struct lapack_hegvd<T, DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int dim,
+        const int lda,
+        T* Mat_A,
+        T* Mat_B,
+        Real* eigen_val,
+        T *eigen_vec)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'L';
+        cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+
+        // prevent B from being overwritten by Cholesky
+        T *d_B_backup = nullptr;
+        cudaErrcheck(cudaMalloc(&d_B_backup, sizeof(T) * dim * lda));
+        cudaErrcheck(cudaMemcpy(d_B_backup, Mat_B, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+
+        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
+                eigen_vec, lda,
+                d_B_backup, lda,
+                eigen_val);
+        cudaErrcheck(cudaFree(d_B_backup));
+    }
+};
+
+template <typename T>
+struct lapack_hegvx<T, DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T *A,
+        T *B,
+        const int m,
+        Real *eigen_val,
+        T *eigen_vec)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char range = 'I';
+        const char uplo = 'U';
+        int meig = 0;
+
+        // this hegvdx will protect the input A, B from being overwritten
+        // and write the eigenvectors into eigen_vec.
+        cuSolverConnector::hegvdx(cusolver_handle,
+            itype, jobz, range, uplo,
+            n, lda, A, B,
+            Real(0), Real(0),
+            1, m, &meig,
+            eigen_val, eigen_vec);
+    }
+};
+
+
 
 template <typename T>
 struct lapack_getrf<T, DEVICE_GPU> {
@@ -175,15 +256,25 @@ template struct lapack_potrf<double, DEVICE_GPU>;
 template struct lapack_potrf<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_potrf<std::complex<double>, DEVICE_GPU>;
 
-template struct lapack_dnevd<float,  DEVICE_GPU>;
-template struct lapack_dnevd<double, DEVICE_GPU>;
-template struct lapack_dnevd<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_dnevd<std::complex<double>, DEVICE_GPU>;
+template struct lapack_heevd<float,  DEVICE_GPU>;
+template struct lapack_heevd<double, DEVICE_GPU>;
+template struct lapack_heevd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_heevd<std::complex<double>, DEVICE_GPU>;
 
-template struct lapack_dngvd<float,  DEVICE_GPU>;
-template struct lapack_dngvd<double, DEVICE_GPU>;
-template struct lapack_dngvd<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_dngvd<std::complex<double>, DEVICE_GPU>;
+template struct lapack_heevx<float, DEVICE_GPU>;
+template struct lapack_heevx<double, DEVICE_GPU>;
+template struct lapack_heevx<std::complex<float>, DEVICE_GPU>;
+template struct lapack_heevx<std::complex<double>, DEVICE_GPU>;
+
+template struct lapack_hegvd<float,  DEVICE_GPU>;
+template struct lapack_hegvd<double, DEVICE_GPU>;
+template struct lapack_hegvd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_hegvd<std::complex<double>, DEVICE_GPU>;
+
+template struct lapack_hegvx<float,  DEVICE_GPU>;
+template struct lapack_hegvx<double, DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<double>, DEVICE_GPU>;
 
 template struct lapack_getrf<float,  DEVICE_GPU>;
 template struct lapack_getrf<double, DEVICE_GPU>;
