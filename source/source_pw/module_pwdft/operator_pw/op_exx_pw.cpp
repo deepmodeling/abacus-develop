@@ -76,15 +76,22 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     tpiba = ucell->tpiba;
     Real tpiba2 = tpiba * tpiba;
 
+    // initialize rhopw_dev
+    double ecut_exx = PARAM.inp.ecutexx;
+    if (ecut_exx == 0.0)
+    {
+        ecut_exx = PARAM.inp.ecutrho;
+    }
+
     rhopw_dev = new ModulePW::PW_Basis(wfcpw->get_device(), rhopw->get_precision());
     rhopw_dev->fft_bundle.setfft(wfcpw->get_device(), rhopw->get_precision());
 #ifdef __MPI
     rhopw_dev->initmpi(rhopw->poolnproc, rhopw->poolrank, rhopw->pool_world);
 #endif
     // here we can actually use different ecut to init the grids
-    rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, rhopw->gridecut_lat * rhopw->tpiba2);
+    rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, ecut_exx);
     rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, rhopw->nx, rhopw->ny, rhopw->nz);
-    rhopw_dev->initparameters(rhopw->gamma_only, rhopw->ggecut * rhopw->tpiba2, rhopw->distribution_type, rhopw->xprime);
+    rhopw_dev->initparameters(rhopw->gamma_only, ecut_exx, rhopw->distribution_type, rhopw->xprime);
     rhopw_dev->setuptransform();
     rhopw_dev->collect_local_pw();
 

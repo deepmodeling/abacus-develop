@@ -571,6 +571,18 @@ void ReadInput::item_others()
         };
         this->add_item(item);
     }
+    {
+        Input_Item item("ecutexx");
+        item.annotation = "energy cutoff for exx calculation, Ry";
+        read_sync_double(input.ecutexx);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ecutexx < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
+            }
+        };
+        this->add_item(item);
+    }
 
 }
 } // namespace ModuleIO
