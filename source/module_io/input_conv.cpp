@@ -306,7 +306,7 @@ void Input_Conv::Convert()
                        tolower);
         GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0") {
@@ -332,7 +332,7 @@ void Input_Conv::Convert()
                        dft_functional_lower.begin(),
                        tolower);
         GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
-        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0") {
@@ -362,7 +362,8 @@ void Input_Conv::Convert()
                    PARAM.inp.dft_functional.end(),
                    dft_functional_lower.begin(),
                    tolower);
-    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0"
+        || dft_functional_lower == "b3lyp")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type

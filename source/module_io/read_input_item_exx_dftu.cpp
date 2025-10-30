@@ -26,6 +26,10 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_hybrid_alpha = "0.25";
                 }
+                else if (dft_functional_lower == "b3lyp")
+                {
+                    para.input.exx_hybrid_alpha = "0.20";
+                }
                 // added by jghan 2024-07-06
                 else if (dft_functional_lower == "muller" || dft_functional_lower == "power" 
                         || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
