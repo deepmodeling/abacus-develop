@@ -4,7 +4,14 @@
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 
-// #include <base/third_party/cusolver_utils.h> // traits
+// #include <base/third_party/cusolver_utils.h> // traits, needed if generic API is used.
+// header provided by cusolver, including some data types and macros.
+// see https://github.com/NVIDIA/CUDALibrarySamples/blob/master/cuSOLVER/utils/cusolver_utils.h
+// The cuSolverDN library provides two different APIs; legacy and generic.
+// https://docs.nvidia.com/cuda/cusolver/index.html#naming-conventions
+// now only legacy APIs are used, while the general APIs have the potential to simplify code implementation.
+// for example, cucusolverDnXpotrf/getrf/geqrf/sytrf
+// More tests are needed to confirm that the generic APIs are operating normally, as they are not yet fully supported.
 
 #include <base/macros/cuda.h>
 
