@@ -32,7 +32,7 @@ void hegvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
                                                            const int nstart,
                                                            const int ldh,
                                                            const double* _hcc,
-                                                           const double* _scc,
+                                                           double* _scc,
                                                            double* _eigenvalue,
                                                            double* _vcc)
 {

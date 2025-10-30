@@ -42,173 +42,253 @@
 //"xxx" specifies the type of problem, for example:
 //  - gv stands for generalized eigenvalue
 
+// The following declarations cover only a subset of LAPACK routines.
+// If you need a LAPACK function that is not included here, feel free to add its declaration as needed.
 extern "C"
 {
-// solve the generalized eigenproblem Ax=eBx, where A is Hermitian and complex couble
-    // zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
-    void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
-        double* a, const int* lda,
-        const double* b, const int* ldb, double* w,
-        double* work, int* lwork,
-        int* iwork, int* liwork, int* info);
+// === Generalized Hermitian-definite eigenproblems ===
+void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+             double* a, const int* lda,
+             double* b, const int* ldb,
+             double* w,
+             double* work, const int* lwork,
+             int* iwork, const int* liwork,
+             int* info);
 
-    void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<float>* a, const int* lda,
-             const std::complex<float>* b, const int* ldb, float* w,
-             std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
-             int* iwork, int* liwork, int* info);
+             std::complex<float>* b, const int* ldb,
+             float* w,
+             std::complex<float>* work, const int* lwork,
+             float* rwork, const int* lrwork,
+             int* iwork, const int* liwork,
+             int* info);
 
-    void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
-                 std::complex<double>* a, const int* lda, 
-                 const std::complex<double>* b, const int* ldb, double* w,
-                 std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
-                 int* iwork, int* liwork, int* info);
+void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+             std::complex<double>* a, const int* lda,
+             std::complex<double>* b, const int* ldb,
+             double* w,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, const int* lrwork,
+             int* iwork, const int* liwork,
+             int* info);
 
-    void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-        double* a, const int* lda,
-        const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
-        const int* m, double* w, double* z, const int* ldz,
-        double* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+// === Selected eigenvalues/vectors: standard Hermitian ===
 
-    void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-             std::complex<float> *a, const int* lda,
-             const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
-             const int* m, float* w, std::complex<float> *z, const int *ldz,
-             std::complex<float> *work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+             double* a, const int* lda,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, double* z, const int* ldz,
+             double* work, const int* lwork,
+             int* iwork, int* ifail,
+             int* info);
 
-    void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n, 
-                 std::complex<double> *a, const int* lda,
-                 const double* vl, const double* vu, const int* il, const int* iu, const double* abstol, 
-                 const int* m, double* w, std::complex<double> *z, const int *ldz, 
-                 std::complex<double> *work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+             std::complex<float>* a, const int* lda,
+             const float* vl, const float* vu,
+             const int* il, const int* iu,
+             const float* abstol,
+             int* m, float* w, std::complex<float>* z, const int* ldz,
+             std::complex<float>* work, const int* lwork,
+             float* rwork, int* iwork, int* ifail,
+             int* info);
+
+void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+             std::complex<double>* a, const int* lda,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, std::complex<double>* z, const int* ldz,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, int* iwork, int* ifail,
+             int* info);
+
+// === Selected eigenvalues/vectors: generalized Hermitian ===
+
+void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n,
+             double* a, const int* lda,
+             double* b, const int* ldb,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, double* z, const int* ldz,
+             double* work, const int* lwork,
+             int* iwork, int* ifail,
+             int* info);
+
+void chegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n,
+             std::complex<float>* a, const int* lda,
+             std::complex<float>* b, const int* ldb,
+             const float* vl, const float* vu,
+             const int* il, const int* iu,
+             const float* abstol,
+             int* m, float* w, std::complex<float>* z, const int* ldz,
+             std::complex<float>* work, const int* lwork,
+             float* rwork, int* iwork, int* ifail,
+             int* info);
+
+void zhegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n,
+             std::complex<double>* a, const int* lda,
+             std::complex<double>* b, const int* ldb,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, std::complex<double>* z, const int* ldz,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, int* iwork, int* ifail,
+             int* info);
+
+// === Generalized Hermitian: all eigenvalues (simple driver) ===
+
+void dsygv_(const int* itype, const char* jobz, const char* uplo, const int* n,
+            double* a, const int* lda,
+            double* b, const int* ldb,
+            double* w,
+            double* work, const int* lwork,
+            int* info);
+
+void chegv_(const int* itype, const char* jobz, const char* uplo, const int* n,
+            std::complex<float>* a, const int* lda,
+            std::complex<float>* b, const int* ldb,
+            float* w,
+            std::complex<float>* work, const int* lwork,
+            float* rwork,
+            int* info);
+
+void zhegv_(const int* itype, const char* jobz, const char* uplo, const int* n,
+            std::complex<double>* a, const int* lda,
+            std::complex<double>* b, const int* ldb,
+            double* w,
+            std::complex<double>* work, const int* lwork,
+            double* rwork,
+            int* info);
+
+// === Standard Hermitian eigenproblem ===
+
+void dsyev_(const char* jobz, const char* uplo, const int* n,
+            double* a, const int* lda,
+            double* w,
+            double* work, const int* lwork,
+            int* info);
+
+void cheev_(const char* jobz, const char* uplo, const int* n,
+            std::complex<float>* a, const int* lda,
+            float* w,
+            std::complex<float>* work, const int* lwork,
+            float* rwork,
+            int* info);
+
+void zheev_(const char* jobz, const char* uplo, const int* n,
+            std::complex<double>* a, const int* lda,
+            double* w,
+            std::complex<double>* work, const int* lwork,
+            double* rwork,
+            int* info);
+
+// === General (non-Hermitian) eigenproblem ===
+
+void dgeev_(const char* jobvl, const char* jobvr, const int* n,
+            double* a, const int* lda,
+            double* wr, double* wi,
+            double* vl, const int* ldvl,
+            double* vr, const int* ldvr,
+            double* work, const int* lwork,
+            int* info);
+
+void zgeev_(const char* jobvl, const char* jobvr, const int* n,
+            std::complex<double>* a, const int* lda,
+            std::complex<double>* w,
+            std::complex<double>* vl, const int* ldvl,
+            std::complex<double>* vr, const int* ldvr,
+            std::complex<double>* work, const int* lwork,
+            double* rwork,
+            int* info);
+
+// === Matrix inversion (LU) ===
+
+void dgetrf_(const int* m, const int* n, double* a, const int* lda,
+             int* ipiv, int* info);
+
+void dgetri_(const int* n, double* a, const int* lda,
+             const int* ipiv,
+             double* work, const int* lwork,
+             int* info);
+
+// === Symmetric indefinite inversion (Bunch-Kaufman) ===
+
+void dsytrf_(const char* uplo, const int* n, double* a, const int* lda,
+             int* ipiv, double* work, const int* lwork, int* info);
+
+void dsytri_(const char* uplo, const int* n, double* a, const int* lda,
+             const int* ipiv, double* work, int* info);
+
+// === Cholesky factorization & inversion ===
+
+void spotrf_(const char* uplo, const int* n, float* a, const int* lda, int* info);
+void dpotrf_(const char* uplo, const int* n, double* a, const int* lda, int* info);
+void cpotrf_(const char* uplo, const int* n, std::complex<float>* a, const int* lda, int* info);
+void zpotrf_(const char* uplo, const int* n, std::complex<double>* a, const int* lda, int* info);
+
+void spotri_(const char* uplo, const int* n, float* a, const int* lda, int* info);
+void dpotri_(const char* uplo, const int* n, double* a, const int* lda, int* info);
+void cpotri_(const char* uplo, const int* n, std::complex<float>* a, const int* lda, int* info);
+void zpotri_(const char* uplo, const int* n, std::complex<double>* a, const int* lda, int* info);
+
+// === Complex LU inversion ===
+
+void zgetrf_(const int* m, const int* n, std::complex<double>* a, const int* lda,
+             int* ipiv, int* info);
+
+void zgetri_(const int* n, std::complex<double>* a, const int* lda,
+             const int* ipiv,
+             std::complex<double>* work, const int* lwork,
+             int* info);
 
 
-    void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
-        const int* n, double* A, const int* lda, double* B, const int* ldb,
-        const double* vl, const double* vu, const int* il, const int* iu,
-        const double* abstol, const int* m, double* w, double* Z, const int* ldz,
-        double* work, const int* lwork, int* iwork, int* ifail, int* info);
+// === Tridiagonal eigen solvers ===
 
-    void chegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
-             const int* n,std::complex<float> *a,const int* lda,std::complex<float> *b,
-             const int* ldb,const float* vl,const float* vu,const int* il,
-             const int* iu,const float* abstol,const int* m,float* w,
-             std::complex<float> *z,const int *ldz,std::complex<float> *work,const int* lwork,
-             float* rwork,int* iwork,int* ifail,int* info);
+void dsterf_(const int* n, double* d, double* e, int* info);
 
-    void zhegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
-                 const int* n,std::complex<double> *a,const int* lda,std::complex<double> *b,
-                 const int* ldb,const double* vl,const double* vu,const int* il,
-                 const int* iu,const double* abstol,const int* m,double* w,
-                 std::complex<double> *z,const int *ldz,std::complex<double> *work,const int* lwork,
-                 double* rwork,int* iwork,int* ifail,int* info);
+void dstein_(const int* n, const double* d, const double* e,
+             const int* m, const double* w,
+             const int* iblock, const int* isplit,
+             double* z, const int* ldz,
+             double* work, int* iwork, int* ifail,
+             int* info);
 
-    void zhegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
-                std::complex<double>* a,const int* lda,std::complex<double>* b,const int* ldb,
-                double* w,std::complex<double>* work,int* lwork,double* rwork,int* info);
-    void chegv_(const int* itype,const char* jobz,const char* uplo,const int* n,
-                std::complex<float>* a,const int* lda,std::complex<float>* b,const int* ldb,
-                float* w,std::complex<float>* work,int* lwork,float* rwork,int* info);
-	void dsygv_(const int* itype, const char* jobz,const char* uplo, const int* n,
-				double* a,const int* lda,double* b,const int* ldb,
-	 			double* w,double* work,int* lwork,int* info);
+void zstein_(const int* n, const double* d, const double* e,
+             const int* m, const double* w,
+             const int* iblock, const int* isplit,
+             std::complex<double>* z, const int* ldz,
+             double* work, int* iwork, int* ifail,
+             int* info);
 
-    // solve the eigenproblem Ax=ex, where A is Hermitian and complex couble
-    // zheev_ returns all eigenvalues while zheevx_ returns selected ones
-    void zheev_(const char* jobz,const char* uplo,const int* n,std::complex<double> *a,
-                const int* lda,double* w,std::complex<double >* work,const int* lwork,
-                double* rwork,int* info);
-    void cheev_(const char* jobz,const char* uplo,const int* n,std::complex<float> *a,
-                const int* lda,float* w,std::complex<float >* work,const int* lwork,
-                float* rwork,int* info);
-	void dsyev_(const char* jobz,const char* uplo,const int* n,double *a,
-                const int* lda,double* w,double* work,const int* lwork, int* info);
+// === Unblocked Cholesky (level 2 BLAS) ===
 
-    // solve the eigenproblem Ax=ex, where A is a general matrix
-    void dgeev_(const char* jobvl, const char* jobvr, const int* n, double* a, const int* lda,
-        double* wr, double* wi, double* vl, const int* ldvl, double* vr, const int* ldvr,
-        double* work, const int* lwork, int* info);
-    void zgeev_(const char* jobvl, const char* jobvr, const int* n, std::complex<double>* a, const int* lda,
-        std::complex<double>* w, std::complex<double>* vl, const int* ldvl, std::complex<double>* vr, const int* ldvr,
-        std::complex<double>* work, const int* lwork, double* rwork, int* info);
-    // liuyu add 2023-10-03
-    // dgetri and dgetrf computes the inverse of a n*n real matrix
-    void dgetri_(const int* n, double* a, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);
-    void dgetrf_(const int* m, const int* n, double* a, const int* lda, int* ipiv, int* info);
+void dpotf2_(const char* uplo, const int* n, double* a, const int* lda, int* info);
+void zpotf2_(const char* uplo, const int* n, std::complex<double>* a, const int* lda, int* info);
 
-    // dsytrf_ computes the Bunch-Kaufman factorization of a double precision
-    // symmetric matrix, while dsytri takes its output to perform martrix inversion
-    void dsytrf_(const char* uplo, const int* n, double * a, const int* lda,
-                 int *ipiv,double *work, const int* lwork ,int *info);
-    void dsytri_(const char* uplo,const int* n,double *a, const int *lda,
-                 int *ipiv, double * work,int *info);
-    // Peize Lin add dsptrf and dsptri 2016-06-21, to compute inverse real symmetry indefinit matrix.
-    // dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix
-    // while dpotri taks its output to perform matrix inversion
-    void spotrf_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
-    void dpotrf_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
-    void cpotrf_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
-    void zpotrf_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
-    void spotri_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
-    void dpotri_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
-    void cpotri_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
-    void zpotri_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
+// === Tridiagonal solver ===
 
-    // zgetrf computes the LU factorization of a general matrix
-    // while zgetri takes its output to perform matrix inversion
-    void zgetrf_(const int* m, const int *n, std::complex<double> *A, const int *lda, int *ipiv, int* info);
-    void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
+void dgtsv_(const int* n, const int* nrhs,
+            double* dl, double* d, double* du,
+            double* b, const int* ldb,
+            int* info);
 
-    // if trans=='N':	C = alpha * A * A.H + beta * C
-	// if trans=='C':	C = alpha * A.H * A + beta * C
-	void zherk_(const char *uplo, const char *trans, const int *n, const int *k,
-		const double *alpha, const std::complex<double> *A, const int *lda,
-		const double *beta, std::complex<double> *C, const int *ldc);
-    void cherk_(const char* uplo, const char* trans, const int* n, const int* k,
-        const float* alpha, const std::complex<float>* A, const int* lda,
-        const float* beta, std::complex<float>* C, const int* ldc);
+// === Symmetric indefinite linear solver ===
 
-	// computes all eigenvalues of a symmetric tridiagonal matrix
-	// using the Pal-Walker-Kahan variant of the QL or QR algorithm.
-	void dsterf_(int *n, double *d, double *e, int *info);
-    // computes the eigenvectors of a real symmetric tridiagonal
-    // matrix T corresponding to specified eigenvalues
-	void dstein_(int *n, double* d, double *e, int *m, double *w,
-		int* block, int* isplit, double* z, int *lda, double *work,
-		int* iwork, int* ifail, int *info);
-    // computes the eigenvectors of a complex symmetric tridiagonal
-    // matrix T corresponding to specified eigenvalues
- 	void zstein_(int *n, double* d, double *e, int *m, double *w,
-        int* block, int* isplit, std::complex<double>* z, int *lda, double *work,
-        int* iwork, int* ifail, int *info);
-
-	// computes the Cholesky factorization of a symmetric
-	// positive definite matrix A.
-	void dpotf2_(char *uplo, int *n, double *a, int *lda, int *info);
-	void zpotf2_(char *uplo,int *n,std::complex<double> *a, int *lda, int *info);
-
-    // reduces a symmetric definite generalized eigenproblem to standard form
-    // using the factorization results obtained from spotrf
-	void dsygs2_(int *itype, char *uplo, int *n, double *a, int *lda, double *b, int *ldb, int *info);
-	void zhegs2_(int *itype, char *uplo, int *n, std::complex<double> *a, int *lda, std::complex<double> *b, int *ldb, int *info);
-
-    // copies a into b
-	void dlacpy_(char *uplo, int *m, int *n, double* a, int *lda, double *b, int *ldb);
-	void zlacpy_(char *uplo, int *m, int *n, std::complex<double>* a, int *lda, std::complex<double> *b, int *ldb);
-
-    // generates a real elementary reflector H of order n, such that
-    //   H * ( alpha ) = ( beta ),   H is unitary.
-    //       (   x   )   (   0  )
-	void dlarfg_(int *n, double *alpha, double *x, int *incx, double *tau);
-	void zlarfg_(int *n, std::complex<double> *alpha, std::complex<double> *x, int *incx, std::complex<double> *tau);
-
-    // solve a tridiagonal linear system
-    void dgtsv_(int* N, int* NRHS, double* DL, double* D, double* DU, double* B, int* LDB, int* INFO);
-
-    // solve Ax = b 
-    void dsysv_(const char* uplo, const int* n, const int* m, double * a, const int* lda,
-                 int *ipiv, double * b, const int* ldb, double *work, const int* lwork ,int *info);
-}
+void dsysv_(const char* uplo, const int* n, const int* nrhs,
+            double* a, const int* lda,
+            int* ipiv,
+            double* b, const int* ldb,
+            double* work, const int* lwork,
+            int* info);
+}  // extern "C"
 
 #ifdef GATHER_INFO
 #define zhegvx_ zhegvx_i
@@ -226,7 +306,7 @@ void zhegvx_i(const int* itype,
               const int* il,
               const int* iu,
               const double* abstol,
-              const int* m,
+              int* m,
               double* w,
               std::complex<double>* z,
               const int* ldz,

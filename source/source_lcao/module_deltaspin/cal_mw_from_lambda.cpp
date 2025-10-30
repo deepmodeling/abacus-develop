@@ -151,7 +151,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 ->update_lambda();
         }
         // diagonalization without update charge
-        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, true);
+        // mohan add two parameters charge and nspin, 2025-10-24
+        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->pelec->charge, PARAM.inp.nspin, true);
         elecstate::calculate_weights(this->pelec->ekb,
                                      this->pelec->wg,
                                      this->pelec->klist,

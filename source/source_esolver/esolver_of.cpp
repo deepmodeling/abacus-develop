@@ -273,7 +273,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             {
                 // Here we initialize rho to be uniform,
                 // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                this->chr.rho[is][ibs] = this->nelec_[is] / this->pelec->omega;
+                this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
                 this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
             }
         }
@@ -587,7 +587,7 @@ void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
-    this->kedf_manager_->get_stress(this->pelec->omega,
+    this->kedf_manager_->get_stress(ucell.omega,
                                     this->chr.rho,
                                     this->pphi_,
                                     this->pw_rho,

@@ -31,10 +31,9 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_psi/psi.h"
 
-//-----force& stress-------------------
 #include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
-//---------------------------------------------------
 
 namespace ModuleESolver
 {
@@ -102,9 +101,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
 					this->pv, 
 					*(this->psi), 
-					this->pelec, 
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
+					this->pelec->ekb,
+                    this->pelec->wg, 
+                    this->kv.ik2iktot,
+                    this->kv.get_nkstot(),
 					PARAM.inp.nspin,
                     0,
                     TD_info::estep_shift))
@@ -292,7 +292,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->chr, PARAM.inp.nspin, skip_charge);
         }
     }
 
@@ -573,8 +573,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
          _pes->DM->cal_DMR();
     }
 
-    // get the real-space charge density
-    this->pelec->psiToRho(this->psi[0]);
+    // get the real-space charge density, mohan add 2025-10-24
+    LCAO_domain::dm2rho(_pes->DM->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 }
 
 template class ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>;

@@ -13,7 +13,7 @@ namespace elecstate {
 
 template <typename T, typename Device>
 ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                    Charge* chg_in,
+                                    Charge* chr_in,
                                     K_Vectors* pkv_in,
                                     UnitCell* ucell_in,
                                     pseudopot_cell_vnl* ppcell_in,
@@ -26,7 +26,7 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
     this->rhopw_smooth = rhopw_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->init_ks(chg_in, pkv_in, pkv_in->get_nks(), rhodpw_in, bigpw_in);
+    this->init_ks(chr_in, pkv_in, pkv_in->get_nks(), rhodpw_in, bigpw_in);
 }
 
 template<typename T, typename Device>

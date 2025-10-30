@@ -4,7 +4,6 @@
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
@@ -16,33 +15,6 @@
 #include <sys/time.h>
 #include <stdexcept>
 #include <string>
-
-/*
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
-{
-    ModuleBase::TITLE("Exx_LRI_Interface", "write_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
-    std::ofstream ofs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
-    cereal::BinaryOutputArchive oar(ofs);
-    oar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
-}
-
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name)
-{
-    ModuleBase::TITLE("Exx_LRI_Interface", "read_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
-    const std::string file_name_rank = file_name + "_" + std::to_string(GlobalV::MY_RANK);
-    std::ifstream ifs(file_name_rank, std::ofstream::binary);
-    if(!ifs.is_open())
-        { ModuleBase::WARNING_QUIT("Exx_LRI_Interface", file_name_rank+" not found."); }
-    cereal::BinaryInputArchive iar(ifs);
-    iar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
-}
-*/
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,

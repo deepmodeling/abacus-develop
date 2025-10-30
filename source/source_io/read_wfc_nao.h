@@ -1,9 +1,9 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
+#ifndef READ_WFC_NAO_H
+#define READ_WFC_NAO_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
-#include "source_estate/elecstate.h"
+#include "source_base/matrix.h"
 
 // mohan add 2010-09-09
 namespace ModuleIO
@@ -14,6 +14,7 @@ namespace ModuleIO
  * @param ifs The input file stream to read from.
  * @param data The variable to store the read data value.
  */
+void read_wfc_nao_one_data(std::ifstream& ifs, float& data);
 void read_wfc_nao_one_data(std::ifstream& ifs, double& data);
 
 /**
@@ -22,6 +23,7 @@ void read_wfc_nao_one_data(std::ifstream& ifs, double& data);
  * @param ifs The input file stream to read from.
  * @param data The variable to store the read complex data value.
  */
+void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<float>& data);
 void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
 
 /**
@@ -40,7 +42,8 @@ bool read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	elecstate::ElecState* const pelec,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,

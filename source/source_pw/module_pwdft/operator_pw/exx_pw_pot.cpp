@@ -30,6 +30,20 @@ void get_exx_potential(const K_Vectors* kv,
     // fill zero
     setmem_real_cpu_op()(pot_cpu, 0, npw);
 
+    std::vector<ModuleBase::Vector3<double>> qvec_c, qvec_d;
+#ifdef __MPI
+    kv->para_k.gatherkvec(kv->kvec_c, qvec_c);
+    kv->para_k.gatherkvec(kv->kvec_d, qvec_d);
+#else
+    qvec_c = kv->kvec_c;
+    qvec_d = kv->kvec_d;
+#endif
+
+    if (ik > nks)
+    {
+        return;
+    }
+
     // calculate Fock pot
     auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
     for (int i = 0; i < param_fock.size(); i++)
@@ -39,8 +53,8 @@ void get_exx_potential(const K_Vectors* kv,
         double alpha = std::stod(param["alpha"]);
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
-        const ModuleBase::Vector3<double> q_c = wfcpw->kvec_c[iq];
-        const ModuleBase::Vector3<double> q_d = wfcpw->kvec_d[iq];
+        const ModuleBase::Vector3<double> q_c = qvec_c[iq];
+        const ModuleBase::Vector3<double> q_d = qvec_d[iq];
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -109,8 +123,8 @@ void get_exx_potential(const K_Vectors* kv,
                                           ucell_omega);
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
-        const ModuleBase::Vector3<double> q_c = wfcpw->kvec_c[iq];
-        const ModuleBase::Vector3<double> q_d = wfcpw->kvec_d[iq];
+        const ModuleBase::Vector3<double> q_c = qvec_c[iq];
+        const ModuleBase::Vector3<double> q_d = qvec_d[iq];
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -146,6 +160,10 @@ void get_exx_potential(const K_Vectors* kv,
             // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
             Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
+            // if (ig == 0 && GlobalV::MY_RANK==1)
+            // {
+            //     printf("k-q+G: %f %f %f\n", (k_c - q_c + rhopw_dev->gcar[ig])[0], (k_c - q_c + rhopw_dev->gcar[ig])[1], (k_c - q_c + rhopw_dev->gcar[ig])[2]);
+            // }
             // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
             if (gg >= 1e-8)
             {
@@ -388,7 +406,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
 
     // this is the \sum_q F(q) part
     // temporarily for all k points, should be replaced to q points later
-    for (int ik = 0; ik < wfcpw->nks; ik++)
+    for (int ik = 0; ik < wfcpw->nks / nk_fac; ik++)
     {
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
@@ -437,7 +455,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
         }
     }
 
-    Parallel_Reduce::reduce_pool(div);
+    Parallel_Reduce::reduce_all(div);
     // std::cout << "EXX div: " << div << std::endl;
 
     // if (PARAM.inp.dft_functional == "hse")
@@ -454,8 +472,8 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
         }
     }
 
-    div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / wfcpw->nks;
-    //    std::cout << "div: " << div << std::endl;
+    div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / kv->get_nkstot_full();
+    // std::cout << "div: " << div << std::endl;
 
     // numerically value the mean value of F(q) in the reciprocal space
     // This means we need to calculate the average of F(q) in the first brillouin zone
@@ -481,9 +499,9 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     aa += 1.0 / std::sqrt(alpha * ModuleBase::PI);
 
     div -= ModuleBase::e2 * ucell_omega * aa;
-    exx_div = div * wfcpw->nks / nk_fac;
+    exx_div = div * kv->get_nkstot_full();
     //    exx_div = 0;
-    //    std::cout << "EXX divergence: " << exx_div << std::endl;
+    // std::cout << "EXX divergence: " << exx_div << std::endl;
 
     return exx_div;
 }

@@ -61,6 +61,29 @@ void Setup_DeePKS<TK>::before_runner(const UnitCell& ucell, // unitcell
 #endif
 }
 
+template <typename TK>
+void Setup_DeePKS<TK>::delta_e(
+		const UnitCell& ucell,
+		const K_Vectors &kv,
+		const LCAO_Orbitals& orb,
+	    const Parallel_Orbitals &pv, // parallel orbitals
+		const Grid_Driver &gd,
+		const std::vector<std::vector<TK>>& dm_vec,
+        elecstate::fenergy &f_en,
+		const Input_para &inp)
+{
+#ifdef __MLALGO
+    if (inp.deepks_scf)
+    {
+        this->ld.dpks_cal_e_delta_band(dm_vec, kv.get_nks());
+        DeePKS_domain::update_dmr(kv.kvec_d, dm_vec, ucell, orb, pv, gd, this->ld.dm_r);
+        f_en.edeepks_scf = this->ld.E_delta - this->ld.e_delta_band;
+        f_en.edeepks_delta = this->ld.E_delta;
+    }
+#endif
+}
+
+
 
 template <typename TK>
 void Setup_DeePKS<TK>::write_forces(

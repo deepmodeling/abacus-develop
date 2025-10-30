@@ -302,6 +302,9 @@
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
+    - [ecutexx](#ecutexx)
+    - [exx_thr_type](#exx_thr_type)
+    - [exx_ene_thr](#exx_ene_thr)
   - [Molecular Dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -3100,6 +3103,26 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Type**: Boolean
 - **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See [https://doi.org/10.1103/PhysRevB.79.205114](https://doi.org/10.1103/PhysRevB.79.205114) for details. Should be set to true most of the time.
 - **Default**: True
+
+### ecutexx
+- **Type**: Real
+- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing `ecutexx` below `ecutrho` may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+- **Default**: same as *[ecutrho](#ecutrho)*
+- **Unit**: Ry
+
+### exx_thr_type
+- **Type**: String
+- **Description**: The type of threshold used to judge whether the outer loop has converged in the separate loop EXX calculation.
+  - energy: use the change of exact exchange energy to judge convergence.
+  - density: if the change of charge density difference between two successive outer loop iterations is seen as converged according to *[scf_thr](#scf_thr)*, then the outer loop is seen as converged.
+- **Default**: `density`
+
+### exx_ene_thr
+- **Type**: Real
+- **Availability**: *[exx_thr_type](#exx_thr_type)*==`energy`
+- **Description**: The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.
+- **Default**: 1e-5
+- **Unit**: Ry
 
 ## Molecular dynamics
 

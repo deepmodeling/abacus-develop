@@ -12,7 +12,7 @@ using namespace hsolver;
 
 
 template <typename T, typename Device>
-DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
+DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
@@ -80,7 +80,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     resmem_complex_op()(this->vcc, nbase_x * nbase_x, "DAV::vcc");
     setmem_complex_op()(this->vcc, 0, nbase_x * nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
+
     // lagrange_matrix(nband, nband); // for orthogonalization
     resmem_complex_op()(this->lagrange_matrix, nband * nband);
     setmem_complex_op()(this->lagrange_matrix, 0, nband * nband);
@@ -409,7 +409,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = basis[nbase] - spsi * vc_ev_vector
     //              = hpsi - spsi * lambda * vcc
     //              = (H - lambda * S) * psi * vcc
-    //              = (H - lambda * S) * psi_new 
+    //              = (H - lambda * S) * psi_new
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
@@ -622,7 +622,8 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
             resmem_var_op()(eigenvalue_gpu, nbase_x);
             syncmem_var_h2d_op()(eigenvalue_gpu, this->eigenvalue, nbase_x);
 
-            heevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            // heevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            ct::kernels::lapack_heevx<T, ct_Device>()(nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
 
             syncmem_var_d2h_op()(this->eigenvalue, eigenvalue_gpu, nbase_x);
             delmem_var_op()(eigenvalue_gpu);
@@ -630,7 +631,8 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         }
         else
         {
-            heevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, this->eigenvalue, vcc);
+            //heevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, this->eigenvalue, vcc);
+            ct::kernels::lapack_heevx<T, ct_Device>()(nbase, nbase_x, hcc, nband, this->eigenvalue, vcc);
         }
     }
 

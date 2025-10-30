@@ -4,10 +4,8 @@
 #include "source_io/write_wfc_pw.h"
 #include "source_base/memory.h"
 
-#ifndef __OLD_GINT
-#include "source_lcao/module_gint/temp_gint/gint_env_gamma.h"
-#include "source_lcao/module_gint/temp_gint/gint_env_k.h"
-#endif
+#include "source_lcao/module_gint/gint_env_gamma.h"
+#include "source_lcao/module_gint/gint_env_k.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -24,7 +22,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const ModulePW::PW_Basis_K* pw_wfc,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
-                        Gint_Gamma& gg,
                         const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
@@ -45,30 +42,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     prepare_get_wf(ofs_running);
 
-#ifdef __OLD_GINT
-    // allocate grid wave functions for gamma_only
-    std::vector<double**> wfc_gamma_grid(nspin);
-    for (int is = 0; is < nspin; ++is)
-    {
-        wfc_gamma_grid[is] = new double*[nbands];
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
-        }
-    }
-#endif
-
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
 
     // if (out_wfc_pw || out_wfc_r)
     psi_g.resize(nspin, nbands, kv.ngk[0]);
-
-#ifdef __OLD_GINT
-    const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
-    ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
-#endif
 
     // Set this->bands_picked_
     this->select_bands(out_wfc_norm, nbands, fermi_band);
@@ -77,35 +55,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     for (int is = 0; is < nspin; ++is)
     {
         psid->fix_k(is);
-#ifdef __OLD_GINT
-    #ifdef __MPI
-        wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
-    #else
-        // if not MPI enabled, it is the case psid holds a global matrix. 
-        // use fix_k to switch between different spin channels (actually kpoints, 
-        // because now the same kpoint in different spin channels are treated
-        // as distinct kpoints)
-        for (int i = 0; i < nbands; ++i)
-        {
-            for (int j = 0; j < nlocal; ++j)
-            {
-                wfc_gamma_grid[is][i][j] = psid[0](i, j);
-            }
-        }
-    #endif
-#else
         ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
-#endif
         for (int ib = 0; ib < nbands; ++ib)
         {
             if (bands_picked_[ib])
             {
-            #ifdef __OLD_GINT
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
-                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
-            #else
                 gint_env.cal_env_band(ib);
-            #endif
                 pes_->charge->save_rho_before_sum_band();
 
                 // pint out information
@@ -140,34 +95,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     for (int is = 0; is < nspin; ++is)
     {
         psid->fix_k(is);
-#ifdef __OLD_GINT
-    #ifdef __MPI
-        wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
-    #else
-        // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
-        // different spin channels (actually kpoints, because now the same kpoint in different spin channels
-        // are treated as distinct kpoints)
-        for (int i = 0; i < nbands; ++i)
-        {
-            for (int j = 0; j < nlocal; ++j)
-            {
-                wfc_gamma_grid[is][i][j] = psid[0](i, j);
-            }
-        }
-    #endif
-#else
         ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
-#endif
         for (int ib = 0; ib < nbands; ++ib)
         {
             if (bands_picked_[ib])
             {
-#ifdef __OLD_GINT
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
-                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
-#else
                 gint_env.cal_env_band(ib);
-#endif
                 pes_->charge->save_rho_before_sum_band();
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
@@ -222,16 +155,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                            pw_wfc,
                            ofs_running);
 
-#ifdef __OLD_GINT
-    for (int is = 0; is < nspin; ++is)
-    {
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            delete[] wfc_gamma_grid[is][ib];
-        }
-        delete[] wfc_gamma_grid[is];
-    }
-#endif
     return;
 }
 
@@ -241,7 +164,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const ModulePW::PW_Basis_K* pw_wfc,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
-                        Gint_k& gk,
                         const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
@@ -262,21 +184,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // allocate grid wave functions for multi-k
     const int nks = kv.get_nks();
     std::vector<std::complex<double>**> wfc_k_grid(nks);
-#ifdef __OLD_GINT
-    for (int ik = 0; ik < nks; ++ik)
-    {
-        wfc_k_grid[ik] = new std::complex<double>*[nbands];
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            wfc_k_grid[ik][ib] = new std::complex<double>[gk.gridt->lgd];
-        }
-    }
-
-    const double mem_size
-        = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nks) / 1024.0 / 1024.0;
-    ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
-#endif
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
@@ -295,36 +202,14 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
         psi->fix_k(ik);
 
-#ifdef __OLD_GINT
-    #ifdef __MPI // need to deal with NSPIN=4 !!!!
-        wfc_2d_to_grid(psi->get_pointer(), para_orb, wfc_k_grid[ik], gk.gridt->trace_lo);
-    #else
-        for (int i = 0; i < nbands; ++i)
-        {
-            for (int j = 0; j < nlocal; ++j)
-            {
-                wfc_k_grid[ik][i][j] = psi[0](i, j);
-            }
-        }
-    #endif
-#else
         ModuleGint::Gint_env_k gint_env(psi->get_pointer(), &para_orb, kv.kvec_c, kv.kvec_d,
                                         nbands, nlocal, ik, PARAM.inp.nspin, PARAM.globalv.npol, pes_->charge->rho[ispin]);
-#endif
         
         for (int ib = 0; ib < nbands; ++ib)
         {
             if (bands_picked_[ib])
             {
-#ifdef __OLD_GINT
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
-                                              pw_wfc->nrxx); // terrible, you make changes on another instance's data???
-
-                // deal with NSPIN=4
-                gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, ucell);
-#else
                 gint_env.cal_env_band(ib);
-#endif
 
                 // ik0 is the real k-point index, starting from 0
                 int ik0 = kv.ik2iktot[ik];
@@ -440,16 +325,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
             }
         }
     }
-#ifdef __OLD_GINT
-    for (int ik = 0; ik < nks; ++ik)
-    {
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            delete[] wfc_k_grid[ik][ib];
-        }
-        delete[] wfc_k_grid[ik];
-    }
-#endif
     return;
 }
 

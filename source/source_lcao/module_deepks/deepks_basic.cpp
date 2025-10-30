@@ -8,6 +8,7 @@
 #include "source_base/atom_in.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+#include <cstdlib> // use system command
 
 // d(Descriptor) / d(projected density matrix)
 // Dimension is different for each inl, so there's a vector of tensors

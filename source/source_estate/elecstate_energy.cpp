@@ -174,7 +174,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     deband0 = deband_aux;
 #endif
 
-    deband0 *= this->omega / this->charge->rhopw->nxyz;
+    deband0 *= ucell.omega / this->charge->rhopw->nxyz;
 
     // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
     deband0 -= 2 * this->f_en.exx; // Peize Lin add 2017-10-16
@@ -246,7 +246,7 @@ double ElecState::cal_delta_escf() const
 
     assert(this->charge->rhopw->nxyz > 0);
 
-    descf *= this->omega / this->charge->rhopw->nxyz;
+    descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
     return descf;
 }
 

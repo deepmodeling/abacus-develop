@@ -24,8 +24,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
@@ -64,8 +62,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     *pw_rhod,
                                     vloc,
                                     chr,
-                                    gg,
-                                    gk,
                                     kv,
                                     orb.cutoffs(),
                                     pelec->wg,
@@ -89,8 +85,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       *pw_rhod,
                                       vloc,
                                       chr,
-                                      gg,
-                                      gk,
                                       kv,
                                       orb.cutoffs(),
                                       gd
@@ -118,8 +112,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             *pw_rhod,
                                             vloc,
                                             chr,
-                                            gg,
-                                            gk,
                                             kv,
                                             pelec->wg,
                                             gd,
@@ -150,8 +142,6 @@ template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      /
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<double, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
@@ -172,8 +162,6 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
@@ -194,8 +182,6 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 

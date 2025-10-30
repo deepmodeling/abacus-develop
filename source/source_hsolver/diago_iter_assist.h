@@ -80,7 +80,7 @@ class DiagoIterAssist
     static void diag_hegvd(const int nstart,
                             const int nbands,
                             const T *hcc,
-                            const T *sc,
+                            T *sc,
                             const int ldh, // nstart
                             Real *e,
                             T *vcc);
@@ -104,7 +104,7 @@ class DiagoIterAssist
     /// @param mat_col : number of columns of target matrix
     /// @param en : eigenvalues
     static void diag_responce(const T* hcc,
-                              const T* scc,
+                              T* scc,
                               const int nbands,
                               const T* mat_in, 
                               T* mat_out, 
@@ -113,7 +113,7 @@ class DiagoIterAssist
     
     /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
     static void diag_subspace_psi(const T* hcc,
-                              const T* scc,
+                              T* scc,
                               const int dim_subspace,
                               psi::Psi<T, Device>& evc,
                               Real* en);

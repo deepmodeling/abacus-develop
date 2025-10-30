@@ -1,18 +1,9 @@
 #pragma once
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/stress_tools.h"
-#ifndef TGINT_H
-#define TGINT_H
-template <typename T>
-struct TGint;
-template <> struct TGint<double> { using type = Gint_Gamma; };
-template <> struct TGint<std::complex<double>> { using type = Gint_k; };
-#endif
 
 /// calculate the abstract formulas: 
 /// $Tr[D*dH/dx]$ (force) and $1/V Tr[D*(dH/dx_a*x_b)]$ (stress)
@@ -60,7 +51,6 @@ namespace PulayForceStress
         const elecstate::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
         const UnitCell& ucell,  ///< [in] unit cell
         const elecstate::Potential* pot, ///< [in] potential on grid
-        typename TGint<TK>::type& gint, ///< [in] Gint object
         const bool& isforce,
         const bool& isstress,
         const bool& set_dmr_gint = true);

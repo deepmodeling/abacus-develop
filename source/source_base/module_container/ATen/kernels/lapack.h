@@ -1,6 +1,7 @@
 #ifndef ATEN_KERNELS_LAPACK_H_
 #define ATEN_KERNELS_LAPACK_H_
 
+#include "source_base/macros.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
@@ -35,11 +36,22 @@ struct lapack_potrf {
     void operator()(
         const char& uplo,
         const int& dim,
-        T* Mat, 
+        T* Mat,
         const int& lda);
 };
 
-
+// ============================================================================
+// Standard Hermitian Eigenvalue Problem Solvers
+// ============================================================================
+// The following structures (lapack_heevd and lapack_heevx) implement solvers
+// for standard Hermitian eigenvalue problems of the form:
+//      A * x = lambda * x
+// where:
+//   - A is a Hermitian matrix
+//   - lambda are the eigenvalues to be computed
+//   - x are the corresponding eigenvectors
+//
+// ============================================================================
 template <typename T, typename Device>
 struct lapack_heevd {
     using Real = typename GetTypeReal<T>::type;
@@ -51,18 +63,114 @@ struct lapack_heevd {
         Real* eigen_val);
 };
 
+template <typename T, typename Device>
+struct lapack_heevx {
+    using Real = typename GetTypeReal<T>::type;
+    /**
+     * @brief Computes selected eigenvalues and, optionally, eigenvectors of a complex Hermitian matrix.
+     *
+     * This function solves the problem A*x = lambda*x, where A is a Hermitian matrix.
+     * It computes a subset of eigenvalues and, optionally, the corresponding eigenvectors.
+     *
+     * @param dim   The order of the matrix A. dim >= 0.
+     * @param lda   The leading dimension of the array Mat. lda >= max(1, dim).
+     * @param Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     * @param neig  The number of eigenvalues to be found. 0 <= neig <= dim.
+     * @param eigen_val On normal exit, the first \p neig elements contain the selected
+     *                  eigenvalues in ascending order.
+     * @param eigen_vec If eigen_vec is not nullptr, then on exit it contains the
+     *                  orthonormal eigenvectors of the matrix A. The eigenvectors are stored in
+     *                  the columns of eigen_vec, in the same order as the eigenvalues.
+     *
+     * @note
+     * See LAPACK ZHEEVX or CHEEVX documentation for more details.
+     * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
+     */
+    void operator()(
+        const int dim,
+        const int lda,
+        const T *Mat,
+        const int neig,
+        Real *eigen_val,
+        T *eigen_vec);
+};
+
+
+// ============================================================================
+// Generalized Hermitian-definite Eigenvalue Problem Solvers
+// ============================================================================
+// The following structures (lapack_hegvd and lapack_hegvx) implement solvers
+// for generalized Hermitian-definite eigenvalue problems of the form:
+//      A * x = lambda * B * x
+// where:
+//   - A is a Hermitian matrix
+//   - B is a Hermitian positive definite matrix
+//   - lambda are the eigenvalues to be computed
+//   - x are the corresponding eigenvectors
+//
+// ============================================================================
 
 template <typename T, typename Device>
 struct lapack_hegvd {
     using Real = typename GetTypeReal<T>::type;
+    /**
+     * @brief Computes all the eigenvalues and, optionally, the eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+     *
+     * This function solves the problem A*x = lambda*B*x, where A and B are Hermitian matrices, and B is also positive definite.
+     *
+     * @param n The order of the matrices Mat_A and Mat_B. n >= 0.
+     * @param lda The leading dimension of the arrays Mat_A and Mat_B. lda >= max(1, n).
+     * @param Mat_A On entry, the Hermitian matrix A. On exit, it may be overwritten.
+     * @param Mat_B On entry, the Hermitian positive definite matrix B. On exit, it may be overwritten.
+     * @param eigen_val Array to store the computed eigenvalues in ascending order.
+     * @param eigen_vec If not nullptr, array to store the computed eigenvectors.
+     *
+     * @note
+     * See LAPACK ZHEGVD or CHEGVD documentation for more details.
+     * This function assumes that A and B have the same leading dimensions, lda.
+     * This function copies B to auxiliary memory to avoid being overwritten.
+     */
     void operator()(
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
-        T* Mat_A,
-        T* Mat_B,
-        const int& dim,
-        Real* eigen_val);
+        const int n,
+        const int lda,
+        T *Mat_A,
+        T *Mat_B,
+        Real *eigen_val,
+        T *eigen_vec);
+};
+
+template <typename T, typename Device>
+struct lapack_hegvx {
+    using Real = typename GetTypeReal<T>::type;
+    /**
+     * @ brief hegvx computes the first m eigenvalues and their corresponding eigenvectors of
+     * a complex generalized Hermitian-definite eigenproblem.
+     *
+     * In this op, the CPU version is implemented through the `hegvx` interface, and the CUDA version
+     * is implemented through the `evd` interface and acquires the first m eigenpairs
+     *
+     * hegvx 'V' 'I' 'U'  is used to compute the first m eigenpairs of the problem
+     *
+     * @param n The order of the matrices A and B. n >= 0.
+     * @param lda The leading dimension of the array A and B. lda >= max(1, n).
+     * @param A On entry, the Hermitian matrix A. On exit, if info = 0, A contains the matrix Z of eigenvectors.
+     * @param B On entry, the Hermitian positive definite matrix B. On exit, the triangular factor from the Cholesky factorization of B.
+     * @param m The number of eigenvalues and eigenvectors to be found. 0 < m <= n.
+     * @param eigen_val The first m eigenvalues in ascending order.
+     * @param eigen_vec The first m columns contain the orthonormal eigenvectors of the matrix A corresponding to the selected eigenvalues.
+     *
+     * @note
+     * See LAPACK ZHEGVX doc for more details.
+     * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
+     */
+    void operator()(
+        const int n,
+        const int lda,
+        T *Mat_A,
+        T *Mat_B,
+        const int m,
+        Real *eigen_val,
+        T *eigen_vec);
 };
 
 

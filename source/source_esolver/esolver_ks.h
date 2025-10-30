@@ -71,7 +71,6 @@ class ESolver_KS : public ESolver_FP
     int maxniter;               //! maximum iter steps for scf
     int niter;                  //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
-
     bool scf_nmax_flag = false; // whether scf has reached nmax, mohan add 20250921
 };
 } // namespace ModuleESolver

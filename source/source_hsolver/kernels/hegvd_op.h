@@ -64,7 +64,7 @@ struct hegvd_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, const T* B, Real* W, T* V);
+    void operator()(const Device* d, const int nstart, const int ldh, const T* A, T* B, Real* W, T* V);
 };
 
 // template <typename T, typename Device>

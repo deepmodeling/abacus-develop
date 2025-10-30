@@ -155,7 +155,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
                                     this->pv,
                                     *(this->psi),
-                                    this->pelec,
+									this->pelec->ekb,
+									this->pelec->wg,
                                     this->pelec->klist->ik2iktot,
                                     this->pelec->klist->get_nkstot(),
                                     PARAM.inp.nspin))
@@ -174,8 +175,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
             this->gd,
             &this->pv,
@@ -184,16 +183,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM,
-            this->deepks
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
-#endif
-        );
-    }
+			this->deepks,
+			istep,
+			this->exx_nao);
+	}
 
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -234,8 +227,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         Get_pchg_lcao get_pchg(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            get_pchg.begin(this->GG,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
                            this->pw_rhod->nrxx,
@@ -252,8 +244,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            get_pchg.begin(this->GK,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->chr.rhog,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
@@ -285,7 +276,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GG,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
@@ -304,7 +294,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GK,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,

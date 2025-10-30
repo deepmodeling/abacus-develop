@@ -33,14 +33,14 @@ TYPED_TEST(LapackTest, Trtri) {
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
     Tensor B = A;
     Tensor C = B;
     C.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
@@ -51,7 +51,7 @@ TYPED_TEST(LapackTest, Trtri) {
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     trtriCalculator('L', 'N', dim, B.data<Type>(), dim);
     gemmCalculator(trans, trans, m, n, k, &alpha, B.data<Type>(), k, A.data<Type>(), n, &beta, C.data<Type>(), n);
-    
+
     EXPECT_EQ(C, I);
 }
 
@@ -69,11 +69,11 @@ TYPED_TEST(LapackTest, Potrf) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(2.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(2.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor B = A;
     Tensor C = B;
     C.zero();
-    
+
     const char transa = 'N';
     const char transb = 'C';
     const int m = 3;
@@ -92,11 +92,14 @@ TYPED_TEST(LapackTest, Potrf) {
     EXPECT_EQ(A, C);
 }
 
+// Test for lapack_heevd and lapack_heevx:
+// Solve a standard eigenvalue problem
+// and check that A*V = V*E
 TYPED_TEST(LapackTest, heevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
-    
+
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
     lapack_heevd<Type, Device> heevdCalculator;
@@ -105,14 +108,14 @@ TYPED_TEST(LapackTest, heevd) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
     expected_C1.zero();
     expected_C2.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
@@ -122,10 +125,10 @@ TYPED_TEST(LapackTest, heevd) {
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
-    
+
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
-            static_cast<Type>(E.data<Real>()[0]), 
+            static_cast<Type>(E.data<Real>()[0]),
             static_cast<Type>(E.data<Real>()[1]),
             static_cast<Type>(E.data<Real>()[2])}));
 
@@ -138,12 +141,66 @@ TYPED_TEST(LapackTest, heevd) {
     EXPECT_EQ(expected_C1, expected_C2);
 }
 
+TYPED_TEST(LapackTest, heevx) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Real = typename GetTypeReal<Type>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
+    blas_gemm<Type, Device> gemmCalculator;
+    blas_axpy<Type, Device> axpyCalculator;
+    lapack_heevx<Type, Device> heevxCalculator;
+
+    const int dim = 3;
+    const int neig = 2;  // Compute first 2 eigenvalues
+
+    Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
+
+    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
+    Tensor V = A;
+    Tensor expected_C1 = std::move(Tensor({static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                           static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0)}).to_device<Device>());
+    Tensor expected_C2 = expected_C1;
+    expected_C1.zero();
+    expected_C2.zero();
+
+    const char trans = 'N';
+    const int m = 3;
+    const int n = neig;
+    const int k = 3;
+    const Type alpha = static_cast<Type>(1.0);
+    const Type beta  = static_cast<Type>(0.0);
+
+    // Compute first neig eigenvalues and eigenvectors using heevx
+    heevxCalculator(dim, dim, A.data<Type>(), neig, E.data<Real>(), V.data<Type>());
+
+    E = E.to_device<ct::DEVICE_CPU>();
+    const Tensor Alpha = std::move(Tensor({
+            static_cast<Type>(E.data<Real>()[0]),
+            static_cast<Type>(E.data<Real>()[1])}));
+
+    // Check the eigenvalues and eigenvectors
+    // A * x = lambda * x for the first neig eigenvectors
+    // check that A * V = V * E
+    // get A * V
+    gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), m, V.data<Type>(), k, &beta, expected_C1.data<Type>(), m);
+    // get V * E
+    for (int ii = 0; ii < neig; ii++) {
+        axpyCalculator(dim, Alpha.data<Type>() + ii, V.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
+    }
+
+    EXPECT_EQ(expected_C1, expected_C2);
+}
+
+// Test for lapack_hegvd and lapack_hegvx
+// Solve a generalized eigenvalue problem
+// and check that A * v = e * B * v
 TYPED_TEST(LapackTest, hegvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
-    
+
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
     lapack_hegvd<Type, Device> hegvdCalculator;
@@ -152,31 +209,31 @@ TYPED_TEST(LapackTest, hegvd) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
-    
+
     Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
     expected_C1.zero();
     expected_C2.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
     const int k = 3;
     const Type alpha = static_cast<Type>(1.0);
     const Type beta  = static_cast<Type>(0.0);
-    // Note al<l blas and lapack operators within container are column major!
+    // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    hegvdCalculator(1, 'V', 'U', B.data<Type>(), I.data<Type>(), dim, E.data<Real>());
+    hegvdCalculator(dim, dim, A.data<Type>(), I.data<Type>(), E.data<Real>(), B.data<Type>());
 
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
-            static_cast<Type>(E.data<Real>()[0]), 
+            static_cast<Type>(E.data<Real>()[0]),
             static_cast<Type>(E.data<Real>()[1]),
             static_cast<Type>(E.data<Real>()[2])}));
 
@@ -189,5 +246,66 @@ TYPED_TEST(LapackTest, hegvd) {
     EXPECT_EQ(expected_C1, expected_C2);
 }
 
-} // namespace op
+TYPED_TEST(LapackTest, hegvx) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Real = typename GetTypeReal<Type>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    blas_gemm<Type, Device> gemmCalculator;
+    blas_axpy<Type, Device> axpyCalculator;
+    lapack_hegvx<Type, Device> hegvxCalculator;
+
+    const int dim = 3;
+    const int neig = 2;  // Compute first 2 eigenvalues
+
+    Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
+                                 static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
+
+    Tensor B = std::move(Tensor({static_cast<Type>(2.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(2.0), static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(2.0)}).to_device<Device>());
+
+    Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
+    Tensor V = A;
+    Tensor expected_C1 = std::move(Tensor({static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
+                                           static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(0.0)}).to_device<Device>());
+    Tensor expected_C2 = expected_C1;
+    Tensor C_temp = expected_C1;
+    expected_C1.zero();
+    expected_C2.zero();
+
+    const char trans = 'N';
+    const int m = 3;
+    const int n = neig;
+    const int k = 3;
+    const Type alpha = static_cast<Type>(1.0);
+    const Type beta  = static_cast<Type>(0.0);
+
+    // Compute first neig eigenvalues and eigenvectors using hegvx
+    hegvxCalculator(dim, dim, A.data<Type>(), B.data<Type>(), neig, E.data<Real>(), V.data<Type>());
+
+    E = E.to_device<ct::DEVICE_CPU>();
+    const Tensor Alpha = std::move(Tensor({
+            static_cast<Type>(E.data<Real>()[0]),
+            static_cast<Type>(E.data<Real>()[1])}));
+
+    // Check the eigenvalues and eigenvectors
+    // A * x = lambda * B * x for the first neig eigenvectors
+    // check that A * V = E * B * V
+    // get A * V
+    gemmCalculator(trans, trans, m, n, k, &alpha, A.data<Type>(), m, V.data<Type>(), k, &beta, expected_C1.data<Type>(), m);
+    // get E * B * V
+    // where B is 2 * eye(3,3)
+    // get C_temp = B * V first
+    gemmCalculator(trans, trans, m, n, k, &alpha, B.data<Type>(), m, V.data<Type>(), k, &beta, C_temp.data<Type>(), m);
+    // then compute C2 = E * B * V
+    for (int ii = 0; ii < neig; ii++) {
+        axpyCalculator(dim, Alpha.data<Type>() + ii, C_temp.data<Type>() + ii * dim, 1, expected_C2.data<Type>() + ii * dim, 1);
+    }
+
+    EXPECT_EQ(expected_C1, expected_C2);
+}
+
+} // namespace kernels
 } // namespace container

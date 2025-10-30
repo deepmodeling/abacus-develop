@@ -212,7 +212,7 @@ struct hegvd_op<T, base_device::DEVICE_GPU>
                     const int nstart,
                     const int ldh,
                     const T* A, // hcc
-                    const T* B, // scc
+                    T* B, // scc
                     Real* W,    // eigenvalue
                     T* V)
     {

@@ -78,6 +78,14 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                 const int ngk_ik = 0,
                 const bool is_first_node = false) const;
 
+    void act_op_kpar(const int nbands,
+            const int nbasis,
+            const int npol,
+            const T *tmpsi_in,
+            T *tmhpsi,
+            const int ngk_ik = 0,
+            const bool is_first_node = false) const;
+
     void act_op_ace(const int nbands,
                     const int nbasis,
                     const int npol,

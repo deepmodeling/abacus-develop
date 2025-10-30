@@ -25,8 +25,8 @@ void daxpy_(const int *N, const double *alpha, const double *x, const int *incx,
 void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx, std::complex<float> *y, const int *incy);
 void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx, std::complex<double> *y, const int *incy);
 
-void dcopy_(long const *n, const double *a, int const *incx, double *b, int const *incy);
-void zcopy_(long const *n, const std::complex<double> *a, int const *incx, std::complex<double> *b, int const *incy);
+void dcopy_(const int *n, const double *a, const int *incx, double *b, const int *incy);
+void zcopy_(const int *n, const std::complex<double> *a, const int *incx, std::complex<double> *b, const int *incy);
 
 //reason for passing results as argument instead of returning it:
 //see https://www.numbercrunch.de/blog/2014/07/lost-in-translation/
@@ -107,14 +107,26 @@ void dsymm_(const char *side, const char *uplo, const int *m, const int *n,
             const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
             const double *beta, double *c, const int *ldc);
 //a is hermitian
-void zhemm_(char *side, char *uplo, int *m, int *n,std::complex<double> *alpha,
-            std::complex<double> *a,  int *lda,  std::complex<double> *b, int *ldb, std::complex<double> *beta, std::complex<double> *c, int *ldc);
+void zhemm_(const char *side, const char *uplo,
+            const int *m, const int *n,
+            const std::complex<double> *alpha,
+            const std::complex<double> *a, const int *lda,
+            const std::complex<double> *b, const int *ldb,
+            const std::complex<double> *beta,
+            std::complex<double> *c, const int *ldc);
 
 //solving triangular matrix with multiple right hand sides
-void dtrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-            double* alpha, double* a, int *lda, double*b, int *ldb);
-void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-            std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
+void dtrsm_(const char *side, const char *uplo, const char *transa, const char *diag,
+            const int *m, const int *n,
+            const double *alpha,
+            const double *a, const int *lda,
+            double *b, const int *ldb);
+
+void ztrsm_(const char *side, const char *uplo, const char *transa, const char *diag,
+            const int *m, const int *n,
+            const std::complex<double> *alpha,
+            const std::complex<double> *a, const int *lda,
+            std::complex<double> *b, const int *ldb);
 
 }
 
@@ -339,12 +351,12 @@ double nrm2( const int n, const std::complex<double> *x, const int incx )
 
 // copies a into b
 static inline
-void copy(const long n, const double *a, const int incx, double *b, const int incy)
+void copy(const int n, const double *a, const int incx, double *b, const int incy)
 {
     dcopy_(&n, a, &incx, b, &incy);
 }
 static inline
-void copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy)
+void copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy)
 {
     zcopy_(&n, a, &incx, b, &incy);
 }
