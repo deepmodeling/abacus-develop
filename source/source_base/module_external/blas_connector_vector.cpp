@@ -322,7 +322,7 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 }
 
 // copies a into b
-void BlasConnector::copy(const long n, const float *a, const int incx, float *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const float *a, const int incx, float *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		scopy_(&n, a, &incx, b, &incy);
@@ -332,7 +332,7 @@ void BlasConnector::copy(const long n, const float *a, const int incx, float *b,
 	}
 }
 
-void BlasConnector::copy(const long n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		dcopy_(&n, a, &incx, b, &incy);
@@ -342,7 +342,7 @@ void BlasConnector::copy(const long n, const double *a, const int incx, double *
 	}
 }
 
-void BlasConnector::copy(const long n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		ccopy_(&n, a, &incx, b, &incy);
@@ -352,7 +352,7 @@ void BlasConnector::copy(const long n, const std::complex<float> *a, const int i
 	}
 }
 
-void BlasConnector::copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
