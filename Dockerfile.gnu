@@ -32,7 +32,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
     # This will fetch the latest commit info, and store in docker building cache.
     # If there are newer commits, docker build will ignore the cache and build latest codes.
 
-RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+RUN git clone https://github.com/deepmodeling/abacus-develop.git -b LTS --depth 1 && \
     cd abacus-develop && \
     cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
     cmake --build build -j`nproc` && \
