@@ -5,6 +5,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_charge/charge_extra.h"
 #include "prepare_unitcell.h"
+#include "source_base/module_fft/fft_bundle.h"
 #undef private
 #undef protected
 // mock functions for UnitCell
@@ -66,7 +67,6 @@ PW_Basis::PW_Basis()
 PW_Basis::~PW_Basis()
 {
 }
-FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
 {
 }

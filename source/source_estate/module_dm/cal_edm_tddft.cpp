@@ -29,7 +29,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         // mohan add 2024-03-27
         //! be careful, the type of nloc is 'long'
         //! whether the long type is safe, needs more discussion
-        const long nloc = pv.nloc;
+        const int nloc = pv.nloc;
         const int ncol = pv.ncol;
         const int nrow = pv.nrow;
 

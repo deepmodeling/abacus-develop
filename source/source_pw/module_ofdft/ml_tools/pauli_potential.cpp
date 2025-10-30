@@ -62,6 +62,17 @@ void PauliPotential::init(const Input &input,
     this->ml_tanh_qnl = this->descriptor2index["tanh_qnl"].size() > 0;
     this->ml_tanhp_nl = this->descriptor2index["tanhp_nl"].size() > 0;
     this->ml_tanhq_nl = this->descriptor2index["tanhq_nl"].size() > 0;
+
+    if (input.energy_type == "kedf")
+    {
+        this->cLDA = this->cTF;
+        this->tau_exp = 5. / 3.;
+    }
+    else if (input.energy_type == "exx")
+    {
+        this->cLDA = this->cDirac;
+        this->tau_exp = 4. / 3.;
+    }
 }
 
 torch::Tensor PauliPotential::get_potential(const int istru,
@@ -73,7 +84,7 @@ torch::Tensor PauliPotential::get_potential(const int istru,
 {
     // Input::print("get potential begin");
     this->istru = istru;
-    torch::Tensor potential = 5. / 3. * F;
+    torch::Tensor potential = F * this->tau_exp;
 
     // semi-local potential terms
     if (this->ml_gamma) {
@@ -97,18 +108,18 @@ torch::Tensor PauliPotential::get_potential(const int istru,
     if (this->ml_tanhq) {
         potential += this->potTanhqTerm1(data.q[istru], data.tanhq[istru], gradient);
     }
-    potential *= data.tau_tf[istru] / data.rho[istru];
+    potential *= data.tau_lda[istru] / data.rho[istru];
 
     // non-local potential terms
     if (this->ml_gammanl) {
-        potential += this->potGammanlTerm(data.rho[istru], data.gamma[istru], kernels, data.tau_tf[istru], gradient);
+        potential += this->potGammanlTerm(data.rho[istru], data.gamma[istru], kernels, data.tau_lda[istru], gradient);
     }
     if (this->ml_p || this->ml_pnl) {
         potential += this->potPPnlTerm(data.rho[istru],
                                        data.nablaRho[istru],
                                        data.p[istru],
                                        kernels,
-                                       data.tau_tf[istru],
+                                       data.tau_lda[istru],
                                        gradient,
                                        grid.fft_grid[istru]);
     }
@@ -116,19 +127,19 @@ torch::Tensor PauliPotential::get_potential(const int istru,
         potential += this->potQQnlTerm(data.rho[istru],
                                        data.q[istru],
                                        kernels,
-                                       data.tau_tf[istru],
+                                       data.tau_lda[istru],
                                        gradient,
                                        grid.fft_gg[istru]);
     }
     if (this->ml_xi) {
-        potential += this->potXinlTerm(data.rho[istru], kernels, data.tau_tf[istru], gradient);
+        potential += this->potXinlTerm(data.rho[istru], kernels, data.tau_lda[istru], gradient);
     }
     if (this->ml_tanhxi) {
-        potential += this->potTanhxinlTerm(data.rho[istru], data.tanhxi, kernels, data.tau_tf[istru], gradient);
+        potential += this->potTanhxinlTerm(data.rho[istru], data.tanhxi, kernels, data.tau_lda[istru], gradient);
     }
     if (this->ml_tanhxi_nl) {
         potential
-            += this->potTanhxi_nlTerm(data.rho[istru], data.xi, data.tanhxi, kernels, data.tau_tf[istru], gradient);
+            += this->potTanhxi_nlTerm(data.rho[istru], data.xi, data.tanhxi, kernels, data.tau_lda[istru], gradient);
     }
     if ((this->ml_tanhp || this->ml_tanhp_nl) && !this->ml_tanh_pnl) {
         potential += this->potTanhpTanhp_nlTerm(data.rho[istru],
@@ -136,7 +147,7 @@ torch::Tensor PauliPotential::get_potential(const int istru,
                                                 data.p[istru],
                                                 data.tanhp[istru],
                                                 kernels,
-                                                data.tau_tf[istru],
+                                                data.tau_lda[istru],
                                                 gradient,
                                                 grid.fft_grid[istru]);
     }
@@ -145,7 +156,7 @@ torch::Tensor PauliPotential::get_potential(const int istru,
                                                 data.q[istru],
                                                 data.tanhq[istru],
                                                 kernels,
-                                                data.tau_tf[istru],
+                                                data.tau_lda[istru],
                                                 gradient,
                                                 grid.fft_gg[istru]);
     }
@@ -156,7 +167,7 @@ torch::Tensor PauliPotential::get_potential(const int istru,
                                                 data.tanhp[istru],
                                                 data.tanh_pnl,
                                                 kernels,
-                                                data.tau_tf[istru],
+                                                data.tau_lda[istru],
                                                 gradient,
                                                 grid.fft_grid[istru]);
     }
@@ -166,7 +177,7 @@ torch::Tensor PauliPotential::get_potential(const int istru,
                                                 data.tanhq[istru],
                                                 data.tanh_qnl,
                                                 kernels,
-                                                data.tau_tf[istru],
+                                                data.tau_lda[istru],
                                                 gradient,
                                                 grid.fft_gg[istru]);
     }
@@ -203,7 +214,7 @@ torch::Tensor PauliPotential::potGammanlTerm(const torch::Tensor &rho,
                                         const torch::Tensor &gamma,
                                         const Kernel *kernels,
                                         // const torch::Tensor &kernel,
-                                        const torch::Tensor &tauTF,
+                                        const torch::Tensor &tauLDA,
                                         const torch::Tensor &gradient)
 {
     // std::cout << "potGmmamnlTerm" << std::endl;
@@ -216,7 +227,7 @@ torch::Tensor PauliPotential::potGammanlTerm(const torch::Tensor &rho,
                   * torch::real(
                       torch::fft::ifftn(torch::fft::fftn(gradient.index({"...", d2i})
                                                              .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                         * tauTF)
+                                                         * tauLDA)
                                         * kernels[d2k].kernel[istru]));
     }
     return result;
@@ -227,7 +238,7 @@ torch::Tensor PauliPotential::potPPnlTerm(const torch::Tensor &rho,
                                      const torch::Tensor &p,
                                      const Kernel *kernels,
                                      //  const torch::Tensor &kernel,
-                                     const torch::Tensor &tauTF,
+                                     const torch::Tensor &tauLDA,
                                      const torch::Tensor &gradient,
                                      const std::vector<torch::Tensor> &grid)
 {
@@ -240,17 +251,17 @@ torch::Tensor PauliPotential::potPPnlTerm(const torch::Tensor &rho,
         dFdpnl_nl
             += torch::real(torch::fft::ifftn(torch::fft::fftn(gradient.index({"...", d2i})
                                                                   .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                              * tauTF)
+                                                              * tauLDA)
                                              * kernels[d2k].kernel[istru]));
     }
 
     torch::Tensor temp = torch::zeros_like(nablaRho);
     for (int i = 0; i < 3; ++i)
     {
-        temp[i] = (this->ml_p) ? -3. / 20.
+        temp[i] = (this->ml_p) ? - this->pqcoef * 2.
                                      * gradient.index({"...", this->descriptor2index["p"][0]})
                                            .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                     * nablaRho[i] / rho * /*Ha to Ry*/ 2.
+                                     * nablaRho[i] * tauLDA / torch::pow(rho, 8. / 3.)
                                : torch::zeros_like(nablaRho[i]);
         if (this->ml_pnl) {
             temp[i] += -this->pqcoef * 2. * nablaRho[i] / torch::pow(rho, 8. / 3.) * dFdpnl_nl;
@@ -272,7 +283,7 @@ torch::Tensor PauliPotential::potQQnlTerm(const torch::Tensor &rho,
                                      const torch::Tensor &q,
                                      const Kernel *kernels,
                                      //  const torch::Tensor &kernel,
-                                     const torch::Tensor &tauTF,
+                                     const torch::Tensor &tauLDA,
                                      const torch::Tensor &gradient,
                                      const torch::Tensor &gg)
 {
@@ -285,14 +296,14 @@ torch::Tensor PauliPotential::potQQnlTerm(const torch::Tensor &rho,
         dFdqnl_nl
             = torch::real(torch::fft::ifftn(torch::fft::fftn(gradient.index({"...", d2i})
                                                                  .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                             * tauTF)
+                                                             * tauLDA)
                                             * kernels[d2k].kernel[istru]));
     }
 
-    torch::Tensor temp = (this->ml_q) ? 3. / 40.
+    torch::Tensor temp = (this->ml_q) ? this->pqcoef
                                             * gradient.index({"...", this->descriptor2index["q"][0]})
                                                   .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                            * /*Ha2Ry*/ 2.
+                                            * tauLDA / torch::pow(rho, 5. / 3.)
                                       : torch::zeros_like(q);
     if (this->ml_qnl) {
         temp += this->pqcoef / torch::pow(rho, 5. / 3.) * dFdqnl_nl;
@@ -358,7 +369,7 @@ torch::Tensor PauliPotential::potTanhqTerm1(const torch::Tensor &q,
 torch::Tensor PauliPotential::potXinlTerm(const torch::Tensor &rho,
                                      const Kernel *kernels,
                                      //  const torch::Tensor &kernel,
-                                     const torch::Tensor &tauTF,
+                                     const torch::Tensor &tauLDA,
                                      const torch::Tensor &gradient)
 {
     torch::Tensor result = torch::zeros_like(rho);
@@ -370,7 +381,7 @@ torch::Tensor PauliPotential::potXinlTerm(const torch::Tensor &rho,
                   * torch::real(
                       torch::fft::ifftn(torch::fft::fftn(gradient.index({"...", d2i})
                                                              .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                         * tauTF * torch::pow(rho, -1. / 3.))
+                                                         * tauLDA * torch::pow(rho, -1. / 3.))
                                         * kernels[d2k].kernel[istru]));
     }
     return result;
@@ -380,7 +391,7 @@ torch::Tensor PauliPotential::potTanhxinlTerm(const torch::Tensor &rho,
                                          const std::vector<torch::Tensor> &tanhxi,
                                          const Kernel *kernels,
                                          //  const torch::Tensor &kernel,
-                                         const torch::Tensor &tauTF,
+                                         const torch::Tensor &tauLDA,
                                          const torch::Tensor &gradient)
 {
     torch::Tensor result = torch::zeros_like(rho);
@@ -392,7 +403,7 @@ torch::Tensor PauliPotential::potTanhxinlTerm(const torch::Tensor &rho,
         result += 1. / 3. * torch::pow(rho, -2. / 3.)
                   * torch::real(torch::fft::ifftn(
                       torch::fft::fftn(gradient.index({"...", d2i}).reshape({this->fftdim, this->fftdim, this->fftdim})
-                                       * this->dtanh(tanhxi[d2k][istru], this->chi_xi[d2k]) * tauTF
+                                       * this->dtanh(tanhxi[d2k][istru], this->chi_xi[d2k]) * tauLDA
                                        * torch::pow(rho, -1. / 3.))
                       * kernels[d2k].kernel[istru]));
     }
@@ -404,7 +415,7 @@ torch::Tensor PauliPotential::potTanhxi_nlTerm(const torch::Tensor &rho,
                                           const std::vector<torch::Tensor> &tanhxi,
                                           const Kernel *kernels,
                                           //   const torch::Tensor &kernel,
-                                          const torch::Tensor &tauTF,
+                                          const torch::Tensor &tauLDA,
                                           const torch::Tensor &gradient)
 {
     torch::Tensor result = torch::zeros_like(rho);
@@ -414,7 +425,7 @@ torch::Tensor PauliPotential::potTanhxi_nlTerm(const torch::Tensor &rho,
         int d2i = this->descriptor2index["tanhxi_nl"][ik];
         torch::Tensor dFdxi
             = torch::real(torch::fft::ifftn(
-                  torch::fft::fftn(tauTF
+                  torch::fft::fftn(tauLDA
                                    * gradient.index({"...", d2i}).reshape({this->fftdim, this->fftdim, this->fftdim}))
                   * kernels[d2k].kernel[istru]))
               * this->dtanh(tanhxi[d2k][istru], this->chi_xi[d2k]) * torch::pow(rho, -1. / 3.);
@@ -435,7 +446,7 @@ torch::Tensor PauliPotential::potTanhpTanh_pnlTerm(const torch::Tensor &rho,
                                               const std::vector<torch::Tensor> &tanh_pnl,
                                               const Kernel *kernels,
                                               //   const torch::Tensor &kernel,
-                                              const torch::Tensor &tauTF,
+                                              const torch::Tensor &tauLDA,
                                               const torch::Tensor &gradient,
                                               const std::vector<torch::Tensor> &grid)
 {
@@ -448,17 +459,17 @@ torch::Tensor PauliPotential::potTanhpTanh_pnlTerm(const torch::Tensor &rho,
             torch::fft::fftn(gradient.index({"...", d2i})
                                  .reshape({this->fftdim, this->fftdim, this->fftdim})
                              * this->dtanh(tanh_pnl[d2k][istru], this->chi_pnl[d2k])
-                             * tauTF)
+                             * tauLDA)
             * kernels[d2k].kernel[istru]));
     }
 
     torch::Tensor temp = torch::zeros_like(nablaRho);
     for (int i = 0; i < 3; ++i)
     {
-        temp[i] = (this->ml_tanhp) ? -3. / 20.
+        temp[i] = (this->ml_tanhp) ? - this->pqcoef * 2.
                                          * gradient.index({"...", this->descriptor2index["tanhp"][0]})
                                                .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                         * this->dtanh(tanhp, this->chi_p) * nablaRho[i] / rho * /*Ha to Ry*/ 2.
+                                         * this->dtanh(tanhp, this->chi_p) * nablaRho[i] * tauLDA / torch::pow(rho, 8./3.)
                                    : torch::zeros_like(nablaRho[i]);
         if (this->ml_tanh_pnl) {
             temp[i] += -this->pqcoef * 2. * nablaRho[i] / torch::pow(rho, 8. / 3.) * dFdpnl_nl;
@@ -479,7 +490,7 @@ torch::Tensor PauliPotential::potTanhqTanh_qnlTerm(const torch::Tensor &rho,
                                               const std::vector<torch::Tensor> &tanh_qnl,
                                               const Kernel *kernels,
                                               //   const torch::Tensor &kernel,
-                                              const torch::Tensor &tauTF,
+                                              const torch::Tensor &tauLDA,
                                               const torch::Tensor &gradient,
                                               const torch::Tensor &gg)
 {
@@ -492,14 +503,14 @@ torch::Tensor PauliPotential::potTanhqTanh_qnlTerm(const torch::Tensor &rho,
             torch::fft::fftn(gradient.index({"...", d2i})
                                  .reshape({this->fftdim, this->fftdim, this->fftdim})
                              * this->dtanh(tanh_qnl[d2k][istru], this->chi_qnl[d2k])
-                             * tauTF)
+                             * tauLDA)
             * kernels[d2k].kernel[istru]));
     }
 
-    torch::Tensor temp = (this->ml_tanhq) ? 3. / 40.
+    torch::Tensor temp = (this->ml_tanhq) ? this->pqcoef
                                                 * gradient.index({"...", this->descriptor2index["tanhq"][0]})
                                                       .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                * this->dtanh(tanhq, this->chi_q) * /*Ha2Ry*/ 2.
+                                                * this->dtanh(tanhq, this->chi_q) * tauLDA / torch::pow(rho, 5. / 3.)
                                           : torch::zeros_like(q);
     if (this->ml_tanh_qnl) {
         temp += this->pqcoef / torch::pow(rho, 5. / 3.) * dFdqnl_nl;
@@ -519,7 +530,7 @@ torch::Tensor PauliPotential::potTanhpTanhp_nlTerm(const torch::Tensor &rho,
                                               const torch::Tensor &tanhp,
                                               const Kernel *kernels,
                                               //   const torch::Tensor &kernel,
-                                              const torch::Tensor &tauTF,
+                                              const torch::Tensor &tauLDA,
                                               const torch::Tensor &gradient,
                                               const std::vector<torch::Tensor> &grid)
 {
@@ -531,7 +542,7 @@ torch::Tensor PauliPotential::potTanhpTanhp_nlTerm(const torch::Tensor &rho,
         dFdpnl_nl += torch::real(torch::fft::ifftn(
                          torch::fft::fftn(gradient.index({"...", d2i})
                                               .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                          * tauTF)
+                                          * tauLDA)
                          * kernels[d2k].kernel[istru]))
                      * this->dtanh(tanhp, this->chi_p);
     }
@@ -539,10 +550,10 @@ torch::Tensor PauliPotential::potTanhpTanhp_nlTerm(const torch::Tensor &rho,
     torch::Tensor temp = torch::zeros_like(nablaRho);
     for (int i = 0; i < 3; ++i)
     {
-        temp[i] = (this->ml_tanhp) ? -3. / 20.
+        temp[i] = (this->ml_tanhp) ? - this->pqcoef * 2.
                                          * gradient.index({"...", this->descriptor2index["tanhp"][0]})
                                                .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                         * this->dtanh(tanhp, this->chi_p) * nablaRho[i] / rho * /*Ha to Ry*/ 2.
+                                         * this->dtanh(tanhp, this->chi_p) * nablaRho[i] * tauLDA / torch::pow(rho, 8. / 3.)
                                    : torch::zeros_like(nablaRho[i]);
         if (this->ml_tanhp_nl) {
             temp[i] += -this->pqcoef * 2. * nablaRho[i] / torch::pow(rho, 8. / 3.) * dFdpnl_nl;
@@ -562,7 +573,7 @@ torch::Tensor PauliPotential::potTanhqTanhq_nlTerm(const torch::Tensor &rho,
                                               const torch::Tensor &tanhq,
                                               const Kernel *kernels,
                                               //   const torch::Tensor &kernel,
-                                              const torch::Tensor &tauTF,
+                                              const torch::Tensor &tauLDA,
                                               const torch::Tensor &gradient,
                                               const torch::Tensor &gg)
 {
@@ -574,15 +585,15 @@ torch::Tensor PauliPotential::potTanhqTanhq_nlTerm(const torch::Tensor &rho,
         dFdqnl_nl += torch::real(torch::fft::ifftn(
                          torch::fft::fftn(gradient.index({"...", d2i})
                                               .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                          * tauTF)
+                                          * tauLDA)
                          * kernels[d2k].kernel[istru]))
                      * this->dtanh(tanhq, this->chi_q);
     }
 
-    torch::Tensor temp = (this->ml_tanhq) ? 3. / 40.
+    torch::Tensor temp = (this->ml_tanhq) ? this->pqcoef
                                                 * gradient.index({"...", this->descriptor2index["tanhq"][0]})
                                                       .reshape({this->fftdim, this->fftdim, this->fftdim})
-                                                * this->dtanh(tanhq, this->chi_q) * /*Ha2Ry*/ 2.
+                                                * this->dtanh(tanhq, this->chi_q) * tauLDA / torch::pow(rho, 5. / 3.)
                                           : torch::zeros_like(q);
     if (this->ml_tanhq_nl) {
         temp += this->pqcoef / torch::pow(rho, 5. / 3.) * dFdqnl_nl;

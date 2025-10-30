@@ -21,8 +21,6 @@ void write_eband_terms(const int nspin,
                        const ModulePW::PW_Basis& rhod_basis,
                        const ModuleBase::matrix& vloc,
                        const Charge& chg,
-                       Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                       Gint_k& gint_k,         // mohan add 2024-04-01
                        const K_Vectors& kv,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
@@ -44,10 +42,6 @@ void write_eband_terms(const int nspin,
         Parallel_2D p2d;
 
         set_para2d_MO(*pv, nbands, p2d);
-
-        typename TGint<TK>::type* gint = nullptr;
-
-        set_gint_pointer<TK>(gint_gamma, gint_k, gint);
 
 		auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) 
 		{
@@ -110,7 +104,7 @@ void write_eband_terms(const int nspin,
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
 
-			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint,
+			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(
 					&v_pp_local_k_ao, 
 					kv.kvec_d, 
 					&pot_local, 
@@ -167,7 +161,7 @@ void write_eband_terms(const int nspin,
             std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> v_hartree_op(nspin0);
             for (int is = 0; is < nspin0; ++is)
             {
-                v_hartree_op[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
+                v_hartree_op[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(
                     &v_hartree_k_ao, kv.kvec_d, &pot_hartree, &v_hartree_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
                 v_hartree_op[is]->contributeHR();
             }
@@ -199,8 +193,6 @@ void write_eband_terms(const int nspin,
                               rhod_basis,
                               vloc,
                               chg,
-                              gint_gamma,
-                              gint_k,
                               kv,
                               orb_cutoff,
                               wg,

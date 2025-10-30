@@ -30,6 +30,7 @@ AddTest(
   SOURCES read_input_test.cpp 
           ../../source_base/test/tool_quit_no_exit.cpp 
           ../../source_base/module_device/device.cpp
+          ../../source_base/module_device/output_device.cpp
 )
 
 AddTest(
@@ -50,9 +51,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_nscf_band
+  TARGET MODULE_IO_write_bands
   LIBS parameter ${math_libs} base device
-  SOURCES nscf_band_test.cpp ../nscf_band.cpp
+  SOURCES write_bands_test.cpp ../write_bands.cpp
 )
 
 AddTest(

@@ -4,6 +4,7 @@
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"
 
@@ -61,7 +62,8 @@ class Potential : public PotBase
               Structure_Factor* structure_factors_in,
               surchem* solvent_in,
               double* etxc_in,
-              double* vtxc_in);
+              double* vtxc_in,
+              VSep* vsep_cell_in = nullptr);
     ~Potential();
 
     // initialize potential when SCF begin
@@ -174,7 +176,7 @@ class Potential : public PotBase
     {
         return this->rho_basis_;
     }
-    // What about adding a function to get the wfc? 
+    // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 
 
@@ -220,6 +222,7 @@ class Potential : public PotBase
     const ModuleBase::matrix* vloc_ = nullptr;
     Structure_Factor* structure_factors_ = nullptr;
     surchem* solvent_ = nullptr;
+    VSep* vsep_cell = nullptr;
     bool use_gpu_ = false;
 };
 

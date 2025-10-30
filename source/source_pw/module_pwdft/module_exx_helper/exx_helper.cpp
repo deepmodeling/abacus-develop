@@ -8,7 +8,7 @@ double Exx_Helper<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_)
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::exx_after_converge(int &iter)
+bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
 {
     if (op_exx->first_iter)
     {
@@ -18,8 +18,18 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter)
     {
         return true;
     }
-    else if (iter == 1)
+    else if (PARAM.inp.exx_thr_type == "energy" && ene_conv)
     {
+        return true;
+    }
+    else if (PARAM.inp.exx_thr_type == "density" && iter == 1)
+    {
+        return true;
+    }
+    else if (iter >= PARAM.inp.exx_hybrid_step)
+    {
+        GlobalV::ofs_running << " !!EXX IS NOT CONVERGED!!" << std::endl;
+        std::cout << " !!EXX IS NOT CONVERGED!!" << std::endl;
         return true;
     }
     GlobalV::ofs_running << "Updating EXX and rerun SCF" << std::endl;

@@ -36,7 +36,7 @@ public:
                const UnitCell& ucell,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
-               K_Vectors& kv_in,
+               const K_Vectors& kv_in,
                void* p_hamilt_in,
                void* psi_in,
                elecstate::ElecState* pelec_in,
@@ -201,7 +201,7 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(K_Vectors& kv_in,
+    void set_solver_parameters(const K_Vectors& kv_in,
                                void* p_hamilt_in,
                                void* psi_in,
                                elecstate::ElecState* pelec_in);

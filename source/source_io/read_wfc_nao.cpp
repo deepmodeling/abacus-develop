@@ -7,6 +7,14 @@
 #include "write_wfc_nao.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/filename.h"
+#include "source_base/tool_title.h" // use title
+#include "source_base/global_function.h" // use READ_VALUE
+
+// mohan add 2025-10-19
+void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, float& data)
+{
+    ifs >> data;
+}
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 {
@@ -21,22 +29,31 @@ void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& d
     data = std::complex<double>(a, b);
 }
 
+void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, std::complex<float>& data)
+{
+    float a = 0.0;
+    float b = 0.0;
+    ifs >> a >> b;
+    data = std::complex<float>(a, b);
+}
+
 template <typename T>
 bool ModuleIO::read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	elecstate::ElecState* const pelec,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
     const int skip_band,
-    const int nstep)
+    const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
 
-    const int nk = pelec->ekb.nr;
+    const int nk = ekb.nr;
 
     const bool gamma_only = std::is_same<T, double>::value;
     const int out_type = 1; // only support .txt file now
@@ -119,8 +136,8 @@ bool ModuleIO::read_wfc_nao(
             const int ib_read = std::max(i - skip_band, 0);
             int ib = 0;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(ik, ib_read));
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(ik, ib_read));
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, ekb(ik, ib_read));
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, wg(ik, ib_read));
             if (i+1 != ib)
             {
                 error_message << "The band index read in from file do not match the global parameter band index!\n";
@@ -158,12 +175,12 @@ bool ModuleIO::read_wfc_nao(
             const bool out_app_flag = false;
             std::stringstream error_message;
             std::string readin_dir = global_readin_dir;
-            if(nstep >= 0)
+            if(istep >= 0)
             {
                 readin_dir = readin_dir + "WFC/";
             }
             std::string ss = ModuleIO::filename_output(readin_dir,"wf","nao",
-                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,nstep);
+                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,istep);
 
             read_success = read_one_file(ss, error_message, ik, ctot);
             errors = error_message.str();
@@ -194,8 +211,8 @@ bool ModuleIO::read_wfc_nao(
                   1,
                   const_cast<int*>(ParaV.desc_wfc),
                   pv_glb.blacs_ctxt);
-        Parallel_Common::bcast_double(&(pelec->ekb(ik, 0)), nbands);
-        Parallel_Common::bcast_double(&(pelec->wg(ik, 0)), nbands);
+        Parallel_Common::bcast_double(&ekb(ik, 0), nbands);
+        Parallel_Common::bcast_double(&wg(ik, 0), nbands);
 #else
         BlasConnector::copy(nbands*nlocal, ctot.data(), 1, psid.get_pointer(), 1);
 #endif
@@ -207,19 +224,45 @@ bool ModuleIO::read_wfc_nao(
 template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<double>& psid,
-	elecstate::ElecState* const pelec,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int nstep,
+    const int istep,
+    const int skip_band);
+
+// mohan add 2025-10-19
+template bool ModuleIO::read_wfc_nao<float>(const std::string& global_readin_dir,
+    const Parallel_Orbitals& ParaV,
+    psi::Psi<float>& psid,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
+    const int istep,
     const int skip_band);
 
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
 	psi::Psi<std::complex<double>>& psid,
-	elecstate::ElecState* const pelec,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int nstep,
+    const int istep,
+	const int skip_band);
+
+// mohan add 2025-10-19
+template bool ModuleIO::read_wfc_nao<std::complex<float>>(const std::string& global_readin_dir,
+    const Parallel_Orbitals& ParaV,
+	psi::Psi<std::complex<float>>& psid,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
+    const int istep,
 	const int skip_band);

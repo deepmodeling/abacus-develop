@@ -95,44 +95,44 @@ std::vector<double> CalculateSphericalBessel(int l, double q, const std::vector<
 /// @return a vector of q, the q is from j_l(qr)
 std::vector<double> GetSphericalBesselZeros(int order, int number) {
     std::map<std::pair<int, int>, double> zeros;
-    
+
     zeros[{0, 1}] = 3.14159;  zeros[{0, 2}] = 6.28318;  zeros[{0, 3}] = 9.42477;
     zeros[{0, 4}] = 12.5664;  zeros[{0, 5}] = 15.708;   zeros[{0, 6}] = 18.8495;
     zeros[{0, 7}] = 21.9911;  zeros[{0, 8}] = 25.1327;  zeros[{0, 9}] = 28.2743;
     zeros[{0, 10}] = 31.4159;
-    
+
     zeros[{1, 1}] = 4.49341;  zeros[{1, 2}] = 7.72525;  zeros[{1, 3}] = 10.9041;
     zeros[{1, 4}] = 14.0662;  zeros[{1, 5}] = 17.2208;  zeros[{1, 6}] = 20.3713;
     zeros[{1, 7}] = 23.5181;  zeros[{1, 8}] = 26.6617;  zeros[{1, 9}] = 29.8029;
     zeros[{1, 10}] = 32.9425;
-    
+
     zeros[{2, 1}] = 5.76346;  zeros[{2, 2}] = 9.09501;  zeros[{2, 3}] = 12.3229;
     zeros[{2, 4}] = 15.5146;  zeros[{2, 5}] = 18.6861;  zeros[{2, 6}] = 21.8457;
     zeros[{2, 7}] = 24.9989;  zeros[{2, 8}] = 28.1498;  zeros[{2, 9}] = 31.2997;
     zeros[{2, 10}] = 34.4491;
-    
+
     zeros[{3, 1}] = 7.01559;  zeros[{3, 2}] = 10.4013;  zeros[{3, 3}] = 13.5821;
     zeros[{3, 4}] = 16.7496;  zeros[{3, 5}] = 19.9023;  zeros[{3, 6}] = 23.0446;
     zeros[{3, 7}] = 26.1799;  zeros[{3, 8}] = 29.3105;  zeros[{3, 9}] = 32.4377;
     zeros[{3, 10}] = 35.5629;
-    
+
     zeros[{4, 1}] = 8.26356;  zeros[{4, 2}] = 11.6209;  zeros[{4, 3}] = 14.7965;
     zeros[{4, 4}] = 17.9598;  zeros[{4, 5}] = 21.113;   zeros[{4, 6}] = 24.2583;
     zeros[{4, 7}] = 27.3979;  zeros[{4, 8}] = 30.5325;  zeros[{4, 9}] = 33.6635;
     zeros[{4, 10}] = 36.7914;
-    
+
     zeros[{5, 1}] = 9.51045;  zeros[{5, 2}] = 12.8377;  zeros[{5, 3}] = 16.0106;
     zeros[{5, 4}] = 19.1714;  zeros[{5, 5}] = 22.3224;  zeros[{5, 6}] = 25.4666;
     zeros[{5, 7}] = 28.6055;  zeros[{5, 8}] = 31.7408;  zeros[{5, 9}] = 34.873;
     zeros[{5, 10}] = 38.0025;
-    
+
     std::vector<double> result;
     for (int i = 1; i <= number; ++i) {
         result.push_back(zeros[{order, i}]);
     }
     return result;
 }
-/// @brief Get mod of q vector of Spherical Bessel functions, all q satisfy when r=`rcut`, j_l(qr)=0. 
+/// @brief Get mod of q vector of Spherical Bessel functions, all q satisfy when r=`rcut`, j_l(qr)=0.
 /// @details first solve the equation j_l(x) = 0, therefore get the table (l, k) -> x, where l is the order of SBF and k is the k-th zero of j_l(x). Then let x = q*rcut, therefore q = x/rcut, return it.
 /// @attention this function itself is a COMPLETE version, while the function it called GetSphericalBesselZeros may be INCOMPLETE, due to limited support of numerical table.
 /// @param order the angular momentum of Spherical Bessel functions
@@ -268,12 +268,12 @@ std::unordered_map<std::string, double> ReadinC4(const std::string &FileName, co
         else{
             for (int indexchi = 0; indexchi < TotalNumChi; indexchi++){
 
-                C4File >> word; 
-                C4File >> word; 
+                C4File >> word;
+                C4File >> word;
                 C4File >> word; /* skip title1, 2 and 3 */
 
                 C4File >> word; std::string key = word; key += " ";
-                C4File >> word; key += word; key += " "; 
+                C4File >> word; key += word; key += " ";
                 C4File >> word; key += word; key += " ";
 
                 for (int indexNumBesselFunction = 0; indexNumBesselFunction < NumBesselFunction; indexNumBesselFunction++)
@@ -359,6 +359,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
@@ -433,8 +437,8 @@ protected:
     int i_Nq = static_cast<int>(sqrt(d_EnergyCutoff)*d_CutoffRadius/M_PI);
     /* number of SBF is expected to be 1 */
      besselBasis.init(
-         b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth, 
-         d_SmoothSigma, d_CutoffRadius, d_Tolerance, 
+         b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth,
+         d_SmoothSigma, d_CutoffRadius, d_Tolerance,
          ucell, d_dk, d_dr
      );
      EXPECT_EQ(besselBasis.get_ecut_number(), i_Nq);
@@ -468,8 +472,8 @@ TEST_F(TestBesselBasis, PolynomialInterpolation2Test) {
     /* therefore the expected dimension of TableOne is 1*1*6 */
 
     besselBasis.init(
-        b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth, 
-        d_SmoothSigma, d_CutoffRadius, d_Tolerance, 
+        b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth,
+        d_SmoothSigma, d_CutoffRadius, d_Tolerance,
         ucell, d_dk, d_dr
     );
     /* gnorm for interpolation */
@@ -483,7 +487,7 @@ TEST_F(TestBesselBasis, PolynomialInterpolation2Test) {
     double d_x3 = 3.0 - d_x0;
 
    std::vector<std::vector<std::vector<double>>> vvv_d_TableOne = GenerateTableOne(
-        b_Smooth, d_SmoothSigma, d_EnergyCutoff, d_CutoffRadius, 
+        b_Smooth, d_SmoothSigma, d_EnergyCutoff, d_CutoffRadius,
         i_Lmax, d_dr, d_dk
     );
     double d_yExpected = vvv_d_TableOne[0][0][i_position]*d_x1*d_x2*d_x3/6.0+
@@ -517,14 +521,14 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
     int i_Nq = static_cast<int>(sqrt(d_EnergyCutoff)*d_CutoffRadius/M_PI);
     int i_kMesh = static_cast<int>(sqrt(d_EnergyCutoff)/d_dk) + 4 + 1;
      /*
-      manipulate Bessel_Basis::init_Faln function 
+      manipulate Bessel_Basis::init_Faln function
       because for(int it=0; it<ntype; it++)
       then        for(int il=0; il<ucell.atoms[it].nwl+1; il++)
       and             for(int in=0; in<ucell.atoms[it].l_nchi[il]; in++)
       Parameter ntype is controlled by input, but
       Parameter nwl, l_nchi are controlled by GlobalC, and will determine exact dimension of Faln
     */
-    /* 
+    /*
       Therefore Faln is expected to have dimension 1*1*1*6
     */
     #ifdef __MPI
@@ -533,8 +537,8 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
         MPI_Init(&argc, &argv);
     #endif
     besselBasis.init(
-        b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth, 
-        d_SmoothSigma, d_CutoffRadius, d_Tolerance, 
+        b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth,
+        d_SmoothSigma, d_CutoffRadius, d_Tolerance,
         ucell, d_dk, d_dr
     );
     /* Gnorm for interpolation */
@@ -548,7 +552,7 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
     double d_x3 = 3.0 - d_x0;
 
     std::vector<std::vector<std::vector<double>>> vvv_d_TableOne = GenerateTableOne(
-        b_Smooth, d_SmoothSigma, d_EnergyCutoff, d_CutoffRadius, 
+        b_Smooth, d_SmoothSigma, d_EnergyCutoff, d_CutoffRadius,
         i_Lmax, d_dr, d_dk
     );
     std::vector<std::vector<std::vector<std::vector<double>>>> vvvv_d_Faln = GenerateFaln(

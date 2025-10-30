@@ -545,6 +545,44 @@ void ReadInput::item_others()
         read_sync_bool(input.exx_gamma_extrapolation);
         this->add_item(item);
     }
+    {
+        Input_Item item("exx_thr_type");
+        item.annotation = "threshold type for exx outer loop, energy or density";
+        read_sync_string(input.exx_thr_type);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::string thr_type = para.input.exx_thr_type;
+            std::transform(thr_type.begin(), thr_type.end(), thr_type.begin(), ::tolower);
+            if (thr_type != "energy" && thr_type != "density")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_thr_type should be energy or density");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ene_thr");
+        item.annotation = "threshold for exx outer loop when exx_thr_type = energy";
+        read_sync_double(input.exx_ene_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ene_thr <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ene_thr must > 0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("ecutexx");
+        item.annotation = "energy cutoff for exx calculation, Ry";
+        read_sync_double(input.ecutexx);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ecutexx < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
+            }
+        };
+        this->add_item(item);
+    }
 
 }
 } // namespace ModuleIO

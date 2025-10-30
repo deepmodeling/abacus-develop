@@ -1,0 +1,21 @@
+INPUT_PARAMETERS 
+#Parameters (1.General)
+suffix               autotest
+calculation          md
+esolver_type         ksdft
+md_type              nve
+md_nstep             3
+symmetry             -1
+                 
+#Parameters (2.Iteration)
+ecutwfc              50
+scf_thr              1e-5
+scf_nmax             100
+#Parameters (3.Basis)
+basis_type           lcao
+                 
+#Parameters (4.Smearing)
+smearing_method      gauss
+smearing_sigma       0.002
+
+out_alllog           1

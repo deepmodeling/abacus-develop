@@ -5,8 +5,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/module_gint/gint_k.h"
-
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 namespace ModuleIO
 {
 /// @brief the output interface to write the sparse matrix of H, S, T, and r
@@ -19,7 +18,6 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const int& istep,
                        const ModuleBase::matrix& v_eff,
                        const Parallel_Orbitals& pv,
-                       Gint_k& gint_k, // mohan add 2024-04-01
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,

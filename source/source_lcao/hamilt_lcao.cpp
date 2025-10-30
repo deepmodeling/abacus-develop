@@ -1,4 +1,4 @@
-#include "hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
@@ -41,6 +41,7 @@
 #include "module_operator_lcao/td_pot_hybrid.h"
 #include "module_operator_lcao/veff_lcao.h"
 
+
 namespace hamilt
 {
 
@@ -70,28 +71,17 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 }
 
 template <typename TK, typename TR>
-HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
-                               Gint_k* GK_in,
-                               const UnitCell& ucell,
+HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
                                elecstate::Potential* pot_in,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
-                               elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __MLALGO
-                               ,
-                               LCAO_Deepks<TK>* ld_in
-#endif
-#ifdef __EXX
-                               ,
-                               const int istep,
-                               int* exx_two_level_step,
-                               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-                               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
-#endif
-)
+                               elecstate::DensityMatrix<TK, double>* DM_in,
+                               Setup_DeePKS<TK> &deepks,
+							   const int istep, 
+							   Exx_NAO<TK> &exx_nao)
 {
     this->classname = "HamiltLCAO";
 
@@ -189,8 +179,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // effective potential term
-                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(GG_in,
-                                                                    this->hsk,
+                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     pot_in,
                                                                     this->hR, // no explicit call yet
@@ -205,7 +194,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
-            Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* deepks_op = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     this->hR, // no explicit call yet
                                                                     &ucell,
@@ -214,9 +203,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in,
-                                                                    ld_in);
-            this->getOperator()->add(deepks);
-            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
+                                                                    &deepks.ld);
+            this->getOperator()->add(deepks_op);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks_op)->get_V_delta_R();
         }
 #endif
 
@@ -259,8 +248,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 // register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
                 // Veff term
-                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(GK_in,
-                                                                     this->hsk,
+                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
                                                                      this->kv->kvec_d,
                                                                      pot_in,
                                                                      this->hR,
@@ -330,7 +318,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
-            Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* deepks_op = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     hR,
                                                                     &ucell,
@@ -339,9 +327,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in,
-                                                                    ld_in);
-            this->getOperator()->add(deepks);
-            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
+                                                                    &deepks.ld);
+            this->getOperator()->add(deepks_op);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks_op)->get_V_delta_R();
         }
 #endif
         // TDDFT_velocity_gauge
@@ -418,6 +406,21 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
+	    int* exx_two_level_step = nullptr;
+	    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
+	    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr;
+
+		if(GlobalC::exx_info.info_ri.real_number)
+		{
+            exx_two_level_step = &exx_nao.exd->two_level_step;
+			Hexxd = &exx_nao.exd->get_Hexxs();
+		}
+		else
+		{
+            exx_two_level_step = &exx_nao.exc->two_level_step;
+			Hexxc = &exx_nao.exc->get_Hexxs();
+		}
+
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs

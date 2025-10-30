@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_STRESS_PW_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_STRESS_PW_H
+#ifndef STRESS_PW_H
+#define STRESS_PW_H
 
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/VL_in_pw.h"

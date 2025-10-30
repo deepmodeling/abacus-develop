@@ -8,6 +8,8 @@ namespace ModuleIO
 {
 
 void write_wfc_pw(
+        const int istep,
+        const int iter,
         const int kpar,
         const int my_pool,
         const int my_rank,
