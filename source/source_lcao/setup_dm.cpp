@@ -16,7 +16,7 @@ namespace LCAO_domain
 {
 
 template <typename TK>
-void Setup_DM<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
+void Setup_DM<TK>::init_dm(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
 {
     const int nspin_dm = nspin == 2 ? 2 : 1;
     this->dm = new DensityMatrix<TK, double>(paraV, nspin_dm, kv->kvec_d, kv->get_nks() / nspin_dm);

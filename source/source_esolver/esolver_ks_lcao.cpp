@@ -91,7 +91,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
 
     // 7) init DMK, but DMR is constructed in before_scf()
-    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
+    this->dmat.init_dm(&this->kv, &(this->pv), inp.nspin);
 
     // 8) init exact exchange calculations
     this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, inp);
@@ -193,11 +193,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
-        elecstate::DensityMatrix<TK, double>* DM = estate->get_DM();
-
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, DM, this->deepks, istep, exx_nao);
+            two_center_bundle_, orb_, this->dmat.get_dm(), this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -226,7 +224,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    estate->get_DM()->init_DMR(*hamilt_lcao->getHR());
+    this->dmat.get_dm()->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO
     // 14) initialize DMR of DeePKS
@@ -238,7 +236,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
     if (istep > 0)
     {
-        estate->get_DM()->cal_DMR();
+        this->dmat.get_dm()->cal_DMR();
     }
 
     // 16) the electron charge density should be symmetrized,
@@ -365,7 +363,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_init","pelec does not exist");
 	}
 
-	elecstate::DensityMatrix<TK, double>* dm = estate->get_DM();
+	elecstate::DensityMatrix<TK, double>* dm = this->dmat.get_dm();
 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 

@@ -27,21 +27,11 @@ class ElecStateLCAO : public ElecState
 
     virtual ~ElecStateLCAO()
     {
-        if (this->DM != nullptr)
-        {
-            delete this->DM;
-        }
     }
 
     // update charge density for next scf step
     // void getNewRho() override;
 
-    // initial density matrix
-    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
-    DensityMatrix<TK, double>* get_DM() const
-    {
-        return const_cast<DensityMatrix<TK, double>*>(this->DM);
-    }
     static int out_wfc_lcao;
     static bool need_psi_grid;
 
@@ -58,8 +48,6 @@ class ElecStateLCAO : public ElecState
      */
     void dm2rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
 #endif
-
-    DensityMatrix<TK, double>* DM = nullptr;
 
 };
 

@@ -25,7 +25,7 @@ class Setup_DM
     }
 
     // initial density matrix
-    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    void init_dm(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
 
     DensityMatrix<TK, double>* get_dm() const
     {

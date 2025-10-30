@@ -467,7 +467,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::save2(UnitCell& ucell,
         // calculate energy density matrix for tddft
         if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && PARAM.inp.td_edm == 0)
         {
-            elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
         }
     }
 

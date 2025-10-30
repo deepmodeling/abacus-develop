@@ -15,12 +15,6 @@
 namespace elecstate
 {
 
-template <typename TK>
-void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
-{
-    const int nspin_dm = nspin == 2 ? 2 : 1;
-    this->DM = new DensityMatrix<TK, double>(paraV, nspin_dm, kv->kvec_d, kv->get_nks() / nspin_dm);
-}
 
 template <>
 double ElecStateLCAO<double>::get_spin_constrain_energy()
