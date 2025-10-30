@@ -3,6 +3,7 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
+#include "ions_move_basic.h"
 
 namespace Lattice_Change_Basic
 {
