@@ -49,6 +49,20 @@ void ReadInput::item_relax()
         // this->add_item(item);
     }
     {
+        Input_Item item("cp2k");
+        item.annotation = "x; y; z; none;";
+        read_sync_string(input.cp2k);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> cp2ks = {"x", "y", "z", "none"};
+            if (std::find(cp2ks.begin(),cp2ks.end(), para.input.cp2k)==cp2ks.end())
+            {
+                const std::string warningstr = nofound_str(cp2ks, "cp2k");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("relax_new");
         item.annotation = "whether to use the new relaxation method";
         read_sync_bool(input.relax_new);

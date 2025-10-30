@@ -4,6 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
+#include "ions_move_basic.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -83,6 +84,18 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
 			for (int j = 0;j < 3;++j) 
 			{
 				move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+                if(j==0&&Ions_Move_Basic::cp2k=="x")
+                {
+                    move_mat_t(j, i) = 0.0;
+                }
+                if(j==1&&Ions_Move_Basic::cp2k=="y")
+                {
+                    move_mat_t(j, i) = 0.0; 
+                }
+                if (j==2&&Ions_Move_Basic::cp2k=="z")
+                {
+                    move_mat_t(j, i) = 0.0;
+                }              
 			}
 		}
 		ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
@@ -97,7 +110,6 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
 			}
 		}
     }
-
     if (ucell.lc[0] != 0)
     {
         ucell.latvec.e11 = (move[0] + lat[0]) / ucell.lat0;

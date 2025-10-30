@@ -15,11 +15,11 @@ void BFGS::allocate(const int _size)
     size=_size;
     largest_grad=0.0;
     sign=true;
-    H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
+    H = ModuleBase::matrix(3*size, 3*size);
     
     for (int i = 0; i < 3*size; ++i) 
     {
-        H[i][i] = alpha;  
+        H(i,i) = alpha;  
     }
     
     pos = std::vector<ModuleBase::Vector3<double>> (size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); 
@@ -114,7 +114,7 @@ void BFGS::GetPostaud(UnitCell& ucell,
 
 void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
                        std::vector<ModuleBase::Vector3<double>>& pos,
-                       std::vector<std::vector<double>>& H,
+                       ModuleBase::matrix& H,
                        std::vector<double>& pos0,
                        std::vector<double>& force0,
                        std::vector<double>& steplength,
@@ -133,20 +133,23 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     int info=0;
     std::vector<double> H_flat;
     
-    for(const auto& row : H)
+    for(int i=0;i<H.nr;i++)
     {
-        H_flat.insert(H_flat.end(), row.begin(), row.end());
-    }
+        for(int j=0;j<H.nc;j++)
+        {
+            H_flat.push_back(H(i,j));
+        }
+    } 
     
     int value=3*size;
     int* ptr=&value;
     dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
-    std::vector<std::vector<double>> V(3*size, std::vector<double>(3*size, 0.0));
+    ModuleBase::matrix V(3*size, 3*size);
     for(int i = 0; i < 3*size; i++)
     {
         for(int j = 0; j < 3*size; j++)
         {
-            V[j][i] = H_flat[3*size*i + j];
+            V(j,i) = H_flat[3*size*i + j];
         }
     }
     std::vector<double> a=DotInMAndV2(V, changedforce);
@@ -174,7 +177,7 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
 
 void BFGS::Update(std::vector<double>& pos, 
                   std::vector<double>& force,
-                  std::vector<std::vector<double>>& H,
+                  ModuleBase::matrix& H,
                   UnitCell& ucell)
 {
     if(sign)
@@ -240,10 +243,10 @@ void BFGS::Update(std::vector<double>& pos,
     double a = DotInVAndV(dpos, dforce);
     std::vector<double> dg = DotInMAndV1(H, dpos);
     double b = DotInVAndV(dpos, dg);
-    std::vector<std::vector<double>> term1=OuterVAndV(dforce, dforce);
-    std::vector<std::vector<double>> term2=OuterVAndV(dg, dg);
-    std::vector<std::vector<double>> term3=MPlus(term1, a);
-    std::vector<std::vector<double>> term4=MPlus(term2, b);
+    ModuleBase::matrix term1=OuterVAndV(dforce, dforce);
+    ModuleBase::matrix term2=OuterVAndV(dg, dg);
+    ModuleBase::matrix term3=MPlus(term1, a);
+    ModuleBase::matrix term4=MPlus(term2, b);
     H = MSubM(H, term3);
     H = MSubM(H, term4);
 }

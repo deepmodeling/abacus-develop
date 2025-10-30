@@ -18,17 +18,17 @@ std::vector<double> ReshapeMToV(std::vector<ModuleBase::Vector3<double>>& matrix
     return result;
 }
 
-std::vector<std::vector<double>> MAddM(std::vector<std::vector<double>>& a, 
-                                             std::vector<std::vector<double>>& b) 
+ModuleBase::matrix MAddM(ModuleBase::matrix& a, 
+                                             ModuleBase::matrix& b) 
 {
-    assert(!a.empty() && !b.empty());
-    assert(a.size() == b.size() && a[0].size() == b[0].size());
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
+    assert(a.nr!=0 && a.nc!=0 && b.nr!=0 && b.nc!=0);
+    assert(a.nr == b.nr && a.nc == b.nc);
+    ModuleBase::matrix result = ModuleBase::matrix(a.nr, a.nc);
+    for(int i = 0; i < a.nr; i++)
     {
-        for(int j = 0; j < a[0].size(); j++)
+        for(int j = 0; j < a.nc; j++)
         {
-            result[i][j] = a[i][j] + b[i][j];
+            result(i,j) = a(i,j) + b(i,j);
         }
     }
     return result;
@@ -58,30 +58,30 @@ std::vector<ModuleBase::Vector3<double>> ReshapeVToM(std::vector<double>& matrix
     return result;
 }
 
-std::vector<double> DotInMAndV1(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
+std::vector<double> DotInMAndV1(ModuleBase::matrix& matrix, std::vector<double>& vec) 
 {
-    assert(!matrix.empty());
-    assert(matrix[0].size() == vec.size());
-    std::vector<double> result(matrix.size(), 0.0);
+    assert(matrix.nr!=0 && matrix.nc!=0);
+    assert(matrix.nc == vec.size());
+    std::vector<double> result(matrix.nr, 0.0);
     for(int i = 0; i < result.size(); i++)
     {
         for(int j = 0; j < vec.size(); j++)
         {
-            result[i] += matrix[i][j] * vec[j];
+            result[i] += matrix(i,j) * vec[j];
         }
     }
     return result;
 }
-std::vector<double> DotInMAndV2(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
+std::vector<double> DotInMAndV2(ModuleBase::matrix& matrix, std::vector<double>& vec) 
 {
-    assert(!matrix.empty());
-    assert(matrix.size() == vec.size());
-    std::vector<double> result(matrix.size(), 0.0);
+    assert(matrix.nr!=0 && matrix.nc!=0);
+    assert(matrix.nr == vec.size());
+    std::vector<double> result(matrix.nc, 0.0);
     for(int i = 0; i < result.size(); i++)
     {
         for(int j = 0; j < vec.size(); j++)
         {
-            result[i] += matrix[j][i] * vec[j];
+            result[i] += matrix(j,i) * vec[j];
         }
     }
     return result;
@@ -98,45 +98,45 @@ double DotInVAndV(std::vector<double>& vec1, std::vector<double>& vec2)
     return result;
 }
 
-std::vector<std::vector<double>> OuterVAndV(std::vector<double>& a, std::vector<double>& b) 
+ModuleBase::matrix OuterVAndV(std::vector<double>& a, std::vector<double>& b) 
 {
     assert(a.size() == b.size());
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(b.size(), 0.0));
+    ModuleBase::matrix result = ModuleBase::matrix(a.size(), b.size());
     for(int i = 0; i < a.size(); i++)
     {
         for(int j = 0; j < b.size(); j++)
         {
-            result[i][j] = a[i] * b[j];
+            result(i,j) = a[i] * b[j];
         }
     }
     return result;
 }
 
-std::vector<std::vector<double>> MPlus(std::vector<std::vector<double>>& a, double b)
+ModuleBase::matrix MPlus(ModuleBase::matrix& a, double b)
 {
-    assert(!a.empty());
+    assert(a.nr!=0 && a.nc!=0);
     assert(b != 0);
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
+    ModuleBase::matrix result = ModuleBase::matrix(a.nr, a.nc);
+    for(int i = 0; i < a.nr; i++)
     {
-        for(int j = 0; j < a[0].size(); j++)
+        for(int j = 0; j < a.nc; j++)
         {
-            result[i][j] = a[i][j] / b;
+            result(i,j) = a(i,j) / b;
         }
     }
     return result;
 }
 
-std::vector<std::vector<double>> MSubM(std::vector<std::vector<double>>& a, std::vector<std::vector<double>>& b)
+ModuleBase::matrix MSubM(ModuleBase::matrix& a, ModuleBase::matrix& b)
 {
-    assert(!a.empty() && !b.empty());
-    assert(a.size() == b.size() && a[0].size() == b[0].size());
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
+    assert(a.nr!=0 && a.nc!=0 && b.nr!=0 && b.nc!=0);
+    assert(a.nr == b.nr && a.nc == b.nc);
+    ModuleBase::matrix result = ModuleBase::matrix(a.nr, a.nc);
+    for(int i = 0; i < a.nr; i++)
     {
-        for(int j = 0; j < a[0].size(); j++)
+        for(int j = 0; j < a.nc; j++)
         {
-            result[i][j] = a[i][j] - b[i][j];
+            result(i,j) = a(i,j) - b(i,j);
         }
     }
     return result;
@@ -144,7 +144,6 @@ std::vector<std::vector<double>> MSubM(std::vector<std::vector<double>>& a, std:
 
 std::vector<double> DotInVAndFloat(std::vector<double>& vec, double b) 
 {
-    assert(b != 0);
     std::vector<double> result(vec.size(), 0.0);
     for(int i = 0; i < vec.size(); i++)
     {

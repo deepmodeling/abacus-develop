@@ -50,7 +50,6 @@ private:
 
     ModuleESolver::ESolver* solver;         ///< Structure solver
     std::vector<double> steplength;//the length of atoms displacement 
-    std::vector<std::vector<double>> H;//Hessian matrix
     std::vector<double> force0;//force in previous step
     std::vector<ModuleBase::Vector3<double>> force;
     std::vector<double> pos0;//atom pos in previous step(cartesian coordinates)
@@ -67,7 +66,6 @@ private:
      */
     void prepare_step(std::vector<ModuleBase::Vector3<double>>& force,
                       std::vector<ModuleBase::Vector3<double>>& pos,
-                      std::vector<std::vector<double>>& H,
                       std::vector<double>& pos0,
                       std::vector<double>& force0,
                       std::vector<ModuleBase::Vector3<double>>& dpos,

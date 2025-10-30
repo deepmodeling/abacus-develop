@@ -12,7 +12,6 @@ void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、for
     size=_size;
     memory=100;
     iteration=0;
-    H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     H0=1/alpha;
     pos = std::vector<ModuleBase::Vector3<double>> (size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); 
     pos0 = std::vector<double>(3*size, 0.0);
@@ -59,7 +58,7 @@ void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const dou
         }
         k+=ucell.atoms[i].na;
     }
-    this->prepare_step(force,pos,H,pos0,force0,dpos,ucell,etot);
+    this->prepare_step(force,pos,pos0,force0,dpos,ucell,etot);
     this->determine_step(steplength,dpos,maxstep);
     this->update_pos(ucell);
     this->calculate_largest_grad(_force,ucell);
@@ -100,7 +99,6 @@ void LBFGS::get_pos_taud(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>
 
 void LBFGS::prepare_step(std::vector<ModuleBase::Vector3<double>>& force,
                          std::vector<ModuleBase::Vector3<double>>& pos,
-                         std::vector<std::vector<double>>& H,
                          std::vector<double>& pos0,
                          std::vector<double>& force0,
                          std::vector<ModuleBase::Vector3<double>>& dpos,

@@ -113,6 +113,7 @@
     - [npart\_sto](#npart_sto)
   - [Geometry Relaxation](#geometry-relaxation)
     - [relax\_method](#relax_method)
+    - [cp2k](#cp2k)
     - [relax\_new](#relax_new)
     - [relax\_scale\_force](#relax_scale_force)
     - [relax\_nmax](#relax_nmax)

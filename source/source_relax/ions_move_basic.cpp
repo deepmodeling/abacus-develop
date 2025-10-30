@@ -24,6 +24,7 @@ double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru = 0;
 std::vector<std::string> Ions_Move_Basic::relax_method = {"bfgs","2"};
+std::string Ions_Move_Basic::cp2k = "none";
 
 void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad)
 {
