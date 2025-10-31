@@ -6,7 +6,6 @@
 
 namespace module_rt
 {
-#ifdef __MPI
 //------------------------ MPI gathering and distributing functions ------------------------//
 // This struct is used for collecting matrices from all processes to root process
 template <typename T>
@@ -18,6 +17,7 @@ struct Matrix_g
     std::shared_ptr<int> desc;
 };
 
+#ifdef __MPI
 // Collect matrices from all processes to root process
 template <typename T>
 void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock<T>& mat_l, Matrix_g<T>& mat_g)
