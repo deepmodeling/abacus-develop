@@ -80,6 +80,7 @@ void ctrl_output_td(const UnitCell& ucell,
     //     }
     // }
 
+#ifdef __LCAO
     // (1) Write dipole information
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -128,6 +129,7 @@ void ctrl_output_td(const UnitCell& ucell,
             }
         }
     }
+#endif // __LCAO
 }
 
 template void ctrl_output_td<double>(const UnitCell&,
