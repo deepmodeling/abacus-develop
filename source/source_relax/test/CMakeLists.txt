@@ -38,7 +38,7 @@ AddTest(
 AddTest(
   TARGET lattice_change_basic_test
   LIBS parameter ${math_libs} base device 
-  SOURCES lattice_change_basic_test.cpp ../lattice_change_basic.cpp
+  SOURCES lattice_change_basic_test.cpp ../lattice_change_basic.cpp ../ions_move_basic.cpp
 )
 
 AddTest(
