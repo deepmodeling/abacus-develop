@@ -2,9 +2,9 @@ from abacus_plot.dipole import Dipole
 from abacus_plot.dipole import Absorption
 import matplotlib.pyplot as plt
 
-dipolefile = './SPIN1_DIPOLE'
+dipolefile = './dipole_s1.txt'
 dipole = Dipole(dipolefile, dt=0.0024)
-Efile=[[],[],["efield_0.dat","efield_1.dat"]]
+Efile=[[],[],["efield_0.txt","efield_1.txt"]]
 Abs = Absorption(dipolefile, Efile, dt=0.0024)
 
 fig1, ax1 = plt.subplots()

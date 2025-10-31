@@ -437,13 +437,16 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
 
     ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
 
+    // Output energy for sub-loop (electronic step)
+    std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
+
     // (1) Write dipole information
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         if (PARAM.inp.out_dipole == 1)
         {
             std::stringstream ss_dipole;
-            ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
+            ss_dipole << PARAM.globalv.global_out_dir << "dipole_s" << is + 1 << ".txt";
             ModuleIO::write_dipole(ucell, this->chr.rho_save[is], this->chr.rhopw, is, istep, ss_dipole.str());
         }
     }
@@ -481,10 +484,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
         }
     }
 
-    // (3) Output energy for sub-loop (electronic step)
-    std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
-
-    // (4) Output file for restart
+    // (3) Output file for restart
     if (PARAM.inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
         if (istep % PARAM.inp.out_freq_ion == 0)
