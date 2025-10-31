@@ -157,7 +157,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
             this->hamilt2rho(ucell, totstep, iter, this->diag_ethr); // From ESolver_KS
 
             // 5) Finish SCF iterations
-            this->iter_finish(ucell, totstep, iter, conv_esolver);
+            this->iter_finish(ucell, totstep, estep, estep_max, iter, conv_esolver);
 
             // 6) Check convergence
             if (conv_esolver || this->oscillate_esolver)
@@ -283,7 +283,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
 }
 
 template <typename TR, typename Device>
-void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
+                                                    const int istep,
+                                                    const int estep,
+                                                    const int estep_max,
+                                                    int& iter,
+                                                    bool& conv_esolver)
 {
     // Print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -307,6 +312,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell, const int i
 
     // Store wave function, Hamiltonian and Overlap matrix, to be used in next time step
     this->store_h_s_psi(ucell, istep, iter, conv_esolver);
+
+    // Calculate energy-density matrix for RT-TDDFT
+    if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
+        && PARAM.inp.td_edm == 0)
+    {
+        elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
+    }
 }
 
 template <typename TR, typename Device>
@@ -420,12 +432,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                                     this->Sk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
                                     1);
             }
-        }
-
-        // Calculate energy-density matrix for RT-TDDFT
-        if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && PARAM.inp.td_edm == 0)
-        {
-            elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
         }
     }
 }

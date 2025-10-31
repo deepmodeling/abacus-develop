@@ -27,7 +27,12 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     void store_h_s_psi(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    void iter_finish(UnitCell& ucell,
+                     const int istep,
+                     const int estep,
+                     const int estep_max,
+                     int& iter,
+                     bool& conv_esolver);
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
