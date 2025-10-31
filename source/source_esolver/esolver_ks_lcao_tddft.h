@@ -2,6 +2,7 @@
 #define ESOLVER_KS_LCAO_TDDFT_H
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
+#include "source_base/module_container/ATen/core/tensor.h"   // ct::Tensor
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/velocity_op.h"
@@ -69,20 +70,23 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     void print_step();
-    //! wave functions of last time step
+
+    //! Wave function for all k-points of last time step
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
 
-    //! Hamiltonian of last time step
-    std::complex<double>** Hk_laststep = nullptr;
+    //! Hamiltonian for all k-points of last time step
+    ct::Tensor Hk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE);
 
-    //! Overlap matrix of last time step
-    std::complex<double>** Sk_laststep = nullptr;
-
-    const int td_htype = 1;
+    //! Overlap matrix for all k-points of last time step
+    ct::Tensor Sk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE);
 
     //! Control heterogeneous computing of the TDDFT solver
     bool use_tensor = false;
     bool use_lapack = false;
+
+    // Control the device type for Hk_laststep and Sk_laststep
+    // Set to CPU temporarily, should wait for further GPU development
+    static constexpr ct::DeviceType ct_device_type_hs = ct::DeviceType::CpuDevice;
 
     //! Total steps for evolving the wave function
     int totstep = -1;
@@ -92,7 +96,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     TD_info* td_p = nullptr;
 
-    //! doubt
+    //! Restart flag
     bool restart_done = false;
 
   private:

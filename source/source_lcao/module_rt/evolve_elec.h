@@ -7,7 +7,7 @@
 #include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/module_external/scalapack_connector.h"                   // Cpxgemr2d
+#include "source_base/module_external/scalapack_connector.h"   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -159,11 +159,10 @@ class Evolve_elec
                           Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
-                          std::complex<double>** Hk_laststep,
-                          std::complex<double>** Sk_laststep,
+                          ct::Tensor& Hk_laststep,
+                          ct::Tensor& Sk_laststep,
                           ModuleBase::matrix& ekb,
                           std::ofstream& ofs_running,
-                          const int htype,
                           const int propagator,
                           const bool use_tensor,
                           const bool use_lapack);

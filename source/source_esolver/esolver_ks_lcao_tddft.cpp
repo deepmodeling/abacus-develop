@@ -36,26 +36,11 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 {
-    //****************************************************
-    // do not add any codes in this deconstructor funcion
-    //****************************************************
+    //*************************************************
+    // Do not add any code in this destructor function
+    //*************************************************
     delete psi_laststep;
-    if (Hk_laststep != nullptr)
-    {
-        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-        {
-            delete[] Hk_laststep[ik];
-        }
-        delete[] Hk_laststep;
-    }
-    if (Sk_laststep != nullptr)
-    {
-        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-        {
-            delete[] Sk_laststep[ik];
-        }
-        delete[] Sk_laststep;
-    }
+
     if (td_p != nullptr)
     {
         delete td_p;
@@ -201,9 +186,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
             restart_done = true;
             estep += TD_info::estep_shift % PARAM.inp.estep_per_md;
             if (estep == 0)
+            {
                 break;
+            }
             if (PARAM.inp.mdp.md_nstep != 0)
+            {
                 estep -= 1;
+            }
         }
     }
     if (PARAM.inp.td_stype != 1 && TD_info::out_current)
@@ -243,7 +232,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                       this->Sk_laststep,
                                                       this->pelec->ekb,
                                                       GlobalV::ofs_running,
-                                                      td_htype,
                                                       PARAM.inp.propagator,
                                                       use_tensor,
                                                       use_lapack);
@@ -264,7 +252,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   this->Sk_laststep,
                                                   this->pelec->ekb,
                                                   GlobalV::ofs_running,
-                                                  td_htype,
                                                   PARAM.inp.propagator,
                                                   use_tensor,
                                                   use_lapack);
@@ -329,109 +316,114 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                                                       const int iter,
                                                       const bool conv_esolver)
 {
-    const int nloc = this->pv.nloc;
-    const int ncol_nbands = this->pv.ncol_bands;
-    const int nrow = this->pv.nrow;
     const int nbands = PARAM.inp.nbands;
     const int nlocal = PARAM.globalv.nlocal;
 
-    // store wfc and Hk laststep
+    // Store wave function, Hamiltonian and Overlap matrix
     if (conv_esolver)
     {
         if (this->psi_laststep == nullptr)
         {
-            int ncol_tmp = 0;
-            int nrow_tmp = 0;
+            this->psi_laststep = new psi::Psi<std::complex<double>>(this->kv.get_nks(),
 #ifdef __MPI
-            ncol_tmp = ncol_nbands;
-            nrow_tmp = nrow;
+                                                                    this->pv.ncol_bands,
+                                                                    this->pv.nrow,
 #else
-            ncol_tmp = nbands;
-            nrow_tmp = nlocal;
+                                                                    nbands,
+                                                                    nlocal,
 #endif
-            this->psi_laststep
-                = new psi::Psi<std::complex<double>>(this->kv.get_nks(), ncol_tmp, nrow_tmp, this->kv.ngk, true);
+                                                                    this->kv.ngk,
+                                                                    true);
         }
 
-        // allocate memory for Hk_laststep and Sk_laststep
-        if (td_htype == 1)
+        // Length of Hk_laststep and Sk_laststep, nlocal * nlocal for global, nloc for local
+        const int len_HS_ik = use_tensor && use_lapack ? nlocal * nlocal : this->pv.nloc;
+        const int len_HS_all = this->kv.get_nks() * len_HS_ik;
+
+        // Allocate memory for Hk_laststep, if (use_tensor && use_lapack), should be global
+        if (this->Hk_laststep.NumElements() != len_HS_all)
         {
-            // Length of Hk_laststep and Sk_laststep, nlocal * nlocal for global, nloc for local
-            const int len_HS = use_tensor && use_lapack ? nlocal * nlocal : nloc;
-
-            if (this->Hk_laststep == nullptr)
-            {
-                this->Hk_laststep = new std::complex<double>*[this->kv.get_nks()];
-                for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-                {
-                    // Allocate memory for Hk_laststep, if (use_tensor && use_lapack), should be global
-                    this->Hk_laststep[ik] = new std::complex<double>[len_HS];
-                    ModuleBase::GlobalFunc::ZEROS(Hk_laststep[ik], len_HS);
-                }
-            }
-            if (this->Sk_laststep == nullptr)
-            {
-                this->Sk_laststep = new std::complex<double>*[this->kv.get_nks()];
-                for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-                {
-                    // Allocate memory for Sk_laststep, if (use_tensor && use_lapack), should be global
-                    this->Sk_laststep[ik] = new std::complex<double>[len_HS];
-                    ModuleBase::GlobalFunc::ZEROS(Sk_laststep[ik], len_HS);
-                }
-            }
+            this->Hk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE,
+                                           ct_device_type_hs,
+                                           ct::TensorShape({this->kv.get_nks(), len_HS_ik}));
+            this->Hk_laststep.zero();
         }
 
-        // put information to Hk_laststep and Sk_laststep
+        // Allocate memory for Sk_laststep, if (use_tensor && use_lapack), should be global
+        if (this->Sk_laststep.NumElements() != len_HS_all)
+        {
+            this->Sk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE,
+                                           ct_device_type_hs,
+                                           ct::TensorShape({this->kv.get_nks(), len_HS_ik}));
+            this->Sk_laststep.zero();
+        }
+
+        // Put information into psi_laststep, Hk_laststep and Sk_laststep
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             this->psi->fix_k(ik);
             this->psi_laststep->fix_k(ik);
 
-            // copy the data from psi to psi_laststep
-            const int size0 = this->psi->get_nbands() * this->psi->get_nbasis();
-            for (int index = 0; index < size0; ++index)
+            // Copy data from psi to psi_laststep at k-point ik
+            const int len_psi_ik = this->psi->get_nbands() * this->psi->get_nbasis();
+            for (int index = 0; index < len_psi_ik; ++index)
             {
                 psi_laststep[0].get_pointer()[index] = this->psi[0].get_pointer()[index];
             }
 
-            // store Hamiltonian
-            if (td_htype == 1)
+            // Get H and S matrices at k-point ik
+            this->p_hamilt->updateHk(ik);
+            hamilt::MatrixBlock<std::complex<double>> h_mat;
+            hamilt::MatrixBlock<std::complex<double>> s_mat;
+            this->p_hamilt->matrix(h_mat, s_mat);
+
+            // Store H and S matrices to Hk_laststep and Sk_laststep
+            if (use_tensor && use_lapack)
             {
-                this->p_hamilt->updateHk(ik);
-                hamilt::MatrixBlock<std::complex<double>> h_mat;
-                hamilt::MatrixBlock<std::complex<double>> s_mat;
-                this->p_hamilt->matrix(h_mat, s_mat);
-
-                if (use_tensor && use_lapack)
-                {
-                    // Gather H and S matrices to root process
+                // Gather H and S matrices to root process
 #ifdef __MPI
-                    int myid = 0;
-                    int num_procs = 1;
-                    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-                    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+                int myid = 0;
+                int num_procs = 1;
+                MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+                MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                    Matrix_g<std::complex<double>> h_mat_g; // Global matrix structure
-                    Matrix_g<std::complex<double>> s_mat_g; // Global matrix structure
+                // Global matrix structure
+                Matrix_g<std::complex<double>> h_mat_g;
+                Matrix_g<std::complex<double>> s_mat_g;
 
-                    // Collect H matrix
-                    gatherMatrix(myid, 0, h_mat, h_mat_g);
-                    BlasConnector::copy(nlocal * nlocal, h_mat_g.p.get(), 1, Hk_laststep[ik], 1);
+                // Collect H matrix
+                gatherMatrix(myid, 0, h_mat, h_mat_g);
+                BlasConnector::copy(len_HS_ik,
+                                    h_mat_g.p.get(),
+                                    1,
+                                    this->Hk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    1);
 
-                    // Collect S matrix
-                    gatherMatrix(myid, 0, s_mat, s_mat_g);
-                    BlasConnector::copy(nlocal * nlocal, s_mat_g.p.get(), 1, Sk_laststep[ik], 1);
+                // Collect S matrix
+                gatherMatrix(myid, 0, s_mat, s_mat_g);
+                BlasConnector::copy(len_HS_ik,
+                                    s_mat_g.p.get(),
+                                    1,
+                                    this->Sk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    1);
 #endif
-                }
-                else
-                {
-                    BlasConnector::copy(nloc, h_mat.p, 1, Hk_laststep[ik], 1);
-                    BlasConnector::copy(nloc, s_mat.p, 1, Sk_laststep[ik], 1);
-                }
+            }
+            else
+            {
+                BlasConnector::copy(len_HS_ik,
+                                    h_mat.p,
+                                    1,
+                                    this->Hk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    1);
+                BlasConnector::copy(len_HS_ik,
+                                    s_mat.p,
+                                    1,
+                                    this->Sk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    1);
             }
         }
 
-        // calculate energy density matrix for tddft
+        // Calculate energy-density matrix for RT-TDDFT
         if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && PARAM.inp.td_edm == 0)
         {
             elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
