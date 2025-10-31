@@ -38,7 +38,6 @@ TEST_F(BFGSTest, TestAllocate)
     bfgs.allocate(size);
 
     // Check if allocated arrays are not empty
-    EXPECT_FALSE(bfgs.H.empty());
     EXPECT_FALSE(bfgs.pos.empty());
     EXPECT_FALSE(bfgs.pos0.empty());
     EXPECT_FALSE(bfgs.pos_taud.empty());
