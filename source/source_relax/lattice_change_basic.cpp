@@ -16,6 +16,8 @@ double Lattice_Change_Basic::ediff = 0.0;
 double Lattice_Change_Basic::etot = 0.0;
 double Lattice_Change_Basic::etot_p = 0.0;
 
+std::string Ions_Move_Basic::cp2k = "none";
+
 // double Lattice_Change_Basic::lattice_change_ini = 0.5; // default is 0.5
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
 std::string Lattice_Change_Basic::fixed_axes = "None";
