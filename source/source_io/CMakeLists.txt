@@ -2,6 +2,7 @@ list(APPEND objects
     input_conv.cpp
     ctrl_output_fp.cpp
     ctrl_output_pw.cpp
+    ctrl_output_td.cpp
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
