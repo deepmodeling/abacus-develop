@@ -180,7 +180,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     // write end
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = PARAM.globalv.global_out_dir + "current_total.dat";
+        std::string filename = PARAM.globalv.global_out_dir + "current_total.txt";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
@@ -560,7 +560,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
             if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
             {
                 std::string filename = PARAM.globalv.global_out_dir + "current_spin" + std::to_string(is) + "_ik"
-                                       + std::to_string(ik) + ".dat";
+                                       + std::to_string(ik) + ".txt";
                 std::ofstream fout;
                 fout.open(filename, std::ios::app);
                 fout << std::setprecision(16);
@@ -573,7 +573,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     } // end is
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = PARAM.globalv.global_out_dir + "current_total.dat";
+        std::string filename = PARAM.globalv.global_out_dir + "current_total.txt";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);

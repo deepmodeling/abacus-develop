@@ -148,24 +148,17 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         for (int iter = 1; iter <= this->maxniter; ++iter)
         {
             ModuleIO::write_head_td(GlobalV::ofs_running, istep, totstep, iter, this->basisname);
-            //----------------------------------------------------------------
-            // 3) initialization of SCF iterations
-            //----------------------------------------------------------------
-            this->iter_init(ucell, totstep, iter);
 
-            //----------------------------------------------------------------
-            // 4) use Hamiltonian to obtain charge density
-            //----------------------------------------------------------------
-            this->hamilt2rho(ucell, totstep, iter, this->diag_ethr);
+            // 3) Initialization of SCF iterations
+            this->iter_init(ucell, totstep, iter); // From ESolver_KS_LCAO
 
-            //----------------------------------------------------------------
-            // 5) finish scf iterations
-            //----------------------------------------------------------------
+            // 4) Use Hamiltonian to obtain charge density
+            this->hamilt2rho(ucell, totstep, iter, this->diag_ethr); // From ESolver_KS
+
+            // 5) Finish SCF iterations
             this->iter_finish(ucell, totstep, iter, conv_esolver);
 
-            //----------------------------------------------------------------
-            // 6) check convergence
-            //----------------------------------------------------------------
+            // 6) Check convergence
             if (conv_esolver || this->oscillate_esolver)
             {
                 this->niter = iter;
@@ -175,10 +168,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                 }
                 break;
             }
-        } // end scf iterations
+        } // end SCF iterations
 
         //----------------------------------------------------------------
-        // 7) after scf
+        // 7) after_scf
         //----------------------------------------------------------------
         this->after_scf(ucell, totstep, conv_esolver);
         if (!restart_done && PARAM.inp.mdp.md_restart)
@@ -195,10 +188,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
             }
         }
     }
+
     if (PARAM.inp.td_stype != 1 && TD_info::out_current)
     {
         delete velocity_mat;
     }
+
     ModuleBase::timer::tick(this->classname, "runner");
     return;
 }
@@ -261,7 +256,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     }
     else
     {
-        // reset energy
+        // For the first step, do normal SCF calculation to get initial state
         this->pelec->f_en.eband = 0.0;
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
@@ -272,7 +267,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         }
     }
 
-    // symmetrize the charge density only for ground state
+    // Symmetrize the charge density only for ground state
     if (istep <= 1)
     {
         Symmetry_rho srho;
@@ -282,14 +277,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         }
     }
 
-    // (7) calculate delta energy
+    // Calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
-    // print occupation of each band
+    // Print occupation of each band
     if (iter == 1 && istep <= 2)
     {
         GlobalV::ofs_running << " k-point  State   Occupations" << std::endl;
@@ -309,6 +304,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell, const int i
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
 
+    // Store wave function, Hamiltonian and Overlap matrix, to be used in next time step
     this->store_h_s_psi(ucell, istep, iter, conv_esolver);
 }
 
@@ -441,7 +437,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
 
     ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
 
-    // (1) write dipole information
+    // (1) Write dipole information
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         if (PARAM.inp.out_dipole == 1)
@@ -451,9 +447,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
             ModuleIO::write_dipole(ucell, this->chr.rho_save[is], this->chr.rhopw, is, istep, ss_dipole.str());
         }
     }
+
+    // (2) Write current information
     elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
         = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
-    // (2) write current information
     if (TD_info::out_current)
     {
         if (TD_info::out_current_k)
@@ -483,10 +480,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                     this->RA);
         }
     }
-    // (3) output energy for sub loop
+
+    // (3) Output energy for sub-loop (electronic step)
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
 
-    // (4) output file for restart
+    // (4) Output file for restart
     if (PARAM.inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
         if (istep % PARAM.inp.out_freq_ion == 0)
@@ -511,12 +509,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
                                  this->pelec->skip_weights);
     }
 
-    // calculate Eband energy
+    // Calculate Eband energy
     elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
-    // calculate the density matrix
-    ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
-
+    // Calculate the density matrix
     auto _pes = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
     elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, this->psi[0], *(_pes->DM));
     if (PARAM.inp.td_stype == 2)
@@ -528,7 +524,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
         _pes->DM->cal_DMR();
     }
 
-    // get the real-space charge density, mohan add 2025-10-24
+    // Get the real-space charge density, mohan add 2025-10-24
     LCAO_domain::dm2rho(_pes->DM->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 }
 
