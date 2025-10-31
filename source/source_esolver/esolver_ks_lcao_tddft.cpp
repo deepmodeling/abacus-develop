@@ -51,11 +51,8 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    // 1) run before_all_runners in ESolver_KS_LCAO
+    // Run before_all_runners in ESolver_KS_LCAO
     ESolver_KS_LCAO<std::complex<double>, TR>::before_all_runners(ucell, inp);
-
-    // this line should be optimized
-    // this->pelec = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 
     td_p = new TD_info(&ucell);
     TD_info::td_vel_op = td_p;
@@ -74,10 +71,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
                                     0,
                                     TD_info::estep_shift))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO_TDDFT", "Read electronic wavefunction from file failed!");
         }
     }
 }
+
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
 {
@@ -87,7 +85,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
-    this->before_scf(ucell, istep);
+    this->before_scf(ucell, istep); // From ESolver_KS_LCAO
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // Initialize velocity operator for current calculation
@@ -105,7 +103,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     }
     int estep_max = (istep == 0 && !PARAM.inp.mdp.md_restart) ? 1 : PARAM.inp.estep_per_md;
     if (PARAM.inp.mdp.md_nstep == 0)
+    {
         estep_max = PARAM.inp.estep_per_md + 1;
+    }
     // int estep_max = PARAM.inp.estep_per_md;
     for (int estep = 0; estep < estep_max; estep++)
     {
@@ -202,7 +202,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick(this->classname, "runner");
     return;
 }
-// output electronic step infos
+
+// Output electronic step information
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 {
@@ -210,6 +211,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
     std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
     std::cout << " -------------------------------------------" << std::endl;
 }
+
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                           const int istep,
@@ -388,11 +390,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                 MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
                 // Global matrix structure
-                Matrix_g<std::complex<double>> h_mat_g;
-                Matrix_g<std::complex<double>> s_mat_g;
+                module_rt::Matrix_g<std::complex<double>> h_mat_g;
+                module_rt::Matrix_g<std::complex<double>> s_mat_g;
 
                 // Collect H matrix
-                gatherMatrix(myid, 0, h_mat, h_mat_g);
+                module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
                 BlasConnector::copy(len_HS_ik,
                                     h_mat_g.p.get(),
                                     1,
@@ -400,7 +402,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                                     1);
 
                 // Collect S matrix
-                gatherMatrix(myid, 0, s_mat, s_mat_g);
+                module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
                 BlasConnector::copy(len_HS_ik,
                                     s_mat_g.p.get(),
                                     1,
@@ -435,7 +437,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_LCAO_TDDFT", "after_scf");
-    ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
+    ModuleBase::timer::tick(this->classname, "after_scf");
 
     ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
 
@@ -493,7 +495,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
         }
     }
 
-    ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
+    ModuleBase::timer::tick(this->classname, "after_scf");
 }
 
 template <typename TR, typename Device>

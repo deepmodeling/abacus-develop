@@ -11,6 +11,7 @@
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------
@@ -98,7 +99,7 @@ void gatherPsi(const int myid,
                const int root_proc,
                T* psi_l,
                const Parallel_Orbitals& para_orb,
-               ModuleESolver::Matrix_g<T>& psi_g)
+               module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
     int ctxt = desc_psi[1];                  // BLACS context
@@ -124,7 +125,7 @@ void gatherPsi(const int myid,
 }
 
 template <typename T>
-void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const ModuleESolver::Matrix_g<T>& psi_g)
+void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
     int ctxt = desc_psi[1];                  // BLACS context

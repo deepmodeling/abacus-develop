@@ -90,8 +90,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             ct::Tensor ekb_tensor(ct::DataType::DT_DOUBLE, ct_device_type, ct::TensorShape({nband}));
 
             // Global psi
-            ModuleESolver::Matrix_g<std::complex<double>> psi_g;
-            ModuleESolver::Matrix_g<std::complex<double>> psi_laststep_g;
+            module_rt::Matrix_g<std::complex<double>> psi_g;
+            module_rt::Matrix_g<std::complex<double>> psi_laststep_g;
 
             if (use_lapack)
             {
