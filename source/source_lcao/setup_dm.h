@@ -24,17 +24,17 @@ class Setup_DM
         }
     }
 
-    // initial density matrix
-    void init_dm(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    // allocate density matrix
+    void allocate_dm(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
 
-    DensityMatrix<TK, double>* get_dm() const
+    elecstate::DensityMatrix<TK, double>* get_dm() const
     {
-        return const_cast<DensityMatrix<TK, double>*>(this->dm);
+        return const_cast<elecstate::DensityMatrix<TK, double>*>(this->dm);
     }
 
     private:
 
-    DensityMatrix<TK, double>* dm = nullptr;
+    elecstate::DensityMatrix<TK, double>* dm = nullptr;
 
 };
 

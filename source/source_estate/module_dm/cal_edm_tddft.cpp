@@ -2,11 +2,13 @@
 
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+
+#include "source_io/module_parameter/parameter.h" // use PARAM.globalv
 namespace elecstate
 {
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void cal_edm_tddft(Parallel_Orbitals& pv,
-                   Setup_DM &dmat,
+                   LCAO_DOMAIN::Setup_DM<std::complex<double>> &dmat,
                    K_Vectors& kv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {

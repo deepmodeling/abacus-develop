@@ -91,7 +91,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
 
     // 7) init DMK, but DMR is constructed in before_scf()
-    this->dmat.init_dm(&this->kv, &(this->pv), inp.nspin);
+    this->dmat.allocate_dm(&this->kv, &(this->pv), inp.nspin);
 
     // 8) init exact exchange calculations
     this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, inp);
@@ -382,7 +382,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-		elecstate::init_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+		elecstate::init_dm<TK>(ucell, estate, this->dmat, this->psi, this->chr, iter, exx_two_level_step);
 	}
 
 #ifdef __EXX
