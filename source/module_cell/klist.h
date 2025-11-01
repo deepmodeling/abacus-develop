@@ -157,8 +157,8 @@ public:
 
 private:
     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
-    int nkstot;      /// number of symmetry-reduced k points in full k mesh
-    int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+    int nkstot;      /// number of symmetry-reduced k points in full k mesh (up+dw)
+    int nkstot_full; /// number of k points before symmetry reduction in full k mesh (none spin)
 
     int nspin;
     bool kc_done;
