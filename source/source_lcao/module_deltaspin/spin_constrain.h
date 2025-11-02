@@ -14,6 +14,8 @@
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
 
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
+
 namespace spinconstrain
 {
 
@@ -49,7 +51,9 @@ public:
 
   void cal_mi_pw();
 
-  void cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+  void cal_mw_from_lambda(int i_step, 
+		  elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-02
+		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
    * @brief calculate the energy of \sum_i \lambda_i * Mi
