@@ -130,7 +130,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
 		int i_step, 
+#ifdef __LCAO
         elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-02
+#endif
 		const ModuleBase::Vector3<double>* delta_lambda)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
@@ -155,7 +157,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         }
         // diagonalization without update charge
         // mohan add two parameters charge and nspin, 2025-10-24
-        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->pelec->charge, PARAM.inp.nspin, true);
+        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, dm, *this->pelec->charge, PARAM.inp.nspin, true);
         elecstate::calculate_weights(this->pelec->ekb,
                                      this->pelec->wg,
                                      this->pelec->klist,
@@ -165,9 +167,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
 
-        elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *psi_t, dm);
+        elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, dm);
 
-        pelec_lcao->get_DM()->cal_DMR();
+        dm.cal_DMR();
+
         this->cal_mi_lcao(i_step);
     }
     else

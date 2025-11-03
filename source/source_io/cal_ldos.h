@@ -20,12 +20,12 @@ class Cal_ldos
     ~Cal_ldos(){};
 
     static void cal_ldos_lcao(
-        const Efermi &eferm, // mohan add 2025-11-02
+        const elecstate::Efermi &eferm, // mohan add 2025-11-02
         const Charge &chr, // mohan add add 2025-11-02
         const LCAO_DOMAIN::Setup_DM<T> &dmat, // mohan add 2025-11-02 
 		const K_Vectors &kv, // k points, mohan add 2025-11-02
-        const matrix &ekb, // mohan add 2025-11-02
-        const matrix &wg, // mohan add 2025-11-02
+        const ModuleBase::matrix &ekb, // mohan add 2025-11-02
+        const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
 		const UnitCell& ucell);

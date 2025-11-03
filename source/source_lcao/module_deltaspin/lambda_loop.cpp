@@ -99,7 +99,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun)
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
+        int outer_step,
+#ifdef __LCAO
+		elecstate::DensityMatrix<std::complex<double>, double>& dm, // mohan add 2025-11-03
+#endif
+		bool rerun)
 {
     // init controlling parameters
     int nat = this->get_nat();
@@ -139,7 +144,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         double duration = 0.0;
         if (i_step == -1)
         {
+
+#ifdef __LCAO
+            this->cal_mw_from_lambda(i_step, dm);
+#else
             this->cal_mw_from_lambda(i_step);
+#endif
             spin = this->Mi_;
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
             print_2d("initial lambda (eV/uB): ", initial_lambda, this->nspin_, ModuleBase::Ry_to_eV);
@@ -151,7 +161,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         {
             where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
-            this->cal_mw_from_lambda(i_step, delta_lambda.data());
+
+#ifdef __LCAO
+            this->cal_mw_from_lambda(i_step, dm);
+#else
+            this->cal_mw_from_lambda(i_step);
+#endif
+
             new_spin = this->Mi_;
             bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
             if (i_step >= this->nsc_min_ && GradLessThanBound)
@@ -222,7 +238,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                 if(rms_error > this->current_sc_thr_ * 10 && rerun == true && this->higher_mag_prec == true)
                 {
                     std::cout<<"Error: RMS error is too large, rerun the loop"<<std::endl;
+#ifdef __LCAO
+                    this->run_lambda_loop(outer_step, dm, false);
+#else
                     this->run_lambda_loop(outer_step, false);
+#endif
+
                 }
             }
             break;
@@ -246,7 +267,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
         where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+
+#ifdef __LCAO
+        this->cal_mw_from_lambda(i_step, dm, delta_lambda.data());
+#else
         this->cal_mw_from_lambda(i_step, delta_lambda.data());
+#endif
 
         spin_plus = this->Mi_;
 

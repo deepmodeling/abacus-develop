@@ -14,7 +14,9 @@
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
 
+#ifdef __LCAO
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
+#endif
 
 namespace spinconstrain
 {
@@ -52,7 +54,9 @@ public:
   void cal_mi_pw();
 
   void cal_mw_from_lambda(int i_step, 
+#ifdef __LCAO
 		  elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-02
+#endif
 		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
@@ -64,7 +68,11 @@ public:
 
   double get_escon();
 
-  void run_lambda_loop(int outer_step, bool rerun = true);
+  void run_lambda_loop(int outer_step, 
+#ifdef __LCAO
+		  elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-03
+#endif
+		  bool rerun = true);
 
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
