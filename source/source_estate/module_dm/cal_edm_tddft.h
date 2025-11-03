@@ -9,7 +9,7 @@
 namespace elecstate
 {
 void cal_edm_tddft(Parallel_Orbitals& pv,
-                   LCAO_DOMAIN::Setup_DM<std::complex<double>> &dmat,
+                   LCAO_domain::Setup_DM<std::complex<double>> &dmat,
                    K_Vectors& kv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt);
 } // namespace elecstate

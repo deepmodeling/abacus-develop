@@ -73,7 +73,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     TwoCenterBundle two_center_bundle_;
 
     //! Add density matrix class, mohan add 2025-10-30
-    LCAO_DOMAIN::Setup_DM<TK> dmat;
+    LCAO_domain::Setup_DM<TK> dmat;
 
     //! For RDMFT calculations, added by jghan, 2024-03-16 
     rdmft::RDMFT<TK, TR> rdmft_solver;

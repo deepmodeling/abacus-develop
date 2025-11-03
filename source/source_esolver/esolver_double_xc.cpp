@@ -84,7 +84,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     // 6) initialize the density matrix
-    this->dmat_base.allocate_dm(&this->kv, &(this->pv), PARAM.inp.nspin);
+    this->dmat_base.allocate_dm(&this->kv, &this->pv, PARAM.inp.nspin);
 
     // 10) inititlize the charge density
     this->chr_base.allocate(PARAM.inp.nspin);

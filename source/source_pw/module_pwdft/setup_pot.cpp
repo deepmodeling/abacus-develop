@@ -102,11 +102,14 @@ void pw::setup_pot(const int istep,
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
                    ucell,
-                   nullptr,
+                   nullptr, // parallel orbitals
                    PARAM.inp.nspin,
                    kv,
                    p_hamilt,
                    kspw_psi,
+#ifdef __LCAO
+                   nullptr, // density matrix, not useful in LCAO, mohan note 2025-11-03
+#endif
                    pelec,
                    pw_wfc);
     }

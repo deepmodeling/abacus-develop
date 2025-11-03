@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace LCAO_DOMAIN
+namespace LCAO_domain
 {
 template <typename TK>
 class Setup_DM
@@ -25,7 +25,7 @@ class Setup_DM
     }
 
     // allocate density matrix
-    void allocate_dm(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    void allocate_dm(const K_Vectors* kv, const Parallel_Orbitals* pv, const int nspin);
 
     elecstate::DensityMatrix<TK, double>* get_dm() const
     {

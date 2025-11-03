@@ -13,7 +13,7 @@ namespace elecstate
 template <typename TK> 
 void init_dm(UnitCell& ucell,
 		ElecStateLCAO<TK>* pelec,
-        LCAO_DOMAIN::Setup_DM<TK> &dmat,
+        LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
 		Charge &chr,
         const int iter,

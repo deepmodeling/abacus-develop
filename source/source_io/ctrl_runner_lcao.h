@@ -18,7 +18,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecStateLCAO<TK>* pelec,// electronic info
-        const LCAO_DOMAIN::Setup_DM<TK> &dmat, // mohan add 2025-11-02
+        const LCAO_domain::Setup_DM<TK> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
