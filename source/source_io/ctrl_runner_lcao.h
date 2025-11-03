@@ -8,6 +8,7 @@
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
+#include "source_lcao/setup_dm.h" // for density matrix, mohan add 20251103
 
 namespace ModuleIO
 {
@@ -17,6 +18,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecStateLCAO<TK>* pelec,// electronic info
+        const LCAO_DOMAIN::Setup_DM<TK> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms

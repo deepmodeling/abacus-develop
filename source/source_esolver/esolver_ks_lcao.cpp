@@ -333,7 +333,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 	}
 
 	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		  PARAM.inp, this->kv, estate, this->pv, this->Pgrid, 
+		  PARAM.inp, this->kv, estate, this->dmat, this->pv, this->Pgrid, 
 		  this->gd, this->psi, this->chr, hamilt_lcao,
           this->two_center_bundle_,
           this->orb_, this->pw_rho, this->pw_rhod,
