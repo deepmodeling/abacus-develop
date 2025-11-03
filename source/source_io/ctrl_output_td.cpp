@@ -25,61 +25,6 @@ void ctrl_output_td(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
-    // Original code commented out, might need reference later
-
-    // // (1) Write dipole information
-    // for (int is = 0; is < PARAM.inp.nspin; is++)
-    // {
-    //     if (PARAM.inp.out_dipole == 1)
-    //     {
-    //         std::stringstream ss_dipole;
-    //         ss_dipole << PARAM.globalv.global_out_dir << "dipole_s" << is + 1 << ".txt";
-    //         ModuleIO::write_dipole(ucell, this->chr.rho_save[is], this->chr.rhopw, is, istep, ss_dipole.str());
-    //     }
-    // }
-
-    // // (2) Write current information
-    // elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
-    //     = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
-    // if (TD_info::out_current)
-    // {
-    //     if (TD_info::out_current_k)
-    //     {
-    //         ModuleIO::write_current_eachk(ucell,
-    //                                       istep,
-    //                                       this->psi,
-    //                                       this->pelec,
-    //                                       this->kv,
-    //                                       this->two_center_bundle_.overlap_orb.get(),
-    //                                       tmp_DM->get_paraV_pointer(),
-    //                                       this->orb_,
-    //                                       this->velocity_mat,
-    //                                       this->RA);
-    //     }
-    //     else
-    //     {
-    //         ModuleIO::write_current(ucell,
-    //                                 istep,
-    //                                 this->psi,
-    //                                 this->pelec,
-    //                                 this->kv,
-    //                                 this->two_center_bundle_.overlap_orb.get(),
-    //                                 tmp_DM->get_paraV_pointer(),
-    //                                 this->orb_,
-    //                                 this->velocity_mat,
-    //                                 this->RA);
-    //     }
-    // }
-
-    // // (3) Output file for restart
-    // if (PARAM.inp.out_freq_ion > 0) // default value of out_freq_ion is 0
-    // {
-    //     if (istep % PARAM.inp.out_freq_ion == 0)
-    //     {
-    //         td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
-    //     }
-    // }
-
 #ifdef __LCAO
     // (1) Write dipole information
     for (int is = 0; is < PARAM.inp.nspin; ++is)
