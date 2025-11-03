@@ -1,6 +1,8 @@
 #ifndef SETUP_DM_H
 #define SETUP_DM_H 
 
+#include "source_cell/klist.h" 
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_estate/module_dm/density_matrix.h"
 
 #include <vector>
