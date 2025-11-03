@@ -145,12 +145,37 @@ struct lapack_getrs {
 // ============================================================================
 template <typename T, typename Device>
 struct lapack_heevd {
+    // !> ZHEEVD computes all eigenvalues and, optionally, eigenvectors of a
+    // !> complex Hermitian matrix A.  If eigenvectors are desired, it uses a
+    // !> divide and conquer algorithm.
+    // !>          On exit, if JOBZ = 'V', then if INFO = 0, A contains the
+    // !>          orthonormal eigenvectors of the matrix A.
+    /**
+     * @brief Computes all eigenvalues and, optionally, eigenvectors of a complex Hermitian matrix.
+     *
+     * This function solves the standard Hermitian eigenvalue problem A*x = lambda*x,
+     * where A is a Hermitian matrix. It computes all eigenvalues and optionally
+     * the corresponding eigenvectors using a divide and conquer algorithm.
+     *
+     * @param[in] dim   The order of the matrix A. dim >= 0.
+     * @param[in,out] Mat   On entry, the Hermitian matrix A.
+     *              On exit, if eigenvectors are computed, A contains the
+     *              orthonormal eigenvectors of the matrix A.
+     * @param[in] lda   The leading dimension of the array Mat. lda >= max(1, dim).
+     * @param[out] eigen_val Array of size at least dim. On normal exit, contains the
+     *                  eigenvalues in ascending order.
+     *
+     * @note
+     * See LAPACK ZHEEVD or CHEEVD documentation for more details.
+     * The matrix is assumed to be stored in upper or lower triangular form
+     * according to the uplo parameter (not shown here but typically passed
+     * to the actual implementation).
+     */
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const char& jobz,
-        const char& uplo,
+        const int dim,
         T* Mat,
-        const int& dim,
+        const int lda,
         Real* eigen_val);
 };
 
@@ -165,7 +190,8 @@ struct lapack_heevx {
      *
      * @param dim   The order of the matrix A. dim >= 0.
      * @param lda   The leading dimension of the array Mat. lda >= max(1, dim).
-     * @param Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     * @param[in] Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     *                  Only used to provide values of matrix.
      * @param neig  The number of eigenvalues to be found. 0 <= neig <= dim.
      * @param eigen_val On normal exit, the first \p neig elements contain the selected
      *                  eigenvalues in ascending order.

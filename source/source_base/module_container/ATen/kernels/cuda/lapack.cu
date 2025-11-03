@@ -231,13 +231,14 @@ template <typename T>
 struct lapack_heevd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const char& jobz,
-        const char& uplo,
+        const int dim,
         T* Mat,
-        const int& dim,
+        const int lda,
         Real* eigen_val)
     {
-        cuSolverConnector::heevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        char jobz = 'V';        // Compute eigenvalues and eigenvectors
+        char uplo = 'U';
+        cuSolverConnector::heevd(cusolver_handle, jobz, uplo, dim, Mat, lda, eigen_val);
     }
 };
 

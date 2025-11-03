@@ -11,6 +11,7 @@ namespace kernels {
 
 template <typename T, typename Device>
 struct blas_copy {
+    // DCOPY copies a vector, x, to a vector, y.
     void operator()(
         const int n,
         const T *x,

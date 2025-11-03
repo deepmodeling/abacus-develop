@@ -196,12 +196,13 @@ template <typename T>
 struct lapack_heevd<T, DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const char& jobz,
-        const char& uplo,
+        const int dim,
         T* Mat,
-        const int& dim,
+        const int lda,
         Real* eigen_val)
     {
+        char jobz = 'V';        // Compute eigenvalues and eigenvectors
+        char uplo = 'U';
         int info = 0;
         int lwork = std::max(2 * dim + dim * dim, 1 + 6 * dim + 2 * dim * dim);
         Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
@@ -215,7 +216,7 @@ struct lapack_heevd<T, DEVICE_CPU> {
         Tensor iwork(DataTypeToEnum<int>::value, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        lapackConnector::heevd(jobz, uplo, dim, Mat, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::heevd(jobz, uplo, dim, Mat, lda, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         if (info != 0) {
             throw std::runtime_error("heevd failed with info = " + std::to_string(info));
         }
@@ -233,6 +234,8 @@ struct lapack_heevx<T, DEVICE_CPU> {
         Real *eigen_val,
         T *eigen_vec)
     {
+        // copy Mat to aux, solve heevx(aux, eigen_val, eigen_vec)
+        // input Mat is not referenced in actual heevx LAPACK routines, and aux is destroyed.
         Tensor aux(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
         // Copy Mat to aux since heevx will destroy it
         // aux = Mat
