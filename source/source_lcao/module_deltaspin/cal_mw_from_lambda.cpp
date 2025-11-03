@@ -437,27 +437,27 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 
             if(pw_solve)
             {
-                hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(this->pw_wfc_,
-                                                 PARAM.inp.calculation,
-                                                 PARAM.inp.basis_type,
-                                                 PARAM.inp.ks_solver,
-                                                 false,
-                                                 PARAM.globalv.use_uspp,
-                                                 PARAM.inp.nspin,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+				hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(this->pw_wfc_,
+						PARAM.inp.calculation,
+						PARAM.inp.basis_type,
+						PARAM.inp.ks_solver,
+						false,
+						PARAM.globalv.use_uspp,
+						PARAM.inp.nspin,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
 
-                hsolver_pw_obj.solve(hamilt_t,
-                         psi_t[0],
-                         this->pelec,
-                         this->pelec->ekb.c,
-                         GlobalV::RANK_IN_POOL,
-                         GlobalV::NPROC_IN_POOL,
-                         false,
-                         this->tpiba,
-                         this->get_nat());
+				hsolver_pw_obj.solve(hamilt_t,
+						psi_t[0],
+						this->pelec,
+						this->pelec->ekb.c,
+						GlobalV::RANK_IN_POOL,
+						GlobalV::NPROC_IN_POOL,
+						false,
+						this->tpiba,
+						this->get_nat());
             }
             else
             {// update charge density only
@@ -467,17 +467,17 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 #if ((defined __CUDA) || (defined __ROCM))
         else
         {
-            base_device::DEVICE_GPU* ctx = {};
-            base_device::DEVICE_CPU* cpu_ctx = {};
-            psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
-            hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
-            auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
-            nbands = psi_t->get_nbands();
-            npol = psi_t->get_npol();
-            nkb = onsite_p->get_tot_nproj();
-            nk = psi_t->get_nk();
-            nh_iat = &onsite_p->get_nh(0);
-            size_becp = nbands * nkb * npol;
+			base_device::DEVICE_GPU* ctx = {};
+			base_device::DEVICE_CPU* cpu_ctx = {};
+			psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
+			hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
+			auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+			nbands = psi_t->get_nbands();
+			npol = psi_t->get_npol();
+			nkb = onsite_p->get_tot_nproj();
+			nk = psi_t->get_nk();
+			nh_iat = &onsite_p->get_nh(0);
+			size_becp = nbands * nkb * npol;
 
             std::complex<double>* h_tmp = nullptr;
             std::complex<double>* s_tmp = nullptr;
