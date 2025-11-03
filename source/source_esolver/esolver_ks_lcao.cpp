@@ -598,7 +598,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     if (PARAM.inp.out_elf[0] > 0)
 	{
-		LCAO_domain::dm2tau(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, estate->charge);
+		LCAO_domain::dm2tau(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge);
 	}
 
     //! 1) call after_scf() of ESolver_KS
