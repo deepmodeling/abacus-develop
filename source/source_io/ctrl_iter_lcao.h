@@ -19,7 +19,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecStateLCAO<TK>* pelec, // electronic info * 
-        elecstate::DensityMatrix<TK, TR>& dm, // density matrix, mohan add 2025-11-03
+        elecstate::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *

@@ -522,7 +522,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             if (GlobalC::dftu.omc != 2)
             {
-                ModuleDFTU::dftu_cal_occup_m(iter, ucell, *dm_vec, this->kv,
+                ModuleDFTU::dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
                   this->p_chgmix->get_mixing_beta(), hamilt_lcao);
             }
             GlobalC::dftu.cal_energy_correction(ucell, istep);
@@ -552,8 +552,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
         {
-            elecstate::DensityMatrix<TK, double>* dm = this->dmat.get_dm();
-            this->p_chgmix->mix_dmr(dm);
+            this->p_chgmix->mix_dmr(this->dmat.get_dm());
         }
     }
 
@@ -564,7 +563,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // control the output related to the finished iteration
-    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate,
+    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate, *this->dmat.get_dm(),
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
       this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);

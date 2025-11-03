@@ -207,6 +207,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->kv,
                    this->p_hamilt,
                    this->psi,
+                   this->dmat.get_dm(),
                    this->pelec);
     }
 
