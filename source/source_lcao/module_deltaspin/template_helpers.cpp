@@ -2,7 +2,6 @@
 
 template <>
 void spinconstrain::SpinConstrain<double>::cal_mw_from_lambda(int i_step, 
-		elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-02
 		const ModuleBase::Vector3<double>* delta_lambda)
 {
 }
@@ -14,7 +13,6 @@ void spinconstrain::SpinConstrain<double>::cal_mi_lcao(const int& step, bool pri
 
 template <>
 void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step, 
-		elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-03
 		bool rerun)
 {
 }

@@ -292,7 +292,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->chr, PARAM.inp.nspin, skip_charge);
+			hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.get_dm(), 
+					this->chr, PARAM.inp.nspin, skip_charge);
         }
     }
 
@@ -497,7 +498,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
         }
     }
     elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
-            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+            = this->dmat.get_dm();
+
     // (2) write current information
     if(TD_info::out_current)
     {
@@ -562,19 +564,18 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     // calculate the density matrix
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
 
-    auto _pes = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
-    elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, this->psi[0], *(_pes->DM));
+    elecstate::cal_dm_psi(this->dmat.get_dm()->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.get_dm());
     if(PARAM.inp.td_stype == 2)
     {
-        _pes->DM->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.get_dm()->cal_DMR_td(ucell, TD_info::cart_At);
     }
     else
     {
-         _pes->DM->cal_DMR();
+        this->dmat.get_dm()->cal_DMR();
     }
 
     // get the real-space charge density, mohan add 2025-10-24
-    LCAO_domain::dm2rho(_pes->DM->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 }
 
 template class ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>;

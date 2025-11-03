@@ -18,7 +18,7 @@ class Setup_DM
 
     ~Setup_DM()
     {
-        if (this->DM != nullptr)
+        if (this->dm != nullptr)
         {
             delete this->dm;
         }

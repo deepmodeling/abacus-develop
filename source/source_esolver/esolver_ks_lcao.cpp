@@ -208,7 +208,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.init_sc(PARAM.inp.sc_thr, PARAM.inp.nsc, PARAM.inp.nsc_min, PARAM.inp.alpha_trial,
                    PARAM.inp.sccut, PARAM.inp.sc_drop_thr, ucell, &(this->pv),
-                   PARAM.inp.nspin, this->kv, this->p_hamilt, this->psi, this->pelec);
+                   PARAM.inp.nspin, this->kv, this->p_hamilt, this->psi, this->dmat.get_dm(), this->pelec);
     }
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
@@ -468,7 +468,8 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     if (!skip_solve)
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->chr, PARAM.inp.nspin, skip_charge);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.get_dm(), 
+          this->chr, PARAM.inp.nspin, skip_charge);
     }
 
     // 4) EXX
@@ -557,7 +558,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
         {
-            elecstate::DensityMatrix<TK, double>* dm = estate->get_DM();
+            elecstate::DensityMatrix<TK, double>* dm = this->dmat.get_dm();
             this->p_chgmix->mix_dmr(dm);
         }
     }
@@ -597,7 +598,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     if (PARAM.inp.out_elf[0] > 0)
 	{
-		LCAO_domain::dm2tau(estate->DM->get_DMR_vector(), PARAM.inp.nspin, estate->charge);
+		LCAO_domain::dm2tau(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, estate->charge);
 	}
 
     //! 1) call after_scf() of ESolver_KS

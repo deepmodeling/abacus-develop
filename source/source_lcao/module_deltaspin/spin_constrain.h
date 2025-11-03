@@ -43,7 +43,10 @@ public:
                const K_Vectors& kv_in,
                void* p_hamilt_in,
                void* psi_in,
-               elecstate::ElecState* pelec_in,
+#ifdef __LCAO
+			   elecstate::DensityMatrix<std::complex<double>, double> *dm_in, // mohan add 2025-11-02
+#endif
+			   elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /// @brief calculate the magnetization of each atom with real space projection method for LCAO base
@@ -54,9 +57,6 @@ public:
   void cal_mi_pw();
 
   void cal_mw_from_lambda(int i_step, 
-#ifdef __LCAO
-		  elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-02
-#endif
 		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
@@ -69,16 +69,16 @@ public:
   double get_escon();
 
   void run_lambda_loop(int outer_step, 
-#ifdef __LCAO
-		  elecstate::DensityMatrix<std::complex<double>, double> &dm, // mohan add 2025-11-03
-#endif
 		  bool rerun = true);
 
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat);
+  void calculate_delta_hcc(std::complex<double>* h_tmp, 
+		  const std::complex<double>* becp_k, 
+		  const ModuleBase::Vector3<double>* delta_lambda, 
+		  const int nbands, const int nkb, const int* nh_iat);
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
@@ -121,6 +121,9 @@ public:
     void* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
+#ifdef __LCAO
+    elecstate::DensityMatrix<std::complex<double>, double>* dm_;
+#endif
     double tpiba = 0.0; /// save ucell.tpiba
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;

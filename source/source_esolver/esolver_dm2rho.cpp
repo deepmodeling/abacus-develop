@@ -46,16 +46,9 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 
     ESolver_KS_LCAO<TK, TR>::before_scf(ucell, istep);
 
-    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-
-    if(!estate)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_DM2rho::after_scf","pelec does not exist");
-    }
-
     // file name of DM
     std::string zipname = "output_DM0.npz";
-    elecstate::DensityMatrix<TK, double>* dm = estate->get_DM();
+    elecstate::DensityMatrix<TK, double>* dm = this->dmat.get_dm();
 
     // read DM from file
     ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
@@ -69,7 +62,7 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(estate->DM->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 
     int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
 
