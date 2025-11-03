@@ -1,8 +1,8 @@
 #ifndef SPARSE_FORMAT_HSR_H
 #define SPARSE_FORMAT_HSR_H
 
-#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
+#include "source_lcao/hamilt_lcao.h"
 
 namespace sparse_format
 {
@@ -37,6 +37,7 @@ std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
 };
 
 using TAC = std::pair<int, std::array<int, 3>>;
+template <typename TK>
 void cal_HSR(const UnitCell& ucell,
              const Parallel_Orbitals& pv,
              LCAO_HS_Arrays& HS_Arrays,
@@ -44,7 +45,7 @@ void cal_HSR(const UnitCell& ucell,
              const int& current_spin,
              const double& sparse_thr,
              const int (&nmp)[3],
-             hamilt::Hamilt<std::complex<double>>* p_ham
+             hamilt::Hamilt<TK>* p_ham
 #ifdef __EXX
              ,
              const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
@@ -52,25 +53,11 @@ void cal_HSR(const UnitCell& ucell,
 #endif
 );
 
-void cal_HContainer_d(const Parallel_Orbitals& pv,
-                      const int& current_spin,
-                      const double& sparse_threshold,
-                      const hamilt::HContainer<double>& hR,
-                      std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
-
-void cal_HContainer_cd(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_threshold,
-    const hamilt::HContainer<std::complex<double>>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
-
-void cal_HContainer_td(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_threshold,
-    const hamilt::HContainer<double>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+template <typename TI, typename TO = TI>
+void cal_HContainer(const Parallel_Orbitals& pv,
+                    const double& sparse_thr,
+                    const hamilt::HContainer<TI>& hR,
+                    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target);
 
 void clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr);
 

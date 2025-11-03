@@ -598,8 +598,8 @@ fi
 # check currents in rt-TDDFT 
 #--------------------------------------------
 if ! test -z "$out_current" && [ $out_current ]; then
-	current1ref=refcurrent_total.dat
-	current1cal=OUT.autotest/current_total.dat
+	current1ref=refcurrent_total.txt
+	current1cal=OUT.autotest/current_total.txt
 	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
 	echo "CompareCurrent_pass $?" >>$1
 fi

@@ -7,7 +7,7 @@
 #include "solve_propagation.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
+#include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_pw/module_pwdft/global.h"
@@ -26,7 +26,6 @@ void evolve_psi(const int nband,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
                 double* ekb,
-                int htype,
                 int propagator,
                 std::ofstream& ofs_running,
                 const int print_matrix)
@@ -63,7 +62,7 @@ void evolve_psi(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (propagator != 2)
     {
         half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
@@ -133,7 +132,6 @@ void evolve_psi_tensor(const int nband,
                        ct::Tensor& H_laststep,
                        ct::Tensor& S_laststep,
                        ct::Tensor& ekb,
-                       int htype,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
@@ -178,15 +176,15 @@ void evolve_psi_tensor(const int nband,
         MPI_Comm_rank(MPI_COMM_WORLD, &myid);
         MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-        ModuleESolver::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
+        module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
 
         // Collect H matrix
-        ModuleESolver::gatherMatrix(myid, 0, h_mat, h_mat_g);
+        module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
         syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
         syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
 
         // Collect S matrix
-        ModuleESolver::gatherMatrix(myid, 0, s_mat, s_mat_g);
+        module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
         syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat_g.p.get(), len_HS);
     }
     else
@@ -209,7 +207,7 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (propagator != 2)
     {
         if (!use_lapack)
         {
@@ -324,7 +322,6 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
@@ -340,7 +337,6 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,

@@ -560,6 +560,7 @@ OBJS_IO=input_conv.o\
     ctrl_iter_lcao.o\
     ctrl_output_fp.o\
     ctrl_output_pw.o\
+    ctrl_output_td.o\
     para_json.o\
     abacusjson.o\
     general_info.o\

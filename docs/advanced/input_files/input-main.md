@@ -3185,14 +3185,14 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Boolean
 - **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_NAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.txt` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_NAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
   - False: ABACUS will start molecular dynamics calculations normally from the first step.
 - **Default**: False
 
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of `OUT.${suffix}/Restart_md.dat` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
+- **Description**: The output frequency of `OUT.${suffix}/Restart_md.txt` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
 - **Default**: 5
 
 ### md_dumpfreq

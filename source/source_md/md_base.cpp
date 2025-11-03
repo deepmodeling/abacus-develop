@@ -228,7 +228,7 @@ void MD_base::write_restart(const std::string& global_out_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;

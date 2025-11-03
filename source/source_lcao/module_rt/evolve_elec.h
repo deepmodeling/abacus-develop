@@ -7,10 +7,11 @@
 #include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/module_external/scalapack_connector.h"                   // Cpxgemr2d
+#include "source_base/module_external/scalapack_connector.h"   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------
@@ -91,52 +92,6 @@ inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, co
 
 namespace module_rt
 {
-#ifdef __MPI
-//------------------------ MPI gathering and distributing functions ------------------------//
-template <typename T>
-void gatherPsi(const int myid,
-               const int root_proc,
-               T* psi_l,
-               const Parallel_Orbitals& para_orb,
-               ModuleESolver::Matrix_g<T>& psi_g)
-{
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
-    int ctxt = desc_psi[1];                  // BLACS context
-    int nrows = desc_psi[2];                 // Global matrix row number
-    int ncols = desc_psi[3];                 // Global matrix column number
-
-    if (myid == root_proc)
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
-    }
-    else
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // Placeholder for non-root processes
-    }
-
-    // Set the descriptor of the global psi
-    psi_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
-    psi_g.row = nrows;
-    psi_g.col = ncols;
-
-    // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
-    Cpxgemr2d(nrows, ncols, psi_l, 1, 1, const_cast<int*>(desc_psi), psi_g.p.get(), 1, 1, psi_g.desc.get(), ctxt);
-}
-
-template <typename T>
-void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const ModuleESolver::Matrix_g<T>& psi_g)
-{
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
-    int ctxt = desc_psi[1];                  // BLACS context
-    int nrows = desc_psi[2];                 // Global matrix row number
-    int ncols = desc_psi[3];                 // Global matrix column number
-
-    // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
-    Cpxgemr2d(nrows, ncols, psi_g.p.get(), 1, 1, psi_g.desc.get(), psi_l, 1, 1, const_cast<int*>(desc_psi), ctxt);
-}
-//------------------------ MPI gathering and distributing functions ------------------------//
-#endif // __MPI
-
 template <typename Device = base_device::DEVICE_CPU>
 class Evolve_elec
 {
@@ -159,11 +114,10 @@ class Evolve_elec
                           Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
-                          std::complex<double>** Hk_laststep,
-                          std::complex<double>** Sk_laststep,
+                          ct::Tensor& Hk_laststep,
+                          ct::Tensor& Sk_laststep,
                           ModuleBase::matrix& ekb,
                           std::ofstream& ofs_running,
-                          const int htype,
                           const int propagator,
                           const bool use_tensor,
                           const bool use_lapack);
