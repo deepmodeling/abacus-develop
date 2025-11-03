@@ -1,8 +1,8 @@
 #include "spin_constrain.h"
 
 // init sc
-template <typename FPTYPE>
-void spinconstrain::SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
+template <typename TK>
+void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
 		int nsc_in,
 		int nsc_min_in,
 		double alpha_trial_in,
@@ -15,7 +15,7 @@ void spinconstrain::SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
 		void* p_hamilt_in,
 		void* psi_in,
 #ifdef __LCAO
-		elecstate::DensityMatrix<std::complex<double>, double>* dm_in, // mohan add 2025-11-03
+		elecstate::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-03
 #endif
 		elecstate::ElecState* pelec_in,
 		ModulePW::PW_Basis_K* pw_wfc_in)

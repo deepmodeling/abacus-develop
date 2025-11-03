@@ -153,12 +153,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     //! 1) call before_scf() of ESolver_KS.
     ESolver_KS<TK>::before_scf(ucell, istep);
 
-    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-    if(!estate)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","pelec does not exist");
-    }
-
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
       PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL.get_rcutmax_Beta(),
@@ -517,7 +511,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","p_hamilt does not exist");
     }
 
-	const std::vector<std::vector<TK>>& dm_vec = estate->get_DM()->get_DMK_vector();
+	const std::vector<std::vector<TK>>& dm_vec = this->dmat.get_dm()->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
@@ -528,7 +522,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             if (GlobalC::dftu.omc != 2)
             {
-                ModuleDFTU::dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
+                ModuleDFTU::dftu_cal_occup_m(iter, ucell, *dm_vec, this->kv,
                   this->p_chgmix->get_mixing_beta(), hamilt_lcao);
             }
             GlobalC::dftu.cal_energy_correction(ucell, istep);

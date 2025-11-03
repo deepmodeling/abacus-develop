@@ -23,7 +23,7 @@ namespace spinconstrain
 
 struct ScAtomData;
 
-template <typename FPTYPE>
+template <typename TK>
 class SpinConstrain
 {
 public:
@@ -44,7 +44,7 @@ public:
                void* p_hamilt_in,
                void* psi_in,
 #ifdef __LCAO
-			   elecstate::DensityMatrix<std::complex<double>, double> *dm_in, // mohan add 2025-11-02
+			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
 #endif
 			   elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
@@ -122,7 +122,7 @@ public:
     elecstate::ElecState* pelec = nullptr;
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
 #ifdef __LCAO
-    elecstate::DensityMatrix<std::complex<double>, double>* dm_;
+    elecstate::DensityMatrix<TK, double>* dm_;
 #endif
     double tpiba = 0.0; /// save ucell.tpiba
     const double meV_to_Ry = 7.349864435130999e-05;
@@ -255,20 +255,20 @@ public:
   public:
     /// @brief save operator for spin-constrained DFT
     /// @param op_in the base pointer of operator, actual type should be DeltaSpin<OperatorLCAO<TK, TR>>*
-    void set_operator(hamilt::Operator<FPTYPE>* op_in);
+    void set_operator(hamilt::Operator<TK>* op_in);
     /// @brief set is_Mi_converged
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief get is_Mi_converged
     bool mag_converged() const {return this->is_Mi_converged;}
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
-    hamilt::Operator<FPTYPE>* p_operator = nullptr;
+    hamilt::Operator<TK>* p_operator = nullptr;
     /// @brief if atomic magnetic moment is converged
     bool is_Mi_converged = false;
 
-    FPTYPE* sub_h_save;
-    FPTYPE* sub_s_save;
-    FPTYPE* becp_save;
+    TK* sub_h_save;
+    TK* sub_s_save;
+    TK* becp_save;
 };
 
 
