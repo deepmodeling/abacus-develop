@@ -200,8 +200,8 @@ private:
  public:
    void force_stress(const UnitCell& ucell,
                      const Grid_Driver& gd,
-					 const std::vector<std::vector<double>>& dmk_d, // mohan modify 2025-11-02
-					 const std::vector<std::vector<std::complex<double>>>& dmk_c, // dmat.get_dm()->get_DMK_vector();
+					 std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
+					 std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
 					 const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
                      ModuleBase::matrix& force_dftu,

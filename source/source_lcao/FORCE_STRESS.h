@@ -16,6 +16,7 @@
 #include "force_stress_arrays.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
+#include "source_lcao/setup_dm.h" // mohan add 2025-11-03
 
 
 template <typename T>
@@ -38,6 +39,7 @@ class Force_Stress_LCAO
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
+                        LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
                         const psi::Psi<T>* psi,
                         const TwoCenterBundle& two_center_bundle,
                         const LCAO_Orbitals& orb,

@@ -39,6 +39,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
+                                          LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
                                           const psi::Psi<T>* psi,
                                           const TwoCenterBundle& two_center_bundle,
                                           const LCAO_Orbitals& orb,
@@ -144,7 +145,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(nullptr,
           kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd, two_center_bundle.overlap_orb_beta.get());
 
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(pelec)->get_DM();
+        const auto* dm_p = dmat.get_dm();
 
         if (PARAM.inp.nspin == 2)
         {
@@ -166,7 +167,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
         // calculate temporary complex DMR for nonlocal force&stress
         // In fact, only SOC part need the imaginary part of DMR for correct force&stress
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+        const auto* dm_p = dmat.get_dm();
         hamilt::HContainer<std::complex<double>> tmp_dmr(dm_p->get_DMR_pointer(1)->get_paraV());
         std::vector<int> ijrs = dm_p->get_DMR_pointer(1)->get_ijr_info();
         tmp_dmr.insert_ijrs(&ijrs);
@@ -248,7 +249,19 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-            GlobalC::dftu.force_stress(ucell, gd, pelec, pv, fsr, force_dftu, stress_dftu, kv);
+			// GlobalC::dftu.force_stress(ucell, gd, pelec, pv, fsr, force_dftu, stress_dftu, kv);
+			// mohan modify 2025-11-03
+            auto dm_pointer = dmat.get_dm();
+			if(PARAM.globalv.gamma_only_local)
+			{
+                // T is double
+				GlobalC::dftu.force_stress(ucell, gd, dm_pointer, nullptr, pv, fsr, force_dftu, stress_dftu, kv);
+			}
+			else
+			{
+                // T is complex<double>
+				GlobalC::dftu.force_stress(ucell, gd, nullptr, dm_pointer, pv, fsr, force_dftu, stress_dftu, kv);
+			}
         }
         else
         {
@@ -287,7 +300,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                                      two_center_bundle.overlap_orb_onsite.get(),
                                                                      orb.cutoffs());
 
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+        const auto* dm_p = dmat.get_dm();
         if (PARAM.inp.nspin == 2)
         {
             const_cast<elecstate::DensityMatrix<std::complex<double>, double>*>(dm_p)->switch_dmr(2);
