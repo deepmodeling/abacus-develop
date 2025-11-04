@@ -34,7 +34,9 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     this->set_decay_grad();
     if(ParaV_in != nullptr) this->set_ParaV(ParaV_in);
     this->set_solver_parameters(kv_in, p_hamilt_in, psi_in, pelec_in);
+#ifdef __LCAO
     this->dm_ = dm_in; // mohan add 2025-11-03
+#endif
 }
 
 template class spinconstrain::SpinConstrain<std::complex<double>>;
