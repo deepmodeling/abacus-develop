@@ -300,6 +300,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 p_hamilt,
                 kv,
                 pelec,
+                dm, // mohan add 2025-11-04
                 two_center_bundle,
                 orb,
                 ucell,
