@@ -2,11 +2,13 @@
 
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+
+#include "source_io/module_parameter/parameter.h" // use PARAM.globalv
 namespace elecstate
 {
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void cal_edm_tddft(Parallel_Orbitals& pv,
-                   elecstate::ElecState* pelec,
+                   LCAO_domain::Setup_DM<std::complex<double>> &dmat,
                    K_Vectors& kv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
@@ -14,15 +16,13 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
 
-    auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(pelec);
-
-    _pelec->get_DM()->EDMK.resize(kv.get_nks());
+    dmat.dm->EDMK.resize(kv.get_nks());
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         p_hamilt->updateHk(ik);
-        std::complex<double>* tmp_dmk = _pelec->get_DM()->get_DMK_pointer(ik);
-        ModuleBase::ComplexMatrix& tmp_edmk = _pelec->get_DM()->EDMK[ik];
+        std::complex<double>* tmp_dmk = dmat.dm->get_DMK_pointer(ik);
+        ModuleBase::ComplexMatrix& tmp_edmk = dmat.dm->EDMK[ik];
 
 #ifdef __MPI
 

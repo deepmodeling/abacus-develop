@@ -8,15 +8,15 @@
 namespace spinconstrain
 {
 
-template <typename FPTYPE>
-SpinConstrain<FPTYPE>& SpinConstrain<FPTYPE>::getScInstance()
+template <typename TK>
+SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
 {
-    static SpinConstrain<FPTYPE> instance; // Guaranteed to be created and destroyed only once
+    static SpinConstrain<TK> instance; // Guaranteed to be created and destroyed only once
     return instance;
 }
 
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::cal_escon()
+template <typename TK>
+double SpinConstrain<TK>::cal_escon()
 {
     this->escon_ = 0.0;
     if (!this->is_Mi_converged)
@@ -33,30 +33,30 @@ double SpinConstrain<FPTYPE>::cal_escon()
     return this->escon_;
 }
 
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_escon()
+template <typename TK>
+double SpinConstrain<TK>::get_escon()
 {
     return this->escon_;
 }
 
 // set atomCounts
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_atomCounts(const std::map<int, int>& atomCounts_in)
+template <typename TK>
+void SpinConstrain<TK>::set_atomCounts(const std::map<int, int>& atomCounts_in)
 {
     this->atomCounts.clear();
     this->atomCounts = atomCounts_in;
 }
 
 // get atomCounts
-template <typename FPTYPE>
-const std::map<int, int>& SpinConstrain<FPTYPE>::get_atomCounts() const
+template <typename TK>
+const std::map<int, int>& SpinConstrain<TK>::get_atomCounts() const
 {
     return this->atomCounts;
 }
 
 /// set nspin
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_nspin(int nspin_in)
+template <typename TK>
+void SpinConstrain<TK>::set_nspin(int nspin_in)
 {
     if (nspin_in != 4 && nspin_in != 2)
     {
@@ -66,14 +66,14 @@ void SpinConstrain<FPTYPE>::set_nspin(int nspin_in)
 }
 
 /// get nspin
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_nspin()
+template <typename TK>
+int SpinConstrain<TK>::get_nspin()
 {
     return this->nspin_;
 }
 
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_nat()
+template <typename TK>
+int SpinConstrain<TK>::get_nat()
 {
     int nat = 0;
     for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
@@ -83,14 +83,14 @@ int SpinConstrain<FPTYPE>::get_nat()
     return nat;
 }
 
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_ntype()
+template <typename TK>
+int SpinConstrain<TK>::get_ntype()
 {
     return this->atomCounts.size();
 }
 
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::check_atomCounts()
+template <typename TK>
+void SpinConstrain<TK>::check_atomCounts()
 {
     if (!this->atomCounts.size())
     {
@@ -116,8 +116,8 @@ void SpinConstrain<FPTYPE>::check_atomCounts()
 }
 
 // get iat
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_iat(int itype, int atom_index)
+template <typename TK>
+int SpinConstrain<TK>::get_iat(int itype, int atom_index)
 {
     if (itype < 0 || itype >= this->get_ntype())
     {
@@ -141,38 +141,38 @@ int SpinConstrain<FPTYPE>::get_iat(int itype, int atom_index)
 }
 
 // set orbitalCounts
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in)
+template <typename TK>
+void SpinConstrain<TK>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in)
 {
     this->orbitalCounts.clear();
     this->orbitalCounts = orbitalCounts_in;
 }
 
 // get orbitalCounts
-template <typename FPTYPE>
-const std::map<int, int>& SpinConstrain<FPTYPE>::get_orbitalCounts() const
+template <typename TK>
+const std::map<int, int>& SpinConstrain<TK>::get_orbitalCounts() const
 {
     return this->orbitalCounts;
 }
 
 // set lnchiCounts
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in)
+template <typename TK>
+void SpinConstrain<TK>::set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in)
 {
     this->lnchiCounts.clear();
     this->lnchiCounts = lnchiCounts_in;
 }
 
 // get lnchiCounts
-template <typename FPTYPE>
-const std::map<int, std::map<int, int>>& SpinConstrain<FPTYPE>::get_lnchiCounts() const
+template <typename TK>
+const std::map<int, std::map<int, int>>& SpinConstrain<TK>::get_lnchiCounts() const
 {
     return this->lnchiCounts;
 }
 
 // set sc_lambda from ScData
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_sc_lambda()
+template <typename TK>
+void SpinConstrain<TK>::set_sc_lambda()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -194,8 +194,8 @@ void SpinConstrain<FPTYPE>::set_sc_lambda()
 }
 
 // set target_mag from ScData
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_target_mag()
+template <typename TK>
+void SpinConstrain<TK>::set_target_mag()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -234,8 +234,8 @@ void SpinConstrain<FPTYPE>::set_target_mag()
 }
 
 // set constrain from ScData
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_constrain()
+template <typename TK>
+void SpinConstrain<TK>::set_constrain()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -266,8 +266,8 @@ void SpinConstrain<FPTYPE>::set_constrain()
 }
 
 // set sc_lambda from variable
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
+template <typename TK>
+void SpinConstrain<TK>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -283,8 +283,8 @@ void SpinConstrain<FPTYPE>::set_sc_lambda(const ModuleBase::Vector3<double>* lam
 }
 
 // set target_mag from variable
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in)
+template <typename TK>
+void SpinConstrain<TK>::set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -299,8 +299,8 @@ void SpinConstrain<FPTYPE>::set_target_mag(const ModuleBase::Vector3<double>* ta
     }
 }
 
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_target_mag(const std::vector<ModuleBase::Vector3<double>>& target_mag_in)
+template <typename TK>
+void SpinConstrain<TK>::set_target_mag(const std::vector<ModuleBase::Vector3<double>>& target_mag_in)
 {
     int nat = this->get_nat();
     assert(target_mag_in.size() == nat);
@@ -324,8 +324,8 @@ void SpinConstrain<FPTYPE>::set_target_mag(const std::vector<ModuleBase::Vector3
 }
 
 /// set constrain from variable
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in)
+template <typename TK>
+void SpinConstrain<TK>::set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -340,28 +340,28 @@ void SpinConstrain<FPTYPE>::set_constrain(const ModuleBase::Vector3<int>* constr
     }
 }
 
-template <typename FPTYPE>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE>::get_sc_lambda() const
+template <typename TK>
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_sc_lambda() const
 {
     return this->lambda_;
 }
 
-template <typename FPTYPE>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE>::get_target_mag() const
+template <typename TK>
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_target_mag() const
 {
     return this->target_mag_;
 }
 
 /// get_constrain
-template <typename FPTYPE>
-const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<FPTYPE>::get_constrain() const
+template <typename TK>
+const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<TK>::get_constrain() const
 {
     return this->constrain_;
 }
 
 /// zero atomic magnetic moment
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::zero_Mi()
+template <typename TK>
+void SpinConstrain<TK>::zero_Mi()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -377,15 +377,15 @@ void SpinConstrain<FPTYPE>::zero_Mi()
 /// get grad_decay
 /// this function can only be called by the root process because only
 /// root process reads the ScDecayGrad from json file
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_decay_grad(int itype)
+template <typename TK>
+double SpinConstrain<TK>::get_decay_grad(int itype)
 {
     return this->ScDecayGrad[itype];
 }
 
 /// set grad_decy
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_decay_grad()
+template <typename TK>
+void SpinConstrain<TK>::set_decay_grad()
 {
     this->check_atomCounts();
     int ntype = this->get_ntype();
@@ -397,15 +397,15 @@ void SpinConstrain<FPTYPE>::set_decay_grad()
 }
 
 /// get decay_grad
-template <typename FPTYPE>
-const std::vector<double>& SpinConstrain<FPTYPE>::get_decay_grad()
+template <typename TK>
+const std::vector<double>& SpinConstrain<TK>::get_decay_grad()
 {
     return this->decay_grad_;
 }
 
 /// set grad_decy from variable
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_decay_grad(const double* decay_grad_in, int ntype_in)
+template <typename TK>
+void SpinConstrain<TK>::set_decay_grad(const double* decay_grad_in, int ntype_in)
 {
     this->check_atomCounts();
     int ntype = this->get_ntype();
@@ -421,8 +421,8 @@ void SpinConstrain<FPTYPE>::set_decay_grad(const double* decay_grad_in, int ntyp
 }
 
 /// @brief  set input parameters
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_input_parameters(double sc_thr_in,
+template <typename TK>
+void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
                                                  int nsc_in,
                                                  int nsc_min_in,
                                                  double alpha_trial_in,
@@ -438,56 +438,56 @@ void SpinConstrain<FPTYPE>::set_input_parameters(double sc_thr_in,
 }
 
 /// get sc_thr
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_sc_thr()
+template <typename TK>
+double SpinConstrain<TK>::get_sc_thr()
 {
     return this->sc_thr_;
 }
 
 /// get nsc
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_nsc()
+template <typename TK>
+int SpinConstrain<TK>::get_nsc()
 {
     return this->nsc_;
 }
 
 /// get nsc_min
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_nsc_min()
+template <typename TK>
+int SpinConstrain<TK>::get_nsc_min()
 {
     return this->nsc_min_;
 }
 
 /// get alpha_trial
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_alpha_trial()
+template <typename TK>
+double SpinConstrain<TK>::get_alpha_trial()
 {
     return this->alpha_trial_;
 }
 
 /// get sccut
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_sccut()
+template <typename TK>
+double SpinConstrain<TK>::get_sccut()
 {
     return this->restrict_current_;
 }
 
 /// set sc_drop_thr
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_sc_drop_thr(double sc_drop_thr_in)
+template <typename TK>
+void SpinConstrain<TK>::set_sc_drop_thr(double sc_drop_thr_in)
 {
     this->sc_drop_thr_ = sc_drop_thr_in;
 }
 
 /// get sc_drop_thr
-template <typename FPTYPE>
-double SpinConstrain<FPTYPE>::get_sc_drop_thr()
+template <typename TK>
+double SpinConstrain<TK>::get_sc_drop_thr()
 {
     return this->sc_drop_thr_;
 }
 
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_solver_parameters(const K_Vectors& kv_in,
+template <typename TK>
+void SpinConstrain<TK>::set_solver_parameters(const K_Vectors& kv_in,
                                                   void* p_hamilt_in,
                                                   void* psi_in,
                                                   elecstate::ElecState* pelec_in)
@@ -499,8 +499,8 @@ void SpinConstrain<FPTYPE>::set_solver_parameters(const K_Vectors& kv_in,
 }
 
 /// @brief  set ParaV
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_ParaV(Parallel_Orbitals* ParaV_in)
+template <typename TK>
+void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
 {
     this->ParaV = ParaV_in;
     int nloc = this->ParaV->nloc;
@@ -511,8 +511,8 @@ void SpinConstrain<FPTYPE>::set_ParaV(Parallel_Orbitals* ParaV_in)
 }
 
 /// print Mi
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::print_Mi(std::ofstream& ofs_running)
+template <typename TK>
+void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -556,8 +556,8 @@ void SpinConstrain<FPTYPE>::print_Mi(std::ofstream& ofs_running)
 }
 
 /// print magnetic force (defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::print_Mag_Force(std::ofstream& ofs_running)
+template <typename TK>
+void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
 {
     this->check_atomCounts();
     int nat = this->get_nat();

@@ -9,6 +9,7 @@
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
+#include "source_lcao/setup_dm.h" // mohan add 2025-10-30
 
 #include <memory>
 
@@ -70,6 +71,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
+
+    //! Add density matrix class, mohan add 2025-10-30
+    LCAO_domain::Setup_DM<TK> dmat;
 
     //! For RDMFT calculations, added by jghan, 2024-03-16 
     rdmft::RDMFT<TK, TR> rdmft_solver;

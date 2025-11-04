@@ -99,7 +99,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun)
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
+        int outer_step,
+		bool rerun)
 {
     // init controlling parameters
     int nat = this->get_nat();
@@ -139,6 +141,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         double duration = 0.0;
         if (i_step == -1)
         {
+
             this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
@@ -151,7 +154,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         {
             where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
-            this->cal_mw_from_lambda(i_step, delta_lambda.data());
+
+            this->cal_mw_from_lambda(i_step);
+
             new_spin = this->Mi_;
             bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
             if (i_step >= this->nsc_min_ && GradLessThanBound)
@@ -246,6 +251,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
         where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+
         this->cal_mw_from_lambda(i_step, delta_lambda.data());
 
         spin_plus = this->Mi_;

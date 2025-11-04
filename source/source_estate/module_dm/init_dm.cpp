@@ -6,6 +6,7 @@
 template <typename TK>
 void elecstate::init_dm(UnitCell& ucell,
 		elecstate::ElecStateLCAO<TK>* pelec,
+        LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
 		Charge &chr,
         const int iter,
@@ -30,8 +31,8 @@ void elecstate::init_dm(UnitCell& ucell,
 				pelec->skip_weights);
 
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
-		elecstate::cal_dm_psi(pelec->DM->get_paraV_pointer(), pelec->wg, *psi, *(pelec->DM));
-		pelec->DM->cal_DMR();
+		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
+		dmat.dm->cal_DMR();
 
 		pelec->psiToRho(*psi);
 		pelec->skip_weights = false;
@@ -51,6 +52,7 @@ void elecstate::init_dm(UnitCell& ucell,
 
 template void elecstate::init_dm<double>(UnitCell& ucell,
 		elecstate::ElecStateLCAO<double>* pelec,
+        LCAO_domain::Setup_DM<double> &dmat,
         psi::Psi<double>* psi,
 		Charge &chr,
         const int iter,
@@ -58,6 +60,7 @@ template void elecstate::init_dm<double>(UnitCell& ucell,
 
 template void elecstate::init_dm<std::complex<double>>(UnitCell& ucell,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec,
+        LCAO_domain::Setup_DM<std::complex<double>> &dmat,
         psi::Psi<std::complex<double>>* psi,
 		Charge &chr,
         const int iter,

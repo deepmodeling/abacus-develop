@@ -128,7 +128,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
 }
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda)
+void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
+		int i_step, 
+		const ModuleBase::Vector3<double>* delta_lambda)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
@@ -152,7 +154,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
         }
         // diagonalization without update charge
         // mohan add two parameters charge and nspin, 2025-10-24
-        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->pelec->charge, PARAM.inp.nspin, true);
+        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, PARAM.inp.nspin, true);
         elecstate::calculate_weights(this->pelec->ekb,
                                      this->pelec->wg,
                                      this->pelec->klist,
@@ -161,10 +163,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                                      this->pelec->nelec_spin,
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
-        elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
-            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
-        elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *psi_t, *(pelec_lcao->get_DM()));
-        pelec_lcao->get_DM()->cal_DMR();
+
+        elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+
+        this->dm_->cal_DMR();
+
         this->cal_mi_lcao(i_step);
     }
     else
@@ -431,27 +434,27 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 
             if(pw_solve)
             {
-                hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(this->pw_wfc_,
-                                                 PARAM.inp.calculation,
-                                                 PARAM.inp.basis_type,
-                                                 PARAM.inp.ks_solver,
-                                                 false,
-                                                 PARAM.globalv.use_uspp,
-                                                 PARAM.inp.nspin,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+				hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(this->pw_wfc_,
+						PARAM.inp.calculation,
+						PARAM.inp.basis_type,
+						PARAM.inp.ks_solver,
+						false,
+						PARAM.globalv.use_uspp,
+						PARAM.inp.nspin,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+						hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
 
-                hsolver_pw_obj.solve(hamilt_t,
-                         psi_t[0],
-                         this->pelec,
-                         this->pelec->ekb.c,
-                         GlobalV::RANK_IN_POOL,
-                         GlobalV::NPROC_IN_POOL,
-                         false,
-                         this->tpiba,
-                         this->get_nat());
+				hsolver_pw_obj.solve(hamilt_t,
+						psi_t[0],
+						this->pelec,
+						this->pelec->ekb.c,
+						GlobalV::RANK_IN_POOL,
+						GlobalV::NPROC_IN_POOL,
+						false,
+						this->tpiba,
+						this->get_nat());
             }
             else
             {// update charge density only
@@ -461,17 +464,17 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 #if ((defined __CUDA) || (defined __ROCM))
         else
         {
-            base_device::DEVICE_GPU* ctx = {};
-            base_device::DEVICE_CPU* cpu_ctx = {};
-            psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
-            hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
-            auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
-            nbands = psi_t->get_nbands();
-            npol = psi_t->get_npol();
-            nkb = onsite_p->get_tot_nproj();
-            nk = psi_t->get_nk();
-            nh_iat = &onsite_p->get_nh(0);
-            size_becp = nbands * nkb * npol;
+			base_device::DEVICE_GPU* ctx = {};
+			base_device::DEVICE_CPU* cpu_ctx = {};
+			psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
+			hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
+			auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+			nbands = psi_t->get_nbands();
+			npol = psi_t->get_npol();
+			nkb = onsite_p->get_tot_nproj();
+			nk = psi_t->get_nk();
+			nh_iat = &onsite_p->get_nh(0);
+			size_becp = nbands * nkb * npol;
 
             std::complex<double>* h_tmp = nullptr;
             std::complex<double>* s_tmp = nullptr;

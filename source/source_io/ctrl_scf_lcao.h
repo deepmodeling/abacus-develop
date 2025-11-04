@@ -15,6 +15,7 @@
 
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 
 namespace ModuleIO
 {
@@ -24,6 +25,7 @@ namespace ModuleIO
 				const Input_para& inp,
 				K_Vectors& kv,
 				elecstate::ElecStateLCAO<TK>* pelec, 
+                elecstate::DensityMatrix<TK,double> *dm, // mohan add 2025-11-04
 				Parallel_Orbitals& pv,
 				Grid_Driver& gd,
 				psi::Psi<TK>* psi,

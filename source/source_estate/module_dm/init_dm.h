@@ -5,6 +5,7 @@
 #include "source_estate/elecstate_lcao.h"// use ElecStateLCAO
 #include "source_psi/psi.h" // use electronic wave functions
 #include "source_estate/module_charge/charge.h" // use charge
+#include "source_lcao/setup_dm.h" // define Setup_DM
 
 namespace elecstate
 {
@@ -12,6 +13,7 @@ namespace elecstate
 template <typename TK> 
 void init_dm(UnitCell& ucell,
 		ElecStateLCAO<TK>* pelec,
+        LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
 		Charge &chr,
         const int iter,
