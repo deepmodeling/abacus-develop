@@ -447,20 +447,20 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
     // Output energy for sub-loop (electronic step)
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
 
-    ModuleIO::ctrl_output_td<TR>(
-        ucell,
-        this->chr.rho_save,
-        this->chr.rhopw,
-        istep,
-        this->psi,
-        this->pelec,
-        this->kv,
-        this->two_center_bundle_.overlap_orb.get(),
-        dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_paraV_pointer(),
-        this->orb_,
-        this->velocity_mat,
-        this->RA,
-        this->td_p);
+    // Output dipole, current, etc.
+    ModuleIO::ctrl_output_td<TR>(ucell,
+                                 this->chr.rho_save,
+                                 this->chr.rhopw,
+                                 istep,
+                                 this->psi,
+                                 this->pelec,
+                                 this->kv,
+                                 this->two_center_bundle_.overlap_orb.get(),
+                                 &this->pv,
+                                 this->orb_,
+                                 this->velocity_mat,
+                                 this->RA,
+                                 this->td_p);
 
     ModuleBase::timer::tick(this->classname, "after_scf");
 }

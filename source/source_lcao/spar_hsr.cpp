@@ -92,8 +92,8 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2)
     {
-        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
-            = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
+        hamilt::HamiltLCAO<TK, double>* p_ham_lcao
+            = dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham);
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 

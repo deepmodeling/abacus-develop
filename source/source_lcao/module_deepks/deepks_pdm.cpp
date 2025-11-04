@@ -37,7 +37,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
 {
     if (read_pdm_file && !init_pdm) // for DeePKS NSCF calculation
     {
-        const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
+        const std::string file_projdm = PARAM.globalv.global_readin_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
         if (!ifs)

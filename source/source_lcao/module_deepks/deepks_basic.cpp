@@ -197,7 +197,15 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     // input_dim:(natom, des_per_atom)
     inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, des_per_atom}));
     std::vector<torch::Tensor> ec;
-    ec.push_back(model_deepks.forward(inputs).toTensor()); // Hartree
+    try
+    {
+        ec.push_back(model_deepks.forward(inputs).toTensor()); // Hartree
+    }
+    catch (const c10::Error& e)
+    {
+        ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm", "Please check whether the input shape required by model file matches the descriptor!");
+        throw;
+    }
     E_delta = ec[0].item<double>() * 2;                    // Ry; *2 is for Hartree to Ry
 
     // cal gedm
