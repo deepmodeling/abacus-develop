@@ -70,7 +70,9 @@ if(MKL_FOUND)
     set_property(TARGET MKL::MKL PROPERTY
     INTERFACE_LINK_LIBRARIES
     "-Wl,--start-group"
-    MKL::INTEL MKL::INTEL_THREAD MKL::CORE)
+    MKL::INTEL MKL::INTEL_THREAD MKL::CORE
+    "-Wl,--end-group"
+    )
   endif()
 endif()
 
