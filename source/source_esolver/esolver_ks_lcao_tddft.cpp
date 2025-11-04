@@ -408,7 +408,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                 BlasConnector::copy(len_HS_ik,
                                     h_mat_g.p.get(),
                                     1,
-                                    this->Hk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
                                     1);
 
                 // Collect S matrix
@@ -416,7 +416,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                 BlasConnector::copy(len_HS_ik,
                                     s_mat_g.p.get(),
                                     1,
-                                    this->Sk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
                                     1);
 #endif
             }
@@ -425,12 +425,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                 BlasConnector::copy(len_HS_ik,
                                     h_mat.p,
                                     1,
-                                    this->Hk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
                                     1);
                 BlasConnector::copy(len_HS_ik,
                                     s_mat.p,
                                     1,
-                                    this->Sk_laststep.data<std::complex<double>>() + ik * len_HS_ik,
+                                    this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
                                     1);
             } // end use_tensor
         } // end ik
