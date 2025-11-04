@@ -201,7 +201,8 @@ TYPED_TEST(LapackTest, heevd) {
     const Type beta  = static_cast<Type>(0.0);
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
+    // heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
+    heevdCalculator(dim, B.data<Type>(), dim, E.data<Real>());
 
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
