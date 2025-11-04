@@ -308,7 +308,7 @@ void Structure_Factor::bspline_sf(const int norder,
     return;
 }
 
-void Structure_Factor:: bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
+void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                         const int nx, const int ny, const int nz, const int norder)
 {
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
