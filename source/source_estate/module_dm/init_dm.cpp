@@ -5,7 +5,7 @@
 
 template <typename TK>
 void elecstate::init_dm(UnitCell& ucell,
-		elecstate::ElecStateLCAO<TK>* pelec,
+		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
 		Charge &chr,
@@ -51,7 +51,7 @@ void elecstate::init_dm(UnitCell& ucell,
 
 
 template void elecstate::init_dm<double>(UnitCell& ucell,
-		elecstate::ElecStateLCAO<double>* pelec,
+		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<double> &dmat,
         psi::Psi<double>* psi,
 		Charge &chr,
@@ -59,7 +59,7 @@ template void elecstate::init_dm<double>(UnitCell& ucell,
         const int exx_two_level_step);
 
 template void elecstate::init_dm<std::complex<double>>(UnitCell& ucell,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec,
+		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<std::complex<double>> &dmat,
         psi::Psi<std::complex<double>>* psi,
 		Charge &chr,

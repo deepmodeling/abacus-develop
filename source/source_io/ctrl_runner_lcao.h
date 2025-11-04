@@ -3,7 +3,7 @@
 
 #include "source_cell/unitcell.h" // use UnitCell
 #include "source_cell/klist.h" // use K_Vectors
-#include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
+#include "source_estate/elecstate.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
@@ -17,7 +17,7 @@ template <typename TK, typename TR>
 void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
-		elecstate::ElecStateLCAO<TK>* pelec,// electronic info
+		elecstate::ElecState* pelec,// electronic info
         const LCAO_domain::Setup_DM<TK> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info

@@ -211,8 +211,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 12) init_scf, should be before_scf? mohan add 2025-03-10
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
-    // 13) initalize DMR
-    // DMR should be same size with Hamiltonian(R)
+    // 13) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
     if(!hamilt_lcao)
     {
@@ -221,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO
-    // 14) initialize DMR of DeePKS
+    // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
     this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
 #endif
 
@@ -257,8 +256,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::cal_energy()
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "cal_energy");
-
     return this->pelec->f_en.etot;
 }
 
@@ -294,15 +291,13 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 
-    // if the users do not want to calculate forces but want stress,
-    // we call cal_force
     if (!this->have_force)
     {
         ModuleBase::matrix fcs;
         this->cal_force(ucell, fcs);
     }
 
-    // the 'scs' stress has already been calculated in 'cal_force'
+    // the stress has been calculated in 'cal_force'
     stress = this->scs;
     this->have_force = false;
 
@@ -319,21 +314,14 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-	auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-
-	if(!estate)
-	{
-		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","pelec does not exist");
-	}
-
 	if(!hamilt_lcao)
 	{
 		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","p_hamilt does not exist");
 	}
 
 	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		  PARAM.inp, this->kv, estate, this->dmat, this->pv, this->Pgrid, 
+		  PARAM.inp, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
 		  this->gd, this->psi, this->chr, hamilt_lcao,
           this->two_center_bundle_,
           this->orb_, this->pw_rho, this->pw_rhod,
@@ -350,17 +338,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
-    // cast pointers
-	auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-	if(!estate)
-	{
-		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_init","pelec does not exist");
-	}
-
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
-    estate->f_en.deband_harris = estate->cal_delta_eband(ucell);
+    this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
     if (istep == 0 && PARAM.inp.init_wfc == "file")
 	{
@@ -374,7 +355,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-		elecstate::init_dm<TK>(ucell, estate, this->dmat, this->psi, this->chr, iter, exx_two_level_step);
+		elecstate::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, iter, exx_two_level_step);
 	}
 
 #ifdef __EXX
