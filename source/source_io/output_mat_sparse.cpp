@@ -5,8 +5,7 @@
 
 namespace ModuleIO
 {
-
-template <>
+template <typename T>
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
                        const bool& out_mat_ds,
@@ -20,32 +19,14 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-                       hamilt::Hamilt<double>* p_ham)
-{
-}
-
-template <>
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
-                       const bool& out_mat_ds,
-                       const bool& out_mat_t,
-                       const bool& out_mat_r,
-                       const int& istep,
-                       const ModuleBase::matrix& v_eff,
-                       const Parallel_Orbitals& pv,
-                       const TwoCenterBundle& two_center_bundle,
-                       const LCAO_Orbitals& orb,
-                       UnitCell& ucell,
-                       const Grid_Driver& grid,
-                       const K_Vectors& kv,
-                       hamilt::Hamilt<std::complex<double>>* p_ham)
+                       hamilt::Hamilt<T>* p_ham)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (out_mat_hsR)
     {
-        output_HSR(ucell,istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
+        output_HSR(ucell, istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
@@ -87,7 +68,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
         r_matrix.init(ucell, pv, orb);
         if (out_mat_hsR)
         {
-            r_matrix.out_rR_other(ucell,istep, HS_Arrays.output_R_coor);
+            r_matrix.out_rR_other(ucell, istep, HS_Arrays.output_R_coor);
         }
         else
         {
@@ -97,5 +78,34 @@ void output_mat_sparse(const bool& out_mat_hsR,
 
     return;
 }
+
+template void output_mat_sparse<double>(const bool& out_mat_hsR,
+                                        const bool& out_mat_dh,
+                                        const bool& out_mat_ds,
+                                        const bool& out_mat_t,
+                                        const bool& out_mat_r,
+                                        const int& istep,
+                                        const ModuleBase::matrix& v_eff,
+                                        const Parallel_Orbitals& pv,
+                                        const TwoCenterBundle& two_center_bundle,
+                                        const LCAO_Orbitals& orb,
+                                        UnitCell& ucell,
+                                        const Grid_Driver& grid,
+                                        const K_Vectors& kv,
+                                        hamilt::Hamilt<double>* p_ham);
+template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
+                                                      const bool& out_mat_dh,
+                                                      const bool& out_mat_ds,
+                                                      const bool& out_mat_t,
+                                                      const bool& out_mat_r,
+                                                      const int& istep,
+                                                      const ModuleBase::matrix& v_eff,
+                                                      const Parallel_Orbitals& pv,
+                                                      const TwoCenterBundle& two_center_bundle,
+                                                      const LCAO_Orbitals& orb,
+                                                      UnitCell& ucell,
+                                                      const Grid_Driver& grid,
+                                                      const K_Vectors& kv,
+                                                      hamilt::Hamilt<std::complex<double>>* p_ham);
 
 } // namespace ModuleIO

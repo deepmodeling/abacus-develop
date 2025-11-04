@@ -68,7 +68,7 @@ class ReadInput
     /**
      * @brief determine the md step in restart case
      *
-     * @param file_dir directory of Restart_md.dat
+     * @param file_dir directory of Restart_md.txt
      * @return md step
      */
     int current_md_step(const std::string& file_dir);

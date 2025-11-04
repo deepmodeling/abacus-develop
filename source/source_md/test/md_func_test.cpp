@@ -418,9 +418,9 @@ TEST_F(MD_func_test, print_stress)
 
 TEST_F(MD_func_test, current_md_info)
 {
-    // Set up the file directory and create the Restart_md.dat file
+    // Set up the file directory and create the Restart_md.txt file
     std::string file_dir = "./";
-    std::ofstream file(file_dir + "Restart_md.dat");
+    std::ofstream file(file_dir + "Restart_md.txt");
     file << 123;
     file.close();
     int istep = -1;
@@ -430,7 +430,7 @@ TEST_F(MD_func_test, current_md_info)
     // Call the function with the correct file path and check the result
     EXPECT_EQ(istep, 123);
     EXPECT_DOUBLE_EQ(temperature, 0.0);
-    remove("Restart_md.dat");
+    remove("Restart_md.txt");
 }
 
 TEST_F(MD_func_test, current_step_warning)

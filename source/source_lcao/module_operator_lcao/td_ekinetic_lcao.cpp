@@ -375,11 +375,8 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         {
             for (int spin_now = 0; spin_now < spin_tot; spin_now++)
             {
-                sparse_format::cal_HContainer_cd(*(paraV),
-                                                 spin_now,
-                                                 1e-10,
-                                                 *hR_tmp,
-                                                 TD_info::td_vel_op->HR_sparse_td_vel[spin_now]);
+                sparse_format::cal_HContainer<std::complex<double>>(
+                    *(paraV), 1e-10, *hR_tmp, TD_info::td_vel_op->HR_sparse_td_vel[spin_now]);
             }
             output_hR_done = true;
         }

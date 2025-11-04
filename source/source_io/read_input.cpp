@@ -488,12 +488,12 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
 int ReadInput::current_md_step(const std::string& file_dir)
 {
     std::stringstream ssc;
-    ssc << file_dir << "Restart_md.dat";
+    ssc << file_dir << "Restart_md.txt";
     std::ifstream file(ssc.str().c_str());
 
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.dat");
+        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.txt");
     }
 
     int md_step;

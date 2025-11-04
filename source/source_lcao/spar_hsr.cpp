@@ -1,8 +1,8 @@
 #include "spar_hsr.h"
 
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_rt/td_info.h"
-#include "source_io/module_parameter/parameter.h"
 #include "spar_dh.h"
 #include "spar_exx.h"
 #include "spar_u.h"
@@ -67,6 +67,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
 }
 #endif // __MPI
 
+template <typename TK>
 void sparse_format::cal_HSR(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
                             LCAO_HS_Arrays& HS_Arrays,
@@ -74,7 +75,7 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
                             const int& current_spin,
                             const double& sparse_thr,
                             const int (&nmp)[3],
-                            hamilt::Hamilt<std::complex<double>>* p_ham
+                            hamilt::Hamilt<TK>* p_ham
 #ifdef __EXX
                             ,
                             const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
@@ -91,30 +92,29 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2)
     {
-        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
-            = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
+        hamilt::HamiltLCAO<TK, double>* p_ham_lcao
+            = dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham);
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
         if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
-            sparse_format::cal_HContainer_td(pv,
-                                             current_spin,
-                                             sparse_thr,
-                                             *(p_ham_lcao->getHR()),
-                                             TD_info::td_vel_op->HR_sparse_td_vel[current_spin]);
+            sparse_format::cal_HContainer<double, std::complex<double>>(
+                pv,
+                sparse_thr,
+                *(p_ham_lcao->getHR()),
+                TD_info::td_vel_op->HR_sparse_td_vel[current_spin]);
         }
         else
         {
 
-            sparse_format::cal_HContainer_d(pv,
-                                            current_spin,
-                                            sparse_thr,
-                                            *(p_ham_lcao->getHR()),
-                                            HS_Arrays.HR_sparse[current_spin]);
+            sparse_format::cal_HContainer<double>(pv,
+                                                  sparse_thr,
+                                                  *(p_ham_lcao->getHR()),
+                                                  HS_Arrays.HR_sparse[current_spin]);
         }
 
-        sparse_format::cal_HContainer_d(pv, current_spin, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_sparse);
+        sparse_format::cal_HContainer<double>(pv, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_sparse);
     }
     else if (nspin == 4)
     {
@@ -123,9 +123,15 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
-        sparse_format::cal_HContainer_cd(pv, current_spin, sparse_thr, *(p_ham_lcao->getHR()), HS_Arrays.HR_soc_sparse);
+        sparse_format::cal_HContainer<std::complex<double>>(pv,
+                                                            sparse_thr,
+                                                            *(p_ham_lcao->getHR()),
+                                                            HS_Arrays.HR_soc_sparse);
 
-        sparse_format::cal_HContainer_cd(pv, current_spin, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_soc_sparse);
+        sparse_format::cal_HContainer<std::complex<double>>(pv,
+                                                            sparse_thr,
+                                                            *(p_ham_lcao->getSR()),
+                                                            HS_Arrays.SR_soc_sparse);
     }
     else
     {
@@ -179,14 +185,13 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
     return;
 }
 
-void sparse_format::cal_HContainer_d(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_thr,
-    const hamilt::HContainer<double>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target)
+template <typename TI, typename TO>
+void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
+                                   const double& sparse_thr,
+                                   const hamilt::HContainer<TI>& hR,
+                                   std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target)
 {
-    ModuleBase::TITLE("sparse_format", "cal_HContainer_d");
+    ModuleBase::TITLE("sparse_format", "cal_HContainer");
 
     auto row_indexes = pv.get_indexes_row();
     auto col_indexes = pv.get_indexes_col();
@@ -209,93 +214,8 @@ void sparse_format::cal_HContainer_d(
                 for (int j = 0; j < col_size; ++j)
                 {
                     int nu = col_indexes[start_j + j];
-                    const auto& value_tmp = matrix.get_value(i, j);
-                    if (std::abs(value_tmp) > sparse_thr)
-                    {
-                        target[dR][mu][nu] = value_tmp;
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
-
-void sparse_format::cal_HContainer_cd(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_thr,
-    const hamilt::HContainer<std::complex<double>>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target)
-{
-    ModuleBase::TITLE("sparse_format", "cal_HContainer_cd");
-
-    auto row_indexes = pv.get_indexes_row();
-    auto col_indexes = pv.get_indexes_col();
-    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap)
-    {
-        int atom_i = hR.get_atom_pair(iap).get_atom_i();
-        int atom_j = hR.get_atom_pair(iap).get_atom_j();
-        int start_i = pv.atom_begin_row[atom_i];
-        int start_j = pv.atom_begin_col[atom_j];
-        int row_size = pv.get_row_size(atom_i);
-        int col_size = pv.get_col_size(atom_j);
-        for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR)
-        {
-            auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
-            Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
-            for (int i = 0; i < row_size; ++i)
-            {
-                int mu = row_indexes[start_i + i];
-                for (int j = 0; j < col_size; ++j)
-                {
-                    int nu = col_indexes[start_j + j];
-                    const auto& value_tmp = matrix.get_value(i, j);
-                    if (std::abs(value_tmp) > sparse_thr)
-                    {
-                        target[dR][mu][nu] = value_tmp;
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
-
-void sparse_format::cal_HContainer_td(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_thr,
-    const hamilt::HContainer<double>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target)
-{
-    ModuleBase::TITLE("sparse_format", "cal_HContainer_td");
-
-    auto row_indexes = pv.get_indexes_row();
-    auto col_indexes = pv.get_indexes_col();
-    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap)
-    {
-        int atom_i = hR.get_atom_pair(iap).get_atom_i();
-        int atom_j = hR.get_atom_pair(iap).get_atom_j();
-        int start_i = pv.atom_begin_row[atom_i];
-        int start_j = pv.atom_begin_col[atom_j];
-        int row_size = pv.get_row_size(atom_i);
-        int col_size = pv.get_col_size(atom_j);
-        for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR)
-        {
-            auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
-            Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
-            for (int i = 0; i < row_size; ++i)
-            {
-                int mu = row_indexes[start_i + i];
-                for (int j = 0; j < col_size; ++j)
-                {
-                    int nu = col_indexes[start_j + j];
-                    const auto& value_tmp = std::complex<double>(matrix.get_value(i, j), 0.0);
+                    // const auto& value_tmp = std::complex<double>(matrix.get_value(i, j), 0.0);
+                    const TO value_tmp = static_cast<TO>(matrix.get_value(i, j));
                     if (std::abs(value_tmp) > sparse_thr)
                     {
                         target[dR][mu][nu] += value_tmp;
@@ -396,8 +316,8 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
                         iter++;
                     }
                 } // end while iter
-            } // end row loop
-        } // end R loop
+            }     // end row loop
+        }         // end R loop
 
         for (auto& R_loop: HS_Arrays.SR_soc_sparse)
         {
@@ -416,8 +336,8 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
                         iter++;
                     }
                 } // end while iter
-            } // end row_loop
-        } // end R_loop
+            }     // end row_loop
+        }         // end R_loop
     }
 
     return;
@@ -452,3 +372,49 @@ void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 
     return;
 }
+
+template void sparse_format::cal_HSR<double>(
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    const Grid_Driver& grid,
+    const int& current_spin,
+    const double& sparse_thr,
+    const int (&nmp)[3],
+    hamilt::Hamilt<double>* p_ham
+#ifdef __EXX
+    ,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+#endif
+);
+template void sparse_format::cal_HSR<std::complex<double>>(
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    const Grid_Driver& grid,
+    const int& current_spin,
+    const double& sparse_thr,
+    const int (&nmp)[3],
+    hamilt::Hamilt<std::complex<double>>* p_ham
+#ifdef __EXX
+    ,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+#endif
+);
+template void sparse_format::cal_HContainer<double>(
+    const Parallel_Orbitals& pv,
+    const double& sparse_thr,
+    const hamilt::HContainer<double>& hR,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
+template void sparse_format::cal_HContainer<double, std::complex<double>>(
+    const Parallel_Orbitals& pv,
+    const double& sparse_thr,
+    const hamilt::HContainer<double>& hR,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+template void sparse_format::cal_HContainer<std::complex<double>>(
+    const Parallel_Orbitals& pv,
+    const double& sparse_thr,
+    const hamilt::HContainer<std::complex<double>>& hR,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
