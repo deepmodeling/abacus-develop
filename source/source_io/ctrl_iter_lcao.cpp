@@ -49,9 +49,9 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             GlobalC::exx_info.info_ri.real_number ?
-              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
-              exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
         }
     }

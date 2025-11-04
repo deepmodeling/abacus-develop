@@ -383,11 +383,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exx_nao.exd->exx_eachiterinit(istep, ucell, this->dmat.dm, this->kv, iter);
+            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
         }
         else
         {
-            this->exx_nao.exc->exx_eachiterinit(istep, ucell, this->dmat.dm, this->kv, iter);
+            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
         }
     }
 #endif
