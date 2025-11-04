@@ -36,8 +36,8 @@ template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<TK>* pelec, 
-        elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
+		elecstate::ElecState* pelec, 
+		elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
 		psi::Psi<TK>* psi,
@@ -299,7 +299,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleIO::cal_mag(&pv,
                 p_hamilt,
                 kv,
-                pelec,
                 dm, // mohan add 2025-11-04
                 two_center_bundle,
                 orb,
@@ -469,7 +468,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<double>* pelec, 
+		elecstate::ElecState* pelec, 
         elecstate::DensityMatrix<double,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
@@ -493,7 +492,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		elecstate::ElecState* pelec, 
         elecstate::DensityMatrix<std::complex<double>,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
@@ -516,7 +515,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		elecstate::ElecState* pelec, 
         elecstate::DensityMatrix<std::complex<double>,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,

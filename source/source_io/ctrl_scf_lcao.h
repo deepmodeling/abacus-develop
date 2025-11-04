@@ -5,7 +5,7 @@
 
 #include "source_cell/unitcell.h" // use UnitCell
 #include "source_cell/klist.h" // use K_Vectors
-#include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
+#include "source_estate/elecstate.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
@@ -24,7 +24,7 @@ namespace ModuleIO
 		void ctrl_scf_lcao(UnitCell& ucell, 
 				const Input_para& inp,
 				K_Vectors& kv,
-				elecstate::ElecStateLCAO<TK>* pelec, 
+				elecstate::ElecState* pelec, 
                 elecstate::DensityMatrix<TK,double> *dm, // mohan add 2025-11-04
 				Parallel_Orbitals& pv,
 				Grid_Driver& gd,

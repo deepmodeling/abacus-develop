@@ -90,7 +90,6 @@ template <typename TK>
 void cal_mag(Parallel_Orbitals* pv,
              hamilt::Hamilt<TK>* p_ham,
              K_Vectors& kv,
-             elecstate::ElecState* pelec,
              elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,

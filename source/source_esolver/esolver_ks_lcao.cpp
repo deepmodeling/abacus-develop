@@ -574,13 +574,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
-    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-
-    if(!estate)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","pelec does not exist");
-    }
 
     if(!hamilt_lcao)
     {
@@ -597,11 +591,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 
     //! 2) output of lcao every few ionic steps
-  
-
-
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
-            PARAM.inp, this->kv, estate, this->dmat.dm, this->pv,
+            PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
             this->gd, this->psi, hamilt_lcao,
             this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho,
