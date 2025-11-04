@@ -78,7 +78,6 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_RO
     cmake -B build \
         -DMKL_SYCL=OFF \
         -DENABLE_MLALGO=ON \
-        -DENABLE_PEXSI=ON \
         -DENABLE_LIBXC=ON \
         -DENABLE_LIBRI=ON \
         -DENABLE_RAPIDJSON=ON \
