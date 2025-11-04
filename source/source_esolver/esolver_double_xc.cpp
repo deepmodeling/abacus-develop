@@ -233,7 +233,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 				this->gd,
 				&(this->pv),
 				*(this->psi),
-				this->dmat_base.dm,
+				this->dmat.dm,
 				p_ham_deepks,
 				iter,
 				conv_esolver,
