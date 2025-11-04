@@ -181,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             this->kv,
             two_center_bundle_,
             orb_,
-            this->dmat.get_dm(),
+            this->dmat.dm,
 			this->deepks,
 			istep,
 			this->exx_nao);
@@ -207,7 +207,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->kv,
                    this->p_hamilt,
                    this->psi,
-                   this->dmat.get_dm(),
+                   this->dmat.dm,
                    this->pelec);
     }
 

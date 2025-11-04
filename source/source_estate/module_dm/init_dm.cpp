@@ -31,8 +31,8 @@ void elecstate::init_dm(UnitCell& ucell,
 				pelec->skip_weights);
 
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
-		elecstate::cal_dm_psi(dmat.get_dm()->get_paraV_pointer(), pelec->wg, *psi, *dmat.get_dm());
-		dmat.get_dm()->cal_DMR();
+		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
+		dmat.dm->cal_DMR();
 
 		pelec->psiToRho(*psi);
 		pelec->skip_weights = false;

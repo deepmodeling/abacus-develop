@@ -292,7 +292,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-			hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.get_dm(), 
+			hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.dm, 
 					this->chr, PARAM.inp.nspin, skip_charge);
         }
     }
@@ -497,8 +497,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                    ss_dipole.str());
         }
     }
-    elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
-            = this->dmat.get_dm();
 
     // (2) write current information
     if(TD_info::out_current)
@@ -511,7 +509,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                     this->pelec,
                                     this->kv,
                                     this->two_center_bundle_.overlap_orb.get(),
-                                    tmp_DM->get_paraV_pointer(),
+                                    this->dmat.dm->get_paraV_pointer(),
                                     this->orb_,
                                     this->velocity_mat,
                                     this->RA);
@@ -524,7 +522,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                     this->pelec,
                                     this->kv,
                                     this->two_center_bundle_.overlap_orb.get(),
-                                    tmp_DM->get_paraV_pointer(),
+                                    this->dmat.dm->get_paraV_pointer(),
                                     this->orb_,
                                     this->velocity_mat,
                                     this->RA);
@@ -564,18 +562,18 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     // calculate the density matrix
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
 
-    elecstate::cal_dm_psi(this->dmat.get_dm()->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.get_dm());
+    elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.dm);
     if(PARAM.inp.td_stype == 2)
     {
-        this->dmat.get_dm()->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
     }
     else
     {
-        this->dmat.get_dm()->cal_DMR();
+        this->dmat.dm->cal_DMR();
     }
 
     // get the real-space charge density, mohan add 2025-10-24
-    LCAO_domain::dm2rho(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 }
 
 template class ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>;

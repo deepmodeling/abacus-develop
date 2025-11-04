@@ -189,7 +189,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.get_dm(), this->deepks, istep, exx_nao);
+            two_center_bundle_, orb_, this->dmat.dm, this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -202,7 +202,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.init_sc(PARAM.inp.sc_thr, PARAM.inp.nsc, PARAM.inp.nsc_min, PARAM.inp.alpha_trial,
                    PARAM.inp.sccut, PARAM.inp.sc_drop_thr, ucell, &(this->pv),
-                   PARAM.inp.nspin, this->kv, this->p_hamilt, this->psi, this->dmat.get_dm(), this->pelec);
+                   PARAM.inp.nspin, this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
     }
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
@@ -218,7 +218,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    this->dmat.get_dm()->init_DMR(*hamilt_lcao->getHR());
+    this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO
     // 14) initialize DMR of DeePKS
@@ -230,7 +230,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
     if (istep > 0)
     {
-        this->dmat.get_dm()->cal_DMR();
+        this->dmat.dm->cal_DMR();
     }
 
     // 16) the electron charge density should be symmetrized,
@@ -357,9 +357,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_init","pelec does not exist");
 	}
 
-	elecstate::DensityMatrix<TK, double>* dm = this->dmat.get_dm();
-
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
+    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
     estate->f_en.deband_harris = estate->cal_delta_eband(ucell);
@@ -385,11 +383,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
+            this->exx_nao.exd->exx_eachiterinit(istep, ucell, this->dmat.dm, this->kv, iter);
         }
         else
         {
-            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
+            this->exx_nao.exc->exx_eachiterinit(istep, ucell, this->dmat.dm, this->kv, iter);
         }
     }
 #endif
@@ -398,7 +396,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (istep != 0 || iter != 1)
         {
-            GlobalC::dftu.set_dmr(dm);
+            GlobalC::dftu.set_dmr(this->dmat.dm);
         }
         // Calculate U and J if Yukawa potential is used
         GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
@@ -424,7 +422,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // save density matrix DMR for mixing
     if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
-        dm->save_DMR();
+        this->dmat.dm->save_DMR();
     }
 }
 
@@ -462,7 +460,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     if (!skip_solve)
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.get_dm(), 
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }
 
@@ -511,7 +509,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","p_hamilt does not exist");
     }
 
-	const std::vector<std::vector<TK>>& dm_vec = this->dmat.get_dm()->get_DMK_vector();
+	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
@@ -552,7 +550,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
         {
-            this->p_chgmix->mix_dmr(this->dmat.get_dm());
+            this->p_chgmix->mix_dmr(this->dmat.dm);
         }
     }
 
@@ -563,7 +561,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // control the output related to the finished iteration
-    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate, *this->dmat.get_dm(),
+    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate, *this->dmat.dm,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
       this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
@@ -576,13 +574,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
-    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-
-    if(!estate)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","pelec does not exist");
-    }
 
     if(!hamilt_lcao)
     {
@@ -591,7 +583,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     if (PARAM.inp.out_elf[0] > 0)
 	{
-		LCAO_domain::dm2tau(this->dmat.get_dm()->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge);
+		LCAO_domain::dm2tau(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge);
 	}
 
     //! 1) call after_scf() of ESolver_KS
@@ -600,7 +592,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
-            PARAM.inp, this->kv, estate, this->pv,
+            PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
             this->gd, this->psi, hamilt_lcao,
             this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho,

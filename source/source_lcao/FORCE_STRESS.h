@@ -81,8 +81,9 @@ class Force_Stress_LCAO
                        const UnitCell& ucell,
                        const Grid_Driver& gd,
                        ForceStressArrays& fsr, // mohan add 2024-06-15
-                       const elecstate::ElecState* pelec,
-                       const psi::Psi<T>* psi,
+					   const elecstate::ElecState* pelec,
+					   const elecstate::DensityMatrix<T, double>* dm, // mohan add 2025-11-04
+					   const psi::Psi<T>* psi,
                        ModuleBase::matrix& foverlap,
                        ModuleBase::matrix& ftvnl_dphi,
                        ModuleBase::matrix& fvnl_dbeta,

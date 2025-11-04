@@ -146,7 +146,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->kv,
             this->two_center_bundle_,
             this->orb_,
-            this->dmat_base.get_dm(),
+            &this->dmat_base.dm,
 			this->deepks,
 			istep,
 			this->exx_nao);
@@ -157,11 +157,11 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
     // DMR should be same size with Hamiltonian(R)
-    this->dmat_base.get_dm()->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
+    this->dmat_base.dm.init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
 
     if (istep > 0)
     {
-        this->dmat_base.get_dm()->cal_DMR();
+        this->dmat_base.dm.cal_DMR();
     }
 
     ModuleBase::timer::tick("ESolver_DoubleXC", "before_scf");
@@ -233,7 +233,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 				this->gd,
 				&(this->pv),
 				*(this->psi),
-				this->dmat_base.get_dm(),
+				&this->dmat_base.dm,
 				p_ham_deepks,
 				iter,
 				conv_esolver,
@@ -349,10 +349,10 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             for (int ik = 0; ik < nks; ik++)
             {
 // mohan update 2025-11-03
-                this->dmat_base.get_dm()->set_DMK_pointer(ik, this->dmat.get_dm()->get_DMK_pointer(ik));
+                this->dmat_base.dm.set_DMK_pointer(ik, this->dmat.dm.get_DMK_pointer(ik));
 //                _pes_lcao_base->get_DM()->set_DMK_pointer(ik, _pes_lcao->get_DM()->get_DMK_pointer(ik));
             }
-            this->dmat_base.get_dm()->cal_DMR();
+            this->dmat_base.dm.cal_DMR();
 //            _pes_lcao_base->get_DM()->cal_DMR();
             _pes_lcao_base->ekb = _pes_lcao->ekb;
             _pes_lcao_base->wg = _pes_lcao->wg;          
