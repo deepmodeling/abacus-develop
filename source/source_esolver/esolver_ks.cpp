@@ -99,7 +99,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
 
     //! 11) calculate the structure factor
-    this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
+    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
 }
 
 template <typename T, typename Device>
