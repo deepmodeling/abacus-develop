@@ -118,4 +118,37 @@ class Force_Stress_LCAO
 template <typename T>
 double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
 
+// only for DFT+U, mohan add 2025-11-04
+template <typename T>
+void assign_dmk_ptr(
+    elecstate::DensityMatrix<T,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+);
+
+template <>
+void assign_dmk_ptr<double>(
+    elecstate::DensityMatrix<double,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_d = &dmk_tmp;
+    dmk_c = nullptr;
+}
+
+template <>
+void assign_dmk_ptr<std::complex<double>>(
+    elecstate::DensityMatrix<std::complex<double>,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_c = &dmk_tmp;
+    dmk_d = nullptr;
+}
+
 #endif

@@ -250,17 +250,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 			// mohan modify 2025-11-03
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
-            auto& dmk_tmp = dmat.dm->get_DMK_vector();
-			if(PARAM.globalv.gamma_only_local)
-			{
-                // T is double
-                //dmk_d = &dmk_tmp;
-			}
-			else
-			{
-                // T is complex<double>
-                //dmk_c = &dmk_tmp; 
-			}
+            // add a new template function
+            assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
 		    GlobalC::dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr, force_dftu, stress_dftu, kv);
         }
         else
