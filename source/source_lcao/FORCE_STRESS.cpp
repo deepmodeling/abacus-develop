@@ -22,6 +22,34 @@
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal_new.h"
 
+
+// mohan add 2025-11-04
+template <>
+void assign_dmk_ptr<double>(
+    elecstate::DensityMatrix<double,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_d = &dmk_tmp;
+    dmk_c = nullptr;
+}
+
+template <>
+void assign_dmk_ptr<std::complex<double>>(
+    elecstate::DensityMatrix<std::complex<double>,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_c = &dmk_tmp;
+    dmk_d = nullptr;
+}
+
+
+
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), nat(nat_in)
 {
@@ -852,29 +880,3 @@ void Force_Stress_LCAO<T>::forceSymmetry(const UnitCell& ucell, ModuleBase::matr
 
 template class Force_Stress_LCAO<double>;
 template class Force_Stress_LCAO<std::complex<double>>;
-
-template <>
-void assign_dmk_ptr<double>(
-    elecstate::DensityMatrix<double,double>* dm,
-    std::vector<std::vector<double>>*& dmk_d,
-    std::vector<std::vector<std::complex<double>>>*& dmk_c,
-    bool gamma_only_local
-) {
-    auto& dmk_tmp = dm->get_DMK_vector();
-    dmk_d = &dmk_tmp;
-    dmk_c = nullptr;
-}
-
-template <>
-void assign_dmk_ptr<std::complex<double>>(
-    elecstate::DensityMatrix<std::complex<double>,double>* dm,
-    std::vector<std::vector<double>>*& dmk_d,
-    std::vector<std::vector<std::complex<double>>>*& dmk_c,
-    bool gamma_only_local
-) {
-    auto& dmk_tmp = dm->get_DMK_vector();
-    dmk_c = &dmk_tmp;
-    dmk_d = nullptr;
-}
-
-
