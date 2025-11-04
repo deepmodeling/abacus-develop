@@ -496,13 +496,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-
-    if(!estate)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","pelec does not exist");
-    }
 
     if(!hamilt_lcao)
     {
@@ -561,11 +555,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // control the output related to the finished iteration
-    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate, *this->dmat.dm,
+    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, this->pelec, *this->dmat.dm,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
       this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
-
 }
 
 template <typename TK, typename TR>
@@ -589,18 +582,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //! 1) call after_scf() of ESolver_KS
     ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
 
-
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
             PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
-            this->gd, this->psi, hamilt_lcao,
-            this->two_center_bundle_,
-            this->orb_, this->pw_wfc, this->pw_rho,
-            this->pw_big, this->sf,
+            this->gd, this->psi, hamilt_lcao, this->two_center_bundle_,
+            this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->rdmft_solver, this->deepks, this->exx_nao, 
-            this->conv_esolver, this->scf_nmax_flag,
-            istep);
-
+            this->conv_esolver, this->scf_nmax_flag, istep);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
