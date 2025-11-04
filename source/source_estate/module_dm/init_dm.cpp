@@ -34,7 +34,7 @@ void elecstate::init_dm(UnitCell& ucell,
 		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
 		dmat.dm->cal_DMR();
 
-		pelec->psiToRho(*psi);
+//		pelec->psiToRho(*psi); // I found this sentence is useless, mohan add 2025-11-04
 		pelec->skip_weights = false;
 
 		elecstate::cal_ux(ucell);
