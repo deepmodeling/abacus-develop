@@ -18,9 +18,13 @@ RUN apt-get update && \
         intel-oneapi-compiler-fortran \
         intel-oneapi-mkl-devel \
         intel-oneapi-mpi-devel \
+        intel-oneapi-mkl-devel-sycl \
         intel-oneapi-vtune && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*sycl*dft*
+RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*distributed*
 
 # Set oneAPI environment variables
 ENV ONEAPI_ROOT=/opt/intel/oneapi
