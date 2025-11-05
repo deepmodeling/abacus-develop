@@ -21,10 +21,18 @@ class HamiltPW : public Hamilt<T, Device>
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
+
   public:
-    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl* nlpp,const UnitCell* ucell);
+
+	HamiltPW(elecstate::Potential* pot_in, 
+			ModulePW::PW_Basis_K* wfc_basis, 
+			K_Vectors* p_kv, 
+			pseudopot_cell_vnl* nlpp,
+			const UnitCell* ucell);
+
     template<typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
+
     ~HamiltPW();
 
     // for target K point, update consequence of hPsi() and matrix()

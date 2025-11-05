@@ -78,8 +78,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
-                               elecstate::DensityMatrix<TK, double>* DM_in,
-                               Setup_DeePKS<TK> &deepks,
+							   elecstate::DensityMatrix<TK, double>* DM_in,
+							   ModuleDFTU::DFTU &dftu, // mohan add 2025-11-05
+							   Setup_DeePKS<TK> &deepks,
 							   const int istep, 
 							   Exx_NAO<TK> &exx_nao)
 {
@@ -212,26 +213,26 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // end node should be OperatorDFTU
         if (PARAM.inp.dft_plus_u)
         {
-            Operator<TK>* dftu = nullptr;
+            Operator<TK>* plus_u = nullptr;
             if (PARAM.inp.dft_plus_u == 2)
             {
-                dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
+                plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
                                                               this->hR, // no explicit call yet
                                                               this->kv->isk);
             }
             else
             {
-                dftu = new DFTU<OperatorLCAO<TK, TR>>(this->hsk,
+                plus_u = new DFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                       this->kv->kvec_d,
                                                       this->hR,
                                                       ucell,
                                                       &grid_d,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(),
-                                                      &GlobalC::dftu);
+                                                      &dftu);
             }
-            this->getOperator()->add(dftu);
+            this->getOperator()->add(plus_u);
         }
     }
     // multi-k-points case to initialize HamiltLCAO, ops will be used
@@ -367,26 +368,26 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         }
         if (PARAM.inp.dft_plus_u)
         {
-            Operator<TK>* dftu = nullptr;
+            Operator<TK>* plus_u = nullptr;
             if (PARAM.inp.dft_plus_u == 2)
             {
-                dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
+                plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
                                                               this->hR, // no explicit call yet
                                                               this->kv->isk);
             }
             else
             {
-                dftu = new DFTU<OperatorLCAO<TK, TR>>(this->hsk,
+                plus_u = new DFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                       this->kv->kvec_d,
                                                       this->hR,
                                                       ucell,
                                                       &grid_d,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(),
-                                                      &GlobalC::dftu);
+                                                      &dftu);
             }
-            this->getOperator()->add(dftu);
+            this->getOperator()->add(plus_u);
         }
         if (PARAM.inp.sc_mag_switch)
         {

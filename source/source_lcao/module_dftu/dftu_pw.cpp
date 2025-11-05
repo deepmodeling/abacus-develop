@@ -7,10 +7,6 @@
 
 namespace ModuleDFTU
 {
-DFTU* DFTU::get_instance()
-{
-    return &GlobalC::dftu;
-}
 /// calculate occupation matrix for DFT+U
 void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matrix& wg_in, const UnitCell& cell, const double& mixing_beta)
 {

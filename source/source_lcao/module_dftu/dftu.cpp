@@ -20,20 +20,14 @@
 #include <sstream>
 #include <vector>
 
-namespace GlobalC
-{
-ModuleDFTU::DFTU dftu;
-}
-
 namespace ModuleDFTU
 {
+
 DFTU::DFTU()
-{
-}
+{}
 
 DFTU::~DFTU()
-{
-}
+{}
 
 void DFTU::init(UnitCell& cell, // unitcell class
                 const Parallel_Orbitals* pv,

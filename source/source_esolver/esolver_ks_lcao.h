@@ -10,6 +10,7 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 #include "source_lcao/setup_dm.h" // mohan add 2025-10-30
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
 
 #include <memory>
 
@@ -69,31 +70,35 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     //! GintInfo: used to store some basic infomation about module_gint
     std::unique_ptr<ModuleGint::GintInfo> gint_info_;
 
+    //! NAO: store related information 
+    LCAO_Orbitals orb_;
+
     //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
 
     //! Add density matrix class, mohan add 2025-10-30
     LCAO_domain::Setup_DM<TK> dmat;
 
+    //! DFT+U method, mohan add 2025-11-05
+    ModuleDFTU::DFTU dftu;
+
+    // For deepks method, mohan add 2025-10-08
+    Setup_DeePKS<TK> deepks;
+
+    // For exact-exchange energy, mohan add 2025-10-08
+    Exx_NAO<TK> exx_nao;
+
     //! For RDMFT calculations, added by jghan, 2024-03-16 
     rdmft::RDMFT<TK, TR> rdmft_solver;
 
-    //! NAO: store related information 
-    LCAO_Orbitals orb_;
+    //! For linear-response TDDFT
+    friend class LR::ESolver_LR<double, double>;
+    friend class LR::ESolver_LR<std::complex<double>, double>;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
     ModuleBase::matrix scs;
     bool have_force = false;
-
-    // deepks method, mohan add 2025-10-08
-    Setup_DeePKS<TK> deepks;
-
-    // exact-exchange energy, mohan add 2025-10-08
-    Exx_NAO<TK> exx_nao;
-
-    friend class LR::ESolver_LR<double, double>;
-    friend class LR::ESolver_LR<std::complex<double>, double>;
 
 
   public:
