@@ -89,7 +89,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-void Structure_Factor::setup_structure_factor(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
+void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
 {
 }
 
