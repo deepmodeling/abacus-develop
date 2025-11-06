@@ -23,9 +23,11 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
+             Plus_U *dftu, // mohan add 2025-11-06 
              const bool cal_delta_spin,
              const bool cal_dftu);
 
@@ -41,8 +43,8 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk = 0,
-        const bool is_first_node = false)const override;
+		const int ngk = 0,
+		const bool is_first_node = false)const override;
 
     const int *get_isk() const {return this->isk;}
     const UnitCell *get_ucell() const {return this->ucell;}
@@ -60,6 +62,8 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const int* isk = nullptr;
 
     const UnitCell* ucell = nullptr;
+
+    Plus_U *dftu = nullptr; // mohan add 2025-11-06
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;

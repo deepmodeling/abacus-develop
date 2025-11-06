@@ -133,6 +133,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
+    // note: init DFT+U is done here for pw basis for every scf iteration, however, 
+    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->vsep_cell,
               this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);

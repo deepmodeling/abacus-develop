@@ -13,9 +13,10 @@ namespace hamilt {
 
 template<typename T, typename Device>
 OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
-                                               const UnitCell* ucell_in,
-                                               const bool cal_delta_spin,
-                                               const bool cal_dftu)
+		const UnitCell* ucell_in,
+		Plus_U *dftu, // mohan add 2025-11-06 
+		const bool cal_delta_spin,
+		const bool cal_dftu)
 {
     this->classname = "OnsiteProj";
     this->cal_type = calculation_type::pw_onsite;
@@ -425,7 +426,7 @@ void OnsiteProj<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "OnsiteProjPW");
     this->update_becp(tmpsi_in, npol, nbands);
     this->cal_ps_delta_spin(npol, nbands);
-    this->cal_ps_dftu(dftu, npol, nbands);
+    this->cal_ps_dftu(*this->dftu, npol, nbands);
     this->add_onsite_proj(tmhpsi, npol, nbands);
     ModuleBase::timer::tick("Operator", "OnsiteProjPW");
 }
