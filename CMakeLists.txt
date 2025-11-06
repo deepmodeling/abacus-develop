@@ -286,10 +286,6 @@ if (USE_SW)
   include_directories(${SW_FFT}/include)
 
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
 endif()
 
 find_package(Threads REQUIRED)
@@ -470,10 +466,7 @@ if(MKLROOT)
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs ifcore)
   endif()
-elseif(USE_SW)
-   list(APPEND math_libs gfortran)
-  # SW architecture can only use its own math library
-else()
+elseif(NOT USE_SW)
   find_package(FFTW3 REQUIRED)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
@@ -795,6 +788,17 @@ endif()
 if(ENABLE_RAPIDJSON)
   target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
+
+if (USE_SW)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
+  list(APPEND math_libs gfortran)
+endif()
+
+list(APPEND math_libs m)
+target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
