@@ -64,9 +64,10 @@ void Gint_vl_metagga_gpu::cal_hr_gint_()
         CudaMemWrapper<double> dphi_y_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_z_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
         #pragma omp for schedule(dynamic)
-        for(const auto& bgrid_batch: gint_info_->get_bgrid_batches())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            if(bgrid_batch->empty())
+            const auto& biggrid = gint_info_->get_biggrids()[i];
+            if(biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
