@@ -18,8 +18,9 @@ RUN apt-get update && \
         intel-oneapi-compiler-fortran \
         intel-oneapi-mkl-devel \
         intel-oneapi-mpi-devel \
-        intel-oneapi-mkl-devel-sycl \
         intel-oneapi-vtune && \
+    apt-cache search intel-oneapi-mkl && \
+    apt-cache search intel-oneapi | grep sycl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
