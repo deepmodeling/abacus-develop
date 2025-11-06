@@ -92,7 +92,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                 }
                 // then for each g-component, initialize the wavefunction value
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
                 for (int ig = 0; ig < ng; ig++)
                 {
@@ -104,7 +104,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                     psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr * cos(arg), rr * sin(arg)));
                 }
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
                 for (int ig = ng; ig < npwk_max; ++ig)
                 {
@@ -151,7 +151,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
             for (int ipol = 0; ipol < npol; ipol++)
             {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
                 for (int ig = 0; ig < ng; ig++)
                 {

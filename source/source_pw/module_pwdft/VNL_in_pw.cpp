@@ -340,7 +340,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
 
     ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int ig = 0; ig < npw; ig++)
     {
