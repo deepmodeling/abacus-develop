@@ -20,16 +20,16 @@
 #include <sstream>
 #include <vector>
 
-namespace ModuleDFTU
-{
+ // mohan add 2025-11-06
+int Plus_U::energy_u = 0.0;
 
-DFTU::DFTU()
+Plus_U::Plus_U()
 {}
 
-DFTU::~DFTU()
+Plus_U::~Plus_U()
 {}
 
-void DFTU::init(UnitCell& cell, // unitcell class
+void Plus_U::init(UnitCell& cell, // unitcell class
                 const Parallel_Orbitals* pv,
                 const int nks
 #ifdef __LCAO
@@ -37,7 +37,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
 #endif
                 )
 {
-    ModuleBase::TITLE("DFTU", "init");
+    ModuleBase::TITLE("Plus_U", "init");
 
 #ifndef __MPI
     std::cout << "DFT+U module is only accessible in mpi versioin" << std::endl;
@@ -61,7 +61,8 @@ void DFTU::init(UnitCell& cell, // unitcell class
     const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
     const int nspin = PARAM.inp.nspin;   // number of spins
 
-    this->EU = 0.0;
+    // mohan update 2025-11-06
+    Plus_U::energy_u = 0.0;
 
     this->locale.resize(cell.nat);
     this->locale_save.resize(cell.nat);
@@ -215,24 +216,27 @@ void DFTU::init(UnitCell& cell, // unitcell class
         }
     }
 
-    ModuleBase::Memory::record("DFTU::locale", sizeof(double) * num_locale);
+    ModuleBase::Memory::record("Plus_U::locale", sizeof(double) * num_locale);
     return;
 }
 
 #ifdef __LCAO
 
-void DFTU::cal_energy_correction(const UnitCell& ucell,
+void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                  const int istep)
 {
-    ModuleBase::TITLE("DFTU", "cal_energy_correction");
-    ModuleBase::timer::tick("DFTU", "cal_energy_correction");
+    ModuleBase::TITLE("Plus_U", "cal_energy_correction");
+    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
     if (!initialed_locale)
     {
-        ModuleBase::timer::tick("DFTU", "cal_energy_correction");
+        ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
         return;
     }
-    this->EU = 0.0;
-    double EU_dc = 0.0;
+
+    // mohan update 20251106
+    Plus_U::energy_u = 0.0;
+
+    double energy_dc = 0.0;
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -285,12 +289,12 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
                             }
                             if (Yukawa)
                             {
-                                this->EU += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
+                                Plus_U::energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
                                             * (nm_trace - nm2_trace);
                             }
                             else
                             {
-                                this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+                                Plus_U::energy_u += 0.5 * this->U[T] * (nm_trace - nm2_trace);
                             }
                         }
                     }
@@ -320,12 +324,12 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
                         }
                         if (Yukawa)
                         {
-                            this->EU
-                                += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
+                            Plus_U::energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) 
+                              * (nm_trace - nm2_trace);
                         }
                         else
                         {
-                            this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+                            Plus_U::energy_u += 0.5 * this->U[T] * (nm_trace - nm2_trace);
                         }
                     }
 
@@ -347,14 +351,14 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
                                         {
                                             double VU = 0.0;
                                             VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
-                                            EU_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
+                                            energy_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
                                     else if (PARAM.inp.nspin == 4) // SOC
                                     {
                                         double VU = 0.0;
                                         VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
-                                        EU_dc += VU * this->locale[iat][l][n][0](m1_all, m2_all);
+                                        energy_dc += VU * this->locale[iat][l][n][0](m1_all, m2_all);
                                     }
                                 }
                             }
@@ -365,16 +369,16 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
         }         // end I
     }             // end T
 
-    // substract the double counting EU_dc included in band energy eband
-    this->EU -= EU_dc;
+    // substract the double counting energy_dc included in band energy eband
+    Plus_U::energy_u -= energy_dc;
 
-    ModuleBase::timer::tick("DFTU", "cal_energy_correction");
+    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
     return;
 }
 
 #endif
 
-void DFTU::uramping_update()
+void Plus_U::uramping_update()
 {
     // if uramping < 0.1, use the original U
     if (this->uramping < 0.01) {
@@ -394,7 +398,7 @@ void DFTU::uramping_update()
     }
 }
 
-bool DFTU::u_converged()
+bool Plus_U::u_converged()
 {
     for (int i = 0; i < this->U0.size(); i++)
     {
@@ -408,19 +412,19 @@ bool DFTU::u_converged()
 
 #ifdef __LCAO
 
-void DFTU::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
+void Plus_U::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
 {
     this->dm_in_dftu_cd = dmr;
     return;
 }
 
-void DFTU::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
+void Plus_U::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
 {
     this->dm_in_dftu_d = dmr;
     return;
 }
 
-const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
+const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
 {
     if (this->dm_in_dftu_d != nullptr)
     {
@@ -461,5 +465,3 @@ void dftu_cal_occup_m(const int iter,
 }
 
 #endif
-
-} // namespace ModuleDFTU

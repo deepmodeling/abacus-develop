@@ -5,6 +5,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251106
 
 namespace hamilt {
 
@@ -48,8 +49,12 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
   private:
     void cal_ps_delta_spin(const int npol, const int m) const;
-    void cal_ps_dftu(const int npol, const int m) const;
+
+    // mohan add dftu 20251106
+    void cal_ps_dftu(Plus_U &dftu, const int npol, const int m) const;
+
     void update_becp(const T* psi_in, const int npol, const int m) const;
+
     void add_onsite_proj(T *hpsi_in, const int npol, const int m) const;
 
     const int* isk = nullptr;

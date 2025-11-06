@@ -6,6 +6,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
 #include "source_pw/module_pwdft/operator_pw/velocity_pw.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 #include <memory>
 #include <source_base/macros.h>
@@ -54,6 +55,9 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     // Electronic wave function psi
     Setup_Psi_pw<T, Device> stp;
+
+    //! DFT+U method, mohan add 2025-11-06
+    Plus_U dftu;
 
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;

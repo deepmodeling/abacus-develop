@@ -15,15 +15,13 @@
 #include <string>
 #include <vector>
 
-namespace ModuleDFTU
-{
 
-class DFTU
+class Plus_U
 {
 
   public:
-    DFTU();
-    ~DFTU();
+    Plus_U();
+    ~Plus_U();
 
   public:
     // allocate relevant data strcutures
@@ -37,7 +35,10 @@ class DFTU
     
     // calculate the energy correction
     void cal_energy_correction(const UnitCell& ucell, const int istep);
-    double get_energy(){return EU;}
+
+    // mohan change the function to static, 20251106
+    static double get_energy(){return energy_u;}
+
     void uramping_update(); // update U by uramping
     bool u_converged(); // check if U is converged
 
@@ -48,9 +49,11 @@ class DFTU
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 
-    double EU; //+U energy
-
   private:
+
+    // mohan change the variable to static, 20251106
+    static double energy_u; //+U energy, mohan update 2025-11-06, change this to private
+
     const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
 
@@ -331,6 +334,5 @@ void dftu_cal_occup_m(const int iter,
                       hamilt::Hamilt<T>* p_ham);
 #endif
 
-} // namespace ModuleDFTU
 
 #endif

@@ -172,14 +172,13 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // should before lambda loop in DeltaSpin
     if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
         // only old DFT+U method should calculate energy correction in esolver,
         // new DFT+U method will calculate energy when evaluating the Hamiltonian
-        if (dftu->omc != 2)
+        if (this->dftu.omc != 2)
         {
-            dftu->cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
+            this->dftu.cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
         }
-        dftu->output(ucell);
+        this->dftu.output(ucell);
     }
 }
 

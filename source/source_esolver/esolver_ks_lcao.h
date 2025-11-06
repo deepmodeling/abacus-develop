@@ -80,7 +80,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     LCAO_domain::Setup_DM<TK> dmat;
 
     //! DFT+U method, mohan add 2025-11-05
-    ModuleDFTU::DFTU dftu;
+    Plus_U dftu;
 
     // For deepks method, mohan add 2025-10-08
     Setup_DeePKS<TK> deepks;

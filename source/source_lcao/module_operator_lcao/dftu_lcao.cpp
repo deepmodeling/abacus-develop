@@ -19,7 +19,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
                                                  const std::vector<double>& orb_cutoff,
-                                                 ModuleDFTU::DFTU* dftu_in)
+                                                 Plus_U* dftu_in)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
 {
     this->cal_type = calculation_type::lcao_dftu;

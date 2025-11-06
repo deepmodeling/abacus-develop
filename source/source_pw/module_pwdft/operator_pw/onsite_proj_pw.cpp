@@ -209,14 +209,18 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
 }
 
 template<typename T, typename Device>
-void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(const int npol, const int m) const
+void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
+		Plus_U &dftu, // mohan add 20251106
+		const int npol, 
+		const int m) const
 {
-    if(!this->has_dftu) return;
+	if(!this->has_dftu) 
+	{
+		return;
+	}
 
     auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     const std::complex<double>* becp = onsite_p->get_becp();
-
-    auto* dftu = ModuleDFTU::DFTU::get_instance();
 
     // T *ps = new T[tnp * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * tnp);
@@ -247,7 +251,7 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(const int npol, const int m)
         for(int iat=0;iat<this->ucell->nat;iat++)
         {
             const int it = this->ucell->iat2it[iat];
-            const int target_l = dftu->orbital_corr[it];
+            const int target_l = dftu.orbital_corr[it];
             orb_l_iat0[iat] = target_l;
             const int nproj = onsite_p->get_nh(iat);
             if(target_l == -1)
@@ -286,10 +290,10 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(const int npol, const int m)
         syncmem_int_h2d_op()(this->ip_m, ip_m0.data(), onsite_p->get_tot_nproj());
         syncmem_int_h2d_op()(this->vu_begin_iat, vu_begin_iat0.data(), this->ucell->nat);
 
-        resmem_complex_op()(this->vu_device, dftu->get_size_eff_pot_pw());
+        resmem_complex_op()(this->vu_device, dftu.get_size_eff_pot_pw());
     }
 
-    syncmem_complex_h2d_op()(this->vu_device, dftu->get_eff_pot_pw(0), dftu->get_size_eff_pot_pw());
+    syncmem_complex_h2d_op()(this->vu_device, dftu.get_eff_pot_pw(0), dftu.get_size_eff_pot_pw());
 
     hamilt::onsite_ps_op<Real, Device>()(
         this->ctx,   // device context
@@ -354,30 +358,57 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(const int npol, const int m)
 }
 
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::add_onsite_proj(std::complex<float> *hpsi_in, const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::add_onsite_proj(
+		std::complex<float> *hpsi_in, 
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::update_becp(const std::complex<float> *psi_in, const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::update_becp(
+		const std::complex<float> *psi_in, 
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::cal_ps_delta_spin(const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::cal_ps_delta_spin(
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::cal_ps_dftu(const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>::cal_ps_dftu(
+		Plus_U &dftu,
+		const int npol, 
+		const int m) const
 {}
 
 #if ((defined __CUDA) || (defined __ROCM))
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::add_onsite_proj(std::complex<float> *hpsi_in, const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::add_onsite_proj(
+		std::complex<float> *hpsi_in, 
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::update_becp(const std::complex<float> *psi_in, const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::update_becp(
+		const std::complex<float> *psi_in, 
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_ps_delta_spin(const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_ps_delta_spin(
+		const int npol, 
+		const int m) const
 {}
+
 template<>
-void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_ps_dftu(const int npol, const int m) const
+void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_ps_dftu(
+		const int npol, 
+		const int m) const
 {}
 #endif
 
@@ -394,7 +425,7 @@ void OnsiteProj<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "OnsiteProjPW");
     this->update_becp(tmpsi_in, npol, nbands);
     this->cal_ps_delta_spin(npol, nbands);
-    this->cal_ps_dftu(npol, nbands);
+    this->cal_ps_dftu(dftu, npol, nbands);
     this->add_onsite_proj(tmhpsi, npol, nbands);
     ModuleBase::timer::tick("Operator", "OnsiteProjPW");
 }
@@ -405,7 +436,6 @@ hamilt::OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const OnsiteProj<OperatorP
 {
     this->classname = "OnsiteProj";
     this->cal_type = calculation_type::pw_nonlocal;
-    // FIXME: 
 }
 
 template class OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;

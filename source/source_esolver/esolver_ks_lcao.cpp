@@ -98,7 +98,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 9) initialize DFT+U
     if (inp.dft_plus_u)
     {
-        dftu.init(ucell, &this->pv, this->kv.get_nks(), &orb_);
+        this->dftu.init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
     // 10) init local pseudopotentials
@@ -336,7 +336,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
+    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
+      this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
@@ -375,10 +376,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (istep != 0 || iter != 1)
         {
-            dftu.set_dmr(this->dmat.dm);
+            this->dftu.set_dmr(this->dmat.dm);
         }
         // Calculate U and J if Yukawa potential is used
-        dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
+        this->dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
 #ifdef __MLALGO
@@ -491,14 +492,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         // new DFT+U method calculates energy in Hamiltonian
         if (PARAM.inp.dft_plus_u == 2)
         {
-            if (dftu.omc != 2)
+            if (this->dftu.omc != 2)
             {
-                ModuleDFTU::dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
+                dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
                   this->p_chgmix->get_mixing_beta(), hamilt_lcao);
             }
-            dftu.cal_energy_correction(ucell, istep);
+            this->dftu.cal_energy_correction(ucell, istep);
         }
-        dftu.output(ucell);
+        this->dftu.output(ucell);
     }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
@@ -530,7 +531,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // use the converged occupation matrix for next MD/Relax SCF calculation
     if (PARAM.inp.dft_plus_u && conv_esolver)
     {
-        dftu.initialed_locale = true;
+        this->dftu.initialed_locale = true;
     }
 
     // control the output related to the finished iteration
