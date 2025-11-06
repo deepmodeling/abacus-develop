@@ -11,8 +11,9 @@ template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
                                           const ModuleBase::matrix& wg,
                                           const ModulePW::PW_Basis_K* wfc_basis,
-                                          const UnitCell& ucell_in,
-                                          const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
+										  const UnitCell& ucell_in,
+										  const Plus_U &dftu, // mohan add 2025-11-06
+										  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_onsite");
     if(psi_in == nullptr || wfc_basis == nullptr)
@@ -53,12 +54,13 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
         // force for DFT+U
         if(PARAM.inp.dft_plus_u)
         {
-            auto* dftu = ModuleDFTU::DFTU::get_instance();
-            onsite_p->get_fs_tools()->cal_force_dftu(ik, npm, force, dftu->orbital_corr.data(), dftu->get_eff_pot_pw(0), dftu->get_size_eff_pot_pw(), wg.c);
+            onsite_p->get_fs_tools()->cal_force_dftu(ik, npm, force, 
+              dftu.orbital_corr.data(), dftu.get_eff_pot_pw(0), dftu.get_size_eff_pot_pw(), wg.c);
         }
         if(PARAM.inp.sc_mag_switch)
         {
-            spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+            spinconstrain::SpinConstrain<std::complex<double>>& sc = 
+              spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
             const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
             onsite_p->get_fs_tools()->cal_force_dspin(ik, npm, force, lambda.data(), wg.c);
         }
