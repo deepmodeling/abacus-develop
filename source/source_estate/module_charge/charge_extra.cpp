@@ -107,7 +107,7 @@ void Charge_Extra::extrapolate_charge(
     rho_extr = std::min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
+        sf->setup(&ucell, *Pgrid, chr->rhopw);
         ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
@@ -169,7 +169,7 @@ void Charge_Extra::extrapolate_charge(
         }
     }
 
-    sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
+    sf->setup(&ucell, *Pgrid, chr->rhopw);
     double** rho_atom = new double*[this->nspin];
     for (int is = 0; is < this->nspin; is++)
     {

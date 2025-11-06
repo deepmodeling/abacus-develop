@@ -7,7 +7,7 @@
 #ifdef __LCAO
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_hamilt/hamilt.h"
-#include "source_estate/elecstate.h"
+// #include "source_estate/elecstate.h" // mohan update 2025-11-02
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/force_stress_arrays.h" // mohan add 2024-06-15
@@ -200,8 +200,9 @@ private:
  public:
    void force_stress(const UnitCell& ucell,
                      const Grid_Driver& gd,
-                     const elecstate::ElecState* pelec,
-                     const Parallel_Orbitals& pv,
+					 std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
+					 std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
+					 const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
                      ModuleBase::matrix& force_dftu,
                      ModuleBase::matrix& stress_dftu,

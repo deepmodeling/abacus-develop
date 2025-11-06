@@ -1,11 +1,13 @@
 #ifndef SETUP_DM_H
 #define SETUP_DM_H 
 
+#include "source_cell/klist.h" 
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_estate/module_dm/density_matrix.h"
 
 #include <vector>
 
-namespace LCAO_DOMAIN
+namespace LCAO_domain
 {
 template <typename TK>
 class Setup_DM
@@ -18,23 +20,16 @@ class Setup_DM
 
     ~Setup_DM()
     {
-        if (this->DM != nullptr)
+        if (this->dm != nullptr)
         {
             delete this->dm;
         }
     }
 
-    // initial density matrix
-    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    // allocate density matrix
+    void allocate_dm(const K_Vectors* kv, const Parallel_Orbitals* pv, const int nspin);
 
-    DensityMatrix<TK, double>* get_dm() const
-    {
-        return const_cast<DensityMatrix<TK, double>*>(this->dm);
-    }
-
-    private:
-
-    DensityMatrix<TK, double>* dm = nullptr;
+    elecstate::DensityMatrix<TK, double>* dm = nullptr;
 
 };
 

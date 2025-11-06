@@ -1,8 +1,5 @@
-//==========================================================
-// Author:Xin Qu
 #include "source_io/module_parameter/parameter.h"
-// DATE : 2019-12-10
-//==========================================================
+
 #ifdef __LCAO
 #include "dftu.h"
 #include "source_base/constants.h"
@@ -23,6 +20,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
+
 
 extern "C"
 {
@@ -74,7 +72,8 @@ namespace ModuleDFTU
 
 void DFTU::force_stress(const UnitCell& ucell,
                         const Grid_Driver& gd,
-                        const elecstate::ElecState* pelec,
+                        std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
+                        std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
                         const Parallel_Orbitals& pv,
                         ForceStressArrays& fsr, // mohan add 2024-06-16
                         ModuleBase::matrix& force_dftu,
@@ -114,29 +113,12 @@ void DFTU::force_stress(const UnitCell& ucell,
 
             this->cal_VU_pot_mat_real(spin, false, VU);
 
-            const std::vector<std::vector<double>>& dmk
-                = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-
 #ifdef __MPI
-            pdgemm_(&transT,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &alpha,
-                    dmk[spin].data(),
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    VU,
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    &beta,
-                    &rho_VU[0],
-                    &one_int,
-                    &one_int,
-                    pv.desc);
+            pdgemm_(&transT, &transN, &nlocal, &nlocal, &nlocal,
+                    &alpha, (*dmk_d)[spin].data(), &one_int, &one_int, // important to add () outside *dmk_d, mohan note 20251103
+                    pv.desc, VU, &one_int, &one_int,
+                    pv.desc, &beta, &rho_VU[0],
+                    &one_int, &one_int, pv.desc);
 #endif
 
             delete[] VU;
@@ -178,31 +160,12 @@ void DFTU::force_stress(const UnitCell& ucell,
 
             this->cal_VU_pot_mat_complex(spin, false, VU);
 
-            const std::vector<std::vector<std::complex<double>>>& dmk
-                = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)
-                      ->get_DM()
-                      ->get_DMK_vector();
 
 #ifdef __MPI
-            pzgemm_(&transT,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &alpha,
-                    dmk[ik].data(),
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    VU,
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    &beta,
-                    &rho_VU[0],
-                    &one_int,
-                    &one_int,
-                    pv.desc);
+            pzgemm_(&transT, &transN, &nlocal, &nlocal, &nlocal,
+                    &alpha, (*dmk_c)[ik].data(), &one_int, &one_int, // important to add (), 20251103
+                    pv.desc, VU, &one_int, &one_int, pv.desc, &beta,
+                    &rho_VU[0], &one_int, &one_int, pv.desc);
 #endif
 
             delete[] VU;

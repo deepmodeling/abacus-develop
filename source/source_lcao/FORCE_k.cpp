@@ -190,34 +190,32 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 // be called in Force_LCAO::start_force_calculation
 template <>
 void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
-                                              const bool isstress,
-                                              ForceStressArrays& fsr, // mohan add 2024-06-15
-                                              const UnitCell& ucell,
-                                              const Grid_Driver& gd,
-                                              const psi::Psi<std::complex<double>>* psi,
-                                              const elecstate::ElecState* pelec,
-                                              ModuleBase::matrix& foverlap,
-                                              ModuleBase::matrix& ftvnl_dphi,
-                                              ModuleBase::matrix& fvnl_dbeta,
-                                              ModuleBase::matrix& fvl_dphi,
-                                              ModuleBase::matrix& soverlap,
-                                              ModuleBase::matrix& stvnl_dphi,
-                                              ModuleBase::matrix& svnl_dbeta,
-                                              ModuleBase::matrix& svl_dphi,
-                                              ModuleBase::matrix& fvnl_dalpha,
-                                              ModuleBase::matrix& svnl_dalpha,
-                                              Setup_DeePKS<std::complex<double>>& deepks,
-                                              const TwoCenterBundle& two_center_bundle,
-                                              const LCAO_Orbitals& orb,
-                                              const Parallel_Orbitals& pv,
-                                              const K_Vectors* kv,
-                                              Record_adj* ra)
+		const bool isstress,
+		ForceStressArrays& fsr, // mohan add 2024-06-15
+		const UnitCell& ucell,
+		const Grid_Driver& gd,
+		const psi::Psi<std::complex<double>>* psi,
+		const elecstate::ElecState* pelec,
+		const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+		ModuleBase::matrix& foverlap,
+		ModuleBase::matrix& ftvnl_dphi,
+		ModuleBase::matrix& fvnl_dbeta,
+		ModuleBase::matrix& fvl_dphi,
+		ModuleBase::matrix& soverlap,
+		ModuleBase::matrix& stvnl_dphi,
+		ModuleBase::matrix& svnl_dbeta,
+		ModuleBase::matrix& svl_dphi,
+		ModuleBase::matrix& fvnl_dalpha,
+		ModuleBase::matrix& svnl_dalpha,
+		Setup_DeePKS<std::complex<double>>& deepks,
+		const TwoCenterBundle& two_center_bundle,
+		const LCAO_Orbitals& orb,
+		const Parallel_Orbitals& pv,
+		const K_Vectors* kv,
+		Record_adj* ra)
 {
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::tick("Forces", "ftable");
-
-    elecstate::DensityMatrix <std::complex<double>, double>* dm
-        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
     this->allocate(ucell,
                    gd,

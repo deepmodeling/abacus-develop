@@ -46,7 +46,7 @@ Structure_Factor::~Structure_Factor()
 // called in input.cpp
 void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nbspline_in)
 {
-    ModuleBase::TITLE("PW_Basis","set");
+    ModuleBase::TITLE("Structure_Factor","set");
     this->rho_basis = rho_basis_in;
     this->nbspline = nbspline_in;
     return;
@@ -54,10 +54,11 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 
 // Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
 {
-    ModuleBase::TITLE("PW_Basis","setup_structure_factor");
-    ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
+    ModuleBase::TITLE("Structure_Factor","setup");
+    ModuleBase::timer::tick("Structure_Factor","setup");
+
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
     this->ucell = Ucell;
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
@@ -66,9 +67,15 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
 //	std::string outstr;
 //	outstr = PARAM.globalv.global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
-    bool usebspline;
-    if(nbspline > 0) {   usebspline = true;
-    } else {    usebspline = false;}
+	bool usebspline;
+	if(nbspline > 0) 
+	{   
+		usebspline = true;
+	} 
+	else 
+	{    
+		usebspline = false;
+	}
     
     if(usebspline)
     {
@@ -100,12 +107,15 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
 
 //	ofs.close();
 
-    int i,j; //ng;
+    int i=0;
+    int j=0;
+ 
     this->eigts1.create(Ucell->nat, 2*rho_basis->nx + 1);
     this->eigts2.create(Ucell->nat, 2*rho_basis->ny + 1);
     this->eigts3.create(Ucell->nat, 2*rho_basis->nz + 1);
 
-    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
+    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) 
+    * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
 
     ModuleBase::Vector3<double> gtau;
     int inat = 0;
@@ -177,7 +187,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
+    ModuleBase::timer::tick("Structure_Factor","setup");
     return;
 }
 
@@ -298,7 +308,7 @@ void Structure_Factor::bspline_sf(const int norder,
     return;
 }
 
-void Structure_Factor:: bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
+void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                         const int nx, const int ny, const int nz, const int norder)
 {
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;

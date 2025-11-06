@@ -42,6 +42,7 @@ if(ENABLE_LCAO)
         LCAO_init_basis.cpp
         setup_exx.cpp
         setup_deepks.cpp
+        setup_dm.cpp
         rho_tau_lcao.cpp
 		record_adj.cpp
         center2_orb.cpp

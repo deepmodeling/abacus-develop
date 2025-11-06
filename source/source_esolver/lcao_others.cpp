@@ -173,7 +173,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
-        elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell,
             this->gd,
@@ -182,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             this->kv,
             two_center_bundle_,
             orb_,
-            DM,
+            this->dmat.dm,
 			this->deepks,
 			istep,
 			this->exx_nao);
@@ -208,6 +207,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->kv,
                    this->p_hamilt,
                    this->psi,
+                   this->dmat.dm,
                    this->pelec);
     }
 

@@ -480,6 +480,7 @@ template int Get_wf_lcao::set_wfc_grid(const int naroc[2],
                                        const double* in,
                                        double** out,
                                        const std::vector<int>& trace_lo);
+
 template int Get_wf_lcao::set_wfc_grid(const int naroc[2],
                                        const int nb,
                                        const int dim0,

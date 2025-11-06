@@ -13,7 +13,8 @@ template <typename TK, typename TR>
 void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
-		elecstate::ElecStateLCAO<TK>* pelec, // electronic info * 
+		elecstate::ElecState* pelec, // electronic info * 
+        elecstate::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
@@ -48,9 +49,9 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             GlobalC::exx_info.info_ri.real_number ?
-              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
-              exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
         }
     }
@@ -68,7 +69,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 
             deepks_interface.out_deepks_labels(pelec->f_en.etot, kv.get_nks(),
               ucell.nat, PARAM.globalv.nlocal, pelec->ekb, kv.kvec_d,
-              ucell, orb, gd, &pv, *psi, pelec->get_DM(),
+              ucell, orb, gd, &pv, *psi, &dm,
               p_hamilt, iter, conv_esolver, GlobalV::MY_RANK, GlobalV::ofs_running);
         }
     }
@@ -81,7 +82,8 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
-		elecstate::ElecStateLCAO<double>* pelec, // electronic info * 
+		elecstate::ElecState* pelec, // electronic info * 
+        elecstate::DensityMatrix<double, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<double>* psi, // wave functions *
@@ -100,7 +102,8 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
 template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, // electronic info * 
+		elecstate::ElecState* pelec, // electronic info * 
+        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
@@ -119,7 +122,8 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
 template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, // electronic info * 
+		elecstate::ElecState* pelec, // electronic info * 
+        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
