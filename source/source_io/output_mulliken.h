@@ -9,6 +9,7 @@
 #include "source_io/output_sk.h"
 #include "source_base/formatter.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 
 #include <map>
 #include <vector>
@@ -89,7 +90,7 @@ template <typename TK>
 void cal_mag(Parallel_Orbitals* pv,
              hamilt::Hamilt<TK>* p_ham,
              K_Vectors& kv,
-             elecstate::ElecState* pelec,
+             elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,
              UnitCell& ucell,
@@ -103,10 +104,7 @@ void cal_mag(Parallel_Orbitals* pv,
         auto cell_index
             = CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
         auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
-        auto out_dm_k = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
-                                                pv,
-                                                PARAM.inp.nspin,
-                                                kv.get_nks());
+        auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
 
         auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), &(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
         auto atom_chg = mulp.get_atom_chg();
@@ -127,8 +125,7 @@ void cal_mag(Parallel_Orbitals* pv,
     {
         std::vector<std::vector<double>> atom_mag(ucell.nat, std::vector<double>(PARAM.inp.nspin, 0.0));
         std::vector<ModuleBase::Vector3<int>> constrain(ucell.nat, ModuleBase::Vector3<int>(1, 1, 1));
-        const hamilt::HContainer<double>* dmr
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
         std::vector<double> moments;
         std::vector<double> mag_x(ucell.nat, 0.0);
         std::vector<double> mag_y(ucell.nat, 0.0);
@@ -144,9 +141,9 @@ void cal_mag(Parallel_Orbitals* pv,
 						&gd,
 						two_center_bundle.overlap_orb_onsite.get(),
 						orb.cutoffs());
-			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
+			dm->switch_dmr(2);
 			moments = sc_lambda->cal_moment(dmr, constrain);
-			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
+			dm->switch_dmr(0);
 			delete sc_lambda;
 			//const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
             //const std::vector<std::string> fmts = {"%-26s", "%20.10f"};

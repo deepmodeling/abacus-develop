@@ -4,6 +4,12 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_pw.h"
 
+#include "source_estate/fp_energy.h" // eferm
+#include "source_estate/module_charge/charge.h" // chr
+#include "source_lcao/setup_dm.h" // Setup_DM
+#include "source_cell/klist.h" // K_Vectors
+#include "source_base/matrix.h" // matrix
+
 namespace ModuleIO
 {
 template <typename T>
@@ -13,10 +19,17 @@ class Cal_ldos
     Cal_ldos(){};
     ~Cal_ldos(){};
 
-    static void cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
-                              const psi::Psi<T>& psi,
-                              const Parallel_Grid& pgrid,
-                              const UnitCell& ucell);
+    static void cal_ldos_lcao(
+        const elecstate::Efermi &eferm, // mohan add 2025-11-02
+        const Charge &chr, // mohan add add 2025-11-02
+        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
+		const K_Vectors &kv, // k points, mohan add 2025-11-02
+        const ModuleBase::matrix &ekb, // mohan add 2025-11-02
+        const ModuleBase::matrix &wg, // mohan add 2025-11-02
+		const psi::Psi<T>& psi,
+		const Parallel_Grid& pgrid,
+		const UnitCell& ucell);
+
 }; // namespace Cal_ldos
 
 void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,

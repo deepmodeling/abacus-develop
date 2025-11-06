@@ -36,7 +36,8 @@ template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<TK>* pelec, 
+		elecstate::ElecState* pelec, 
+		elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
 		psi::Psi<TK>* psi,
@@ -115,11 +116,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 	//------------------------------------------------------------------
     if(inp.out_dmr[0])
 	{
-		const auto& dmr_vector = pelec->get_DM()->get_DMR_vector();
-
         const int precision = inp.out_dmr[1];
 
-		ModuleIO::write_dmr(dmr_vector, precision, pv, out_app_flag,
+		ModuleIO::write_dmr(dm->get_DMR_vector(), precision, pv, out_app_flag,
 				ucell.get_iat2iwt(), ucell.nat, istep);
 	}
 
@@ -135,7 +134,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 		}
 		const int precision = inp.out_dmk[1];
 
-		ModuleIO::write_dmk(pelec->get_DM()->get_DMK_vector(),
+		ModuleIO::write_dmk(dm->get_DMK_vector(),
 				precision, efermis, &(ucell), pv, istep);
 	}
 
@@ -196,7 +195,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 			gd,
 			&pv,
 			*psi,
-			pelec->get_DM(),
+			dm,
 			p_ham_deepks,
             -1, // -1 when called in after scf
             true, // no used when after scf
@@ -300,7 +299,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleIO::cal_mag(&pv,
                 p_hamilt,
                 kv,
-                pelec,
+                dm, // mohan add 2025-11-04
                 two_center_bundle,
                 orb,
                 ucell,
@@ -404,7 +403,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (inp.rpa)
     {
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
+        rpa_lri_double.cal_postSCF_exx(*dm,
                                        MPI_COMM_WORLD,
                                        ucell,
                                        kv,
@@ -469,7 +468,8 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<double>* pelec, 
+		elecstate::ElecState* pelec, 
+        elecstate::DensityMatrix<double,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
 		psi::Psi<double>* psi,
@@ -492,7 +492,8 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		elecstate::ElecState* pelec, 
+        elecstate::DensityMatrix<std::complex<double>,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
 		psi::Psi<std::complex<double>>* psi,
@@ -514,7 +515,8 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
         UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		elecstate::ElecState* pelec, 
+        elecstate::DensityMatrix<std::complex<double>,double>* dm, // mohan add 2025-11-04
 		Parallel_Orbitals& pv,
 		Grid_Driver& gd,
 		psi::Psi<std::complex<double>>* psi,

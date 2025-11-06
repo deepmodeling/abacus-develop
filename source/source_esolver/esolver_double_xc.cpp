@@ -84,7 +84,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     // 6) initialize the density matrix
-    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
+    this->dmat_base.allocate_dm(&this->kv, &this->pv, PARAM.inp.nspin);
 
     // 10) inititlize the charge density
     this->chr_base.allocate(PARAM.inp.nspin);
@@ -138,8 +138,6 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt_base == nullptr)
     {
-        elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)->get_DM();
-
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(
             ucell,
             this->gd,
@@ -148,7 +146,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->kv,
             this->two_center_bundle_,
             this->orb_,
-            DM,
+            this->dmat_base.dm,
 			this->deepks,
 			istep,
 			this->exx_nao);
@@ -159,13 +157,11 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
     // DMR should be same size with Hamiltonian(R)
-    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)
-    ->get_DM()
-    ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
+    this->dmat_base.dm->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
 
     if (istep > 0)
     {
-        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base)->get_DM()->cal_DMR();
+        this->dmat_base.dm->cal_DMR();
     }
 
     ModuleBase::timer::tick("ESolver_DoubleXC", "before_scf");
@@ -226,23 +222,23 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->deepks.ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
-        deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                                            this->kv.get_nks(),
-                                            ucell.nat,
-                                            PARAM.globalv.nlocal,
-                                            this->pelec->ekb,
-                                            this->kv.kvec_d,
-                                            ucell,
-                                            this->orb_,
-                                            this->gd,
-                                            &(this->pv),
-                                            *(this->psi),
-                                            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                            p_ham_deepks,
-                                            iter,
-                                            conv_esolver,
-                                            GlobalV::MY_RANK,
-                                            GlobalV::ofs_running);
+		deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
+				this->kv.get_nks(),
+				ucell.nat,
+				PARAM.globalv.nlocal,
+				this->pelec->ekb,
+				this->kv.kvec_d,
+				ucell,
+				this->orb_,
+				this->gd,
+				&(this->pv),
+				*(this->psi),
+				this->dmat.dm,
+				p_ham_deepks,
+				iter,
+				conv_esolver,
+				GlobalV::MY_RANK,
+				GlobalV::ofs_running);
 #endif
                                             
         // restore to density after charge mixing
@@ -352,9 +348,12 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
             for (int ik = 0; ik < nks; ik++)
             {
-                _pes_lcao_base->get_DM()->set_DMK_pointer(ik, _pes_lcao->get_DM()->get_DMK_pointer(ik));
+// mohan update 2025-11-03
+                this->dmat_base.dm->set_DMK_pointer(ik, this->dmat.dm->get_DMK_pointer(ik));
+//                _pes_lcao_base->get_DM()->set_DMK_pointer(ik, _pes_lcao->get_DM()->get_DMK_pointer(ik));
             }
-            _pes_lcao_base->get_DM()->cal_DMR();
+            this->dmat_base.dm->cal_DMR();
+//            _pes_lcao_base->get_DM()->cal_DMR();
             _pes_lcao_base->ekb = _pes_lcao->ekb;
             _pes_lcao_base->wg = _pes_lcao->wg;          
         }        
@@ -386,6 +385,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->gd,
                        this->pv,
                        this->pelec_base,
+                       this->dmat_base, // mohan add 2025-11-03
                        this->psi,
                        this->two_center_bundle_,
                        this->orb_,

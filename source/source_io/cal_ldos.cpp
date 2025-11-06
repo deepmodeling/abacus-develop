@@ -12,10 +12,16 @@ namespace ModuleIO
 
 #ifdef __LCAO
 template <typename T>
-void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
-                                const psi::Psi<T>& psi,
-                                const Parallel_Grid& pgrid,
-                                const UnitCell& ucell)
+void Cal_ldos<T>::cal_ldos_lcao(
+        const elecstate::Efermi &eferm, // mohan add 2025-11-02
+        const Charge &chr, // mohan add add 2025-11-02
+        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
+		const K_Vectors &kv, // k points, mohan add 2025-11-02
+        const ModuleBase::matrix &ekb, // mohan add 2025-11-02
+        const ModuleBase::matrix &wg, // mohan add 2025-11-02
+		const psi::Psi<T>& psi,
+		const Parallel_Grid& pgrid,
+		const UnitCell& ucell)
 {
     for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
     {
@@ -25,38 +31,38 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
         const double emax = en > 0 ? en : 0;
 
         // calculate weight (for bands not in the range, weight is zero)
-        ModuleBase::matrix weight(pelec->ekb.nr, pelec->ekb.nc);
-        for (int ik = 0; ik < pelec->ekb.nr; ++ik)
+        ModuleBase::matrix weight(ekb.nr, ekb.nc);
+        for (int ik = 0; ik < ekb.nr; ++ik)
         {
-            const double efermi = pelec->eferm.get_efval(pelec->klist->isk[ik]);
+            const double efermi = eferm.get_efval(kv.isk[ik]);
 
-            for (int ib = 0; ib < pelec->ekb.nc; ib++)
+            for (int ib = 0; ib < ekb.nc; ib++)
             {
-                const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
+                const double eigenval = (ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 if (eigenval >= emin && eigenval <= emax)
                 {
-                    weight(ik, ib) = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
+                    weight(ik, ib) = en > 0 ? kv.wk[ik] - wg(ik, ib) : wg(ik, ib);
                 }
             }
         }
 
         // calculate dm-like for ldos
         const int nspin_dm = PARAM.inp.nspin == 2 ? 2 : 1;
-        elecstate::DensityMatrix<T, double> dm_ldos(pelec->DM->get_paraV_pointer(),
+        elecstate::DensityMatrix<T, double> dm_ldos(dmat.dm->get_paraV_pointer(),
                                                     nspin_dm,
-                                                    pelec->klist->kvec_d,
-                                                    pelec->klist->get_nks() / nspin_dm);
+                                                    kv.kvec_d,
+                                                    kv.get_nks() / nspin_dm);
 
-        elecstate::cal_dm_psi(pelec->DM->get_paraV_pointer(), weight, psi, dm_ldos);
-        dm_ldos.init_DMR(*(pelec->DM->get_DMR_pointer(1)));
+        elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), weight, psi, dm_ldos);
+        dm_ldos.init_DMR(*(dmat.dm->get_DMR_pointer(1)));
         dm_ldos.cal_DMR();
 
         // allocate ldos space
-        std::vector<double> ldos_space(PARAM.inp.nspin * pelec->charge->nrxx);
+        std::vector<double> ldos_space(PARAM.inp.nspin * chr.nrxx);
         double** ldos = new double*[PARAM.inp.nspin];
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            ldos[is] = &ldos_space[is * pelec->charge->nrxx];
+            ldos[is] = &ldos_space[is * chr.nrxx];
         }
 
     // calculate ldos
@@ -66,7 +72,7 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
         // ldos[0] += ldos[1] for nspin_dm == 2
         if (nspin_dm == 2)
         {
-            BlasConnector::axpy(pelec->charge->nrxx, 1.0, ldos[1], 1, ldos[0], 1);
+            BlasConnector::axpy(chr.nrxx, 1.0, ldos[1], 1, ldos[0], 1);
         }
 
         // write ldos to cube file

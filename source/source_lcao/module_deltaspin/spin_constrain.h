@@ -14,12 +14,16 @@
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
 
+#ifdef __LCAO
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
+#endif
+
 namespace spinconstrain
 {
 
 struct ScAtomData;
 
-template <typename FPTYPE>
+template <typename TK>
 class SpinConstrain
 {
 public:
@@ -39,7 +43,10 @@ public:
                const K_Vectors& kv_in,
                void* p_hamilt_in,
                void* psi_in,
-               elecstate::ElecState* pelec_in,
+#ifdef __LCAO
+			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
+#endif
+			   elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /// @brief calculate the magnetization of each atom with real space projection method for LCAO base
@@ -49,7 +56,8 @@ public:
 
   void cal_mi_pw();
 
-  void cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+  void cal_mw_from_lambda(int i_step, 
+		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
    * @brief calculate the energy of \sum_i \lambda_i * Mi
@@ -60,13 +68,17 @@ public:
 
   double get_escon();
 
-  void run_lambda_loop(int outer_step, bool rerun = true);
+  void run_lambda_loop(int outer_step, 
+		  bool rerun = true);
 
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat);
+  void calculate_delta_hcc(std::complex<double>* h_tmp, 
+		  const std::complex<double>* becp_k, 
+		  const ModuleBase::Vector3<double>* delta_lambda, 
+		  const int nbands, const int nkb, const int* nh_iat);
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
@@ -109,6 +121,9 @@ public:
     void* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
+#ifdef __LCAO
+    elecstate::DensityMatrix<TK, double>* dm_;
+#endif
     double tpiba = 0.0; /// save ucell.tpiba
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;
@@ -240,20 +255,20 @@ public:
   public:
     /// @brief save operator for spin-constrained DFT
     /// @param op_in the base pointer of operator, actual type should be DeltaSpin<OperatorLCAO<TK, TR>>*
-    void set_operator(hamilt::Operator<FPTYPE>* op_in);
+    void set_operator(hamilt::Operator<TK>* op_in);
     /// @brief set is_Mi_converged
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief get is_Mi_converged
     bool mag_converged() const {return this->is_Mi_converged;}
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
-    hamilt::Operator<FPTYPE>* p_operator = nullptr;
+    hamilt::Operator<TK>* p_operator = nullptr;
     /// @brief if atomic magnetic moment is converged
     bool is_Mi_converged = false;
 
-    FPTYPE* sub_h_save;
-    FPTYPE* sub_s_save;
-    FPTYPE* becp_save;
+    TK* sub_h_save;
+    TK* sub_s_save;
+    TK* becp_save;
 };
 
 

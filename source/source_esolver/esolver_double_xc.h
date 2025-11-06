@@ -32,6 +32,9 @@ class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
     //! Electronic states
     elecstate::ElecState* pelec_base = nullptr;
 
+    //! Density Matrix, mohan add 2025-11-03
+    LCAO_domain::Setup_DM<TK> dmat_base;
+
     //! Electorn charge density
     Charge chr_base;
 };

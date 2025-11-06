@@ -45,7 +45,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 {
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
-    //! 1) init "before_all_runniers" in ESolver_FP
+    //! 1) setup "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
     
     //! 2) setup some parameters
@@ -67,7 +67,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    //! 4) setup Exc for the first element '0', because all elements have same exc 
+    //! 4) setup Exc for the first element '0' (all elements have same exc) 
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     
     //! 5) setup the charge mixing parameters
@@ -84,7 +84,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
-    //! 7) Setup the k points according to symmetry.
+    //! 7) setup k points in the Brillouin zone according to symmetry.
     this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -99,19 +99,12 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
 
     //! 11) calculate the structure factor
-    this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
+    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
 }
 
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
-{
-    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
-    // Temporarily, before HSolver is constructed, it should be overrided by
-    // LCAO, PW, SDFT and TDDFT.
-    // After HSolver is constructed, LCAO, PW, SDFT should delete their own
-    // hamilt2rho_single() and use:
-    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
-}
+{}
 
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)

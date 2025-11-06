@@ -75,7 +75,7 @@ TEST_F(StructureFactorTest, set)
 TEST_F(StructureFactorTest, setup_structure_factor_double)
 {
     rho_basis->npw = 10;
-    SF.setup_structure_factor(ucell,*pgrid,rho_basis);  
+    SF.setup(ucell,*pgrid,rho_basis);  
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nx + 1);i++) 
     {
@@ -100,7 +100,7 @@ TEST_F(StructureFactorTest, setup_structure_factor_float)
 {
     PARAM.sys.has_float_data = true;
     rho_basis->npw = 10;
-    SF.setup_structure_factor(ucell,*pgrid,rho_basis);  
+    SF.setup(ucell,*pgrid,rho_basis);  
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nx + 1);i++) 
     {

@@ -5,7 +5,8 @@
 
 template <typename TK>
 void elecstate::init_dm(UnitCell& ucell,
-		elecstate::ElecStateLCAO<TK>* pelec,
+		elecstate::ElecState* pelec,
+        LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
 		Charge &chr,
         const int iter,
@@ -30,10 +31,10 @@ void elecstate::init_dm(UnitCell& ucell,
 				pelec->skip_weights);
 
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
-		elecstate::cal_dm_psi(pelec->DM->get_paraV_pointer(), pelec->wg, *psi, *(pelec->DM));
-		pelec->DM->cal_DMR();
+		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
+		dmat.dm->cal_DMR();
 
-		pelec->psiToRho(*psi);
+//		pelec->psiToRho(*psi); // I found this sentence is useless, mohan add 2025-11-04
 		pelec->skip_weights = false;
 
 		elecstate::cal_ux(ucell);
@@ -50,14 +51,16 @@ void elecstate::init_dm(UnitCell& ucell,
 
 
 template void elecstate::init_dm<double>(UnitCell& ucell,
-		elecstate::ElecStateLCAO<double>* pelec,
+		elecstate::ElecState* pelec,
+        LCAO_domain::Setup_DM<double> &dmat,
         psi::Psi<double>* psi,
 		Charge &chr,
         const int iter,
         const int exx_two_level_step);
 
 template void elecstate::init_dm<std::complex<double>>(UnitCell& ucell,
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec,
+		elecstate::ElecState* pelec,
+        LCAO_domain::Setup_DM<std::complex<double>> &dmat,
         psi::Psi<std::complex<double>>* psi,
 		Charge &chr,
         const int iter,
