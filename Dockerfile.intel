@@ -183,8 +183,6 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_RO
     cd abacus-develop-3.9.0.17 && \
     sed -i '3i\#include "source_estate/elecstate_lcao.h"' source/source_lcao/edm.cpp && \
     cmake -B build \
-        -DMKL_SYCL=OFF \
-        -DMKL_SYCL_LINK=OFF \
         -DENABLE_MLALGO=ON \
         -DENABLE_PEXSI=ON \
         -DENABLE_LIBXC=ON \
