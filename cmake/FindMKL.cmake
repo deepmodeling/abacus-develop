@@ -4,7 +4,7 @@
 #  MKL_INCLUDE - where to find mkl.h, etc.
 #  MKL_FOUND        - True if mkl found.
 
-find_package(MKL NO_MODULE) # try using official module first
+# find_package(MKL NO_MODULE) # try using official module first
 if(NOT TARGET MKL::MKL)
 
 find_path(MKL_INCLUDE mkl_service.h HINTS ${MKLROOT}/include)

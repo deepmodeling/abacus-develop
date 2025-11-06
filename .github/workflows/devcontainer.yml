@@ -1,9 +1,6 @@
 name: Container
 
 on:
-  pull_request: # FOR TESTING ONLY
-    branches:
-      - develop
   push:
     branches:
       - develop
