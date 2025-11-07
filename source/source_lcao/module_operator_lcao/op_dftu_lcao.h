@@ -3,7 +3,7 @@
 
 #include "source_base/timer.h"
 #include "operator_lcao.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace hamilt
 {
@@ -30,6 +30,7 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         : isk(isk_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_dftu;
+        this->dftu = dftu_in; // mohan add 2025-11-07
     }
 
     virtual void contributeHR() override;
@@ -37,6 +38,8 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     virtual void contributeHk(int ik) override;
 
   private:
+
+    Plus_U *dftu; // mohan add 20251107
 
     bool HR_fixed_done = false;
 

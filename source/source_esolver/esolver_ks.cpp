@@ -15,6 +15,7 @@
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_io/print_info.h" // print_parameters
 #include "source_psi/setup_psi.h" // mohan add 20251009
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 namespace ModuleESolver
 {
@@ -285,7 +286,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 	bool converged_u = true;
 	// to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-	if (inp.dft_plus_u)
+	if (PARAM.inp.dft_plus_u)
 	{
 		converged_u = this->dftu.u_converged();
 	}

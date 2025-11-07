@@ -37,17 +37,31 @@ class Plus_U
     void cal_energy_correction(const UnitCell& ucell, const int istep);
 
     // mohan change the function to static, 20251106
-    static double get_energy(){return energy_u;}
+	static double get_energy()
+	{
+		return Plus_U::energy_u;
+	}
+
+	static void set_energy(const double &e)
+	{ 
+		Plus_U::energy_u = e; 
+	}
+
+	static void set_double_energy() // mohan add 20251107
+	{ 
+		Plus_U::energy_u *= 2.0;
+	}
 
     void uramping_update(); // update U by uramping
     bool u_converged(); // check if U is converged
 
-    std::vector<double> U = {}; // U (Hubbard parameter U)
-    std::vector<double> U0; // U0 (target Hubbard parameter U0)
-    std::vector<int> orbital_corr = {}; //
-    double uramping; // increase U by uramping, default is -1.0
-    int omc; // occupation matrix control
-    int mixing_dftu; //whether to mix locale
+    // mohan change these parameters to static, 2025-11-07
+    static std::vector<double> U; // U (Hubbard parameter U)
+    static std::vector<double> U0; // U0 (target Hubbard parameter U0)
+    static std::vector<int> orbital_corr; //
+    static double uramping; // increase U by uramping, default is -1.0
+    static int omc; // occupation matrix control
+    static int mixing_dftu; //whether to mix locale
 
   private:
 
@@ -287,7 +301,7 @@ private:
     //=============================================================
 
   public:
-    bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
+    static bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
     void cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx);
 
   private:
@@ -324,6 +338,8 @@ private:
 #endif
 };
 
+
+/*
 #ifdef __LCAO
 template <typename T>
 void dftu_cal_occup_m(const int iter,
@@ -333,6 +349,7 @@ void dftu_cal_occup_m(const int iter,
                       const double& mixing_beta,
                       hamilt::Hamilt<T>* p_ham);
 #endif
+*/
 
 
 #endif

@@ -69,19 +69,20 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
 
 template <typename TK>
 void sparse_format::cal_HSR(const UnitCell& ucell,
-                            const Parallel_Orbitals& pv,
-                            LCAO_HS_Arrays& HS_Arrays,
-                            const Grid_Driver& grid,
-                            const int& current_spin,
-                            const double& sparse_thr,
-                            const int (&nmp)[3],
-                            hamilt::Hamilt<TK>* p_ham
+		Plus_U &dftu, // mohan add 20251107
+		const Parallel_Orbitals& pv,
+		LCAO_HS_Arrays& HS_Arrays,
+		const Grid_Driver& grid,
+		const int& current_spin,
+		const double& sparse_thr,
+		const int (&nmp)[3],
+		hamilt::Hamilt<TK>* p_ham
 #ifdef __EXX
-                            ,
-                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+		,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
-)
+		)
 {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
@@ -143,17 +144,15 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
     {
         if (nspin == 1 || nspin == 2)
         {
-            cal_HR_dftu(pv, HS_Arrays.all_R_coor, HS_Arrays.SR_sparse, HS_Arrays.HR_sparse, current_spin, sparse_thr);
+            cal_HR_dftu(dftu, pv, HS_Arrays.all_R_coor, 
+              HS_Arrays.SR_sparse, HS_Arrays.HR_sparse, current_spin, sparse_thr);
         }
         else if (nspin == 4)
         {
-            cal_HR_dftu_soc(pv,
-                            HS_Arrays.all_R_coor,
-                            HS_Arrays.SR_soc_sparse,
-                            HS_Arrays.HR_soc_sparse,
-                            current_spin,
-                            sparse_thr);
-        }
+			cal_HR_dftu_soc(dftu, pv, HS_Arrays.all_R_coor,
+			  HS_Arrays.SR_soc_sparse, HS_Arrays.HR_soc_sparse,
+		      current_spin, sparse_thr);
+		}
         else
         {
             ModuleBase::WARNING_QUIT("cal_HSR", "check the value of nspin.");
@@ -374,45 +373,51 @@ void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
 }
 
 template void sparse_format::cal_HSR<double>(
-    const UnitCell& ucell,
-    const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    const Grid_Driver& grid,
-    const int& current_spin,
-    const double& sparse_thr,
-    const int (&nmp)[3],
-    hamilt::Hamilt<double>* p_ham
+		const UnitCell& ucell,
+		Plus_U &dftu, // mohan add 20251107
+		const Parallel_Orbitals& pv,
+		LCAO_HS_Arrays& HS_Arrays,
+		const Grid_Driver& grid,
+		const int& current_spin,
+		const double& sparse_thr,
+		const int (&nmp)[3],
+		hamilt::Hamilt<double>* p_ham
 #ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+		,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
-);
+		);
+
 template void sparse_format::cal_HSR<std::complex<double>>(
-    const UnitCell& ucell,
-    const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    const Grid_Driver& grid,
-    const int& current_spin,
-    const double& sparse_thr,
-    const int (&nmp)[3],
-    hamilt::Hamilt<std::complex<double>>* p_ham
+		const UnitCell& ucell,
+		Plus_U &dftu, // mohan add 20251107
+		const Parallel_Orbitals& pv,
+		LCAO_HS_Arrays& HS_Arrays,
+		const Grid_Driver& grid,
+		const int& current_spin,
+		const double& sparse_thr,
+		const int (&nmp)[3],
+		hamilt::Hamilt<std::complex<double>>* p_ham
 #ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+		,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
-);
+		);
+
 template void sparse_format::cal_HContainer<double>(
     const Parallel_Orbitals& pv,
     const double& sparse_thr,
     const hamilt::HContainer<double>& hR,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
+
 template void sparse_format::cal_HContainer<double, std::complex<double>>(
     const Parallel_Orbitals& pv,
     const double& sparse_thr,
     const hamilt::HContainer<double>& hR,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+
 template void sparse_format::cal_HContainer<std::complex<double>>(
     const Parallel_Orbitals& pv,
     const double& sparse_thr,

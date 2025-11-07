@@ -7,6 +7,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_pw/module_pwdft/global.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace ModuleIO
 {
@@ -19,6 +20,7 @@ void output_HSR(const UnitCell& ucell,
                 LCAO_HS_Arrays& HS_Arrays,
                 const Grid_Driver& grid, // mohan add 2024-04-06
                 const K_Vectors& kv,
+		        Plus_U &dftu, // mohan add 20251107
                 hamilt::Hamilt<TK>* p_ham,
 #ifdef __EXX
                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,

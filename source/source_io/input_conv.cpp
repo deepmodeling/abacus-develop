@@ -213,16 +213,16 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
-        GlobalC::dftu.omc = PARAM.inp.omc;
-        GlobalC::dftu.orbital_corr = PARAM.inp.orbital_corr;
-        GlobalC::dftu.uramping = PARAM.globalv.uramping;
-        GlobalC::dftu.mixing_dftu = PARAM.inp.mixing_dftu;
-        GlobalC::dftu.U = PARAM.globalv.hubbard_u;
-        GlobalC::dftu.U0 = PARAM.globalv.hubbard_u;
+        Plus_U::Yukawa = PARAM.inp.yukawa_potential;
+        Plus_U::omc = PARAM.inp.omc;
+        Plus_U::orbital_corr = PARAM.inp.orbital_corr;
+        Plus_U::uramping = PARAM.globalv.uramping;
+        Plus_U::mixing_dftu = PARAM.inp.mixing_dftu;
+        Plus_U::U = PARAM.globalv.hubbard_u;
+        Plus_U::U0 = PARAM.globalv.hubbard_u;
         if (PARAM.globalv.uramping > 0.01)
         {
-            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), PARAM.inp.ntype);
+            ModuleBase::GlobalFunc::ZEROS(Plus_U::U.data(), PARAM.inp.ntype);
         }
     }
 

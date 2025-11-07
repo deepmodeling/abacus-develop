@@ -21,7 +21,19 @@
 #include <vector>
 
  // mohan add 2025-11-06
-int Plus_U::energy_u = 0.0;
+double Plus_U::energy_u = 0.0;
+
+std::vector<double> Plus_U::U = {}; // U (Hubbard parameter U)
+
+std::vector<double> Plus_U::U0 = {}; // U0 (target Hubbard parameter U0)
+
+std::vector<int> Plus_U::orbital_corr = {}; //
+
+double Plus_U::uramping = 0.0; // increase U by uramping, default is -1.0
+
+int Plus_U::omc=0; // occupation matrix control
+
+int Plus_U::mixing_dftu=0; //whether to mix locale
 
 Plus_U::Plus_U()
 {}
@@ -440,6 +452,7 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
     }
 }
 
+/*
 //! dftu occupation matrix for gamma only using dm(double)
 template <>
 void dftu_cal_occup_m(const int iter,
@@ -463,5 +476,6 @@ void dftu_cal_occup_m(const int iter,
 {
     GlobalC::dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
 }
+*/
 
 #endif

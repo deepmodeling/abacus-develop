@@ -10,7 +10,6 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 #include "source_lcao/setup_dm.h" // mohan add 2025-10-30
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
 
 #include <memory>
 
@@ -79,8 +78,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     //! Add density matrix class, mohan add 2025-10-30
     LCAO_domain::Setup_DM<TK> dmat;
 
-    //! DFT+U method, mohan add 2025-11-05
-    Plus_U dftu;
 
     // For deepks method, mohan add 2025-10-08
     Setup_DeePKS<TK> deepks;

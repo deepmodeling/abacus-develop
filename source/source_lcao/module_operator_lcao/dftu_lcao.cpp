@@ -186,7 +186,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // will update this->dftu->locale and this->dftu->EU
 		if (this->current_spin == 0) 
 		{
-			this->dftu->EU = 0.0;
+            this->dftu->set_energy(0.0);
 		}
 	}
     ModuleBase::timer::tick("DFTU", "contributeHR");
@@ -272,7 +272,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         ModuleBase::timer::tick("DFTU", "cal_vu");
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU_tmp(occ.size());
-        this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), this->dftu->EU);
+
+        double u_energy = 0.0;
+        this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), u_energy);
+        Plus_U::set_energy(u_energy);
+
         // transfer occ from pauli matrix format to normal format
         std::vector<TR> VU(occ.size());
         this->transfer_vu(VU_tmp, VU);
@@ -311,7 +315,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // energy correction for NSPIN=1
 	if (this->nspin == 1) 
 	{
-		this->dftu->EU *= 2.0;
+        this->dftu->set_double_energy();
 	}
 	// for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
 	if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
