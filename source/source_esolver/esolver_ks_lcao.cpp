@@ -272,7 +272,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
-                       this->pw_rho, this->solvent, this->deepks,
+                       this->pw_rho, this->solvent, this->dftu, this->deepks,
                        this->exx_nao, &ucell.symm);
 
     // delete RA after cal_force

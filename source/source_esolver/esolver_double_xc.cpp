@@ -397,6 +397,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->kv,
                        this->pw_rho,
                        this->solvent,
+                       this->dftu,
                        this->deepks,
 					   this->exx_nao,
 					   &ucell.symm);

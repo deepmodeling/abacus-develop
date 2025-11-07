@@ -35,6 +35,8 @@ int Plus_U::omc=0; // occupation matrix control
 
 int Plus_U::mixing_dftu=0; //whether to mix locale
 
+bool Plus_U::Yukawa=false; // whether to use Yukawa potential
+
 Plus_U::Plus_U()
 {}
 
