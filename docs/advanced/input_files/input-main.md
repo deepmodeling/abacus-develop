@@ -3882,10 +3882,13 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   Type of electric field in the time domain.
   - 0: Gaussian type function:
+
   $$
     E(t) = A \cos\left[2\pi f(t-t_0)+\varphi\right]\exp\left[-\frac{(t-t_0)^2}{2\sigma^2}\right]
   $$
+
   - 1: Trapezoid function:
+
   $$
     E(t) =
     \begin{cases}
@@ -3895,11 +3898,15 @@ These variables are used to control berry phase and wannier90 interface paramete
         0, & t \geqslant t_3
     \end{cases}
   $$
+
   - 2: Trigonometric function:
+
   $$
     E(t) = A \cos(2\pi f_1 t + \varphi_1) \sin^2(2\pi f_2 t + \varphi_2)
   $$
+
   - 3: Heaviside step function:
+
   $$
     E(t) =
     \begin{cases}
@@ -3907,6 +3914,7 @@ These variables are used to control berry phase and wannier90 interface paramete
         0, & t \geqslant t_0
     \end{cases}
   $$
+
 - **Default**: 0
 
 ### td_tstart
