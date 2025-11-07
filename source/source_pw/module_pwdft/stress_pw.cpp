@@ -8,6 +8,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
+                                           Plus_U &dftu, // mhan add 2025-11-07 
                                            const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
@@ -119,7 +120,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // DFT+U and DeltaSpin stress
     if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
     {
-        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
+        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, dftu, d_psi_in, p_symm);
     }
 
     // EXX PW stress

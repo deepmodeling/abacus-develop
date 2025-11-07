@@ -25,7 +25,7 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     OperatorDFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
 								  hamilt::HContainer<TR>* hR_in,
-								  ModuleDFTU::DFTU* dftu_in, // mohan add 2025-11-05
+								  Plus_U* dftu_in, // mohan add 2025-11-05
 								  const std::vector<int>& isk_in)
         : isk(isk_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
