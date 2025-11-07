@@ -37,7 +37,6 @@ class ElecStateLCAO : public ElecState
 
     double get_spin_constrain_energy() override;
 
-#ifdef __PEXSI
     // use for pexsi
 
     /**
@@ -46,8 +45,9 @@ class ElecStateLCAO : public ElecState
      * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be
      * stored in DensityMatrix::pexsi_EDM
      */
-    void dm2rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
-#endif
+	void dm2rho(std::vector<TK*> pexsi_DM, 
+			std::vector<TK*> pexsi_EDM, 
+			DensityMatrix<TK, double>* dm);
 
 };
 

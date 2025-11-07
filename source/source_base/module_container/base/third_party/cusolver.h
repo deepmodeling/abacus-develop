@@ -3,6 +3,16 @@
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
+
+// #include <base/third_party/cusolver_utils.h> // traits, needed if generic API is used.
+// header provided by cusolver, including some data types and macros.
+// see https://github.com/NVIDIA/CUDALibrarySamples/blob/master/cuSOLVER/utils/cusolver_utils.h
+// The cuSolverDN library provides two different APIs; legacy and generic.
+// https://docs.nvidia.com/cuda/cusolver/index.html#naming-conventions
+// now only legacy APIs are used, while the general APIs have the potential to simplify code implementation.
+// for example, cucusolverDnXpotrf/getrf/geqrf/sytrf
+// More tests are needed to confirm that the generic APIs are operating normally, as they are not yet fully supported.
+
 #include <base/macros/cuda.h>
 
 namespace container {
@@ -1135,6 +1145,433 @@ void getrs(cusolverDnHandle_t& cusolver_handle, const char& trans, const int& n,
 
     cudaErrcheck(cudaFree(d_info));
 }
+
+// QR decomposition
+// geqrf, orgqr
+// Note:
+// there are two cusolver geqrf
+// one is cusolverDn<t>geqrf
+// one is cusolverDnXgeqrf
+// which one is better?
+//
+// template<typename T>
+// static inline void geqrf(
+//     cusolverDnHandle_t& cusolver_handle,
+//     const int64_t m,
+//     const int64_t n,
+//     T* d_A,           // device matrix A (m x n, column-major)
+//     const int64_t lda,
+//     T* d_tau         // output: scalar factors of elementary reflectors
+// ) {
+//     // query workspace size
+//     int *d_info = nullptr;    /* error info */
+//
+//     size_t workspaceInBytesOnDevice = 0; /* size of workspace */
+//     void *d_work = nullptr;              /* device workspace */
+//     size_t workspaceInBytesOnHost = 0;   /* size of workspace */
+//     void *h_work = nullptr;              /* host workspace */
+//
+//     cudaErrcheck(cudaMalloc(reinterpret_cast<void **>(&d_info), sizeof(int)));
+//
+//     cusolverDnParams_t params = NULL;
+//     cusolverErrcheck(cusolverDnCreateParams(&params));
+//
+//     cusolverErrcheck(cusolverDnXgeqrf_bufferSize(
+//         cusolver_handle,
+//         params,
+//         m, n,
+//         traits<T>::cuda_data_type,
+//         d_A,
+//         lda,
+//         traits<T>::cuda_data_type,
+//         d_tau,
+//         traits<T>::cuda_data_type,
+//         &workspaceInBytesOnDevice,
+//         &workspaceInBytesOnHost
+//     ));
+//
+//     // allocate device workspace
+//     cudaErrcheck(cudaMalloc(reinterpret_cast<void **>(&d_work), workspaceInBytesOnDevice));
+//
+//     // allocate host workspace
+//     if (workspaceInBytesOnHost > 0) {
+//         h_work = reinterpret_cast<void *>(malloc(workspaceInBytesOnHost));
+//         if (h_work == nullptr) {
+//             throw std::runtime_error("Error: h_work not allocated.");
+//         }
+//     }
+//
+//     // QR factorization
+//     cusolverErrcheck(cusolverDnXgeqrf(
+//         cusolver_handle,
+//         params,
+//         m, n,
+//         traits<T>::cuda_data_type,
+//         d_A,
+//         lda,
+//         traits<T>::cuda_data_type,
+//         d_tau,
+//         traits<T>::cuda_data_type,
+//         d_work,
+//         workspaceInBytesOnDevice,
+//         h_work,
+//         workspaceInBytesOnHost,
+//         d_info
+//     ));
+//
+//     // check info
+//     int h_info = 0;
+//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+//     if (h_info != 0) {
+//         // std::printf("%d-th parameter is wrong \n", -info);
+//         // print error message
+//         std::cout << -h_info << "th parameter is wrong" << std::endl;
+//         throw std::runtime_error("geqrf: failed to compute QR decomposition");
+//     }
+//
+//     // clean workspace
+//     cudaErrcheck(cudaFree(d_info));
+//     cudaErrcheck(cudaFree(d_work));
+//     if (h_work) free(h_work);
+//     cusolverErrcheck(cusolverDnDestroyParams(params));
+// }
+
+// geqrf
+
+// --- float ---
+static inline void geqrf(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    float* d_A,
+    const int lda,
+    float* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnSgeqrf_bufferSize(
+        cusolver_handle, m, n, d_A, lda, &lwork));
+
+    float* d_work = nullptr;
+    int*   d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(float) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnSgeqrf(
+        cusolver_handle, m, n, d_A, lda, d_tau, d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "geqrf (S): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("geqrf (S): QR factorization failed");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- double ---
+static inline void geqrf(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    double* d_A,
+    const int lda,
+    double* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnDgeqrf_bufferSize(
+        cusolver_handle, m, n, d_A, lda, &lwork));
+
+    double* d_work = nullptr;
+    int*    d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(double) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnDgeqrf(
+        cusolver_handle, m, n, d_A, lda, d_tau, d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "geqrf (D): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("geqrf (D): QR factorization failed");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- std::complex<float> ---
+static inline void geqrf(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    std::complex<float>* d_A,
+    const int lda,
+    std::complex<float>* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnCgeqrf_bufferSize(
+        cusolver_handle, m, n,
+        reinterpret_cast<cuComplex*>(d_A),
+        lda,
+        &lwork  // ← 这里才是 lwork 的地址！
+    ));
+
+    cuComplex* d_work = nullptr;
+    int*       d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(cuComplex) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnCgeqrf(
+        cusolver_handle, m, n,
+        reinterpret_cast<cuComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuComplex*>(d_tau),  // ← 这里才是 d_tau
+        d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "geqrf (C): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("geqrf (C): QR factorization failed");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- std::complex<double> ---
+static inline void geqrf(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    std::complex<double>* d_A,
+    const int lda,
+    std::complex<double>* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnZgeqrf_bufferSize(
+        cusolver_handle, m, n,
+        reinterpret_cast<cuDoubleComplex*>(d_A),
+        lda,
+        &lwork
+    ));
+
+    cuDoubleComplex* d_work = nullptr;
+    int*             d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(cuDoubleComplex) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnZgeqrf(
+        cusolver_handle, m, n,
+        reinterpret_cast<cuDoubleComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuDoubleComplex*>(d_tau),
+        d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "geqrf (Z): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("geqrf (Z): QR factorization failed");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+
+// --- float ---
+static inline void orgqr(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    const int k,
+    float* d_A,
+    const int lda,
+    float* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnSorgqr_bufferSize(
+        cusolver_handle, m, n, k, d_A, lda, d_tau, &lwork));
+
+    float* d_work = nullptr;
+    int*   d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(float) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnSorgqr(
+        cusolver_handle, m, n, k, d_A, lda, d_tau, d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "orgqr (S): info = " << h_info << " (failure at parameter " << -h_info << ")" << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("orgqr (S): failed to generate Q matrix");
+    }
+
+    // clean workspace
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- double ---
+static inline void orgqr(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    const int k,
+    double* d_A,
+    const int lda,
+    double* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnDorgqr_bufferSize(
+        cusolver_handle, m, n, k, d_A, lda, d_tau, &lwork));
+
+    double* d_work = nullptr;
+    int*    d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(double) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnDorgqr(
+        cusolver_handle, m, n, k, d_A, lda, d_tau, d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "orgqr (D): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("orgqr (D): failed to generate Q matrix");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- std::complex<float> ---
+static inline void orgqr(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    const int k,
+    std::complex<float>* d_A,
+    const int lda,
+    std::complex<float>* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnCungqr_bufferSize(
+        cusolver_handle, m, n, k,
+        reinterpret_cast<cuComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuComplex*>(d_tau),
+        &lwork));
+
+    cuComplex* d_work = nullptr;
+    int*       d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(cuComplex) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnCungqr(
+        cusolver_handle, m, n, k,
+        reinterpret_cast<cuComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuComplex*>(d_tau),
+        d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "orgqr (C): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("orgqr (C): failed to generate Q matrix");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+// --- std::complex<double> ---
+static inline void orgqr(
+    cusolverDnHandle_t& cusolver_handle,
+    const int m,
+    const int n,
+    const int k,
+    std::complex<double>* d_A,
+    const int lda,
+    std::complex<double>* d_tau
+) {
+    int lwork = 0;
+    cusolverErrcheck(cusolverDnZungqr_bufferSize(
+        cusolver_handle, m, n, k,
+        reinterpret_cast<cuDoubleComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuDoubleComplex*>(d_tau),
+        &lwork));
+
+    cuDoubleComplex* d_work = nullptr;
+    int*             d_info = nullptr;
+
+    if (lwork > 0) {
+        cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_work), sizeof(cuDoubleComplex) * lwork));
+    }
+    cudaErrcheck(cudaMalloc(reinterpret_cast<void**>(&d_info), sizeof(int)));
+
+    cusolverErrcheck(cusolverDnZungqr(
+        cusolver_handle, m, n, k,
+        reinterpret_cast<cuDoubleComplex*>(d_A),
+        lda,
+        reinterpret_cast<cuDoubleComplex*>(d_tau),
+        d_work, lwork, d_info));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        std::cout << "orgqr (Z): info = " << h_info << std::endl;
+        if (d_work) cudaErrcheck(cudaFree(d_work));
+        cudaErrcheck(cudaFree(d_info));
+        throw std::runtime_error("orgqr (Z): failed to generate Q matrix");
+    }
+
+    if (d_work) cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
 
 } // namespace cuSolverConnector
 } // namespace container

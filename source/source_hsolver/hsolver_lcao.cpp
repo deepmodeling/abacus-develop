@@ -112,7 +112,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<T> pe(ParaV);
+        DiagoPexsi<TK> pe(ParaV);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
@@ -121,10 +121,10 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             pe.diag(pHamilt, psi, nullptr);
         }
-        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
-        _pes->dm2rho(dm, pe.EDM);
+        _pes->dm2rho(pe.DM, pe.EDM, &dm);
 #endif
     }
 
