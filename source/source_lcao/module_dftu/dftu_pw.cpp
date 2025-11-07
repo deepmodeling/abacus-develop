@@ -5,16 +5,14 @@
 #include "source_base/timer.h"
 
 
-namespace ModuleDFTU
-{
-DFTU* DFTU::get_instance()
-{
-    return &GlobalC::dftu;
-}
 /// calculate occupation matrix for DFT+U
-void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matrix& wg_in, const UnitCell& cell, const double& mixing_beta)
+void Plus_U::cal_occ_pw(const int iter, 
+		const void* psi_in, 
+		const ModuleBase::matrix& wg_in, 
+		const UnitCell& cell, 
+		const double& mixing_beta)
 {
-    ModuleBase::timer::tick("DFTU", "cal_occ_pw");
+    ModuleBase::timer::tick("Plus_U", "cal_occ_pw");
     this->copy_locale(cell);
     this->zero_locale(cell);
 
@@ -137,7 +135,7 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
     }
 #endif
 
-    this->EU = 0.0;
+    Plus_U::energy_u = 0.0;
     // reduce mag from all k-pools
     for(int iat = 0; iat < cell.nat; iat++)
     {
@@ -148,7 +146,12 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
             continue;
         }
         const int size = (2 * target_l + 1) * (2 * target_l + 1);
-        Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, PARAM.globalv.nproc_in_pool, this->locale[iat][target_l][0][0].c, size * PARAM.inp.nspin);
+
+		Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
+				PARAM.globalv.nproc_in_pool, 
+				this->locale[iat][target_l][0][0].c, 
+				size * PARAM.inp.nspin);
+
         //update effective potential
         const double u_value = this->U[it];
         std::complex<double>* vu_iat = &(this->eff_pot_pw[this->eff_pot_pw_index[iat]]);
@@ -157,8 +160,10 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
         {
             for (int m2 = 0; m2 < m_size; m2++)
             {
-                vu_iat[m1 * m_size + m2] = u_value * (1.0 * (m1 == m2) - this->locale[iat][target_l][0][0].c[m2 * m_size + m1]);
-                this->EU += u_value * 0.25 * this->locale[iat][target_l][0][0].c[m2 * m_size + m1] * this->locale[iat][target_l][0][0].c[m1 * m_size + m2];
+                vu_iat[m1 * m_size + m2] = u_value * 
+                  (1.0 * (m1 == m2) - this->locale[iat][target_l][0][0].c[m2 * m_size + m1]);
+                Plus_U::energy_u += u_value * 0.25 * this->locale[iat][target_l][0][0].c[m2 * m_size + m1] 
+                         * this->locale[iat][target_l][0][0].c[m1 * m_size + m2];
             }
         }
         for (int is = 1; is < 4; ++is)
@@ -168,8 +173,11 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
             {
                 for (int m2 = 0; m2 < m_size; m2++)
                 {
-                    vu_iat[start + m1 * m_size + m2] = u_value * (0 - this->locale[iat][target_l][0][0].c[start + m2 * m_size + m1]);
-                    this->EU += u_value * 0.25 * this->locale[iat][target_l][0][0].c[start + m2 * m_size + m1] * this->locale[iat][target_l][0][0].c[start + m1 * m_size + m2];
+                    vu_iat[start + m1 * m_size + m2] = u_value * 
+                      (0 - this->locale[iat][target_l][0][0].c[start + m2 * m_size + m1]);
+                    Plus_U::energy_u += u_value * 0.25 
+                             * this->locale[iat][target_l][0][0].c[start + m2 * m_size + m1] 
+                             * this->locale[iat][target_l][0][0].c[start + m1 * m_size + m2];
                 }
             }
         }
@@ -201,12 +209,11 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
         this->mix_locale(cell, mixing_beta);
     }
     // update effective potential
-    ModuleBase::timer::tick("DFTU", "cal_occ_pw");
+    ModuleBase::timer::tick("Plus_U", "cal_occ_pw");
 }
 /// calculate the local DFT+U effective potential matrix for PW base.
-void DFTU::cal_VU_pot_pw(const int spin)
+void Plus_U::cal_VU_pot_pw(const int spin)
 {
 
 }
 
-} // namespace ModuleDFTU

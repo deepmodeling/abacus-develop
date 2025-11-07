@@ -29,6 +29,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
                                        surchem& solvent,
+                                       const Plus_U *p_dftu, //mohan add 2025-11-06
                                        const pseudopot_cell_vl* locpp,
                                        const pseudopot_cell_vnl* p_nlpp,
                                        K_Vectors* pkv,
@@ -70,9 +71,10 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         }
 
         // DFT+U and DeltaSpin
+        // here maybe a bug when OFDFT calls +U, mohan add 20251107
         if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
-            this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, psi_in);
+            this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, *p_dftu, psi_in);
         }
     }
 

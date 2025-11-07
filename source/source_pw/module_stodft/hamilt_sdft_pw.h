@@ -26,7 +26,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
                  K_Vectors* p_kv,
                  pseudopot_cell_vnl* nlpp,
                  const UnitCell* ucell,
-                 const int& npol,
+				 const int& npol,
                  Real* emin_in,
                  Real* emax_in);
     /**

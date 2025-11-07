@@ -19,6 +19,7 @@
 #endif
 
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
 
 namespace hamilt
 {
@@ -48,6 +49,7 @@ class HamiltLCAO : public Hamilt<TK>
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
 			   elecstate::DensityMatrix<TK, double>* DM_in,
+			   Plus_U* p_dftu, // mohan add 2025-11-05
 			   Setup_DeePKS<TK> &deepks,
 			   const int istep, 
 			   Exx_NAO<TK> &exx_nao);

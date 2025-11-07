@@ -3,6 +3,7 @@
 
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace sparse_format
 {
@@ -39,19 +40,20 @@ std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
 using TAC = std::pair<int, std::array<int, 3>>;
 template <typename TK>
 void cal_HSR(const UnitCell& ucell,
-             const Parallel_Orbitals& pv,
-             LCAO_HS_Arrays& HS_Arrays,
-             const Grid_Driver& grid,
-             const int& current_spin,
-             const double& sparse_thr,
-             const int (&nmp)[3],
-             hamilt::Hamilt<TK>* p_ham
+		Plus_U &dftu, // mohan add 2025-11-07
+		const Parallel_Orbitals& pv,
+		LCAO_HS_Arrays& HS_Arrays,
+		const Grid_Driver& grid,
+		const int& current_spin,
+		const double& sparse_thr,
+		const int (&nmp)[3],
+		hamilt::Hamilt<TK>* p_ham
 #ifdef __EXX
-             ,
-             const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-             const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+		,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+		const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
-);
+		);
 
 template <typename TI, typename TO = TI>
 void cal_HContainer(const Parallel_Orbitals& pv,

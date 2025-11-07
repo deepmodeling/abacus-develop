@@ -7,6 +7,7 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_psi/psi.h" // use electronic wave functions
 #include "source_hamilt/hamilt.h" // use Hamiltonian
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace ModuleESolver
 {
@@ -60,6 +61,9 @@ class ESolver_KS : public ESolver_FP
 
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
+
+    //! DFT+U method, mohan add 2025-11-07
+    Plus_U dftu;
 
     std::string basisname;      //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0; //! number of electrons

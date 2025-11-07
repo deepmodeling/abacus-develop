@@ -19,8 +19,9 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
                           const Grid_Driver& grid, // mohan add 2024-04-06
-                          const K_Vectors& kv,
-                          hamilt::Hamilt<TK>* p_ham,
+						  const K_Vectors& kv,
+						  Plus_U &dftu, // mohan add 20251107
+						  hamilt::Hamilt<TK>* p_ham,
 #ifdef __EXX
                           const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
                           const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc,
@@ -48,18 +49,19 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
     {
         const int spin_now = 0;
         // jingan add 2021-6-4, modify 2021-12-2
-        sparse_format::cal_HSR(ucell,
-                               pv,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham
+		sparse_format::cal_HSR(ucell,
+				dftu, // mohan add 20251107
+				pv,
+				HS_Arrays,
+				grid,
+				spin_now,
+				sparse_thr,
+				kv.nmp,
+				p_ham
 #ifdef __EXX
-                               ,
-                               Hexxd,
-                               Hexxc
+				,
+				Hexxd,
+				Hexxc
 #endif
         );
     }
@@ -68,20 +70,21 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
         int spin_now = 1;
 
         // save HR of spin down first (the current spin always be down)
-        sparse_format::cal_HSR(ucell,
-                               pv,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham
+		sparse_format::cal_HSR(ucell,
+				dftu,
+				pv,
+				HS_Arrays,
+				grid,
+				spin_now,
+				sparse_thr,
+				kv.nmp,
+				p_ham
 #ifdef __EXX
-                               ,
-                               Hexxd,
-                               Hexxc
+				,
+				Hexxd,
+				Hexxc
 #endif
-        );
+				);
 
         // cal HR of the spin up
         if (PARAM.inp.vl_in_h)
@@ -92,18 +95,19 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
             spin_now = 0;
         }
 
-        sparse_format::cal_HSR(ucell,
-                               pv,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham
+		sparse_format::cal_HSR(ucell,
+				dftu,
+				pv,
+				HS_Arrays,
+				grid,
+				spin_now,
+				sparse_thr,
+				kv.nmp,
+				p_ham
 #ifdef __EXX
-                               ,
-                               Hexxd,
-                               Hexxc
+				,
+				Hexxd,
+				Hexxc
 #endif
         );
     }
@@ -305,6 +309,7 @@ template void ModuleIO::output_HSR<double>(
     LCAO_HS_Arrays& HS_Arrays,
     const Grid_Driver& grid,
     const K_Vectors& kv,
+	Plus_U &dftu, // mohan add 20251107
     hamilt::Hamilt<double>* p_ham,
 #ifdef __EXX
     const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
@@ -324,6 +329,7 @@ template void ModuleIO::output_HSR<std::complex<double>>(
     LCAO_HS_Arrays& HS_Arrays,
     const Grid_Driver& grid,
     const K_Vectors& kv,
+	Plus_U &dftu, // mohan add 20251107
     hamilt::Hamilt<std::complex<double>>* p_ham,
 #ifdef __EXX
     const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,

@@ -15,6 +15,7 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
         const double &hsolver_error,
         const double &scf_thr,
         const double &scf_ene_thr,
+        const bool converged_u, // mohan add 2025-11-06
 		const Input_para& inp) // input parameters
 {
 
@@ -36,17 +37,8 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
         // drho will be 0 at p_chgmix->mixing_restart step, which is
         // not ground state
         bool not_restart_step = !(iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0);
-        // SCF will continue if U is not converged for uramping calculation
-        bool is_U_converged = true;
-        // to avoid unnecessary dependence on dft+u, refactor is needed
-#ifdef __LCAO
-        if (inp.dft_plus_u)
-        {
-            is_U_converged = GlobalC::dftu.u_converged();
-        }
-#endif
 
-        conv_esolver = (drho < scf_thr && not_restart_step && is_U_converged);
+        conv_esolver = (drho < scf_thr && not_restart_step && converged_u);
 
         // add energy threshold for SCF convergence
         if (scf_ene_thr > 0.0)
@@ -66,8 +58,6 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
                     = (std::abs(pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < scf_ene_thr);
             }
         }
-
-
 
         // If drho < hsolver_error in the first iter or drho < scf_thr, we
         // do not change rho.
@@ -127,9 +117,9 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
 }
 
 
-
 void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
+        Plus_U &dftu, // mohan add 2025-11-06
 		const Input_para& inp) // input parameters
 {
     ModuleBase::TITLE("module_charge", "chgmixing_ks_pw");
@@ -148,12 +138,11 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
         if (inp.dft_plus_u)
         {
-            auto* dftu = ModuleDFTU::DFTU::get_instance();
-            if (dftu->uramping > 0.01 && !dftu->u_converged())
+            if (dftu.uramping > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }
-            if (dftu->uramping > 0.01)
+            if (dftu.uramping > 0.01)
             {
                 bool do_uramping = true;
                 if (inp.sc_mag_switch)
@@ -167,11 +156,11 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 				}
 				if (do_uramping)
 				{
-					dftu->uramping_update(); // update U by uramping if uramping > 0.01
+					dftu.uramping_update(); // update U by uramping if uramping > 0.01
 					std::cout << " U-Ramping! Current U = ";
-					for (int i = 0; i < dftu->U0.size(); i++)
+					for (int i = 0; i < dftu.U0.size(); i++)
 					{
-						std::cout << dftu->U[i] * ModuleBase::Ry_to_eV << " ";
+						std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
 					}
 					std::cout << " eV " << std::endl;
 				}
@@ -184,6 +173,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
 void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
+        Plus_U &dftu, // mohan add 2025-11-06
         const int nnr, // dimension of density matrix
 		const Input_para& inp) // input parameters
 {
@@ -195,12 +185,12 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         p_chgmix->mixing_restart_count = 0;
         // this output will be removed once the feeature is stable
-        if (GlobalC::dftu.uramping > 0.01)
+        if (dftu.uramping > 0.01)
         {
             std::cout << " U-Ramping! Current U = ";
-            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+            for (int i = 0; i < dftu.U0.size(); i++)
             {
-                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
             }
             std::cout << " eV " << std::endl;
         }
@@ -213,17 +203,17 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mixing_restart_count++;
         if (inp.dft_plus_u)
         {
-            GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
-            if (GlobalC::dftu.uramping > 0.01)
+            dftu.uramping_update(); // update U by uramping if uramping > 0.01
+            if (dftu.uramping > 0.01)
             {
                 std::cout << " U-Ramping! Current U = ";
-                for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+                for (int i = 0; i < dftu.U0.size(); i++)
                 {
-                    std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                    std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
                 }
                 std::cout << " eV " << std::endl;
             }
-            if (GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged())
+            if (dftu.uramping > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }
