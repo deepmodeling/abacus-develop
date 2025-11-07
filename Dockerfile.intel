@@ -74,14 +74,116 @@ RUN wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-
     unzip -q /tmp/libtorch.zip -d /opt && rm -f /tmp/libtorch.zip
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake:${CMAKE_PREFIX_PATH}
 
+
+###### PEXSI PART: pexsi and gklib and metis and parmetis and superlu_dist
+ENV GKLIB_VERSION="master" 
+ENV METIS_VERSION="master"
+ENV PARMETIS_VERSION="main"
+ENV SUPERLU_DIST_VERSION=7.2.0
+ENV PEXSI_VERSION=2.0.0
+ENV GKLIB_ROOT=/usr/local/gklib-${GKLIB_VERSION}
+ENV METIS32_ROOT=/usr/local/metis32-${METIS_VERSION}
+ENV PARMETIS32_ROOT=/usr/local/parmetis32-${PARMETIS_VERSION}
+ENV PEXSI32_ROOT=/usr/local/pexsi32-${PEXSI_VERSION}
+ENV SUPERLU_DIST32_ROOT=/usr/local/superlu_dist32-${SUPERLU_DIST_VERSION}
+
+# 2. install GKlib
+RUN wget https://codeload.github.com/KarypisLab/GKlib/zip/refs/heads/${GKLIB_VERSION} -O GKlib-${GKLIB_VERSION}.zip && \
+    unzip GKlib-${GKLIB_VERSION}.zip && \
+    cd GKlib-${GKLIB_VERSION} && \
+    make config shared=1 prefix=${GKLIB_ROOT} openmp=set && \
+    make -j$(nproc) && \
+    make install && \
+    ls ${GKLIB_ROOT}/lib && \
+    cp ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so && \ 
+    cd / && rm -rf GKlib-${GKLIB_VERSION} GKlib-${GKLIB_VERSION}.zip
+#.so file CANNOT be found otherwise.
+# 2. install METIS
+RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    wget https://codeload.github.com/KarypisLab/METIS/zip/refs/heads/${METIS_VERSION} -O METIS-${METIS_VERSION}.zip && \
+    unzip METIS-${METIS_VERSION}.zip && \
+    cd METIS-${METIS_VERSION} && \
+    make config shared=1 prefix=${METIS32_ROOT} gklib_path=${GKLIB_ROOT} && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf METIS-${METIS_VERSION} METIS-${METIS_VERSION}.zip
+
+# 3. install ParMETIS
+RUN export LD_LIBRARY_PATH=${METIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    wget https://codeload.github.com/KarypisLab/ParMETIS/zip/refs/heads/${PARMETIS_VERSION} -O ParMETIS-${PARMETIS_VERSION}.zip && \
+    unzip ParMETIS-${PARMETIS_VERSION}.zip && \
+    cd ParMETIS-${PARMETIS_VERSION} && \
+    make config shared=1 prefix=${PARMETIS32_ROOT} gklib_path=${GKLIB_ROOT} metis_path=${METIS32_ROOT} && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf ParMETIS-${PARMETIS_VERSION} ParMETIS-${PARMETIS_VERSION}.zip
+
+# 4. install SuperLU_DIST 
+RUN wget https://codeload.github.com/xiaoyeli/superlu_dist/tar.gz/refs/tags/v${SUPERLU_DIST_VERSION} -O v${SUPERLU_DIST_VERSION}.tar.gz && \
+    tar -xzf v${SUPERLU_DIST_VERSION}.tar.gz && \
+    cd superlu_dist-${SUPERLU_DIST_VERSION} && \
+    mkdir build && cd build && \
+    cmake .. \
+    -DTPL_ENABLE_PARMETISLIB=ON \
+    -DTPL_PARMETIS_LIBRARIES="${PARMETIS32_ROOT}/lib/libparmetis.so;${METIS32_ROOT}/lib/libmetis.so;${GKLIB_ROOT}/lib/libGKlib.so" \
+    -DTPL_PARMETIS_INCLUDE_DIRS="${PARMETIS32_ROOT}/include;${METIS32_ROOT}/include;${GKLIB_ROOT}/include" \
+    -DTPL_ENABLE_INTERNAL_BLASLIB=OFF \
+    -DTPL_ENABLE_LAPACKLIB=ON \
+    -DTPL_ENABLE_COMBBLASLIB=OFF \
+    -DTPL_ENABLE_CUDALIB=OFF \
+    -Denable_complex16=ON \
+    -DXSDK_INDEX_SIZE=32 \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX=${SUPERLU_DIST32_ROOT} \
+    -DCMAKE_C_FLAGS="-O3 -fopenmp" \
+    -DCMAKE_CXX_FLAGS="-O3 -fopenmp" \
+    -DXSDK_ENABLE_Fortran=ON \
+    -DCMAKE_Fortran_COMPILER=mpiifx && \                             
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf superlu_dist-${SUPERLU_DIST_VERSION} v${SUPERLU_DIST_VERSION}.tar.gz
+
+###     -DCMAKE_C_COMPILER=mpiicc \
+###     -DCMAKE_CXX_COMPILER=mpiicpc \
+###     -DCMAKE_CUDA_COMPILER=nvcc \
+
+# 5. install PEXSI
+RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    export LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LIBRARY_PATH} && \
+    export PKG_CONFIG_PATH=${SUPERLU_DIST32_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${GKLIB_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH} && \
+    export CPATH=${SUPERLU_DIST32_ROOT}/include:${PARMETIS32_ROOT}/include:${METIS32_ROOT}/include:${GKLIB_ROOT}/include:${CMAKE_PREFIX_PATH} && \
+    export CMAKE_PREFIX_PATH=${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH} && \
+    wget https://bitbucket.org/berkeleylab/pexsi/downloads/pexsi_v${PEXSI_VERSION}.tar.gz && \
+    tar -xzf pexsi_v${PEXSI_VERSION}.tar.gz && \
+    cd pexsi_v${PEXSI_VERSION} && \
+    sed -i 's/^add_pexsi_f_example_exe/# add_pexsi_f_example_exe/g' fortran/CMakeLists.txt && \
+    sed -i 's/^add_pexsi_example_exe/# add_pexsi_example_exe/g' examples/CMakeLists.txt && \
+    sed -i 's/add_executable/# add_executable/g' fortran/CMakeLists.txt && \
+    sed -i 's/add_executable/# add_executable/g' examples/CMakeLists.txt && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=${PEXSI32_ROOT} \
+        -DPEXSI_ENABLE_OPENMP=ON \
+        -DPEXSI_ENABLE_FORTRAN=OFF && \
+    make pexsi -j$(nproc) && \
+    make install && \
+    cd / && rm -rf pexsi_v${PEXSI_VERSION} pexsi_v${PEXSI_VERSION}.tar.gz
+
+###         -DCMAKE_C_COMPILER=mpiicc \
+###        -DCMAKE_CXX_COMPILER=mpiicpc \
+###### END of PEXSI PART
+
 # Clone and build abacus (optional during image build; keep for CI image)
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    export PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH} && \
     export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH} && \
+    export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH} && \
     cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
     cmake -B build \
         -DENABLE_MLALGO=ON \
+        -DENABLE_PEXSI=ON \
         -DENABLE_LIBXC=ON \
         -DENABLE_LIBRI=ON \
         -DENABLE_RAPIDJSON=ON \
@@ -92,5 +194,9 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_RO
     rm -rf /tmp/abacus-develop
         # -DMKL_SYCL=OFF \
         # -DMKL_SYCL_DISTRIBUTED_DFT:BOOL=OFF \
+    # cd /tmp && wget https://github.com/deepmodeling/abacus-develop/archive/refs/tags/v3.9.0.17.zip -O abacus-develop-3.9.0.17.zip && \
+    # unzip abacus-develop-3.9.0.17.zip && \
+    # cd abacus-develop-3.9.0.17 && \
+    # sed -i '3i\#include "source_estate/elecstate_lcao.h"' source/source_lcao/edm.cpp && \
 # Default entry
 CMD ["/bin/bash"]

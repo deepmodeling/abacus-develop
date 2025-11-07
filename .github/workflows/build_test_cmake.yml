@@ -27,7 +27,7 @@ jobs:
             build_args: "-DUSE_CUDA=1"
             name: "Build with CUDA support"
           - tag: gnu
-            build_args: "-DENABLE_LCAO=OFF"
+            build_args: "-DENABLE_LCAO=0"
             name: "Build without LCAO"
           - tag: gnu
             build_args: "-DUSE_ELPA=0 "

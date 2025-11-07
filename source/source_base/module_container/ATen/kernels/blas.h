@@ -10,6 +10,26 @@ namespace container {
 namespace kernels {
 
 template <typename T, typename Device>
+struct blas_copy {
+    // DCOPY copies a vector, x, to a vector, y.
+    void operator()(
+        const int n,
+        const T *x,
+        const int incx,
+        T *y,
+        const int incy);
+};
+
+template <typename T, typename Device>
+struct blas_nrm2 {
+    using Real = typename GetTypeReal<T>::type;
+    Real operator()(
+        const int n,
+        const T *x,
+        const int incx);
+};
+
+template <typename T, typename Device>
 struct blas_dot {
     void operator()(
         const int& n,

@@ -25,14 +25,17 @@ void daxpy_(const int *N, const double *alpha, const double *x, const int *incx,
 void caxpy_(const int *N, const std::complex<float> *alpha, const std::complex<float> *x, const int *incx, std::complex<float> *y, const int *incy);
 void zaxpy_(const int *N, const std::complex<double> *alpha, const std::complex<double> *x, const int *incx, std::complex<double> *y, const int *incy);
 
-void dcopy_(const int *n, const double *a, const int *incx, double *b, const int *incy);
-void zcopy_(const int *n, const std::complex<double> *a, const int *incx, std::complex<double> *b, const int *incy);
+void scopy_(const int *n, const float *a, const int *incx, float *b, int const *incy);
+void dcopy_(const int *n, const double *a, const int *incx, double *b, int const *incy);
+void ccopy_(const int *n, const std::complex<float> *a, const int *incx, std::complex<float> *b, int const *incy);
+void zcopy_(const int *n, const std::complex<double> *a, const int *incx, std::complex<double> *b, int const *incy);
+
 
 //reason for passing results as argument instead of returning it:
 //see https://www.numbercrunch.de/blog/2014/07/lost-in-translation/
-void cdotc_(const int *n, const std::complex<float> *zx, const int *incx, 
+void cdotc_(const int *n, const std::complex<float> *zx, const int *incx,
             const std::complex<float> *zy, const int *incy, std::complex<float> *result);
-void zdotc_(const int *n, const std::complex<double> *zx, const int *incx, 
+void zdotc_(const int *n, const std::complex<double> *zx, const int *incx,
             const std::complex<double> *zy, const int *incy, std::complex<double> *result);
 // Peize Lin add ?dot 2017-10-27, to compute d=x*y
 float sdot_(const int *N, const float *x, const int *incx, const float *y, const int *incy);
@@ -41,6 +44,7 @@ double ddot_(const int *N, const double *x, const int *incx, const double *y, co
 // Peize Lin add ?nrm2 2018-06-12, to compute out = ||x||_2 = \sqrt{ \sum_i x_i**2 }
 float snrm2_( const int *n, const float *x, const int *incx );
 double dnrm2_( const int *n, const double *x, const int *incx );
+float scnrm2_( const int *n, const std::complex<float> *x, const int *incx );
 double dznrm2_( const int *n, const std::complex<double> *x, const int *incx );
 
 // level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
@@ -344,6 +348,11 @@ double nrm2( const int n, const double *x, const int incx )
     return dnrm2_( &n, x, &incx );
 }
 static inline
+double nrm2( const int n, const std::complex<float> *x, const int incx )
+{
+    return scnrm2_( &n, x, &incx );
+}
+static inline
 double nrm2( const int n, const std::complex<double> *x, const int incx )
 {
     return dznrm2_( &n, x, &incx );
@@ -351,9 +360,20 @@ double nrm2( const int n, const std::complex<double> *x, const int incx )
 
 // copies a into b
 static inline
+void copy(const int n, const float *a, const int incx, float *b, const int incy)
+{
+    scopy_(&n, a, &incx, b, &incy);
+}
+static inline
 void copy(const int n, const double *a, const int incx, double *b, const int incy)
+
 {
     dcopy_(&n, a, &incx, b, &incy);
+}
+static inline
+void copy(const int n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy)
+{
+    ccopy_(&n, a, &incx, b, &incy);
 }
 static inline
 void copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy)

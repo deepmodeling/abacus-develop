@@ -20,6 +20,7 @@ struct set_matrix {
 };
 
 
+// --- 1. Matrix Decomposition ---
 template <typename T, typename Device>
 struct lapack_trtri {
     void operator()(
@@ -40,6 +41,96 @@ struct lapack_potrf {
         const int& lda);
 };
 
+template <typename T, typename Device>
+struct lapack_getrf {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* Mat,
+        const int& lda,
+        int* ipiv);
+};
+
+
+template <typename T, typename Device>
+struct lapack_getri {
+    void operator()(
+        const int& n,
+        T* Mat,
+        const int& lda,
+        const int* ipiv,
+        T* work,
+        const int& lwork);
+};
+
+// This is QR factorization in-place
+// that will change input Mat A to orthogonal/unitary matrix Q
+template <typename T, typename Device>
+struct lapack_geqrf_inplace {
+    /**
+     * @brief Perform in-place QR factorization of a matrix using LAPACK's geqrf function.
+     *
+     * This function computes the QR factorization of an m-by-n matrix A as A = Q * R,
+     * where Q is an orthogonal/unitary matrix and R is an upper triangular matrix.
+     * The factorization is performed in-place, meaning the input matrix A will be modified.
+     *
+     * On exit: A is overwritten with the QR factorization Q orthogonal/unitary matrix
+     *
+     * @param m The number of rows in the matrix A. m >= 0
+     * @param n The number of columns in the matrix A. n >= 0
+     * @param A Pointer to the matrix A to be factorized. On exit, contains the QR factorization
+     * @param lda The leading dimension of the matrix A. lda >= max(1, m)
+     */
+    void operator()(
+        const int m,
+        const int n,
+        T *A,
+        const int lda);
+};
+
+// This is QR factorization
+// where [in]Mat will be kept and the results are stored in separate matrix Q
+// template <typename T, typename Device>
+// struct lapack_geqrf{
+//     /**
+//      * Perform QR factorization of a matrix using LAPACK's geqrf function.
+//      *
+//      * @param m The number of rows in the matrix.
+//      * @param n The number of columns in the matrix.
+//      * @param Mat The matrix to be factorized.
+//      *        On exit, the upper triangle contains the upper triangular matrix R,
+//      *        and the elements below the diagonal, with the array TAU, represent
+//      *        the unitary matrix Q as a product of min(m,n) elementary reflectors.
+//      * @param lda The leading dimension of the matrix.
+//      * @param tau Array of size min(m,n) containing the Householder reflectors.
+//      */
+//     void operator()(
+//         const int m,
+//         const int n,
+//         T *Mat,
+//         const int lda,
+//         T *tau);
+// };
+
+
+// --- 2. Linear System Solvers ---
+template <typename T, typename Device>
+struct lapack_getrs {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb);
+};
+
+
+
+// --- 3. Standard & Generalized Eigenvalue ---
+
 // ============================================================================
 // Standard Hermitian Eigenvalue Problem Solvers
 // ============================================================================
@@ -54,12 +145,37 @@ struct lapack_potrf {
 // ============================================================================
 template <typename T, typename Device>
 struct lapack_heevd {
+    // !> ZHEEVD computes all eigenvalues and, optionally, eigenvectors of a
+    // !> complex Hermitian matrix A.  If eigenvectors are desired, it uses a
+    // !> divide and conquer algorithm.
+    // !>          On exit, if JOBZ = 'V', then if INFO = 0, A contains the
+    // !>          orthonormal eigenvectors of the matrix A.
+    /**
+     * @brief Computes all eigenvalues and, optionally, eigenvectors of a complex Hermitian matrix.
+     *
+     * This function solves the standard Hermitian eigenvalue problem A*x = lambda*x,
+     * where A is a Hermitian matrix. It computes all eigenvalues and optionally
+     * the corresponding eigenvectors using a divide and conquer algorithm.
+     *
+     * @param[in] dim   The order of the matrix A. dim >= 0.
+     * @param[in,out] Mat   On entry, the Hermitian matrix A.
+     *              On exit, if eigenvectors are computed, A contains the
+     *              orthonormal eigenvectors of the matrix A.
+     * @param[in] lda   The leading dimension of the array Mat. lda >= max(1, dim).
+     * @param[out] eigen_val Array of size at least dim. On normal exit, contains the
+     *                  eigenvalues in ascending order.
+     *
+     * @note
+     * See LAPACK ZHEEVD or CHEEVD documentation for more details.
+     * The matrix is assumed to be stored in upper or lower triangular form
+     * according to the uplo parameter (not shown here but typically passed
+     * to the actual implementation).
+     */
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const char& jobz,
-        const char& uplo,
+        const int dim,
         T* Mat,
-        const int& dim,
+        const int lda,
         Real* eigen_val);
 };
 
@@ -74,7 +190,8 @@ struct lapack_heevx {
      *
      * @param dim   The order of the matrix A. dim >= 0.
      * @param lda   The leading dimension of the array Mat. lda >= max(1, dim).
-     * @param Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     * @param[in] Mat   On entry, the Hermitian matrix A. On exit, A is kept.
+     *                  Only used to provide values of matrix.
      * @param neig  The number of eigenvalues to be found. 0 <= neig <= dim.
      * @param eigen_val On normal exit, the first \p neig elements contain the selected
      *                  eigenvalues in ascending order.
@@ -173,41 +290,6 @@ struct lapack_hegvx {
         T *eigen_vec);
 };
 
-
-template <typename T, typename Device>
-struct lapack_getrf {
-    void operator()(
-        const int& m,
-        const int& n,
-        T* Mat,
-        const int& lda,
-        int* ipiv);
-};
-
-
-template <typename T, typename Device>
-struct lapack_getri {
-    void operator()(
-        const int& n,
-        T* Mat,
-        const int& lda,
-        const int* ipiv,
-        T* work,
-        const int& lwork);
-};
-
-template <typename T, typename Device>
-struct lapack_getrs {
-    void operator()(
-        const char& trans,
-        const int& n,
-        const int& nrhs,
-        T* A,
-        const int& lda,
-        const int* ipiv,
-        T* B,
-        const int& ldb);
-};
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles

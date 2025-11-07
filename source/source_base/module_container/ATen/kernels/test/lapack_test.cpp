@@ -92,6 +92,83 @@ TYPED_TEST(LapackTest, Potrf) {
     EXPECT_EQ(A, C);
 }
 
+// lapack_geqrf_inplace,
+// check that QtQ = I
+TYPED_TEST(LapackTest, GeqrfInPlace) {
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+
+    lapack_geqrf_inplace<Type, Device> geqrfCalculator;
+
+    const int m = 4;
+    const int n = 3;  // m >= n，Q is m x n column-orthogonal matrix
+    const int lda = m;
+
+    Tensor A_input = std::move(Tensor({
+        static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0), static_cast<Type>(4.0),
+        static_cast<Type>(5.0), static_cast<Type>(6.0), static_cast<Type>(7.0), static_cast<Type>(8.0),
+        static_cast<Type>(9.0), static_cast<Type>(10.0), static_cast<Type>(11.0), static_cast<Type>(12.0)
+    }).to_device<Device>());
+
+    Tensor A = A_input; // will be overwritten as Q
+
+    // do geqrf -> get orthogonal Q
+    geqrfCalculator(m, n, A.data<Type>(), lda);
+
+    // check on CPU
+    Tensor Q = A.to_device<DEVICE_CPU>();
+    const Type* Q_data = Q.data<Type>();
+
+    // compute QtQ = Q^T * Q (n x n)
+    Tensor QtQ = Q; // std::move(Tensor(std::vector<Type>(n * n, static_cast<Type>(0.0))).to_device<DEVICE_CPU>());
+    const Type alpha = static_cast<Type>(1.0);
+    const Type beta  = static_cast<Type>(0.0);
+
+    blas_gemm<Type, DEVICE_CPU> gemm;
+    gemm('C', 'N',           // Q^T * Q
+         n, n, m,            //  n x n
+         &alpha,
+         Q_data, lda,        // Q^T
+         Q_data, lda,        // Q
+         &beta,
+         QtQ.data<Type>(), n);
+
+    // To print value: first to_device CPU, then print
+    // // Test code: print A
+    // std::cout << "A = " << std::endl;
+    // for (int i = 0; i < m; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << A_input.to_device<DEVICE_CPU>().data<Type>()[i + j * m] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // // Test code: print Q
+    // std::cout << "Q = " << std::endl;
+    // for (int i = 0; i < m; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << Q.data<Type>()[i + j * m] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // // Test code: print QtQ
+    // std::cout << "QtQ = " << std::endl;
+    // for (int i = 0; i < n; ++i) {
+    //     for (int j = 0; j < n; ++j) {
+    //         std::cout << QtQ.data<Type>()[i + j * n] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    // check QtQ
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            Type expected = (i == j) ? static_cast<Type>(1.0) : static_cast<Type>(0.0);
+            EXPECT_NEAR(std::abs(QtQ.data<Type>()[i + j * n]), std::abs(expected), 1e-5)
+                << "Q^T * Q not identity at (" << i << "," << j << ")";
+        }
+    }
+}
+
 // Test for lapack_heevd and lapack_heevx:
 // Solve a standard eigenvalue problem
 // and check that A*V = V*E
@@ -124,7 +201,8 @@ TYPED_TEST(LapackTest, heevd) {
     const Type beta  = static_cast<Type>(0.0);
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
+    // heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
+    heevdCalculator(dim, B.data<Type>(), dim, E.data<Real>());
 
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
