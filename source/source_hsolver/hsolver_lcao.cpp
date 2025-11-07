@@ -124,7 +124,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
         auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
-        _pes->dm2rho(dm, pe.EDM);
+        _pes->dm2rho(pe.DM, pe.EDM, dm);
 #endif
     }
 

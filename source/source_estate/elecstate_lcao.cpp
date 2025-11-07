@@ -31,11 +31,11 @@ double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 }
 
 template <>
-void ElecStateLCAO<double>::dm2Rho(std::vector<double*> pexsi_DM, 
+void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM, 
 		std::vector<double*> pexsi_EDM,
 		DensityMatrix<double, double>* dm)
 {
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2Rho");
+    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
 
     int nspin = PARAM.inp.nspin;
     if (PARAM.inp.nspin == 4)
@@ -72,12 +72,12 @@ void ElecStateLCAO<double>::dm2Rho(std::vector<double*> pexsi_DM,
 
     this->charge->renormalize_rho();
 
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2Rho");
+    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
     return;
 }
 
 template <>
-void ElecStateLCAO<std::complex<double>>::dm2Rho(std::vector<std::complex<double>*> pexsi_DM,
+void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double>*> pexsi_DM,
 		std::vector<std::complex<double>*> pexsi_EDM,
 		DensityMatrix<std::complex<double>, double>* dm)
 {
