@@ -4,7 +4,7 @@
 #  MKL_INCLUDE - where to find mkl.h, etc.
 #  MKL_FOUND        - True if mkl found.
 
-find_package(MKL NO_MODULE) # try using official module first
+# find_package(MKL NO_MODULE) # try using official module first
 if(NOT TARGET MKL::MKL)
 
 find_path(MKL_INCLUDE mkl_service.h HINTS ${MKLROOT}/include)
@@ -70,7 +70,9 @@ if(MKL_FOUND)
     set_property(TARGET MKL::MKL PROPERTY
     INTERFACE_LINK_LIBRARIES
     "-Wl,--start-group"
-    MKL::INTEL MKL::INTEL_THREAD MKL::CORE)
+    MKL::INTEL MKL::INTEL_THREAD MKL::CORE
+    "-Wl,--end-group"
+    )
   endif()
 endif()
 
