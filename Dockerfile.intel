@@ -178,10 +178,8 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH} && \
     export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH} && \
     export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH} && \
-    cd /tmp && wget https://github.com/deepmodeling/abacus-develop/archive/refs/tags/v3.9.0.17.zip -O abacus-develop-3.9.0.17.zip && \
-    unzip abacus-develop-3.9.0.17.zip && \
-    cd abacus-develop-3.9.0.17 && \
-    sed -i '3i\#include "source_estate/elecstate_lcao.h"' source/source_lcao/edm.cpp && \
+    cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+    cd abacus-develop && \
     cmake -B build \
         -DENABLE_MLALGO=ON \
         -DENABLE_PEXSI=ON \
@@ -195,5 +193,9 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_RO
     rm -rf /tmp/abacus-develop
         # -DMKL_SYCL=OFF \
         # -DMKL_SYCL_DISTRIBUTED_DFT:BOOL=OFF \
+    # cd /tmp && wget https://github.com/deepmodeling/abacus-develop/archive/refs/tags/v3.9.0.17.zip -O abacus-develop-3.9.0.17.zip && \
+    # unzip abacus-develop-3.9.0.17.zip && \
+    # cd abacus-develop-3.9.0.17 && \
+    # sed -i '3i\#include "source_estate/elecstate_lcao.h"' source/source_lcao/edm.cpp && \
 # Default entry
 CMD ["/bin/bash"]
