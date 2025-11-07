@@ -29,7 +29,7 @@ class HamiltPW : public Hamilt<T, Device>
 			ModulePW::PW_Basis_K* wfc_basis, 
 			K_Vectors* p_kv, 
 			pseudopot_cell_vnl* nlpp,
-			Plus_U &dftu, // mohan add 2025-11-06
+			Plus_U *p_dftu, // mohan add 2025-11-06
 			const UnitCell* ucell);
 
     template<typename T_in, typename Device_in = Device>

@@ -43,6 +43,8 @@
 #include "source_hsolver/hsolver_pw.h"
 #include "source_md/md_func.h"
 
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c) {
     std::vector<double> params_ori;

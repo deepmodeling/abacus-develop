@@ -2,7 +2,6 @@
 #define HAMILTSDFTPW_H
 
 #include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 namespace hamilt
 {
@@ -27,7 +26,6 @@ class HamiltSdftPW : public HamiltPW<T, Device>
                  K_Vectors* p_kv,
                  pseudopot_cell_vnl* nlpp,
                  const UnitCell* ucell,
-				 Plus_U &dftu, // mohan add 2025-11-07
 				 const int& npol,
                  Real* emin_in,
                  Real* emax_in);

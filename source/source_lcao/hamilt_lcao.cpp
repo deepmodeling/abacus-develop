@@ -79,7 +79,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
 							   elecstate::DensityMatrix<TK, double>* DM_in,
-							   Plus_U &dftu, // mohan add 2025-11-05
+							   Plus_U* p_dftu, // mohan add 2025-11-05
 							   Setup_DeePKS<TK> &deepks,
 							   const int istep, 
 							   Exx_NAO<TK> &exx_nao)
@@ -219,7 +219,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
 															  this->hR, // no explicit call yet
-															  &dftu, // mohan add 2025-11-07
+															  p_dftu, // mohan add 2025-11-07
 															  this->kv->isk);
             }
             else
@@ -231,7 +231,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       &grid_d,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(),
-                                                      &dftu);
+                                                      p_dftu);
             }
             this->getOperator()->add(plus_u);
         }
@@ -375,7 +375,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
 															  this->hR, // no explicit call yet
-															  &dftu, // mohan add 2025-11-07
+															  p_dftu, // mohan add 2025-11-07
                                                               this->kv->isk);
             }
             else
@@ -387,7 +387,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       &grid_d,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(),
-                                                      &dftu);
+                                                      p_dftu);
             }
             this->getOperator()->add(plus_u);
         }

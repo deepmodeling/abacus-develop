@@ -339,7 +339,6 @@ private:
 };
 
 
-/*
 #ifdef __LCAO
 template <typename T>
 void dftu_cal_occup_m(const int iter,
@@ -347,9 +346,9 @@ void dftu_cal_occup_m(const int iter,
                       const std::vector<std::vector<T>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
-                      hamilt::Hamilt<T>* p_ham);
+                      hamilt::Hamilt<T>* p_ham,
+                      Plus_U &dftu);
 #endif
-*/
 
 
 #endif

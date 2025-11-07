@@ -452,7 +452,6 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
     }
 }
 
-/*
 //! dftu occupation matrix for gamma only using dm(double)
 template <>
 void dftu_cal_occup_m(const int iter,
@@ -460,9 +459,10 @@ void dftu_cal_occup_m(const int iter,
                       const std::vector<std::vector<double>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
-                      hamilt::Hamilt<double>* p_ham)
+                      hamilt::Hamilt<double>* p_ham,
+                      Plus_U &dftu)
 {
-    GlobalC::dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
+    dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
 }
 
 //! dftu occupation matrix for multiple k-points using dm(complex)
@@ -472,10 +472,10 @@ void dftu_cal_occup_m(const int iter,
                       const std::vector<std::vector<std::complex<double>>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
-                      hamilt::Hamilt<std::complex<double>>* p_ham)
+                      hamilt::Hamilt<std::complex<double>>* p_ham,
+                      Plus_U &dftu)
 {
-    GlobalC::dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
+    dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
 }
-*/
 
 #endif

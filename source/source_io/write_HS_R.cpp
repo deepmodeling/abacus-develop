@@ -70,20 +70,21 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
         int spin_now = 1;
 
         // save HR of spin down first (the current spin always be down)
-        sparse_format::cal_HSR(ucell,
-                               pv,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham
+		sparse_format::cal_HSR(ucell,
+				dftu,
+				pv,
+				HS_Arrays,
+				grid,
+				spin_now,
+				sparse_thr,
+				kv.nmp,
+				p_ham
 #ifdef __EXX
-                               ,
-                               Hexxd,
-                               Hexxc
+				,
+				Hexxd,
+				Hexxc
 #endif
-        );
+				);
 
         // cal HR of the spin up
         if (PARAM.inp.vl_in_h)
@@ -94,18 +95,19 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
             spin_now = 0;
         }
 
-        sparse_format::cal_HSR(ucell,
-                               pv,
-                               HS_Arrays,
-                               grid,
-                               spin_now,
-                               sparse_thr,
-                               kv.nmp,
-                               p_ham
+		sparse_format::cal_HSR(ucell,
+				dftu,
+				pv,
+				HS_Arrays,
+				grid,
+				spin_now,
+				sparse_thr,
+				kv.nmp,
+				p_ham
 #ifdef __EXX
-                               ,
-                               Hexxd,
-                               Hexxc
+				,
+				Hexxd,
+				Hexxc
 #endif
         );
     }

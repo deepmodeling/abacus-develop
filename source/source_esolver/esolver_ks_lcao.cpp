@@ -187,7 +187,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, this->deepks, istep, exx_nao);
+            two_center_bundle_, orb_, this->dmat.dm, &this->dftu, this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -495,7 +495,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             if (this->dftu.omc != 2)
             {
                 dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
-                  this->p_chgmix->get_mixing_beta(), hamilt_lcao);
+                  this->p_chgmix->get_mixing_beta(), hamilt_lcao, this->dftu);
             }
             this->dftu.cal_energy_correction(ucell, istep);
         }
@@ -565,7 +565,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
             PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
-            this->gd, this->psi, hamilt_lcao, this->two_center_bundle_,
+            this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->rdmft_solver, this->deepks, this->exx_nao, 
             this->conv_esolver, this->scf_nmax_flag, istep);
