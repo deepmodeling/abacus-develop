@@ -40,6 +40,7 @@ struct set_matrix<T, DEVICE_CPU> {
     }
 };
 
+// --- 1. Matrix Decomposition ---
 template <typename T>
 struct lapack_trtri<T, DEVICE_CPU> {
     void operator()(
@@ -73,16 +74,135 @@ struct lapack_potrf<T, DEVICE_CPU> {
     }
 };
 
+
+template <typename T>
+struct lapack_getrf<T, DEVICE_CPU> {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* Mat,
+        const int& lda,
+        int* ipiv)
+    {
+        int info = 0;
+        lapackConnector::getrf(m, n, Mat, lda, ipiv, info);
+        if (info != 0) {
+            throw std::runtime_error("getrf failed with info = " + std::to_string(info));
+        }
+    }
+};
+
+template <typename T>
+struct lapack_getri<T, DEVICE_CPU> {
+    void operator()(
+        const int& n,
+        T* Mat,
+        const int& lda,
+        const int* ipiv,
+        T* work,
+        const int& lwork)
+    {
+        int info = 0;
+        lapackConnector::getri(n, Mat, lda, ipiv, work, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("getri failed with info = " + std::to_string(info));
+        }
+    }
+};
+
+template <typename T>
+struct lapack_geqrf_inplace<T, DEVICE_CPU> {
+    void operator()(
+        const int m,
+        const int n,
+        T *A,
+        const int lda)
+    {
+        // Tensor or vector?
+        // 1. tau for storing the Householder reflectors
+        // tau should be dimension min(m, n)
+        int k = std::min(m, n);
+        Tensor tau(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {k});
+        tau.zero();
+
+        int info = 0;
+
+        // 2. query for workspace size
+        int lwork = -1;
+        T work_query;
+        lapackConnector::geqrf(m, n, A, lda, tau.data<T>(), &work_query, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("geqrf workspace query failed with info = " + std::to_string(info));
+        }
+        // allocate workspace
+        lwork = static_cast<int>(get_real(work_query));
+        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
+        work.zero();
+
+        // 3. perform QR decomposition
+        // and A is overwritten with upper R.
+        // Lower A + tau => Q
+        lapackConnector::geqrf(m, n, A, lda, tau.data<T>(), work.data<T>(), lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("geqrf failed with info = " + std::to_string(info));
+        }
+
+        // 4. use orgqr to compute Q
+        // workspace query
+        lwork = -1;
+        lapackConnector::orgqr(m, n, k, A, lda, tau.data<T>(), &work_query, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("orgqr workspace query failed with info = " + std::to_string(info));
+        }
+        // allocate workspace
+        lwork = static_cast<int>(get_real(work_query));
+        work.resize({lwork});
+
+        // compute Q
+        lapackConnector::orgqr(m, n, k, A, lda, tau.data<T>(), work.data<T>(), lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("orgqr failed with info = " + std::to_string(info));
+        }
+
+        // now, A should be overwritten with Q, columns orthogonal
+
+    }
+};
+
+// --- 2. Linear System Solvers ---
+template <typename T>
+struct lapack_getrs<T, DEVICE_CPU> {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb)
+    {
+        int info = 0;
+        lapackConnector::getrs(trans, n, nrhs, A, lda, ipiv, B, ldb, info);
+        if (info != 0) {
+            throw std::runtime_error("getrs failed with info = " + std::to_string(info));
+        }
+    }
+};
+
+
+// --- 3. Standard & Generalized Eigenvalue ---
 template <typename T>
 struct lapack_heevd<T, DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const char& jobz,
-        const char& uplo,
+        const int dim,
         T* Mat,
-        const int& dim,
+        const int lda,
         Real* eigen_val)
     {
+        char jobz = 'V';        // Compute eigenvalues and eigenvectors
+        char uplo = 'U';
         int info = 0;
         int lwork = std::max(2 * dim + dim * dim, 1 + 6 * dim + 2 * dim * dim);
         Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
@@ -96,7 +216,7 @@ struct lapack_heevd<T, DEVICE_CPU> {
         Tensor iwork(DataTypeToEnum<int>::value, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        lapackConnector::heevd(jobz, uplo, dim, Mat, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::heevd(jobz, uplo, dim, Mat, lda, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         if (info != 0) {
             throw std::runtime_error("heevd failed with info = " + std::to_string(info));
         }
@@ -114,6 +234,8 @@ struct lapack_heevx<T, DEVICE_CPU> {
         Real *eigen_val,
         T *eigen_vec)
     {
+        // copy Mat to aux, solve heevx(aux, eigen_val, eigen_vec)
+        // input Mat is not referenced in actual heevx LAPACK routines, and aux is destroyed.
         Tensor aux(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
         // Copy Mat to aux since heevx will destroy it
         // aux = Mat
@@ -338,60 +460,9 @@ struct lapack_hegvx<T, DEVICE_CPU> {
     }
 };
 
-template <typename T>
-struct lapack_getrf<T, DEVICE_CPU> {
-    void operator()(
-        const int& m,
-        const int& n,
-        T* Mat,
-        const int& lda,
-        int* ipiv)
-    {
-        int info = 0;
-        lapackConnector::getrf(m, n, Mat, lda, ipiv, info);
-        if (info != 0) {
-            throw std::runtime_error("getrf failed with info = " + std::to_string(info));
-        }
-    }
-};
 
-template <typename T>
-struct lapack_getri<T, DEVICE_CPU> {
-    void operator()(
-        const int& n,
-        T* Mat,
-        const int& lda,
-        const int* ipiv,
-        T* work,
-        const int& lwork)
-    {
-        int info = 0;
-        lapackConnector::getri(n, Mat, lda, ipiv, work, lwork, info);
-        if (info != 0) {
-            throw std::runtime_error("getri failed with info = " + std::to_string(info));
-        }
-    }
-};
 
-template <typename T>
-struct lapack_getrs<T, DEVICE_CPU> {
-    void operator()(
-        const char& trans,
-        const int& n,
-        const int& nrhs,
-        T* A,
-        const int& lda,
-        const int* ipiv,
-        T* B,
-        const int& ldb)
-    {
-        int info = 0;
-        lapackConnector::getrs(trans, n, nrhs, A, lda, ipiv, B, ldb, info);
-        if (info != 0) {
-            throw std::runtime_error("getrs failed with info = " + std::to_string(info));
-        }
-    }
-};
+
 
 template struct set_matrix<float,  DEVICE_CPU>;
 template struct set_matrix<double, DEVICE_CPU>;
@@ -407,6 +478,28 @@ template struct lapack_trtri<float,  DEVICE_CPU>;
 template struct lapack_trtri<double, DEVICE_CPU>;
 template struct lapack_trtri<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_trtri<std::complex<double>, DEVICE_CPU>;
+
+
+template struct lapack_getrf<float,  DEVICE_CPU>;
+template struct lapack_getrf<double, DEVICE_CPU>;
+template struct lapack_getrf<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_getrf<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_getri<float, DEVICE_CPU>;
+template struct lapack_getri<double, DEVICE_CPU>;
+template struct lapack_getri<std::complex<float>, DEVICE_CPU>;
+template struct lapack_getri<std::complex<double>, DEVICE_CPU>;
+
+
+template struct lapack_getrs<float, DEVICE_CPU>;
+template struct lapack_getrs<double, DEVICE_CPU>;
+template struct lapack_getrs<std::complex<float>, DEVICE_CPU>;
+template struct lapack_getrs<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_geqrf_inplace<float,  DEVICE_CPU>;
+template struct lapack_geqrf_inplace<double, DEVICE_CPU>;
+template struct lapack_geqrf_inplace<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_geqrf_inplace<std::complex<double>, DEVICE_CPU>;
 
 template struct lapack_heevd<float,  DEVICE_CPU>;
 template struct lapack_heevd<double, DEVICE_CPU>;
@@ -427,21 +520,6 @@ template struct lapack_hegvx<float,  DEVICE_CPU>;
 template struct lapack_hegvx<double, DEVICE_CPU>;
 template struct lapack_hegvx<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_hegvx<std::complex<double>, DEVICE_CPU>;
-
-template struct lapack_getrf<float,  DEVICE_CPU>;
-template struct lapack_getrf<double, DEVICE_CPU>;
-template struct lapack_getrf<std::complex<float>,  DEVICE_CPU>;
-template struct lapack_getrf<std::complex<double>, DEVICE_CPU>;
-
-template struct lapack_getri<float, DEVICE_CPU>;
-template struct lapack_getri<double, DEVICE_CPU>;
-template struct lapack_getri<std::complex<float>, DEVICE_CPU>;
-template struct lapack_getri<std::complex<double>, DEVICE_CPU>;
-
-template struct lapack_getrs<float, DEVICE_CPU>;
-template struct lapack_getrs<double, DEVICE_CPU>;
-template struct lapack_getrs<std::complex<float>, DEVICE_CPU>;
-template struct lapack_getrs<std::complex<double>, DEVICE_CPU>;
 
 } // namespace kernels
 } // namespace container
