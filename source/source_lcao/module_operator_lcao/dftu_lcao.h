@@ -33,7 +33,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const Grid_Driver* gridD_in,
                                const TwoCenterIntegrator* intor,
                                const std::vector<double>& orb_cutoff,
-                               Plus_U* dftu_in);
+                               Plus_U* p_dftu);
     ~DFTU<OperatorLCAO<TK, TR>>();
 
     /**

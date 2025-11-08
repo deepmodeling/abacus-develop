@@ -19,12 +19,12 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
                                                  const std::vector<double>& orb_cutoff,
-                                                 Plus_U* dftu_in)
+                                                 Plus_U* p_dftu)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
 {
     this->cal_type = calculation_type::lcao_dftu;
     this->ucell = &ucell_in;
-    this->dftu = dftu_in;
+    this->dftu = p_dftu;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
 #endif
@@ -273,7 +273,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU_tmp(occ.size());
 
-        double u_energy = 0.0;
+        // mohan add 2025-11-08
+        double u_energy = Plus_U::get_energy();
         this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), u_energy);
         Plus_U::set_energy(u_energy);
 
