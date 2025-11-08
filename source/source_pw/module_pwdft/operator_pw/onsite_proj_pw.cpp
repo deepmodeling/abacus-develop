@@ -14,7 +14,7 @@ namespace hamilt {
 template<typename T, typename Device>
 OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
 		const UnitCell* ucell_in,
-		Plus_U *dftu, // mohan add 2025-11-06 
+		Plus_U *p_dftu, // mohan add 2025-11-06 
 		const bool cal_delta_spin,
 		const bool cal_dftu)
 {
@@ -24,6 +24,7 @@ OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
     this->ucell = ucell_in;
     this->has_delta_spin = cal_delta_spin;
     this->has_dftu = cal_dftu;
+    this->dftu = p_dftu; // mohan add 2025-11-08
 }
 
 template<typename T, typename Device>

@@ -27,7 +27,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   public:
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
-             Plus_U *dftu, // mohan add 2025-11-06 
+             Plus_U *p_dftu, // mohan add 2025-11-06 
              const bool cal_delta_spin,
              const bool cal_dftu);
 
