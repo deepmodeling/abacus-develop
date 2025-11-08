@@ -52,8 +52,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   private:
     void cal_ps_delta_spin(const int npol, const int m) const;
 
-    // mohan add dftu 20251106
-    void cal_ps_dftu(Plus_U &dftu, const int npol, const int m) const;
+    void cal_ps_dftu(const int npol, const int m) const;
 
     void update_becp(const T* psi_in, const int npol, const int m) const;
 
