@@ -3,6 +3,7 @@
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
+#include <iostream>
 
 // #include <base/third_party/cusolver_utils.h> // traits, needed if generic API is used.
 // header provided by cusolver, including some data types and macros.
