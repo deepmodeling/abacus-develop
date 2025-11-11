@@ -451,8 +451,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             }
             this->dftu.cal_energy_correction(ucell, istep);
         }
-        this->dftu.output(ucell);
-    }
+		this->dftu.output(ucell);
+		// use the converged occupation matrix for next MD/Relax SCF calculation
+		if (conv_esolver)
+		{
+			this->dftu.initialed_locale = true;
+		}
+	}
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
@@ -478,12 +483,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             this->p_chgmix->mix_dmr(this->dmat.dm);
         }
-    }
-
-    // use the converged occupation matrix for next MD/Relax SCF calculation
-    if (PARAM.inp.dft_plus_u && conv_esolver)
-    {
-        this->dftu.initialed_locale = true;
     }
 
     // control the output related to the finished iteration
