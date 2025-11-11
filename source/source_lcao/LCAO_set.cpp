@@ -7,7 +7,7 @@
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
 		const K_Vectors &kv, // k-points
-		psi::Psi<TK>* psi, // coefficients of NAO basis
+		psi::Psi<TK>* &psi, // coefficients of NAO basis
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
@@ -42,6 +42,8 @@ void LCAO_domain::set_psi_occ_dm_chg(
     //! 5) init charge density
     chr.allocate(inp.nspin);
 
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
+
     return;
 }
 
@@ -65,7 +67,6 @@ void LCAO_domain::set_pot(
 {
     //! 1) init local pseudopotentials
     locpp.init_vloc(ucell, &pw_rho);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! 2) init potentials
     if (pelec->pot == nullptr)
@@ -88,6 +89,8 @@ void LCAO_domain::set_pot(
     //! 5) init deepks
     deepks.before_runner(ucell, kv.get_nks(), orb, pv, inp);
 
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "POTENTIALS");
+
     return;
 }
 
@@ -95,7 +98,7 @@ void LCAO_domain::set_pot(
 
 template void LCAO_domain::set_psi_occ_dm_chg<double>(
 		const K_Vectors &kv, // k-points
-		psi::Psi<double>* psi, // coefficients of NAO basis
+		psi::Psi<double>* &psi, // coefficients of NAO basis
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<double> &dmat, // density matrix 
@@ -104,7 +107,7 @@ template void LCAO_domain::set_psi_occ_dm_chg<double>(
 
 template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
 		const K_Vectors &kv, // k-points
-		psi::Psi<std::complex<double>>* psi, // coefficients of NAO basis
+		psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<std::complex<double>> &dmat, // density matrix 

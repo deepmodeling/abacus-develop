@@ -25,7 +25,7 @@ namespace LCAO_domain
 template <typename TK>
 void set_psi_occ_dm_chg(
 		const K_Vectors &kv, // k-points
-		psi::Psi<TK>* psi, // coefficients of NAO basis
+		psi::Psi<TK>* &psi, // coefficients of NAO basis
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
