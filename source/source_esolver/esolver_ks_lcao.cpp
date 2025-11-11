@@ -21,13 +21,6 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 
-
-// tmp
-#include "source_psi/setup_psi.h" // use Setup_Psi
-#include "source_io/read_wfc_nao.h" // use read_wfc_nao
-#include "source_estate/elecstate_tools.h" // use fixed_weights
-
-
 namespace ModuleESolver
 {
 
