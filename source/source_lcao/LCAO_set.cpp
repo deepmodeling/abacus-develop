@@ -1,5 +1,8 @@
-#include "source_lcao/LCAO_set_pot.h"
+#include "source_lcao/LCAO_set.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_psi/setup_psi.h" // use Setup_Psi
+#include "source_io/read_wfc_nao.h" // use read_wfc_nao
+#include "source_estate/elecstate_tools.h" // use fixed_weights
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -11,6 +14,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
 		Charge &chr, // charge density 
 		const Input_para &inp) // input parameters
 {
+
     //! 1) init electronic wave function psi
     Setup_Psi<TK>::allocate_psi(psi, kv, pv, inp);
 
@@ -29,7 +33,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     if (inp.ocp && inp.esolver_type != "tddft")
     {
         elecstate::fixed_weights(inp.ocp_kb, inp.nbands, inp.nelec,
-          kv, pelec->wg, pelec->skip_weights);
+          &kv, pelec->wg, pelec->skip_weights);
     }
 
     //! 4) init DMK, but DMR is constructed in before_scf()
@@ -42,24 +46,25 @@ void LCAO_domain::set_psi_occ_dm_chg(
 }
 
 
-
+template <typename TK>
 void LCAO_domain::set_pot(
-		const K_Vectors &kv, 
-	    const Structure_Factor& sf,	
+        UnitCell &ucell, // not const because of dftu
+		K_Vectors &kv, // not const due to exx 
+	    Structure_Factor& sf, // will be modified in potential	
 		const ModulePW::PW_Basis &pw_rho, 
 		const ModulePW::PW_Basis &pw_rhod, 
 		elecstate::ElecState* pelec,
 		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals &pv, 
+		Parallel_Orbitals &pv, // not const due to deepks 
 		pseudopot_cell_vl &locpp, 
         Plus_U &dftu,
         surchem& solvent,
-        Exx_NAO<T> &exx_nao,
-        Setup_DeePKS<T> &deepks,
+        Exx_NAO<TK> &exx_nao,
+        Setup_DeePKS<TK> &deepks,
         const Input_para &inp)
 {
     //! 1) init local pseudopotentials
-    locpp.init_vloc(ucell, pw_rho);
+    locpp.init_vloc(ucell, &pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! 2) init potentials
@@ -67,7 +72,7 @@ void LCAO_domain::set_pot(
     {
         // where is the pot deleted?
         pelec->pot = new elecstate::Potential(&pw_rhod, &pw_rho,
-          &ucell, &(locpp.vloc), &(sf), &(solvent),
+          &ucell, &locpp.vloc, &sf, &solvent,
           &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
     }
 
@@ -87,3 +92,53 @@ void LCAO_domain::set_pot(
 }
 
 
+
+template void LCAO_domain::set_psi_occ_dm_chg<double>(
+		const K_Vectors &kv, // k-points
+		psi::Psi<double>* psi, // coefficients of NAO basis
+		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+		elecstate::ElecState* pelec, // eigen values and weights
+		LCAO_domain::Setup_DM<double> &dmat, // density matrix 
+		Charge &chr, // charge density 
+		const Input_para &inp);
+
+template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
+		const K_Vectors &kv, // k-points
+		psi::Psi<std::complex<double>>* psi, // coefficients of NAO basis
+		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+		elecstate::ElecState* pelec, // eigen values and weights
+		LCAO_domain::Setup_DM<std::complex<double>> &dmat, // density matrix 
+		Charge &chr, // charge density 
+		const Input_para &inp);
+
+template void LCAO_domain::set_pot<double>(
+        UnitCell &ucell,
+		K_Vectors &kv, 
+	    Structure_Factor& sf,	
+		const ModulePW::PW_Basis &pw_rho, 
+		const ModulePW::PW_Basis &pw_rhod, 
+		elecstate::ElecState* pelec,
+		const LCAO_Orbitals& orb,
+		Parallel_Orbitals &pv, 
+		pseudopot_cell_vl &locpp, 
+        Plus_U &dftu,
+        surchem& solvent,
+        Exx_NAO<double> &exx_nao,
+        Setup_DeePKS<double> &deepks,
+        const Input_para &inp);
+
+template void LCAO_domain::set_pot<std::complex<double>>(
+        UnitCell &ucell,
+	    K_Vectors &kv, 
+	    Structure_Factor& sf,	
+		const ModulePW::PW_Basis &pw_rho, 
+		const ModulePW::PW_Basis &pw_rhod, 
+		elecstate::ElecState* pelec,
+		const LCAO_Orbitals& orb,
+		Parallel_Orbitals &pv, 
+		pseudopot_cell_vl &locpp, 
+        Plus_U &dftu,
+        surchem& solvent,
+        Exx_NAO<std::complex<double>> &exx_nao,
+        Setup_DeePKS<std::complex<double>> &deepks,
+        const Input_para &inp);

@@ -17,10 +17,9 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
-#include "source_psi/setup_psi.h" // mohan add 20251019
-#include "source_io/read_wfc_nao.h" 
 #include "source_io/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+#include "source_lcao/LCAO_set.h" // mohan add 20251111
 
 namespace ModuleESolver
 {
@@ -74,9 +73,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         return;
     }
 
-    LCAO_domain::set_psi_occ_dm_chg();
+    LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec, 
+      this->dmat, this->chr, inp);
 
-    LCAO_domain::set_pot();
+    LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod, 
+      this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
+      this->solvent, this->exx_nao, this->deepks, inp);
 
     //! if kpar is not divisible by nks, print a warning
     ModuleIO::print_kpar(this->kv.get_nks(), PARAM.globalv.kpar_lcao);
