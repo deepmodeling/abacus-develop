@@ -808,9 +808,9 @@ void Ylm::rl_sph_harm
 void Ylm::grad_rl_sph_harm
 (
  	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const double x,
+	const double y,
+	const double z,
 	double* rly,
 	double** grly
 )

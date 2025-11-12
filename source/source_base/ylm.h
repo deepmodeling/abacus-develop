@@ -124,9 +124,9 @@ class Ylm
 	 */
 	static void grad_rl_sph_harm(
 			const int& Lmax,
-			const double& x,
-			const double& y,
-			const double& z,
+			const double x,
+			const double y,
+			const double z,
 			double* rly,
 			double** grly);
 
