@@ -218,10 +218,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 {
                     torch::Tensor gdmx;
                     DeePKS_domain::cal_gdmx<
-                        TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dmr, ucell, orb, *ParaV, GridD, gdmx);
+                        TK>(nks, deepks_param, kvec_d, phialpha, dmr, ucell, orb, *ParaV, GridD, gdmx);
 
                     torch::Tensor gvx;
-                    DeePKS_domain::cal_gvx(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmx, gvx, rank);
+                    DeePKS_domain::cal_gvx(ucell.nat, deepks_param, gevdm, gdmx, gvx, rank);
                     const std::string file_gradvx = get_filename("gradvx", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, rank);
 

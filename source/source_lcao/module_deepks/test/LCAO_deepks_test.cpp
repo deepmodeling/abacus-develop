@@ -176,12 +176,10 @@ void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
 template <typename T>
 void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
 {
-    DeePKS_domain::cal_gdmx<T>(this->ld.lmaxd,
-                               this->ld.inlmax,
-                               kv.nkstot,
+    DeePKS_domain::cal_gdmx<T>(kv.nkstot,
+                               this->ld.deepks_param,
                                kv.kvec_d,
                                this->ld.phialpha,
-                               this->ld.inl_index,
                                this->ld.dm_r,
                                ucell,
                                ORB,
@@ -198,7 +196,7 @@ void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
     std::vector<torch::Tensor> gevdm;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvx;
-    DeePKS_domain::cal_gvx(ucell.nat, this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, gevdm, gdmx, gvx, 0);
+    DeePKS_domain::cal_gvx(ucell.nat, this->ld.deepks_param, gevdm, gdmx, gvx, 0);
     DeePKS_domain::check_tensor<double>(gvx, "gvx.dat", 0); // 0 for rank
     this->compare_with_ref("gvx.dat", "gvx_ref.dat");
 }
