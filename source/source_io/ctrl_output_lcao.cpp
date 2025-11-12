@@ -258,7 +258,7 @@ void ctrl_output_lcao(UnitCell& ucell,
         ModuleIO::AngularMomentumCalculator mylcalculator(
             inp.orbital_dir,
             ucell,
-            inp.search_radius,
+            orb.get_rcutmax_Phi(),
             inp.test_deconstructor,
             inp.test_grid,
             inp.test_atom_input,
