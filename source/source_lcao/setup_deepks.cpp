@@ -56,7 +56,7 @@ void Setup_DeePKS<TK>::before_runner(const UnitCell& ucell, // unitcell
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
         DeePKS_domain::read_pdm((inp.init_chg == "file"), inp.deepks_equiv,
           this->ld.init_pdm, ucell.nat, orb.Alpha[0].getTotal_nchi() * ucell.nat,
-          this->ld.lmaxd, this->ld.inl2l, *orb.Alpha, this->ld.pdm);
+          this->ld.deepks_param.lmaxd, this->ld.deepks_param.inl2l, *orb.Alpha, this->ld.pdm);
     }
 #endif
 }

@@ -260,7 +260,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                                          kv->kvec_d,
                                                          deepks.ld.phialpha,
                                                          deepks.ld.gedm,
-                                                         deepks.ld.inl_index,
+                                                         deepks.ld.deepks_param.inl_index,
                                                          fvnl_dalpha,
                                                          isstress,
                                                          svnl_dalpha);

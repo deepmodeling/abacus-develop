@@ -166,12 +166,10 @@ template <typename T>
 void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
     DeePKS_domain::cal_descriptor(ucell.nat,
-                                  this->ld.inlmax,
-                                  this->ld.inl2l,
+                                  this->ld.deepks_param,
                                   this->ld.pdm,
-                                  descriptor,
-                                  this->ld.des_per_atom);
-    DeePKS_domain::check_descriptor(this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, ucell, "./", descriptor, 0);
+                                  descriptor);
+    DeePKS_domain::check_descriptor(this->ld.deepks_param, ucell, "./", descriptor, 0);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
 
@@ -198,7 +196,7 @@ template <typename T>
 void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
 {
     std::vector<torch::Tensor> gevdm;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvx;
     DeePKS_domain::cal_gvx(ucell.nat, this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, gevdm, gdmx, gvx, 0);
     DeePKS_domain::check_tensor<double>(gvx, "gvx.dat", 0); // 0 for rank
@@ -228,7 +226,7 @@ template <typename T>
 void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
 {
     std::vector<torch::Tensor> gevdm;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvepsl;
     DeePKS_domain::cal_gvepsl(ucell.nat,
                               this->ld.inlmax,
@@ -248,7 +246,7 @@ void test_deepks<T>::check_orbpre()
     using TH = std::conditional_t<std::is_same<T, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
     std::vector<torch::Tensor> gevdm;
     torch::Tensor orbpre;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     DeePKS_domain::cal_orbital_precalc<T, TH>(dm,
                                               this->ld.lmaxd,
                                               this->ld.inlmax,
@@ -273,7 +271,7 @@ void test_deepks<T>::check_vdpre()
 {
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdpre;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     DeePKS_domain::cal_v_delta_precalc<T>(PARAM.sys.nlocal,
                                           this->ld.lmaxd,
                                           this->ld.inlmax,
@@ -298,7 +296,7 @@ void test_deepks<T>::check_vdrpre()
 {
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdrpre;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     // normally use hR to get R_size, here use 3 instead for Bravo lattice R in [-1,0,1]
     int R_size = 3;
     DeePKS_domain::cal_vdr_precalc(PARAM.sys.nlocal,
@@ -331,11 +329,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
     if (PARAM.inp.deepks_equiv)
     {
         DeePKS_domain::cal_edelta_gedm_equiv(ucell.nat,
-                                             this->ld.lmaxd,
-                                             this->ld.nmaxd,
-                                             this->ld.inlmax,
-                                             this->ld.des_per_atom,
-                                             this->ld.inl2l,
+                                             this->ld.deepks_param,
                                              descriptor,
                                              this->ld.gedm,
                                              this->ld.E_delta,
@@ -344,9 +338,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
     else
     {
         DeePKS_domain::cal_edelta_gedm(ucell.nat,
-                                       this->ld.inlmax,
-                                       this->ld.des_per_atom,
-                                       this->ld.inl2l,
+                                       this->ld.deepks_param,
                                        descriptor,
                                        this->ld.pdm,
                                        this->ld.model_deepks,
@@ -359,7 +351,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
     ofs.close();
     this->compare_with_ref("E_delta.dat", "E_delta_ref.dat");
 
-    // DeePKS_domain::check_gedm(this->ld.inlmax, this->ld.inl2l, this->ld.gedm);
+    // DeePKS_domain::check_gedm(this->ld.deepks_param, this->ld.gedm);
     // this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 

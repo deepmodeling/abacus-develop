@@ -10,12 +10,12 @@
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_hcontainer/atom_pair.h"
 
 // calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gevdm * v_delta_pdm;
 // v_delta_pdm[nks,nlocal,nlocal,Inl,nm,nm] = overlap * overlap;
@@ -118,8 +118,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                 {
                                     for (int m2 = 0; m2 < nm; ++m2) // nm = 1 for s, 3 for p, 5 for d
                                     {
-                                        TK tmp = overlap_1->get_value(iw1, ib + m1)
-                                                        * overlap_2->get_value(iw2, ib + m2) * *kpase_ptr;
+                                        TK tmp = overlap_1->get_value(iw1, ib + m1) * overlap_2->get_value(iw2, ib + m2)
+                                                 * *kpase_ptr;
                                         TK_tensor tmp_tensor = TK_tensor(tmp);
                                         accessor[ik][iw1_all][iw2_all][inl][m1][m2] += tmp_tensor;
                                     }

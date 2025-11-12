@@ -156,9 +156,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
                                    inlmax,
-                                   this->ld->lmaxd,
-                                   this->ld->inl2l,
-                                   this->ld->inl_index,
+                                   this->ld->deepks_param.lmaxd,
+                                   this->ld->deepks_param.inl2l,
+                                   this->ld->deepks_param.inl_index,
                                    this->kvec_d,
                                    this->ld->dm_r,
                                    this->ld->phialpha,
@@ -170,19 +170,13 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
-                                      inlmax,
-                                      this->ld->inl2l,
+                                      this->ld->deepks_param,
                                       this->ld->pdm,
-                                      descriptor,
-                                      this->ld->des_per_atom);
+                                      descriptor);
         if (PARAM.inp.deepks_equiv)
         {
             DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
-                                                 this->ld->lmaxd,
-                                                 this->ld->nmaxd,
-                                                 inlmax,
-                                                 this->ld->des_per_atom,
-                                                 this->ld->inl2l,
+                                                 this->ld->deepks_param,
                                                  descriptor,
                                                  this->ld->gedm,
                                                  this->ld->E_delta,
@@ -191,9 +185,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         else
         {
             DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
-                                           inlmax,
-                                           this->ld->des_per_atom,
-                                           this->ld->inl2l,
+                                           this->ld->deepks_param,
                                            descriptor,
                                            this->ld->pdm,
                                            this->ld->model_deepks,
@@ -253,7 +245,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             {
                 for (int N0 = 0; N0 < ptr_orb_->Alpha[0].getNchi(L0); ++N0)
                 {
-                    const int inl = this->ld->inl_index[T0](I0, L0, N0);
+                    const int inl = this->ld->deepks_param.inl_index[T0](I0, L0, N0);
                     const double* pgedm = this->ld->gedm[inl];
                     const int nm = 2 * L0 + 1;
 
@@ -274,7 +266,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         {
             const double* pgedm = this->ld->gedm[iat0];
             int nproj = 0;
-            for (int il = 0; il < this->ld->lmaxd + 1; il++)
+            for (int il = 0; il < this->ld->deepks_param.lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * ptr_orb_->Alpha[0].getNchi(il);
             }

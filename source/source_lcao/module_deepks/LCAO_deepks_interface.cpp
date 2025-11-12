@@ -85,12 +85,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const int nlmax = orb.Alpha[0].getTotal_nchi();
     const int inlmax = nlmax * nat;
     const int lmaxd = orb.get_lmax_d();
-    const int nmaxd = ld->nmaxd;
+    const int nmaxd = ld->deepks_param.nmaxd;
 
-    const int des_per_atom = ld->des_per_atom;
-    const std::vector<int> inl2l = ld->inl2l;
-    const ModuleBase::IntArray* inl_index = ld->inl_index;
+    const int des_per_atom = ld->deepks_param.des_per_atom;
+    const std::vector<int> inl2l = ld->deepks_param.inl2l;
+    const ModuleBase::IntArray* inl_index = ld->deepks_param.inl_index;
     const std::vector<hamilt::HContainer<double>*> phialpha = ld->phialpha;
+
+    const DeePKS_Param& deepks_param = ld->deepks_param;
 
     std::vector<torch::Tensor> pdm = ld->pdm;
     bool init_pdm = ld->init_pdm;
@@ -127,15 +129,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         DeePKS_domain::check_pdm(inlmax, inl2l, pdm); // print out the projected dm for NSCF calculaiton
 
         std::vector<torch::Tensor> descriptor;
-        DeePKS_domain::cal_descriptor(nat, inlmax, inl2l, pdm, descriptor,
-                                      des_per_atom); // final descriptor
-        DeePKS_domain::check_descriptor(inlmax,
-                                        des_per_atom,
-                                        inl2l,
-                                        ucell,
-                                        PARAM.globalv.global_out_dir,
-                                        descriptor,
-                                        rank);
+        DeePKS_domain::cal_descriptor(nat, deepks_param, pdm, descriptor); // final descriptor
+        DeePKS_domain::check_descriptor(deepks_param, ucell, PARAM.globalv.global_out_dir, descriptor, rank);
         
         const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_d(nat,
@@ -155,11 +150,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             if (PARAM.inp.deepks_equiv)
             {
                 DeePKS_domain::cal_edelta_gedm_equiv(nat,
-                                                     lmaxd,
-                                                     nmaxd,
-                                                     inlmax,
-                                                     des_per_atom,
-                                                     inl2l,
+                                                     deepks_param,
                                                      descriptor,
                                                      ld->gedm,
                                                      E_delta,
@@ -168,9 +159,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             else
             {
                 DeePKS_domain::cal_edelta_gedm(nat,
-                                               inlmax,
-                                               des_per_atom,
-                                               inl2l,
+                                               deepks_param,
                                                descriptor,
                                                pdm,
                                                ld->model_deepks,
@@ -187,7 +176,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         std::vector<torch::Tensor> gevdm;
         if ( output_precalc )
         {
-            DeePKS_domain::cal_gevdm(nat, inlmax, inl2l, pdm, gevdm);
+            DeePKS_domain::cal_gevdm(nat, deepks_param, pdm, gevdm);
         }
 
 //================================================================================
@@ -695,7 +684,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
 
-                DeePKS_domain::check_gedm(inlmax, inl2l, ld->gedm);
+                DeePKS_domain::check_gedm(deepks_param, ld->gedm);
 
                 std::ofstream ofs("E_delta_bands.dat");
                 ofs << std::setprecision(10) << e_delta_band;
