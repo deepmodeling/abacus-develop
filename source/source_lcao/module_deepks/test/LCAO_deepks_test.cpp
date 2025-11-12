@@ -146,10 +146,7 @@ void test_deepks<T>::check_pdm()
                               Test_Deepks::GridD,
                               this->ld.dm_r);
     DeePKS_domain::cal_pdm<T>(this->ld.init_pdm,
-                              this->ld.inlmax,
-                              this->ld.lmaxd,
-                              this->ld.inl2l,
-                              this->ld.inl_index,
+                              this->ld.deepks_param,
                               kv.kvec_d,
                               this->ld.dm_r,
                               this->ld.phialpha,
@@ -158,7 +155,7 @@ void test_deepks<T>::check_pdm()
                               Test_Deepks::GridD,
                               ParaO,
                               this->ld.pdm);
-    DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl2l, this->ld.pdm);
+    DeePKS_domain::check_pdm(this->ld.deepks_param, this->ld.pdm);
     this->compare_with_ref("deepks_projdm.dat", "pdm_ref.dat");
 }
 
@@ -246,15 +243,12 @@ void test_deepks<T>::check_orbpre()
     torch::Tensor orbpre;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     DeePKS_domain::cal_orbital_precalc<T, TH>(dm,
-                                              this->ld.lmaxd,
-                                              this->ld.inlmax,
                                               ucell.nat,
                                               kv.nkstot,
-                                              this->ld.inl2l,
+                                              this->ld.deepks_param,
                                               kv.kvec_d,
                                               this->ld.phialpha,
                                               gevdm,
-                                              this->ld.inl_index,
                                               ucell,
                                               ORB,
                                               ParaO,

@@ -152,13 +152,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        const int inlmax = ptr_orb_->Alpha[0].getTotal_nchi() * this->ucell->nat;
-
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
-                                   inlmax,
-                                   this->ld->deepks_param.lmaxd,
-                                   this->ld->deepks_param.inl2l,
-                                   this->ld->deepks_param.inl_index,
+                                   this->ld->deepks_param,
                                    this->kvec_d,
                                    this->ld->dm_r,
                                    this->ld->phialpha,

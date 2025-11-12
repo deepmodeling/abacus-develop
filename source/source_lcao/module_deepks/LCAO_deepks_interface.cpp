@@ -124,9 +124,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
         DeePKS_domain::cal_pdm<
-            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dmr, phialpha, ucell, orb, GridD, *ParaV, pdm);
+            TK>(init_pdm, deepks_param, kvec_d, dmr, phialpha, ucell, orb, GridD, *ParaV, pdm);
 
-        DeePKS_domain::check_pdm(inlmax, inl2l, pdm); // print out the projected dm for NSCF calculaiton
+        DeePKS_domain::check_pdm(deepks_param, pdm); // print out the projected dm for NSCF calculaiton
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(nat, deepks_param, pdm, descriptor); // final descriptor
@@ -368,15 +368,12 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     torch::Tensor orbital_precalc_temp;
                     ModuleBase::matrix o_delta_temp(nks, 1);
                     DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
-                                                                lmaxd,
-                                                                inlmax,
                                                                 nat,
                                                                 nks,
-                                                                inl2l,
+                                                                deepks_param,
                                                                 kvec_d,
                                                                 phialpha,
                                                                 gevdm,
-                                                                inl_index,
                                                                 ucell,
                                                                 orb,
                                                                 *ParaV,
