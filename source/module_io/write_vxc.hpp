@@ -243,7 +243,12 @@ void write_Vxc(const int nspin,
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
             &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
 
-        vxcs_op_ao[is]->contributeHR();
+        vxcs_op_ao[is]->contributeHR(); // Veff::current_spin=0
+        if (is == 1)
+        {
+            vxcs_R_ao[is].set_zero();
+            vxcs_op_ao[is]->contributeHR(); //Veff::current_spin=1 (changes only when contributeHR() called)
+        }
     }
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
@@ -304,6 +309,17 @@ void write_Vxc(const int nspin,
                            "k-" + std::to_string(ik),
                            p2d,
                            drank);
+        // ModuleIO::save_mat(-1,
+        //     vxc_k_ao.get_hk(),
+        //     nbasis,
+        //     false /*binary*/,
+        //     PARAM.inp.out_ndigits,
+        //     true /*triangle*/,
+        //     false /*append*/,
+        //     "Vxc_AO",
+        //     "k-" + std::to_string(ik),
+        //     *pv,
+        //     drank);
         // ======test=======
         // total_energy += all_band_energy(ik, vxc_tot_k_mo, p2d, wg);
         // ======test=======
