@@ -91,7 +91,7 @@ void ModuleIO::write_pot_init(
             }
 
             ModuleIO::write_vdata_palgrid(para_grid,
-                                          pelec->pot->get_effective_v(is),
+                                          pelec->pot->get_eff_v(is),
                                           is,
                                           nspin,
                                           istep,

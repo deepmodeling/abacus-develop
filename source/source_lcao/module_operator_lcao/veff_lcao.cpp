@@ -65,8 +65,8 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
-    double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
+    double* vr_eff1 = this->pot->get_eff_v(this->current_spin);
+    double* vofk_eff1 = this->pot->get_eff_vofk(this->current_spin);
 
     if(XC_Functional::get_ked_flag())
     {
@@ -95,8 +95,8 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
-    double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
+    double* vr_eff1 = this->pot->get_eff_v(this->current_spin);
+    double* vofk_eff1 = this->pot->get_eff_vofk(this->current_spin);
 
     if(XC_Functional::get_ked_flag())
     {
@@ -126,16 +126,17 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     std::vector<const double*> vofk_eff(4, nullptr);
     for (int is = 0; is < 4; is++)
     {
-        vr_eff[is] = this->pot->get_effective_v(is);
+        vr_eff[is] = this->pot->get_eff_v(is);
         if(XC_Functional::get_ked_flag())
         {
-            vofk_eff[is] = this->pot->get_effective_vofk(is);
+            vofk_eff[is] = this->pot->get_eff_vofk(is);
         }
     }
     if(XC_Functional::get_ked_flag())
     {
         ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
-    } else
+    } 
+    else
     {
         ModuleGint::cal_gint_vl(vr_eff, this->hR);
     }

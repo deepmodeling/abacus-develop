@@ -13,7 +13,6 @@ list(APPEND objects
     module_pot/H_Hartree_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
-    module_pot/pot_local_paw.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
     module_pot/pot_sep.cpp

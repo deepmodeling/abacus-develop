@@ -66,7 +66,7 @@ void pw::setup_pot(const int istep,
 	//! D in uspp need vloc, thus behind init_scf()
 	//! calculate the effective coefficient matrix
 	//! for non-local pseudopotential projectors
-	ModuleBase::matrix veff = pelec->pot->get_effective_v();
+	ModuleBase::matrix veff = pelec->pot->get_eff_v();
 
 	ppcell.cal_effective_D(veff, pw_rhod, ucell);
 

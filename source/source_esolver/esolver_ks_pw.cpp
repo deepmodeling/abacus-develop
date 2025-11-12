@@ -286,7 +286,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // pp projectors, liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
-        ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+        ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 

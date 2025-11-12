@@ -18,7 +18,7 @@ namespace elecstate
  * 2. Func init_pot()
  *     a. need istep for update_for_tddft();
  *     b. need Charge for update_from_charge();
- *     c. it will reset fixed_done to false, v_effective_fixed will be calculated;
+ *     c. it will reset fixed_done to false, v_eff_fixed will be calculated;
  *     d. it should be called after Charge is initialized;
  *     e. it can only be called once in one SCF loop
  * 3. Func pot_register() and components
@@ -30,8 +30,8 @@ namespace elecstate
  *     f. "efield", PotEfield introduces electronic field including dipole correction part of potentials;
  *     g. "gatefield", PotGate introduces gate field part of potentials;
  * 4. Func update_from_charge()
- *     a. regenerate v_effective
- *     b. if Meta-GGA is choosed, it will regenerate vofk_effective
+ *     a. regenerate v_eff
+ *     b. if Meta-GGA is choosed, it will regenerate vofk_eff
  * 5. Func update_for_tddft()
  *     a. in principle, it should be added to components, but it related to real time(istep)
  *     b. it should be called after update_from_charge() as a compensation;
@@ -41,9 +41,9 @@ namespace elecstate
  *         2. use the final delta_V_eff for calculating force correction
  * 7. Func write_potential()
  * 8. Func write_elecstat_pot()
- * 9. interfaces for v_effective_fixed/v_effective/vofk_effective
+ * 9. interfaces for v_eff_fixed/v_eff/vofk_eff
  * 10. Func interpolate_vrs()
- *    a. interpolate v_effective on the smooth mesh
+ *    a. interpolate v_eff on the smooth mesh
  */
 class Potential : public PotBase
 {
@@ -53,7 +53,7 @@ class Potential : public PotBase
     // In constructor, size of every potential components should be allocated
     // rho_basis_in is the dense grids, rho_basis_smooth_in is the smooth grids in USPP
     // charge density and potential are defined on dense grids,
-    // but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
+    // but eff potential needs to be interpolated on smooth grids in order to compute Veff|psi>
     // Note: rho_basis_in and rho_basis_smooth_in are the same in NCPP
     Potential(const ModulePW::PW_Basis* rho_basis_in,
               const ModulePW::PW_Basis* rho_basis_smooth_in,
@@ -78,61 +78,61 @@ class Potential : public PotBase
     PotBase* get_pot_type(const std::string& pot_type);
 
     // interfaces to get values
-    ModuleBase::matrix& get_effective_v()
+    ModuleBase::matrix& get_eff_v()
     {
-        return this->v_effective;
+        return this->v_eff;
     }
-    const ModuleBase::matrix& get_effective_v() const
+    const ModuleBase::matrix& get_eff_v() const
     {
-        return this->v_effective;
+        return this->v_eff;
     }
 
-    double* get_effective_v(int is)
+    double* get_eff_v(int is)
     {
-        if (this->v_effective.nc > 0)
+        if (this->v_eff.nc > 0)
         {
-            return &(this->v_effective(is, 0));
+            return &(this->v_eff(is, 0));
         }
         else
         {
             return nullptr;
         }
     }
-    const double* get_effective_v(int is) const
+    const double* get_eff_v(int is) const
     {
-        if (this->v_effective.nc > 0)
+        if (this->v_eff.nc > 0)
         {
-            return &(this->v_effective(is, 0));
+            return &(this->v_eff(is, 0));
         }
         else
         {
             return nullptr;
         }
     }
-    ModuleBase::matrix& get_effective_vofk()
+    ModuleBase::matrix& get_eff_vofk()
     {
-        return this->vofk_effective;
+        return this->vofk_eff;
     }
-    const ModuleBase::matrix& get_effective_vofk() const
+    const ModuleBase::matrix& get_eff_vofk() const
     {
-        return this->vofk_effective;
+        return this->vofk_eff;
     }
-    double* get_effective_vofk(int is)
+    double* get_eff_vofk(int is)
     {
-        if (this->vofk_effective.nc > 0)
+        if (this->vofk_eff.nc > 0)
         {
-            return &(this->vofk_effective(is, 0));
+            return &(this->vofk_eff(is, 0));
         }
         else
         {
             return nullptr;
         }
     }
-    const double* get_effective_vofk(int is) const
+    const double* get_eff_vofk(int is) const
     {
-        if (this->vofk_effective.nc > 0)
+        if (this->vofk_eff.nc > 0)
         {
-            return &(this->vofk_effective(is, 0));
+            return &(this->vofk_eff(is, 0));
         }
         else
         {
@@ -166,11 +166,11 @@ class Potential : public PotBase
 
     double* get_fixed_v()
     {
-        return this->v_effective_fixed.data();
+        return this->v_eff_fixed.data();
     }
     const double* get_fixed_v() const
     {
-        return this->v_effective_fixed.data();
+        return this->v_eff_fixed.data();
     }
     const ModulePW::PW_Basis *get_rho_basis() const
     {
@@ -195,18 +195,20 @@ class Potential : public PotBase
 
     void allocate();
 
-    std::vector<double> v_effective_fixed;
-    ModuleBase::matrix v_effective;
+    std::vector<double> v_eff_fixed;
+    ModuleBase::matrix v_eff;
 
     ModuleBase::matrix veff_smooth; // used in uspp liuyu 2023-10-12
     ModuleBase::matrix vofk_smooth; // used in uspp liuyu 2023-10-12
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 
-    float *s_veff_smooth = nullptr, *s_vofk_smooth = nullptr;
-    double *d_veff_smooth = nullptr, *d_vofk_smooth = nullptr;
+    float *s_veff_smooth = nullptr;
+    float *s_vofk_smooth = nullptr;
+    double *d_veff_smooth = nullptr;
+    double *d_vofk_smooth = nullptr;
 
-    ModuleBase::matrix vofk_effective;
+    ModuleBase::matrix vofk_eff;
 
     bool fixed_done = false;
 

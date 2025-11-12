@@ -26,7 +26,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
 
     ModuleBase::matrix stressus(3, 3);
 
-    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)

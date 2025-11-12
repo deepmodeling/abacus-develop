@@ -109,10 +109,10 @@ void Potential::allocate()
 		return;
 	}
 
-    this->v_effective_fixed.resize(nrxx);
+    this->v_eff_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
 
-    this->v_effective.create(nspin, nrxx);
+    this->v_eff.create(nspin, nrxx);
     ModuleBase::Memory::record("Pot::veff", sizeof(double) * nspin * nrxx);
 
     this->veff_smooth.create(nspin, nrxx_smooth);
@@ -120,7 +120,7 @@ void Potential::allocate()
 
     if (XC_Functional::get_ked_flag())
     {
-        this->vofk_effective.create(nspin, nrxx);
+        this->vofk_eff.create(nspin, nrxx);
         ModuleBase::Memory::record("Pot::vofk", sizeof(double) * nspin * nrxx);
 
         this->vofk_smooth.create(nspin, nrxx_smooth);
@@ -162,11 +162,11 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
 
     if (!this->fixed_done)
     {
-        this->cal_fixed_v(this->v_effective_fixed.data());
+        this->cal_fixed_v(this->v_eff_fixed.data());
         this->fixed_done = true;
     }
 
-    this->cal_v_eff(chg, ucell, this->v_effective);
+    this->cal_v_eff(chg, ucell, this->v_eff);
 
     // interpolate potential on the smooth mesh if necessary
     this->interpolate_vrs();
@@ -202,7 +202,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
     ModuleBase::TITLE("Potential", "cal_fixed_v");
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
 
-    this->v_effective_fixed.assign(this->v_effective_fixed.size(), 0.0);
+    this->v_eff_fixed.assign(this->v_eff_fixed.size(), 0.0);
     for (size_t i = 0; i < this->components.size(); i++)
     {
         if (this->components[i]->fixed_mode)
@@ -219,10 +219,10 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     ModuleBase::TITLE("Potential", "cal_veff");
     ModuleBase::timer::tick("Potential", "cal_veff");
 
-    const int nspin_current = this->v_effective.nr;
-    const int nrxx = this->v_effective.nc;
-    // first of all, set v_effective to zero.
-    this->v_effective.zero_out();
+    const int nspin_current = this->v_eff.nr;
+    const int nrxx = this->v_eff.nc;
+    // first of all, set v_eff to zero.
+    this->v_eff.zero_out();
 
     // add fixed potential components
     // nspin = 2, add fixed components for all
@@ -231,11 +231,11 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     {
         if (i == 0 || nspin_current == 2)
         {
-            ModuleBase::GlobalFunc::COPYARRAY(this->v_effective_fixed.data(), this->get_effective_v(i), nrxx);
+            ModuleBase::GlobalFunc::COPYARRAY(this->v_eff_fixed.data(), this->get_eff_v(i), nrxx);
         }
     }
 
-    // cal effective by every components
+    // cal eff by every components
     for (size_t i = 0; i < this->components.size(); i++)
     {
         if (this->components[i]->dynamic_mode)
@@ -265,14 +265,14 @@ void Potential::init_pot(int istep, const Charge*const chg)
 void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
 {
     ModuleBase::TITLE("Potential", "get_vnew");
-    vnew.create(this->v_effective.nr, this->v_effective.nc);
-    vnew = this->v_effective;
+    vnew.create(this->v_eff.nr, this->v_eff.nc);
+    vnew = this->v_eff;
 
     this->update_from_charge(chg, this->ucell_);
     //(used later for scf correction to the forces )
     for (int iter = 0; iter < vnew.nr * vnew.nc; ++iter)
     {
-        vnew.c[iter] = this->v_effective.c[iter] - vnew.c[iter];
+        vnew.c[iter] = this->v_eff.c[iter] - vnew.c[iter];
     }
 
     return;
@@ -296,7 +296,7 @@ void Potential::interpolate_vrs(void)
         ModuleBase::ComplexMatrix vrs(nspin, rho_basis_->npw);
         for (int is = 0; is < nspin; is++)
         {
-            rho_basis_->real2recip(&v_effective(is, 0), &vrs(is, 0));
+            rho_basis_->real2recip(&v_eff(is, 0), &vrs(is, 0));
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
         }
 
@@ -305,15 +305,15 @@ void Potential::interpolate_vrs(void)
             ModuleBase::ComplexMatrix vrs_ofk(nspin, rho_basis_->npw);
             for (int is = 0; is < nspin; is++)
             {
-                rho_basis_->real2recip(&vofk_effective(is, 0), &vrs_ofk(is, 0));
+                rho_basis_->real2recip(&vofk_eff(is, 0), &vrs_ofk(is, 0));
                 rho_basis_smooth_->recip2real(&vrs_ofk(is, 0), &vofk_smooth(is, 0));
             }
         }
     }
     else
     {
-        this->veff_smooth = this->v_effective;
-        this->vofk_smooth = this->vofk_effective;
+        this->veff_smooth = this->v_eff;
+        this->vofk_smooth = this->vofk_eff;
     }
 
     ModuleBase::timer::tick("Potential", "interpolate_vrs");

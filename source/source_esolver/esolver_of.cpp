@@ -122,7 +122,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
-    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -317,10 +317,10 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     this->kedf_manager_->get_potential(this->chr.rho,
                                        this->pphi_,
                                        this->pw_rho,
-                                       this->pelec->pot->get_effective_v()); // KEDF potential
+                                       this->pelec->pot->get_eff_v()); // KEDF potential
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        const double* vr_eff = this->pelec->pot->get_effective_v(is);
+        const double* vr_eff = this->pelec->pot->get_eff_v(is);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             this->pdEdphi_[is][ir] = vr_eff[ir];
@@ -516,9 +516,9 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     this->kedf_manager_->get_potential(this->chr.rho,
                                        this->pphi_,
                                        this->pw_rho,
-                                       this->pelec->pot->get_effective_v()); // KEDF potential
+                                       this->pelec->pot->get_eff_v()); // KEDF potential
         
-        const double* vr_eff = this->pelec->pot->get_effective_v(0);
+        const double* vr_eff = this->pelec->pot->get_eff_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             this->pdEdphi_[0][ir] = vr_eff[ir];
