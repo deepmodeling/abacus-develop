@@ -15,8 +15,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                        const psi::Psi<double>& wfc,
                        elecstate::DensityMatrix<double, double>& DM)
 {
-    ModuleBase::TITLE("elecstate", "cal_dm");
-    ModuleBase::timer::tick("elecstate", "cal_dm");
+    ModuleBase::TITLE("elecstate", "cal_dm_psi");
+    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
 
     // dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -33,13 +33,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // dm[ik].create(ParaV->ncol, ParaV->nrow);
         //  wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
 
-        psi::Psi<double> wg_wfc(1, 
-                                wfc.get_nbands(), 
-                                wfc.get_nbasis(),
-                                wfc.get_nbasis(),
-                                true);
-        wg_wfc.set_all_psi(wfc.get_pointer(), wg_wfc.size());
+        psi::Psi<double> wg_wfc(1, wfc.get_nbands(), 
+          wfc.get_nbasis(), wfc.get_nbasis(), true);
 
+        wg_wfc.set_all_psi(wfc.get_pointer(), wg_wfc.size());
 
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
@@ -50,7 +47,6 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                 if (ib_global >= wg.nc)
                 {
                     break;
-                    ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
 			if (ib_global >= wg.nc)
@@ -70,7 +66,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         psiMulPsi(wg_wfc, wfc, dmk_pointer);
 #endif
     }
-    ModuleBase::timer::tick("elecstate", "cal_dm");
+    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
 
     return;
 }
@@ -80,8 +76,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                        const psi::Psi<std::complex<double>>& wfc,
                        elecstate::DensityMatrix<std::complex<double>, double>& DM)
 {
-    ModuleBase::TITLE("elecstate", "cal_dm");
-    ModuleBase::timer::tick("elecstate", "cal_dm");
+    ModuleBase::TITLE("elecstate", "cal_dm_psi");
+    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
 
     // dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -104,6 +100,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         
         const std::complex<double>* pwfc = wfc.get_pointer();
         std::complex<double>* pwg_wfc = wg_wfc.get_pointer();
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -139,8 +136,9 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         if (PARAM.inp.ks_solver == "cg_in_lcao")
         {
             psiMulPsi(wg_wfc, wfc, dmk_pointer);
-        } else 
-        {
+		} 
+		else 
+		{
             psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
         }
 #else
@@ -148,7 +146,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 #endif
     }
 
-    ModuleBase::timer::tick("elecstate", "cal_dm");
+    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
     return;
 }
 
