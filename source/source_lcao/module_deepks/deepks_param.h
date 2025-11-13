@@ -2,7 +2,10 @@
 #define LCAO_DEEPKS_PARAM
 
 #include <vector>
-namespace ModuleBase { struct IntArray; }
+namespace ModuleBase
+{
+struct IntArray;
+}
 
 struct DeePKS_Param
 {

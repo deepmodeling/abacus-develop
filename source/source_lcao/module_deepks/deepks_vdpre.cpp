@@ -43,8 +43,9 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     using TK_tensor =
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
 
-    torch::Tensor v_delta_pdm
-        = torch::zeros({nks, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)}, torch::dtype(dtype));
+    torch::Tensor v_delta_pdm = torch::zeros(
+        {nks, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
+        torch::dtype(dtype));
     auto accessor = v_delta_pdm.accessor<TK_tensor, 6>();
 
     DeePKS_domain::iterate_ad2(
@@ -130,7 +131,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
         }
     );
 #ifdef __MPI
-    const int size = nks * nlocal * nlocal * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1) * (2 * deepks_param.lmaxd + 1);
+    const int size
+        = nks * nlocal * nlocal * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1) * (2 * deepks_param.lmaxd + 1);
     TK_tensor* data_tensor_ptr = v_delta_pdm.data_ptr<TK_tensor>();
     TK* data_ptr = reinterpret_cast<TK*>(data_tensor_ptr);
     Parallel_Reduce::reduce_all(data_ptr, size);

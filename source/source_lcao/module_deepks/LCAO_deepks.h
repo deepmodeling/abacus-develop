@@ -68,8 +68,8 @@ class LCAO_Deepks
     // private variables
     //-------------------
     //  private:
-  public:                            // change to public to reconstuct the code, 2024-07-22 by mohan
-    DeePKS_Param deepks_param;       // parameters for DeePKS
+  public:                      // change to public to reconstuct the code, 2024-07-22 by mohan
+    DeePKS_Param deepks_param; // parameters for DeePKS
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
 

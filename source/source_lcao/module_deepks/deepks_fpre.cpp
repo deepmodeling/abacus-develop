@@ -8,8 +8,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_hcontainer/atom_pair.h"
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
@@ -161,8 +161,10 @@ void DeePKS_domain::cal_gvx(const int nat,
         for (int nl = 0; nl < nlmax; ++nl)
         {
             int nm = 2 * deepks_param.inl2l[nl] + 1;
-            torch::Tensor gdmx_sliced
-                = gdmx.slice(2, nl, deepks_param.inlmax, nlmax).slice(3, 0, nm, 1).slice(4, 0, nm, 1).permute({1, 0, 2, 3, 4});
+            torch::Tensor gdmx_sliced = gdmx.slice(2, nl, deepks_param.inlmax, nlmax)
+                                            .slice(3, 0, nm, 1)
+                                            .slice(4, 0, nm, 1)
+                                            .permute({1, 0, 2, 3, 4});
             gdmr.push_back(gdmx_sliced);
         }
 

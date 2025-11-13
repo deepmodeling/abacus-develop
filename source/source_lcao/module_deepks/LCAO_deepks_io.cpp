@@ -102,7 +102,8 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                 npy_des.push_back(accessor[im]);
             }
         }
-        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
+        const long unsigned dshape[]
+            = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
         if (rank == 0)
         {
             npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);
@@ -120,7 +121,8 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                 npy_des.push_back(accessor[i]);
             }
         }
-        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
+        const long unsigned dshape[]
+            = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
         if (rank == 0)
         {
             npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);

@@ -172,7 +172,8 @@ void DeePKS_domain::cal_gvepsl(const int nat,
         for (int nl = 0; nl < nlmax; ++nl)
         {
             int nm = 2 * deepks_param.inl2l[nl] + 1;
-            torch::Tensor gdmepsl_sliced = gdmepsl.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            torch::Tensor gdmepsl_sliced
+                = gdmepsl.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
             gdmepsl_vector.push_back(gdmepsl_sliced);
         }
         assert(gdmepsl_vector.size() == nlmax);

@@ -144,11 +144,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
 
     const std::string file_d = PARAM.globalv.global_out_dir + "deepks_dm_eig.npy";
-    LCAO_deepks_io::save_npy_d(nat,
-                               PARAM.inp.deepks_equiv,
-                               deepks_param,
-                               descriptor,
-                               file_d,
+    LCAO_deepks_io::save_npy_d(nat, PARAM.inp.deepks_equiv, deepks_param, descriptor, file_d,
                                rank); // libnpy needed
 
     if (rank == 0)
