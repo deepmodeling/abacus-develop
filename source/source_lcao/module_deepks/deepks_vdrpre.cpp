@@ -14,10 +14,9 @@
 #include "source_lcao/module_hcontainer/atom_pair.h"
 
 void DeePKS_domain::prepare_phialpha_r(const int nlocal,
-                                       const int lmaxd,
-                                       const int inlmax,
                                        const int nat,
                                        const int R_size,
+                                       const DeePKS_Param& deepks_param,
                                        const std::vector<hamilt::HContainer<double>*> phialpha,
                                        const UnitCell& ucell,
                                        const LCAO_Orbitals& orb,
@@ -28,8 +27,8 @@ void DeePKS_domain::prepare_phialpha_r(const int nlocal,
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_r");
     ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_r");
     constexpr torch::Dtype dtype = torch::kFloat64;
-    int nlmax = inlmax / nat;
-    int mmax = 2 * lmaxd + 1;
+    int nlmax = deepks_param.inlmax / nat;
+    int mmax = 2 * deepks_param.lmaxd + 1;
 
     phialpha_r_out = torch::zeros({R_size, R_size, R_size, nat, nlmax, nlocal, mmax}, dtype);
     auto accessor = phialpha_r_out.accessor<double, 7>();
@@ -100,16 +99,13 @@ void DeePKS_domain::prepare_phialpha_r(const int nlocal,
 }
 
 void DeePKS_domain::cal_vdr_precalc(const int nlocal,
-                                    const int lmaxd,
-                                    const int inlmax,
                                     const int nat,
                                     const int nks,
                                     const int R_size,
-                                    const std::vector<int>& inl2l,
+                                    const DeePKS_Param& deepks_param,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                     const std::vector<hamilt::HContainer<double>*> phialpha,
                                     const std::vector<torch::Tensor> gevdm,
-                                    const ModuleBase::IntArray* inl_index,
                                     const UnitCell& ucell,
                                     const LCAO_Orbitals& orb,
                                     const Parallel_Orbitals& pv,
@@ -120,7 +116,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
     ModuleBase::timer::tick("DeePKS_domain", "calc_vdr_precalc");
 
     torch::Tensor vdr_pdm
-        = torch::zeros({R_size, R_size, R_size, nlocal, nlocal, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)},
+        = torch::zeros({R_size, R_size, R_size, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
                        torch::TensorOptions().dtype(torch::kFloat64));
     auto accessor = vdr_pdm.accessor<double, 8>();
 
@@ -185,7 +181,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                     {
                         for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                         {
-                            const int inl = inl_index[T0](I0, L0, N0);
+                            const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                             const int nm = 2 * L0 + 1;
 
                             for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
@@ -207,18 +203,18 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
     );
 
 #ifdef __MPI
-    const int size = R_size * R_size * R_size * nlocal * nlocal * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
+    const int size = R_size * R_size * R_size * nlocal * nlocal * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1) * (2 * deepks_param.lmaxd + 1);
     double* data_ptr = vdr_pdm.data_ptr<double>();
     Parallel_Reduce::reduce_all(data_ptr, size);
 #endif
 
     // transfer v_delta_pdm to v_delta_pdm_vector
-    int nlmax = inlmax / nat;
+    int nlmax = deepks_param.inlmax / nat;
     std::vector<torch::Tensor> vdr_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        int nm = 2 * inl2l[nl] + 1;
-        torch::Tensor vdr_pdm_sliced = vdr_pdm.slice(5, nl, inlmax, nlmax).slice(6, 0, nm, 1).slice(7, 0, nm, 1);
+        int nm = 2 * deepks_param.inl2l[nl] + 1;
+        torch::Tensor vdr_pdm_sliced = vdr_pdm.slice(5, nl, deepks_param.inlmax, nlmax).slice(6, 0, nm, 1).slice(7, 0, nm, 1);
         vdr_pdm_vector.push_back(vdr_pdm_sliced);
     }
 

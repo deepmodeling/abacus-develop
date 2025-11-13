@@ -22,15 +22,12 @@
 // for deepks_v_delta = 1
 template <typename TK>
 void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
-                                        const int lmaxd,
-                                        const int inlmax,
                                         const int nat,
                                         const int nks,
-                                        const std::vector<int>& inl2l,
+                                        const DeePKS_Param& deepks_param,
                                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                         const std::vector<hamilt::HContainer<double>*> phialpha,
                                         const std::vector<torch::Tensor> gevdm,
-                                        const ModuleBase::IntArray* inl_index,
                                         const UnitCell& ucell,
                                         const LCAO_Orbitals& orb,
                                         const Parallel_Orbitals& pv,
@@ -47,7 +44,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
 
     torch::Tensor v_delta_pdm
-        = torch::zeros({nks, nlocal, nlocal, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(dtype));
+        = torch::zeros({nks, nlocal, nlocal, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)}, torch::dtype(dtype));
     auto accessor = v_delta_pdm.accessor<TK_tensor, 6>();
 
     DeePKS_domain::iterate_ad2(
@@ -112,7 +109,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                         {
                             for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                             {
-                                const int inl = inl_index[T0](I0, L0, N0);
+                                const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                                 const int nm = 2 * L0 + 1;
                                 for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
                                 {
@@ -133,20 +130,20 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
         }
     );
 #ifdef __MPI
-    const int size = nks * nlocal * nlocal * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
+    const int size = nks * nlocal * nlocal * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1) * (2 * deepks_param.lmaxd + 1);
     TK_tensor* data_tensor_ptr = v_delta_pdm.data_ptr<TK_tensor>();
     TK* data_ptr = reinterpret_cast<TK*>(data_tensor_ptr);
     Parallel_Reduce::reduce_all(data_ptr, size);
 #endif
 
     // transfer v_delta_pdm to v_delta_pdm_vector
-    int nlmax = inlmax / nat;
+    int nlmax = deepks_param.inlmax / nat;
     std::vector<torch::Tensor> v_delta_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        int nm = 2 * inl2l[nl] + 1;
+        int nm = 2 * deepks_param.inl2l[nl] + 1;
         torch::Tensor v_delta_pdm_sliced
-            = v_delta_pdm.slice(3, nl, inlmax, nlmax).slice(4, 0, nm, 1).slice(5, 0, nm, 1);
+            = v_delta_pdm.slice(3, nl, deepks_param.inlmax, nlmax).slice(4, 0, nm, 1).slice(5, 0, nm, 1);
         v_delta_pdm_vector.push_back(v_delta_pdm_sliced);
     }
 
@@ -173,10 +170,9 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 // prepare_phialpha and prepare_gevdm for deepks_v_delta = 2
 template <typename TK>
 void DeePKS_domain::prepare_phialpha(const int nlocal,
-                                     const int lmaxd,
-                                     const int inlmax,
                                      const int nat,
                                      const int nks,
+                                     const DeePKS_Param& deepks_param,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                      const std::vector<hamilt::HContainer<double>*> phialpha,
                                      const UnitCell& ucell,
@@ -190,8 +186,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
     using TK_tensor =
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
-    int nlmax = inlmax / nat;
-    int mmax = 2 * lmaxd + 1;
+    int nlmax = deepks_param.inlmax / nat;
+    int mmax = 2 * deepks_param.lmaxd + 1;
     phialpha_out = torch::zeros({nat, nlmax, nks, nlocal, mmax}, dtype);
     auto accessor = phialpha_out.accessor<TK_tensor, 5>();
 
@@ -268,16 +264,15 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
 }
 
 void DeePKS_domain::prepare_gevdm(const int nat,
-                                  const int lmaxd,
-                                  const int inlmax,
+                                  const DeePKS_Param& deepks_param,
                                   const LCAO_Orbitals& orb,
                                   const std::vector<torch::Tensor>& gevdm_in,
                                   torch::Tensor& gevdm_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_gevdm");
     ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
-    int nlmax = inlmax / nat;
-    int mmax = 2 * lmaxd + 1;
+    int nlmax = deepks_param.inlmax / nat;
+    int mmax = 2 * deepks_param.lmaxd + 1;
     gevdm_out = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
 
     std::vector<torch::Tensor> gevdm_out_vector;
@@ -295,15 +290,12 @@ void DeePKS_domain::prepare_gevdm(const int nat,
 }
 
 template void DeePKS_domain::cal_v_delta_precalc<double>(const int nlocal,
-                                                         const int lmaxd,
-                                                         const int inlmax,
                                                          const int nat,
                                                          const int nks,
-                                                         const std::vector<int>& inl2l,
+                                                         const DeePKS_Param& deepks_param,
                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                          const std::vector<hamilt::HContainer<double>*> phialpha,
                                                          const std::vector<torch::Tensor> gevdm,
-                                                         const ModuleBase::IntArray* inl_index,
                                                          const UnitCell& ucell,
                                                          const LCAO_Orbitals& orb,
                                                          const Parallel_Orbitals& pv,
@@ -311,15 +303,12 @@ template void DeePKS_domain::cal_v_delta_precalc<double>(const int nlocal,
                                                          torch::Tensor& v_delta_precalc);
 template void DeePKS_domain::cal_v_delta_precalc<std::complex<double>>(
     const int nlocal,
-    const int lmaxd,
-    const int inlmax,
     const int nat,
     const int nks,
-    const std::vector<int>& inl2l,
+    const DeePKS_Param& deepks_param,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
     const std::vector<torch::Tensor> gevdm,
-    const ModuleBase::IntArray* inl_index,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,
@@ -327,10 +316,9 @@ template void DeePKS_domain::cal_v_delta_precalc<std::complex<double>>(
     torch::Tensor& v_delta_precalc);
 
 template void DeePKS_domain::prepare_phialpha<double>(const int nlocal,
-                                                      const int lmaxd,
-                                                      const int inlmax,
                                                       const int nat,
                                                       const int nks,
+                                                      const DeePKS_Param& deepks_param,
                                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                       const std::vector<hamilt::HContainer<double>*> phialpha,
                                                       const UnitCell& ucell,
@@ -341,10 +329,9 @@ template void DeePKS_domain::prepare_phialpha<double>(const int nlocal,
 
 template void DeePKS_domain::prepare_phialpha<std::complex<double>>(
     const int nlocal,
-    const int lmaxd,
-    const int inlmax,
     const int nat,
     const int nks,
+    const DeePKS_Param& deepks_param,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
     const UnitCell& ucell,

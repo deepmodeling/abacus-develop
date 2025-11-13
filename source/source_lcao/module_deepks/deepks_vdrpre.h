@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/matrix.h"
@@ -29,10 +30,9 @@ namespace DeePKS_domain
 // for deepks_v_delta = -1
 // calculates v_delta_r_precalc
 void prepare_phialpha_r(const int nlocal,
-                        const int lmaxd,
-                        const int inlmax,
                         const int nat,
                         const int R_size,
+                        const DeePKS_Param& deepks_param,
                         const std::vector<hamilt::HContainer<double>*> phialpha,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
@@ -41,16 +41,13 @@ void prepare_phialpha_r(const int nlocal,
                         torch::Tensor& phialpha_r_out);
 
 void cal_vdr_precalc(const int nlocal,
-                     const int lmaxd,
-                     const int inlmax,
                      const int nat,
                      const int nks,
                      const int R_size,
-                     const std::vector<int>& inl2l,
+                     const DeePKS_Param& deepks_param,
                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                      const std::vector<hamilt::HContainer<double>*> phialpha,
                      const std::vector<torch::Tensor> gevdm,
-                     const ModuleBase::IntArray* inl_index,
                      const UnitCell& ucell,
                      const LCAO_Orbitals& orb,
                      const Parallel_Orbitals& pv,

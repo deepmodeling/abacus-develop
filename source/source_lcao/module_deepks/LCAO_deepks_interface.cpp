@@ -479,16 +479,13 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                             torch::Tensor vdr_precalc;
                             DeePKS_domain::cal_vdr_precalc(nlocal,
-                                                        lmaxd,
-                                                        inlmax,
                                                         nat,
                                                         nks,
                                                         R_size,
-                                                        inl2l,
+                                                        deepks_param,
                                                         kvec_d,
                                                         phialpha,
                                                         gevdm,
-                                                        inl_index,
                                                         ucell,
                                                         orb,
                                                         *ParaV,
@@ -503,10 +500,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                             torch::Tensor phialpha_r_out;
                             DeePKS_domain::prepare_phialpha_r(nlocal,
-                                                            lmaxd,
-                                                            inlmax,
                                                             nat,
                                                             R_size,
+                                                            deepks_param,
                                                             phialpha,
                                                             ucell,
                                                             orb,
@@ -517,7 +513,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
 
                             torch::Tensor gevdm_out;
-                            DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
+                            DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
                             const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
                         }
@@ -575,15 +571,12 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 {
                     torch::Tensor v_delta_precalc;
                     DeePKS_domain::cal_v_delta_precalc<TK>(nlocal,
-                                                        lmaxd,
-                                                        inlmax,
                                                         nat,
                                                         nks,
-                                                        inl2l,
+                                                        deepks_param,
                                                         kvec_d,
                                                         phialpha,
                                                         gevdm,
-                                                        inl_index,
                                                         ucell,
                                                         orb,
                                                         *ParaV,
@@ -597,10 +590,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 {
                     torch::Tensor phialpha_out;
                     DeePKS_domain::prepare_phialpha<TK>(nlocal,
-                                                        lmaxd,
-                                                        inlmax,
                                                         nat,
                                                         nks,
+                                                        deepks_param,
                                                         kvec_d,
                                                         phialpha,
                                                         ucell,
@@ -612,7 +604,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     LCAO_deepks_io::save_tensor2npy<TK>(file_phialpha, phialpha_out, rank);
 
                     torch::Tensor gevdm_out;
-                    DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
+                    DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
                     const std::string file_gevdm = get_filename("gevdm", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
                 }

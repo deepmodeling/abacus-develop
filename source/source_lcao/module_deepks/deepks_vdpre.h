@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/matrix.h"
@@ -32,15 +33,12 @@ namespace DeePKS_domain
 // calculates v_delta_precalc
 template <typename TK>
 void cal_v_delta_precalc(const int nlocal,
-                         const int lmaxd,
-                         const int inlmax,
                          const int nat,
                          const int nks,
-                         const std::vector<int>& inl2l,
+                         const DeePKS_Param& deepks_param,
                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                          const std::vector<hamilt::HContainer<double>*> phialpha,
                          const std::vector<torch::Tensor> gevdm,
-                         const ModuleBase::IntArray* inl_index,
                          const UnitCell& ucell,
                          const LCAO_Orbitals& orb,
                          const Parallel_Orbitals& pv,
@@ -51,10 +49,9 @@ void cal_v_delta_precalc(const int nlocal,
 // prepare phialpha for outputting npy file
 template <typename TK>
 void prepare_phialpha(const int nlocal,
-                      const int lmaxd,
-                      const int inlmax,
                       const int nat,
                       const int nks,
+                      const DeePKS_Param& deepks_param,
                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                       const std::vector<hamilt::HContainer<double>*> phialpha,
                       const UnitCell& ucell,
@@ -65,8 +62,7 @@ void prepare_phialpha(const int nlocal,
 
 // prepare gevdm for outputting npy file
 void prepare_gevdm(const int nat,
-                   const int lmaxd,
-                   const int inlmax,
+                   const DeePKS_Param& deepks_param,
                    const LCAO_Orbitals& orb,
                    const std::vector<torch::Tensor>& gevdm_in,
                    torch::Tensor& gevdm_out);
