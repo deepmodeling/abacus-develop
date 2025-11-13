@@ -33,6 +33,7 @@ if(ENABLE_LCAO)
         spar_hsr.cpp
         spar_st.cpp
         spar_u.cpp
+        LCAO_set.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp
 		LCAO_nl_mu.cpp	

@@ -53,10 +53,10 @@ class Ylm
 	 * @param rly [in] calculated Ylm, Y00, Y10, Y11, Y1-1, Y20, Y21, Y2-1, Y22, Y2-2...
 	 */
 	static void rlylm(
-			const int& Lmax, 
-			const double& x,
-			const double& y,
-			const double& z,
+			const int Lmax, 
+			const double x,
+			const double y,
+			const double z,
 			double rly[]);
 
 	/**
@@ -70,10 +70,10 @@ class Ylm
 	 * @param grly [out] gradient of Ylm, [dY00/dx, dY00/dy, dY00/dz], [dY10/dx, dY10/dy, dY10/dz], [dY11/dx, dY11/dy, dY11/dz],...
 	 */
 	static void rlylm(
-			const int& Lmax, 
-			const double& x,
-			const double& y,
-			const double& z,
+			const int Lmax, 
+			const double x,
+			const double y,
+			const double z,
 			double rly[],
 			double grly[][3]);
 
@@ -87,10 +87,10 @@ class Ylm
 	 * @param rly [in] calculated Ylm, Y00, Y10, Y11, Y1-1, Y20, Y21, Y2-1, Y22, Y2-2...
 	 */
 	static void sph_harm(
-			const int& Lmax,
-			const double& xdr,
-			const double& ydr,
-			const double& zdr,
+			const int Lmax,
+			const double xdr,
+			const double ydr,
+			const double zdr,
 			std::vector<double> &rly);
 	
 	/**
@@ -105,10 +105,10 @@ class Ylm
 	 * @date 2016-08-26
 	 */
 	static void rl_sph_harm(
-			const int& Lmax,
-			const double& x,
-			const double& y,
-			const double& z,
+			const int Lmax,
+			const double x,
+			const double y,
+			const double z,
 			std::vector<double>& rly);
 	
 	/**
@@ -123,10 +123,10 @@ class Ylm
 	 *             grly should be a memory-contiguous two-dimensional array for better performance.
 	 */
 	static void grad_rl_sph_harm(
-			const int& Lmax,
-			const double& x,
-			const double& y,
-			const double& z,
+			const int Lmax,
+			const double x,
+			const double y,
+			const double z,
 			double* rly,
 			double** grly);
 
@@ -140,10 +140,10 @@ class Ylm
 	 * @param hrly [out] hessian of Ylm, [dY00/dx2, dY00/dxy, dY00/dxz, dY00/dyy, dY00/dyz, dY00/dzz] , ...
 	 */
 	static void hes_rl_sph_harm(
-			const int& Lmax,
-			const double& x,
-			const double& y,
-			const double& z,
+			const int Lmax,
+			const double x,
+			const double y,
+			const double z,
 			std::vector<std::vector<double>>& hrly);
 
 	//calculate the coefficient of Ylm, ylmcoef.		
