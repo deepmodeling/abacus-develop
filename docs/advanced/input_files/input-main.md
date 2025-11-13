@@ -4031,6 +4031,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Type**: Real Real
 - **Description**: The range of the wavelength for the absorption spectrum calculation.
 - **Default**: 0.0 0.0
+- **Unit**: nm
 
 ### out_wfc_lr
 
