@@ -162,10 +162,7 @@ void test_deepks<T>::check_pdm()
 template <typename T>
 void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
-    DeePKS_domain::cal_descriptor(ucell.nat,
-                                  this->ld.deepks_param,
-                                  this->ld.pdm,
-                                  descriptor);
+    DeePKS_domain::cal_descriptor(ucell.nat, this->ld.deepks_param, this->ld.pdm, descriptor);
     DeePKS_domain::check_descriptor(this->ld.deepks_param, ucell, "./", descriptor, 0);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
@@ -221,12 +218,7 @@ void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
     std::vector<torch::Tensor> gevdm;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvepsl;
-    DeePKS_domain::cal_gvepsl(ucell.nat,
-                              this->ld.deepks_param,
-                              gevdm,
-                              gdmepsl,
-                              gvepsl,
-                              0);
+    DeePKS_domain::cal_gvepsl(ucell.nat, this->ld.deepks_param, gevdm, gdmepsl, gvepsl, 0);
     DeePKS_domain::check_tensor<double>(gvepsl, "gvepsl.dat", 0); // 0 for rank
     this->compare_with_ref("gvepsl.dat", "gvepsl_ref.dat");
 }
