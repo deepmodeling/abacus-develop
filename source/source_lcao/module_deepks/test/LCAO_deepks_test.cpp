@@ -201,12 +201,10 @@ void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
 template <typename T>
 void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl)
 {
-    DeePKS_domain::cal_gdmepsl<T>(this->ld.lmaxd,
-                                  this->ld.inlmax,
-                                  kv.nkstot,
+    DeePKS_domain::cal_gdmepsl<T>(kv.nkstot,
+                                  this->ld.deepks_param,
                                   kv.kvec_d,
                                   this->ld.phialpha,
-                                  this->ld.inl_index,
                                   this->ld.dm_r,
                                   ucell,
                                   ORB,
@@ -224,9 +222,7 @@ void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvepsl;
     DeePKS_domain::cal_gvepsl(ucell.nat,
-                              this->ld.inlmax,
-                              this->ld.des_per_atom,
-                              this->ld.inl2l,
+                              this->ld.deepks_param,
                               gevdm,
                               gdmepsl,
                               gvepsl,

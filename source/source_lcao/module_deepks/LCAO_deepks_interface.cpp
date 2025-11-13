@@ -241,11 +241,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     && !PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
                     torch::Tensor gdmepsl;
-                    DeePKS_domain::cal_gdmepsl<
-                        TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dmr, ucell, orb, *ParaV, GridD, gdmepsl);
+                    DeePKS_domain::cal_gdmepsl<TK>(nks, deepks_param, kvec_d, phialpha, dmr, ucell, orb, *ParaV, GridD, gdmepsl);
 
                     torch::Tensor gvepsl;
-                    DeePKS_domain::cal_gvepsl(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmepsl, gvepsl, rank);
+                    DeePKS_domain::cal_gvepsl(ucell.nat, deepks_param, gevdm, gdmepsl, gvepsl, rank);
                     const std::string file_gvepsl = get_filename("gvepsl", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, rank);
 
