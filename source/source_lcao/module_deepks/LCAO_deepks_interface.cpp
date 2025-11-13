@@ -82,14 +82,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
     // These variables are frequently used in the following code
-    const int nlmax = orb.Alpha[0].getTotal_nchi();
-    const int inlmax = nlmax * nat;
-    const int lmaxd = orb.get_lmax_d();
-    const int nmaxd = ld->deepks_param.nmaxd;
-
-    const int des_per_atom = ld->deepks_param.des_per_atom;
-    const std::vector<int> inl2l = ld->deepks_param.inl2l;
-    const ModuleBase::IntArray* inl_index = ld->deepks_param.inl_index;
     const std::vector<hamilt::HContainer<double>*> phialpha = ld->phialpha;
 
     const DeePKS_Param& deepks_param = ld->deepks_param;
@@ -134,10 +126,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         
         const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_d(nat,
-                                des_per_atom,
-                                inlmax,
-                                inl2l,
                                 PARAM.inp.deepks_equiv,
+                                deepks_param,
                                 descriptor,
                                 file_d,
                                 rank); // libnpy needed
