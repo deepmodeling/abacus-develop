@@ -20,7 +20,7 @@ jobs:
             build_args: "-DENABLE_LIBXC=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
             name: "Build extra components with GNU toolchain"
           - tag: intel
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_PEXSI=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
+            build_args: "-DCMAKE_PREFIX_PATH='${PEXSI32_ROOT};${SUPERLU_DIST32_ROOT};${PARMETIS32_ROOT};${METIS32_ROOT};${GKLIB_ROOT}' -DENABLE_LIBXC=1 -DENABLE_PEXSI=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
