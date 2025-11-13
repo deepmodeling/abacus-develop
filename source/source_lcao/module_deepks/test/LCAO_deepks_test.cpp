@@ -386,10 +386,10 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
                                   Test_Deepks::GridD,
                                   ParaO,
                                   nks,
+                                  this->ld.deepks_param,
                                   kv.kvec_d,
                                   this->ld.phialpha,
                                   this->ld.gedm,
-                                  this->ld.inl_index,
                                   fvnl_dalpha,
                                   cal_stress,
                                   svnl_dalpha);
