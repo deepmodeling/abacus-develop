@@ -14,7 +14,7 @@ void FFT_DSP<double>::initfft(int nx_in, int ny_in, int nz_in)
     this->nx = nx_in;
     this->ny = ny_in;
     this->nz = nz_in;
-    cluster_id = GlobalV::MY_RANK;
+    cluster_id = GlobalV::MY_RANK % 4;
     nxyz = this->nx * this->ny * this->nz;
 }
 template <>

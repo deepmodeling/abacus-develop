@@ -452,7 +452,7 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
         {
             mtfunc::free_ht(arr);
         }
-        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
+        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK % 4);
         std::string record_string;
         if (record_in != nullptr)
         {
