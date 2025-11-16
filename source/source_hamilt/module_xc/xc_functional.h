@@ -83,6 +83,8 @@ class XC_Functional
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
+	static std::string output_info();
+
 	private:
 
 	static std::vector<int> func_id; // libxc id of functional
