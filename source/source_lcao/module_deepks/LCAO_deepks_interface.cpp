@@ -475,25 +475,19 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         }
                         else if (PARAM.inp.deepks_v_delta == -2)
                         {
-                            int R_size = DeePKS_domain::get_R_size(*h_deltaR);
-                            torch::Tensor phialpha_r_out;
-                            DeePKS_domain::prepare_phialpha_r(nlocal,
-                                                              nat,
-                                                              R_size,
-                                                              deepks_param,
-                                                              phialpha,
-                                                              ucell,
-                                                              orb,
-                                                              *ParaV,
-                                                              GridD,
-                                                              phialpha_r_out);
-                            const std::string file_phialpha_r = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
-                            LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
-
                             torch::Tensor gevdm_out;
                             DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
                             const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
+
+                            int R_size = DeePKS_domain::get_R_size(*h_deltaR);
+                            torch::Tensor overlap_out;
+                            torch::Tensor iRmat;
+                            DeePKS_domain::prepare_phialpha_iRmat(nlocal, R_size, deepks_param, phialpha, ucell, orb, GridD, overlap_out, iRmat);
+                            const std::string file_overlap = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
+                            LCAO_deepks_io::save_tensor2npy<double>(file_overlap, overlap_out, rank);
+                            const std::string file_iRmat = PARAM.globalv.global_out_dir + "deepks_iRmat.npy";
+                            LCAO_deepks_io::save_tensor2npy<int>(file_iRmat, iRmat, rank);
                         }
                     }
                 }

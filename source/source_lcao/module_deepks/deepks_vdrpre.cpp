@@ -1,4 +1,4 @@
-//  prepare_phialpha_r : prepare phialpha_r for outputting npy file
+//  prepare_phialpha_iRmat : prepare phialpha_r and iR_mat for outputting npy file
 
 #ifdef __MLALGO
 
@@ -13,85 +13,84 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
 
-void DeePKS_domain::prepare_phialpha_r(const int nlocal,
-                                       const int nat,
-                                       const int R_size,
-                                       const DeePKS_Param& deepks_param,
-                                       const std::vector<hamilt::HContainer<double>*> phialpha,
-                                       const UnitCell& ucell,
-                                       const LCAO_Orbitals& orb,
-                                       const Parallel_Orbitals& pv,
-                                       const Grid_Driver& GridD,
-                                       torch::Tensor& phialpha_r_out)
+void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
+                                            const int R_size,
+                                            const DeePKS_Param& deepks_param,
+                                            const std::vector<hamilt::HContainer<double>*> phialpha,
+                                            const UnitCell& ucell,
+                                            const LCAO_Orbitals& orb,
+                                            const Grid_Driver& GridD,
+                                            torch::Tensor& overlap,
+                                            torch::Tensor& iRmat)
 {
-    ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_r");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_r");
+    ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_iRmat");
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
     constexpr torch::Dtype dtype = torch::kFloat64;
-    int nlmax = deepks_param.inlmax / nat;
-    int mmax = 2 * deepks_param.lmaxd + 1;
 
-    phialpha_r_out = torch::zeros({R_size, R_size, R_size, nat, nlmax, nlocal, mmax}, dtype);
-    auto accessor = phialpha_r_out.accessor<double, 7>();
+    // get the maximum nnmax
+    std::vector<int> nnmax_vec(ucell.nat, 0);
+    DeePKS_domain::iterate_ad1(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start,
+            const int nw_tot,
+            ModuleBase::Vector3<int> dR)
+        {
+            if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
+            {
+                return; // to next loop
+            }
+            nnmax_vec[iat]++;
+        }
+    );
+    
+    int nnmax = *std::max_element(nnmax_vec.begin(), nnmax_vec.end());
+    overlap = torch::zeros({ucell.nat, nnmax, nlocal, deepks_param.des_per_atom}, dtype);
+    torch::Tensor dRmat_tmp = torch::zeros({ucell.nat, nnmax, 3}, torch::kInt32);
+    auto overlap_accessor = overlap.accessor<double, 4>();
+    auto dRmat_accessor = dRmat_tmp.accessor<int, 3>();
 
-    DeePKS_domain::iterate_ad1(ucell,
-                               GridD,
-                               orb,
-                               false, // no trace_alpha
-                               [&](const int iat,
-                                   const ModuleBase::Vector3<double>& tau0,
-                                   const int ibt,
-                                   const ModuleBase::Vector3<double>& tau,
-                                   const int start,
-                                   const int nw_tot,
-                                   ModuleBase::Vector3<int> dR) {
-                                   if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
-                                   {
-                                       return; // to next loop
-                                   }
+    std::fill(nnmax_vec.begin(), nnmax_vec.end(), 0);
+    DeePKS_domain::iterate_ad1(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start,
+            const int nw_tot,
+            ModuleBase::Vector3<int> dR)
+        {
+            hamilt::BaseMatrix<double>* overlap_mat = phialpha[0]->find_matrix(iat, ibt, dR);
+            if (overlap_mat == nullptr)
+            {
+                return; // to next loop
+            }
+            dRmat_accessor[iat][nnmax_vec[iat]][0] = dR.x;
+            dRmat_accessor[iat][nnmax_vec[iat]][1] = dR.y;
+            dRmat_accessor[iat][nnmax_vec[iat]][2] = dR.z;
 
-                                   // middle loop : all atomic basis on the adjacent atom ad
-                                   for (int iw1 = 0; iw1 < nw_tot; ++iw1)
-                                   {
-                                       const int iw1_all = start + iw1;
-                                       const int iw1_local = pv.global2local_row(iw1_all);
-                                       const int iw2_local = pv.global2local_col(iw1_all);
-                                       if (iw1_local < 0 || iw2_local < 0)
-                                       {
-                                           continue;
-                                       }
-                                       hamilt::BaseMatrix<double>* overlap = phialpha[0]->find_matrix(iat, ibt, dR);
-                                       const int iR = phialpha[0]->find_R(dR);
-
-                                       int ib = 0;
-                                       int nl = 0;
-                                       for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                                       {
-                                           for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                                           {
-                                               const int nm = 2 * L0 + 1;
-                                               for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
-                                               {
-                                                   int iRx = DeePKS_domain::mapping_R(dR.x);
-                                                   int iRy = DeePKS_domain::mapping_R(dR.y);
-                                                   int iRz = DeePKS_domain::mapping_R(dR.z);
-                                                   accessor[iRx][iRy][iRz][iat][nl][iw1_all][m1]
-                                                       += overlap->get_value(iw1, ib + m1);
-                                               }
-                                               ib += nm;
-                                               nl++;
-                                           }
-                                       }
-                                   } // end iw
-                               });
-
-#ifdef __MPI
-    int size = R_size * R_size * R_size * nat * nlmax * nlocal * mmax;
-    double* data_ptr = phialpha_r_out.data_ptr<double>();
-    Parallel_Reduce::reduce_all(data_ptr, size);
-
-#endif
-
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_r");
+            for (int ix = 0; ix < nw_tot; ix++)
+            {
+                for (int iy = 0; iy < deepks_param.des_per_atom; iy++)
+                {
+                    overlap_accessor[iat][nnmax_vec[iat]][start + ix][iy] = overlap_mat->get_value(ix, iy);
+                }
+            }
+            nnmax_vec[iat]++;
+        }
+    );
+    iRmat = mapping_R(dRmat_tmp.unsqueeze(1) - dRmat_tmp.unsqueeze(2));
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
     return;
 }
 
@@ -251,6 +250,15 @@ int DeePKS_domain::mapping_R(int R)
         R_index = -2 * R;
     }
     return R_index;
+}
+
+torch::Tensor DeePKS_domain::mapping_R(const torch::Tensor& R_tensor)
+{
+    auto R = R_tensor.to(torch::kInt32);
+    auto pos = R > 0;
+    auto twoR_minus1 = R * 2 - 1;
+    auto neg_minus2R = -2 * R;
+    return at::where(pos, twoR_minus1, neg_minus2R);
 }
 
 template <typename T>
