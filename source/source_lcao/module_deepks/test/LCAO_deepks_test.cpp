@@ -273,6 +273,8 @@ void test_deepks<T>::check_vdrpre()
 {
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdrpre;
+    torch::Tensor overlap_out;
+    torch::Tensor iRmat;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     // normally use hR to get R_size, here use 3 instead for Bravo lattice R in [-1,0,1]
     int R_size = 3;
@@ -289,10 +291,23 @@ void test_deepks<T>::check_vdrpre()
                                    ParaO,
                                    Test_Deepks::GridD,
                                    vdrpre);
+    DeePKS_domain::prepare_phialpha_iRmat(PARAM.sys.nlocal,
+                                        R_size,
+                                        this->ld.deepks_param,
+                                        this->ld.phialpha,
+                                        ucell,
+                                        ORB,
+                                        Test_Deepks::GridD,
+                                        overlap_out,
+                                        iRmat);
     // vdrpre is large, we only check the main element in Bravo lattice vector (0, 0, 0) and (1, 0, 0)
     torch::Tensor vdrpre_sliced = vdrpre.slice(0, 0, 2, 1).slice(1, 0, 1, 1).slice(2, 0, 1, 1);
     DeePKS_domain::check_tensor<double>(vdrpre_sliced, "vdr_precalc.dat", 0); // 0 for rank
+    DeePKS_domain::check_tensor<double>(overlap_out, "phialpha_r.dat", 0); // 0 for rank
+    DeePKS_domain::check_tensor<int>(iRmat, "iRmat.dat", 0); // 0 for rank
     this->compare_with_ref("vdr_precalc.dat", "vdrpre_ref.dat");
+    this->compare_with_ref("phialpha_r.dat", "phialpha_r_ref.dat");
+    this->compare_with_ref("iRmat.dat", "iRmat_ref.dat");
 }
 
 template <typename T>
