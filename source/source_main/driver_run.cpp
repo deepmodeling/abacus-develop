@@ -129,7 +129,7 @@ void Driver::init_hardware()
 
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    mtfunc::dspInitHandle(GlobalV::MY_RANK % 4);
+    mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 }
 

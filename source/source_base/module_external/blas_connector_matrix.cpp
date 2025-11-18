@@ -4,6 +4,7 @@
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
 #include "source_base/global_variable.h"
+#include "source_io/module_parameter/parameter.h"
 #endif
 
 #ifdef __CUDA
@@ -30,7 +31,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		mtfunc::sgemm_mth_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc, GlobalV::MY_RANK % 4);
+		&beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
 	}
 #endif
 #ifdef __CUDA
@@ -67,7 +68,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::dgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::dgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -106,7 +107,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::cgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -157,7 +158,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::zgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -200,7 +201,7 @@ void BlasConnector::gemm_cm(const char transa, const char transb, const int m, c
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		mtfunc::sgemm_mth_(&transb, &transa, &m, &n, &k,
 		&alpha, a, &lda, b, &ldb,
-		&beta, c, &ldc, GlobalV::MY_RANK % 4);
+		&beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
 	}
 #endif
 #ifdef __CUDA
@@ -237,7 +238,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
 #ifdef __CUDA
@@ -276,7 +277,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
 #ifdef __CUDA
@@ -327,7 +328,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % 4);
+        mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
     }
 #endif
 #ifdef __CUDA

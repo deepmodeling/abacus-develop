@@ -692,5 +692,8 @@ struct Input_para
     bool of_cd = false;      ///< add CD potential or not   https://doi.org/10.1103/PhysRevB.98.144302
     double of_mCD_alpha = 1.0;     /// parameter of modified CD Potential
 
+    // ==============   #Parameters (25.uncommon hardware) =================
+    int dsp_count = 4;   /// the count of dsp hardwares in one node
+
 };
 #endif

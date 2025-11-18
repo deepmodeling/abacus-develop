@@ -5,6 +5,7 @@
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
 #include "source_base/global_variable.h"
+#include "source_io/module_parameter/parameter.h"
 #endif
 
 #include <complex>
@@ -452,7 +453,7 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
         {
             mtfunc::free_ht(arr);
         }
-        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK % 4);
+        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK % PARAM.inp.dsp_count);
         std::string record_string;
         if (record_in != nullptr)
         {

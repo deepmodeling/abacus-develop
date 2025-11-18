@@ -2,6 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <iostream>
 #include <string.h>
@@ -14,7 +15,7 @@ void FFT_DSP<double>::initfft(int nx_in, int ny_in, int nz_in)
     this->nx = nx_in;
     this->ny = ny_in;
     this->nz = nz_in;
-    cluster_id = GlobalV::MY_RANK % 4;
+    cluster_id = GlobalV::MY_RANK % PARAM.inp.dsp_count;
     nxyz = this->nx * this->ny * this->nz;
 }
 template <>
