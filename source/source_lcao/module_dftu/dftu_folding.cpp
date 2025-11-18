@@ -8,10 +8,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 
-namespace ModuleDFTU
-{
-
-void DFTU::fold_dSR_gamma(const UnitCell& ucell,
+void Plus_U::fold_dSR_gamma(const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
                           const Grid_Driver* gd,
                           double* dsloc_x,
@@ -22,7 +19,7 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                           const int dim2,
                           double* dSR_gamma)
 {
-    ModuleBase::TITLE("DFTU", "fold_dSR_gamma");
+    ModuleBase::TITLE("Plus_U", "fold_dSR_gamma");
 
     ModuleBase::GlobalFunc::ZEROS(dSR_gamma, pv.nloc);
 
@@ -125,7 +122,7 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
     return;
 }
 
-void DFTU::folding_matrix_k(const UnitCell& ucell,
+void Plus_U::folding_matrix_k(const UnitCell& ucell,
                             const Grid_Driver& gd,
                             ForceStressArrays& fsr,
                             const Parallel_Orbitals& pv,
@@ -135,11 +132,11 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                             std::complex<double>* mat_k,
                             const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("DFTU", "folding_matrix_k");
-    ModuleBase::timer::tick("DFTU", "folding_matrix_k");
+    ModuleBase::TITLE("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::tick("Plus_U", "folding_matrix_k");
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
-    double* mat_ptr;
+    double* mat_ptr = nullptr;
     if (dim1 == 1 || dim1 == 4)
     {
         mat_ptr = fsr.DSloc_Rx;
@@ -277,16 +274,16 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
             } // ad
         } // I1
     } // T1
-    ModuleBase::timer::tick("DFTU", "folding_matrix_k");
+    ModuleBase::timer::tick("Plus_U", "folding_matrix_k");
 
     return;
 }
 
-void DFTU::folding_matrix_k_new(const int ik,
+void Plus_U::folding_matrix_k_new(const int ik,
     hamilt::Hamilt<std::complex<double>>* p_ham)
 {
-    ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
-    ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
+    ModuleBase::TITLE("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::tick("Plus_U", "folding_matrix_k_new");
 
     int hk_type = 0;
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -313,7 +310,8 @@ void DFTU::folding_matrix_k_new(const int ik,
                         ->updateSk(ik, hk_type);
         }
     }
+
+    ModuleBase::timer::tick("Plus_U", "folding_matrix_k_new");
 }
 
-} // namespace ModuleDFTU
 #endif // __LCAO

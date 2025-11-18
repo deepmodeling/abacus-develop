@@ -22,6 +22,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               ModulePW::PW_Basis_K* wfc_basis,
                               K_Vectors* pkv,
                               pseudopot_cell_vnl* nlpp,
+                              Plus_U* p_dftu, // mohan add 2025-11-06
                               const UnitCell* ucell): ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -120,7 +121,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     if(PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
     {
         Operator<T, Device>* onsite_proj
-            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, 
+                    PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
         this->ops->add(onsite_proj);
     }
     if (GlobalC::exx_info.info_global.cal_exx)

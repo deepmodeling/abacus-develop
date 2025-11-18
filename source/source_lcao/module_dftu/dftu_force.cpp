@@ -67,10 +67,8 @@ extern "C"
                  const int* DESCC);
 }
 
-namespace ModuleDFTU
-{
 
-void DFTU::force_stress(const UnitCell& ucell,
+void Plus_U::force_stress(const UnitCell& ucell,
                         const Grid_Driver& gd,
                         std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
                         std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
@@ -80,8 +78,8 @@ void DFTU::force_stress(const UnitCell& ucell,
                         ModuleBase::matrix& stress_dftu,
                         const K_Vectors& kv)
 {
-    ModuleBase::TITLE("DFTU", "force_stress");
-    ModuleBase::timer::tick("DFTU", "force_stress");
+    ModuleBase::TITLE("Plus_U", "force_stress");
+    ModuleBase::timer::tick("Plus_U", "force_stress");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -207,12 +205,12 @@ void DFTU::force_stress(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("DFTU", "force_stress");
+    ModuleBase::timer::tick("Plus_U", "force_stress");
 
     return;
 }
 
-void DFTU::cal_force_k(const UnitCell& ucell,
+void Plus_U::cal_force_k(const UnitCell& ucell,
                        const Grid_Driver& gd,
                        ForceStressArrays& fsr,
                        const Parallel_Orbitals& pv,
@@ -221,8 +219,8 @@ void DFTU::cal_force_k(const UnitCell& ucell,
                        ModuleBase::matrix& force_dftu,
                        const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("DFTU", "cal_force_k");
-    ModuleBase::timer::tick("DFTU", "cal_force_k");
+    ModuleBase::TITLE("Plus_U", "cal_force_k");
+    ModuleBase::timer::tick("Plus_U", "cal_force_k");
 
     const char transN = 'N';
     const char transC = 'C';
@@ -337,12 +335,12 @@ void DFTU::cal_force_k(const UnitCell& ucell,
             }             // ia
         }                 // it
     }                     // end dim
-    ModuleBase::timer::tick("DFTU", "cal_force_k");
+    ModuleBase::timer::tick("Plus_U", "cal_force_k");
 
     return;
 }
 
-void DFTU::cal_stress_k(const UnitCell& ucell,
+void Plus_U::cal_stress_k(const UnitCell& ucell,
                         const Grid_Driver& gd,
                         ForceStressArrays& fsr,
                         const Parallel_Orbitals& pv,
@@ -351,8 +349,8 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
                         ModuleBase::matrix& stress_dftu,
                         const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("DFTU", "cal_stress_k");
-    ModuleBase::timer::tick("DFTU", "cal_stress_k");
+    ModuleBase::TITLE("Plus_U", "cal_stress_k");
+    ModuleBase::timer::tick("Plus_U", "cal_stress_k");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -408,12 +406,12 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("DFTU", "cal_stress_k");
+    ModuleBase::timer::tick("Plus_U", "cal_stress_k");
 
     return;
 }
 
-void DFTU::cal_force_gamma(const UnitCell& ucell,
+void Plus_U::cal_force_gamma(const UnitCell& ucell,
                            const double* rho_VU,
                            const Parallel_Orbitals& pv,
                            double* dsloc_x,
@@ -421,8 +419,8 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
                            double* dsloc_z,
                            ModuleBase::matrix& force_dftu)
 {
-    ModuleBase::TITLE("DFTU", "cal_force_gamma");
-    ModuleBase::timer::tick("DFTU", "cal_force_gamma");
+    ModuleBase::TITLE("Plus_U", "cal_force_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_force_gamma");
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double one = 1.0, zero = 0.0, minus_one = -1.0;
@@ -548,12 +546,12 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }                 // it
 
     } // end dim
-    ModuleBase::timer::tick("DFTU", "cal_force_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_force_gamma");
 
     return;
 }
 
-void DFTU::cal_stress_gamma(const UnitCell& ucell,
+void Plus_U::cal_stress_gamma(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
                             const Grid_Driver* gd,
                             double* dsloc_x,
@@ -563,8 +561,8 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
                             const double* rho_VU,
                             ModuleBase::matrix& stress_dftu)
 {
-    ModuleBase::TITLE("DFTU", "cal_stress_gamma");
-    ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
+    ModuleBase::TITLE("Plus_U", "cal_stress_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_stress_gamma");
 
     const char transN = 'N';
     const int one_int = 1;
@@ -621,8 +619,7 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_stress_gamma");
     return;
 }
-} // namespace ModuleDFTU
 #endif

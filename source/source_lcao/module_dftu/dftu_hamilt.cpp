@@ -4,19 +4,20 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/global.h"
 
-namespace ModuleDFTU
-{
 
 #ifdef __LCAO
-void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk, const std::complex<double>* sk)
+void Plus_U::cal_eff_pot_mat_complex(const int ik, 
+		std::complex<double>* eff_pot, 
+		const std::vector<int>& isk, 
+		const std::complex<double>* sk)
 {
-    ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
-    ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
+    ModuleBase::TITLE("Plus_U", "cal_eff_pot_c");
     if (!this->initialed_locale)
     {
-        ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
         return;
     }
+
+	ModuleBase::timer::tick("Plus_U", "cal_eff_pot_c");
 
     int spin = isk[ik];
 
@@ -44,8 +45,10 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, 
             eff_pot, &one_int, &one_int, this->paraV->desc);
 #endif
 
-    for (int irc = 0; irc < this->paraV->nloc; irc++)
-        VU[irc] = eff_pot[irc];
+	for (int irc = 0; irc < this->paraV->nloc; irc++)
+	{
+		VU[irc] = eff_pot[irc];
+	}
 
 #ifdef __MPI
   	pztranc_(&PARAM.globalv.nlocal, &PARAM.globalv.nlocal, 
@@ -55,19 +58,18 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, 
             eff_pot, &one_int, &one_int, this->paraV->desc);
 #endif
 
-    ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
+	ModuleBase::timer::tick("Plus_U", "cal_eff_pot_c");
     return;
 }
 
-void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk)
+void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk)
 {
-    ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
-    ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
+    ModuleBase::TITLE("Plus_U", "cal_eff_pot_r");
     if (!this->initialed_locale)
     {
-        ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
         return;
     }
+    ModuleBase::timer::tick("Plus_U", "cal_eff_pot_r");
 
     int spin = isk[ik];
 
@@ -104,11 +106,11 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector
             eff_pot, &one_int, &one_int, const_cast<int*>(this->paraV->desc));
 #endif
 
-    ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
+    ModuleBase::timer::tick("Plus_U", "cal_eff_pot_r");
     return;
 }
 
-void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
+void Plus_U::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
@@ -138,7 +140,7 @@ void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
     return;
 }
 
-void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR)
+void Plus_U::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
@@ -169,4 +171,3 @@ void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double
 }
 
 #endif
-}

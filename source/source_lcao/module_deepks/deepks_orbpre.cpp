@@ -7,26 +7,23 @@
 #include "deepks_orbpre.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_hcontainer/atom_pair.h"
 
 // calculates orbital_precalc[nks,NAt,NDscrpt] = gevdm * orbital_pdm;
 // orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;
 template <typename TK, typename TH>
 void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
-                                        const int lmaxd,
-                                        const int inlmax,
                                         const int nat,
                                         const int nks,
-                                        const std::vector<int>& inl2l,
+                                        const DeePKS_Param& deepks_param,
                                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                         const std::vector<hamilt::HContainer<double>*> phialpha,
                                         const std::vector<torch::Tensor> gevdm,
-                                        const ModuleBase::IntArray* inl_index,
                                         const UnitCell& ucell,
                                         const LCAO_Orbitals& orb,
                                         const Parallel_Orbitals& pv,
@@ -39,7 +36,8 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
     torch::Tensor orbital_pdm
-        = torch::zeros({nks, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(torch::kFloat64));
+        = torch::zeros({nks, deepks_param.inlmax, (2 * deepks_param.lmaxd + 1), (2 * deepks_param.lmaxd + 1)},
+                       torch::dtype(torch::kFloat64));
     auto accessor = orbital_pdm.accessor<double, 4>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
@@ -60,7 +58,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
             {
                 for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                 {
-                    const int inl = inl_index[T0](I0, L0, N0);
+                    const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                     const int nm = 2 * L0 + 1;
 
                     for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -242,7 +240,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                     {
                         for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                         {
-                            const int inl = inl_index[T0](I0, L0, N0);
+                            const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                             const int nm = 2 * L0 + 1;
 
                             for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -265,19 +263,19 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
         }
     }
 #ifdef __MPI
-    const int size = nks * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
+    const int size = nks * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1) * (2 * deepks_param.lmaxd + 1);
     Parallel_Reduce::reduce_all(orbital_pdm.data_ptr<double>(), size);
 #endif
 
     // transfer orbital_pdm [nks,inl,nm,nm] to orbital_pdm_vector [nl,[nks,nat,nm,nm]]
-    int nlmax = inlmax / nat;
+    int nlmax = deepks_param.inlmax / nat;
 
     std::vector<torch::Tensor> orbital_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        int nm = 2 * inl2l[nl] + 1;
+        int nm = 2 * deepks_param.inl2l[nl] + 1;
         torch::Tensor orbital_pdm_sliced
-            = orbital_pdm.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            = orbital_pdm.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
         orbital_pdm_vector.push_back(orbital_pdm_sliced);
     }
 
@@ -297,15 +295,12 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
 template void DeePKS_domain::cal_orbital_precalc<double, ModuleBase::matrix>(
     const std::vector<ModuleBase::matrix>& dm_hl,
-    const int lmaxd,
-    const int inlmax,
     const int nat,
     const int nks,
-    const std::vector<int>& inl2l,
+    const DeePKS_Param& deepks_param,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
     const std::vector<torch::Tensor> gevdm,
-    const ModuleBase::IntArray* inl_index,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,
@@ -314,15 +309,12 @@ template void DeePKS_domain::cal_orbital_precalc<double, ModuleBase::matrix>(
 
 template void DeePKS_domain::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(
     const std::vector<ModuleBase::ComplexMatrix>& dm_hl,
-    const int lmaxd,
-    const int inlmax,
     const int nat,
     const int nks,
-    const std::vector<int>& inl2l,
+    const DeePKS_Param& deepks_param,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
     const std::vector<torch::Tensor> gevdm,
-    const ModuleBase::IntArray* inl_index,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,

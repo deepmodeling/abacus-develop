@@ -182,6 +182,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             this->dmat.dm,
+            &this->dftu,
 			this->deepks,
 			istep,
 			this->exx_nao);

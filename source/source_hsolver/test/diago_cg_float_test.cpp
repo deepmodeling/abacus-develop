@@ -108,7 +108,7 @@ class DiagoCGPrepare
         float *en = new float[npw];
         int ik = 1;
 	    hamilt::Hamilt<std::complex<float>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+	    ha =new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 	    psi::Psi<std::complex<float>> psi;
 	    psi.resize(ik,nband,npw);
 	    //psi.fix_k(0);

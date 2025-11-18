@@ -55,7 +55,13 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
-    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell, &ucell);
+	this->p_hamilt = new hamilt::HamiltPW<T, Device>(
+			this->pelec->pot, 
+			this->pw_wfc, 
+			&this->kv, 
+			&this->ppcell, 
+			&this->dftu,
+			&ucell);
 }
 
 template <typename T, typename Device>
@@ -133,8 +139,10 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
+    // note: init DFT+U is done here for pw basis for every scf iteration, however, 
+    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
-              this->chr, this->locpp, this->ppcell, this->vsep_cell,
+              this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
               this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     // setup psi (electronic wave functions)
@@ -162,7 +170,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
     // 2) perform charge mixing for KSDFT using pw basis
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, PARAM.inp);
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, this->dftu, PARAM.inp);
 
     // 3) mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -172,14 +180,13 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // should before lambda loop in DeltaSpin
     if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
         // only old DFT+U method should calculate energy correction in esolver,
         // new DFT+U method will calculate energy when evaluating the Hamiltonian
-        if (dftu->omc != 2)
+        if (this->dftu.omc != 2)
         {
-            dftu->cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
+            this->dftu.cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
         }
-        dftu->output(ucell);
+        this->dftu.output(ucell);
     }
 }
 
@@ -389,7 +396,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
 
     // Calculate forces
     ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
-                 &this->sf, this->solvent, &this->locpp, &this->ppcell, 
+                 &this->sf, this->solvent, &this->dftu, &this->locpp, &this->ppcell, 
                  &this->kv, this->pw_wfc, this->stp.psi_d);
 }
 
@@ -401,7 +408,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
     // mohan add 2025-10-12
     this->stp.update_psi_d();
 
-    ss.cal_stress(stress, ucell, this->locpp, this->ppcell, this->pw_rhod,
+    ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
                   &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.psi_d);
 
     // external stress

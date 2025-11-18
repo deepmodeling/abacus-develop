@@ -19,14 +19,15 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-                       hamilt::Hamilt<T>* p_ham)
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U* p_dftu)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (out_mat_hsR)
     {
-        output_HSR(ucell, istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
+        output_HSR(ucell, istep, pv, HS_Arrays, grid, kv, *p_dftu, p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
@@ -92,7 +93,9 @@ template void output_mat_sparse<double>(const bool& out_mat_hsR,
                                         UnitCell& ucell,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
-                                        hamilt::Hamilt<double>* p_ham);
+										hamilt::Hamilt<double>* p_ham,
+										Plus_U* p_dftu);
+
 template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
                                                       const bool& out_mat_dh,
                                                       const bool& out_mat_ds,
@@ -106,6 +109,7 @@ template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
                                                       UnitCell& ucell,
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
-                                                      hamilt::Hamilt<std::complex<double>>* p_ham);
+													  hamilt::Hamilt<std::complex<double>>* p_ham,
+													  Plus_U* p_dftu);
 
 } // namespace ModuleIO

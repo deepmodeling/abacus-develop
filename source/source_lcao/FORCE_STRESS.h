@@ -17,6 +17,7 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
 #include "source_lcao/setup_dm.h" // mohan add 2025-11-03
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 
 template <typename T>
@@ -49,7 +50,8 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
-                        surchem& solvent,
+						surchem& solvent,
+						Plus_U &dftu, // mohan add 2025-11-07
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);

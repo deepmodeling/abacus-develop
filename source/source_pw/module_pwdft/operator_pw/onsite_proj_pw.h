@@ -5,6 +5,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251106
 
 namespace hamilt {
 
@@ -22,9 +23,11 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
+             Plus_U *p_dftu, // mohan add 2025-11-06 
              const bool cal_delta_spin,
              const bool cal_dftu);
 
@@ -40,21 +43,26 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk = 0,
-        const bool is_first_node = false)const override;
+		const int ngk = 0,
+		const bool is_first_node = false)const override;
 
     const int *get_isk() const {return this->isk;}
     const UnitCell *get_ucell() const {return this->ucell;}
 
   private:
     void cal_ps_delta_spin(const int npol, const int m) const;
+
     void cal_ps_dftu(const int npol, const int m) const;
+
     void update_becp(const T* psi_in, const int npol, const int m) const;
+
     void add_onsite_proj(T *hpsi_in, const int npol, const int m) const;
 
     const int* isk = nullptr;
 
     const UnitCell* ucell = nullptr;
+
+    Plus_U *dftu = nullptr; // mohan add 2025-11-06
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;

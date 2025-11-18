@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 #include "LCAO_deepks_io.h"
+#include "deepks_param.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "source_cell/unitcell.h"
@@ -32,28 +33,21 @@ void load_model(const std::string& model_file, torch::jit::script::Module& model
 
 // calculate gevdm
 void cal_gevdm(const int nat,
-               const int inlmax,
-               const std::vector<int>& inl2l,
+               const DeePKS_Param& deepks_param,
                const std::vector<torch::Tensor>& pdm,
                std::vector<torch::Tensor>& gevdm);
 
 /// calculate partial of energy correction to descriptors
 void cal_edelta_gedm(const int nat,
-                     const int inlmax,
-                     const int des_per_atom,
-                     const std::vector<int>& inl2l,
+                     const DeePKS_Param& deepks_param,
                      const std::vector<torch::Tensor>& descriptor,
                      const std::vector<torch::Tensor>& pdm,
                      torch::jit::script::Module& model_deepks,
                      double** gedm,
                      double& E_delta);
-void check_gedm(const int inlmax, const std::vector<int>& inl2l, double** gedm);
+void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
 void cal_edelta_gedm_equiv(const int nat,
-                           const int lmaxd,
-                           const int nmaxd,
-                           const int inlmax,
-                           const int des_per_atom,
-                           const std::vector<int>& inl2l,
+                           const DeePKS_Param& deepks_param,
                            const std::vector<torch::Tensor>& descriptor,
                            double** gedm,
                            double& E_delta,

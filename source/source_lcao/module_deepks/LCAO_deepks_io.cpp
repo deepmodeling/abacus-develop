@@ -3,8 +3,8 @@
 #ifdef __MLALGO
 
 #include "LCAO_deepks_io.h"
-#include "source_base/tool_quit.h"
 #include "npy.hpp"
+#include "source_base/tool_quit.h"
 
 #include <mpi.h>
 
@@ -75,10 +75,8 @@ void LCAO_deepks_io::load_npy_gedm(const int nat,
 
 // saves descriptor into dm_eig.npy
 void LCAO_deepks_io::save_npy_d(const int nat,
-                                const int des_per_atom,
-                                const int inlmax,
-                                const std::vector<int>& inl2l,
                                 const bool deepks_equiv,
+                                const DeePKS_Param& deepks_param,
                                 const std::vector<torch::Tensor>& descriptor,
                                 const std::string& dm_eig_file,
                                 const int rank)
@@ -95,16 +93,17 @@ void LCAO_deepks_io::save_npy_d(const int nat,
     if (!deepks_equiv)
     {
         std::vector<double> npy_des;
-        for (int inl = 0; inl < inlmax; ++inl)
+        for (int inl = 0; inl < deepks_param.inlmax; ++inl)
         {
             auto accessor = descriptor[inl].accessor<double, 1>();
-            int nm = 2 * inl2l[inl] + 1;
+            int nm = 2 * deepks_param.inl2l[inl] + 1;
             for (int im = 0; im < nm; im++)
             {
                 npy_des.push_back(accessor[im]);
             }
         }
-        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
+        const long unsigned dshape[]
+            = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
         if (rank == 0)
         {
             npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);
@@ -117,12 +116,13 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         for (int iat = 0; iat < nat; iat++)
         {
             auto accessor = descriptor[iat].accessor<double, 1>();
-            for (int i = 0; i < des_per_atom; i++)
+            for (int i = 0; i < deepks_param.des_per_atom; i++)
             {
                 npy_des.push_back(accessor[i]);
             }
         }
-        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
+        const long unsigned dshape[]
+            = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
         if (rank == 0)
         {
             npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);

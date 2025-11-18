@@ -4,7 +4,6 @@
 #include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
-#include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -18,10 +17,16 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
-#include "source_psi/setup_psi.h" // mohan add 20251019
-#include "source_io/read_wfc_nao.h" 
 #include "source_io/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+#include "source_lcao/LCAO_set.h" // mohan add 20251111
+
+
+// tmp
+#include "source_psi/setup_psi.h" // use Setup_Psi
+#include "source_io/read_wfc_nao.h" // use read_wfc_nao
+#include "source_estate/elecstate_tools.h" // use fixed_weights
+
 
 namespace ModuleESolver
 {
@@ -75,63 +80,17 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         return;
     }
 
-    // 5) init electronic wave function psi
-    Setup_Psi<TK>::allocate_psi(this->psi, this->kv, this->pv, inp);
+    LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
+      this->dmat, this->chr, inp);
 
-    //! read psi from file
-    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
-    {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
-             this->pv, *this->psi, this->pelec->ekb, this->pelec->wg, this->kv.ik2iktot,
-             this->kv.get_nkstot(), inp.nspin))
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
-        }
-    }
+    LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
+      this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
+      this->solvent, this->exx_nao, this->deepks, inp);
 
-
-    // 7) init DMK, but DMR is constructed in before_scf()
-    this->dmat.allocate_dm(&this->kv, &this->pv, inp.nspin);
-
-    // 8) init exact exchange calculations
-    this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, inp);
-
-    // 9) initialize DFT+U
-    if (inp.dft_plus_u)
-    {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
-        dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
-    }
-
-    // 10) init local pseudopotentials
-    this->locpp.init_vloc(ucell, this->pw_rho);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
-    // 11) init charge density
-    this->chr.allocate(inp.nspin);
-
-    // 12) init potentials
-    if (this->pelec->pot == nullptr)
-    {
-        this->pelec->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho,
-          &ucell, &(this->locpp.vloc), &(this->sf), &(this->solvent),
-          &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc));
-    }
-
-    // 13) init deepks
-    this->deepks.before_runner(ucell, this->kv.get_nks(), this->orb_, this->pv, inp);
-
-    // 14) set occupations, tddft does not need to set occupations in the first scf
-    if (inp.ocp && inp.esolver_type != "tddft")
-    {
-        elecstate::fixed_weights(inp.ocp_kb, inp.nbands, inp.nelec,
-          this->pelec->klist, this->pelec->wg, this->pelec->skip_weights);
-    }
-
-    // 15) if kpar is not divisible by nks, print a warning
+    //! if kpar is not divisible by nks, print a warning
     ModuleIO::print_kpar(this->kv.get_nks(), PARAM.globalv.kpar_lcao);
 
-    // 16) init rdmft, added by jghan
+    //! init rdmft, added by jghan
     if (inp.rdmft == true)
     {
         rdmft_solver.init(this->pv, ucell,
@@ -189,7 +148,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, this->deepks, istep, exx_nao);
+            two_center_bundle_, orb_, this->dmat.dm, &this->dftu, this->deepks, istep, exx_nao);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -274,7 +233,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
-                       this->pw_rho, this->solvent, this->deepks,
+                       this->pw_rho, this->solvent, this->dftu, this->deepks,
                        this->exx_nao, &ucell.symm);
 
     // delete RA after cal_force
@@ -312,8 +271,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     ESolver_KS<TK>::after_all_runners(ucell);
 
-    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
 	if(!hamilt_lcao)
 	{
@@ -338,7 +295,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
+    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
+      this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
@@ -377,10 +335,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (istep != 0 || iter != 1)
         {
-            GlobalC::dftu.set_dmr(this->dmat.dm);
+            this->dftu.set_dmr(this->dmat.dm);
         }
         // Calculate U and J if Yukawa potential is used
-        GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
+        this->dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
 #ifdef __MLALGO
@@ -489,18 +447,18 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
     {
-        // only old DFT+U method should calculated energy correction in esolver,
-        // new DFT+U method will calculate energy in calculating Hamiltonian
+        // old DFT+U method calculates energy correction in esolver,
+        // new DFT+U method calculates energy in Hamiltonian
         if (PARAM.inp.dft_plus_u == 2)
         {
-            if (GlobalC::dftu.omc != 2)
+            if (this->dftu.omc != 2)
             {
-                ModuleDFTU::dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
-                  this->p_chgmix->get_mixing_beta(), hamilt_lcao);
+                dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
+                  this->p_chgmix->get_mixing_beta(), hamilt_lcao, this->dftu);
             }
-            GlobalC::dftu.cal_energy_correction(ucell, istep);
+            this->dftu.cal_energy_correction(ucell, istep);
         }
-        GlobalC::dftu.output(ucell);
+        this->dftu.output(ucell);
     }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
@@ -532,7 +490,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // use the converged occupation matrix for next MD/Relax SCF calculation
     if (PARAM.inp.dft_plus_u && conv_esolver)
     {
-        GlobalC::dftu.initialed_locale = true;
+        this->dftu.initialed_locale = true;
     }
 
     // control the output related to the finished iteration
@@ -566,7 +524,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
             PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
-            this->gd, this->psi, hamilt_lcao, this->two_center_bundle_,
+            this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->rdmft_solver, this->deepks, this->exx_nao, 
             this->conv_esolver, this->scf_nmax_flag, istep);

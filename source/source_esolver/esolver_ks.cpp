@@ -15,6 +15,7 @@
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_io/print_info.h" // print_parameters
 #include "source_psi/setup_psi.h" // mohan add 20251009
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 namespace ModuleESolver
 {
@@ -281,9 +282,19 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                                        this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing 
+    // SCF will continue if U is not converged for uramping calculation
+	bool converged_u = true;
+	// to avoid unnecessary dependence on dft+u, refactor is needed
+#ifdef __LCAO
+	if (PARAM.inp.dft_plus_u)
+	{
+		converged_u = this->dftu.u_converged();
+	}
+#endif
+
     module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
       this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
-      this->scf_thr, this->scf_ene_thr, PARAM.inp);
+      this->scf_thr, this->scf_ene_thr, converged_u, PARAM.inp);
 
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);

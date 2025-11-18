@@ -77,7 +77,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
-                                          surchem& solvent,
+										  surchem& solvent,
+										  Plus_U &dftu, // mohan add 2025-11-07
                                           Setup_DeePKS<T>& deepks,
 										  Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm)
@@ -259,41 +260,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     }
 
     //! atomic forces from DFT+U (Quxin version)
-    ModuleBase::matrix force_dftu;
-    ModuleBase::matrix stress_dftu;
+    ModuleBase::matrix force_u;
+    ModuleBase::matrix stress_u;
 
     if (PARAM.inp.dft_plus_u) // Quxin add for DFT+U on 20201029
     {
         if (isforce)
         {
-            force_dftu.create(nat, 3);
+            force_u.create(nat, 3);
         }
         if (isstress)
         {
-            stress_dftu.create(3, 3);
+            stress_u.create(3, 3);
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-			// GlobalC::dftu.force_stress(ucell, gd, pelec, pv, fsr, force_dftu, stress_dftu, kv);
+			// dftu.force_stress(ucell, gd, pelec, pv, fsr, force_u, stress_u, kv);
 			// mohan modify 2025-11-03
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             // add a new template function
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-		    GlobalC::dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr, force_dftu, stress_dftu, kv);
+		    dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr, force_u, stress_u, kv);
         }
         else
         {
-            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(nullptr, // HK and SK are not used for force&stress
+            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmpu(nullptr, // HK and SK are not used for force&stress
                                                                    kv.kvec_d,
                                                                    nullptr, // HR are not used for force&stress
                                                                    ucell,
                                                                    &gd,
                                                                    two_center_bundle.overlap_orb_onsite.get(),
                                                                    orb.cutoffs(),
-                                                                   &GlobalC::dftu);
+                                                                   &dftu);
 
-            tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
+            tmpu.cal_force_stress(isforce, isstress, force_u, stress_u);
         }
     }
 
@@ -393,7 +394,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // Force contribution from DFT+U, Quxin add on 20201029
                 if (PARAM.inp.dft_plus_u)
                 {
-                    fcs(iat, i) += force_dftu(iat, i);
+                    fcs(iat, i) += force_u(iat, i);
                 }
                 if (PARAM.inp.sc_mag_switch)
                 {
@@ -536,7 +537,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DFT+U      FORCE", force_dftu, false);
+                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DFT+U      FORCE", force_u, false);
             }
             if (PARAM.inp.sc_mag_switch)
             {
@@ -604,7 +605,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // DFT plus U stress from qux
                 if (PARAM.inp.dft_plus_u)
                 {
-                    scs(i, j) += stress_dftu(i, j);
+                    scs(i, j) += stress_u(i, j);
                 }
                 if (PARAM.inp.sc_mag_switch)
                 {
@@ -673,7 +674,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, screen, ry, GlobalV::ofs_running);
+                ModuleIO::print_stress("DFTU     STRESS", stress_u, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.sc_mag_switch)
             {

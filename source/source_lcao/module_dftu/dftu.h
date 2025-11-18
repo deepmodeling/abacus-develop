@@ -7,7 +7,6 @@
 #ifdef __LCAO
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_hamilt/hamilt.h"
-// #include "source_estate/elecstate.h" // mohan update 2025-11-02
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/force_stress_arrays.h" // mohan add 2024-06-15
@@ -16,24 +15,14 @@
 #include <string>
 #include <vector>
 
-//==========================================================
-// CLASS :
-// NAME : DTFU (DFT+U)
-//==========================================================
-namespace ModuleDFTU
-{
 
-class DFTU
+class Plus_U
 {
 
   public:
-    DFTU(); // constructor
-    ~DFTU(); // deconstructor
+    Plus_U();
+    ~Plus_U();
 
-    //=============================================================
-    // In dftu.cpp
-    // Initialization & Calculating energy
-    //=============================================================
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
@@ -44,23 +33,41 @@ class DFTU
 #endif
               );
     
-    static DFTU* get_instance();
-
     // calculate the energy correction
     void cal_energy_correction(const UnitCell& ucell, const int istep);
-    double get_energy(){return EU;}
+
+    // mohan change the function to static, 20251106
+	static double get_energy()
+	{
+		return Plus_U::energy_u;
+	}
+
+	static void set_energy(const double &e)
+	{ 
+		Plus_U::energy_u = e; 
+	}
+
+	static void set_double_energy() // mohan add 20251107
+	{ 
+		Plus_U::energy_u *= 2.0;
+	}
+
     void uramping_update(); // update U by uramping
     bool u_converged(); // check if U is converged
 
-    std::vector<double> U = {}; // U (Hubbard parameter U)
-    std::vector<double> U0; // U0 (target Hubbard parameter U0)
-    std::vector<int> orbital_corr = {}; //
-    double uramping; // increase U by uramping, default is -1.0
-    int omc; // occupation matrix control
-    int mixing_dftu; //whether to mix locale
+    // mohan change these parameters to static, 2025-11-07
+    static std::vector<double> U; // U (Hubbard parameter U)
+    static std::vector<double> U0; // U0 (target Hubbard parameter U0)
+    static std::vector<int> orbital_corr; //
+    static double uramping; // increase U by uramping, default is -1.0
+    static int omc; // occupation matrix control
+    static int mixing_dftu; //whether to mix locale
 
-    double EU; //+U energy
   private:
+
+    // mohan change the variable to static, 20251106
+    static double energy_u; //+U energy, mohan update 2025-11-06, change this to private
+
     const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
 
@@ -82,10 +89,21 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk, const std::complex<double>* sk);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk);
+	void cal_eff_pot_mat_complex(const int ik, 
+			std::complex<double>* eff_pot, 
+			const std::vector<int>& isk, 
+			const std::complex<double>* sk);
+
+	void cal_eff_pot_mat_real(const int ik, 
+			double* eff_pot, 
+			const std::vector<int>& isk, 
+			const double* sk);
+
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
-    void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
+
+	void cal_eff_pot_mat_R_complex_double(const int ispin, 
+			std::complex<double>* SR, 
+			std::complex<double>* HR);
 #endif
 
     //=============================================================
@@ -95,13 +113,26 @@ class DFTU
     //=============================================================
   public:
     /// interface for PW base
-    /// calculate the local occupation number matrix for PW based wave functions
-    void cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matrix& wg_in, const UnitCell& cell, const double& mixing_beta);
+	/// calculate the local occupation number matrix for PW based wave functions
+	void cal_occ_pw(const int iter, 
+			const void* psi_in, 
+			const ModuleBase::matrix& wg_in, 
+			const UnitCell& cell, 
+			const double& mixing_beta);
+
     /// calculate the local DFT+U effective potential matrix for PW base.
     void cal_VU_pot_pw(const int spin);
+
     /// get effective potential matrix for PW base
-    const std::complex<double>* get_eff_pot_pw(const int iat) const { return &(eff_pot_pw[this->eff_pot_pw_index[iat]]); }
-    int get_size_eff_pot_pw() const { return eff_pot_pw.size(); }
+	const std::complex<double>* get_eff_pot_pw(const int iat) const 
+	{ 
+		return &(eff_pot_pw[this->eff_pot_pw_index[iat]]); 
+	}
+
+	int get_size_eff_pot_pw() const 
+	{ 
+		return eff_pot_pw.size(); 
+	}
 
 #ifdef __LCAO
     // calculate the local occupation number matrix
@@ -111,6 +142,7 @@ class DFTU
                        const K_Vectors& kv, 
                        const double& mixing_beta, 
                        hamilt::Hamilt<std::complex<double>>* p_ham);
+
     void cal_occup_m_gamma(const int iter, 
                            const UnitCell& ucell,
                            const std::vector<std::vector<double>>& dm_gamma, 
@@ -122,6 +154,7 @@ class DFTU
     bool initialed_locale = false;
 
   private:
+
     void copy_locale(const UnitCell& ucell);
     void zero_locale(const UnitCell& ucell);
     void mix_locale(const UnitCell& ucell,const double& mixing_beta);
@@ -129,12 +162,13 @@ class DFTU
     std::vector<std::complex<double>> eff_pot_pw;
     std::vector<int> eff_pot_pw_index;
 
-public:
-    // local occupancy matrix of the correlated subspace
+  public:
+	// local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale; // locale[iat][l][n][spin](m1,m2)
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save; // locale_save[iat][l][n][spin](m1,m2)
+
 #ifdef __LCAO
 private:
     //=============================================================
@@ -267,7 +301,7 @@ private:
     //=============================================================
 
   public:
-    bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
+    static bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
     void cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx);
 
   private:
@@ -304,6 +338,7 @@ private:
 #endif
 };
 
+
 #ifdef __LCAO
 template <typename T>
 void dftu_cal_occup_m(const int iter,
@@ -311,13 +346,9 @@ void dftu_cal_occup_m(const int iter,
                       const std::vector<std::vector<T>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
-                      hamilt::Hamilt<T>* p_ham);
+                      hamilt::Hamilt<T>* p_ham,
+                      Plus_U &dftu);
 #endif
 
-} // namespace ModuleDFTU
 
-namespace GlobalC
-{
-	extern ModuleDFTU::DFTU dftu;
-}
 #endif

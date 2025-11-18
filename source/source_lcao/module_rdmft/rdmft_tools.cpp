@@ -186,13 +186,6 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     
 }
 
-
-template class Veff_rdmft<double, double>;
-
-template class Veff_rdmft<std::complex<double>, double>;
-
-template class Veff_rdmft<std::complex<double>, std::complex<double>>;
-
 // this part of the code is copying from class Veff
 // initialize_HR()
 template <typename TK, typename TR>
@@ -399,6 +392,10 @@ void Veff_rdmft<double, double>::contributeHR()
 }
 
 }
+template class rdmft::Veff_rdmft<double, double>;
 
+template class rdmft::Veff_rdmft<std::complex<double>, double>;
+
+template class rdmft::Veff_rdmft<std::complex<double>, std::complex<double>>;
 
 

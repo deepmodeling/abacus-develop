@@ -575,7 +575,10 @@ double ESolver_OF::cal_energy()
 void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
-    ff.cal_force(ucell, force, *pelec, this->pw_rho, &ucell.symm, &sf, this->solvent, &this->locpp);
+ 
+    // here nullptr is for DFT+U, which may cause bugs, mohan note 2025-11-07
+    // solvent can be used? mohan ask 2025-11-07
+    ff.cal_force(ucell, force, *pelec, this->pw_rho, &ucell.symm, &sf, this->solvent, nullptr, &this->locpp);
 }
 
 /**

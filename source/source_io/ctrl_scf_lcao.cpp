@@ -42,6 +42,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 		Grid_Driver& gd,
 		psi::Psi<TK>* psi,
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
+        Plus_U &dftu, // mohan add 2025-11-07
 		TwoCenterBundle &two_center_bundle,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
@@ -222,7 +223,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 			ucell,
 			gd,
 			kv,
-			p_ham_tk);
+			p_ham_tk, 
+			&dftu);
 
     //------------------------------------------------------------------
     //! 8) Output kinetic matrix
@@ -276,7 +278,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleIO::AngularMomentumCalculator mylcalculator(
             inp.orbital_dir,
             ucell,
-            inp.search_radius,
+            orb.get_rcutmax_Phi(),
             inp.test_deconstructor,
             inp.test_grid,
             inp.test_atom_input,
@@ -474,6 +476,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
 		Grid_Driver& gd,
 		psi::Psi<double>* psi,
 		hamilt::HamiltLCAO<double, double>* p_hamilt,
+        Plus_U &dftu, // mohan add 2025-11-07
 		TwoCenterBundle &two_center_bundle,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
@@ -498,6 +501,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
 		Grid_Driver& gd,
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
+        Plus_U &dftu, // mohan add 2025-11-07
 		TwoCenterBundle &two_center_bundle,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
@@ -521,6 +525,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
 		Grid_Driver& gd,
 		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
+        Plus_U &dftu, // mohan add 2025-11-07
 		TwoCenterBundle &two_center_bundle,
 		LCAO_Orbitals &orb,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
