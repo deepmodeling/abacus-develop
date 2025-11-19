@@ -1594,7 +1594,7 @@ These variables are used to control the geometry relaxation.
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`. The difference between POTIM(from VASP) and relax_bfgs_rmax is that POTIM uniformly scales the step size of each iteration to the value of POTIM, whereas relax_bfgs_rmax only caps the step size when it exceeds relax_bfgs_rmax.
+- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`. 
 - **Unit**: Bohr
 - **Default**: 0.8
 
