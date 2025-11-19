@@ -1,6 +1,6 @@
 # Easy Installation
 
-This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or building with `make`, please refer to [the advanced installation guide](../advanced/install.md)** after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS (and possibly its requirements) from the source code using the latest compiler for the best performace. You can use [toolchain](#install-requirements-by-toolchain) to install ABACUS and dependencies in a source-code compilation way with convience. You can also deploy ABACUS **without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note that ABACUS only supports Linux; for Windows users, please consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker.
+This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or building with `make`, please refer to [the advanced installation guide](../advanced/install.md)** after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS (and possibly its requirements) from the source code using the latest compiler for the best performace. You can use [toolchain](#install-by-toolchain) to install ABACUS and dependencies in a source-code compilation way with convience. You can also deploy ABACUS **without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note that ABACUS only supports Linux; for Windows users, please consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker.
 
 ## Get ABACUS source code
 
@@ -62,10 +62,10 @@ These requirements support the calculation of plane-wave basis in ABACUS. For LC
 - [CEREAL](https://uscilab.github.io/cereal/).
 - [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017 (optional).
 
-## Install ABACUS with requirements by toolchain
+## Install by toolchain
 
 We offer a set of [toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
-scripts to compile and install all the requirements
+scripts to compile and install all the requirements and ABACUS itself
 automatically and suitable for machine characteristic in an online or offline way. 
 The toolchain can be downloaded with ABACUS repo, and users can easily compile the requirements by running *toolchain_[gnu,intel,gcc-aocl,aocc-aocl].sh* and ABACUS itself by running *build_abacus_[gnu,intel,gcc-aocl,aocc-aocl].sh* script in the toolchain directory in `GNU`, `Intel-oneAPI` , `GCC-AMD AOCL` and `AMD AOCC-AOCL` toolchain.
 Sometimes, ABACUS by toolchain installation may have better efficient performance due to the suitable compiled dependencies. One should read the [README in toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain/README.md) for most of the information before use, and related tutorials can be accessed via ABACUS WeChat platform.
