@@ -81,6 +81,8 @@ case "${with_mpich}" in
                 MPICC="" \
                 FFLAGS="${FCFLAGS} ${compat_flag}" \
                 FCFLAGS="${FCFLAGS} ${compat_flag}" \
+                --without-x \
+                --enable-gl=no \
                 --with-device=${MPICH_DEVICE} \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -90,19 +92,19 @@ case "${with_mpich}" in
         fi
         if [ "${PACK_RUN}" = "__TRUE__" ]; then
             echo "--pack-run mode specified, skip system check"
-        else
-            check_dir "${pkg_install_dir}/bin"
-            check_dir "${pkg_install_dir}/lib"
-            check_dir "${pkg_install_dir}/include"
-            check_install ${pkg_install_dir}/bin/mpiexec "mpich" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
-            check_install ${pkg_install_dir}/bin/mpicc "mpich" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
-            check_install ${pkg_install_dir}/bin/mpicxx "mpich" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
-            check_install ${pkg_install_dir}/bin/mpifort "mpich" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
-            MPIFORT="${MPIFC}"
-            MPIF77="${MPIFC}"
-            MPICH_CFLAGS="-I'${pkg_install_dir}/include'"
-            MPICH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+            exit 0
         fi
+        check_dir "${pkg_install_dir}/bin"
+        check_dir "${pkg_install_dir}/lib"
+        check_dir "${pkg_install_dir}/include"
+        check_install ${pkg_install_dir}/bin/mpiexec "mpich" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
+        check_install ${pkg_install_dir}/bin/mpicc "mpich" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
+        check_install ${pkg_install_dir}/bin/mpicxx "mpich" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
+        check_install ${pkg_install_dir}/bin/mpifort "mpich" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
+        MPIFORT="${MPIFC}"
+        MPIF77="${MPIFC}"
+        MPICH_CFLAGS="-I'${pkg_install_dir}/include'"
+        MPICH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
         ;;
     __SYSTEM__)
         echo "==================== Finding MPICH from system paths ===================="
@@ -176,9 +178,9 @@ EOF
 prepend_path PATH "${pkg_install_dir}/bin"
 export PATH="${pkg_install_dir}/bin":\${PATH}
 export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH "${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH "${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export CPATH "${pkg_install_dir}/include":\${CPATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
     fi
     cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}
@@ -189,6 +191,8 @@ cat << EOF >> ${INSTALLDIR}/lsan.supp
 # MPICH 3.3.2 with GCC 10.3.0
 leak:MPIR_Find_local_and_external
 leak:MPIU_Find_local_and_external
+# MPICH 4.2.3
+leak:MPL_malloc
 EOF
 
 load "${BUILDDIR}/setup_mpich"
