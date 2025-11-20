@@ -751,10 +751,13 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     }
     
     // Sort k-points by distance from origin
-    std::sort(klist.begin(), klist.end(),
-        [](const KPoint& a, const KPoint& b) {
-            return a.norm < b.norm;
-        });
+    if(klist.size() > 1)
+    {
+        std::sort(klist.begin()+1, klist.end(),
+            [](const KPoint& a, const KPoint& b) {
+                return a.norm < b.norm;
+            });
+    }
     
     // Build parent-child relationships
     k_order.push_back(klist[0].index);
