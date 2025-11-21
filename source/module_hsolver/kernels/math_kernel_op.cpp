@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 namespace hsolver
 {
@@ -355,6 +356,88 @@ struct matrixSetToAnother<T, base_device::DEVICE_CPU>
     }
 };
 
+template <typename T>
+struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
+    {
+        for (int m = 0; m < notconv; m++)
+        {
+            for (int idx = 0; idx < nbase; idx++)
+            {
+                result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+            }
+        }
+    }
+};
+
+template <typename T>
+struct precondition_op<T, base_device::DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+                   const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   const Real* precondition,
+                   const Real* eigenvalues)
+    {
+        std::vector<Real> pre(dim, 0.0);
+        for (int m = 0; m < notconv; m++)
+        {
+            for (size_t i = 0; i < dim; i++)
+            {
+                Real x = std::abs(precondition[i] - eigenvalues[m]);
+                pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+            }
+            const base_device::DEVICE_CPU* d;
+            vector_div_vector_op<T, base_device::DEVICE_CPU>()(
+                                                             d,
+                                                             dim,
+                                                             psi_iter + (nbase + m) * dim,
+                                                             psi_iter + (nbase + m) * dim,
+                                                             pre.data());
+        }
+    }
+};
+
+template <typename T>
+struct normalize_op<T, base_device::DEVICE_CPU> {
+    void operator()(const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   typename GetTypeReal<T>::type* psi_norm)
+    {
+        using Real = typename GetTypeReal<T>::type;
+        for (int m = 0; m < notconv; m++)
+        {
+            // Calculate norm using dot_real_op
+            const base_device::DEVICE_CPU* d;
+            Real psi_m_norm = dot_real_op<T, base_device::DEVICE_CPU>()(
+                                                                d,
+                                                                dim,
+                                                                psi_iter + (nbase + m) * dim,
+                                                                psi_iter + (nbase + m) * dim,
+                                                                true);
+            assert(psi_m_norm > 0.0);
+            psi_m_norm = sqrt(psi_m_norm);
+
+            // Normalize using vector_div_constant_op
+            vector_div_constant_op<T, base_device::DEVICE_CPU>()(
+                                                              d,
+                                                              dim,
+                                                              psi_iter + (nbase + m) * dim,
+                                                              psi_iter + (nbase + m) * dim,
+                                                              psi_m_norm);
+            if (psi_norm) {
+                psi_norm[m] = psi_m_norm;
+            }
+        }
+    }
+};
+
 // Explicitly instantiate functors for the types of functor registered.
 template struct scal_op<float, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
@@ -387,6 +470,16 @@ template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU
 template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
+
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_CPU>;
+template struct precondition_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct precondition_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct precondition_op<double, base_device::DEVICE_CPU>;
+template struct normalize_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct normalize_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct normalize_op<double, base_device::DEVICE_CPU>;
 
 #ifdef __LCAO
 template struct axpy_op<double, base_device::DEVICE_CPU>;

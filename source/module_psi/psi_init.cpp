@@ -115,12 +115,14 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
     for (int ik = 0; ik < this->pw_wfc.nks; ik++)
     {
+        if(PARAM.inp.use_k_continuity && ik > 0) continue;
         //! Fix the wavefunction to initialize at given kpoint
         psi->fix_k(ik);
         kspw_psi->fix_k(ik);
 
         //! Update Hamiltonian from other kpoint to the given one
         p_hamilt->updateHk(ik);
+                
 
         //! initialize psi_cpu
         this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
