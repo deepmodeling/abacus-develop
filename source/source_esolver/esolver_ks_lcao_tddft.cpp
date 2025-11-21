@@ -318,7 +318,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
         && PARAM.inp.td_edm == 0)
     {
-        elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
+        elecstate::cal_edm_tddft_tensor(this->pv, this->dmat, this->kv, this->p_hamilt);
     }
 }
 
