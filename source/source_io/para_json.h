@@ -1,23 +1,26 @@
-#include <ctime>
-#include <string>
+#ifndef ModuleIO_PARSE_ARGS_H
+#define ModuleIO_PARSE_ARGS_H
 
-#include "source_cell/module_symmetry/symmetry.h"
-#include "source_cell/atom_spec.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_cell/unitcell.h"
-namespace Json
+namespace ModuleIO
 {
+/**
+ * @brief This function returns the version information when using command
+ * "abacus --version", "abacus -v" or "abacus -V"; returns the compilation
+ * details when using command "abacus --info", "abacus -i" or "abacus -I";
+ * otherwise, it returns usage.
+ * 
+ * @param [in] argc (ARGument Count) is an integer variable that stores the number 
+ * of command-line arguments passed by the user including the name of the program. 
+ * So if we pass a value to a program, the value of argc would be 2 (one for 
+ * argument and one for program name) 
+ * @param [in] argv (ARGument Vector) is an array of character pointers listing
+ * all the arguments. If argc is greater than zero, the array elements from 
+ * argv[0] to argv[argc-1] will contain pointers to strings. argv[0] is the name 
+ * of the program , After that till argv[argc-1] every element is command -line 
+ * arguments.
+ */
+void parse_args(int argc, char** argv);
+void print_build_info();
+} // namespace ModuleIO
 
-// void create_Json(ModuleSymmetry::Symmetry *symm,Atom *atoms,Input *input);
-
-void create_Json(UnitCell *ucell, const Parameter& input);
-
-// Output the json to abacus.json file
-void json_output();
-
-// Convert time_t to string
-void convert_time(std::time_t time_now, std::string& time_str);
-
-// generate struture wrapper function
-void gen_stru_wrapper(UnitCell *ucell);
-} // namespace Json
+#endif
