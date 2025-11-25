@@ -33,6 +33,7 @@ jobs:
       - name: Build
         run: |
           nvidia-smi
+          rm -rf build
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
