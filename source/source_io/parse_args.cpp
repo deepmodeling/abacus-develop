@@ -9,7 +9,7 @@
 #include "source_io/read_input.h"
 #include "source_main/version.h"
 
-#ifdef COMMIT_INFO
+#if defined(COMMIT_INFO)
 #include "commit.h"
 #endif
 
@@ -32,10 +32,10 @@ void print_build_info()
     // --- 1. Core & Platform Info ---
     print_section("ABACUS Core & Platform");
     print_info("ABACUS Version", VERSION);
-#ifdef COMMIT
-    print_info("Git Commit", COMMIT);
+#if defined(COMMIT）
+        print_info("Git Commit", COMMIT);
 #else
-    print_info("Git Commit", "N/A");
+        print_info("Git Commit", "N/A");
 #endif
     print_info("Target Platform", ABACUS_PLATFORM_NAME);
     print_info("Build Type", ABACUS_BUILD_TYPE);
@@ -74,11 +74,11 @@ void print_build_info()
 
     // --- 7. Core Math Libraries ---
     print_section("Core Math Libraries");
-    #if defined(__LCAO)
-    print_info("LCAO Algorithm", "yes");
-    #else
-    print_info("LCAO Algorithm", "no");
-    #endif
+#if defined(__LCAO)
+        print_info("LCAO Algorithm", "yes");
+#else
+        print_info("LCAO Algorithm", "no");
+#endif
     print_info("ELPA Support", ABACUS_ELPA_VERSION);
     print_info("MKL Support", ABACUS_MKL_SUPPORT);
     print_info("LibXC Support", ABACUS_LIBXC_VERSION);
@@ -123,7 +123,7 @@ void parse_args(int argc, char** argv)
         std::string arg = argv[i];
         if (arg == "--version" || arg == "-v" || arg == "-V")
         {
-#ifdef VERSION
+#if defined(VERSION)
             const char* version = VERSION;
 #else
             const char* version = "unknown";
