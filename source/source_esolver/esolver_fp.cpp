@@ -161,7 +161,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
             ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
+                                 PARAM.globalv.gamma_only_pw,
                                  this->pw_rhod,
                                  PARAM.inp.nspin,
                                  ucell.GT,
@@ -180,7 +180,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                     this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
                 }
                 ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-TAU-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
+                                     PARAM.globalv.gamma_only_pw,
                                      this->pw_rhod,
                                      PARAM.inp.nspin,
                                      ucell.GT,
