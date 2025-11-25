@@ -127,7 +127,7 @@ void parse_args(int argc, char** argv)
             std::cout << "ABACUS version " << version << std::endl;
             std::exit(0);
         }
-        else if (arg == "--info" || arg == "-i")
+        else if (arg == "--info" || arg == "-i" || arg == "-I")
         {
             print_build_info();
             std::exit(0);
@@ -140,8 +140,8 @@ void parse_args(int argc, char** argv)
         {
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             std::cerr << "Usage: abacus [options]" << std::endl;
-            std::cerr << "  -v, --version      Display version information." << std::endl;
-            std::cerr << "  -i, --info         Display detailed build information." << std::endl;
+            std::cerr << "  -v, -V, --version      Display version information." << std::endl;
+            std::cerr << "  -i, -I, --info         Display detailed build information." << std::endl;
             std::cerr << "  --check-input      Check input file syntax and exit." << std::endl;
             std::exit(1);
         }
