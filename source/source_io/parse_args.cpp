@@ -74,7 +74,11 @@ void print_build_info()
 
     // --- 7. Core Math Libraries ---
     print_section("Core Math Libraries");
-    print_info("LCAO Algorithm", (__LCAO ? "yes" : "no"));
+    #if defined(__LCAO)
+    print_info("LCAO Algorithm", "yes");
+    #else
+    print_info("LCAO Algorithm", "no");
+    #endif
     print_info("ELPA Support", ABACUS_ELPA_VERSION);
     print_info("MKL Support", ABACUS_MKL_SUPPORT);
     print_info("LibXC Support", ABACUS_LIBXC_VERSION);
