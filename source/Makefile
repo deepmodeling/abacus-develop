@@ -213,7 +213,7 @@ FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
 # Rule to generate the build_info.h file using the shell script.
 # This rule is executed whenever build_info.h.in, the script, or any of the
 # relevant Makefile variables change.
-source/source_io/build_info.h: source/source_io/build_info.h.in generate_build_info.sh
+source_io/build_info.h: source_io/build_info.h.in ../generate_build_info.sh
 	@echo "Generating build information header..."
 	@# Export all necessary Makefile variables as environment for the script
 	@export BUILD_TYPE="Release"; \
@@ -233,12 +233,12 @@ source/source_io/build_info.h: source/source_io/build_info.h.in generate_build_i
 	if [ "$(MPI)" = "ON" ]; then export ENABLE_MPI="ON"; fi; \
 	export USE_CUDA="no"; \
 	if [ "$(GPU)" = "CUDA" ]; then export USE_CUDA="ON"; fi; \
-	./generate_build_info.sh
+	../generate_build_info.sh
 	@echo "Build information header generated."
 
 # Specific rule for parse_args.o to enforce dependency on build_info.h.
 # This overrides the generic %.o:%.cpp rule for this specific file.
-${OBJ_DIR}/parse_args.o: source/source_io/parse_args.cpp source/source_io/build_info.h
+${OBJ_DIR}/parse_args.o: source_io/parse_args.cpp source_io/build_info.h
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 
 ###### END of ABACUS INFO PART ######
