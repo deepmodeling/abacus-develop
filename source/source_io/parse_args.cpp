@@ -32,7 +32,7 @@ void print_build_info()
     // --- 1. Core & Platform Info ---
     print_section("ABACUS Core & Platform");
     print_info("ABACUS Version", VERSION);
-#if defined(COMMIT）
+#if defined(COMMIT)
         print_info("Git Commit", COMMIT);
 #else
         print_info("Git Commit", "N/A");
