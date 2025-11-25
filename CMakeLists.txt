@@ -616,10 +616,6 @@ if(ENABLE_LIBCOMM)
 endif()
 
 
-
-list(APPEND math_libs m)
-target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
-
 if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
