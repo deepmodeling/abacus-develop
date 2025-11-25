@@ -208,6 +208,41 @@ endif
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
 
+###### START of ABACUS INFO PART ######
+
+# Rule to generate the build_info.h file using the shell script.
+# This rule is executed whenever build_info.h.in, the script, or any of the
+# relevant Makefile variables change.
+source/source_io/build_info.h: source/source_io/build_info.h.in generate_build_info.sh
+	@echo "Generating build information header..."
+	@# Export all necessary Makefile variables as environment for the script
+	@export BUILD_TYPE="Release"; \
+	if [ "$(DEBUG)" = "ON" ]; then export BUILD_TYPE="Debug"; export ENABLE_ASAN="yes"; else export ENABLE_ASAN="no"; fi; \
+	export CXX="${CXX}"; \
+	export CXXFLAGS="${OPTS} ${HONG}"; \
+	export MKLROOT="${MKLROOT}"; \
+	export ELPA_DIR="${ELPA_DIR}"; \
+	export FFTW_DIR="${FFTW_DIR}"; \
+	export CEREAL_DIR="${CEREAL_DIR}"; \
+	export LIBXC_DIR="${LIBXC_DIR}"; \
+	export LIBRI_DIR="${LIBRI_DIR}"; \
+	export DeePMD_DIR="${DeePMD_DIR}"; \
+	export TensorFlow_DIR="${TensorFlow_DIR}"; \
+	export PEXSI_DIR="${PEXSI_DIR}"; \
+	export ENABLE_MPI="no"; \
+	if [ "$(MPI)" = "ON" ]; then export ENABLE_MPI="ON"; fi; \
+	export USE_CUDA="no"; \
+	if [ "$(GPU)" = "CUDA" ]; then export USE_CUDA="ON"; fi; \
+	./generate_build_info.sh
+	@echo "Build information header generated."
+
+# Specific rule for parse_args.o to enforce dependency on build_info.h.
+# This overrides the generic %.o:%.cpp rule for this specific file.
+${OBJ_DIR}/parse_args.o: source/source_io/parse_args.cpp source/source_io/build_info.h
+	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+
+###### END of ABACUS INFO PART ######
+
 #==========================
 # MAKING OPTIONS
 #==========================
@@ -228,10 +263,11 @@ pw $(BIN_DIR)/${VERSION}-PW.x:
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
-
 #==========================
 # rules
 #==========================
+# Note: The specific rule for parse_args.o above is more precise.
+# This generic rule will apply to all other .cpp files.
 ${OBJ_DIR}/%.o:%.cpp
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 	
