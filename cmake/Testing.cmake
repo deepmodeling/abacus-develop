@@ -71,15 +71,15 @@ function(setup_testing)
             add_coverage(${UT_TARGET})
         endif()
 
-        target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
+        target_link_libraries(${UT_TARGET} PRIVATE ${UT_LIBS} Threads::Threads
                               GTest::gtest_main GTest::gmock_main)
                               
         if(ENABLE_GOOGLEBENCH)
-            target_link_libraries(${UT_TARGET} benchmark::benchmark)
+            target_link_libraries(${UT_TARGET} PRIVATE benchmark::benchmark)
         endif()
 
         if(USE_OPENMP)
-            target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
+            target_link_libraries(${UT_TARGET} PRIVATE OpenMP::OpenMP_CXX)
         endif()
 
         # Link to build info if needed
