@@ -86,33 +86,6 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
     }
 }
 
-bool check_file_contain_nonascii_char(std::ifstream& ifs)
-{
-    if (!ifs.is_open()) {
-        return false;
-    }
-
-    // save current position to restore later
-    std::streampos old_pos = ifs.tellg();
-    ifs.clear();
-    ifs.seekg(0, std::ios::beg);
-
-    char c;
-    while (ifs.get(c)) {
-        if (static_cast<unsigned char>(c) > 0x7F) {
-            ifs.clear();
-            ifs.seekg(old_pos, std::ios::beg);
-            return false;
-        }
-    }
-
-    // finish check, restore position
-    ifs.clear();
-    ifs.seekg(old_pos, std::ios::beg);
-    return true;
-}
-
-
 bool ReadInput::check_mode = false;
 
 ReadInput::ReadInput(const int& rank)

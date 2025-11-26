@@ -5,7 +5,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include <string>
-
+#include <fstream>
 namespace ModuleIO
 {
 class ReadInput
@@ -155,7 +155,32 @@ std::string nofound_str(std::vector<std::string> init_chgs, const std::string& s
 // check whether a file contains non-ascii characters
 // return false if contains non-ascii characters, or file cannot be opened
 // return true if all characters are ascii
-bool check_file_contain_nonascii_char(std::ifstream& ifs);
+inline bool check_file_contain_nonascii_char(std::ifstream& ifs)
+{
+  if (!ifs.is_open())
+  {
+    return false;
+  }
+
+  std::streampos old_pos = ifs.tellg();
+  ifs.clear();
+  ifs.seekg(0, std::ios::beg);
+
+  char c;
+  while (ifs.get(c))
+  {
+    if (static_cast<unsigned char>(c) > 0x7F)
+    {
+      ifs.clear();
+      ifs.seekg(old_pos, std::ios::beg);
+      return false;
+    }
+  }
+
+  ifs.clear();
+  ifs.seekg(old_pos, std::ios::beg);
+  return true;
+}
 
 } // namespace ModuleIO
 
