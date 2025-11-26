@@ -152,6 +152,11 @@ std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
 
+// check whether a file contains non-ascii characters
+// return false if contains non-ascii characters, or file cannot be opened
+// return true if all characters are ascii
+bool check_file_contain_nonascii_char(std::ifstream& ifs);
+
 } // namespace ModuleIO
 
 #endif

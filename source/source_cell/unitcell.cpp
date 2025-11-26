@@ -15,6 +15,7 @@
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/sep_cell.h"
+#include "source_io/read_input.h"
 
 #ifdef __MPI
 #include "mpi.h"
@@ -220,7 +221,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             GlobalV::ofs_warning << fn;
             ok = false;
         }
-
+        if (!ModuleIO::check_file_contain_nonascii_char(ifa)) {
+            ModuleBase::WARNING_QUIT("UnitCell::setup_cell", "The structure file contains non-ascii characters. Please check the file encoding format." );
+        }
         if (ok)
         {
             log << "\n\n";
