@@ -247,8 +247,8 @@ $(BUILD_INFO_DIR)/build_info.h:$(ABACUS_ROOT)source_io/build_info.h.in $(ABACUS_
 
     # Specific rule for parse_args.o to enforce dependency on build_info.h.
     # This overrides the generic %.o:%.cpp rule for this specific file.
-    ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR)build_info.h
-    @mkdir -p $(dir$@)
+${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR)build_info.h
+	@mkdir -p $(dir$@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 
 ###### END of ABACUS INFO PART ######
@@ -271,7 +271,7 @@ pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ cp $(ABACUS_ROOT)source_pw/module_pwdft/${VERSION}-PW.x $(realpath $(BIN_DIR))/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
-    @mkdir -p $(dir$@)
+	@mkdir -p $(dir$@)
 	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
 
 #==========================
