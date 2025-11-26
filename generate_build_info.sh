@@ -10,6 +10,12 @@
 
 # set -e # Exit immediately if a command exits with a non-zero status.
 
+if [ -z "$1" ]; then
+    echo "Usage: $0 <output_file_path>"
+    exit 1
+fi
+OUTPUT_FILE=$1
+
 # --- Helper Functions ---
 
 # Function to get version from a command's output
@@ -213,7 +219,6 @@ fi
 # --- Final File Generation ---
 
 INPUT_FILE="source_io/build_info.h.in"
-OUTPUT_FILE="source_io/build_info.h"
 
 # Use sed to replace all placeholders with detected values
 # Note the use of different delimiters (#) for paths to avoid conflicts with /
