@@ -475,12 +475,8 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-if(USE_DSP)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
-else()
   find_package(ScaLAPACK REQUIRED)
   list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-endif()
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -615,6 +611,10 @@ if(ENABLE_LIBCOMM)
   include_directories(${LIBCOMM_DIR}/include)
 endif()
 
+
+
+list(APPEND math_libs m)
+target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
 if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
