@@ -731,6 +731,13 @@ if(BUILD_TESTING)
     if(USE_OPENMP)
       target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
     endif()
+    if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+        message(STATUS "Adding build_info.h include path for test target: ${UT_TARGET}")
+        target_include_directories(${UT_TARGET}
+            PRIVATE
+                ${CMAKE_BINARY_DIR}/source/source_io
+        )
+    endif()
     install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
     add_test(
       NAME ${UT_TARGET}
