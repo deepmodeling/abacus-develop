@@ -683,6 +683,9 @@ add_subdirectory(source)
 include(cmake/BuildInfo.cmake)
 setup_build_info()
 
+include_directories(${CMAKE_BINARY_DIR}/source/source_io)
+message("include ${CMAKE_BINARY_DIR}/source/source_io")
+
 target_link_libraries(
   ${ABACUS_BIN_NAME}
   base
