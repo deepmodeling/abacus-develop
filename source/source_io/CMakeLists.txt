@@ -110,18 +110,17 @@ add_library(
     read_set_globalv.cpp
 )
 
+target_include_directories(
+    io_basic
+    PUBLIC
+    ${CMAKE_BINARY_DIR}/source/source_io}
+)
+
 add_library(
     io_basic
     OBJECT
     ${objects}
 )
-
-target_link_libraries(
-    io_basic
-    PUBLIC
-    BuildInfo::Headers
-)
-
 
 add_library(
     io_advanced
