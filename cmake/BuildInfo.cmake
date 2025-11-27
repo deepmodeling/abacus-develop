@@ -18,11 +18,11 @@ configure_file(
     @ONLY
 )
 
-    add_library(BuildInfo::Headers INTERFACE IMPORTED GLOBAL)
-    target_include_directories(BuildInfo::Headers
-        INTERFACE
-            ${CMAKE_BINARY_DIR}/source/source_io
-    )
+    # add_library(BuildInfo::Headers INTERFACE IMPORTED GLOBAL)
+    # target_include_directories(BuildInfo::Headers
+    #     INTERFACE
+    #         ${CMAKE_BINARY_DIR}/source/source_io
+    # )
 
     message(STATUS "Build info header configured: ${BUILD_INFO_OUTPUT}")
 endfunction()
