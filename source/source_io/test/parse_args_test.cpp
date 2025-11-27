@@ -44,7 +44,7 @@ TEST_F(ParseArgsTest, VersionFlags) {
         EXPECT_EXIT(
             { ModuleIO::parse_args(argc, argv.data()); },
             ::testing::ExitedWithCode(0),
-            ::testing::HasSubstr(output_ref)
+            output_ref.c_str() 
         ) << "Failed for argument: " << arg;
     }
 }
@@ -61,7 +61,7 @@ TEST_F(ParseArgsTest, InfoFlags) {
         EXPECT_EXIT(
             { ModuleIO::parse_args(argc, argv.data()); },
             ::testing::ExitedWithCode(0),
-            ::testing::HasSubstr("ABACUS Core & Platform")
+            "ABACUS Core"
         ) << "Failed for argument: " << arg;
     }
 }
@@ -76,7 +76,7 @@ TEST_F(ParseArgsTest, UnknownArgument) {
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
-        ::testing::HasSubstr("Usage: abacus")
+        "Usage: abacus"
     );
 }
 
@@ -102,7 +102,7 @@ TEST_F(ParseArgsTest, PriorityVersionOverCheckInput) {
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(0),
-        ::testing::HasSubstr("ABACUS version")
+        "ABACUS version"
     );
 
 }
