@@ -119,7 +119,7 @@ add_library(
 target_include_directories(
     io_basic
     PUBLIC
-    ${CMAKE_BINARY_DIR}/source/source_io}
+    ${CMAKE_BINARY_DIR}/source/source_io
 )
 
 add_library(
