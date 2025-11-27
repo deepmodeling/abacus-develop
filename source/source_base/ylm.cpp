@@ -1883,8 +1883,11 @@ void Ylm::ZEROS(double u[], const int& n)
 //==========================================================
 long double Ylm::Fact(const int n)
 {
+	// Factorial is undefined for negative integers
+	assert(n >= 0);
+	
 	// Use lookup table for small values (0-20), compute for larger values
-	if (n >= 0 && n <= 20)
+	if (n <= 20)
 	{
 		return factorial_table[n];
 	}
