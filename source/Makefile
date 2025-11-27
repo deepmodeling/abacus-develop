@@ -242,7 +242,7 @@ $(BUILD_INFO_DIR)/build_info.h:$(ABACUS_ROOT)source_io/build_info.h.in $(ABACUS_
 	if [ "$(MPI)" = "ON" ]; then export ENABLE_MPI="ON"; fi; \
 	export USE_CUDA="no"; \
 	if [ "$(GPU)" = "CUDA" ]; then export USE_CUDA="ON"; fi; \
-	$(ABACUS_ROOT)../generate_build_info.sh
+	$(ABACUS_ROOT)../generate_build_info.sh $@
 	@echo "Build information header generated."
 
     # Specific rule for parse_args.o to enforce dependency on build_info.h.
