@@ -2,7 +2,7 @@
 # Setup Testing Environment (GTest, CTest, AddTest function)
 # ==============================================================================
 
-include_guard(GLOBAL)
+# include_guard(GLOBAL)
 
 # --- Helper Macro: Ensure a minimum C++ standard version ---
 macro(set_if_higher VARIABLE VALUE)
