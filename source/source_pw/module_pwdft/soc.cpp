@@ -1,5 +1,11 @@
 #include "soc.h"
 
+// Helper function to compute (-1)^n efficiently without using pow()
+static inline double neg_one_pow(const int n)
+{
+    return (n % 2 == 0) ? 1.0 : -1.0;
+}
+
 Fcoef::~Fcoef()
 {
     if (this->p != nullptr)
@@ -107,8 +113,9 @@ void Soc::rot_ylm(const int lmax)
     {
         int m = (i + 1) / 2;
         int n = l - m;
-        this->p_rot[l2plus1_ * i + n] = std::complex<double>(pow(-1.0, m) / sqrt(2), 0.0);
-        this->p_rot[l2plus1_ * (i + 1) + n] = std::complex<double>(0.0, -pow(-1.0, m) / sqrt(2));
+        const double sign = neg_one_pow(m);
+        this->p_rot[l2plus1_ * i + n] = std::complex<double>(sign / sqrt(2), 0.0);
+        this->p_rot[l2plus1_ * (i + 1) + n] = std::complex<double>(0.0, -sign / sqrt(2));
         n = l + m;
         this->p_rot[l2plus1_ * i + n] = std::complex<double>(1.0 / sqrt(2), 0.0);
         this->p_rot[l2plus1_ * (i + 1) + n] = std::complex<double>(0.0, 1.0 / sqrt(2));

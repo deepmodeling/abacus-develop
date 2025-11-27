@@ -14,6 +14,12 @@
 
 #include <cmath>
 
+// Helper function to compute (-1)^n efficiently without using pow()
+static inline double neg_one_pow(const int n)
+{
+    return (n % 2 == 0) ? 1.0 : -1.0;
+}
+
 Center2_Orb::Orb11::Orb11(const Numerical_Orbital_Lm& nA_in,
                           const Numerical_Orbital_Lm& nB_in,
                           const ModuleBase::Sph_Bessel_Recursive::D2* psb,
@@ -141,7 +147,7 @@ double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
             }
             const double ylm_real = (distance > tiny2) ? ylm_solid / pow(distance, LAB) : ylm_solid;
 
-            const double i_exp = std::pow(-1.0, (LA - LB - LAB) / 2);
+            const double i_exp = neg_one_pow((LA - LB - LAB) / 2);
 
             const double Interp_Tlm
                 = (distance > tiny2)
@@ -218,7 +224,7 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
             const ModuleBase::Vector3<double> gylm_real
                 = (distance > tiny2) ? gylm_solid / pow(distance, LAB) : gylm_solid;
 
-            const double i_exp = std::pow(-1.0, (LA - LB - LAB) / 2);
+            const double i_exp = neg_one_pow((LA - LB - LAB) / 2);
 
             const double Interp_Tlm
                 = (distance > tiny2)
