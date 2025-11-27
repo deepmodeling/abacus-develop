@@ -88,7 +88,7 @@ void read_information(std::stringstream& ifs, std::vector<std::string>& output, 
 
 bool ReadInput::check_mode = false;
 
-bool filter_ascii_only(std::ifstream& ifs,
+bool filter_nonascii_and_comment(std::ifstream& ifs,
                        std::stringstream& out_ascii_stream)
 {
     // 
@@ -102,12 +102,38 @@ bool filter_ascii_only(std::ifstream& ifs,
 
     char c;
     while (ifs.get(c)) {
+        // If comment start, skip until end of line (but keep the newline)
+        if (c == '#') {
+            char d;
+            bool newline_found = false;
+            while (ifs.get(d)) {
+                if (d == '\n' || d == '\r') {
+                    // preserve line break in output
+                    out_ascii_stream.put('\n');
+                    // If CRLF, consume the LF after CR (already wrote a single '\n')
+                    if (d == '\r' && ifs.peek() == '\n') {
+                        ifs.get(d); // consume '\n'
+                    }
+                    newline_found = true;
+                    break;
+                }
+            }
+            if (!newline_found) {
+                // reached EOF while skipping comment
+                break;
+            }
+            continue;
+        }
+
         unsigned char uc = static_cast<unsigned char>(c);
         if (uc <= 0x7F) {
             // ASCII character
             out_ascii_stream.put(c);
         }
-        // skip non-ASCII bytes
+        else {
+            // replace non-ASCII with space character
+            out_ascii_stream.put(' ');
+        }
     }
 
     // recover ifstream state and position
@@ -272,7 +298,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         ifs.clear();
         ifs.seekg(0);
 
-        filter_ascii_only(ifs, ascii_stream);
+        filter_nonascii_and_comment(ifs, ascii_stream);
         ifs.clear();
 
         // file close after reading

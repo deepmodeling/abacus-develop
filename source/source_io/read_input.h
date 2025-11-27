@@ -158,7 +158,7 @@ std::string nofound_str(std::vector<std::string> init_chgs, const std::string& s
 
 // filter non-ASCII characters from ifstream and output to stringstream
 // return true if successful, false otherwise
-bool filter_ascii_only(std::ifstream& ifs,
+bool filter_nonascii_and_comment(std::ifstream& ifs,
                        std::stringstream& out_ascii_stream);
 
 
