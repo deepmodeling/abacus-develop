@@ -685,7 +685,6 @@ setup_build_info()
 
 target_link_libraries(
     io_basic
-    PRIVATE
     BuildInfo::Headers
 )
 
