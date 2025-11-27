@@ -84,8 +84,7 @@ function(setup_testing)
 
         # Link to build info if needed
         if("${UT_SOURCES}" MATCHES "parse_args.cpp")
-            # target_link_libraries(${UT_TARGET} BuildInfo::Headers)
-            target_include_directories(${UT_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/source/source_io
+            target_link_libraries(${UT_TARGET} BuildInfo::Headers)
         )
         endif()
 
