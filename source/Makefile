@@ -1,5 +1,5 @@
 # This is the Makefile of ABACUS
-ABACUS_ROOT := $(dir$(firstword $(MAKEFILE_LIST)))
+ABACUS_ROOT := $(dir $(firstword $(MAKEFILE_LIST)))
 
 BUILD_DIR ?= build
 OBJ_DIR = $(BUILD_DIR)/obj
@@ -28,9 +28,8 @@ ifeq ($(OPENMP), ON)
 else
     ELPA_NAME = elpa
 endif
-OBJ_DIR = obj
-BIN_DIR = ../bin
-SOURCE_DIR = .
+
+SOURCE_DIR = $(ABACUS_ROOT)
 ifeq ($(findstring mpi, $(CXX)), mpi)
      # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI  -DUSE_CEREAL_SERIALIZATION
