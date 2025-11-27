@@ -85,7 +85,6 @@ function(setup_testing)
         # Link to build info if needed
         if("${UT_SOURCES}" MATCHES "parse_args.cpp")
             target_link_libraries(${UT_TARGET} BuildInfo::Headers)
-        )
         endif()
 
         install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
