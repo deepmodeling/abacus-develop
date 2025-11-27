@@ -193,6 +193,7 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
+ABACUS_ROOT := $(dir$(firstword $(MAKEFILE_LIST)))
 include $(ABACUS_ROOT)Makefile.Objects
 
 #==========================
