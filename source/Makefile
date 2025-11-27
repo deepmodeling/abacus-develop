@@ -193,8 +193,9 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
-ABACUS_ROOT := $(dir$(firstword $(MAKEFILE_LIST)))
 include $(ABACUS_ROOT)Makefile.Objects
+VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
+HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
 
 #==========================
 # Optional HONG
