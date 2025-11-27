@@ -110,16 +110,16 @@ add_library(
     read_set_globalv.cpp
 )
 
-target_include_directories(
-    io_basic
-    PUBLIC
-    ${CMAKE_BINARY_DIR}/source/source_io}
-)
-
 add_library(
     io_basic
     OBJECT
     ${objects}
+)
+
+target_include_directories(
+    io_basic
+    PUBLIC
+    ${CMAKE_BINARY_DIR}/source/source_io}
 )
 
 add_library(
