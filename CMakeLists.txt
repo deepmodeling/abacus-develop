@@ -674,6 +674,8 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
+include_directories(${CMAKE_BINARY_DIR}/source/source_io)
+message("include ${CMAKE_BINARY_DIR}/source/source_io")
 
 include(cmake/Testing.cmake)
 setup_testing()
@@ -682,9 +684,6 @@ add_subdirectory(source)
 
 include(cmake/BuildInfo.cmake)
 setup_build_info()
-
-include_directories(${CMAKE_BINARY_DIR}/source/source_io)
-message("include ${CMAKE_BINARY_DIR}/source/source_io")
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}
