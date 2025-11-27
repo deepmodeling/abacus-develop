@@ -115,11 +115,7 @@ add_library(
     OBJECT
     ${objects}
 )
-target_link_libraries(
-    io_basic
-    PUBLIC
-    BuildInfo::Headers
-)
+
 add_library(
     io_advanced
     OBJECT
