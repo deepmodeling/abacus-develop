@@ -28,9 +28,10 @@ void cal_ux(UnitCell& ucell) {
 		for (int ia = 0; ia < ucell.atoms[it].na; ia++) 
 		{
             // m_loc_: local magnetization vector for each atom
-            amag = pow(ucell.atoms[it].m_loc_[ia].x, 2)
-                   + pow(ucell.atoms[it].m_loc_[ia].y, 2)
-                   + pow(ucell.atoms[it].m_loc_[ia].z, 2);
+            const double mx = ucell.atoms[it].m_loc_[ia].x;
+            const double my = ucell.atoms[it].m_loc_[ia].y;
+            const double mz = ucell.atoms[it].m_loc_[ia].z;
+            amag = mx*mx + my*my + mz*mz;
 
             // find the first atom (it,ia) whose magnetism is not zero
             // compute ux
@@ -73,9 +74,10 @@ void cal_ux(UnitCell& ucell) {
     // then set the direction to a unit vector
 	if (ucell.magnet.lsign_) 
 	{
-		uxmod = pow(ucell.magnet.ux_[0], 2) 
-			+ pow(ucell.magnet.ux_[1], 2)
-			+ pow(ucell.magnet.ux_[2], 2);
+		const double ux0 = ucell.magnet.ux_[0];
+		const double ux1 = ucell.magnet.ux_[1];
+		const double ux2 = ucell.magnet.ux_[2];
+		uxmod = ux0*ux0 + ux1*ux1 + ux2*ux2;
 
 		if (uxmod < absolute_mag_thr) 
 		{
@@ -94,9 +96,10 @@ void cal_ux(UnitCell& ucell) {
 bool judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
     bool jp = false;
     double cross;
-    cross = pow((a[1] * b.z - a[2] * b.y), 2)
-            + pow((a[2] * b.x - a[0] * b.z), 2)
-            + pow((a[0] * b.y - a[1] * b.x), 2);
+    const double c1 = a[1] * b.z - a[2] * b.y;
+    const double c2 = a[2] * b.x - a[0] * b.z;
+    const double c3 = a[0] * b.y - a[1] * b.x;
+    cross = c1*c1 + c2*c2 + c3*c3;
     jp = (fabs(cross) < 1e-6);
     return jp;
 }

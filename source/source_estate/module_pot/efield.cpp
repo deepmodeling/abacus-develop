@@ -317,7 +317,7 @@ void Efield::prepare(const UnitCell &cell, double &latvec, double &area)
     {
         ModuleBase::WARNING_QUIT("Efield::prepare", "direction is wrong!");
     }
-    bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
+    bmod = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
 }
 
 void Efield::autoset(std::vector<double>& pos)

@@ -71,7 +71,10 @@ void Magnetism::compute_mag(const double& omega,
 		this->abs_mag = 0.00;
 		for (int ir=0; ir<nrxx; ir++)
 		{
-			double diff = sqrt(pow(rho[1][ir], 2) + pow(rho[2][ir], 2) +pow(rho[3][ir], 2));
+			const double r1 = rho[1][ir];
+			const double r2 = rho[2][ir];
+			const double r3 = rho[3][ir];
+			double diff = sqrt(r1*r1 + r2*r2 + r3*r3);
  
 			for(int i=0;i<3;i++) 
 			{
@@ -112,9 +115,10 @@ bool Magnetism::judge_parallel(const double a[3], const ModuleBase::Vector3<doub
 
    double cross=0.0;
 
-   cross = pow((a[1]*b.z-a[2]*b.y),2) 
-	   + pow((a[2]*b.x-a[0]*b.z),2) 
-	   + pow((a[0]*b.y-a[1]*b.x),2);
+   const double c1 = a[1]*b.z - a[2]*b.y;
+   const double c2 = a[2]*b.x - a[0]*b.z;
+   const double c3 = a[0]*b.y - a[1]*b.x;
+   cross = c1*c1 + c2*c2 + c3*c3;
 
    jp = (fabs(cross)<1e-6);
    return jp;
