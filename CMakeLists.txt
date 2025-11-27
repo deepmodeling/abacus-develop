@@ -674,9 +674,6 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
-include_directories(${CMAKE_BINARY_DIR}/source/source_io)
-message("include ${CMAKE_BINARY_DIR}/source/source_io")
-
 include(cmake/Testing.cmake)
 setup_testing()
 
@@ -745,6 +742,9 @@ if (USE_SW)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
   list(APPEND math_libs gfortran)
 endif()
+
+list(APPEND math_libs m)
+target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
