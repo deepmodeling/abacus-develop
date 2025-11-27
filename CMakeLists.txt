@@ -684,11 +684,6 @@ include(cmake/BuildInfo.cmake)
 setup_build_info()
 
 target_link_libraries(
-    io_basic
-    BuildInfo::Headers
-)
-
-target_link_libraries(
   ${ABACUS_BIN_NAME}
   base
   parameter
