@@ -197,8 +197,10 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     if (this->check_mode)
     {
-        ModuleBase::WARNING_QUIT("ReadInput",
-                                 " INPUT parameters have been successfully checked! ", 0);
+        std::cout << "----------------------------------------------------------" << std::endl;
+        std::cout << "  INPUT parameters have been successfully checked!" << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
+        exit(0);
         return;
     }
 }
@@ -272,6 +274,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 
         filter_ascii_only(ifs, ascii_stream);
         ifs.clear();
+
+        // file close after reading
     }
     
     int ierr = 0;
