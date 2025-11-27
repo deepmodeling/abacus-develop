@@ -69,7 +69,7 @@ std::string to_dir(const std::string& str)
     return str_dir;
 }
 
-void read_information(std::ifstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
+void read_information(std::stringstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
 {
     std::string line;
     getline(ifs, line);
@@ -87,6 +87,36 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
 }
 
 bool ReadInput::check_mode = false;
+
+bool filter_ascii_only(std::ifstream& ifs,
+                       std::stringstream& out_ascii_stream)
+{
+    // 
+    if (!ifs.is_open()) {
+        if (!ifs) return false;
+    }
+
+    std::streampos old_pos = ifs.tellg();
+    ifs.clear();
+    ifs.seekg(0, std::ios::beg);
+
+    char c;
+    while (ifs.get(c)) {
+        unsigned char uc = static_cast<unsigned char>(c);
+        if (uc <= 0x7F) {
+            // ASCII character
+            out_ascii_stream.put(c);
+        }
+        // skip non-ASCII bytes
+    }
+
+    // recover ifstream state and position
+    ifs.clear();
+    ifs.seekg(old_pos, std::ios::beg);
+
+    return true;
+}
+
 
 ReadInput::ReadInput(const int& rank)
 {
@@ -167,10 +197,8 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     if (this->check_mode)
     {
-        std::cout << "----------------------------------------------------------" << std::endl;
-        std::cout << "  INPUT parameters have been successfully checked!" << std::endl;
-        std::cout << "----------------------------------------------------------" << std::endl;
-        exit(0);
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 " INPUT parameters have been successfully checked! ", 0);
         return;
     }
 }
@@ -228,32 +256,36 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("ReadInput", "read_txt_input");
 
-    std::ifstream ifs(filename.c_str(), std::ios::in);
+    std::stringstream ascii_stream;
 
-    if (!ifs)
     {
-        std::cout << " Can't find the INPUT file." << std::endl;
-        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+        std::ifstream ifs(filename.c_str(), std::ios::in);
+
+        if (!ifs)
+        {
+            std::cout << " Can't find the INPUT file." << std::endl;
+            ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+        }
+
+        ifs.clear();
+        ifs.seekg(0);
+
+        filter_ascii_only(ifs, ascii_stream);
+        ifs.clear();
     }
-
-    ifs.clear();
-    ifs.seekg(0);
-
-    std::string word;
+    
     int ierr = 0;
-
-    // ifs >> std::setiosflags(ios::uppercase);
-    ifs.rdstate();
-    while (ifs.good())
+    ascii_stream.rdstate();
+    while (ascii_stream.good())
     {
-        ifs >> word;
-        ifs.ignore(150, '\n');
+        std::string word;
+        ascii_stream >> word;
+        ascii_stream.ignore(150, '\n');
         if (word == "INPUT_PARAMETERS")
         {
             ierr = 1;
             break;
         }
-        ifs.rdstate();
     }
 
     if (ierr == 0)
@@ -266,14 +298,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
-    ifs.rdstate();
-    // the `word1` is moved here and is renamed to improve the code-readability
-    std::string word_; // temporary variable to store the keyword read-in
-    while (ifs.good())
+    ascii_stream.rdstate();
+    while (ascii_stream.good())
     {
-        ifs >> word_;
-        if (ifs.eof()) { break; }
-        word = FmtCore::lower(word_); // the lowercase of the keyword
+        std::string word; // temporary variable to store the keyword read-in
+        ascii_stream >> word;
+        if (ascii_stream.eof()) { break; }
+        word = FmtCore::lower(word); // the lowercase of the keyword
         auto it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
@@ -286,7 +317,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             // qianrui delete '/' 2024-07-10, because path has '/' head.
-            read_information(ifs, p_item->str_values, "#!");
+            read_information(ascii_stream, p_item->str_values, "#!");
         }
         else // otherwise, it should be a comment or an unrecognized parameter
         {
@@ -299,25 +330,24 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             // otherwise, it is a comment. However, ...
             // but it is not always to be shorter than 150 characters
             // we can use ignore to skip the rest of the line
-            ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            ascii_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
 
-        ifs.rdstate();
-        if (ifs.eof())
+        ascii_stream.rdstate();
+        if (ascii_stream.eof())
         {
             break;
         }
-        else if (ifs.bad())
+        else if (ascii_stream.bad())
         {
-            std::cout << " Bad input parameters. " << std::endl;
-            exit(1);
+            ModuleBase::WARNING_QUIT("Input", 
+                                    " Bad input parameters. ", 1);
         }
-        else if (ifs.fail())
+        else if (ascii_stream.fail())
         {
-            std::cout << " word = " << word << std::endl;
-            std::cout << " Fail to read parameters. " << std::endl;
-            ifs.clear();
-            exit(1);
+            ascii_stream.clear();
+            ModuleBase::WARNING_QUIT("Input", 
+                                    " fail to read parameters. ", 1);
         }
     }
 
