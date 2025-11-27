@@ -2,7 +2,7 @@
 # Generate Build Information Header (Including Information Collection)
 # ==============================================================================
 
-include_guard(GLOBAL)
+# include_guard(GLOBAL)
 
 function(setup_build_info)
     message(STATUS "Setting up build information...")
