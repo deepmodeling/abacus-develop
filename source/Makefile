@@ -193,7 +193,7 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
-include Makefile.Objects
+include $(ABACUS_ROOT)Makefile.Objects
 
 #==========================
 # Optional HONG
