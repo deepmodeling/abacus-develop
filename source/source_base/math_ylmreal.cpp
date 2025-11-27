@@ -16,6 +16,13 @@
 namespace ModuleBase
 {
 
+// Helper function to compute (-1)^n efficiently without using pow()
+// This is much faster than pow(-1.0, n) which involves floating point operations
+static inline double neg_one_pow(const int n)
+{
+    return (n % 2 == 0) ? 1.0 : -1.0;
+}
+
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
 
@@ -182,7 +189,7 @@ void YlmReal::rlylm
 					double gamma;
 					double aux0, aux1, aux2, aux3;
 				
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
+					aux0 = neg_one_pow(ik) * pow(2.0, -il);
 					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
 					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
 					aux3 = Fact(il - twok) / Fact(il - twok - im);
@@ -224,13 +231,14 @@ void YlmReal::rlylm
 		//m ! = 0
 		for(int im = 1; im <= il; im++)
 		{
+			const double sign = neg_one_pow(im);
 			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+			rly[ic] = Am[im] * zdep[il][im] * sign * fac / rl;
 			
 			ic++;
 			
 			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+			rly[ic] = Bm[im] * zdep[il][im] * sign * fac / rl;
 
 			ic++;
 		}

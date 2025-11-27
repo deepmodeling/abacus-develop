@@ -11,6 +11,39 @@
 namespace ModuleBase
 {
 
+// Precomputed factorial lookup table for commonly used values (0! to 20!)
+// This avoids expensive repeated factorial computations
+static const long double factorial_table[21] = {
+    1.0L,                     // 0!
+    1.0L,                     // 1!
+    2.0L,                     // 2!
+    6.0L,                     // 3!
+    24.0L,                    // 4!
+    120.0L,                   // 5!
+    720.0L,                   // 6!
+    5040.0L,                  // 7!
+    40320.0L,                 // 8!
+    362880.0L,                // 9!
+    3628800.0L,               // 10!
+    39916800.0L,              // 11!
+    479001600.0L,             // 12!
+    6227020800.0L,            // 13!
+    87178291200.0L,           // 14!
+    1307674368000.0L,         // 15!
+    20922789888000.0L,        // 16!
+    355687428096000.0L,       // 17!
+    6402373705728000.0L,      // 18!
+    121645100408832000.0L,    // 19!
+    2432902008176640000.0L    // 20!
+};
+
+// Helper function to compute (-1)^n efficiently without using pow()
+// This is much faster than pow(-1.0, n) which involves floating point operations
+inline double neg_one_pow(const int n)
+{
+    return (n % 2 == 0) ? 1.0 : -1.0;
+}
+
 int Ylm::nlm = 0;
 std::vector<double> Ylm::ylmcoef = {
 	1.0 / sqrt(ModuleBase::FOUR_PI),
@@ -477,7 +510,7 @@ void Ylm::rlylm
 					double gamma;
 					double aux0, aux1, aux2, aux3;
 
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
+					aux0 = neg_one_pow(ik) * pow(2.0, -il);
 					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
 					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
 					aux3 = Fact(il - twok) / Fact(il - twok - im);
@@ -510,13 +543,14 @@ void Ylm::rlylm
 		//m ! = 0
 		for(int im = 1; im <= il; im++)
 		{
+			const double sign = neg_one_pow(im);
 			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac;
+			rly[ic] = Am[im] * zdep[il][im] * sign * fac;
 
 			ic++;
 
 			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac;
+			rly[ic] = Bm[im] * zdep[il][im] * sign * fac;
 
 			ic++;
 		}
@@ -1655,7 +1689,7 @@ void Ylm::rlylm
 					double gamma;
 					double aux0, aux1, aux2, aux3;
 
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
+					aux0 = neg_one_pow(ik) * pow(2.0, -il);
 					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
 					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
 					aux3 = Fact(il - twok) / Fact(il - twok - im);
@@ -1721,19 +1755,20 @@ void Ylm::rlylm
 		//m ! = 0
 		for(int im = 1; im <= il; im++)
 		{
+			const double sign = neg_one_pow(im);
 			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac;
-			grly[ic][0] = (Gx_dep[il][im] * Am[im] + zdep[il][im] * Gx_Am[im]) * pow(-1.0, im) * fac;
-			grly[ic][1] = (Gy_dep[il][im] * Am[im] + zdep[il][im] * Gy_Am[im]) * pow(-1.0, im) * fac;
-			grly[ic][2] = Gz_dep[il][im] * Am[im] * pow(-1.0, im) * fac;
+			rly[ic] = Am[im] * zdep[il][im] * sign * fac;
+			grly[ic][0] = (Gx_dep[il][im] * Am[im] + zdep[il][im] * Gx_Am[im]) * sign * fac;
+			grly[ic][1] = (Gy_dep[il][im] * Am[im] + zdep[il][im] * Gy_Am[im]) * sign * fac;
+			grly[ic][2] = Gz_dep[il][im] * Am[im] * sign * fac;
 
 			ic++;
 
 			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac;
-			grly[ic][0] = (Gx_dep[il][im] * Bm[im] + zdep[il][im] * Gx_Bm[im]) * pow(-1.0, im) * fac;
-			grly[ic][1] = (Gy_dep[il][im] * Bm[im] + zdep[il][im] * Gy_Bm[im]) * pow(-1.0, im) * fac;
-			grly[ic][2] = Gz_dep[il][im] * Bm[im] * pow(-1.0, im) * fac;
+			rly[ic] = Bm[im] * zdep[il][im] * sign * fac;
+			grly[ic][0] = (Gx_dep[il][im] * Bm[im] + zdep[il][im] * Gx_Bm[im]) * sign * fac;
+			grly[ic][1] = (Gy_dep[il][im] * Bm[im] + zdep[il][im] * Gy_Bm[im]) * sign * fac;
+			grly[ic][2] = Gz_dep[il][im] * Bm[im] * sign * fac;
 
 			ic++;
 		}
@@ -1848,8 +1883,14 @@ void Ylm::ZEROS(double u[], const int& n)
 //==========================================================
 long double Ylm::Fact(const int n)
 {
-	long double f = 1;
-	for(int i=n; i>1; i--)
+	// Use lookup table for small values (0-20), compute for larger values
+	if (n >= 0 && n <= 20)
+	{
+		return factorial_table[n];
+	}
+	// Fall back to computation for n > 20
+	long double f = factorial_table[20];
+	for(int i = 21; i <= n; i++)
 	{
 		f *= i;
 	}
