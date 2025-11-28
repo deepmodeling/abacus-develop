@@ -40,11 +40,13 @@ void ElecState::init_scf(const int istep,
 
     //! other effective potentials need charge density,
     // choose charge density from ionic step 0.
+/*
     if (istep == 0)
     {
         this->charge->init_rho(this->eferm,ucell, pgrid, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
+*/
 
     //! renormalize the charge density
     this->charge->renormalize_rho();

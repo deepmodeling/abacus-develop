@@ -97,11 +97,18 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     pw::setup_pwwfc(inp, ucell, *this->pw_rho, this->kv, this->pw_wfc);
 
     //! 10) parallel of FFT grid 
-	Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
+	this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
 			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
 
     //! 11) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);
+
+    //! 12) read in charge density, mohan add 2025-11-28
+    //! Inititlize the charge density.
+    this->chr.allocate(inp.nspin); // mohan move this from setup_estate_pw, 20251128
+    this->chr.init_rho(this->eferm, ucell, this->Pgrid, this->sf.strucfac, ucell.symm, &this->kv, this->pw_wfc);
+    this->chr.check_rho(); // check the rho
+  
 }
 
 template <typename T, typename Device>

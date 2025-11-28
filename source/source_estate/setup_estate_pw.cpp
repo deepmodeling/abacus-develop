@@ -39,9 +39,6 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
         }
     }
 
-    //! Inititlize the charge density.
-    chr.allocate(inp.nspin);
-
     //! Initialize DFT-1/2
     if (PARAM.inp.dfthalf_type > 0)
     {

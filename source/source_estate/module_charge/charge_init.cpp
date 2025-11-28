@@ -372,11 +372,6 @@ void Charge::set_rho_core(const UnitCell& ucell,
     return;
 } // end subroutine set_rhoc
 
-void Charge::set_rho_core_paw()
-{
-    ModuleBase::TITLE("Charge","set_rho_core_paw");
-}
-
 
 void Charge::non_linear_core_correction
 (
@@ -397,7 +392,7 @@ void Charge::non_linear_core_correction
 
 	double gx = 0.0;
     double rhocg1 = 0.0;
-    double *aux;
+    double *aux = nullptr;
 
     // here we compute the fourier transform is the charge in numeric form
     if (numeric)

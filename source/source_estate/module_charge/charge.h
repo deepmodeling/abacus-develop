@@ -97,8 +97,6 @@ class Charge
                       const ModuleBase::ComplexMatrix& structure_factor, 
                       const bool* numeric);
 
-    void set_rho_core_paw();
-
     void renormalize_rho();
 
     double sum_rho() const;
