@@ -96,7 +96,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_parse_args
-  LIBS io_basic io_input
+  LIBS io_input
   SOURCES parse_args_test.cpp ../parse_args.cpp
 )
 
