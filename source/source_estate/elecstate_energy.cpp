@@ -252,6 +252,12 @@ double ElecState::cal_delta_escf() const
 
     descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
 
+// mohan move the code here, 2025-11-28
+#ifdef __MPI
+        MPI_Bcast(&descf, 1, MPI_DOUBLE, 0, BP_WORLD);
+#endif
+
+
 	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
     return descf;
 }

@@ -20,13 +20,12 @@ void elecstate::init_dm(UnitCell& ucell,
 		std::cout << " LCAO WAVEFUN -> CHARGE " << std::endl;
 
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
+
 		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
 		dmat.dm->cal_DMR();
 
         // mohan add 2025-11-12, use density matrix to calculate the charge density
         LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr);
-
-		pelec->skip_weights = false;
 
 		elecstate::cal_ux(ucell);
 
