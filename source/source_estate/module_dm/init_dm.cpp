@@ -19,17 +19,6 @@ void elecstate::init_dm(UnitCell& ucell,
 	{
 		std::cout << " LCAO WAVEFUN -> CHARGE " << std::endl;
 
-		// calculate the density matrix using read in wave functions
-		// and then calculate the charge density on grid.
-		pelec->skip_weights = true;
-		elecstate::calculate_weights(pelec->ekb,
-				pelec->wg,
-				pelec->klist,
-				pelec->eferm,
-				pelec->f_en,
-				pelec->nelec_spin,
-				pelec->skip_weights);
-
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
 		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
 		dmat.dm->cal_DMR();
