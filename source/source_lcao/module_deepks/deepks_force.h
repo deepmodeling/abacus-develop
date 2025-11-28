@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/matrix.h"
@@ -31,10 +32,10 @@ void cal_f_delta(const hamilt::HContainer<double>* dmr,
                  const Grid_Driver& GridD,
                  const Parallel_Orbitals& pv,
                  const int nks,
+                 const DeePKS_Param& deepks_param,
                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                  std::vector<hamilt::HContainer<double>*> phialpha,
                  double** gedm,
-                 ModuleBase::IntArray* inl_index,
                  ModuleBase::matrix& f_delta,
                  const bool isstress,
                  ModuleBase::matrix& svnl_dalpha);

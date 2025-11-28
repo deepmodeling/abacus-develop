@@ -1594,14 +1594,14 @@ These variables are used to control the geometry relaxation.
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`
+- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`. 
 - **Unit**: Bohr
 - **Default**: 0.8
 
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Description**: For geometry optimization. It indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down.
+- **Description**: In old bfgs algorithm, it indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down. In the current default bfgs algorithm, this parameter is not used.
 - **Default**: 1e-5
 - **Unit**: Bohr
 

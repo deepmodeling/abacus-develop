@@ -66,6 +66,7 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
 OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
+MPICH_VERSION="main"        # main=4.1.6, alt=4.1.5
 OPENBLAS_VERSION="main"     # main=0.3.30, alt=0.3.27
 ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
@@ -104,6 +105,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-4th-openmpi="$WITH_4TH_OPENMPI" \
   --package-version cmake:"$CMAKE_VERSION" \
   --package-version openmpi:"$OPENMPI_VERSION" \
+  --package-version mpich:"$MPICH_VERSION" \
   --package-version openblas:"$OPENBLAS_VERSION" \
   --package-version elpa:"$ELPA_VERSION" \
   --package-version libxc:"$LIBXC_VERSION" \

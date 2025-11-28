@@ -306,6 +306,8 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
     int nqs = kv->get_nkstot_full();
+    int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 
     // ik fixed here, select band n
     for (int iq = 0; iq < nqs; iq++)
@@ -332,7 +334,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
             if (iq_pool == GlobalV::MY_POOL)
             {
-                const T* psi_mq = get_pw(m_iband, iq_loc);
+                const T* psi_mq = get_pw(m_iband, iq_loc + ispin * wfcpw->nks / nspin_fac);
                 wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
                 // send
             }

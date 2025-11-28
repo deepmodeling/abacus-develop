@@ -15,7 +15,6 @@
 template <typename TK>
 void ModuleIO::output_HSR(const UnitCell& ucell,
                           const int& istep,
-                          const ModuleBase::matrix& v_eff,
                           const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
                           const Grid_Driver& grid, // mohan add 2024-04-06
@@ -304,7 +303,6 @@ void ModuleIO::output_TR(const int istep,
 template void ModuleIO::output_HSR<double>(
     const UnitCell& ucell,
     const int& istep,
-    const ModuleBase::matrix& v_eff,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
     const Grid_Driver& grid,
@@ -324,7 +322,6 @@ template void ModuleIO::output_HSR<double>(
 template void ModuleIO::output_HSR<std::complex<double>>(
     const UnitCell& ucell,
     const int& istep,
-    const ModuleBase::matrix& v_eff,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
     const Grid_Driver& grid,

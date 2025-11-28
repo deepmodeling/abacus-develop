@@ -40,7 +40,7 @@ bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 
 	if(xc_func.find("VV10") != std::string::npos) { return true; }
 	/* known excluded: GGA_XC_VV10, HYB_GGA_XC_LC_VV10, MGGA_C_REVSCAN_VV10, MGGA_C_SCAN_VV10, 
-	            	   MGGA_C_SCANL_VV10, MGGA_XC_VCML_RVV10 */
+	                   MGGA_C_SCANL_VV10, MGGA_XC_VCML_RVV10 */
 					   
 	const std::vector<std::string> not_supported = {"C09X", "VCML", "HYB_MGGA_XC_WB97M_V", "MGGA_XC_B97M_V"};
 	for(const std::string& str : not_supported)
@@ -54,8 +54,8 @@ bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 	{
 		std::cout << " WARNING: range-seperated XC omega-B97 family with nonlocal correction term is used.\n" 
 		          << "          if you are not planning to use these functionals like wB97X-D3BJ that:\n"
-				  << "          XC_GGA_XC_WB97X_V with specified D3BJ DFT-D3 parameters, this is not what\n"
-				  << "          you want." << std::endl;
+		          << "          XC_GGA_XC_WB97X_V with specified D3BJ DFT-D3 parameters, this is not what\n"
+		          << "          you want." << std::endl;
 	}
 	return false;
 }
@@ -92,7 +92,7 @@ int xc_func_type_classifier(const std::string& xc_func,
 std::pair<int,std::vector<int>> 
 XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
 {
-    // check if the functional involves Laplacian of rho
+	// check if the functional involves Laplacian of rho
 	if (not_supported_xc_with_laplacian(xc_func_in))
 	{
 		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
@@ -120,14 +120,14 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
 	}
 
 	// check if there is None (no, we dont check it)
-    int func_type = xcfunc_type_.front(); // all functionals are of the same type
+	int func_type = xcfunc_type_.front(); // all functionals are of the same type
 	// if (func_type == 0)
 	// {
 	// 	ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
 	// 		"Unrecognized functional type in '" + xc_func_in + "'.");
 	// }
 
-    // determine the functional id
+	// determine the functional id
 	std::vector<int> func_id(xcfunc_words_.size(), -1);
 	std::transform(xcfunc_words_.begin(), xcfunc_words_.end(), func_id.begin(),
 		[](const std::string& func) { return xc_functional_get_number(func.c_str()); });
@@ -144,7 +144,7 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
 	}
 
 	// return
-    return std::make_pair(func_type, func_id);
+	return std::make_pair(func_type, func_id);
 }
 
 const std::vector<double> in_built_xc_func_ext_params(const int id)
@@ -176,45 +176,45 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
 			return {0.04918, 0.132, 0.2533, 0.349, 
 					0.35/2.29, 2.0/2.29, GlobalC::exx_info.info_global.hse_omega};
 		// Long-range corrected functionals:
-        case XC_HYB_GGA_XC_LC_PBEOP:  // LC version of PBE
+		case XC_HYB_GGA_XC_LC_PBEOP:  // LC version of PBE
 		{
-            // This is a range-separated hybrid functional with range-separation constant  0.330,
-            // and  0.0% short-range and 100.0% long-range exact exchange,
-            // using the error function kernel.
+			// This is a range-separated hybrid functional with range-separation constant  0.330,
+			// and  0.0% short-range and 100.0% long-range exact exchange,
+			// using the error function kernel.
 			return { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
 		}
-        case XC_HYB_GGA_XC_LC_WPBE:  // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
+		case XC_HYB_GGA_XC_LC_WPBE:  // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
 		{
-            // This is a range-separated hybrid functional with range-separation constant  0.400,
-            // and  0.0% short-range and 100.0% long-range exact exchange,
-            // using the error function kernel.
+			// This is a range-separated hybrid functional with range-separation constant  0.400,
+			// and  0.0% short-range and 100.0% long-range exact exchange,
+			// using the error function kernel.
 			return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
 				std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.4
 		}
-        case XC_HYB_GGA_XC_LRC_WPBE:  // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
+		case XC_HYB_GGA_XC_LRC_WPBE:  // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
 		{
-            // This is a range-separated hybrid functional with range-separation constant  0.300,
-            // and  0.0% short-range and 100.0% long-range exact exchange,
-            // using the error function kernel.
+			// This is a range-separated hybrid functional with range-separation constant  0.300,
+			// and  0.0% short-range and 100.0% long-range exact exchange,
+			// using the error function kernel.
 			return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
 				std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.3
 		}
-        case XC_HYB_GGA_XC_LRC_WPBEH:  // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
+		case XC_HYB_GGA_XC_LRC_WPBEH:  // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
 		{
-            // This is a range-separated hybrid functional with range-separation constant  0.200,
-            // and 20.0% short-range and 100.0% long-range exact exchange,
-            // using the error function kernel.	
+			// This is a range-separated hybrid functional with range-separation constant  0.200,
+			// and 20.0% short-range and 100.0% long-range exact exchange,
+			// using the error function kernel.	
 			return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
 				std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.2
 		}
-        case XC_HYB_GGA_XC_CAM_PBEH:  // CAM hybrid screened exchange PBE version
+		case XC_HYB_GGA_XC_CAM_PBEH:  // CAM hybrid screened exchange PBE version
 		{
-            // This is a range-separated hybrid functional with range-separation constant  0.700,
-            // and 100.0% short-range and 20.0% long-range exact exchange,
-            // using the error function kernel.
+			// This is a range-separated hybrid functional with range-separation constant  0.700,
+			// and 100.0% short-range and 20.0% long-range exact exchange,
+			// using the error function kernel.
 			return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
 				std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.7
@@ -287,10 +287,10 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 
 void XC_Functional_Libxc::finish_func(std::vector<xc_func_type> &funcs)
 {
-    for(xc_func_type func : funcs)
+	for(xc_func_type func : funcs)
 	{
-        xc_func_end(&func);
-    }
+		xc_func_end(&func);
+	}
 }
 
 #endif

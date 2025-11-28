@@ -12,6 +12,12 @@
 
 Users are referred to the introduction of features of ABACUS in the [feature list](http://abacus.ustc.edu.cn/features/list.htm).
 
+**2. How to contact the ABACUS community?**
+
+Users can contact the ABACUS community by join ABACUS WeChat or QQ group. One can quickly join the QQ group via group ID: 759914681
+
+If users have any questions or suggestions, please feel free to contact us in group or by raising issue in GitHub repo.
+
 ## Installation
 
 ## Setting up jobs

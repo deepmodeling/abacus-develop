@@ -119,7 +119,8 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     {
         for (int ik0 = 0; ik0 < nk_max; ik0++)
         {
-            int ik = ik0 + ispin * nk_max;
+            int ik = ik0 + ispin * wfcpw->nks / nspin_fac;
+            // printf("ik: %d\n", ik);
             int npwk = wfcpw->npwk[ik];
 
             T* Xi_ace = Xi_ace_k[ik];
@@ -146,7 +147,12 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                 // ik fixed here, select band n
                 for (int iq0 = 0; iq0 < nqs; iq0++)
                 {
-                    int iq = iq0 + ik;
+                    // For nspin=2, iq should be in the same spin channel as ik
+                    int iq;
+
+                    int nk = wfcpw->nks / 2;
+                    iq = iq0 + ispin * nk; // iq in the same spin channel
+
                     // for \psi_nk, get the pw of iq and band m
                     get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
 
@@ -157,7 +163,6 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                     for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
                     {
                         double wg_mqb = 0;
-                        bool skip = false;
                         if (iq_pool == GlobalV::MY_POOL)
                         {
                             wg_mqb = (*wg)(iq_loc, m_iband);

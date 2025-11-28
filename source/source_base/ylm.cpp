@@ -324,10 +324,10 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
  * *************************/
 void Ylm::rlylm
 (
- 	const int& Lmax, //max momentum of l + 1
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of l + 1
+ 	const double x,
+	const double y,
+	const double z,
 	double rly[]
 )
 {
@@ -529,10 +529,10 @@ void Ylm::rlylm
 //return ylm, not rlylm
 void Ylm::sph_harm
 (
- 	const int& Lmax, //max momentum of l
- 	const double& xdr,
-	const double& ydr,
-	const double& zdr,
+ 	const int Lmax, //max momentum of l
+ 	const double xdr,
+	const double ydr,
+	const double zdr,
 	std::vector<double> &rly
 )
 {
@@ -668,10 +668,10 @@ void Ylm::sph_harm
 // Peize Lin change rly 2016-08-26
 void Ylm::rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	std::vector<double>& rly
 )
 {
@@ -807,10 +807,10 @@ void Ylm::rl_sph_harm
 
 void Ylm::grad_rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	double* rly,
 	double** grly
 )
@@ -1097,10 +1097,10 @@ void Ylm::grad_rl_sph_harm
 
 void Ylm::hes_rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	std::vector<std::vector<double>>& hrly
 )
 {
@@ -1394,10 +1394,10 @@ void Ylm::test2 (void)
 
 void Ylm::rlylm
 (
- 	const int& Lmax, //max momentum of l + 1
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of l + 1
+ 	const double x,
+	const double y,
+	const double z,
 	double rly[],
 	double grly[][3]
 )

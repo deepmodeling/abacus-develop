@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/matrix.h"
@@ -27,15 +28,12 @@ namespace DeePKS_domain
 
 template <typename TK, typename TH>
 void cal_orbital_precalc(const std::vector<TH>& dm_hl,
-                         const int lmaxd,
-                         const int inlmax,
                          const int nat,
                          const int nks,
-                         const std::vector<int>& inl2l,
+                         const DeePKS_Param& deepks_param,
                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                          const std::vector<hamilt::HContainer<double>*> phialpha,
                          const std::vector<torch::Tensor> gevdm,
-                         const ModuleBase::IntArray* inl_index,
                          const UnitCell& ucell,
                          const LCAO_Orbitals& orb,
                          const Parallel_Orbitals& pv,

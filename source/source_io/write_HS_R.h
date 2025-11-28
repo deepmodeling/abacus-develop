@@ -15,7 +15,6 @@ using TAC = std::pair<int, std::array<int, 3>>;
 template <typename TK>
 void output_HSR(const UnitCell& ucell,
                 const int& istep,
-                const ModuleBase::matrix& v_eff,
                 const Parallel_Orbitals& pv,
                 LCAO_HS_Arrays& HS_Arrays,
                 const Grid_Driver& grid, // mohan add 2024-04-06

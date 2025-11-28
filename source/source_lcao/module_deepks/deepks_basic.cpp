@@ -8,27 +8,27 @@
 #include "source_base/atom_in.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+
 #include <cstdlib> // use system command
 
 // d(Descriptor) / d(projected density matrix)
 // Dimension is different for each inl, so there's a vector of tensors
 void DeePKS_domain::cal_gevdm(const int nat,
-                              const int inlmax,
-                              const std::vector<int>& inl2l,
+                              const DeePKS_Param& deepks_param,
                               const std::vector<torch::Tensor>& pdm,
                               std::vector<torch::Tensor>& gevdm)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gevdm");
     ModuleBase::timer::tick("DeePKS_domain", "cal_gevdm");
     // cal gevdm(d(EigenValue(D))/dD)
-    int nlmax = inlmax / nat;
+    int nlmax = deepks_param.inlmax / nat;
     for (int nl = 0; nl < nlmax; ++nl)
     {
         std::vector<torch::Tensor> avmmv;
         for (int iat = 0; iat < nat; ++iat)
         {
             int inl = iat * nlmax + nl;
-            int nm = 2 * inl2l[inl] + 1;
+            int nm = 2 * deepks_param.inl2l[inl] + 1;
             // repeat each block for nm times in an additional dimension
             torch::Tensor tmp_x = pdm[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
             // torch::Tensor tmp_y = std::get<0>(torch::symeig(tmp_x, true));
@@ -85,7 +85,7 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     return;
 }
 
-inline void generate_py_files(const int lmaxd, const int nmaxd, const std::string& out_dir)
+inline void generate_py_files(const DeePKS_Param& deepks_param, const std::string& out_dir)
 {
     std::ofstream ofs("cal_edelta_gedm.py");
     ofs << "import torch" << std::endl;
@@ -117,14 +117,14 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
 
     ofs.open("basis.yaml");
     ofs << "proj_basis:" << std::endl;
-    for (int l = 0; l < lmaxd + 1; l++)
+    for (int l = 0; l < deepks_param.lmaxd + 1; l++)
     {
         ofs << "  - - " << l << std::endl;
         ofs << "    - [";
-        for (int i = 0; i < nmaxd + 1; i++)
+        for (int i = 0; i < deepks_param.nmaxd + 1; i++)
         {
             ofs << "0";
-            if (i != nmaxd)
+            if (i != deepks_param.nmaxd)
             {
                 ofs << ", ";
             }
@@ -134,11 +134,7 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
 }
 
 void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
-                                          const int lmaxd,
-                                          const int nmaxd,
-                                          const int inlmax,
-                                          const int des_per_atom,
-                                          const std::vector<int>& inl2l,
+                                          const DeePKS_Param& deepks_param,
                                           const std::vector<torch::Tensor>& descriptor,
                                           double** gedm,
                                           double& E_delta,
@@ -147,19 +143,13 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
 
-    const std::string file_d = PARAM.globalv.global_out_dir + "deepks_dm_eig.npy";;
-    LCAO_deepks_io::save_npy_d(nat,
-                               des_per_atom,
-                               inlmax,
-                               inl2l,
-                               PARAM.inp.deepks_equiv,
-                               descriptor,
-                               file_d,
+    const std::string file_d = PARAM.globalv.global_out_dir + "deepks_dm_eig.npy";
+    LCAO_deepks_io::save_npy_d(nat, PARAM.inp.deepks_equiv, deepks_param, descriptor, file_d,
                                rank); // libnpy needed
 
     if (rank == 0)
     {
-        generate_py_files(lmaxd, nmaxd, PARAM.globalv.global_out_dir);
+        generate_py_files(deepks_param, PARAM.globalv.global_out_dir);
         std::string cmd = "python cal_edelta_gedm.py " + PARAM.inp.deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
@@ -167,7 +157,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    LCAO_deepks_io::load_npy_gedm(nat, des_per_atom, gedm, E_delta, rank);
+    LCAO_deepks_io::load_npy_gedm(nat, deepks_param.des_per_atom, gedm, E_delta, rank);
 
     std::string cmd = "rm -f cal_edelta_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
@@ -179,9 +169,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 // obtain from the machine learning model dE_delta/dDescriptor
 // E_delta is also calculated here
 void DeePKS_domain::cal_edelta_gedm(const int nat,
-                                    const int inlmax,
-                                    const int des_per_atom,
-                                    const std::vector<int>& inl2l,
+                                    const DeePKS_Param& deepks_param,
                                     const std::vector<torch::Tensor>& descriptor,
                                     const std::vector<torch::Tensor>& pdm,
                                     torch::jit::script::Module& model_deepks,
@@ -195,7 +183,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     std::vector<torch::jit::IValue> inputs;
 
     // input_dim:(natom, des_per_atom)
-    inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, des_per_atom}));
+    inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom}));
     std::vector<torch::Tensor> ec;
     try
     {
@@ -203,10 +191,22 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     }
     catch (const c10::Error& e)
     {
-        ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm", "Please check whether the input shape required by model file matches the descriptor!");
+        ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm",
+                                 "Please check whether the input shape required by model file matches the descriptor!");
         throw;
     }
-    E_delta = ec[0].item<double>() * 2;                    // Ry; *2 is for Hartree to Ry
+    E_delta = ec[0].item<double>() * 2; // Ry; *2 is for Hartree to Ry
+
+    // get d ec[0]/d inputs
+    // inputs: [1, nat, des_per_atom]
+    // ec: [1, 1]
+    std::vector<torch::Tensor> tensor_inputs;
+    tensor_inputs.push_back(inputs[0].toTensor());
+    ec[0].reshape({1, 1}).requires_grad_(true);
+    torch::Tensor derivative = torch::autograd::grad(ec, tensor_inputs, {}, true)[0];
+    LCAO_deepks_io::save_tensor2npy<double>("gev.npy",
+                                            derivative.reshape({nat, deepks_param.des_per_atom}),
+                                            0); // dm_eig.npy is the input for gedm
 
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
@@ -219,9 +219,9 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                                                    /*allow_unused=*/true);
 
     // gedm_tensor(Hartree) to gedm(Ry)
-    for (int inl = 0; inl < inlmax; ++inl)
+    for (int inl = 0; inl < deepks_param.inlmax; ++inl)
     {
-        int nm = 2 * inl2l[inl] + 1;
+        int nm = 2 * deepks_param.inl2l[inl] + 1;
         auto accessor = gedm_tensor[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; ++m1)
         {
@@ -236,13 +236,13 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     return;
 }
 
-void DeePKS_domain::check_gedm(const int inlmax, const std::vector<int>& inl2l, double** gedm)
+void DeePKS_domain::check_gedm(const DeePKS_Param& deepks_param, double** gedm)
 {
     std::ofstream ofs("gedm.dat");
 
-    for (int inl = 0; inl < inlmax; inl++)
+    for (int inl = 0; inl < deepks_param.inlmax; inl++)
     {
-        int nm = 2 * inl2l[inl] + 1;
+        int nm = 2 * deepks_param.inl2l[inl] + 1;
         for (int m1 = 0; m1 < nm; ++m1)
         {
             for (int m2 = 0; m2 < nm; ++m2)

@@ -29,17 +29,28 @@ void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
 method. */
-    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "HSE" 
-        || ucell.atoms[0].ncpp.xc_func == "PBE0"|| ucell.atoms[0].ncpp.xc_func == "LC_PBE" 
-        || ucell.atoms[0].ncpp.xc_func == "LC_WPBE" || ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" 
-        || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH") {
+    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
+    {
         XC_Functional::set_xc_type("pbe");
     }
-    else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
-        XC_Functional::set_xc_type("scan");
+    else if ( ucell.atoms[0].ncpp.xc_func == "LC_PBE" || ucell.atoms[0].ncpp.xc_func == "LC_WPBE"
+        || ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH" )
+    {
+        XC_Functional::set_xc_type("pbe");
     }
-    else if (ucell.atoms[0].ncpp.xc_func == "B3LYP") {
+    // added by jghan, 2024-07-07
+    else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER"
+        || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
+    {
+        XC_Functional::set_xc_type("pbe");
+    }
+    else if (ucell.atoms[0].ncpp.xc_func == "B3LYP")
+    {
         XC_Functional::set_xc_type("blyp");
+    }
+    else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
+    {
+        XC_Functional::set_xc_type("scan");
     }
 }
 
@@ -315,4 +326,43 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     use_libxc = false;
 #endif
 
+}
+
+std::string XC_Functional::output_info()
+{
+  #ifdef USE_LIBXC
+    if(use_libxc)
+    {
+        std::stringstream ss;
+        ss<<" Libxc v"<<xc_version_string()<<std::endl;
+        ss<<"\t"<<xc_reference()<<std::endl;
+
+        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+        for(const auto &func : funcs)
+        {
+            const xc_func_info_type *info = xc_func_get_info(&func);
+            ss<<" XC: "<<xc_func_info_get_name(info)<<std::endl;
+            for(int i=0; i<XC_MAX_REFERENCES; ++i)
+            {
+                const func_reference_type *ref = xc_func_info_get_references(func.info, i);
+                if(ref)
+                    ss<<"\t"<<xc_func_reference_get_ref(ref)<<std::endl;
+            }
+        }
+        XC_Functional_Libxc::finish_func(funcs);
+        return ss.str();
+    }
+    else
+    {
+        std::string s = " XC:\t";
+        for(const auto &id: func_id)
+            s += std::string(xc_functional_get_name(id))+"\t";
+        return s;
+    }
+  #else
+    std::string s = " XC:\t";
+    for(const auto &id: func_id)
+        s += std::to_string(id)+"\t";
+    return s;
+  #endif
 }
