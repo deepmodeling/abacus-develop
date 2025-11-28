@@ -18,7 +18,7 @@ jobs:
         - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           # We will handle submodules manually after fixing ownership
