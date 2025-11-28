@@ -55,7 +55,7 @@ jobs:
           cmake --build build -j8
           cmake --install build
 
-- name: Integrated Tests Preparation
+      - name: Integrated Tests Preparation
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
