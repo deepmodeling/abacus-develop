@@ -1,4 +1,5 @@
 /build*
+build_info.h
 bin
 obj
 *.o
