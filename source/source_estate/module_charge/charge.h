@@ -7,7 +7,7 @@
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_estate/fp_energy.h"
+// #include "source_estate/fp_energy.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
 //a forward declaration of UnitCell
@@ -77,8 +77,7 @@ class Charge
      * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
-    void init_rho(elecstate::Efermi& eferm_iout,
-                  const UnitCell& ucell,
+    void init_rho(const UnitCell& ucell,
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucFac,
                   ModuleSymmetry::Symmetry& symm,
