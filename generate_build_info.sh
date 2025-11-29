@@ -90,6 +90,15 @@ if [ "${ENABLE_MPI}" == "ON" ]; then
             version=$(get_version_from_command "$MPI_COMPILER --version" "MPICH Version: ([0-9]+\.[0-9]+\.[0-9]+)")
             if [ -n "$version" ]; then MPI_IMPLEMENTATION="MPICH"; MPI_VERSION="$version"; fi
         fi
+        # Fallback via mpirun
+        if [ -z "$version" ] && command -v mpirun > /dev/null; then
+            mr_out=$(mpirun --version 2>&1)
+            if [[ $mr_out =~ Open\ MPI\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                MPI_IMPLEMENTATION="OpenMPI"; MPI_VERSION="${BASH_REMATCH[1]}"
+            elif [[ $mr_out =~ MPICH\ Version:\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                MPI_IMPLEMENTATION="MPICH"; MPI_VERSION="${BASH_REMATCH[1]}"
+            fi
+        fi
     fi
     if [ "$MPI_VERSION" == "no" ]; then MPI_VERSION="yes (version unknown)"; else MPI_VERSION="yes (v$MPI_VERSION)"; fi
 else
@@ -189,23 +198,9 @@ if [ "${USE_ELPA}" == "ON" ] && [ -n "$ELPA_DIR" ]; then
     fi
 fi
 
-# 10. LibRI
+# 10. Cereal
 CEREAL_VERSION="no"
-if [ "${ENABLE_CEREAL}" == "ON" ] && [ -n "$CEREAL_DIR" ]; then
-    CEREAL_VERSION="yes (version unknown)"
-    major=$(get_version_from_header "$CEREAL_DIR/include/RI/version.h" "__CEREAL_VERSION_MAJOR[[:space:]]+([0-9]+)")
-    minor=$(get_version_from_header "$CEREAL_DIR/include/RI/version.h" "__CEREAL_VERSION_MINOR[[:space:]]+([0-9]+)")
-    patch=$(get_version_from_header "$CEREAL_DIR/include/RI/version.h" "__CEREAL_VERSION_PATCH[[:space:]]+([0-9]+)")
-    if [ -n "$major" ] && [ -n "$minor" ] && [ -n "$patch" ]; then
-        CEREAL_VERSION="yes (v${major}.${minor}.${patch})"
-    else
-        CEREAL_VERSION="yes (path: $CEREAL_DIR)"
-    fi
-fi
-
-# 11. Cereal
-CEREAL_VERSION="no"
-if [ "${ENABLE_CEREAL}" == "ON" ] && [ -n "$CEREAL_DIR" ]; then
+if [ -n "$CEREAL_DIR" ]; then
     CEREAL_VERSION="yes (version unknown)"
     major=$(get_version_from_header "$CEREAL_DIR/include/cereal/version.hpp" "__CEREAL_VERSION_MAJOR[[:space:]]+([0-9]+)")
     minor=$(get_version_from_header "$CEREAL_DIR/include/cereal/version.hpp" "__CEREAL_VERSION_MINOR[[:space:]]+([0-9]+)")
@@ -214,6 +209,50 @@ if [ "${ENABLE_CEREAL}" == "ON" ] && [ -n "$CEREAL_DIR" ]; then
         CEREAL_VERSION="yes (v${major}.${minor}.${patch})"
     else
         CEREAL_VERSION="yes (path: $CEREAL_DIR)"
+    fi
+fi
+
+# 11. LibRI
+LIBRI_VERSION="no"
+if [ -n "$LIBRI_DIR" ]; then
+    LIBRI_VERSION="yes (version unknown)"
+    major=$(get_version_from_header "$LIBRI_DIR/include/RI/version.h" "__LIBRI_VERSION_MAJOR[[:space:]]+([0-9]+)")
+    minor=$(get_version_from_header "$LIBRI_DIR/include/RI/version.h" "__LIBRI_VERSION_MINOR[[:space:]]+([0-9]+)")
+    patch=$(get_version_from_header "$LIBRI_DIR/include/RI/version.h" "__LIBRI_VERSION_PATCH[[:space:]]+([0-9]+)")
+    if [ -n "$major" ] && [ -n "$minor" ] && [ -n "$patch" ]; then
+        LIBRI_VERSION="yes (v${major}.${minor}.${patch})"
+    else
+        LIBRI_VERSION="yes (path: $LIBRI_DIR)"
+    fi
+fi
+
+# 12. LibComm
+LIBCOMM_VERSION="no"
+if [ -n "$LIBCOMM_DIR" ]; then
+    LIBCOMM_VERSION="yes (path: $LIBCOMM_DIR)"
+fi
+
+# 13. FFTW (non-MKL)
+FFTW3_VERSION="no"
+if [ -z "$MKLROOT" ] && [ -n "$FFTW3_INCLUDE_DIR" ]; then
+    FFTW3_VERSION="yes (version unknown)"
+    hdr="$FFTW3_INCLUDE_DIR/fftw3.h"
+    version=$(get_version_from_header "$hdr" "FFTW_VERSION\s+\"([^\"]+)\"")
+    if [ -n "$version" ]; then FFTW3_VERSION="yes (v$version)"; fi
+fi
+
+# CUDA-aware MPI
+CUDA_AWARE_MPI="no"
+if [ "${USE_CUDA}" == "ON" ]; then
+    if command -v ompi_info > /dev/null; then
+        out=$(ompi_info --parsable --all 2>/dev/null)
+        if echo "$out" | grep -q "mpi_built_with_cuda_support:value:true"; then
+            CUDA_AWARE_MPI="yes"
+        else
+            CUDA_AWARE_MPI="no (or undetectable)"
+        fi
+    else
+        CUDA_AWARE_MPI="no (or undetectable)"
     fi
 fi
 # --- Final File Generation ---
@@ -235,14 +274,18 @@ sed \
     -e "s#@ABACUS_CUDA_FLAGS@#$CUDA_FLAGS#g" \
     -e "s#@ABACUS_MPI_IMPLEMENTATION@#$MPI_IMPLEMENTATION#g" \
     -e "s#@ABACUS_MPI_VERSION@#$MPI_VERSION#g" \
+    -e "s#@ABACUS_CUDA_AWARE_MPI@#$CUDA_AWARE_MPI#g" \
     -e "s#@ABACUS_OPENMP_VERSION@#$OPENMP_VERSION#g" \
     -e "s#@ABACUS_MKL_SUPPORT@#$MKL_SUPPORT#g" \
     -e "s#@ABACUS_LIBXC_VERSION@#$LIBXC_VERSION#g" \
+    -e "s#@ABACUS_FFTW_VERSION@#$FFTW3_VERSION#g" \
     -e "s#@ABACUS_CUDA_VERSION@#$CUDA_VERSION#g" \
     -e "s#@ABACUS_ROCM_VERSION@#$ROCM_VERSION#g" \
     -e "s#@ABACUS_DEEPMD_VERSION@#$DEEPMD_VERSION#g" \
     -e "s#@ABACUS_ELPA_VERSION@#$ELPA_VERSION#g" \
     -e "s#@ABACUS_CEREAL_VERSION@#$CEREAL_VERSION#g" \
+    -e "s#@ABACUS_LIBRI_VERSION@#$LIBRI_VERSION#g" \
+    -e "s#@ABACUS_LIBCOMM_VERSION@#$LIBCOMM_VERSION#g" \
     -e "s#@ABACUS_ASAN_STATUS@#${ENABLE_ASAN:-no}#g" \
     -e "s#@ABACUS_CMAKE_OPTIONS@#Not available with Makefile#g" \
     -e "s#@ABACUS_CMAKE_FIND_PACKAGES@#Not available with Makefile#g" \
