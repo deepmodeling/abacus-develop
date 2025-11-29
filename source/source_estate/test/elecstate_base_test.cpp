@@ -80,11 +80,7 @@ void ModulePW::PW_Basis::distribute_r()
 void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge::set_rho_core_paw()
-{
-}
-void Charge::init_rho(elecstate::Efermi&,
-                      const UnitCell&,
+void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,

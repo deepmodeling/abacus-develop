@@ -170,9 +170,9 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->v_effective.nc, 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
@@ -182,9 +182,9 @@ TEST_F(PotentialNewTest, ConstructorCPUSingle)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->v_effective.nc, 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
 TEST_F(PotentialNewTest, ConstructorNRXX0)
@@ -203,11 +203,11 @@ TEST_F(PotentialNewTest, ConstructorXC3)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->v_effective.nc, 100);
-    EXPECT_EQ(pot->vofk_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->vofk_effective.nc, 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->v_eff.nc, 100);
+    EXPECT_EQ(pot->vofk_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->vofk_eff.nc, 100);
 }
 
 TEST_F(PotentialNewTest, ConstructorGPUDouble)
@@ -218,9 +218,9 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->v_effective.nc, 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
 TEST_F(PotentialNewTest, ConstructorGPUSingle)
@@ -232,9 +232,9 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
-    EXPECT_EQ(pot->v_effective.nc, 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff.nr, PARAM.input.nspin);
+    EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
 TEST_F(PotentialNewTest, Getters)
@@ -289,9 +289,9 @@ TEST_F(PotentialNewTest, CalFixedV)
     }
     double* vl_pseudo = new double[1000];
     pot->cal_fixed_v(vl_pseudo);
-    for (int i = 0; i < pot->v_effective_fixed.size(); i++)
+    for (int i = 0; i < pot->v_eff_fixed.size(); i++)
     {
-        EXPECT_DOUBLE_EQ(pot->v_effective_fixed[i], 0.0);
+        EXPECT_DOUBLE_EQ(pot->v_eff_fixed[i], 0.0);
     }
     delete[] vl_pseudo;
 }
@@ -319,9 +319,9 @@ TEST_F(PotentialNewTest, CalVeff)
     ModuleBase::matrix v_eff;
     v_eff.create(2, 100);
     pot->cal_v_eff(chg,this->ucell,v_eff);
-    for (int i = 0; i < pot->v_effective_fixed.size(); i++)
+    for (int i = 0; i < pot->v_eff_fixed.size(); i++)
     {
-        EXPECT_DOUBLE_EQ(pot->v_effective_fixed[i], 0.0);
+        EXPECT_DOUBLE_EQ(pot->v_eff_fixed[i], 0.0);
     }
     delete chg;
 }
@@ -417,8 +417,8 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    ModuleBase::matrix v_eff_tmp = pot->get_effective_v();
-    const ModuleBase::matrix v_eff_tmp_const = pot->get_effective_v();
+    ModuleBase::matrix v_eff_tmp = pot->get_eff_v();
+    const ModuleBase::matrix v_eff_tmp_const = pot->get_eff_v();
     EXPECT_EQ(v_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp.nc, 100);
     EXPECT_EQ(v_eff_tmp_const.nr, PARAM.input.nspin);
@@ -427,8 +427,8 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
     {
         for (int ic = 0; ic < v_eff_tmp.nc; ic++)
         {
-            EXPECT_DOUBLE_EQ(v_eff_tmp(ir, ic), pot->v_effective(ir, ic));
-            EXPECT_DOUBLE_EQ(v_eff_tmp_const(ir, ic), pot->v_effective(ir, ic));
+            EXPECT_DOUBLE_EQ(v_eff_tmp(ir, ic), pot->v_eff(ir, ic));
+            EXPECT_DOUBLE_EQ(v_eff_tmp_const(ir, ic), pot->v_eff(ir, ic));
         }
     }
 }
@@ -439,24 +439,24 @@ TEST_F(PotentialNewTest, GetEffectiveVarray)
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    double* v_eff_tmp = pot->get_effective_v(0);
-    const double* v_eff_tmp_const = pot->get_effective_v(0);
+    double* v_eff_tmp = pot->get_eff_v(0);
+    const double* v_eff_tmp_const = pot->get_eff_v(0);
     for (int ic = 0; ic < rhopw->nrxx; ic++)
     {
-        EXPECT_DOUBLE_EQ(v_eff_tmp[ic], pot->v_effective(0, ic));
-        EXPECT_DOUBLE_EQ(v_eff_tmp_const[ic], pot->v_effective(0, ic));
+        EXPECT_DOUBLE_EQ(v_eff_tmp[ic], pot->v_eff(0, ic));
+        EXPECT_DOUBLE_EQ(v_eff_tmp_const[ic], pot->v_eff(0, ic));
     }
     v_eff_tmp[0] = 1.0;
-    EXPECT_DOUBLE_EQ(pot->v_effective(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(pot->v_eff(0, 0), 1.0);
     EXPECT_DOUBLE_EQ(v_eff_tmp_const[0], 1.0);
 }
 
 TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr)
 {
     pot = new elecstate::Potential;
-    EXPECT_EQ(pot->v_effective.nc, 0);
-    double* v_eff_tmp = pot->get_effective_v(0);
-    const double* v_eff_tmp_const = pot->get_effective_v(0);
+    EXPECT_EQ(pot->v_eff.nc, 0);
+    double* v_eff_tmp = pot->get_eff_v(0);
+    const double* v_eff_tmp_const = pot->get_eff_v(0);
     EXPECT_EQ(v_eff_tmp, nullptr);
     EXPECT_EQ(v_eff_tmp_const, nullptr);
 }
@@ -469,8 +469,8 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    ModuleBase::matrix vofk_eff_tmp = pot->get_effective_vofk();
-    const ModuleBase::matrix vofk_eff_tmp_const = pot->get_effective_vofk();
+    ModuleBase::matrix vofk_eff_tmp = pot->get_eff_vofk();
+    const ModuleBase::matrix vofk_eff_tmp_const = pot->get_eff_vofk();
     EXPECT_EQ(vofk_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp.nc, 100);
     EXPECT_EQ(vofk_eff_tmp_const.nr, PARAM.input.nspin);
@@ -479,8 +479,8 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
     {
         for (int ic = 0; ic < vofk_eff_tmp.nc; ic++)
         {
-            EXPECT_DOUBLE_EQ(vofk_eff_tmp(ir, ic), pot->vofk_effective(ir, ic));
-            EXPECT_DOUBLE_EQ(vofk_eff_tmp_const(ir, ic), pot->vofk_effective(ir, ic));
+            EXPECT_DOUBLE_EQ(vofk_eff_tmp(ir, ic), pot->vofk_eff(ir, ic));
+            EXPECT_DOUBLE_EQ(vofk_eff_tmp_const(ir, ic), pot->vofk_eff(ir, ic));
         }
     }
 }
@@ -491,24 +491,24 @@ TEST_F(PotentialNewTest, GetEffectiveVofkarray)
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    double* vofk_eff_tmp = pot->get_effective_vofk(0);
-    const double* vofk_eff_tmp_const = pot->get_effective_vofk(0);
+    double* vofk_eff_tmp = pot->get_eff_vofk(0);
+    const double* vofk_eff_tmp_const = pot->get_eff_vofk(0);
     for (int ic = 0; ic < rhopw->nrxx; ic++)
     {
-        EXPECT_DOUBLE_EQ(vofk_eff_tmp[ic], pot->vofk_effective(0, ic));
-        EXPECT_DOUBLE_EQ(vofk_eff_tmp_const[ic], pot->vofk_effective(0, ic));
+        EXPECT_DOUBLE_EQ(vofk_eff_tmp[ic], pot->vofk_eff(0, ic));
+        EXPECT_DOUBLE_EQ(vofk_eff_tmp_const[ic], pot->vofk_eff(0, ic));
     }
     vofk_eff_tmp[0] = 1.0;
-    EXPECT_DOUBLE_EQ(pot->vofk_effective(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(pot->vofk_eff(0, 0), 1.0);
     EXPECT_DOUBLE_EQ(vofk_eff_tmp_const[0], 1.0);
 }
 
 TEST_F(PotentialNewTest, GetEffectiveVofkarrayNullptr)
 {
     pot = new elecstate::Potential;
-    EXPECT_EQ(pot->v_effective.nc, 0);
-    double* vofk_eff_tmp = pot->get_effective_vofk(0);
-    const double* vofk_eff_tmp_const = pot->get_effective_vofk(0);
+    EXPECT_EQ(pot->v_eff.nc, 0);
+    double* vofk_eff_tmp = pot->get_eff_vofk(0);
+    const double* vofk_eff_tmp_const = pot->get_eff_vofk(0);
     EXPECT_EQ(vofk_eff_tmp, nullptr);
     EXPECT_EQ(vofk_eff_tmp_const, nullptr);
 }
@@ -519,14 +519,14 @@ TEST_F(PotentialNewTest, GetFixedV)
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
-    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
+    EXPECT_EQ(pot->v_eff_fixed.size(), 100);
     double* v_eff_fixed_tmp = pot->get_fixed_v();
     const double* v_eff_fixed_tmp_const = pot->get_fixed_v();
     for (int ic = 0; ic < rhopw->nrxx; ic++)
     {
         v_eff_fixed_tmp[ic] = ic;
-        EXPECT_DOUBLE_EQ(v_eff_fixed_tmp[ic], pot->v_effective_fixed[ic]);
-        EXPECT_DOUBLE_EQ(v_eff_fixed_tmp_const[ic], pot->v_effective_fixed[ic]);
+        EXPECT_DOUBLE_EQ(v_eff_fixed_tmp[ic], pot->v_eff_fixed[ic]);
+        EXPECT_DOUBLE_EQ(v_eff_fixed_tmp_const[ic], pot->v_eff_fixed[ic]);
     }
 }
 
@@ -594,12 +594,12 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 
      pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-     for (int ir = 0; ir < pot->v_effective.nr; ir++)
+     for (int ir = 0; ir < pot->v_eff.nr; ir++)
      {
-         for (int ic = 0; ic < pot->v_effective.nc; ic++)
+         for (int ic = 0; ic < pot->v_eff.nc; ic++)
          {
-             pot->v_effective(ir, ic) = ir + ic;
-             pot->vofk_effective(ir, ic) = ir + 2 * ic;
+             pot->v_eff(ir, ic) = ir + ic;
+             pot->vofk_eff(ir, ic) = ir + 2 * ic;
          }
      }
 
@@ -655,12 +655,12 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 
      pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-     for (int ir = 0; ir < pot->v_effective.nr; ir++)
+     for (int ir = 0; ir < pot->v_eff.nr; ir++)
      {
-         for (int ic = 0; ic < pot->v_effective.nc; ic++)
+         for (int ic = 0; ic < pot->v_eff.nc; ic++)
          {
-             pot->v_effective(ir, ic) = ir + ic;
-             pot->vofk_effective(ir, ic) = ir + 2 * ic;
+             pot->v_eff(ir, ic) = ir + ic;
+             pot->vofk_eff(ir, ic) = ir + 2 * ic;
          }
      }
 
