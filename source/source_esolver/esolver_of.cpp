@@ -97,13 +97,9 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves
-    Pgrid.init(pw_rho->nx,
-                        pw_rho->ny,
-                        pw_rho->nz,
-                        pw_rho->nplane,
-                        pw_rho->nrxx,
-                        pw_big->nbz,
-                        pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+    Pgrid.init(pw_rho->nx, pw_rho->ny, pw_rho->nz, pw_rho->nplane,
+               pw_rho->nrxx, pw_big->nbz, pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+
     // Calculate Structure factor
     sf.setup(&ucell, Pgrid, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
