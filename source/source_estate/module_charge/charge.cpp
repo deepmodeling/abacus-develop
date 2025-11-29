@@ -80,9 +80,16 @@ void Charge::destroy()
 void Charge::allocate(const int& nspin_in)
 {
     ModuleBase::TITLE("Charge", "allocate");
+
+	if (this->rhopw == nullptr)
+	{
+		ModuleBase::WARNING_QUIT("Charge::allocate","rhopw is nullptr.");
+	}
+
     this->nrxx = this->rhopw->nrxx;
     this->nxyz = this->rhopw->nxyz;
     this->ngmc = this->rhopw->npw;
+
 
     if (allocate_rho == true)
     {
