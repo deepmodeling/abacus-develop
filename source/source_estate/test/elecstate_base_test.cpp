@@ -197,11 +197,10 @@ TEST_F(ElecStateTest, Constructor)
 TEST_F(ElecStateTest, InitKS)
 {
     Charge* charge = new Charge;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
-    EXPECT_NO_THROW(elecstate->init_ks(charge, klist, nk, rhopw, bigpw));
+    EXPECT_NO_THROW(elecstate->init_ks(charge, klist, nk, bigpw));
     EXPECT_EQ(elecstate->charge, charge);
     EXPECT_EQ(elecstate->bigpw, bigpw);
     EXPECT_EQ(elecstate->klist, klist);
@@ -211,14 +210,12 @@ TEST_F(ElecStateTest, InitKS)
     EXPECT_EQ(elecstate->wg.nc, PARAM.input.nbands);
     delete klist;
     delete bigpw;
-    delete rhopw;
     delete charge;
 }
 
 TEST_F(ElecStateTest, GetRho)
 {
     Charge* charge = new Charge;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
@@ -232,7 +229,7 @@ TEST_F(ElecStateTest, GetRho)
             charge->rho[i][j] = 1.0;
         }
     }
-    elecstate->init_ks(charge, klist, nk, rhopw, bigpw);
+    elecstate->init_ks(charge, klist, nk, bigpw);
     EXPECT_EQ(elecstate->getRho(0), &(charge->rho[0][0]));
     EXPECT_EQ(elecstate->getRho(0)[nrxx - 1], 1.0);
     for (int i = 0; i < PARAM.input.nspin; ++i)
@@ -242,7 +239,6 @@ TEST_F(ElecStateTest, GetRho)
     delete[] charge->rho;
     delete klist;
     delete bigpw;
-    delete rhopw;
     delete charge;
 }
 

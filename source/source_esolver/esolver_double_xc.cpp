@@ -51,7 +51,6 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
         this->pelec_base = new elecstate::ElecStateLCAO<TK>(&(this->chr_base), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       this->pw_rho,
                                                        this->pw_big);
     }    
 

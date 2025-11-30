@@ -12,11 +12,10 @@ class ElecStatePW_SDFT : public ElecStatePW<T, Device>
                      K_Vectors* pkv_in,
                      UnitCell* ucell_in,
                      pseudopot_cell_vnl* ppcell_in,
-                     ModulePW::PW_Basis* rhodpw_in,
                      ModulePW::PW_Basis* rhopw_in,
                      ModulePW::PW_Basis_Big* bigpw_in)
         : ElecStatePW<T,
-                      Device>(wfc_basis_in, chr_in, pkv_in, ucell_in, ppcell_in, rhodpw_in, rhopw_in, bigpw_in)
+                      Device>(wfc_basis_in, chr_in, pkv_in, ucell_in, ppcell_in, rhopw_in, bigpw_in)
     {
         this->classname = "ElecStatePW_SDFT";
     }

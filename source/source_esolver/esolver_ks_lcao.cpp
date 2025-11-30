@@ -54,7 +54,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     {
         // TK stands for double and std::complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), &(this->kv),
-          this->kv.get_nks(), this->pw_rho, this->pw_big);
+          this->kv.get_nks(), this->pw_big);
     }
 
     // 3) read LCAO orbitals/projectors and construct the interpolation tables.

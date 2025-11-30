@@ -18,10 +18,9 @@ class ElecStateLCAO : public ElecState
     ElecStateLCAO(Charge* chr_in,
                   const K_Vectors* klist_in,
                   int nks_in,
-                  ModulePW::PW_Basis* rhopw_in,
                   ModulePW::PW_Basis_Big* bigpw_in)
     {
-        init_ks(chr_in, klist_in, nks_in, rhopw_in, bigpw_in);
+        init_ks(chr_in, klist_in, nks_in, bigpw_in);
         this->classname = "ElecStateLCAO";
     }
 

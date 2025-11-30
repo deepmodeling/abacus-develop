@@ -28,14 +28,12 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
         {
             //! SDFT only supports double precision currently
             pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(pw_wfc,
-                &chr, &kv, &ucell, &ppcell,
-                pw_rhod, pw_rho, pw_big);
+                &chr, &kv, &ucell, &ppcell, pw_rho, pw_big);
         }
         else
         {
             pelec = new elecstate::ElecStatePW<T, Device>(pw_wfc,
-                &chr, &kv, &ucell, &ppcell,
-                pw_rhod, pw_rho, pw_big);
+                &chr, &kv, &ucell, &ppcell, pw_rho, pw_big);
         }
     }
 

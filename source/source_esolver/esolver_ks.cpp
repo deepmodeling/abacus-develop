@@ -105,6 +105,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     //! 12) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
+    this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
     this->chr.allocate(inp.nspin); // mohan move this from setup_estate_pw, 20251128
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
     this->chr.check_rho(); // check the rho

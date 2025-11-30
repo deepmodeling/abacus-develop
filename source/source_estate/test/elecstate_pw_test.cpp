@@ -240,7 +240,6 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     EXPECT_EQ(elecstate_pw_d->classname, "ElecStatePW");
@@ -256,7 +255,6 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     EXPECT_EQ(elecstate_pw_s->classname, "ElecStatePW");
@@ -274,7 +272,6 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     elecstate_pw_d->init_rho_data();
@@ -294,7 +291,6 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     elecstate_pw_s->init_rho_data();
@@ -311,7 +307,6 @@ TEST_F(ElecStatePWTest, ParallelKDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     EXPECT_NO_THROW(elecstate_pw_d->parallelK());
@@ -325,7 +320,6 @@ TEST_F(ElecStatePWTest, ParallelKSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     EXPECT_NO_THROW(elecstate_pw_s->parallelK());

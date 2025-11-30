@@ -33,7 +33,6 @@ void ElecState::init_scf(const int istep,
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,
-                        ModulePW::PW_Basis* rhopw_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
 {
     return;
@@ -45,7 +44,6 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
                                     K_Vectors* pkv_in,
                                     UnitCell* ucell_in,
                                     pseudopot_cell_vnl* ppcell_in,
-                                    ModulePW::PW_Basis* rhodpw_in,
                                     ModulePW::PW_Basis* rhopw_in,
                                     ModulePW::PW_Basis_Big* bigpw_in)
     : basis(wfc_basis_in)
