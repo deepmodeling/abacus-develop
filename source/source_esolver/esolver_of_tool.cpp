@@ -20,7 +20,6 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
-        this->chr.allocate(PARAM.inp.nspin);
     }
 
     delete this->pelec->pot;
