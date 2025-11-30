@@ -86,7 +86,10 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
     this->dmat_base.allocate_dm(&this->kv, &this->pv, PARAM.inp.nspin);
 
     // 10) inititlize the charge density
-    this->chr_base.allocate(PARAM.inp.nspin);
+	this->chr_base.set_rhopw(this->pw_rhod); // mohan add 20251130
+	this->chr_base.allocate(PARAM.inp.nspin);
+	this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
+	this->chr_base.check_rho();
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
