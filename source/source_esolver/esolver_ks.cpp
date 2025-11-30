@@ -79,34 +79,11 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     p_chgmix->init_mixing();
 
-    //! 6) symmetry analysis should be performed every time the cell is changed
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-    }
-
-    //! 7) setup k points in the Brillouin zone according to symmetry.
-    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-    //! 8) print information
-    ModuleIO::print_parameters(ucell, this->kv, inp);
-
-    //! 9) setup plane wave for electronic wave functions
+    //! 6) setup plane wave for electronic wave functions
     pw::setup_pwwfc(inp, ucell, *this->pw_rho, this->kv, this->pw_wfc);
 
-    //! 10) parallel of FFT grid 
-	this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
-			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
-
-    //! 11) calculate the structure factor
-    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
-
-    //! 12) read in charge density, mohan add 2025-11-28
+    //! 7) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
-    this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
-    this->chr.allocate(inp.nspin); // mohan move this from setup_estate_pw, 20251128
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
     this->chr.check_rho(); // check the rho
   

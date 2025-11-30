@@ -80,33 +80,6 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         ModuleBase::WARNING_QUIT("esolver_of", "meta-GGA and Hybrid functionals are not supported by OFDFT.");
     }
 
-    // symmetry analysis should be performed every time the cell is changed
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-    }
-
-    // Setup the k points according to symmetry.
-    kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-    // print information
-    // mohan add 2021-01-30
-    ModuleIO::print_parameters(ucell, kv, inp);
-
-    // initialize the real-space uniform grid for FFT and parallel
-    // distribution of plane waves
-    this->Pgrid.init(pw_rho->nx, pw_rho->ny, pw_rho->nz, pw_rho->nplane,
-               pw_rho->nrxx, pw_big->nbz, pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
-
-    // Calculate Structure factor
-    this->sf.setup(&ucell, this->Pgrid, this->pw_rho);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
-
-    // mohan add 20251130
-    this->chr.set_rhopw(this->pw_rho);
-    this->chr.allocate(inp.nspin);
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
     this->chr.check_rho(); // check the rho
 
