@@ -39,9 +39,6 @@ void LCAO_domain::set_psi_occ_dm_chg(
     //! 4) init DMK, but DMR is constructed in before_scf()
     dmat.allocate_dm(&kv, &pv, inp.nspin);
 
-    //! 5) init charge density
-    chr.allocate(inp.nspin);
-
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
 
     return;
