@@ -11,6 +11,39 @@ macro(set_if_higher VARIABLE VALUE)
   endif()
 endmacro()
 
+    # Define the AddTest function for creating unit tests
+    function(AddTest)
+        cmake_parse_arguments(UT "DYN" "TARGET"
+                              "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
+        add_executable(${UT_TARGET} ${UT_SOURCES})
+
+        if(ENABLE_COVERAGE)
+            add_coverage(${UT_TARGET})
+        endif()
+
+        target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
+                              GTest::gtest_main GTest::gmock_main)
+                              
+        if(ENABLE_GOOGLEBENCH)
+            target_link_libraries(${UT_TARGET} benchmark::benchmark)
+        endif()
+
+        if(USE_OPENMP)
+            target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
+        endif()
+
+        # Link to build info if needed
+        if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+            target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
+        endif()
+
+        install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
+        add_test(
+            NAME ${UT_TARGET}
+            COMMAND ${UT_TARGET}
+            WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
+    endfunction()
+
 # --- Main function to configure everything related to testing ---
 function(setup_testing)
     # Add performance test in abacus
@@ -60,39 +93,6 @@ function(setup_testing)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(googletest)
     endif()
-
-    # Define the AddTest function for creating unit tests
-    function(AddTest)
-        cmake_parse_arguments(UT "DYN" "TARGET"
-                              "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
-        add_executable(${UT_TARGET} ${UT_SOURCES})
-
-        if(ENABLE_COVERAGE)
-            add_coverage(${UT_TARGET})
-        endif()
-
-        target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                              GTest::gtest_main GTest::gmock_main)
-                              
-        if(ENABLE_GOOGLEBENCH)
-            target_link_libraries(${UT_TARGET} benchmark::benchmark)
-        endif()
-
-        if(USE_OPENMP)
-            target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
-        endif()
-
-        # Link to build info if needed
-        if("${UT_SOURCES}" MATCHES "parse_args.cpp")
-            target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
-        endif()
-
-        install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-        add_test(
-            NAME ${UT_TARGET}
-            COMMAND ${UT_TARGET}
-            WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-    endfunction()
 
     # Add the test subdirectory
     if(EXISTS ${CMAKE_SOURCE_DIR}/tests/CMakeLists.txt)
