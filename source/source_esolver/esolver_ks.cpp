@@ -62,27 +62,22 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     // cell_factor
     this->ppcell.cell_factor = inp.cell_factor;
 
-    //! 3) setup charge mixing
-    p_chgmix = new Charge_Mixing();
-    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
-
-    //! 4) setup Exc for the first element '0' (all elements have same exc) 
+    //! 3) setup Exc for the first element '0' (all elements have same exc) 
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
-    
-    //! 5) setup the charge mixing parameters
+
+    //! 4) setup charge mixing
+    p_chgmix = new Charge_Mixing();
+    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
     p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
       inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
       inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
-
     p_chgmix->init_mixing();
 
-    //! 6) setup plane wave for electronic wave functions
+    //! 5) setup plane wave for electronic wave functions
     pw::setup_pwwfc(inp, ucell, *this->pw_rho, this->kv, this->pw_wfc);
 
-    //! 7) read in charge density, mohan add 2025-11-28
+    //! 6) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
     this->chr.check_rho(); // check the rho
@@ -100,20 +95,14 @@ void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const i
     this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
     // 2) for MPI: STOGROUP? need to rewrite
-    //<Temporary> It may be changed when more clever parallel algorithm is
-    // put forward.
-    // When parallel algorithm for bands are adopted. Density will only be
-    // treated in the first group.
-    //(Different ranks should have abtained the same, but small differences
-    // always exist in practice.)
+    //<Temporary> It may be changed when more clever parallel algorithm is put forward.
+    // When parallel algorithm for bands are adopted. Density will only be treated in the first group.
+    //(Different ranks should have abtained the same, but small differences always exist in practice.)
     // Maybe in the future, density and wavefunctions should use different
     // parallel algorithms, in which they do not occupy all processors, for
     // example wavefunctions uses 20 processors while density uses 10.
     if (PARAM.globalv.ks_run)
     {
-        // double drho = this->estate.caldr2();
-        // EState should be used after it is constructed.
-
         drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
         hsolver_error = 0.0;
         if (iter == 1 && PARAM.inp.calculation != "nscf")
@@ -125,23 +114,16 @@ void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const i
             // so a more precise HSolver should be executed.
             if (hsolver_error > drho)
             {
-                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
-                                                     PARAM.inp.basis_type,
-                                                     PARAM.inp.esolver_type,
-                                                     PARAM.inp.precision,
-                                                     hsolver_error,
-                                                     drho,
-                                                     diag_ethr,
-                                                     PARAM.inp.nelec);
+                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, PARAM.inp.basis_type,
+                            PARAM.inp.esolver_type, PARAM.inp.precision, hsolver_error,
+                            drho, diag_ethr, PARAM.inp.nelec);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
                 drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
                 hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
-                                                          PARAM.inp.esolver_type,
-                                                          diag_ethr,
-                                                          PARAM.inp.nelec);
+                                PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
             }
         }
     }
@@ -153,22 +135,17 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::tick(this->classname, "runner");
 
-    //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
-    //----------------------------------------------------------------
     this->before_scf(ucell, istep);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
-    //----------------------------------------------------------------
     // 2) SCF iterations
-    //----------------------------------------------------------------
     bool conv_esolver = false;
     this->niter = this->maxniter;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
     for (int iter = 1; iter <= this->maxniter; ++iter)
 	{
-        // mohan add 2025-09-21
 		if(iter == this->maxniter)
 		{
 			this->scf_nmax_flag=true;
