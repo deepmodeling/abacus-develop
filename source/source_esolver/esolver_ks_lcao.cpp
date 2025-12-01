@@ -8,6 +8,8 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
+#include "source_lcao/module_hcontainer/read_hcontainer.h"
+//#include "source_lcao/module_hcontainer/output_hcontainer.h"
 #ifdef __EXX
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
@@ -75,6 +77,29 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
       this->dmat, this->chr, inp);
+    if(inp.init_chg == "dm")
+    {
+        //! 4.1) init density matrix from file
+        std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
+        hamilt::HContainer<double>* dm_container = new hamilt::HContainer<double>(&this->pv);
+        this->dmat.dm->init_DMR(dm_container[0]);
+        hamilt::Read_HContainer<double> reader_dm(
+            this->dmat.dm->get_DMR_vector()[0],
+            dmfile,
+            PARAM.globalv.nlocal,
+            &ucell
+        );
+        reader_dm.read();
+        //for test , print dm again
+        /*std::ofstream file("dmrs1_nao_out.csr");
+        std::ostream& os = file; 
+        hamilt::Output_HContainer<double> output_dm(
+            dm_container,
+            os
+        );
+        output_dm.write();*/
+        delete dm_container;
+    }
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
@@ -161,6 +186,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
     // 12) init_scf, should be before_scf? mohan add 2025-03-10
+    if(PARAM.inp.init_chg == "dm")
+    {
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge, true);
+    }
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // 13) initalize DM(R), which has the same size with Hamiltonian(R)
@@ -169,7 +198,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
+    if(PARAM.inp.init_chg != "dm") this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)

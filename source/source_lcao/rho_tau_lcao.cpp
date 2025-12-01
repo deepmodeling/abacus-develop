@@ -4,7 +4,8 @@
 
 void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
-    Charge* chr)
+    Charge* chr,
+    bool skip_normalize)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2rho");
     ModuleBase::timer::tick("LCAO_domain", "dm2rho");
@@ -16,7 +17,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 
     ModuleGint::cal_gint_rho(dmr, nspin, chr->rho);
 
-    chr->renormalize_rho();
+    if(!skip_normalize)chr->renormalize_rho();
 
     // should be moved somewhere else, mohan 20251024
 	if (XC_Functional::get_ked_flag())
