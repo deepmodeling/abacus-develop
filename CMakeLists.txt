@@ -671,7 +671,6 @@ if(INFO)
 endif()
 
 include(cmake/Testing.cmake)
-setup_testing()
 
 add_subdirectory(source)
 
