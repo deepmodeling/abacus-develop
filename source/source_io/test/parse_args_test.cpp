@@ -6,6 +6,8 @@
 // Already deal with Testing.cmake
 // #include "build_info.h" 
 
+// This file is modified by ZhouXY-PKU at 2025-12-01
+
 // Refresh test status
 class ParseArgsTest : public ::testing::Test {
 protected:
@@ -26,7 +28,7 @@ TEST_F(ParseArgsTest, NoArguments) {
     EXPECT_TRUE(output.empty()) << "Expected no output for no arguments.";
 }
 
-// Test for abacus ersion
+// Test for abacus version
 TEST_F(ParseArgsTest, VersionFlags) {
 #ifdef VERSION
     std::string output_ref = "ABACUS version " + std::string(VERSION) + "\n";
@@ -40,12 +42,16 @@ TEST_F(ParseArgsTest, VersionFlags) {
         char arg0[] = "test";
         std::vector<char*> argv = {arg0, const_cast<char*>(arg.c_str())};
         int argc = argv.size();
-
+        
+        testing::internal::CaptureStdout();
         EXPECT_EXIT(
             { ModuleIO::parse_args(argc, argv.data()); },
             ::testing::ExitedWithCode(0),
-            output_ref.c_str() 
+            ""
         ) << "Failed for argument: " << arg;
+        
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(output_ref, output) << "Output mismatch for argument: " << arg;
     }
 }
 
@@ -58,11 +64,16 @@ TEST_F(ParseArgsTest, InfoFlags) {
         std::vector<char*> argv = {arg0, const_cast<char*>(arg.c_str())};
         int argc = argv.size();
 
+        testing::internal::CaptureStdout();
         EXPECT_EXIT(
             { ModuleIO::parse_args(argc, argv.data()); },
             ::testing::ExitedWithCode(0),
-            "ABACUS Core"
+            ""
         ) << "Failed for argument: " << arg;
+        
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_TRUE(output.find("ABACUS Core") != std::string::npos) 
+            << "Output mismatch for argument: " << arg << "\nCaptured output was: " << output;
     }
 }
 
@@ -73,11 +84,15 @@ TEST_F(ParseArgsTest, UnknownArgument) {
     char* argv[] = {arg0, arg1};
     int argc = 2;
 
+    testing::internal::CaptureStdout();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
-        "Usage: abacus"
+        ""
     );
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("Usage: abacus") != std::string::npos)
+        << "Output did not contain usage information.\nCaptured output was: " << output;
 }
 
 // Test for --check-input
@@ -99,10 +114,13 @@ TEST_F(ParseArgsTest, PriorityVersionOverCheckInput) {
     char* argv[] = {arg0, arg1, arg2};
     int argc = 3;
 
+    testing::internal::CaptureStdout();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(0),
-        "ABACUS version"
+        ""
     );
-
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("ABACUS version") != std::string::npos)
+        << "Output did not contain version information.\nCaptured output was: " << output;
 }
