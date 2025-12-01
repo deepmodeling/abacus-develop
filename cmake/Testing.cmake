@@ -49,6 +49,12 @@ endif()
     if(USE_OPENMP)
       target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
     endif()
+
+    # Link to build info if needed
+    if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+        target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
+    endif()
+        
     install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
     add_test(
       NAME ${UT_TARGET}
