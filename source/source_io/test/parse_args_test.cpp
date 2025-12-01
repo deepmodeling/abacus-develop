@@ -85,15 +85,21 @@ TEST_F(ParseArgsTest, UnknownArgument) {
     int argc = 2;
 
     testing::internal::CaptureStdout();
+    testing::internal::CaptureStderr();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
         ""
     );
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_TRUE(output.find("Usage: abacus") != std::string::npos)
-        << "Output did not contain usage information.\nCaptured output was: " << output;
+    std::string stdout_output = testing::internal::GetCapturedStdout();
+    std::string stderr_output = testing::internal::GetCapturedStderr();
+    std::string combined_output = stdout_output + stderr_output;
+    EXPECT_TRUE(combined_output.find("Usage: abacus") != std::string::npos)
+        << "Output did not contain usage information.\n"
+        << "Captured stdout was: '" << stdout_output << "'\n" 
+        << "Captured stderr was: '" << stderr_output << "'";
 }
+
 
 // Test for --check-input
 TEST_F(ParseArgsTest, CheckInputFlag) {
