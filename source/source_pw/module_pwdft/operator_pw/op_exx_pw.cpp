@@ -174,6 +174,9 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
                                    const bool is_first_node) const
 {
     if (first_iter) return;
+    // std::cout << cal_exx_energy_ace(&psi) << " EXX energy" << std::endl;
+    // MPI_Abort(MPI_COMM_WORLD, 0);
+    // return;
 
     if (is_first_node)
     {
@@ -213,6 +216,8 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     // for (auto iq: q_points)
     //     std::cout << iq << ", ";
     // std::cout << std::endl;
+    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nk = wfcpw->nks / nk_fac;
 
     // ik fixed here, select band n
     for (int n_iband = 0; n_iband < nbands; n_iband++)
@@ -226,7 +231,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         Real nqs = q_points.size();
         for (int iq: q_points)
         {
-            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq);
+            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk);
             for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
             {
                 // double wg_mqb_real = GlobalC::exx_helper.wg(iq, m_iband);
@@ -259,7 +264,6 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 }
 
                 T wk_iq = kv->wk[iq];
-                T wk_ik = kv->wk[this->ik];
 
                 T tmp_scalar = wg_mqb / wk_iq / nqs;
                 axpy_complex_op()(wfcpw->nrxx,
@@ -318,6 +322,10 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
         // decide which pool does the iq belong to
         int iq_pool = kv->para_k.whichpool[iq];
         int iq_loc  = iq - kv->para_k.startk_pool[iq_pool];
+        if (ispin == 1)
+        {
+            iq_loc += wfcpw->nks / nspin_fac;
+        }
 
         for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
         {
@@ -339,11 +347,30 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 // send
             }
 #ifdef __MPI
+#ifdef __CUDA_MPI
             MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
+#else
+            if (PARAM.inp.device == "cpu")
+            {
+                MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
+            }
+            else if (PARAM.inp.device == "gpu")
+            {
+                // need to copy to cpu first
+                T* psi_mq_real_cpu = new T[wfcpw->nrxx];
+                syncmem_complex_d2c_op()(psi_mq_real_cpu, psi_mq_real, wfcpw->nrxx);
+                MPI_Bcast(psi_mq_real_cpu, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
+                syncmem_complex_c2d_op()(psi_mq_real, psi_mq_real_cpu, wfcpw->nrxx);
+                delete[] psi_mq_real_cpu;
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("OperatorEXXPW", "construct_ace: unknown device");
+            }
+#endif
 #endif
             for (int n_iband = 0; n_iband < nbands; n_iband++)
             {
-                double wg_nkb = (*wg)(this->ik, n_iband);
                 const T* psi_nk = tmpsi_in + n_iband * nbasis;
                 // retrieve \psi_nk in real space
                 wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
@@ -369,9 +396,8 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
                 Real wk_iq = kv->wk[iq];
                 Real wk_ik = kv->wk[this->ik];
-                // std::cout << "wk_iq: " << wk_iq << " wk_ik: " << wk_ik << std::endl;
 
-                Real tmp_scalar = wg_mqb / wk_ik / nqs;
+                Real tmp_scalar = wg_mqb / wk_ik / nqs; // wk_ik works for now, but wrong for symmetry.
 
                 T* h_psi_nk = tmhpsi + n_iband * nbasis;
                 Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
@@ -569,7 +595,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
             for (int iq: q_points)
             {
-                get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
+                int nk = wfcpw->nks / nk_fac;
+                get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk);
                 for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
                 {
                     // double wg_f = GlobalC::exx_helper.wg(iq, m_iband);
@@ -589,7 +616,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
                     int nks = wfcpw->nks;
                     int npw = rhopw_dev->npw;
-                    int nk = nks / nk_fac;
+                    // int nk = nks / nk_fac;
                     Eexx_ik_real += exx_cal_energy_op<T, Device>()(density_recip, pot, wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik], npw);
 
                 } // m_iband

@@ -116,6 +116,12 @@ add_library(
     ${objects}
 )
 
+target_include_directories(
+    io_basic
+    PUBLIC
+    ${CMAKE_BINARY_DIR}/source/source_io
+)
+
 add_library(
     io_advanced
     OBJECT

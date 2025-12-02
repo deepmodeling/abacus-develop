@@ -20,6 +20,8 @@ jobs:
       - name: Build
         run: |
           export I_MPI_CXX=icpx
+          chmod a+x generate_build_info.sh
           cd source
-          make -j2 ${{ matrix.build_args }}
+          mkdir build && cd build
+          make -f ../Makefile -j2 ${{ matrix.build_args }}
 

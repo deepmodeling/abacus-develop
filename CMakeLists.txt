@@ -74,8 +74,8 @@ if(ENABLE_RAPIDJSON)
         OFF
         CACHE INTERNAL "")
     FetchContent_MakeAvailable(rapidjson)
-    set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
   endif()
+  set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
   add_compile_definitions(__RAPIDJSON)
   add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
   include_directories(${RapidJSON_INCLUDE_PATH})
@@ -181,6 +181,7 @@ add_executable(${ABACUS_BIN_NAME} source/source_main/main.cpp)
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
+
 
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
@@ -669,72 +670,12 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
-# Add performance test in abacus
-if(ENABLE_GOOGLEBENCH)
-  set(BUILD_TESTING ON)
-  find_package(benchmark HINTS ${BENCHMARK_DIR})
-  if(NOT ${benchmark_FOUND})
-    set(BENCHMARK_USE_BUNDLED_GTEST OFF)
-    include(FetchContent)
-    FetchContent_Declare(
-      benchmark
-      GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG "origin/main"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    set(BENCHMARK_ENABLE_TESTING OFF)
-    FetchContent_MakeAvailable(benchmark)
-  endif()
-endif()
-
-if(BUILD_TESTING)
-  set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
-  include(CTest)
-  enable_testing()
-  find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
-  if(NOT ${GTest_FOUND})
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG "origin/main"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(googletest)
-  endif()
-  # TODO: Try the GoogleTest module.
-  # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
-
-  function(AddTest) # function for UT
-    cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
-    add_executable(${UT_TARGET} ${UT_SOURCES})
-
-    if(ENABLE_COVERAGE)
-      add_coverage(${UT_TARGET})
-    endif()
-
-    # dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
-    if(ENABLE_GOOGLEBENCH)
-      target_link_libraries(
-        ${UT_TARGET} benchmark::benchmark)
-    endif()
-
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
-    endif()
-    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    add_test(
-      NAME ${UT_TARGET}
-      COMMAND ${UT_TARGET}
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-  endfunction(AddTest)
-endif()
+include(cmake/Testing.cmake)
 
 add_subdirectory(source)
+
+include(cmake/BuildInfo.cmake)
+setup_build_info()
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}

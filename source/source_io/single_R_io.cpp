@@ -23,7 +23,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     const bool& reduce)
 {
     T* line = nullptr;
-    std::vector<int> indptr;
+    std::vector<long long> indptr;
     indptr.reserve(PARAM.globalv.nlocal + 1);
     indptr.push_back(0);
 
