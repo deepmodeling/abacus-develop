@@ -53,6 +53,19 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
     this->rhopw = rhopw_in;
 }
 
+// mohan add 2025-12-02
+bool Charge::kin_density()
+{
+	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void Charge::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
@@ -77,7 +90,7 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int& nspin_in)
+void Charge::allocate(const int& nspin_in, const bool kin_den)
 {
     ModuleBase::TITLE("Charge", "allocate");
 
@@ -112,7 +125,7 @@ void Charge::allocate(const int& nspin_in)
     _space_rho_save = new double[nspin * nrxx];
     _space_rhog = new std::complex<double>[nspin * ngmc];
     _space_rhog_save = new std::complex<double>[nspin * ngmc];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         _space_kin_r = new double[nspin * nrxx];
         _space_kin_r_save = new double[nspin * nrxx];
@@ -121,7 +134,7 @@ void Charge::allocate(const int& nspin_in)
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
     rhog_save = new std::complex<double>*[nspin];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
@@ -136,7 +149,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
-        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+        if(kin_den) 
         {
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
@@ -149,7 +162,7 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
     ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
     ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);

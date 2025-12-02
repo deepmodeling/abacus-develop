@@ -218,8 +218,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         delete this->ptemp_rho_;
         this->ptemp_rho_ = new Charge();
-        this->ptemp_rho_->set_rhopw(this->pw_rho);
-        this->ptemp_rho_->allocate(PARAM.inp.nspin);
+		this->ptemp_rho_->set_rhopw(this->pw_rho);
+		const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
+		this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
 
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {

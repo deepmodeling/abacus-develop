@@ -52,7 +52,6 @@ void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
 {
     this->charge = chr_in;
     this->klist = klist_in;
-//    this->charge->set_rhopw(rhopw_in); // mohan comment out 20251130
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
