@@ -97,14 +97,12 @@ class ElecState
     /**
      * @brief Init rho_core, init rho, renormalize rho, init pot
      *
-     * @param istep i-th step
      * @param ucell unit cell
      * @param strucfac structure factor
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
      */
-    void init_scf(const int istep,
-                  const UnitCell& ucell,
+    void init_scf(const UnitCell& ucell,
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
                   const bool* numeric,
