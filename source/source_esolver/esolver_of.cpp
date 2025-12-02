@@ -73,7 +73,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+//  XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     int func_type = XC_Functional::get_func_type();
     if (func_type > 2)
     {

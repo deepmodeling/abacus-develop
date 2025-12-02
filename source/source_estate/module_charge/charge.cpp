@@ -641,6 +641,8 @@ void Charge::save_rho_before_sum_band()
 
 double Charge::cal_rho2ne(const double* rho_in) const
 {
+    assert(this->rhopw->nxyz > 0); // mohan add 2025-12-02
+
     double ne = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {

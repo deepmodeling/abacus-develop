@@ -63,8 +63,8 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     this->ppcell.cell_factor = inp.cell_factor;
 
     //! 3) setup Exc for the first element '0' (all elements have same exc) 
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
+//    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+//    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
 
     //! 4) setup charge mixing
     p_chgmix = new Charge_Mixing();

@@ -81,7 +81,12 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);
 
-    //! 11) initialize the charge density
+    //! 11) setup the xc functional
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
+
+    //! 11) initialize the charge density, we need to first set xc_type,
+    // then we can call chr.allocate()
 	this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
 	this->chr.allocate(inp.nspin); // mohan move this from setup_estate_pw, 20251128
 
