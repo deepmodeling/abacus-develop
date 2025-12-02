@@ -1,10 +1,21 @@
 #ifndef OF_PRINT_INFO_H
 #define OF_PRINT_INFO_H
 
+#include "source_estate/elecstate.h" // electronic states
+#include "source_pw/module_ofdft/kedf_manager.h"
+
+
 namespace OFDFT
 {
 
-	void print_info(const bool conv_esolver);
+void print_info(const int iter,
+		double &iter_time,
+		const double &energy_current,
+		const double &energy_last,
+		const double &normdLdphi,
+		const elecstate::ElecState *pelec,
+		KEDF_Manager *kedf_manager,
+		const bool conv_esolver);
 
 }
 

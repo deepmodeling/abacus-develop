@@ -13,6 +13,8 @@
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
+// mohan add
+#include "source_pw/module_ofdft/of_print_info.h"
 
 namespace ModuleESolver
 {
@@ -430,7 +432,8 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
     conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                          || (this->of_conv_ == "both" && potConv && energyConv);
 
-    this->print_info(conv_esolver);
+    OFDFT::print_info(this->iter_, this->iter_time, this->energy_current_, this->energy_last_, 
+                      this->normdLdphi_, this->pelec, this->kedf_manager_, conv_esolver);
 
     if (conv_esolver || this->iter_ >= this->max_iter_)
     {
