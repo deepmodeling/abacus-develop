@@ -206,11 +206,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         // Refresh the arrays
         delete this->psi_;
-        this->psi_ = new psi::Psi<double>(1, 
-                                          PARAM.inp.nspin, 
-                                          this->pw_rho->nrxx,
-                                          this->pw_rho->nrxx,
-                                          true);
+        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, 
+                                          this->pw_rho->nrxx, this->pw_rho->nrxx, true);
+
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             this->pphi_[is] = this->psi_->get_pointer(is);
@@ -568,11 +566,8 @@ void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
-    this->kedf_manager_->get_stress(ucell.omega,
-                                    this->chr.rho,
-                                    this->pphi_,
-                                    this->pw_rho,
-                                    kinetic_stress_); // kinetic stress
+    this->kedf_manager_->get_stress(ucell.omega, this->chr.rho,
+                         this->pphi_, this->pw_rho, kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
     ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, this->locpp, &sf, &kv);

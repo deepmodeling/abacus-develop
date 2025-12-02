@@ -160,7 +160,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
-    // 12) init_scf, should be before_scf? mohan add 2025-03-10
+    // 12) init_scf
     this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // 13) initalize DM(R), which has the same size with Hamiltonian(R)
