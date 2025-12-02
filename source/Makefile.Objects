@@ -356,6 +356,7 @@ OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
     hcontainer.o\
     output_hcontainer.o\
+    read_hcontainer.o\
     func_folding.o\
     func_transfer.o\
     transfer.o\
