@@ -98,9 +98,6 @@ class ESolver_OF : public ESolver_FP
     void check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
     void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 
-    // --------------------- output the necessary information -----------
-    void print_info(const bool conv_esolver);
-
     // --------------------- interface to blas --------------------------
     double inner_product(double* pa, double* pb, int length, double dV = 1)
     {
