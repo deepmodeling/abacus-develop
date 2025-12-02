@@ -48,8 +48,10 @@ void Read_HContainer<T>::read()
     //
     hamilt::HContainer<T> hcontainer_serial(&pv_serial);
 
+#ifdef __MPI
     if(GlobalV::MY_RANK == 0)
     {
+#endif
     ModuleIO::csrFileReader<T> csr(this->_filename);
     int step = csr.getStep();
     int matrix_dimension = csr.getMatrixDimension();
@@ -110,6 +112,7 @@ void Read_HContainer<T>::read()
                                 value);
         }
     }
+#ifdef __MPI
 }
     // thirdly, distribute hcontainer_serial to parallel hcontainer
     // send <IJR>s from serial_rank to all ranks
@@ -151,6 +154,12 @@ void Read_HContainer<T>::read()
     }
     // gather values from serial_rank to Parallels
     transferSerial2Parallels(hcontainer_serial, this->_hcontainer, 0);
+#else
+    std::vector<int> para_ijrs = hcontainer_serial.get_ijr_info();
+    this->_hcontainer->insert_ijrs(&para_ijrs);
+    this->_hcontainer->allocate();
+    this->_hcontainer->add(hcontainer_serial);
+#endif
 
 }
 
