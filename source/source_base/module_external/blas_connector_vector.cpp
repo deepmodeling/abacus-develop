@@ -412,7 +412,7 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static )
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -433,7 +433,7 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -475,7 +475,7 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
