@@ -2,7 +2,7 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_base/formatter.h"
-#include <chrono>
+//#include <chrono>
 
 /**
  * @brief Print nessecary information to the screen,
@@ -35,9 +35,10 @@ void OFDFT::print_info(const int iter,
 #ifdef __MPI
     double duration = (double)(MPI_Wtime() - iter_time);
 #else
-    double duration
-        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
-          / static_cast<double>(1e6);
+// will recover this part later, 2025-12-03 mohan
+//    double duration
+//        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
+//          / static_cast<double>(1e6);
 #endif
     std::cout << " " << std::setw(8) << iteration
               << std::setw(18) << std::scientific << std::setprecision(8) << energy_current * ModuleBase::Ry_to_eV
@@ -136,6 +137,7 @@ void OFDFT::print_info(const int iter,
 #ifdef __MPI
     iter_time = MPI_Wtime();
 #else
-    iter_time = std::chrono::system_clock::now();
+// will recover this part later, 2025-12-03 mohan
+//    iter_time = std::chrono::system_clock::now();
 #endif
 }
