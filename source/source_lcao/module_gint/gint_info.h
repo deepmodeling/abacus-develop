@@ -104,6 +104,7 @@ class GintInfo
     #ifdef __CUDA
     public:
     std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() { return bgrid_batches_; };
+    int get_bgrid_batches_num() const { return static_cast<int>(bgrid_batches_.size()); };
     std::shared_ptr<const GintGpuVars> get_gpu_vars() const { return gpu_vars_; };
     int get_dev_id() const { return gpu_vars_->dev_id_; };
     int get_streams_num() const { return streams_num_; };

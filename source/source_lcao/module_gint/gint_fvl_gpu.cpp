@@ -93,8 +93,9 @@ void Gint_fvl_gpu::cal_fvl_svl_()
         CudaMemWrapper<double> dphi_z(BatchBigGrid::get_max_phi_len(), stream, false);
 
         #pragma omp for schedule(dynamic)
-        for(const auto& bgrid_batch: gint_info_->get_bgrid_batches())
+        for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
+            const auto& bgrid_batch = gint_info_->get_bgrid_batches()[i];
             if(bgrid_batch->empty())
             {
                 continue;

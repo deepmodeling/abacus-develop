@@ -62,8 +62,9 @@ void Gint_rho_gpu::cal_rho_()
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_dm(BatchBigGrid::get_max_phi_len(), stream, false);
         #pragma omp for schedule(dynamic)
-        for(const auto& bgrid_batch: gint_info_->get_bgrid_batches())
+        for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
+            const auto& bgrid_batch = gint_info_->get_bgrid_batches()[i];
             if(bgrid_batch->empty())
             {
                 continue;
