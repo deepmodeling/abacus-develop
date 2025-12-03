@@ -88,7 +88,7 @@ void Set_GlobalV_Default()
  *   - UpdateFromCharge: elecstate::Potential::update_from_charge()
  *     - calls cal_fixed_v and cal_v_eff to update v_effective from rho
  *   - InitPot: elecstate::Potential::init_pot()
- *     - using istep and update_from_charge to initialize v_effective
+ *     - using update_from_charge to initialize v_effective
  *   - GetVnew: elecstate::Potential::get_vnew()
  *     - used later for scf correction to the forces
  *   - GetEffective: elecstate::Potential::get_effective_v()
@@ -377,7 +377,7 @@ TEST_F(PotentialNewTest, InitPot)
     }
     Charge* chg = new Charge;
     EXPECT_FALSE(pot->fixed_done);
-    pot->init_pot(1,chg);
+    pot->init_pot(chg);
     EXPECT_TRUE(pot->fixed_done);
     delete chg;
 }

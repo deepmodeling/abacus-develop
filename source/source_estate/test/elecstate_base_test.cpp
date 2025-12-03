@@ -14,7 +14,7 @@
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
-void Potential::init_pot(int, Charge const*)
+void Potential::init_pot(Charge const*)
 {
 }
 void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
@@ -263,7 +263,7 @@ TEST_F(ElecStateTest, InitSCF)
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
     ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, ucell, pgrid, strucfac, nullptr, symm));
+    EXPECT_NO_THROW(elecstate->init_scf(ucell, pgrid, strucfac, nullptr, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

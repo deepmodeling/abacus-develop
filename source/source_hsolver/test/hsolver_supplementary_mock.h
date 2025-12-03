@@ -19,8 +19,7 @@ void ElecState::init_nelec_spin()
 
 
 
-void ElecState::init_scf(const int istep,
-                         const UnitCell& ucell,
+void ElecState::init_scf(const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
                          const ModuleBase::ComplexMatrix& strucfac,
                          const bool*,
