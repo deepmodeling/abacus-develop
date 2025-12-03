@@ -3,6 +3,7 @@
 #include "source_psi/setup_psi.h" // use Setup_Psi
 #include "source_io/read_wfc_nao.h" // use read_wfc_nao
 #include "source_estate/elecstate_tools.h" // use fixed_weights
+#include "source_lcao/module_hcontainer/read_hcontainer.h"
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -91,6 +92,27 @@ void LCAO_domain::set_pot(
     return;
 }
 
+template <typename TK>
+void LCAO_domain::init_dm_from_file(
+    const std::string dmfile,
+    LCAO_domain::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv)
+{
+    ModuleBase::TITLE("LCAO_domain::init_dm_from_file", "init_dm_from_file");
+    hamilt::HContainer<double>* dm_container = new hamilt::HContainer<double>(pv);
+    dmat.dm->init_DMR(dm_container[0]);
+    hamilt::Read_HContainer<double> reader_dm(
+        dmat.dm->get_DMR_vector()[0],
+        dmfile,
+        PARAM.globalv.nlocal,
+        &ucell
+    );
+    reader_dm.read();
+    delete dm_container;
+    return;
+}
+
 
 
 template void LCAO_domain::set_psi_occ_dm_chg<double>(
@@ -142,3 +164,14 @@ template void LCAO_domain::set_pot<std::complex<double>>(
         Exx_NAO<std::complex<double>> &exx_nao,
         Setup_DeePKS<std::complex<double>> &deepks,
         const Input_para &inp);
+
+template void LCAO_domain::init_dm_from_file<double>(
+    const std::string dmfile,
+    LCAO_domain::Setup_DM<double>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+template void LCAO_domain::init_dm_from_file<std::complex<double>>(
+    const std::string dmfile,
+    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
