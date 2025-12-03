@@ -2,14 +2,17 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_base/formatter.h"
-//#include <chrono>
 
 /**
  * @brief Print nessecary information to the screen,
  * and write the components of the total energy into running_log.
  */
 void OFDFT::print_info(const int iter,
-		double &iter_time,
+    #ifdef __MPI
+        double &iter_time,
+    #else
+        std::chrono::system_clock::time_point &iter_time,
+    #endif
 		const double &energy_current,
 		const double &energy_last,
 		const double &normdLdphi,
@@ -35,11 +38,9 @@ void OFDFT::print_info(const int iter,
 #ifdef __MPI
     double duration = (double)(MPI_Wtime() - iter_time);
 #else
-    double duration = 0.0;
-// will recover this part later, 2025-12-03 mohan
-//    double duration
-//        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
-//          / static_cast<double>(1e6);
+    double duration
+        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
+          / static_cast<double>(1e6);
 #endif
     std::cout << " " << std::setw(8) << iteration
               << std::setw(18) << std::scientific << std::setprecision(8) << energy_current * ModuleBase::Ry_to_eV
@@ -138,7 +139,6 @@ void OFDFT::print_info(const int iter,
 #ifdef __MPI
     iter_time = MPI_Wtime();
 #else
-// will recover this part later, 2025-12-03 mohan
-//    iter_time = std::chrono::system_clock::now();
+    iter_time = std::chrono::system_clock::now();
 #endif
 }

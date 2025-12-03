@@ -4,14 +4,18 @@
 #include "source_estate/elecstate.h" // electronic states
 #include "source_pw/module_ofdft/kedf_manager.h"
 
-//#include <chrono>
+#include <chrono>
 
 
 namespace OFDFT
 {
 
 void print_info(const int iter,
-		double &iter_time,
+    #ifdef __MPI
+        double &iter_time,
+    #else
+        std::chrono::system_clock::time_point &iter_time,
+    #endif
 		const double &energy_current,
 		const double &energy_last,
 		const double &normdLdphi,
