@@ -27,8 +27,7 @@ void ElecState::init_nelec_spin()
     }
 }
 
-void ElecState::init_scf(const int istep, 
-                         const UnitCell& ucell,
+void ElecState::init_scf(const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
                          const ModuleBase::ComplexMatrix& strucfac, 
                          const bool* numeric,
@@ -38,21 +37,11 @@ void ElecState::init_scf(const int istep,
     //! core correction potential.
     this->charge->set_rho_core(ucell,strucfac, numeric);
 
-    //! other effective potentials need charge density,
-    // choose charge density from ionic step 0.
-/*
-    if (istep == 0)
-    {
-        this->charge->init_rho(this->eferm,ucell, pgrid, strucfac, symm, (const void*)this->klist, wfcpw);
-        this->charge->check_rho(); // check the rho
-    }
-*/
-
     //! renormalize the charge density
     this->charge->renormalize_rho();
 
     //! initialize the potential
-    this->pot->init_pot(istep, this->charge);
+    this->pot->init_pot(this->charge);
 }
 
 
@@ -63,7 +52,6 @@ void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
 {
     this->charge = chr_in;
     this->klist = klist_in;
-//    this->charge->set_rhopw(rhopw_in); // mohan comment out 20251130
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();

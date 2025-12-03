@@ -86,7 +86,8 @@ void ESolver_OF::allocate_array()
     delete this->ptemp_rho_;
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
-    this->ptemp_rho_->allocate(PARAM.inp.nspin);
+    const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
+    this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
 
     this->theta_ = new double[PARAM.inp.nspin];
     this->pdLdphi_ = new double*[PARAM.inp.nspin];
@@ -378,140 +379,13 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
-            if (this->theta_[0] == 0) {
-                std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
-}
-        }
+			if (this->theta_[0] == 0) 
+			{
+				std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
+			}
+		}
         exit(0);
     }
 }
 
-/**
- * @brief Print nessecary information to the screen,
- * and write the components of the total energy into running_log.
- */
-void ESolver_OF::print_info(const bool conv_esolver)
-{
-    if (this->iter_ == 0)
-    {
-        std::cout << " ============================= Running OFDFT "
-                     "=============================="
-                  << std::endl;
-        std::cout << " ITER       ETOT/eV           EDIFF/eV        EFERMI/eV    POTNORM   TIME/s"
-                  << std::endl;
-    }
-
-    std::map<std::string, std::string> prefix_map = {
-        {"cg1", "CG"},
-        {"cg2", "CG"},
-        {"tn", "TN"}
-    };
-    std::string iteration = prefix_map[PARAM.inp.of_method] + std::to_string(this->iter_);
-#ifdef __MPI
-    double duration = (double)(MPI_Wtime() - this->iter_time);
-#else
-    double duration
-        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - this->iter_time)).count()
-          / static_cast<double>(1e6);
-#endif
-    std::cout << " " << std::setw(8) << iteration
-              << std::setw(18) << std::scientific << std::setprecision(8) << this->energy_current_ * ModuleBase::Ry_to_eV
-              << std::setw(18) << (this->energy_current_ - this->energy_last_) * ModuleBase::Ry_to_eV
-              << std::setw(13) << std::setprecision(4) << this->pelec->eferm.get_efval(0) * ModuleBase::Ry_to_eV
-              << std::setw(13) << std::setprecision(4) << this->normdLdphi_
-              << std::setw(6) << std::fixed << std::setprecision(2) << duration << std::endl;
-
-    GlobalV::ofs_running << std::setprecision(12);
-    GlobalV::ofs_running << std::setiosflags(std::ios::right);
-
-    GlobalV::ofs_running << "\nIter" << this->iter_ << ": the norm of potential is " << this->normdLdphi_ << std::endl;
-
-    std::vector<std::string> titles;
-    std::vector<double> energies_Ry;
-    std::vector<double> energies_eV;
-	if ((PARAM.inp.out_band[0] > 0 && 
-				((this->iter_ + 1) % PARAM.inp.out_band[0] == 0 || 
-				 conv_esolver || 
-				 this->iter_ == PARAM.inp.scf_nmax)) || 
-			PARAM.inp.init_chg == "file")
-    {
-        titles.push_back("E_Total");
-        energies_Ry.push_back(this->pelec->f_en.etot);
-        titles.push_back("E_Kinetic");
-        energies_Ry.push_back(this->pelec->f_en.ekinetic);
-        titles.push_back("E_Hartree");
-        energies_Ry.push_back(this->pelec->f_en.hartree_energy);
-        titles.push_back("E_xc");
-        energies_Ry.push_back(this->pelec->f_en.etxc - this->pelec->f_en.etxcc);
-        titles.push_back("E_LocalPP");
-        energies_Ry.push_back(this->pelec->f_en.e_local_pp);
-        titles.push_back("E_Ewald");
-        energies_Ry.push_back(this->pelec->f_en.ewald_energy);
-
-        this->kedf_manager_->record_energy(titles, energies_Ry);
-        
-        std::string vdw_method = PARAM.inp.vdw_method;
-        if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
-        {
-            titles.push_back("E_vdwD2");
-            energies_Ry.push_back(this->pelec->f_en.evdw);
-        }
-        else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
-        {
-            titles.push_back("E_vdwD3");
-            energies_Ry.push_back(this->pelec->f_en.evdw);
-        }
-        if (PARAM.inp.imp_sol)
-        {
-            titles.push_back("E_sol_el");
-            energies_Ry.push_back(this->pelec->f_en.esol_el);
-            titles.push_back("E_sol_cav");
-            energies_Ry.push_back(this->pelec->f_en.esol_cav);
-        }
-        if (PARAM.inp.efield_flag)
-        {
-            titles.push_back("E_efield");
-            energies_Ry.push_back(elecstate::Efield::etotefield);
-        }
-        if (PARAM.inp.gate_flag)
-        {
-            titles.push_back("E_gatefield");
-            energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
-        }
-    }
-    else
-    {
-        titles.push_back("E_Total");
-        energies_Ry.push_back(this->pelec->f_en.etot);
-    }
-
-    if (PARAM.globalv.two_fermi)
-    {
-        titles.push_back("E_Fermi_up");
-        energies_Ry.push_back(this->pelec->eferm.get_efval(0));
-        titles.push_back("E_Fermi_dw");
-        energies_Ry.push_back(this->pelec->eferm.get_efval(1));
-    }
-    else
-    {
-        titles.push_back("E_Fermi");
-        energies_Ry.push_back(this->pelec->eferm.get_efval(0));
-    }
-    energies_eV.resize(energies_Ry.size());
-    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {
-        return energy * ModuleBase::Ry_to_eV;
-    });
-    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"}, 
-                   /*nrows=*/titles.size(), 
-                   /*formats=*/{"%20s", "%20.12f", "%20.12f"}, 0);
-    table << titles << energies_Ry << energies_eV;
-    GlobalV::ofs_running << table.str() << std::endl;
-
-    // reset the iter_time for the next iteration
-#ifdef __MPI
-    this->iter_time = MPI_Wtime();
-#else
-    this->iter_time = std::chrono::system_clock::now();
-#endif
-}
 } // namespace ModuleESolver

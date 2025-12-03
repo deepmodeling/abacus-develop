@@ -67,7 +67,7 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(int istep, const Charge*const chg);
+    void init_pot(const Charge*const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge

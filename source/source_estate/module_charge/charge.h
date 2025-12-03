@@ -84,7 +84,10 @@ class Charge
                   const void* klist = nullptr,
                   const void* wfcpw = nullptr);
 
-    void allocate(const int &nspin_in);
+    // mohan add 2025-12-02
+    bool kin_density();
+
+    void allocate(const int &nspin_in, const bool kin_den);
 
     void atomic_rho(const int spin_number_need,
                     const double& omega,

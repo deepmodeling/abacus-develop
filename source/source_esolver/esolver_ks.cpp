@@ -62,11 +62,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     // cell_factor
     this->ppcell.cell_factor = inp.cell_factor;
 
-    //! 3) setup Exc for the first element '0' (all elements have same exc) 
-//    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-//    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
-
-    //! 4) setup charge mixing
+    //! 3) setup charge mixing
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
     p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
@@ -74,10 +70,10 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
       inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
     p_chgmix->init_mixing();
 
-    //! 5) setup plane wave for electronic wave functions
+    //! 4) setup plane wave for electronic wave functions
     pw::setup_pwwfc(inp, ucell, *this->pw_rho, this->kv, this->pw_wfc);
 
-    //! 6) read in charge density, mohan add 2025-11-28
+    //! 5) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
     this->chr.check_rho(); // check the rho

@@ -13,6 +13,8 @@
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
+// mohan add
+#include "source_pw/module_ofdft/of_print_info.h"
 
 namespace ModuleESolver
 {
@@ -92,7 +94,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -206,11 +208,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         // Refresh the arrays
         delete this->psi_;
-        this->psi_ = new psi::Psi<double>(1, 
-                                          PARAM.inp.nspin, 
-                                          this->pw_rho->nrxx,
-                                          this->pw_rho->nrxx,
-                                          true);
+        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, 
+                                          this->pw_rho->nrxx, this->pw_rho->nrxx, true);
+
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             this->pphi_[is] = this->psi_->get_pointer(is);
@@ -218,8 +218,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         delete this->ptemp_rho_;
         this->ptemp_rho_ = new Charge();
-        this->ptemp_rho_->set_rhopw(this->pw_rho);
-        this->ptemp_rho_->allocate(PARAM.inp.nspin);
+		this->ptemp_rho_->set_rhopw(this->pw_rho);
+		const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
+		this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
 
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
@@ -234,7 +235,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         }
     }
 
-    this->pelec->init_scf(istep, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
+    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -431,7 +432,8 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
     conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                          || (this->of_conv_ == "both" && potConv && energyConv);
 
-    this->print_info(conv_esolver);
+    OFDFT::print_info(this->iter_, this->iter_time, this->energy_current_, this->energy_last_, 
+                      this->normdLdphi_, this->pelec, this->kedf_manager_, conv_esolver);
 
     if (conv_esolver || this->iter_ >= this->max_iter_)
     {
@@ -567,11 +569,8 @@ void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
-    this->kedf_manager_->get_stress(ucell.omega,
-                                    this->chr.rho,
-                                    this->pphi_,
-                                    this->pw_rho,
-                                    kinetic_stress_); // kinetic stress
+    this->kedf_manager_->get_stress(ucell.omega, this->chr.rho,
+                         this->pphi_, this->pw_rho, kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
     ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, this->locpp, &sf, &kv);

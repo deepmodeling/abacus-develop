@@ -738,6 +738,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
+    of_print_info.o\
     symmetry_rho.o\
     symmetry_rhog.o\
     setup_psi_pw.o\

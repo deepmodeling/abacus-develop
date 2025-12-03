@@ -12,7 +12,7 @@
 int XC_Functional::func_type = 1;
 namespace elecstate
 {
-void Potential::init_pot(int, Charge const*)
+void Potential::init_pot(Charge const*)
 {
 }
 void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)

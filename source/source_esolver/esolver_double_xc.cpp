@@ -87,7 +87,8 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
 
     // 10) inititlize the charge density
 	this->chr_base.set_rhopw(this->pw_rhod); // mohan add 20251130
-	this->chr_base.allocate(PARAM.inp.nspin);
+    const bool kin_den = this->chr_base.kin_density(); // mohan add 20251202
+	this->chr_base.allocate(PARAM.inp.nspin, kin_den);
 	this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
 	this->chr_base.check_rho();
 
@@ -156,7 +157,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 	}
 
     XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
-    this->pelec_base->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    this->pelec_base->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
     // DMR should be same size with Hamiltonian(R)

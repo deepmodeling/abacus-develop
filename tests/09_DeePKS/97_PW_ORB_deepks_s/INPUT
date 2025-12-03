@@ -9,16 +9,16 @@ symmetry                0
 
 #Parameters (2.Iteration)
 ecutwfc                 20
-scf_thr                     1e-8
-scf_nmax                   50
+scf_thr                 1e-8
+scf_nmax                50
 
 #Parameters (3.Basis)
 basis_type              pw
 gamma_only              1
 
 #Parameters (4.Smearing)
-smearing_method                gaussian
-smearing_sigma                   0.1
+smearing_method         gaussian
+smearing_sigma          0.1
 
 #Parameters (5.Mixing)
 mixing_type             broyden

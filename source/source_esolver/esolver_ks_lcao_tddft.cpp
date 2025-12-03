@@ -133,7 +133,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                         GlobalV::ofs_running,
                                         GlobalV::ofs_warning);
             // need to test if correct when estep>0
-            this->pelec->init_scf(totstep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+            this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
             if (totstep <= PARAM.inp.td_tend + 1)
             {

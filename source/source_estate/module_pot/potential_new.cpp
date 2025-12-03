@@ -247,12 +247,11 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     ModuleBase::timer::tick("Potential", "cal_veff");
 }
 
-void Potential::init_pot(int istep, const Charge*const chg)
+void Potential::init_pot(const Charge*const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");
 
-    assert(istep >= 0);
     // fixed components only calculated in the beginning of SCF
     this->fixed_done = false;
 
