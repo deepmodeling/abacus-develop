@@ -11,7 +11,7 @@ from ase import Atoms
 from ase.io import read, write
 
 
-def split_poscar_with_index(input_file, selected_indices, output1, output2):
+def split_stru_with_index(input_file, selected_indices, output1, output2):
 
     atoms = read(input_file, verbose=True)
     pp = atoms.info["pp"]
@@ -34,7 +34,7 @@ def split_poscar_with_index(input_file, selected_indices, output1, output2):
     return selected_indices, remaining_indices, pp, basis
 
 
-def merge_poscar_by_index(file1, file2, indices1, indices2, pp, basis, output_file):
+def merge_stru_by_index(file1, file2, indices1, indices2, pp, basis, output_file):
 
     atoms1 = read(file1)
     atoms2 = read(file2)
@@ -96,7 +96,7 @@ def submit_jobs():
     # split structure into A and B
     origin_structure = config['origin_structure']
     selected_indices = config['selected_indices']
-    indices1, indices2, pp, basis = split_poscar_with_index(origin_structure, selected_indices, 
+    indices1, indices2, pp, basis = split_stru_with_index(origin_structure, selected_indices, 
                                                 'A.stru', 'B.stru')
 
 
@@ -155,7 +155,7 @@ def submit_jobs():
 
             # STRU
             perturbed_stru = f"../{all_files[index]}"
-            merge_poscar_by_index(perturbed_stru, '../B.stru', indices1, indices2, 
+            merge_stru_by_index(perturbed_stru, '../B.stru', indices1, indices2, 
                                     pp, basis, 'STRU')
 
             # INPUT
