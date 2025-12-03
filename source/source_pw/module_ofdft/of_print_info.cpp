@@ -35,6 +35,7 @@ void OFDFT::print_info(const int iter,
 #ifdef __MPI
     double duration = (double)(MPI_Wtime() - iter_time);
 #else
+    double duration = 0.0;
 // will recover this part later, 2025-12-03 mohan
 //    double duration
 //        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
