@@ -146,9 +146,12 @@ void evolve_psi_tensor(const int nband,
         = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Initialize cuBLAS & cuSOLVER handle
-    ct::kernels::createGpuSolverHandle();
-    ct::kernels::createGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Initialize cuBLAS & cuSOLVER handle
+        ct::kernels::createGpuSolverHandle();
+        ct::kernels::createGpuBlasHandle();
+    }
 #endif // __CUDA
 
     // ofs_running << " evolve_psi_tensor::start " << std::endl;
@@ -304,9 +307,12 @@ void evolve_psi_tensor(const int nband,
     // ofs_running << " evolve_psi_tensor::end " << std::endl;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Destroy cuBLAS & cuSOLVER handle
-    ct::kernels::destroyGpuSolverHandle();
-    ct::kernels::destroyGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Destroy cuBLAS & cuSOLVER handle
+        ct::kernels::destroyGpuSolverHandle();
+        ct::kernels::destroyGpuBlasHandle();
+    }
 #endif // __CUDA
 
     return;

@@ -17,5 +17,11 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
                           LCAO_domain::Setup_DM<std::complex<double>>& dmat,
                           K_Vectors& kv,
                           hamilt::Hamilt<std::complex<double>>* p_hamilt);
+
+template <typename Device>
+void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
+                                 LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+                                 K_Vectors& kv,
+                                 hamilt::Hamilt<std::complex<double>>* p_hamilt);
 } // namespace elecstate
 #endif // CAL_EDM_TDDFT_H
