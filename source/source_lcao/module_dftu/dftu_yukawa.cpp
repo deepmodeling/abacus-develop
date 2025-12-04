@@ -149,42 +149,30 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
 				}
 				this->cal_slater_Fk(ucell,L, T);
 
-                for (int n = 0; n < N; n++)
+
+                if( L == 1)
                 {
-					if (n != 0) 
-					{
-						continue;
-					}
+                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
+                    this->J_Yukawa[T][L][0] = this->Fk[T][L][0][1] / 5.0;
+                }
+                else if( L == 2)
+                {
+                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
+                    this->J_Yukawa[T][L][0] = (this->Fk[T][L][0][1] + this->Fk[T][L][0][2]) / 14.0;
+                }
+                else if( L == 3)
+                {
+                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
+                    this->J_Yukawa[T][L][0] = (286.0 * this->Fk[T][L][0][1] + 195.0 * this->Fk[T][L][0][2]
+                                                + 250.0 * this->Fk[T][L][0][3])
+                                                / 6435.0;
+                }
 
-                    switch (L)
-                    {
-                    case 1: // p electrons
-                        this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
-                        this->J_Yukawa[T][L][n] = this->Fk[T][L][n][1] / 5.0;
-                        break;
-
-                    case 2: // d electrons
-                        this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
-                        this->J_Yukawa[T][L][n] = (this->Fk[T][L][n][1] + this->Fk[T][L][n][2]) / 14.0;
-                        break;
-
-                    case 3: // f electrons
-						if (Yukawa) 
-						{
-							this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
-						}
-                        this->J_Yukawa[T][L][n] = (286.0 * this->Fk[T][L][n][1] + 195.0 * this->Fk[T][L][n][2]
-                                                   + 250.0 * this->Fk[T][L][n][3])
-                                                  / 6435.0;
-                        break;
-                    }
-
-                    // Hartree to Rydeberg
-                    this->U_Yukawa[T][L][n] *= 2.0;
-                    this->J_Yukawa[T][L][n] *= 2.0;
-                    // update current U with calculated U-J from Slater integrals
-                    this->U[T] = this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n];
-                } // end n
+                // Hartree to Rydeberg
+                this->U_Yukawa[T][L][0] *= 2.0;
+                this->J_Yukawa[T][L][0] *= 2.0;
+                // update current U with calculated U-J from Slater integrals
+                this->U[T] = this->U_Yukawa[T][L][0] - this->J_Yukawa[T][L][0];
             } // end if
         } // end L
     } // end T
