@@ -244,13 +244,8 @@ std::string get_device_flag(const std::string &device,
 int get_device_kpar(const int& kpar, const int& bndpar)
 {
 #if __MPI && (__CUDA || __ROCM)
-    // This function should only be called when GPU mode is active
-    // We use probe_gpu_availability to ensure GPU is actually available
-    if (!probe_gpu_availability()) {
-        // If no GPU available, return kpar unchanged
-        return kpar;
-    }
-
+    // This function should only be called when device mode is GPU
+    // The device decision has already been made by get_device_flag()
     int temp_nproc = 0;
     int new_kpar = kpar;
     MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
