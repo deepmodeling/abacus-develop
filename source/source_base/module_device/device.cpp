@@ -1,4 +1,3 @@
-
 #include "device.h"
 
 #include "source_base/tool_quit.h"
@@ -176,69 +175,40 @@ std::string get_device_flag(const std::string &device,
         ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\", \"gpu\", or \"auto\"!");
     }
     
-    int decision = 0; // 0 for CPU, 1 for GPU
-
-#ifdef __MPI
-    int world_rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    // NOTE: This function is called only on rank 0 during input parsing.
+    // The result will be broadcast to other ranks via the standard bcast mechanism.
+    // DO NOT use MPI_Bcast here as other ranks are not in this code path.
     
-    if (world_rank == 0) {
-        // Rank 0 makes the decision
-        if (device == "gpu") {
-            if (probe_gpu_availability()) {
-                decision = 1;
-                std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
-            } else {
-                ModuleBase::WARNING_QUIT("device", "Device is set to 'gpu', but no available GPU was found. Please check your hardware/drivers or set 'device=cpu'.");
-            }
-        } else if (device == "auto") {
-            if (probe_gpu_availability()) {
-                decision = 1;
-                std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
-            } else {
-                decision = 0;
-                std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
-                std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;
-            }
-        } else { // device == "cpu"
-            decision = 0;
-            std::cout << " INFO: 'device=cpu' specified. CPU will be used." << std::endl;
-        }
-    }
+    std::string result = "cpu";
     
-    // Rank 0 broadcasts the final decision to all other ranks
-    MPI_Bcast(&decision, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#else
-    // Non-MPI case: single process makes the decision
     if (device == "gpu") {
         if (probe_gpu_availability()) {
-            decision = 1;
-            std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
+            result = "gpu";
+            // std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
         } else {
             ModuleBase::WARNING_QUIT("device", "Device is set to 'gpu', but no available GPU was found. Please check your hardware/drivers or set 'device=cpu'.");
         }
     } else if (device == "auto") {
         if (probe_gpu_availability()) {
-            decision = 1;
-            std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
+            result = "gpu";
+            // std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
         } else {
-            decision = 0;
-            std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
-            std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;
+            result = "cpu";
+            // std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
+            // std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;
         }
     } else { // device == "cpu"
-        decision = 0;
-        std::cout << " INFO: 'device=cpu' specified. CPU will be used." << std::endl;
+        result = "cpu";
+        // std::cout << " INFO: 'device=cpu' specified. CPU will be used." << std::endl;
     }
-#endif
 
     // 2. Final check for incompatible basis type
-    if (decision == 1 && basis_type == "lcao_in_pw") {
+    if (result == "gpu" && basis_type == "lcao_in_pw") {
         ModuleBase::WARNING_QUIT("device", "The GPU currently does not support the basis type \"lcao_in_pw\"!");
     }
 
     // 3. Return the final decision
-    return (decision == 1) ? "gpu" : "cpu";
+    return result;
 }
 
 int get_device_kpar(const int& kpar, const int& bndpar)
