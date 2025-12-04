@@ -115,7 +115,13 @@ void output_device_info(std::ostream &output)
     int local_rank = get_node_rank_with_mpi_shared(MPI_COMM_WORLD);
 
     // Get local hardware info
-    int local_gpu_count = local_rank == 0 ? get_device_num("gpu") : 0;
+    int local_gpu_count = 0;
+    #if defined(__CUDA) || defined(__ROCM)
+    if(PARAM.inp.device == "gpu" && local_rank == 0)
+    {
+        local_gpu_count = get_device_num("gpu");
+    }
+    #endif
     int local_cpu_sockets = local_rank == 0 ? get_device_num("cpu") : 0;
 
     // Prepare vectors to gather data from all ranks
@@ -133,7 +139,13 @@ void output_device_info(std::ostream &output)
 
         // Get device model names (from rank 0 node)
         std::string cpu_name = get_device_name("cpu");
-        std::string gpu_name = get_device_name("gpu");
+        std::string gpu_name;
+        #if defined(__CUDA) || defined(__ROCM)
+        if(PARAM.inp.device == "gpu" && total_gpus > 0)
+        {
+            gpu_name = get_device_name("gpu");
+        }
+        #endif
 
         // Output all collected information
         output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
