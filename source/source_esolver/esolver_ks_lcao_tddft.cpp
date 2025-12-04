@@ -264,8 +264,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-			hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.dm, 
-					this->chr, PARAM.inp.nspin, skip_charge);
+            hsolver_lcao_obj.solve(this->p_hamilt,
+                                   this->psi[0],
+                                   this->pelec,
+                                   *this->dmat.dm,
+                                   this->chr,
+                                   PARAM.inp.nspin,
+                                   skip_charge);
         }
     }
 
@@ -318,7 +323,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
         && PARAM.inp.td_edm == 0)
     {
-        elecstate::cal_edm_tddft_tensor(this->pv, this->dmat, this->kv, this->p_hamilt);
+        if (use_tensor && use_lapack)
+        {
+            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, this->p_hamilt);
+        }
+        else
+        {
+            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
+        }
     }
 }
 
@@ -434,7 +446,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
                                     1);
             } // end use_tensor
         } // end ik
-    }// conv_esolver
+    } // conv_esolver
 }
 
 template <typename TR, typename Device>
@@ -483,7 +495,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
     elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.dm);
-    if(PARAM.inp.td_stype == 2)
+    if (PARAM.inp.td_stype == 2)
     {
         this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
     }
