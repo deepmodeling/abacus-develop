@@ -45,6 +45,12 @@ void output_device_info(std::ostream& output);
 int get_device_kpar(const int& kpar, const int& bndpar);
 
 /**
+ * @brief Safely probes for GPU availability without exiting on error.
+ * @return True if at least one GPU is found and usable, false otherwise.
+ */
+bool probe_gpu_availability();
+
+/**
  * @brief Get the device flag object
  * for source_io PARAM.inp.device
  */
