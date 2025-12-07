@@ -106,11 +106,48 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     const int mesh_r1 = orb.Phi[T1].PhiLN(L1, N1).getNr();
     const double* psi_1 = orb.Phi[T1].PhiLN(L1, N1).getPsi();
     const double dk_1 = orb.Phi[T1].PhiLN(L1, N1).getDk();
+    const double inv_dk_1 = 1.0 / dk_1;
 
     const int ridial_grid_num = 140;
     const int angular_grid_num = 110;
     std::vector<double> r_ridial(ridial_grid_num);
     std::vector<double> weights_ridial(ridial_grid_num);
+
+    // OPTIMIZATION START: Cache standard Gauss-Legendre grid
+    static std::vector<double> gl_x(ridial_grid_num);
+    static std::vector<double> gl_w(ridial_grid_num);
+    static bool gl_init = false;
+
+    // Thread-safe initialization
+    if (!gl_init)
+    {
+        #pragma omp critical(init_gauss_legendre)
+        {
+            if (!gl_init)
+            {
+                ModuleBase::Integral::Gauss_Legendre_grid_and_weight(ridial_grid_num, gl_x.data(), gl_w.data());
+                gl_init = true;
+            }
+        }
+    }
+    // OPTIMIZATION END
+
+    // Precompute A dot r_angular for Lebedev grid
+    std::vector<double> A_dot_lebedev(angular_grid_num);
+    for (int ian = 0; ian < angular_grid_num; ++ian)
+    {
+        A_dot_lebedev[ian] = A.x * ModuleBase::Integral::Lebedev_Laikov_grid110_x[ian] +
+                             A.y * ModuleBase::Integral::Lebedev_Laikov_grid110_y[ian] +
+                             A.z * ModuleBase::Integral::Lebedev_Laikov_grid110_z[ian];
+    }
+
+    // Buffers to reuse
+    std::vector<std::complex<double>> result_angular;
+    std::vector<std::complex<double>> result_angular_r_commu_x;
+    std::vector<std::complex<double>> result_angular_r_commu_y;
+    std::vector<std::complex<double>> result_angular_r_commu_z;
+    std::vector<double> rly1;
+    std::vector<std::vector<double>> rly0_all(angular_grid_num);
 
     int index = 0;
     for (int nb = 0; nb < nproj; nb++)
@@ -128,28 +165,52 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         const double dk_0 = infoNL_.Beta[T0].Proj[nb].getDk();
 
         const double Rcut0 = infoNL_.Beta[T0].Proj[nb].getRcut();
-        ModuleBase::Integral::Gauss_Legendre_grid_and_weight(radial0[0],
-                                                             radial0[mesh_r0 - 1],
-                                                             ridial_grid_num,
-                                                             r_ridial.data(),
-                                                             weights_ridial.data());
+
+        // OPTIMIZATION: Use precomputed standard Gauss-Legendre grid
+        double r_min = radial0[0];
+        double r_max = radial0[mesh_r0 - 1];
+        double xl = (r_max - r_min) * 0.5;
+        double xmean = (r_max + r_min) * 0.5;
+        
+        for(int i=0; i<ridial_grid_num; ++i)
+        {
+            r_ridial[i] = xmean + xl * gl_x[i];
+            weights_ridial[i] = xl * gl_w[i];
+        }
 
         const double A_phase = A * R0;
         const std::complex<double> exp_iAR0 = std::exp(ModuleBase::IMAG_UNIT * A_phase);
 
-        std::vector<double> rly0(L0);
-        std::vector<double> rly1(L1);
-        for (int ir = 0; ir < ridial_grid_num; ir++)
+        // Precompute rly0 for all angular points
+        for(int ian = 0; ian < angular_grid_num; ++ian) {
+            ModuleBase::Ylm::rl_sph_harm(L0, 
+                ModuleBase::Integral::Lebedev_Laikov_grid110_x[ian], 
+                ModuleBase::Integral::Lebedev_Laikov_grid110_y[ian], 
+                ModuleBase::Integral::Lebedev_Laikov_grid110_z[ian], 
+                rly0_all[ian]);
+        }
+
+        // Resize buffers
+        if (result_angular.size() < 2 * L0 + 1)
         {
-            std::vector<std::complex<double>> result_angular(2 * L0 + 1, 0.0);
-            std::vector<std::complex<double>> result_angular_r_commu_x;
-            std::vector<std::complex<double>> result_angular_r_commu_y;
-            std::vector<std::complex<double>> result_angular_r_commu_z;
+            result_angular.resize(2 * L0 + 1);
             if (calc_r)
             {
-                result_angular_r_commu_x.resize(2 * L0 + 1, 0.0);
-                result_angular_r_commu_y.resize(2 * L0 + 1, 0.0);
-                result_angular_r_commu_z.resize(2 * L0 + 1, 0.0);
+                result_angular_r_commu_x.resize(2 * L0 + 1);
+                result_angular_r_commu_y.resize(2 * L0 + 1);
+                result_angular_r_commu_z.resize(2 * L0 + 1);
+            }
+        }
+
+        for (int ir = 0; ir < ridial_grid_num; ir++)
+        {
+            // Reset result accumulators
+            std::fill(result_angular.begin(), result_angular.begin() + (2 * L0 + 1), 0.0);
+            if (calc_r)
+            {
+                std::fill(result_angular_r_commu_x.begin(), result_angular_r_commu_x.begin() + (2 * L0 + 1), 0.0);
+                std::fill(result_angular_r_commu_y.begin(), result_angular_r_commu_y.begin() + (2 * L0 + 1), 0.0);
+                std::fill(result_angular_r_commu_z.begin(), result_angular_r_commu_z.begin() + (2 * L0 + 1), 0.0);
             }
 
             for (int ian = 0; ian < angular_grid_num; ian++)
@@ -158,11 +219,13 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                 const double y = ModuleBase::Integral::Lebedev_Laikov_grid110_y[ian];
                 const double z = ModuleBase::Integral::Lebedev_Laikov_grid110_z[ian];
                 const double weights_angular = ModuleBase::Integral::Lebedev_Laikov_grid110_w[ian];
-                const ModuleBase::Vector3<double> r_angular_tmp(x, y, z);
-
-                const ModuleBase::Vector3<double> r_coor = r_ridial[ir] * r_angular_tmp;
+                
+                const double r_val = r_ridial[ir];
+                const ModuleBase::Vector3<double> r_coor(r_val * x, r_val * y, r_val * z);
+                
                 const ModuleBase::Vector3<double> tmp_r_coor = r_coor + dRa;
                 const double tmp_r_coor_norm = tmp_r_coor.norm();
+                
                 if (tmp_r_coor_norm > Rcut1) 
                 {
                     continue;
@@ -174,21 +237,40 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                     tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
                 }
 
-                ModuleBase::Ylm::rl_sph_harm(L0, x, y, z, rly0);
+                const std::vector<double>& rly0_vec = rly0_all[ian];
 
                 ModuleBase::Ylm::rl_sph_harm(L1, tmp_r_unit.x, tmp_r_unit.y, tmp_r_unit.z, rly1);
 
-                const double phase = A * r_coor;
+                const double phase = r_val * A_dot_lebedev[ian];
                 const std::complex<double> exp_iAr = std::exp(ModuleBase::IMAG_UNIT * phase);
 
                 const ModuleBase::Vector3<double> tmp_r_coor_r_commu = r_coor + R0;
-                const double interp_v = ModuleBase::PolyInt::Polynomial_Interpolation(psi_1, 
-                      mesh_r1, dk_1, tmp_r_coor_norm);
+                
+                // OPTIMIZATION: Inline Polynomial Interpolation
+                double position = tmp_r_coor_norm * inv_dk_1;
+                int iq = static_cast<int>(position);
+                double interp_v = 0.0;
+                
+                if (iq <= mesh_r1 - 4)
+                {
+                    const double x0 = position - static_cast<double>(iq);
+                    const double x1 = 1.0 - x0;
+                    const double x2 = 2.0 - x0;
+                    const double x3 = 3.0 - x0;
+                    interp_v = x1*x2*(psi_1[iq]*x3+psi_1[iq+3]*x0)/6.0
+                             + x0*x3*(psi_1[iq+1]*x2-psi_1[iq+2]*x1)/2.0;
+                }
+                
+                const double weight_interp = interp_v * weights_angular;
+                const int offset_L0 = L0 * L0;
+                const int offset_L1 = L1 * L1 + m1;
+                const double rly1_val = rly1[offset_L1];
+                
+                const std::complex<double> common_factor = exp_iAr * rly1_val * weight_interp;
 
                 for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
                 {
-                    std::complex<double> temp = exp_iAr * rly0[L0 * L0 + m0] * rly1[L1 * L1 + m1]
-                                                * interp_v * weights_angular;
+                    std::complex<double> temp = common_factor * rly0_vec[offset_L0 + m0];
                     result_angular[m0] += temp;
 
                     if (calc_r)
