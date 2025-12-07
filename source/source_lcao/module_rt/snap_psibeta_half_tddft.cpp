@@ -53,7 +53,7 @@ inline double interpolate_radial(
     int iq = static_cast<int>(position);
     
     // Boundary check safe-guard
-    if (iq >= mesh - 4) return 0.0;
+    if (iq > mesh - 4) return 0.0;
 
     const double x0 = position - static_cast<double>(iq);
     const double x1 = 1.0 - x0;
