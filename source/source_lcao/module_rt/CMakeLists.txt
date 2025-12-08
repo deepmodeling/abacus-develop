@@ -18,6 +18,13 @@ if(ENABLE_LCAO)
         boundary_fix.cpp
     )
 
+    if(USE_CUDA)
+        list(APPEND objects
+            kernels/cuda/snap_psibeta_kernel.cu
+            kernels/cuda/snap_psibeta_gpu.cu
+        )
+    endif()
+
     add_library(
         tddft
         OBJECT
