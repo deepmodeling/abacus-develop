@@ -160,79 +160,64 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             nlm_tot[i].resize(nlm_dim);
         }
 
-#pragma omp parallel
+#ifdef __CUDA
+        // GPU path: Atom-level GPU batch processing
+        module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
+                                                    this->ucell->infoNL,
+                                                    T0,
+                                                    tau0 * this->ucell->lat0,
+                                                    cart_At,
+                                                    adjs,
+                                                    this->ucell,
+                                                    paraV,
+                                                    npol,
+                                                    nlm_dim,
+                                                    nlm_tot);
+#else
+        // CPU path: OpenMP parallel over neighbors to compute nlm_tot
+#pragma omp parallel for schedule(dynamic)
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
-#ifdef __CUDA
-            cudaSetDevice(dev_id);
-#endif
-#pragma omp for schedule(dynamic)
-            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+            const int T1 = adjs.ntype[ad];
+            const int I1 = adjs.natom[ad];
+            const int iat1 = ucell->itia2iat(T1, I1);
+            const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+            const Atom* atom1 = &ucell->atoms[T1];
+            auto all_indexes = paraV->get_indexes_row(iat1);
+            auto col_indexes = paraV->get_indexes_col(iat1);
+            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+            std::sort(all_indexes.begin(), all_indexes.end());
+            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+
+            // CPU path: loop over orbitals
+            for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
             {
-                const int T1 = adjs.ntype[ad];
-                const int I1 = adjs.natom[ad];
-                const int iat1 = ucell->itia2iat(T1, I1);
-                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-                const Atom* atom1 = &ucell->atoms[T1];
-                auto all_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat1);
-                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-                std::sort(all_indexes.begin(), all_indexes.end());
-                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-
-#ifdef __CUDA
-                // GPU path: batch process all orbitals for this neighbor
-                // Use GPU when there are enough orbitals to benefit from parallelism
-                constexpr int GPU_THRESHOLD = 4;
-                bool gpu_success = false;
-                if (all_indexes.size() / npol >= GPU_THRESHOLD)
+                const int iw1 = all_indexes[iw1l] / npol;
+                std::vector<std::vector<std::complex<double>>> nlm;
+                module_rt::snap_psibeta_half_tddft(orb_,
+                                                   this->ucell->infoNL,
+                                                   nlm,
+                                                   tau1 * this->ucell->lat0,
+                                                   T1,
+                                                   atom1->iw2l[iw1],
+                                                   atom1->iw2m[iw1],
+                                                   atom1->iw2n[iw1],
+                                                   tau0 * this->ucell->lat0,
+                                                   T0,
+                                                   cart_At,
+                                                   TD_info::out_current);
+                for (int dir = 0; dir < nlm_dim; dir++)
                 {
-                    gpu_success = module_rt::gpu::snap_psibeta_neighbor_batch_gpu(orb_,
-                                                                                  this->ucell->infoNL,
-                                                                                  T1,
-                                                                                  tau1 * this->ucell->lat0,
-                                                                                  atom1,
-                                                                                  all_indexes,
-                                                                                  npol,
-                                                                                  T0,
-                                                                                  tau0 * this->ucell->lat0,
-                                                                                  cart_At,
-                                                                                  nlm_tot[ad],
-                                                                                  TD_info::out_current);
-                }
-                if (!gpu_success)
-#endif
-                {
-                    // CPU path: loop over orbitals
-                    for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-                    {
-                        const int iw1 = all_indexes[iw1l] / npol;
-                        std::vector<std::vector<std::complex<double>>> nlm;
-                        // nlm is a vector of vectors, but size of outer vector is only 1 when out_current is false
-                        // and size of outer vector is 4 when out_current is true (3 for <psi|r_i * exp(-iAr)|beta>, 1
-                        // for <psi|exp(-iAr)|beta>) inner loop : all projectors (L0,M0)
-
-                        // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
-                        // and <psi|rexp(-iAr)|beta> as well if current are needed
-                        module_rt::snap_psibeta_half_tddft(orb_,
-                                                           this->ucell->infoNL,
-                                                           nlm,
-                                                           tau1 * this->ucell->lat0,
-                                                           T1,
-                                                           atom1->iw2l[iw1],
-                                                           atom1->iw2m[iw1],
-                                                           atom1->iw2n[iw1],
-                                                           tau0 * this->ucell->lat0,
-                                                           T0,
-                                                           cart_At,
-                                                           TD_info::out_current);
-                        for (int dir = 0; dir < nlm_dim; dir++)
-                        {
-                            nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
-                        }
-                    }
+                    nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
                 }
             }
+        }
+#endif
 
+        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // This runs for BOTH GPU and CPU paths
+#pragma omp parallel
+        {
 #ifdef _OPENMP
             // record the iat number of the adjacent atoms
             std::set<int> ad_atom_set;
@@ -259,7 +244,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
 #endif
 
-            // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
                 const int T1 = adjs.ntype[ad1];
@@ -291,11 +275,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                         if (TD_info::out_current)
                         {
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
-                            for (int i = 0; i < 3; i++)
+                            for (int ii = 0; ii < 3; ii++)
                             {
-                                tmp_c[i] = TD_info::td_vel_op->get_current_term_pointer(i)
-                                               ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
-                                               ->get_pointer();
+                                tmp_c[ii] = TD_info::td_vel_op->get_current_term_pointer(ii)
+                                                ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
+                                                ->get_pointer();
                             }
                             this->cal_HR_IJR(iat1,
                                              iat2,
@@ -320,8 +304,8 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                 }
             }
-        }
-    }
+        } // end omp parallel for matrix assembly
+    }     // end for iat0
 
 #ifdef __CUDA
     // Release GPU resources at end of calculation

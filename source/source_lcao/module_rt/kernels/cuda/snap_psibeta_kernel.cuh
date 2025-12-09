@@ -129,48 +129,84 @@ struct ProjectorData
     double r_max;     // Maximum radial value
 };
 
+/**
+ * @brief Information about a neighbor-orbital pair for atom-level batching
+ *        Used to batch ALL neighbors for a center atom in a single kernel launch
+ */
+struct NeighborOrbitalData
+{
+    int neighbor_idx; // Which neighbor (ad index) this orbital belongs to
+    double3 R1;       // Neighbor atom position (tau1 * lat0)
+
+    // Orbital info (same as OrbitalData)
+    int L1;
+    int m1;
+    int N1;
+    int iw_index;
+    int psi_offset;
+    int psi_mesh;
+    double psi_dk;
+    double psi_rcut;
+};
+
 //=============================================================================
-// Main Kernel
+// Main Kernels
 //=============================================================================
 
 /**
- * @brief Main kernel for neighbor-level batch processing
+ * @brief Neighbor-level batch kernel (original version)
  *
  * Grid: (num_orbitals, nproj, 1)
  * Block: (BLOCK_SIZE, 1, 1)
+ */
+__global__ void snap_psibeta_neighbor_batch_kernel(double3 R1,
+                                                   double3 R0,
+                                                   double3 A,
+                                                   const OrbitalData* __restrict__ orbitals,
+                                                   const ProjectorData* __restrict__ projectors,
+                                                   const double* __restrict__ psi_radial,
+                                                   const double* __restrict__ beta_radial,
+                                                   const int* __restrict__ proj_m0_offset,
+                                                   int num_orbitals,
+                                                   int nproj,
+                                                   int natomwfc,
+                                                   int nlm_dim,
+                                                   cuDoubleComplex* __restrict__ nlm_out);
+
+/**
+ * @brief Atom-level batch kernel - processes ALL neighbors for a center atom
  *
- * Each block processes one (orbital, projector) pair.
- * Threads within a block parallelize over angular integration points.
+ * Grid: (total_neighbor_orbitals, nproj, 1)
+ * Block: (BLOCK_SIZE, 1, 1)
  *
- * @param R1 Neighbor atom position
- * @param R0 Projector atom position
+ * This kernel processes all orbitals from all neighbors in a single launch,
+ * reducing kernel launch overhead significantly.
+ *
+ * @param R0 Center atom position (projector location)
  * @param A Vector potential
- * @param orbitals Array of orbital data [num_orbitals]
+ * @param neighbor_orbitals Array of neighbor-orbital pairs [total_neighbor_orbitals]
  * @param projectors Array of projector data [nproj]
  * @param psi_radial Flattened orbital radial functions
  * @param beta_radial Flattened projector radial functions
- * @param num_orbitals Number of orbitals in batch
+ * @param proj_m0_offset Offset for each projector's m=0 in output
+ * @param total_neighbor_orbitals Total number of (neighbor, orbital) pairs
  * @param nproj Number of projectors
- * @param natomwfc Total number of projector components (sum of 2*L0+1)
- * @param calc_r Whether to compute position operator elements
- * @param nlm_out Output array [num_orbitals * nlm_dim * natomwfc]
- *
- * Note: Gauss-Legendre grids (gl_x, gl_w) and Lebedev grids are stored in constant memory
+ * @param natomwfc Total projector components (sum of 2*L0+1)
+ * @param nlm_dim 1 for no current, 4 for current
+ * @param nlm_out Output [total_neighbor_orbitals * nlm_dim * natomwfc]
  */
-__global__ void snap_psibeta_neighbor_batch_kernel(
-    double3 R1,
-    double3 R0,
-    double3 A,
-    const OrbitalData* __restrict__ orbitals,
-    const ProjectorData* __restrict__ projectors,
-    const double* __restrict__ psi_radial,
-    const double* __restrict__ beta_radial,
-    const int* __restrict__ proj_m0_offset, // Offset for each projector in output
-    int num_orbitals,
-    int nproj,
-    int natomwfc,
-    int nlm_dim,
-    cuDoubleComplex* __restrict__ nlm_out);
+__global__ void snap_psibeta_atom_batch_kernel(double3 R0,
+                                               double3 A,
+                                               const NeighborOrbitalData* __restrict__ neighbor_orbitals,
+                                               const ProjectorData* __restrict__ projectors,
+                                               const double* __restrict__ psi_radial,
+                                               const double* __restrict__ beta_radial,
+                                               const int* __restrict__ proj_m0_offset,
+                                               int total_neighbor_orbitals,
+                                               int nproj,
+                                               int natomwfc,
+                                               int nlm_dim,
+                                               cuDoubleComplex* __restrict__ nlm_out);
 
 //=============================================================================
 // Host-side Helper Functions

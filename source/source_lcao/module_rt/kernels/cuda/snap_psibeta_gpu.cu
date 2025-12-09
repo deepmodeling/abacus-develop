@@ -1,5 +1,6 @@
 #include "../snap_psibeta_gpu.h"
 #include "snap_psibeta_kernel.cuh"
+#include "source_base/timer.h"
 
 #include <cstdio>
 #include <cuda_runtime.h>
@@ -21,7 +22,6 @@ namespace gpu
         if (err != cudaSuccess)                                                                                        \
         {                                                                                                              \
             fprintf(stderr, "[CUDA] Error at %s:%d - %s\n", __FILE__, __LINE__, cudaGetErrorString(err));              \
-            return false;                                                                                              \
         }                                                                                                              \
     } while (0)
 
@@ -345,6 +345,285 @@ bool snap_psibeta_neighbor_batch_gpu(const LCAO_Orbitals& orb,
     cudaFree(proj_m0_offset_d);
     cudaFree(nlm_out_d);
     return true;
+}
+
+//=============================================================================
+// Atom-Level GPU Batch Interface - Processes ALL neighbors in single kernel
+//=============================================================================
+
+void snap_psibeta_atom_batch_gpu(
+    const LCAO_Orbitals& orb,
+    const InfoNonlocal& infoNL_,
+    const int T0,
+    const ModuleBase::Vector3<double>& R0,
+    const ModuleBase::Vector3<double>& A,
+    const AdjacentAtomInfo& adjs,
+    const UnitCell* ucell,
+    const Parallel_Orbitals* paraV,
+    const int npol,
+    const int nlm_dim,
+    std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)
+{
+    ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+
+    // Get projector info
+    const int nproj = infoNL_.nproj[T0];
+    if (nproj == 0)
+    {
+        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+        return;
+    }
+
+    // Calculate natomwfc
+    int natomwfc = 0;
+    std::vector<int> proj_m0_offset_h(nproj);
+    for (int ip = 0; ip < nproj; ip++)
+    {
+        proj_m0_offset_h[ip] = natomwfc;
+        int L0 = infoNL_.Beta[T0].Proj[ip].getL();
+        if (L0 > MAX_L)
+        {
+            fprintf(stderr,
+                    "[CUDA] Error: L0=%d exceeds MAX_L=%d, GPU kernel may produce incorrect results\n",
+                    L0,
+                    MAX_L);
+        }
+        natomwfc += 2 * L0 + 1;
+    }
+
+    //=========================================================================
+    // Collect all neighbor-orbital pairs
+    //=========================================================================
+
+    std::vector<NeighborOrbitalData> neighbor_orbitals_h;
+    std::vector<double> psi_radial_h;
+
+    // Track neighbor index for each orbital for output reconstruction
+    struct OrbitalMapping
+    {
+        int neighbor_idx;
+        int iw_index;
+    };
+    std::vector<OrbitalMapping> orbital_mappings;
+
+    for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+    {
+        const int T1 = adjs.ntype[ad];
+        const int I1 = adjs.natom[ad];
+        const int iat1 = ucell->itia2iat(T1, I1);
+        const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+        const Atom* atom1 = &ucell->atoms[T1];
+
+        // Get orbital indices
+        auto all_indexes = paraV->get_indexes_row(iat1);
+        auto col_indexes = paraV->get_indexes_col(iat1);
+        all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+        std::sort(all_indexes.begin(), all_indexes.end());
+        all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+
+        // Process each orbital
+        for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+        {
+            const int iw1 = all_indexes[iw1l] / npol;
+            const int L1 = atom1->iw2l[iw1];
+            const int m1 = atom1->iw2m[iw1];
+            const int N1 = atom1->iw2n[iw1];
+
+            if (L1 > MAX_L)
+            {
+                continue; // Skip orbitals with L > MAX_L
+            }
+
+            // Get orbital radial data
+            // Use getPsi() to match CPU implementation (not getPsi_r() which returns psi*r)
+            const double* phi_psi = orb.Phi[T1].PhiLN(L1, N1).getPsi();
+            int mesh = orb.Phi[T1].PhiLN(L1, N1).getNr();
+            double dk = orb.Phi[T1].PhiLN(L1, N1).getDk();
+            double rcut = orb.Phi[T1].getRcut();
+
+            // Add to flattened psi array
+            size_t psi_offset = psi_radial_h.size();
+            psi_radial_h.insert(psi_radial_h.end(), phi_psi, phi_psi + mesh);
+
+            // Create neighbor-orbital data
+            NeighborOrbitalData norb;
+            norb.neighbor_idx = ad;
+            norb.R1 = make_double3(tau1.x * ucell->lat0, tau1.y * ucell->lat0, tau1.z * ucell->lat0);
+            norb.L1 = L1;
+            norb.m1 = m1;
+            norb.N1 = N1;
+            norb.iw_index = all_indexes[iw1l];
+            norb.psi_offset = static_cast<int>(psi_offset);
+            norb.psi_mesh = mesh;
+            norb.psi_dk = dk;
+            norb.psi_rcut = rcut;
+
+            neighbor_orbitals_h.push_back(norb);
+
+            OrbitalMapping mapping;
+            mapping.neighbor_idx = ad;
+            mapping.iw_index = all_indexes[iw1l];
+            orbital_mappings.push_back(mapping);
+        }
+    }
+
+    int total_neighbor_orbitals = static_cast<int>(neighbor_orbitals_h.size());
+    if (total_neighbor_orbitals == 0)
+    {
+        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+        return;
+    }
+
+    //=========================================================================
+    // Prepare projector data
+    //=========================================================================
+
+    std::vector<ProjectorData> projectors_h(nproj);
+    std::vector<double> beta_radial_h;
+
+    for (int ip = 0; ip < nproj; ip++)
+    {
+        const auto& proj = infoNL_.Beta[T0].Proj[ip];
+        int L0 = proj.getL();
+        int mesh = proj.getNr();
+        double dk = proj.getDk();
+        double rcut = proj.getRcut();
+        const double* beta_r = proj.getBeta_r();
+        const double* radial = proj.getRadial();
+
+        projectors_h[ip].L0 = L0;
+        projectors_h[ip].beta_offset = static_cast<int>(beta_radial_h.size());
+        projectors_h[ip].beta_mesh = mesh;
+        projectors_h[ip].beta_dk = dk;
+        projectors_h[ip].beta_rcut = rcut;
+        // Use actual radial grid range
+        projectors_h[ip].r_min = radial[0];
+        projectors_h[ip].r_max = radial[mesh - 1];
+
+        beta_radial_h.insert(beta_radial_h.end(), beta_r, beta_r + mesh);
+    }
+
+    //=========================================================================
+    // Allocate Device Memory
+    //=========================================================================
+
+    NeighborOrbitalData* neighbor_orbitals_d = nullptr;
+    ProjectorData* projectors_d = nullptr;
+    double* psi_radial_d = nullptr;
+    double* beta_radial_d = nullptr;
+    int* proj_m0_offset_d = nullptr;
+    cuDoubleComplex* nlm_out_d = nullptr;
+
+    size_t output_size = total_neighbor_orbitals * nlm_dim * natomwfc;
+
+    CUDA_CHECK(cudaMalloc(&neighbor_orbitals_d, total_neighbor_orbitals * sizeof(NeighborOrbitalData)));
+    CUDA_CHECK(cudaMalloc(&projectors_d, nproj * sizeof(ProjectorData)));
+    CUDA_CHECK(cudaMalloc(&psi_radial_d, psi_radial_h.size() * sizeof(double)));
+    CUDA_CHECK(cudaMalloc(&beta_radial_d, beta_radial_h.size() * sizeof(double)));
+    CUDA_CHECK(cudaMalloc(&proj_m0_offset_d, nproj * sizeof(int)));
+    CUDA_CHECK(cudaMalloc(&nlm_out_d, output_size * sizeof(cuDoubleComplex)));
+
+    //=========================================================================
+    // Copy Data to Device
+    //=========================================================================
+
+    CUDA_CHECK(cudaMemcpy(neighbor_orbitals_d,
+                          neighbor_orbitals_h.data(),
+                          total_neighbor_orbitals * sizeof(NeighborOrbitalData),
+                          cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(projectors_d, projectors_h.data(), nproj * sizeof(ProjectorData), cudaMemcpyHostToDevice));
+    CUDA_CHECK(
+        cudaMemcpy(psi_radial_d, psi_radial_h.data(), psi_radial_h.size() * sizeof(double), cudaMemcpyHostToDevice));
+    CUDA_CHECK(
+        cudaMemcpy(beta_radial_d, beta_radial_h.data(), beta_radial_h.size() * sizeof(double), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(proj_m0_offset_d, proj_m0_offset_h.data(), nproj * sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemset(nlm_out_d, 0, output_size * sizeof(cuDoubleComplex)));
+
+    //=========================================================================
+    // Launch Kernel - SINGLE launch for ALL neighbors!
+    //=========================================================================
+
+    double3 R0_d3 = make_double3(R0.x, R0.y, R0.z);
+    double3 A_d3 = make_double3(A.x, A.y, A.z);
+
+    dim3 grid(total_neighbor_orbitals, nproj, 1);
+    dim3 block(BLOCK_SIZE, 1, 1);
+
+    snap_psibeta_atom_batch_kernel<<<grid, block>>>(R0_d3,
+                                                    A_d3,
+                                                    neighbor_orbitals_d,
+                                                    projectors_d,
+                                                    psi_radial_d,
+                                                    beta_radial_d,
+                                                    proj_m0_offset_d,
+                                                    total_neighbor_orbitals,
+                                                    nproj,
+                                                    natomwfc,
+                                                    nlm_dim,
+                                                    nlm_out_d);
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "[CUDA] Atom batch kernel launch error: %s\n", cudaGetErrorString(err));
+        cudaFree(neighbor_orbitals_d);
+        cudaFree(projectors_d);
+        cudaFree(psi_radial_d);
+        cudaFree(beta_radial_d);
+        cudaFree(proj_m0_offset_d);
+        cudaFree(nlm_out_d);
+        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+        return;
+    }
+
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    //=========================================================================
+    // Copy Results Back
+    //=========================================================================
+
+    std::vector<cuDoubleComplex> nlm_out_h(output_size);
+    CUDA_CHECK(cudaMemcpy(nlm_out_h.data(), nlm_out_d, output_size * sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost));
+
+    //=========================================================================
+    // Reconstruct nlm_tot structure
+    //=========================================================================
+
+    for (int i = 0; i < total_neighbor_orbitals; i++)
+    {
+        int ad = orbital_mappings[i].neighbor_idx;
+        int iw_index = orbital_mappings[i].iw_index;
+
+        std::vector<std::vector<std::complex<double>>> nlm(nlm_dim);
+        for (int d = 0; d < nlm_dim; d++)
+        {
+            nlm[d].resize(natomwfc);
+            for (int k = 0; k < natomwfc; k++)
+            {
+                size_t idx = i * nlm_dim * natomwfc + d * natomwfc + k;
+                nlm[d][k] = std::complex<double>(nlm_out_h[idx].x, nlm_out_h[idx].y);
+            }
+        }
+
+        // Insert into nlm_tot[ad][dir][iw_index]
+        for (int dir = 0; dir < nlm_dim; dir++)
+        {
+            nlm_tot[ad][dir].insert({iw_index, nlm[dir]});
+        }
+    }
+
+    //=========================================================================
+    // Cleanup
+    //=========================================================================
+
+    cudaFree(neighbor_orbitals_d);
+    cudaFree(projectors_d);
+    cudaFree(psi_radial_d);
+    cudaFree(beta_radial_d);
+    cudaFree(proj_m0_offset_d);
+    cudaFree(nlm_out_d);
+
+    ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
 }
 
 } // namespace gpu

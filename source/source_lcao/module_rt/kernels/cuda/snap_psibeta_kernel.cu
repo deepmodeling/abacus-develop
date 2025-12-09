@@ -418,6 +418,238 @@ __global__ void snap_psibeta_neighbor_batch_kernel(double3 R1,
 }
 
 //=============================================================================
+// Atom-Level Batch Kernel Implementation
+// Processes ALL neighbors for a center atom in a single kernel launch
+//=============================================================================
+
+__global__ void snap_psibeta_atom_batch_kernel(double3 R0,
+                                               double3 A,
+                                               const NeighborOrbitalData* __restrict__ neighbor_orbitals,
+                                               const ProjectorData* __restrict__ projectors,
+                                               const double* __restrict__ psi_radial,
+                                               const double* __restrict__ beta_radial,
+                                               const int* __restrict__ proj_m0_offset,
+                                               int total_neighbor_orbitals,
+                                               int nproj,
+                                               int natomwfc,
+                                               int nlm_dim,
+                                               cuDoubleComplex* __restrict__ nlm_out)
+{
+    int norb_idx = blockIdx.x; // Which (neighbor, orbital) pair
+    int proj_idx = blockIdx.y; // Which projector
+    int tid = threadIdx.x;
+
+    if (norb_idx >= total_neighbor_orbitals || proj_idx >= nproj)
+    {
+        return;
+    }
+
+    // Load neighbor-orbital data (includes R1)
+    const NeighborOrbitalData& norb = neighbor_orbitals[norb_idx];
+    const ProjectorData& proj = projectors[proj_idx];
+
+    double3 R1 = norb.R1;
+    int L1 = norb.L1;
+    int m1 = norb.m1;
+    int L0 = proj.L0;
+    int m0_offset = proj_m0_offset[proj_idx];
+
+    // Skip if L values exceed our precomputed limit
+    if (L1 > MAX_L || L0 > MAX_L)
+    {
+        return;
+    }
+
+    // Compute geometry
+    double3 dR = make_double3(R1.x - R0.x, R1.y - R0.y, R1.z - R0.z);
+    double distance01 = sqrt(dR.x * dR.x + dR.y * dR.y + dR.z * dR.z);
+
+    double r1_max = norb.psi_rcut;
+    // Integration range: use projector's radial grid range [r_min, r_max]
+    // This matches the CPU implementation in snap_psibeta_half_tddft.cpp
+    double r_min = proj.r_min;
+    double r_max = proj.r_max;
+    double xl = 0.5 * (r_max - r_min);
+    double xmean = 0.5 * (r_max + r_min);
+
+    // Phase factor exp(i A · R0)
+    double AdotR0 = A.x * R0.x + A.y * R0.y + A.z * R0.z;
+    cuDoubleComplex exp_iAR0 = cu_exp_i(AdotR0);
+
+    // Shared memory for reduction
+    __shared__ double s_temp_re[BLOCK_SIZE];
+    __shared__ double s_temp_im[BLOCK_SIZE];
+
+    // Initialize accumulators in registers
+    double result_re[MAX_YLM_SIZE];
+    double result_im[MAX_YLM_SIZE];
+    double result_r_re[3][MAX_YLM_SIZE];
+    double result_r_im[3][MAX_YLM_SIZE];
+
+    int num_m0 = 2 * L0 + 1;
+    for (int m0 = 0; m0 < num_m0; m0++)
+    {
+        result_re[m0] = 0.0;
+        result_im[m0] = 0.0;
+        for (int d = 0; d < 3; d++)
+        {
+            result_r_re[d][m0] = 0.0;
+            result_r_im[d][m0] = 0.0;
+        }
+    }
+
+    // Main integration loop
+    for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
+    {
+        double r_val = xmean + xl * d_gl_x[ir];
+        double w_rad = xl * d_gl_w[ir];
+
+        for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE)
+        {
+            double leb_x = d_lebedev_x[ian];
+            double leb_y = d_lebedev_y[ian];
+            double leb_z = d_lebedev_z[ian];
+            double w_ang = d_lebedev_w[ian];
+
+            // Local position relative to R0
+            double rx = r_val * leb_x;
+            double ry = r_val * leb_y;
+            double rz = r_val * leb_z;
+
+            // Vector from R1 (orbital atom) to integration point (R0 + r_local)
+            // This matches neighbor_batch: tx = rx + dRa.x where dRa = R0 - R1
+            double tx = rx + R0.x - R1.x;
+            double ty = ry + R0.y - R1.y;
+            double tz = rz + R0.z - R1.z;
+            double tnorm = sqrt(tx * tx + ty * ty + tz * tz);
+
+            // Check psi cutoff - matches neighbor_batch logic
+            if (tnorm <= r1_max)
+            {
+                // Compute Y_L1 - match neighbor_batch handling of small tnorm
+                double ylm1[MAX_YLM_SIZE];
+                if (tnorm > 1e-10)
+                {
+                    double inv_tnorm = 1.0 / tnorm;
+                    compute_ylm_gpu(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
+                }
+                else
+                {
+                    compute_ylm_gpu(L1, 0.0, 0.0, 1.0, ylm1);
+                }
+
+                // Compute Y_L0
+                double ylm0[MAX_YLM_SIZE];
+                compute_ylm_gpu(L0, leb_x, leb_y, leb_z, ylm0);
+
+                // Interpolate psi at tnorm (distance to orbital atom)
+                double psi_val
+                    = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
+
+                // Phase factor - match neighbor_batch: exp(+i A · r_local)
+                double A_dot_leb = A.x * leb_x + A.y * leb_y + A.z * leb_z;
+                double phase = r_val * A_dot_leb;
+                cuDoubleComplex exp_iAr = cu_exp_i(phase);
+
+                // Interpolate beta
+                double beta_val
+                    = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
+
+                // Y_L1m1
+                int offset_L1 = L1 * L1 + m1;
+                double ylm_L1_val = ylm1[offset_L1];
+
+                // Combined factor - match neighbor_batch exactly
+                double factor = ylm_L1_val * psi_val * beta_val * r_val * w_rad * w_ang;
+                cuDoubleComplex common_factor = cu_mul_real(exp_iAr, factor);
+
+                // Accumulate for all m0 - match neighbor_batch structure
+                int offset_L0 = L0 * L0;
+                for (int m0 = 0; m0 < num_m0; m0++)
+                {
+                    double ylm0_val = ylm0[offset_L0 + m0];
+
+                    result_re[m0] += common_factor.x * ylm0_val;
+                    result_im[m0] += common_factor.y * ylm0_val;
+
+                    if (nlm_dim == 4)
+                    {
+                        double r_op_x = rx + R0.x;
+                        double r_op_y = ry + R0.y;
+                        double r_op_z = rz + R0.z;
+
+                        result_r_re[0][m0] += common_factor.x * ylm0_val * r_op_x;
+                        result_r_im[0][m0] += common_factor.y * ylm0_val * r_op_x;
+                        result_r_re[1][m0] += common_factor.x * ylm0_val * r_op_y;
+                        result_r_im[1][m0] += common_factor.y * ylm0_val * r_op_y;
+                        result_r_re[2][m0] += common_factor.x * ylm0_val * r_op_z;
+                        result_r_im[2][m0] += common_factor.y * ylm0_val * r_op_z;
+                    }
+                }
+            }
+        }
+    }
+
+    // Reduction and output - OUTSIDE radial loop
+    int out_base = norb_idx * nlm_dim * natomwfc;
+
+    for (int m0 = 0; m0 < num_m0; m0++)
+    {
+        s_temp_re[tid] = result_re[m0];
+        s_temp_im[tid] = result_im[m0];
+        __syncthreads();
+
+        for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1)
+        {
+            if (tid < s)
+            {
+                s_temp_re[tid] += s_temp_re[tid + s];
+                s_temp_im[tid] += s_temp_im[tid + s];
+            }
+            __syncthreads();
+        }
+
+        if (tid == 0)
+        {
+            cuDoubleComplex result = make_cuDoubleComplex(s_temp_re[0], s_temp_im[0]);
+            result = cu_mul(result, exp_iAR0);
+            result = cu_conj(result);
+            nlm_out[out_base + 0 * natomwfc + m0_offset + m0] = result;
+        }
+        __syncthreads();
+
+        if (nlm_dim == 4)
+        {
+            for (int d = 0; d < 3; d++)
+            {
+                s_temp_re[tid] = result_r_re[d][m0];
+                s_temp_im[tid] = result_r_im[d][m0];
+                __syncthreads();
+
+                for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1)
+                {
+                    if (tid < s)
+                    {
+                        s_temp_re[tid] += s_temp_re[tid + s];
+                        s_temp_im[tid] += s_temp_im[tid + s];
+                    }
+                    __syncthreads();
+                }
+
+                if (tid == 0)
+                {
+                    cuDoubleComplex result_r = make_cuDoubleComplex(s_temp_re[0], s_temp_im[0]);
+                    result_r = cu_mul(result_r, exp_iAR0);
+                    result_r = cu_conj(result_r);
+                    nlm_out[out_base + (d + 1) * natomwfc + m0_offset + m0] = result_r;
+                }
+                __syncthreads();
+            }
+        }
+    }
+}
+
+//=============================================================================
 // Host-side Helper Function Implementations
 //=============================================================================
 
