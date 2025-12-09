@@ -101,21 +101,6 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
 //=============================================================================
 
 /**
- * @brief Information about a single orbital for batch processing
- */
-struct OrbitalData
-{
-    int L1;          // Angular momentum
-    int m1;          // Magnetic quantum number
-    int N1;          // Radial quantum number
-    int iw_index;    // Original orbital index for output mapping
-    int psi_offset;  // Offset in flattened psi array
-    int psi_mesh;    // Number of mesh points
-    double psi_dk;   // Grid spacing
-    double psi_rcut; // Cutoff radius
-};
-
-/**
  * @brief Information about a single projector
  */
 struct ProjectorData
@@ -138,40 +123,20 @@ struct NeighborOrbitalData
     int neighbor_idx; // Which neighbor (ad index) this orbital belongs to
     double3 R1;       // Neighbor atom position (tau1 * lat0)
 
-    // Orbital info (same as OrbitalData)
-    int L1;
-    int m1;
-    int N1;
-    int iw_index;
-    int psi_offset;
-    int psi_mesh;
-    double psi_dk;
-    double psi_rcut;
+    // Orbital info
+    int L1;          // Angular momentum
+    int m1;          // Magnetic quantum number
+    int N1;          // Radial quantum number
+    int iw_index;    // Original orbital index for output mapping
+    int psi_offset;  // Offset in flattened psi array
+    int psi_mesh;    // Number of mesh points
+    double psi_dk;   // Grid spacing
+    double psi_rcut; // Cutoff radius
 };
 
 //=============================================================================
 // Main Kernels
 //=============================================================================
-
-/**
- * @brief Neighbor-level batch kernel (original version)
- *
- * Grid: (num_orbitals, nproj, 1)
- * Block: (BLOCK_SIZE, 1, 1)
- */
-__global__ void snap_psibeta_neighbor_batch_kernel(double3 R1,
-                                                   double3 R0,
-                                                   double3 A,
-                                                   const OrbitalData* __restrict__ orbitals,
-                                                   const ProjectorData* __restrict__ projectors,
-                                                   const double* __restrict__ psi_radial,
-                                                   const double* __restrict__ beta_radial,
-                                                   const int* __restrict__ proj_m0_offset,
-                                                   int num_orbitals,
-                                                   int nproj,
-                                                   int natomwfc,
-                                                   int nlm_dim,
-                                                   cuDoubleComplex* __restrict__ nlm_out);
 
 /**
  * @brief Atom-level batch kernel - processes ALL neighbors for a center atom

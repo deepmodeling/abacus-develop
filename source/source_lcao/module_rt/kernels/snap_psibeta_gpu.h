@@ -34,22 +34,6 @@ void initialize_gpu_resources();
 void finalize_gpu_resources();
 
 /**
- * @brief Neighbor-level GPU batch processing interface (legacy)
- */
-bool snap_psibeta_neighbor_batch_gpu(const LCAO_Orbitals& orb,
-                                     const InfoNonlocal& infoNL_,
-                                     const int T1,
-                                     const ModuleBase::Vector3<double>& R1,
-                                     const Atom* atom1,
-                                     const std::vector<int>& all_indexes,
-                                     const int npol,
-                                     const int T0,
-                                     const ModuleBase::Vector3<double>& R0,
-                                     const ModuleBase::Vector3<double>& A,
-                                     std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm_all,
-                                     const bool calc_r);
-
-/**
  * @brief Atom-level GPU batch processing interface
  *
  * Processes ALL neighbors for a center atom in a SINGLE kernel launch.
