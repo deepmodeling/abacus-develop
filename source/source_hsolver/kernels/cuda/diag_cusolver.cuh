@@ -3,8 +3,6 @@
 #include <cuda.h>
 #include <complex>
 
-// #include "source_base/module_device/cuda_compat.h"
-
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 
