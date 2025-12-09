@@ -128,7 +128,7 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
-    if (GlobalV::NPROC != PARAM.inp.KPAR)
+    if (GlobalV::NPROC >= PARAM.inp.KPAR)
     {
         std::cout << "Error: Number of processors must be equal to KPAR for DSP hardware initialization." << std::endl;
         std::exit(1);
