@@ -238,7 +238,7 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute U_operator
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    Propagator prop(propagator, pv, PARAM.inp.td_dt);
     prop.compute_propagator_tensor<Device>(nlocal,
                                            Stmp,
                                            Htmp,
