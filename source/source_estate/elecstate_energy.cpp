@@ -105,15 +105,15 @@ void ElecState::cal_bandgap_updw()
 /// @brief calculate deband
 double ElecState::cal_delta_eband(const UnitCell& ucell) const
 {
-    // out potentials from potential mixing
-    // total energy and band energy corrections
+	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
+	// out potentials from potential mixing
+	// total energy and band energy corrections
     double deband0 = 0.0;
-
     double deband_aux = 0.0;
 
     // only potential related with charge is used here for energy correction
-    // on the fly calculate it here by v_effective - v_fixed
-    const double* v_eff = this->pot->get_effective_v(0);
+    // on the fly calculate it here by v_eff - v_fixed
+    const double* v_eff = this->pot->get_eff_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
     const bool v_ofk_flag = (XC_Functional::get_ked_flag());
@@ -122,10 +122,11 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     {
         deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
     }
+
     if (v_ofk_flag)
     {
-        v_ofk = this->pot->get_effective_vofk(0);
-        // cause in the get_effective_vofk, the func will return nullptr
+        v_ofk = this->pot->get_eff_vofk(0);
+        // cause in the get_eff_vofk, the func will return nullptr
         if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
         {
             ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
@@ -138,14 +139,14 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
 
     if (PARAM.inp.nspin == 2)
     {
-        v_eff = this->pot->get_effective_v(1);
+        v_eff = this->pot->get_eff_v(1);
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
             deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
         }
         if (v_ofk_flag)
         {
-            v_ofk = this->pot->get_effective_vofk(1);
+            v_ofk = this->pot->get_eff_vofk(1);
             if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
             {
                 ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
@@ -160,7 +161,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     {
         for (int is = 1; is < 4; is++)
         {
-            v_eff = this->pot->get_effective_v(is);
+            v_eff = this->pot->get_eff_v(is);
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
                 deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
@@ -178,13 +179,16 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
 
     // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
     deband0 -= 2 * this->f_en.exx; // Peize Lin add 2017-10-16
+
+	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
     return deband0;
 }
 
 /// @brief calculate descf
 double ElecState::cal_delta_escf() const
 {
-    ModuleBase::TITLE("energy", "delta_escf");
+    ModuleBase::TITLE("ElecState", "cal_delta_escf");
+	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
     double descf = 0.0;
 
     // now rho1 is "mixed" charge density
@@ -192,21 +196,21 @@ double ElecState::cal_delta_escf() const
     // because in "deband" the energy is calculated from "output" charge density,
     // so here is the correction.
     // only potential related with charge is used here for energy correction
-    // on the fly calculate it here by v_effective - v_fixed
-    const double* v_eff = this->pot->get_effective_v(0);
+    // on the fly calculate it here by v_eff - v_fixed
+    const double* v_eff = this->pot->get_eff_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
 
     if (XC_Functional::get_ked_flag())
     {
-        v_ofk = this->pot->get_effective_vofk(0);
+        v_ofk = this->pot->get_eff_vofk(0);
     }
     for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
     {
         descf -= (this->charge->rho[0][ir] - this->charge->rho_save[0][ir]) * (v_eff[ir] - v_fixed[ir]);
         if (XC_Functional::get_ked_flag())
         {
-            // cause in the get_effective_vofk, the func will return nullptr
+            // cause in the get_eff_vofk, the func will return nullptr
             assert(v_ofk != nullptr);
             descf -= (this->charge->kin_r[0][ir] - this->charge->kin_r_save[0][ir]) * v_ofk[ir];
         }
@@ -214,10 +218,10 @@ double ElecState::cal_delta_escf() const
 
     if (PARAM.inp.nspin == 2)
     {
-        v_eff = this->pot->get_effective_v(1);
+        v_eff = this->pot->get_eff_v(1);
         if (XC_Functional::get_ked_flag())
         {
-            v_ofk = this->pot->get_effective_vofk(1);
+            v_ofk = this->pot->get_eff_vofk(1);
         }
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
@@ -232,7 +236,7 @@ double ElecState::cal_delta_escf() const
     {
         for (int is = 1; is < 4; is++)
         {
-            v_eff = this->pot->get_effective_v(is);
+            v_eff = this->pot->get_eff_v(is);
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
                 descf -= (this->charge->rho[is][ir] - this->charge->rho_save[is][ir]) * v_eff[ir];
@@ -247,6 +251,14 @@ double ElecState::cal_delta_escf() const
     assert(this->charge->rhopw->nxyz > 0);
 
     descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
+
+// mohan move the code here, 2025-11-28
+#ifdef __MPI
+        MPI_Bcast(&descf, 1, MPI_DOUBLE, 0, BP_WORLD);
+#endif
+
+
+	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
     return descf;
 }
 
@@ -311,7 +323,7 @@ void ElecState::cal_energies(const int type)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("cal_energies", "The form of total energy functional is unknown!");
+        ModuleBase::WARNING_QUIT("ElecState::cal_energies", "The form of total energy functional is unknown!");
     }
 }
 

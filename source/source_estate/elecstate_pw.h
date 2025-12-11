@@ -24,7 +24,6 @@ class ElecStatePW : public ElecState
                 K_Vectors* pkv_in,
                 UnitCell* ucell_in,
                 pseudopot_cell_vnl* ppcell_in,
-                ModulePW::PW_Basis* rhodpw_in,
                 ModulePW::PW_Basis* rhopw_in,
                 ModulePW::PW_Basis_Big* bigpw_in);
 

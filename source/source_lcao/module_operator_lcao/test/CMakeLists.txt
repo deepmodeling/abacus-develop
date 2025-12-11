@@ -9,8 +9,8 @@ AddTest(
   ../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../source_basis/module_ao/ORB_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-  ../../../source_lcao/module_rt/td_info.cpp
-  ../../../source_lcao/module_rt/td_folding.cpp
+  ../../module_rt/td_info.cpp
+  ../../module_rt/td_folding.cpp
   ../../../source_estate/module_pot/H_TDDFT_pw.cpp
 )
 
@@ -22,8 +22,8 @@ AddTest(
   ../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../source_basis/module_ao/ORB_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-  ../../../source_lcao/module_rt/td_info.cpp
-  ../../../source_lcao/module_rt/td_folding.cpp
+  ../../module_rt/td_info.cpp
+  ../../module_rt/td_folding.cpp
   ../../../source_estate/module_pot/H_TDDFT_pw.cpp
 )
 

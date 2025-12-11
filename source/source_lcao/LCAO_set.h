@@ -53,6 +53,12 @@ void set_pot(
         Setup_DeePKS<TK> &deepks,
         const Input_para &inp);
 
+template <typename TK>
+void init_dm_from_file(
+	const std::string dmfile,
+	LCAO_domain::Setup_DM<TK>& dmat,
+	const UnitCell& ucell,
+	const Parallel_Orbitals* pv);
 } // end namespace
 
 #endif

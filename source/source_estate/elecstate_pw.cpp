@@ -17,7 +17,6 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
                                     K_Vectors* pkv_in,
                                     UnitCell* ucell_in,
                                     pseudopot_cell_vnl* ppcell_in,
-                                    ModulePW::PW_Basis* rhodpw_in,
                                     ModulePW::PW_Basis* rhopw_in,
                                     ModulePW::PW_Basis_Big* bigpw_in)
     : basis(wfc_basis_in)
@@ -26,7 +25,7 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
     this->rhopw_smooth = rhopw_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->init_ks(chr_in, pkv_in, pkv_in->get_nks(), rhodpw_in, bigpw_in);
+    this->init_ks(chr_in, pkv_in, pkv_in->get_nks(), bigpw_in);
 }
 
 template<typename T, typename Device>

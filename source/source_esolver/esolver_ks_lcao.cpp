@@ -21,13 +21,6 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 
-
-// tmp
-#include "source_psi/setup_psi.h" // use Setup_Psi
-#include "source_io/read_wfc_nao.h" // use read_wfc_nao
-#include "source_estate/elecstate_tools.h" // use fixed_weights
-
-
 namespace ModuleESolver
 {
 
@@ -61,7 +54,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     {
         // TK stands for double and std::complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), &(this->kv),
-          this->kv.get_nks(), this->pw_rho, this->pw_big);
+          this->kv.get_nks(), this->pw_big);
     }
 
     // 3) read LCAO orbitals/projectors and construct the interpolation tables.
@@ -82,6 +75,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
       this->dmat, this->chr, inp);
+    
+    if(inp.init_chg == "dm")
+    {
+        //! 4.1) init density matrix from file
+        std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
+        LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+    }
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
@@ -167,8 +167,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
-    // 12) init_scf, should be before_scf? mohan add 2025-03-10
-    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    // 12.1) if init_chg = "dm", then calculate rho from readin DMR before init_scf
+    if(PARAM.inp.init_chg == "dm")
+    {
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge, true);
+    }
+    // 12.2) init_scf, should be before_scf? mohan add 2025-03-10
+    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // 13) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
@@ -176,7 +181,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
+    if(PARAM.inp.init_chg != "dm") this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
@@ -458,8 +463,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             }
             this->dftu.cal_energy_correction(ucell, istep);
         }
-        this->dftu.output(ucell);
-    }
+		this->dftu.output(ucell);
+		// use the converged occupation matrix for next MD/Relax SCF calculation
+		if (conv_esolver)
+		{
+			this->dftu.initialed_locale = true;
+		}
+	}
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
@@ -485,12 +495,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             this->p_chgmix->mix_dmr(this->dmat.dm);
         }
-    }
-
-    // use the converged occupation matrix for next MD/Relax SCF calculation
-    if (PARAM.inp.dft_plus_u && conv_esolver)
-    {
-        this->dftu.initialed_locale = true;
     }
 
     // control the output related to the finished iteration

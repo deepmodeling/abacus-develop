@@ -5,6 +5,9 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include <string>
+#include <fstream>
+#include <sstream>
+
 
 namespace ModuleIO
 {
@@ -151,6 +154,13 @@ bool assume_as_boolean(const std::string& val);
 std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
+
+
+// filter non-ASCII characters from ifstream and output to stringstream
+// return true if successful, false otherwise
+bool filter_nonascii_and_comment(std::ifstream& ifs,
+                       std::stringstream& out_ascii_stream);
+
 
 } // namespace ModuleIO
 

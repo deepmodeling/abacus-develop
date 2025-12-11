@@ -25,10 +25,10 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     }
 
     pelec->pot->update_from_charge(&chr, &ucell); // Hartree + XC + external
-    this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_effective_v()); // TF potential
+    this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_eff_v()); // TF potential
     if (PARAM.inp.of_cd)
     {
-        this->cal_CD_potential(psi_, pw_rho, pelec->pot->get_effective_v(), PARAM.inp.of_mCD_alpha); // CD potential
+        this->cal_CD_potential(psi_, pw_rho, pelec->pot->get_eff_v(), PARAM.inp.of_mCD_alpha); // CD potential
     }
 
 #ifdef _OPENMP
@@ -36,7 +36,7 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
 #endif
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        const double* vr_eff = pelec->pot->get_effective_v(is);
+        const double* vr_eff = pelec->pot->get_eff_v(is);
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             Hpsi[is * pw_rho->nrxx + ir] = vr_eff[ir]*psi_[is * pw_rho->nrxx + ir];
@@ -188,14 +188,17 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
         pw_rho->real2recip(rCurrent_z,recipCurrent_z);
         for (int ik = 0; ik < pw_rho->npw; ++ik)
         {
-            recipCDPotential[ik]=recipCurrent_x[ik]*pw_rho->gcar[ik].x+recipCurrent_y[ik]*pw_rho->gcar[ik].y+recipCurrent_z[ik]*pw_rho->gcar[ik].z;
+            recipCDPotential[ik]=recipCurrent_x[ik]*pw_rho->gcar[ik].x
+              +recipCurrent_y[ik]*pw_rho->gcar[ik].y
+              +recipCurrent_z[ik]*pw_rho->gcar[ik].z;
             recipCDPotential[ik]*=imag/pw_rho->gg[ik];
         }
         pw_rho->recip2real(recipCDPotential,rCDPotential);
 
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) / (2.0*std::pow(std::real(kF_r[ir]),2));
+            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) 
+              / (2.0*std::pow(std::real(kF_r[ir]),2));
         }
         delete[] recipCurrent_x;
         delete[] recipCurrent_y;
@@ -278,7 +281,9 @@ void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec,
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             K4[is * nrxx + ir]=-1.0*K4[is * nrxx + ir]*dt*imag;
-            pphi_[is * nrxx + ir]+=1.0/6.0*(K1[is * nrxx + ir]+2.0*K2[is * nrxx + ir]+2.0*K3[is * nrxx + ir]+K4[is * nrxx + ir]);
+            pphi_[is * nrxx + ir]+=1.0/6.0*(K1[is * nrxx + ir]
+              +2.0*K2[is * nrxx + ir]+2.0*K3[is * nrxx + ir]
+              +K4[is * nrxx + ir]);
         }
     }
 

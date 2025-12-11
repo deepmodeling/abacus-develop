@@ -6,6 +6,7 @@ list(APPEND hamilt_ofdft_srcs
     kedf_lkt.cpp
     kedf_manager.cpp
     of_stress_pw.cpp
+    of_print_info.cpp
     evolve_ofdft.cpp
 )
 

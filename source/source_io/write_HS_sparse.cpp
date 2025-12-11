@@ -716,7 +716,7 @@ void ModuleIO::save_sparse(
     ModuleBase::timer::tick("ModuleIO", "save_sparse");
 
     int total_R_num = all_R_coor.size();
-    std::vector<int> nonzero_num(total_R_num, 0);
+    std::vector<long long> nonzero_num(total_R_num, 0);
     int count = 0;
     for (auto& R_coor: all_R_coor) {
         auto iter = smat.find(R_coor);

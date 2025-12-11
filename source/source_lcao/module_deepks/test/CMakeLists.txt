@@ -29,18 +29,18 @@ add_executable(
     ../../../source_estate/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
-    ../../../source_lcao/module_hcontainer/base_matrix.cpp
-    ../../../source_lcao/module_hcontainer/hcontainer.cpp
-    ../../../source_lcao/module_hcontainer/atom_pair.cpp
-    ../../../source_lcao/module_hcontainer/func_transfer.cpp
-    ../../../source_lcao/module_hcontainer/func_folding.cpp
-    ../../../source_lcao/module_hcontainer/transfer.cpp
-    ../../../source_lcao/module_hcontainer/output_hcontainer.cpp
-    ../../../source_lcao/module_operator_lcao/deepks_lcao.cpp
-    ../../../source_lcao/module_operator_lcao/operator_lcao.cpp
+    ../../module_hcontainer/base_matrix.cpp
+    ../../module_hcontainer/hcontainer.cpp
+    ../../module_hcontainer/atom_pair.cpp
+    ../../module_hcontainer/func_transfer.cpp
+    ../../module_hcontainer/func_folding.cpp
+    ../../module_hcontainer/transfer.cpp
+    ../../module_hcontainer/output_hcontainer.cpp
+    ../../module_operator_lcao/deepks_lcao.cpp
+    ../../module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
-    ../../../source_lcao/module_rt/td_info.cpp
-    ../../../source_lcao/module_rt/td_folding.cpp
+    ../../module_rt/td_info.cpp
+    ../../module_rt/td_folding.cpp
     ../../../source_estate/module_pot/H_TDDFT_pw.cpp
 )
 

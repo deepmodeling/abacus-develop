@@ -2,6 +2,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/cal_ux.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-11-12
 
 template <typename TK>
 void elecstate::init_dm(UnitCell& ucell,
@@ -16,26 +17,15 @@ void elecstate::init_dm(UnitCell& ucell,
 
 	if (iter == 1 && exx_two_level_step == 0)
 	{
-		std::cout << " WAVEFUN -> CHARGE " << std::endl;
-
-		// calculate the density matrix using read in wave functions
-		// and then calculate the charge density on grid.
-
-		pelec->skip_weights = true;
-		elecstate::calculate_weights(pelec->ekb,
-				pelec->wg,
-				pelec->klist,
-				pelec->eferm,
-				pelec->f_en,
-				pelec->nelec_spin,
-				pelec->skip_weights);
+		std::cout << " LCAO WAVEFUN -> CHARGE " << std::endl;
 
 		elecstate::calEBand(pelec->ekb, pelec->wg, pelec->f_en);
+
 		elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), pelec->wg, *psi, *dmat.dm);
 		dmat.dm->cal_DMR();
 
-//		pelec->psiToRho(*psi); // I found this sentence is useless, mohan add 2025-11-04
-		pelec->skip_weights = false;
+        // mohan add 2025-11-12, use density matrix to calculate the charge density
+        LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr);
 
 		elecstate::cal_ux(ucell);
 

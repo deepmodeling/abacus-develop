@@ -239,7 +239,6 @@ OBJS_ELECSTAT=elecstate.o\
     potential_types.o\
     pot_sep.o\
     pot_local.o\
-    pot_local_paw.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
@@ -357,6 +356,7 @@ OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
     hcontainer.o\
     output_hcontainer.o\
+    read_hcontainer.o\
     func_folding.o\
     func_transfer.o\
     transfer.o\
@@ -738,6 +738,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
+    of_print_info.o\
     symmetry_rho.o\
     symmetry_rhog.o\
     setup_psi_pw.o\

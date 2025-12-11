@@ -80,7 +80,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! Call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
-    //! setup and allocation for pelec, charge density, potentials, etc. 
+    //! setup and allocation for pelec, potentials, etc. 
     elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
@@ -286,7 +286,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // pp projectors, liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
-        ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+        ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 

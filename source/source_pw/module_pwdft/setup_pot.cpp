@@ -38,13 +38,8 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
-    pelec->init_scf(istep,
-            ucell,
-            para_grid,
-            sf.strucFac,
-            locpp.numeric,
-			ucell.symm,
-			(void*)pw_wfc);
+    pelec->init_scf(ucell, para_grid, sf.strucFac,
+            locpp.numeric, ucell.symm, (void*)pw_wfc);
 
 	//----------------------------------------------------------
 	//! 2) Symmetrize the charge density (rho)
@@ -66,7 +61,7 @@ void pw::setup_pot(const int istep,
 	//! D in uspp need vloc, thus behind init_scf()
 	//! calculate the effective coefficient matrix
 	//! for non-local pseudopotential projectors
-	ModuleBase::matrix veff = pelec->pot->get_effective_v();
+	ModuleBase::matrix veff = pelec->pot->get_eff_v();
 
 	ppcell.cal_effective_D(veff, pw_rhod, ucell);
 

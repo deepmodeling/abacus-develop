@@ -121,7 +121,7 @@ void ctrl_output_fp(UnitCell& ucell,
             fn += spin_block + geom_block + ".cube";
 
             ModuleIO::write_vdata_palgrid(para_grid,
-                    pelec->pot->get_effective_v(is),
+                    pelec->pot->get_eff_v(is),
                     is,
                     nspin,
                     istep_in,

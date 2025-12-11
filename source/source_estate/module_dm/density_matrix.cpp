@@ -29,7 +29,7 @@ template <typename TK, typename TR>
 DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk)
     : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nk((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
 {
-    ModuleBase::TITLE("DensityMatrix", "DensityMatrix-MK");
+    ModuleBase::TITLE("DensityMatrix", "resize_DMK");
     const int nks = _nk * _nspin;
     this->_DMK.resize(nks);
     for (int ik = 0; ik < nks; ik++)
@@ -42,7 +42,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
 template <typename TK, typename TR>
 DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nk(1)
 {
-    ModuleBase::TITLE("DensityMatrix", "DensityMatrix-GO");
+    ModuleBase::TITLE("DensityMatrix", "resize_gamma");
     this->_DMK.resize(_nspin);
     for (int ik = 0; ik < this->_nspin; ik++)
     {

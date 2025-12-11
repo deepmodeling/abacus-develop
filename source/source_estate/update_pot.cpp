@@ -12,9 +12,6 @@ void elecstate::update_pot(UnitCell& ucell, // unitcell
         elecstate::cal_ux(ucell);
         pelec->pot->update_from_charge(&chr, &ucell);
         pelec->f_en.descf = pelec->cal_delta_escf();
-#ifdef __MPI
-        MPI_Bcast(&(pelec->f_en.descf), 1, MPI_DOUBLE, 0, BP_WORLD);
-#endif
     }
     else
     {

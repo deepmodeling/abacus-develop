@@ -15,7 +15,7 @@ AddTest(
   ../read_stru.cpp   ../read_atom_species.cpp
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../source_io/output.cpp
   ../../source_estate/read_pseudo.cpp ../../source_estate/cal_nelec_nband.cpp
-  ../../source_estate/read_orb.cpp    ../../source_cell/print_cell.cpp
+  ../../source_estate/read_orb.cpp    ../print_cell.cpp
   ../../source_estate/cal_wfc.cpp  ../sep.cpp   ../sep_cell.cpp
 )
 

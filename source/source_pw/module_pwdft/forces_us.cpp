@@ -31,7 +31,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     ModuleBase::matrix forceq(ucell.nat, 3);
 
-    ModuleBase::matrix veff = elec.pot->get_effective_v();
+    ModuleBase::matrix veff = elec.pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)

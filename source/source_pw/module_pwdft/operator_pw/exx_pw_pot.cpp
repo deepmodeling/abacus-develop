@@ -392,7 +392,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
                       double ucell_omega)
 {
     double exx_div = 0;
-
+    // return exx_div;
     double nqs_half1 = 0.5 * kv->nmp[0];
     double nqs_half2 = 0.5 * kv->nmp[1];
     double nqs_half3 = 0.5 * kv->nmp[2];

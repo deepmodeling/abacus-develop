@@ -1,13 +1,120 @@
 #include "parse_args.h"
+#include "build_info.h"
 
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
+#include <string>
 
 #include "source_io/read_input.h"
 #include "source_main/version.h"
 
+#if defined(COMMIT_INFO)
+#include "commit.h"
+#endif
+
 namespace ModuleIO
 {
+
+void print_build_info()
+{
+    const int label_width = 30;
+
+    auto print_section = [](const std::string& title) {
+        std::cout << std::endl;
+        std::cout << "----------------- " << title << " -----------------" << std::endl;
+    };
+
+    auto print_info = [label_width](const std::string& label, const std::string& value) {
+        std::cout << std::left << std::setw(label_width) << (label + ":") << " " << value << std::endl;
+    };
+
+    // --- 1. Core & Platform Info ---
+    print_section("ABACUS Core & Platform");
+    print_info("ABACUS Version", VERSION);
+#if defined(COMMIT)
+        print_info("Git Commit", COMMIT);
+#else
+        print_info("Git Commit", "N/A");
+#endif
+    print_info("Target Platform", ABACUS_PLATFORM_NAME);
+    print_info("Build Type", ABACUS_BUILD_TYPE);
+
+    // --- 2. Build Environment ---
+    print_section("Build Environment");
+    print_info("Built By", ABACUS_BUILD_USER);
+    print_info("Built On", ABACUS_BUILD_HOST);
+    print_info("Built At", std::string(__DATE__) + " " + __TIME__);
+
+    // --- 3. Compiler Info ---
+    print_section("Compiler & Flags");
+    print_info("C++ Compiler", std::string(ABACUS_CXX_COMPILER_ID) + " (" + ABACUS_CXX_COMPILER_PATH + ")");
+    print_info("C++ Compiler Ver", ABACUS_CXX_COMPILER_VERSION);
+    print_info("C++ Flags", ABACUS_CXX_FLAGS);
+    print_info("Linker Flags", ABACUS_LINKER_FLAGS);
+    print_info("CUDA Flags", ABACUS_CUDA_FLAGS);
+
+    // --- 4. Sanitizers & Debugging ---
+    print_section("Sanitizers & Debugging");
+    print_info("AddressSanitizer", ABACUS_ASAN_STATUS);
+    print_info("Debug Symbols", ABACUS_DEBUG_SYMBOLS);
+
+    // --- 5. CMake Configuration Summary ---
+    print_section("CMake Configuration Summary");
+    std::cout << ABACUS_CMAKE_OPTIONS << std::endl;
+    std::cout << std::endl;
+    std::cout << ABACUS_CMAKE_FIND_PACKAGES << std::endl;
+
+    // --- 6. Parallelism & Communication ---
+    print_section("Parallelism & Communication");
+    print_info("MPI Implementation", ABACUS_MPI_IMPLEMENTATION);
+    print_info("MPI Version", ABACUS_MPI_VERSION);
+    print_info("CUDA-aware MPI", ABACUS_CUDA_AWARE_MPI);
+    print_info("OpenMP Support", ABACUS_OPENMP_VERSION);
+
+    // --- 7. Core Math Libraries ---
+    print_section("Core Math Libraries");
+#if defined(__LCAO)
+        print_info("LCAO Algorithm", "yes");
+#else
+        print_info("LCAO Algorithm", "no");
+#endif
+    print_info("ELPA Support", ABACUS_ELPA_VERSION);
+    print_info("MKL Support", ABACUS_MKL_SUPPORT);
+    print_info("LibXC Support", ABACUS_LIBXC_VERSION);
+    print_info("FFTW Support", ABACUS_FFTW_VERSION);
+
+    // --- 8. Accelerators & Specific Hardware ---
+    print_section("Accelerators & Hardware");
+    print_info("NVIDIA CUDA Support", ABACUS_CUDA_VERSION);
+    print_info("AMD ROCm Support", ABACUS_ROCM_VERSION);
+    print_info("CUSOLVERMP Support", ABACUS_CUSOLVERMP_VERSION);
+
+    // --- 9. Hybrid Functional Libraries ---
+    print_section("Hybrid Functional Libraries");
+    print_info("Cereal Serialization", ABACUS_CEREAL_VERSION);
+    print_info("LibRI Support", ABACUS_LIBRI_VERSION);
+    print_info("LibComm Support", ABACUS_LIBCOMM_VERSION);
+
+    // --- 10. AI & Machine Learning ---
+    print_section("AI & Machine Learning");
+    print_info("LibTorch Support", ABACUS_LIBTORCH_VERSION);
+    print_info("Libnpy Support", ABACUS_LIBNPY_VERSION);
+    print_info("DeePMD-kit Support", ABACUS_DEEPMD_VERSION);
+    print_info("NEP Support", ABACUS_NEP_VERSION);
+    print_info("TensorFlow Support", ABACUS_TENSORFLOW_VERSION);
+
+    // --- 11. Testing & Other Libraries ---
+    print_section("Testing & Other Libraries");
+    print_info("GTest Support", ABACUS_GTEST_VERSION);
+    print_info("Google Benchmark", ABACUS_GOOGLEBENCH_VERSION);
+    print_info("RapidJSON Support", ABACUS_RAPIDJSON_VERSION);
+    print_info("PEXSI Support", ABACUS_PEXSI_VERSION);
+    print_info("cnpy Support", ABACUS_CNPY_VERSION);
+
+    std::cout << "----------------------------------------------------" << std::endl;
+    std::cout << std::endl;
+}
 
 void parse_args(int argc, char** argv)
 {
@@ -16,12 +123,17 @@ void parse_args(int argc, char** argv)
         std::string arg = argv[i];
         if (arg == "--version" || arg == "-v" || arg == "-V")
         {
-#ifdef VERSION
+#if defined(VERSION)
             const char* version = VERSION;
 #else
             const char* version = "unknown";
 #endif
             std::cout << "ABACUS version " << version << std::endl;
+            std::exit(0);
+        }
+        else if (arg == "--info" || arg == "-i" || arg == "-I")
+        {
+            print_build_info();
             std::exit(0);
         }
         else if (arg == "--check-input")
@@ -30,7 +142,11 @@ void parse_args(int argc, char** argv)
         }
         else
         {
-            std::cerr << "Unknown argument: " << arg << std::endl;
+            std::cerr << "Error: Unknown argument: " << arg << std::endl;
+            std::cerr << "Usage: abacus [options]" << std::endl;
+            std::cerr << "  -v, -V, --version      Display version information." << std::endl;
+            std::cerr << "  -i, -I, --info         Display detailed build information." << std::endl;
+            std::cerr << "  --check-input      Check input file syntax and exit." << std::endl;
             std::exit(1);
         }
     }

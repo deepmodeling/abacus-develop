@@ -24,8 +24,8 @@ namespace PulayForceStress
         {
             for (int is = 0; is < nspin; ++is)
             {
-                vr_eff[is] = pot->get_effective_v(is);
-                vofk_eff[is] = pot->get_effective_vofk(is);
+                vr_eff[is] = pot->get_eff_v(is);
+                vofk_eff[is] = pot->get_eff_vofk(is);
             }
             ModuleGint::cal_gint_fvl_meta(nspin, vr_eff, vofk_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
         }
@@ -33,7 +33,7 @@ namespace PulayForceStress
         {
             for(int is = 0; is < nspin; ++is)
             {
-                vr_eff[is] = pot->get_effective_v(is);
+                vr_eff[is] = pot->get_eff_v(is);
             }
             ModuleGint::cal_gint_fvl(nspin, vr_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
         }
