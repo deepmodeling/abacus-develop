@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (General)
 suffix             autotest
 pseudo_dir         ../../PP_ORB
-orbital_dir        ../../PP_ORB  
+orbital_dir        ../../PP_ORB
 nbands             5
 calculation        md
 esolver_type       tddft
@@ -16,6 +16,7 @@ ks_solver          cusolver
 basis_type         lcao
 gamma_only         0
 md_nstep           2
+estep_per_md       1
 
 mixing_type        broyden
 mixing_beta        0.7
