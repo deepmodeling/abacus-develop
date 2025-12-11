@@ -15,10 +15,10 @@ namespace elecstate
 {
 void print_local_matrix(std::ostream& os,
                         const std::complex<double>* matrix_data,
-                        int local_rows, // pv.nrow
-                        int local_cols, // pv.ncol
-                        const std::string& matrix_name = "",
-                        int rank = -1)
+                        int local_rows,
+                        int local_cols,
+                        const std::string& matrix_name,
+                        int rank)
 {
     if (!matrix_name.empty() || rank >= 0)
     {
@@ -59,6 +59,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
                    K_Vectors& kv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
+    ModuleBase::TITLE("elecstate", "cal_edm_tddft");
     ModuleBase::timer::tick("elecstate", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
@@ -311,6 +312,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
                           K_Vectors& kv,
                           hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
+    ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor");
     ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor");
 
     const int nlocal = PARAM.globalv.nlocal;
@@ -541,6 +543,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
                                  K_Vectors& kv,
                                  hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
+    ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor_lapack");
     ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor_lapack");
 
     const int nlocal = PARAM.globalv.nlocal;

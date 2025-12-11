@@ -30,11 +30,8 @@ void evolve_psi(const int nband,
                 std::ofstream& ofs_running,
                 const int print_matrix)
 {
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    // ofs_running << " Evolving electronic wave functions begins" << std::endl;
-
+    ModuleBase::TITLE("module_rt", "evolve_psi");
     time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -112,12 +109,10 @@ void evolve_psi(const int nband,
     delete[] Hold;
     delete[] U_operator;
 
-#endif
+#endif // __MPI
 
     time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " Evolving electronic wave functions ends" << std::endl;
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
@@ -137,6 +132,9 @@ void evolve_psi_tensor(const int nband,
                        const int print_matrix,
                        const bool use_lapack)
 {
+    ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
+    time_t time_start = time(nullptr);
+
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -154,16 +152,11 @@ void evolve_psi_tensor(const int nband,
     }
 #endif // __CUDA
 
-    // ofs_running << " evolve_psi_tensor::start " << std::endl;
-
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
-
 #ifdef __MPI
-
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
+
+    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
 
     // Create Tensor objects for temporary data and sync from host to device
     const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
@@ -197,6 +190,8 @@ void evolve_psi_tensor(const int nband,
         syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat.p, len_HS);
         syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat.p, len_HS);
     }
+
+    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
 
     ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
     U_operator.zero();
@@ -238,7 +233,7 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute U_operator
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    Propagator prop(propagator, pv, PARAM.inp.td_dt);
     prop.compute_propagator_tensor<Device>(nlocal,
                                            Stmp,
                                            Htmp,
@@ -298,13 +293,7 @@ void evolve_psi_tensor(const int nband,
             compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
         }
     }
-
 #endif // __MPI
-
-    time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " evolve_psi_tensor::end " << std::endl;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (ct_device_type == ct::DeviceType::GpuDevice)
@@ -314,6 +303,9 @@ void evolve_psi_tensor(const int nband,
         ct::kernels::destroyGpuBlasHandle();
     }
 #endif // __CUDA
+
+    time_t time_end = time(nullptr);
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
