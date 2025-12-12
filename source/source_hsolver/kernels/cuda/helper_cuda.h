@@ -40,6 +40,8 @@
 
 #include "helper_string.h"
 
+#include "source_base/module_device/cuda_compat.h"
+
 #ifndef EXIT_WAIVED
 #define EXIT_WAIVED 2
 #endif
