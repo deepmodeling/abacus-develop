@@ -2,7 +2,6 @@
 #include "device.h"
 
 #include "source_base/tool_quit.h"
-#include "source_base/module_device/cuda_compat.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <base/macros/macros.h>
@@ -15,6 +14,7 @@
 
 #if defined(__CUDA)
 #include <cuda_runtime.h>
+#include "source_base/module_device/cuda_compat.h"
 #endif
 
 #if defined(__ROCM)
