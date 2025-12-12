@@ -4,23 +4,20 @@ INPUT_PARAMETERS
 calculation        md
 esolver_type       tddft
 md_type            nve
-md_nstep           2
-estep_per_md       1
-md_dt              0.05
+md_nstep           0
+estep_per_md       10
+td_dt              0.005
 md_tfirst          0
 
 # rt-TDDFT parameters
 td_vext            1  # add time-dependent external potential
 td_vext_dire       3  # direction along z
-td_stype           1  # 1: velocity gauge
-td_ttype           0  # Gaussian type potential
+td_stype           2  # 2: hybrid gauge
+td_ttype           3  # Heaviside type potential
 td_tstart          1  # the step electric field starts
-td_tend            2  # the step electric field ends
-td_gauss_freq      0.32
-td_gauss_phase     0.0
-td_gauss_sigma     0.5
-td_gauss_t0        1
-td_gauss_amp       0.01
+td_tend            10 # the step electric field ends
+td_heavi_t0        3
+td_heavi_amp       0.05
 
 # print out current information
 out_current        1

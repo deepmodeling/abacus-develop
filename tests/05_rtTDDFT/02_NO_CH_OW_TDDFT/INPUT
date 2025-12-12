@@ -19,7 +19,7 @@ ks_solver          scalapack_gvx
 basis_type         lcao
 gamma_only         0
 md_nstep           2
-estep_per_md       1 
+estep_per_md       1
 
 mixing_type        broyden
 mixing_beta        0.7
@@ -31,8 +31,8 @@ stress_thr         1e-6
 cal_force          1
 force_thr_ev       1e-3
 
-md_type		    nve
-md_dt			0.01
-init_vel        1
-out_wfc_lcao    1
-out_app_flag    0
+md_type            nve
+md_dt              0.01
+init_vel           1
+out_wfc_lcao       1
+out_app_flag       0
