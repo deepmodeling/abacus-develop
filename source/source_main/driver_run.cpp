@@ -130,8 +130,10 @@ void Driver::init_hardware()
 #ifdef __DSP
     if (GlobalV::NPROC > PARAM.inp.KPAR)
     {
-        std::cout << "Error: Number of processors must be equal to KPAR for DSP hardware initialization." << std::endl;
-        std::exit(1);
+        ModuleBase::WARNING_QUIT(
+            "Driver::init_hardware",
+            "Number of processors must be equal to KPAR for DSP hardware initialization."
+        );
     }
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);

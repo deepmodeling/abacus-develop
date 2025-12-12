@@ -15,7 +15,7 @@
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-// #include "source_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #include "source_main/version.h"
 
 #include <iostream>
@@ -88,10 +88,10 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
 }
 
 // changed from read_mpi_parameters in 2024-1018
-void Parallel_Global::read_pal_param(int argc, 
-                                          char** argv, 
-                                          int& NPROC, 
-                                          int& NTHREAD_PER_PROC, 
+void Parallel_Global::read_pal_param(int argc,
+                                          char** argv,
+                                          int& NPROC,
+                                          int& NTHREAD_PER_PROC,
                                           int& MY_RANK)
 {
 #ifdef __MPI
@@ -339,7 +339,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
     // band parallelization
     MPICommGroup bndpar_group(kpar_group.group_comm);
     bndpar_group.divide_group_comm(BNDPAR, true);
-    
+
     // Set parallel index.
     // In previous versions, the order of k-point parallelization and band parallelization is reversed.
     // So we need to keep some variables for compatibility.
@@ -355,7 +355,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
     {
         KP_WORLD = MPI_COMM_NULL;
     }
-    
+
     if(BNDPAR > 1)
     {
         NPROC_IN_BNDGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
@@ -385,14 +385,19 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
 {
     if (num_groups == 0)
     {
-        std::cout << "Error: Number of groups must be greater than 0." << std::endl;
-        exit(1);
+        ModuleBase::WARNING_QUIT(
+            "Parallel_Global::divide_mpi_groups",
+            "Number of groups must be greater than 0."
+        );
     }
     if (procs < num_groups)
     {
         std::cout << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
                   << num_groups << ")." << std::endl;
-        exit(1);
+        ModuleBase::WARNING_QUIT(
+            "Parallel_Global::divide_mpi_groups",
+            "Number of processes must be greater than the number of groups."
+        );
     }
     // Calculate the distribution of processes among pools.
     procs_in_group = procs / num_groups;

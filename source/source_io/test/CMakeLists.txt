@@ -8,7 +8,7 @@ install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET MODULE_IO_input_test_para
-  LIBS parameter  ${math_libs} base device io_input 
+  LIBS parameter  ${math_libs} base device io_input
   SOURCES read_input_ptest.cpp
 )
 
@@ -19,7 +19,7 @@ add_test(NAME MODULE_IO_input_test_para_4
 
 AddTest(
   TARGET MODULE_IO_read_exit_file_test
-  LIBS parameter  ${math_libs} base device 
+  LIBS parameter  ${math_libs} base device
   SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
 )
 
@@ -41,7 +41,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
-  LIBS parameter  ${math_libs} base device symmetry 
+  LIBS parameter  ${math_libs} base device symmetry
   SOURCES write_eig_occ_test.cpp ../write_eig_occ.cpp ../output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
 		../cif_io.cpp
 )
@@ -60,7 +60,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_print_info
-  LIBS parameter  ${math_libs} base device symmetry cell_info 
+  LIBS parameter  ${math_libs} base device symmetry cell_info
   SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp
 )
 
@@ -73,6 +73,7 @@ AddTest(
 	../../source_base/parallel_common.cpp
 	../../source_base/parallel_global.cpp
   ../../source_base/parallel_comm.cpp
+  ../../source_base/tool_quit.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory.cpp ../../source_base/timer.cpp
 )
 
 AddTest(
@@ -90,7 +91,7 @@ add_test(NAME MODULE_IO_write_wfc_nao_para
 
 AddTest(
   TARGET MODULE_IO_write_orb_info
-  LIBS parameter  ${math_libs} base device cell_info 
+  LIBS parameter  ${math_libs} base device cell_info
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
@@ -108,7 +109,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_output_log_test
-  LIBS parameter base ${math_libs} device 
+  LIBS parameter base ${math_libs} device
   SOURCES ../output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
@@ -139,8 +140,8 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_to_qo_test
-  LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb 
-  SOURCES 
+  LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb
+  SOURCES
   to_qo_test.cpp
   ../to_qo_kernel.cpp
   ../to_qo_mpi.cpp
@@ -178,9 +179,9 @@ add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
 
 AddTest(
   TARGET MODULE_IO_numerical_basis_test
-  LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb 
-  SOURCES numerical_basis_test.cpp 
-          ../numerical_basis_jyjy.cpp 
+  LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb
+  SOURCES numerical_basis_test.cpp
+          ../numerical_basis_jyjy.cpp
           ../../source_lcao/center2_orb.cpp
           ../orb_io.cpp
 )
@@ -233,7 +234,7 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 
 AddTest(
   TARGET MODULE_IO_write_dmk
-  LIBS parameter ${math_libs} base device cell_info 
+  LIBS parameter ${math_libs} base device cell_info
   SOURCES write_dmk_test.cpp ../write_dmk.cpp ../output.cpp
 )
 
@@ -259,8 +260,8 @@ if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_cal_pLpR_test
   LIBS parameter base ${math_libs} device neighbor
-  SOURCES 
-  cal_pLpR_test.cpp 
+  SOURCES
+  cal_pLpR_test.cpp
   ../cal_pLpR.cpp
   ../../source_basis/module_ao/ORB_atomic_lm.cpp
   ../../source_basis/module_ao/ORB_atomic.cpp

@@ -9,6 +9,8 @@
 #include <cstring>
 #include <string>
 
+#include "source_base/tool_quit.h"
+
 /************************************************
  *  unit test of functions in parallel_global.cpp
  ***********************************************/
@@ -207,4 +209,4 @@ int main(int argc, char** argv)
     MPI_Finalize();
     return result;
 }
-#endif
+#endif // __MPI

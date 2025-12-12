@@ -7,13 +7,13 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_ParaGlobal
   LIBS parameter MPI::MPI_CXX
-  SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp
+  SOURCES parallel_global_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../tool_quit.cpp  ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../parallel_reduce.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_ParaReduce
   LIBS parameter MPI::MPI_CXX
-  SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp
+  SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp ../tool_quit.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 
 install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -54,7 +54,7 @@ add_test(NAME MODULE_BASE_para_gemm_parallel
 AddTest(
     TARGET MODULE_BASE_parallel_2d_test
     SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-    LIBS parameter ${math_libs} 
+    LIBS parameter ${math_libs}
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -82,4 +82,3 @@ add_test(NAME MODULE_BASE_parallel_2d_test_para
         COMMAND ${BASH} blacs_connector_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-
