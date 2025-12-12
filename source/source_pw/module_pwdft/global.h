@@ -3,7 +3,6 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_device/cuda_compat.h"
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_pw/module_pwdft/VNL_in_pw.h"
 #include "source_io/restart.h"
@@ -17,6 +16,7 @@
 #ifdef __CUDA
 #include "cublas_v2.h"
 #include "cufft.h"
+#include "source_base/module_device/cuda_compat.h"
 
 static const char* _cublasGetErrorString(cublasStatus_t error)
 {
