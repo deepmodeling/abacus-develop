@@ -194,6 +194,8 @@ class ParaGlobalDeathTest : public ::testing::Test
     // Init variable, single thread
     void SetUp() override
     {
+        nproc = mpi.GetSize();
+        my_rank = mpi.GetRank();
         // Only master process runs death test (avoid multi-process conflict)
         if (mpi.GetRank() != 0) {return;}
 
