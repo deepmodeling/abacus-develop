@@ -109,7 +109,7 @@ static const char *_cudaGetErrorEnum(cublasStatus_t error) {
 #ifdef _CUFFT_H_
 // cuFFT API errors
 static const char *_cudaGetErrorEnum(cufftResult error) {
-  return ModuleBase::cuda_compat::cufftGetErrorStringCompat(error)
+  return ModuleBase::cuda_compat::cufftGetErrorStringCompat(error);
 }
 #endif
 
