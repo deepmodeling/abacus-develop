@@ -385,8 +385,6 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
 {
     if (num_groups == 0)
     {
-        std::cerr << "Error: Number of groups must be greater than 0." << std::endl;
-        // note that WARNING_QUIT writes to stdout
         ModuleBase::WARNING_QUIT(
             "Parallel_Global::divide_mpi_groups",
             "Number of groups must be greater than 0."
@@ -394,8 +392,6 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
     }
     if (procs < num_groups)
     {
-        std::cerr << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
-                  << num_groups << ")." << std::endl;
         ModuleBase::WARNING_QUIT(
             "Parallel_Global::divide_mpi_groups",
             "Number of processes must be greater than the number of groups."
