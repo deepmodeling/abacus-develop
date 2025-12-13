@@ -6,7 +6,7 @@ namespace cuda_compat {
 //---------------------------------------------------------------------------
 // Implementation of printDeprecatedDeviceInfo and printComputeModeInfo
 //---------------------------------------------------------------------------
-void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop) 
+void printDeprecatedDeviceInfo(std::ostream& ofs_device, const cudaDeviceProp& deviceProp) 
 {
 #if defined(CUDA_VERSION) && CUDA_VERSION < 13000
   char msg[1024];
@@ -36,7 +36,7 @@ void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop)
 #endif
 }
 
-void printComputeModeInfo(std::ostream& os, const cudaDeviceProp& prop) 
+void printComputeModeInfo(std::ostream& ofs_device, const cudaDeviceProp& deviceProp) 
 {
 #if defined(CUDA_VERSION) && CUDA_VERSION < 13000
   char msg[1024];
