@@ -214,7 +214,6 @@ class ParaGlobalDeathTest : public ::testing::Test
 
 TEST_F(ParaGlobalDeathTest, InitPools)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
     nproc = 12;
     mpi.kpar = 3;
     mpi.nstogroup = 3;
@@ -234,7 +233,6 @@ TEST_F(ParaGlobalDeathTest, InitPools)
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
     // test for num_groups == 0,
     // Num_group Equals 0
     // WARNING_QUIT
@@ -264,7 +262,6 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
     // test for procs < num_groups
     // Num_group GreaterThan Processors
     // WARNING_QUIT
@@ -296,6 +293,7 @@ int main(int argc, char** argv)
 {
 
     MPI_Init(&argc, &argv);
+    testing::FLAGS_gtest_death_test_style = "threadsafe";
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
     MPI_Finalize();
