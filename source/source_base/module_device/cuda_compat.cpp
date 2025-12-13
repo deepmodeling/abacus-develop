@@ -112,6 +112,5 @@ const char* cufftGetErrorStringCompat(cufftResult_t error)
     }
 }
 
-} // cuda_compat
 } // namespace cuda_compat
 } // namespace ModuleBase
