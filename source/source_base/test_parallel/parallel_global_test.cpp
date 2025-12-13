@@ -80,25 +80,6 @@ class ParaGlobal : public ::testing::Test
     }
 };
 
-TEST_F(ParaGlobal, InitPools)
-{
-    nproc = 12;
-    mpi.kpar = 3;
-    mpi.nstogroup = 3;
-    my_rank = 5;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
-                                my_rank,
-                                mpi.nstogroup,
-                                mpi.kpar,
-                                mpi.nproc_in_stogroup,
-                                mpi.rank_in_stogroup,
-                                mpi.MY_BNDGROUP,
-                                mpi.nproc_in_pool,
-                                mpi.rank_in_pool,
-                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error:");
-}
-
 TEST_F(ParaGlobal, SplitGrid)
 {
     // NPROC is set to 4 in parallel_global_test.sh
@@ -233,6 +214,23 @@ class ParaGlobalDeathTest : public ::testing::Test
     }
 };
 
+TEST_F(ParaGlobalDeathTest, InitPools)
+{
+    nproc = 12;
+    mpi.kpar = 3;
+    mpi.nstogroup = 3;
+    my_rank = 5;
+    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
+                                my_rank,
+                                mpi.nstogroup,
+                                mpi.kpar,
+                                mpi.nproc_in_stogroup,
+                                mpi.rank_in_stogroup,
+                                mpi.MY_BNDGROUP,
+                                mpi.nproc_in_pool,
+                                mpi.rank_in_pool,
+                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error:");
+}
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
 {
