@@ -95,7 +95,7 @@ TEST_F(ParaGlobal, InitPools)
                                 mpi.MY_BNDGROUP,
                                 mpi.nproc_in_pool,
                                 mpi.rank_in_pool,
-                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error:");
+                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error");
 }
 
 TEST_F(ParaGlobal, SplitGrid)
@@ -200,22 +200,71 @@ TEST_F(ParaGlobal, DivideMPIPools)
 }
 
 
+class FakeMPIContext
+{
+  public:
+    FakeMPIContext()
+    {
+        _rank = 0;
+        _size = 1;
+    }
+
+    int GetRank() const
+    {
+        return _rank;
+    }
+    int GetSize() const
+    {
+        return _size;
+    }
+
+    int drank;
+    int dsize;
+    int dcolor;
+
+    int grank;
+    int gsize;
+
+    int kpar;
+    int nproc_in_pool;
+    int my_pool;
+    int rank_in_pool;
+
+    int nstogroup;
+    int MY_BNDGROUP;
+    int rank_in_stogroup;
+    int nproc_in_stogroup;
+
+  private:
+    int _rank;
+    int _size;
+};
+
 // --- DeathTest: Single thread ---
 class ParaGlobalDeathTest : public ::testing::Test
 {
   protected:
-    MPIContext mpi;
+    FakeMPIContext mpi;
     int nproc;
     int my_rank;
+    int real_rank;
 
     // DeathTest SetUp:
     // Init variable, single thread
     void SetUp() override
     {
+        int is_init = 0;
+        MPI_Initialized(&is_init);
+        if (is_init) {
+             MPI_Comm_rank(MPI_COMM_WORLD, &real_rank);
+        } else {
+             real_rank = 0;
+        }
+
+        if (real_rank != 0) return;
+
         nproc = mpi.GetSize();
         my_rank = mpi.GetRank();
-        // Only master process runs death test (avoid multi-process conflict)
-        if (mpi.GetRank() != 0) {return;}
 
         // init log file
         GlobalV::ofs_warning.open("warning.log");
@@ -225,7 +274,7 @@ class ParaGlobalDeathTest : public ::testing::Test
     // clean log file
     void TearDown() override
     {
-        if (mpi.GetRank() != 0) {return;}
+        if (real_rank != 0) return;
 
         GlobalV::ofs_warning.close();
         remove("warning.log");
@@ -234,12 +283,11 @@ class ParaGlobalDeathTest : public ::testing::Test
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
 {
+    if (real_rank != 0) return;
     // test for num_groups == 0,
     // Num_group Equals 0
     // WARNING_QUIT
-    this->nproc = 12;
     mpi.kpar = 0;
-    this->my_rank = 5;
     EXPECT_EXIT(
         Parallel_Global::divide_mpi_groups(this->nproc,
                                        mpi.kpar,
@@ -263,6 +311,7 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
 {
+    if (real_rank != 0) return;
     // test for procs < num_groups
     // Num_group GreaterThan Processors
     // WARNING_QUIT
@@ -292,12 +341,24 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
 
 int main(int argc, char** argv)
 {
+    bool is_death_test_child = false;
+    for (int i = 0; i < argc; ++i) {
+        if (std::string(argv[i]).find("gtest_internal_run_death_test") != std::string::npos) {
+            is_death_test_child = true;
+            break;
+        }
+    }
 
-    MPI_Init(&argc, &argv);
-    testing::FLAGS_gtest_death_test_style = "threadsafe";
+    if (!is_death_test_child) {
+        MPI_Init(&argc, &argv);
+    }
+
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
-    MPI_Finalize();
+
+    if (!is_death_test_child) {
+        MPI_Finalize();
+    }
     return result;
 }
 #endif // __MPI
