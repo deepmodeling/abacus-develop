@@ -13,6 +13,8 @@ void reset_matrix_boundary(const UnitCell& ucell,
                            psi::Psi<std::complex<double>>* psi_last,
                            const int len_hs)
 {
+    ModuleBase::TITLE("module_rt", "reset_matrix_boundary");
+    ModuleBase::timer::tick("module_rt", "reset_matrix_boundary");
     const ModuleBase::Vector3<int> zero = {0, 0, 0};
     for(int iat = 0; iat < ucell.nat; iat++)
     {
@@ -42,6 +44,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
             }
         }
     }
+    ModuleBase::timer::tick("module_rt", "reset_matrix_boundary");
     return;
 }
 
