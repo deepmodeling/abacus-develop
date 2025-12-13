@@ -328,7 +328,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
     //       and MY_BNDGROUP will be the same as well.
     if(BNDPAR > 1 && NPROC %(BNDPAR * KPAR) != 0)
     {
-        std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC << ") must be divisible by the number of groups ("
+        std::cerr << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC << ") must be divisible by the number of groups ("
                   << BNDPAR * KPAR << ")." << std::endl;
         exit(1);
     }
@@ -385,6 +385,8 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
 {
     if (num_groups == 0)
     {
+        std::cerr << "Error: Number of groups must be greater than 0." << std::endl;
+        // note that WARNING_QUIT writes to stdout
         ModuleBase::WARNING_QUIT(
             "Parallel_Global::divide_mpi_groups",
             "Number of groups must be greater than 0."
@@ -392,7 +394,7 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
     }
     if (procs < num_groups)
     {
-        std::cout << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
+        std::cerr << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
                   << num_groups << ")." << std::endl;
         ModuleBase::WARNING_QUIT(
             "Parallel_Global::divide_mpi_groups",
