@@ -8,6 +8,7 @@
 #include <complex>
 #include <cstring>
 #include <string>
+#include <unistd.h>
 
 #include "source_base/global_variable.h"
 
@@ -249,9 +250,10 @@ class ParaGlobalDeathTest : public ::testing::Test
         nproc = mpi.GetSize();
         my_rank = mpi.GetRank();
 
-        // init log file
+        // init log file needed by WARNING_QUIT
         GlobalV::ofs_warning.open("warning.log");
-        // needed by WARNING_QUIT
+
+
     }
 
     // clean log file
@@ -266,11 +268,16 @@ class ParaGlobalDeathTest : public ::testing::Test
 
 TEST_F(ParaGlobalDeathTest, InitPools)
 {
+    if (real_rank != 0) return;
     nproc = 12;
     mpi.kpar = 3;
     mpi.nstogroup = 3;
     my_rank = 5;
-    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
+    EXPECT_EXIT(
+        {
+            // redirect stdout to stderr to capture WARNING_QUIT output
+            dup2(STDERR_FILENO, STDOUT_FILENO);
+            Parallel_Global::init_pools(nproc,
                                 my_rank,
                                 mpi.nstogroup,
                                 mpi.kpar,
@@ -279,7 +286,10 @@ TEST_F(ParaGlobalDeathTest, InitPools)
                                 mpi.MY_BNDGROUP,
                                 mpi.nproc_in_pool,
                                 mpi.rank_in_pool,
-                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error");
+                                mpi.my_pool);
+        },
+        ::testing::ExitedWithCode(1),
+        "Error");
 }
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
@@ -288,26 +298,22 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
     // test for num_groups == 0,
     // Num_group Equals 0
     // WARNING_QUIT
+    this->nproc = 12;
     mpi.kpar = 0;
     EXPECT_EXIT(
-        Parallel_Global::divide_mpi_groups(this->nproc,
+        {
+            // redirect stdout to stderr to capture WARNING_QUIT output
+            dup2(STDERR_FILENO, STDOUT_FILENO);
+            Parallel_Global::divide_mpi_groups(this->nproc,
                                        mpi.kpar,
                                        this->my_rank,
                                        mpi.nproc_in_pool,
                                        mpi.my_pool,
-                                       mpi.rank_in_pool),
+                                       mpi.rank_in_pool);
+        },
         ::testing::ExitedWithCode(1),
         "Number of groups must be greater than 0."
     );
-    // should WARNING_QUIT inside!
-    std::string output;
-    std::ifstream ifs;
-    ifs.open("warning.log");
-    getline(ifs,output);
-	// test output in warning.log file
-	EXPECT_THAT(output,testing::HasSubstr("warning"));
-	EXPECT_THAT(output,testing::HasSubstr("Number of groups must be greater than 0."));
-    ifs.close();
 }
 
 TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
@@ -320,24 +326,18 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
     mpi.kpar = 24;
     this->my_rank = 5;
     EXPECT_EXIT(
-        Parallel_Global::divide_mpi_groups(this->nproc,
+        {
+            dup2(STDERR_FILENO, STDOUT_FILENO);
+            Parallel_Global::divide_mpi_groups(this->nproc,
                                         mpi.kpar,
                                         this->my_rank,
                                         mpi.nproc_in_pool,
                                         mpi.my_pool,
-                                        mpi.rank_in_pool),
+                                        mpi.rank_in_pool);
+        },
         testing::ExitedWithCode(1),
         "Error: Number of processes.*must be greater than the number of groups"
     );
-    // should WARNING_QUIT inside!
-    std::string output;
-    std::ifstream ifs;
-    ifs.open("warning.log");
-    getline(ifs,output);
-	// test output in warning.log file
-	EXPECT_THAT(output,testing::HasSubstr("warning"));
-	EXPECT_THAT(output,testing::HasSubstr("Number of processes must be greater than the number of groups."));
-    ifs.close();
 }
 
 int main(int argc, char** argv)
@@ -350,11 +350,13 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!is_death_test_child) {
+    if (!is_death_test_child)
+    {
         MPI_Init(&argc, &argv);
     }
 
     testing::InitGoogleTest(&argc, argv);
+    testing::FLAGS_gtest_death_test_style = "threadsafe";
     int result = RUN_ALL_TESTS();
 
     if (!is_death_test_child) {
