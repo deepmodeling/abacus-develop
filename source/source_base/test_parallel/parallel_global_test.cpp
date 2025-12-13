@@ -9,7 +9,7 @@
 #include <cstring>
 #include <string>
 
-#include "source_base/tool_quit.h"
+#include "source_base/global_variable.h"
 
 /************************************************
  *  unit test of functions in parallel_global.cpp
@@ -66,6 +66,7 @@ class MPIContext
     int _size;
 };
 
+// --- Normal Test ---
 class ParaGlobal : public ::testing::Test
 {
   protected:
@@ -162,26 +163,6 @@ TEST_F(ParaGlobal, MyProd)
     EXPECT_EQ(inout[1], std::complex<double>(-3.0, -3.0));
 }
 
-TEST_F(ParaGlobal, InitPools)
-{
-    nproc = 12;
-    mpi.kpar = 3;
-    mpi.nstogroup = 3;
-    my_rank = 5;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
-                                my_rank,
-                                mpi.nstogroup,
-                                mpi.kpar,
-                                mpi.nproc_in_stogroup,
-                                mpi.rank_in_stogroup,
-                                mpi.MY_BNDGROUP,
-                                mpi.nproc_in_pool,
-                                mpi.rank_in_pool,
-                                mpi.my_pool), ::testing::ExitedWithCode(1), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Error:"));
-}
 
 
 TEST_F(ParaGlobal, DivideMPIPools)
@@ -198,6 +179,117 @@ TEST_F(ParaGlobal, DivideMPIPools)
     EXPECT_EQ(mpi.nproc_in_pool, 4);
     EXPECT_EQ(mpi.my_pool, 1);
     EXPECT_EQ(mpi.rank_in_pool, 1);
+}
+
+
+// --- DeathTest: Single thread ---
+class ParaGlobalDeathTest : public ::testing::Test
+{
+  protected:
+    MPIContext mpi;
+    int nproc;
+    int my_rank;
+
+    // DeathTest SetUp:
+    // Init variable, single thread
+    void SetUp() override
+    {
+        // Only master process runs death test (avoid multi-process conflict)
+        if (mpi.GetRank() != 0) {return;}
+
+        // init log file
+        GlobalV::ofs_warning.open("warning.log");
+        // needed by WARNING_QUIT
+    }
+
+    // clean log file
+    void TearDown() override
+    {
+        if (mpi.GetRank() != 0) {return;}
+
+        GlobalV::ofs_warning.close();
+        remove("warning.log");
+    }
+};
+
+TEST_F(ParaGlobalDeathTest, InitPools)
+{
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    nproc = 12;
+    mpi.kpar = 3;
+    mpi.nstogroup = 3;
+    my_rank = 5;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
+                                my_rank,
+                                mpi.nstogroup,
+                                mpi.kpar,
+                                mpi.nproc_in_stogroup,
+                                mpi.rank_in_stogroup,
+                                mpi.MY_BNDGROUP,
+                                mpi.nproc_in_pool,
+                                mpi.rank_in_pool,
+                                mpi.my_pool), ::testing::ExitedWithCode(1), "Error:");
+}
+
+TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgEqZero)
+{
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    // test for num_groups == 0,
+    // Num_group Equals 0
+    // WARNING_QUIT
+    this->nproc = 12;
+    mpi.kpar = 0;
+    this->my_rank = 5;
+    EXPECT_EXIT(
+        Parallel_Global::divide_mpi_groups(this->nproc,
+                                       mpi.kpar,
+                                       this->my_rank,
+                                       mpi.nproc_in_pool,
+                                       mpi.my_pool,
+                                       mpi.rank_in_pool),
+        ::testing::ExitedWithCode(1),
+        "Number of groups must be greater than 0."
+    );
+    // should WARNING_QUIT inside!
+    std::string output;
+    std::ifstream ifs;
+    ifs.open("warning.log");
+    getline(ifs,output);
+	// test output in warning.log file
+	EXPECT_THAT(output,testing::HasSubstr("warning"));
+	EXPECT_THAT(output,testing::HasSubstr("Number of groups must be greater than 0."));
+    ifs.close();
+}
+
+TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
+{
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    // test for procs < num_groups
+    // Num_group GreaterThan Processors
+    // WARNING_QUIT
+    this->nproc = 12;
+    mpi.kpar = 24;
+    this->my_rank = 5;
+    EXPECT_EXIT(
+        Parallel_Global::divide_mpi_groups(this->nproc,
+                                        mpi.kpar,
+                                        this->my_rank,
+                                        mpi.nproc_in_pool,
+                                        mpi.my_pool,
+                                        mpi.rank_in_pool)
+        ,testing::ExitedWithCode(1),
+        "Error: Number of processes.*must be greater than the number of groups"
+    );
+    // should WARNING_QUIT inside!
+    std::string output;
+    std::ifstream ifs;
+    ifs.open("warning.log");
+    getline(ifs,output);
+	// test output in warning.log file
+	EXPECT_THAT(output,testing::HasSubstr("warning"));
+	EXPECT_THAT(output,testing::HasSubstr("Number of processes must be greater than the number of groups."));
+    ifs.close();
 }
 
 int main(int argc, char** argv)
