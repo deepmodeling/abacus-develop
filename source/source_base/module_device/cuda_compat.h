@@ -78,12 +78,4 @@ const char* cufftGetErrorStringCompat(cufftResult_t error);
 } // namespace cuda_compat
 } // namespace ModuleBase
 
-//----------------------------------------------------------------------------
-// Macro Replacement for cuFFT Error Handling
-// Any file that calls _cufftGetErrorString just needs to include this header.
-//----------------------------------------------------------------------------
-#ifndef ABACUS_CUDA_COMPAT_NO_CUFFT_REDIRECT
-    #define _cufftGetErrorString ModuleBase::cuda_compat::cufftGetErrorStringCompat
-#endif
-
 #endif // CUDA_COMPAT_H_
