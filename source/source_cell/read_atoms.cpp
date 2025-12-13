@@ -163,6 +163,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                 ucell.atoms[it].tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 ucell.atoms[it].dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 ucell.atoms[it].taud.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                ucell.atoms[it].boundary_shift.resize(na, ModuleBase::Vector3<int>(0,0,0));
                 ucell.atoms[it].vel.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 ucell.atoms[it].mbl.resize(na, ModuleBase::Vector3<int>(0,0,0));
                 ucell.atoms[it].mag.resize(na, 0);

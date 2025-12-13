@@ -15,6 +15,7 @@ if(ENABLE_LCAO)
         snap_psibeta_half_tddft.cpp
         td_folding.cpp
         solve_propagation.cpp
+        boundary_fix.cpp
     )
 
     add_library(

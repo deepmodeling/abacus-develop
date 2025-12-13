@@ -622,6 +622,7 @@ OBJS_LCAO=evolve_elec.o\
       velocity_op.o\
       snap_psibeta_half_tddft.o\
       solve_propagation.o\
+      boundary_fix.o\
       upsi.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
