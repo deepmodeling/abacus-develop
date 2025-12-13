@@ -31,7 +31,6 @@ AddTest(
           ../../source_base/test/tool_quit_no_exit.cpp 
           ../../source_base/module_device/device.cpp
           ../../source_base/module_device/output_device.cpp
-          ${CMAKE_SOURCE_DIR}/source/source_base/module_device/cuda_compat.cpp
 )
 
 AddTest(
