@@ -277,8 +277,8 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
                                         this->my_rank,
                                         mpi.nproc_in_pool,
                                         mpi.my_pool,
-                                        mpi.rank_in_pool)
-        ,testing::ExitedWithCode(1),
+                                        mpi.rank_in_pool),
+        testing::ExitedWithCode(1),
         "Error: Number of processes.*must be greater than the number of groups"
     );
     // should WARNING_QUIT inside!
