@@ -32,7 +32,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,
                            psi::Psi<std::complex<double>>* psi_last,
-                           const int len_hs);
+                           const size_t len_hs);
 
 /**
 *  @brief Add extra phase to the matrix element belong to iat
@@ -46,7 +46,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
 void boundary_shift_mat(const std::complex<double>& phase,
                         std::complex<double>* matk,
                         const Parallel_Orbitals* pv,
-                        const int iat);
+                        const size_t iat);
 /**
 *  @brief Add extra phase to the wfc coefficient belong to iat
 *
@@ -59,6 +59,6 @@ void boundary_shift_mat(const std::complex<double>& phase,
 void boundary_shift_c(const std::complex<double>& phase,
                       std::complex<double>* psi_k_last,
                       const Parallel_Orbitals* pv,
-                      const int iat);
+                      const size_t iat);
 }// namespace module_rt
 #endif // BOUNDARY_FIX_H

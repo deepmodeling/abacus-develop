@@ -108,7 +108,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         estep_max = PARAM.inp.estep_per_md + 1;
     }
     // reset laststep matrix and wfc, if any atom cross the boundary
-    const int len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.nloc;
+    const size_t len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.nloc;
     module_rt::reset_matrix_boundary(ucell,
                                      this->kv,
                                      &(this->pv),
