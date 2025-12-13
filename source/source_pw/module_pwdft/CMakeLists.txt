@@ -50,12 +50,6 @@ list(APPEND objects
     VSep_in_pw.cpp
 )
 
-if(USE_CUDA)
-  list(APPEND objects
-    source_base/module_device/cuda_compat.cpp
-  )
-endif()
-
 add_library(
     module_pwdft
     OBJECT
