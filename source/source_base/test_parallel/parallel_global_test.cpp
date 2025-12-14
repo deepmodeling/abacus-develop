@@ -225,6 +225,10 @@ class FakeMPIContext
 };
 
 // --- DeathTest: Single thread ---
+// Since these precondition checks cause the processes to die, we call such tests death tests.
+// convention of naming the test suite: *DeathTest
+// Death tests should be run in a single-threaded context.
+// Such DeathTest will be run before all other tests.
 class ParaGlobalDeathTest : public ::testing::Test
 {
   protected:
@@ -274,6 +278,9 @@ TEST_F(ParaGlobalDeathTest, InitPools)
     mpi.nstogroup = 3;
     my_rank = 5;
     EXPECT_EXIT(
+    // This gtest Macro expect that a given `statement` causes the program to exit, with an
+    // integer exit status that satisfies `predicate`(Here ::testing::ExitedWithCode(1)),
+    // and emitting error output that matches `matcher`(Here "Error").
         {
             // redirect stdout to stderr to capture WARNING_QUIT output
             dup2(STDERR_FILENO, STDOUT_FILENO);
@@ -327,6 +334,7 @@ TEST_F(ParaGlobalDeathTest, DivideMPIPoolsNgGtProc)
     this->my_rank = 5;
     EXPECT_EXIT(
         {
+            // redirect stdout to stderr to capture WARNING_QUIT output
             dup2(STDERR_FILENO, STDOUT_FILENO);
             Parallel_Global::divide_mpi_groups(this->nproc,
                                         mpi.kpar,
