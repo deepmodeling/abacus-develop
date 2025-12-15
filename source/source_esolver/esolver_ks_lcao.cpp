@@ -75,13 +75,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
       this->dmat, this->chr, inp);
-    
-    if(inp.init_chg == "dm")
-    {
-        //! 4.1) init density matrix from file
-        std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
-        LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
-    }
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
@@ -167,34 +160,41 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp);
 
-    // 12.1) if init_chg = "dm", then calculate rho from readin DMR before init_scf
-    if(PARAM.inp.init_chg == "dm")
-    {
-        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge, true);
-    }
-    // 12.2) init_scf, should be before_scf? mohan add 2025-03-10
-    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
-
-    // 13) initalize DM(R), which has the same size with Hamiltonian(R)
+    // 12) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+
     if(!hamilt_lcao)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    if(PARAM.inp.init_chg != "dm") this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
+    this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
+
+    // 13.1) calculate or readin the density matrix DMR
+    if(istep == 0 && PARAM.inp.init_chg == "dm")//if the first scf step, readin DMR from file, 
+    {
+        //! 13.1.1) init density matrix from file
+        std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
+        LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+    }
+    else if(istep > 0) //if not, use the DMR calculated from last step
+    {
+        // 13.1.2) two cases are considered:
+        // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
+        // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
+        this->dmat.dm->cal_DMR();
+    }
+    // 13.2 if init_chg = "dm", then calculate rho from readin DMR before init_scf
+    if(PARAM.inp.init_chg == "dm")
+    {
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, this->pelec->charge, true);
+    }
+    // 13.2) init_scf, should be before_scf? mohan add 2025-03-10
+    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
     this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
 #endif
-
-    // 15) two cases are considered:
-    // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
-    // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
-    if (istep > 0)
-    {
-        this->dmat.dm->cal_DMR();
-    }
 
     // 16) the electron charge density should be symmetrized,
     Symmetry_rho srho;

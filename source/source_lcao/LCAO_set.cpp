@@ -100,8 +100,7 @@ void LCAO_domain::init_dm_from_file(
     const Parallel_Orbitals* pv)
 {
     ModuleBase::TITLE("LCAO_domain::init_dm_from_file", "init_dm_from_file");
-    hamilt::HContainer<double>* dm_container = new hamilt::HContainer<double>(pv);
-    dmat.dm->init_DMR(dm_container[0]);
+    hamilt::HContainer<double>* dm_container = dmat.dm->get_DMR_vector()[0];
     hamilt::Read_HContainer<double> reader_dm(
         dmat.dm->get_DMR_vector()[0],
         dmfile,
@@ -109,7 +108,6 @@ void LCAO_domain::init_dm_from_file(
         &ucell
     );
     reader_dm.read();
-    delete dm_container;
     return;
 }
 
