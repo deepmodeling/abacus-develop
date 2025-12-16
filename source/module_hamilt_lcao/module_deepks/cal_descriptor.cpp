@@ -67,7 +67,7 @@ void LCAO_Deepks::cal_descriptor(const int nat)
         std::tuple<torch::Tensor, torch::Tensor> d_v(this->d_tensor[inl], vd);
         // d_v = torch::symeig(pdm[inl], /*eigenvalues=*/true,
         // /*upper=*/true);
-        d_v = torch::linalg::eigh(pdm[inl], /*uplo*/ "U");
+        d_v = torch::linalg_eigh(pdm[inl], /*uplo*/ "U");
         d_tensor[inl] = std::get<0>(d_v);
     }
     ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor");
