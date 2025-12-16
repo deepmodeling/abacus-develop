@@ -98,6 +98,10 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]);
             chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]);
+            if (chr->rhog[1][ig] < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("Charge_Mixing", "Magnetism is larger than Charge at some grid, please try a smaller mixing_beta_mag!");
+            }
         }
         // delete
         delete[] rhog_mag;
@@ -391,6 +395,10 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         {
             chr->rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
             chr->rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+            if (chr->rho[1][ir] < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("Charge_Mixing", "Magnetism is larger than Charge at some grid, please try a smaller mixing_beta_mag!");
+            }
         }
         // delete
         delete[] rho_mag;
