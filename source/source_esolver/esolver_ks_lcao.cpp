@@ -169,14 +169,33 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
-    // 13.1) calculate or readin the density matrix DMR
-    if(istep == 0 && PARAM.inp.init_chg == "dm")//if the first scf step, readin DMR from file, 
+    // 13.1) decide the strategy for initializing DMR and HR
+    if(istep == 0)//if the first scf step, readin DMR from file, 
     {
-        //! 13.1.1) init density matrix from file
-        std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
-        LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+        //calculate or readin the density matrix DMR
+        if(PARAM.inp.init_chg == "dm")
+        {
+            //! 13.1.1) init density matrix from file
+            std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
+            LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+        }
+        if(PARAM.inp.init_chg == "hr")
+        {
+            //! 13.1.2) init HR from file
+            std::string hrfile = PARAM.globalv.global_readin_dir + "/hrs1_nao.csr";
+            LCAO_domain::init_hr_from_file<TR>(
+                hrfile, 
+                dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR(), 
+                ucell, 
+                &(this->pv)
+            );
+            this->p_hamilt->refresh(false);
+            hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.dm, 
+                this->chr, PARAM.inp.nspin, 0);
+        }
     }
-    else if(istep > 0) //if not, use the DMR calculated from last step
+    else //if not, use the DMR calculated from last step
     {
         // 13.1.2) two cases are considered:
         // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
@@ -203,10 +222,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
-    // 17) why we need to set this sentence? mohan add 2025-03-10
-    this->p_hamilt->non_first_scf = istep;
-
-    // 18) update of RDMFT, added by jghan
+    // 17) update of RDMFT, added by jghan
     if (PARAM.inp.rdmft == true)
     {
         rdmft_solver.update_ion(ucell, *(this->pw_rho), this->locpp.vloc, this->sf.strucFac);

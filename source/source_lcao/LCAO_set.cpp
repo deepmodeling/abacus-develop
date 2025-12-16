@@ -99,15 +99,34 @@ void LCAO_domain::init_dm_from_file(
     const UnitCell& ucell,
     const Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("LCAO_domain::init_dm_from_file", "init_dm_from_file");
+    ModuleBase::TITLE("LCAO_domain", "init_dm_from_file");
     hamilt::HContainer<double>* dm_container = dmat.dm->get_DMR_vector()[0];
     hamilt::Read_HContainer<double> reader_dm(
-        dmat.dm->get_DMR_vector()[0],
+        dm_container,
         dmfile,
         PARAM.globalv.nlocal,
         &ucell
     );
     reader_dm.read();
+    return;
+}
+
+template <typename TR>
+void LCAO_domain::init_hr_from_file(
+    const std::string hrfile,
+    hamilt::HContainer<TR>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_hr_from_file");
+    hmat->set_zero();
+    hamilt::Read_HContainer<TR> reader_hr(
+        hmat,
+        hrfile,
+        PARAM.globalv.nlocal,
+        &ucell
+    );
+    reader_hr.read();
     return;
 }
 
@@ -171,5 +190,16 @@ template void LCAO_domain::init_dm_from_file<double>(
 template void LCAO_domain::init_dm_from_file<std::complex<double>>(
     const std::string dmfile,
     LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+
+template void LCAO_domain::init_hr_from_file<double>(
+    const std::string hrfile,
+    hamilt::HContainer<double>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
+template void LCAO_domain::init_hr_from_file<std::complex<double>>(
+    const std::string hrfile,
+    hamilt::HContainer<std::complex<double>>* hmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);

@@ -124,7 +124,7 @@ class HamiltLCAO : public Hamilt<TK>
 #endif
 
     /// refresh the status of HR
-    void refresh() override;
+    void refresh(bool yes) override;
 
     // for target K point, update consequence of hPsi() and matrix()
     virtual void updateHk(const int ik) override;
