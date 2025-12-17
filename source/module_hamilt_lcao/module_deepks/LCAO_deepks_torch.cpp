@@ -115,7 +115,7 @@ void LCAO_Deepks::cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm)
             // repeat each block for nm times in an additional dimension
             torch::Tensor tmp_x = this->pdm[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
             // torch::Tensor tmp_y = std::get<0>(torch::symeig(tmp_x, true));
-            torch::Tensor tmp_y = std::get<0>(torch::linalg::eigh(tmp_x, "U"));
+            torch::Tensor tmp_y = std::get<0>(torch::linalg_eigh(tmp_x, "U"));
             torch::Tensor tmp_yshell = torch::eye(nm, torch::TensorOptions().dtype(torch::kFloat64));
             std::vector<torch::Tensor> tmp_rpt; // repeated-pdm-tensor (x)
             std::vector<torch::Tensor> tmp_rdt; // repeated-d-tensor (y)
