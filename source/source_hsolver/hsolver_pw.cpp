@@ -140,7 +140,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
-            // output iteration information and reset avg_iter
             if (skip_charge)
             {
                 GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
@@ -148,12 +147,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
-            else
-            {
-                this->output_iterInfo();
-            }
         }
-    }
+    } // if (use_k_continuity)
     else {
         // Original code without k-point continuity
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -187,6 +182,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
+            // output iteration information and reset avg_iter
             if (skip_charge)
             {
                 GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
@@ -194,9 +190,13 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                      << " threshold=" << this->diag_thr << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
+
             /// calculate the contribution of Psi for charge density rho
         }
-    }
+    } // else (use_k_continuity)
+
+    // output iteration information and reset avg_iter
+    this->output_iterInfo();
 
     count++;
     // END Loop over k points
@@ -528,7 +528,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     {
         GlobalV::ofs_running << "Average iterative diagonalization steps: "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
+                             << "; where current threshold is: " << this->diag_thr << ". " << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }

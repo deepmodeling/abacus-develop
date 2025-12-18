@@ -2,6 +2,7 @@
 #define MODULE_HSOLVER_DIAGO_CG_H_
 
 #include <functional>
+#include <vector>
 
 #include <source_base/macros.h>
 #include <source_base/kernels/math_kernel_op.h>
@@ -61,6 +62,8 @@ class DiagoCG final
     int n_basis_ = 0;
     /// average iteration steps for cg diagonalization
     double avg_iter_ = 0;
+    /// std::vector for iter count of each band
+    std::vector<int> iter_band;
     /// threshold for cg diagonalization
     Real pw_diag_thr_ = 1e-5;
     /// maximum iteration steps for cg diagonalization
