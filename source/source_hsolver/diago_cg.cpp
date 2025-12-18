@@ -575,7 +575,7 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
 }
 
 template <typename T, typename Device>
-void DiagoCG<T, Device>::diag(const Func& hpsi_func,
+double DiagoCG<T, Device>::diag(const Func& hpsi_func,
                               const Func& spsi_func,
                               ct::Tensor& psi,
                               ct::Tensor& eigen,
@@ -626,6 +626,8 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
     psi.zero();
     // copy psi_temp to psi for 0 to npw.
     psi.sync(psi_temp);
+
+    return avg_iter_;
 }
 
 namespace hsolver

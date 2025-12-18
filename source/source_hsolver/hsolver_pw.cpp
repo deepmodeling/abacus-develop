@@ -346,7 +346,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                .to_device<ct_Device>()
                                .slice({0}, {psi.get_current_ngk()});
 
-        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor)
+        );
         // TODO: Double check tensormap's potential problem
         // ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
