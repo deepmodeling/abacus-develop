@@ -105,7 +105,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         for (int i = 0; i < this->wfc_basis->nks; ++i)
         {
             const int ik = k_order[i];
-            
+
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
@@ -140,12 +140,17 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
+            // output iteration information and reset avg_iter
             if (skip_charge)
             {
                 GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
                                     << " is: " << DiagoIterAssist<T, Device>::avg_iter
                                     << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
+            }
+            else
+            {
+                this->output_iterInfo();
             }
         }
     }
@@ -192,7 +197,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             /// calculate the contribution of Psi for charge density rho
         }
     }
-    
+
     count++;
     // END Loop over k points
 
@@ -533,39 +538,39 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     kvecs_c.resize(nk);
     k_order.clear();
     k_order.reserve(nk);
-    
+
     // Store k-points and corresponding indices
     struct KPoint {
         ModuleBase::Vector3<double> kvec;
         int index;
         double norm;
-        
-        KPoint(const ModuleBase::Vector3<double>& v, int i) : 
+
+        KPoint(const ModuleBase::Vector3<double>& v, int i) :
             kvec(v), index(i), norm(v.norm()) {}
     };
-    
+
     // Build k-point list
     std::vector<KPoint> klist;
     for (int ik = 0; ik < nk; ++ik) {
         kvecs_c[ik] = this->wfc_basis->kvec_c[ik];
         klist.push_back(KPoint(kvecs_c[ik], ik));
     }
-    
+
     // Sort k-points by distance from origin
     std::sort(klist.begin(), klist.end(),
         [](const KPoint& a, const KPoint& b) {
             return a.norm < b.norm;
         });
-    
+
     // Build parent-child relationships
     k_order.push_back(klist[0].index);
-    
+
     // Find nearest processed k-point as parent for each k-point
     for (int i = 1; i < nk; ++i) {
         int current_k = klist[i].index;
         double min_dist = 1e10;
         int parent = -1;
-        
+
         // find the nearest k-point as parent
         for (int j = 0; j < k_order.size(); ++j) {
             int processed_k = k_order[j];
@@ -575,7 +580,7 @@ void HSolverPW<T, Device>::build_k_neighbors() {
                 parent = processed_k;
             }
         }
-        
+
         k_parent[current_k] = parent;
         k_order.push_back(current_k);
     }
@@ -585,34 +590,34 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik) {
     const int nbands = psi.get_nbands();
     const int npwk = this->wfc_basis->npwk[to_ik];
-    
+
     // Get k-point difference
     ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
-    
+
     // Allocate porter locally
     T* porter = nullptr;
     resmem_complex_op()(porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
-    
+
     // Process each band
     for (int ib = 0; ib < nbands; ib++)
     {
         // Fix current k-point and band
         // psi.fix_k(from_ik);
-        
+
         // FFT to real space
         // this->wfc_basis->recip_to_real(this->ctx, psi.get_pointer(ib), porter, from_ik);
         this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
-        
+
         // Apply phase factor
         //     // TODO: Check how to get the r vector
         //     ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
         //     double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
         //     psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
         // }
-        
+
         // Fix k-point for target
         // psi.fix_k(to_ik);
-        
+
         // FFT back to reciprocal space
         // this->wfc_basis->real_to_recip(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
         this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);
