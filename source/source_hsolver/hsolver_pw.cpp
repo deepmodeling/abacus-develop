@@ -144,7 +144,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             {
                 GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
                                     << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                    << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
+                                    << "; where current threshold is: " << this->diag_thr << ". " << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
         }
@@ -195,7 +195,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
     } // else (use_k_continuity)
 
-    // output iteration information and reset avg_iter
+    // output average iteration information and reset avg_iter
     this->output_iterInfo();
 
     count++;
