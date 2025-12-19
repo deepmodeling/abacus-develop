@@ -15,6 +15,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #ifdef __CUDA
 #include "cublas_v2.h"
+#include <cuda.h> // for CUDA_VERSION
 #include "cufft.h"
 
 static const char* _cublasGetErrorString(cublasStatus_t error)
@@ -65,22 +66,27 @@ static const char* _cufftGetErrorString(cufftResult_t error)
         return "CUFFT_INVALID_SIZE";
     case CUFFT_UNALIGNED_DATA:
         return "CUFFT_UNALIGNED_DATA";
-    case CUFFT_INCOMPLETE_PARAMETER_LIST:
-        return "CUFFT_INCOMPLETE_PARAMETER_LIST";
     case CUFFT_INVALID_DEVICE:
         return "CUFFT_INVALID_DEVICE";
-    case CUFFT_PARSE_ERROR:
-        return "CUFFT_PARSE_ERROR";
     case CUFFT_NO_WORKSPACE:
         return "CUFFT_NO_WORKSPACE";
     case CUFFT_NOT_IMPLEMENTED:
         return "CUFFT_NOT_IMPLEMENTED";
-    case CUFFT_LICENSE_ERROR:
-        return "CUFFT_LICENSE_ERROR";
     case CUFFT_NOT_SUPPORTED:
         return "CUFFT_NOT_SUPPORTED";
+    
+#if defined(CUDA_VERSION) && CUDA_VERSION < 13000
+    case CUFFT_INCOMPLETE_PARAMETER_LIST:
+        return "CUFFT_INCOMPLETE_PARAMETER_LIST";
+    case CUFFT_PARSE_ERROR:
+        return "CUFFT_PARSE_ERROR";
+    case CUFFT_LICENSE_ERROR:
+        return "CUFFT_LICENSE_ERROR";
+#endif
+    
+    default:
+        return "<unknown>";
     }
-    return "<unknown>";
 }
 
 #define CHECK_CUDA(func)                                                                                               \
