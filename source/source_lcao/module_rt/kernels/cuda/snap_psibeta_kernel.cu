@@ -30,6 +30,7 @@ __constant__ double d_gl_w[RADIAL_GRID_NUM];
 /**
  * @brief Compute real spherical harmonics Y_lm
  *        Based on the recursive formula used in ModuleBase::Ylm
+ *        OPTIMIZED: Use atan2, sincos for better performance
  */
 __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm)
 {
@@ -45,38 +46,26 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
         return;
     }
 
-    // Compute theta and phi
-    double rxy = sqrt(x * x + y * y);
-    double r = sqrt(x * x + y * y + z * z);
+    // Compute r and cost
+    double r2 = x * x + y * y + z * z;
+    double r = sqrt(r2);
 
-    double cost, phi;
+    double cost, sint, phi;
     if (r < 1e-10)
     {
         cost = 1.0;
+        sint = 0.0;
         phi = 0.0;
     }
     else
     {
         cost = z / r;
-        if (rxy < 1e-10)
-        {
-            phi = 0.0;
-        }
-        else if (x > 1e-10)
-        {
-            phi = atan(y / x);
-        }
-        else if (x < -1e-10)
-        {
-            phi = atan(y / x) + PI;
-        }
-        else
-        {
-            phi = (y >= 0.0) ? PI / 2.0 : -PI / 2.0;
-        }
+        sint = sqrt(1.0 - cost * cost);
+        // Use atan2 for robust phi computation (replaces multiple conditionals)
+        phi = atan2(y, x);
     }
 
-    double sint = sqrt(1.0 - cost * cost);
+    // Ensure sint is non-negative (numerical safety)
     if (sint < 0.0)
     {
         sint = 0.0;
@@ -143,10 +132,14 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
             }
             double same = c * sqrt(1.0 / fact_ratio) * SQRT2;
 
-            ylm[lm] = same * p[l][m] * cos(m * phi);
+            // Use sincos for efficiency (computes both sin and cos together)
+            double sin_mphi, cos_mphi;
+            sincos(m * phi, &sin_mphi, &cos_mphi);
+
+            ylm[lm] = same * p[l][m] * cos_mphi;
             lm++;
 
-            ylm[lm] = same * p[l][m] * sin(m * phi);
+            ylm[lm] = same * p[l][m] * sin_mphi;
             lm++;
         }
     }
@@ -269,7 +262,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         double dRy = R0.y - R1.y;
         double dRz = R0.z - R1.z;
 
-        #pragma unroll 4
+#pragma unroll 4
         for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
         {
             double r_val = xmean + xl * d_gl_x[ir];
@@ -302,14 +295,16 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 }
 
                 // Interpolate psi
-                double psi_val = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
+                double psi_val
+                    = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
 
                 // Phase factor
                 double phase = r_val * A_dot_leb;
                 cuDoubleComplex exp_iAr = cu_exp_i(phase);
 
                 // Interpolate beta
-                double beta_val = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
+                double beta_val
+                    = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
 
                 // Y_L1m1
                 double ylm_L1_val = ylm1[L1 * L1 + m1];
@@ -318,8 +313,8 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 double factor = ylm_L1_val * psi_val * beta_val * r_val * w_rad * w_ang;
                 cuDoubleComplex common_factor = cu_mul_real(exp_iAr, factor);
 
-                // Accumulate for all m0
-                #pragma unroll
+// Accumulate for all m0
+#pragma unroll
                 for (int m0 = 0; m0 < num_m0; m0++)
                 {
                     double ylm0_val = ylm0[offset_L0 + m0];
