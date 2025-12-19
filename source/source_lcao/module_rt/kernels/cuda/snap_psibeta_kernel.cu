@@ -72,15 +72,7 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
     }
 
     // Associated Legendre polynomials P_l^m
-    double p[MAX_L + 1][MAX_L + 1];
-
-    for (int l = 0; l <= L; l++)
-    {
-        for (int m = 0; m <= L; m++)
-        {
-            p[l][m] = 0.0;
-        }
-    }
+    double p[MAX_L + 1][MAX_L + 1] = {0};
 
     p[0][0] = 1.0;
 
