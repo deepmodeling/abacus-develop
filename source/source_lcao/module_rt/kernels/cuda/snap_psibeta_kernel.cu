@@ -253,9 +253,10 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     double AdotR0 = A.x * R0.x + A.y * R0.y + A.z * R0.z;
     cuDoubleComplex exp_iAR0 = cu_exp_i(AdotR0);
 
-    // Shared memory for reduction
-    __shared__ double s_temp_re[BLOCK_SIZE];
-    __shared__ double s_temp_im[BLOCK_SIZE];
+    // Shared memory for warp-level reduction (only need space for warp sums)
+    constexpr int NUM_WARPS = BLOCK_SIZE / 32; // 128 / 32 = 4 warps
+    __shared__ double s_temp_re[NUM_WARPS];
+    __shared__ double s_temp_im[NUM_WARPS];
 
     // Initialize accumulators in registers
     double result_re[MAX_M0_SIZE];
@@ -376,31 +377,40 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }
     }
 
-    // Reduction and output - OUTSIDE radial loop
+    // Reduction and output using warp shuffle - more efficient than shared memory
     int out_base = norb_idx * nlm_dim * natomwfc;
+    int warp_id = tid / 32;
+    int lane_id = tid % 32;
 
     for (int m0 = 0; m0 < num_m0; m0++)
     {
-        s_temp_re[tid] = result_re[m0];
-        s_temp_im[tid] = result_im[m0];
+        // Step 1: Warp-level reduction using shuffle
+        double sum_re = warp_reduce_sum(result_re[m0]);
+        double sum_im = warp_reduce_sum(result_im[m0]);
+
+        // Step 2: First lane of each warp writes to shared memory
+        if (lane_id == 0)
+        {
+            s_temp_re[warp_id] = sum_re;
+            s_temp_im[warp_id] = sum_im;
+        }
         __syncthreads();
 
-        for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1)
+        // Step 3: First warp reduces across all warps
+        if (warp_id == 0)
         {
-            if (tid < s)
-            {
-                s_temp_re[tid] += s_temp_re[tid + s];
-                s_temp_im[tid] += s_temp_im[tid + s];
-            }
-            __syncthreads();
-        }
+            sum_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
+            sum_im = (lane_id < NUM_WARPS) ? s_temp_im[lane_id] : 0.0;
+            sum_re = warp_reduce_sum(sum_re);
+            sum_im = warp_reduce_sum(sum_im);
 
-        if (tid == 0)
-        {
-            cuDoubleComplex result = make_cuDoubleComplex(s_temp_re[0], s_temp_im[0]);
-            result = cu_mul(result, exp_iAR0);
-            result = cu_conj(result);
-            nlm_out[out_base + 0 * natomwfc + m0_offset + m0] = result;
+            if (lane_id == 0)
+            {
+                cuDoubleComplex result = make_cuDoubleComplex(sum_re, sum_im);
+                result = cu_mul(result, exp_iAR0);
+                result = cu_conj(result);
+                nlm_out[out_base + 0 * natomwfc + m0_offset + m0] = result;
+            }
         }
         __syncthreads();
 
@@ -408,26 +418,33 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         {
             for (int d = 0; d < 3; d++)
             {
-                s_temp_re[tid] = result_r_re[d][m0];
-                s_temp_im[tid] = result_r_im[d][m0];
+                // Step 1: Warp-level reduction
+                double sum_r_re = warp_reduce_sum(result_r_re[d][m0]);
+                double sum_r_im = warp_reduce_sum(result_r_im[d][m0]);
+
+                // Step 2: First lane writes to shared memory
+                if (lane_id == 0)
+                {
+                    s_temp_re[warp_id] = sum_r_re;
+                    s_temp_im[warp_id] = sum_r_im;
+                }
                 __syncthreads();
 
-                for (int s = BLOCK_SIZE / 2; s > 0; s >>= 1)
+                // Step 3: First warp reduces across warps
+                if (warp_id == 0)
                 {
-                    if (tid < s)
-                    {
-                        s_temp_re[tid] += s_temp_re[tid + s];
-                        s_temp_im[tid] += s_temp_im[tid + s];
-                    }
-                    __syncthreads();
-                }
+                    sum_r_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
+                    sum_r_im = (lane_id < NUM_WARPS) ? s_temp_im[lane_id] : 0.0;
+                    sum_r_re = warp_reduce_sum(sum_r_re);
+                    sum_r_im = warp_reduce_sum(sum_r_im);
 
-                if (tid == 0)
-                {
-                    cuDoubleComplex result_r = make_cuDoubleComplex(s_temp_re[0], s_temp_im[0]);
-                    result_r = cu_mul(result_r, exp_iAR0);
-                    result_r = cu_conj(result_r);
-                    nlm_out[out_base + (d + 1) * natomwfc + m0_offset + m0] = result_r;
+                    if (lane_id == 0)
+                    {
+                        cuDoubleComplex result_r = make_cuDoubleComplex(sum_r_re, sum_r_im);
+                        result_r = cu_mul(result_r, exp_iAR0);
+                        result_r = cu_conj(result_r);
+                        nlm_out[out_base + (d + 1) * natomwfc + m0_offset + m0] = result_r;
+                    }
                 }
                 __syncthreads();
             }
