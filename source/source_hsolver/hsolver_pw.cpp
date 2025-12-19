@@ -526,7 +526,7 @@ void HSolverPW<T, Device>::output_iterInfo()
     // in PW base, average iteration steps for each band and k-point should be printing
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running << " Average iterative diagonalization steps: "
+        GlobalV::ofs_running << " Average iterative diagonalization steps for k-points: "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
                              << ";\n where current threshold is: " << this->diag_thr << ". " << std::endl;
         // reset avg_iter
