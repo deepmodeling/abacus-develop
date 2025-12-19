@@ -246,35 +246,50 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }
     }
 
-    // Main integration loop
-    for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
+    // Main integration loop - RESTRUCTURED: angular loop outside, radial inside
+    // ylm0 only depends on angular direction (leb_x,y,z), not radial distance
+    // This saves 140x redundant ylm0 computations per angular point
+    for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE)
     {
-        double r_val = xmean + xl * d_gl_x[ir];
-        double w_rad = xl * d_gl_w[ir];
+        double leb_x = d_lebedev_x[ian];
+        double leb_y = d_lebedev_y[ian];
+        double leb_z = d_lebedev_z[ian];
+        double w_ang = d_lebedev_w[ian];
 
-        for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE)
+        // Precompute ylm0 ONCE per angular point (doesn't depend on r_val)
+        double ylm0[MAX_YLM_SIZE];
+        compute_ylm_gpu(L0, leb_x, leb_y, leb_z, ylm0);
+        int offset_L0 = L0 * L0;
+
+        // Precompute A dot direction (doesn't depend on r_val)
+        double A_dot_leb = A.x * leb_x + A.y * leb_y + A.z * leb_z;
+
+        // Precompute dR components
+        double dRx = R0.x - R1.x;
+        double dRy = R0.y - R1.y;
+        double dRz = R0.z - R1.z;
+
+        #pragma unroll 4
+        for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
         {
-            double leb_x = d_lebedev_x[ian];
-            double leb_y = d_lebedev_y[ian];
-            double leb_z = d_lebedev_z[ian];
-            double w_ang = d_lebedev_w[ian];
+            double r_val = xmean + xl * d_gl_x[ir];
+            double w_rad = xl * d_gl_w[ir];
 
             // Local position relative to R0
             double rx = r_val * leb_x;
             double ry = r_val * leb_y;
             double rz = r_val * leb_z;
 
-            // Vector from R1 (orbital atom) to integration point (R0 + r_local)
-            // This matches neighbor_batch: tx = rx + dRa.x where dRa = R0 - R1
-            double tx = rx + R0.x - R1.x;
-            double ty = ry + R0.y - R1.y;
-            double tz = rz + R0.z - R1.z;
+            // Vector from R1 to integration point
+            double tx = rx + dRx;
+            double ty = ry + dRy;
+            double tz = rz + dRz;
             double tnorm = sqrt(tx * tx + ty * ty + tz * tz);
 
-            // Check psi cutoff - matches neighbor_batch logic
+            // Check psi cutoff
             if (tnorm <= r1_max)
             {
-                // Compute Y_L1 - match neighbor_batch handling of small tnorm
+                // Compute Y_L1 (depends on direction to R1, varies with r_val)
                 double ylm1[MAX_YLM_SIZE];
                 if (tnorm > 1e-10)
                 {
@@ -286,33 +301,25 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                     compute_ylm_gpu(L1, 0.0, 0.0, 1.0, ylm1);
                 }
 
-                // Compute Y_L0
-                double ylm0[MAX_YLM_SIZE];
-                compute_ylm_gpu(L0, leb_x, leb_y, leb_z, ylm0);
+                // Interpolate psi
+                double psi_val = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
 
-                // Interpolate psi at tnorm (distance to orbital atom)
-                double psi_val
-                    = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
-
-                // Phase factor - match neighbor_batch: exp(+i A · r_local)
-                double A_dot_leb = A.x * leb_x + A.y * leb_y + A.z * leb_z;
+                // Phase factor
                 double phase = r_val * A_dot_leb;
                 cuDoubleComplex exp_iAr = cu_exp_i(phase);
 
                 // Interpolate beta
-                double beta_val
-                    = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
+                double beta_val = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
 
                 // Y_L1m1
-                int offset_L1 = L1 * L1 + m1;
-                double ylm_L1_val = ylm1[offset_L1];
+                double ylm_L1_val = ylm1[L1 * L1 + m1];
 
-                // Combined factor - match neighbor_batch exactly
+                // Combined factor
                 double factor = ylm_L1_val * psi_val * beta_val * r_val * w_rad * w_ang;
                 cuDoubleComplex common_factor = cu_mul_real(exp_iAr, factor);
 
-                // Accumulate for all m0 - match neighbor_batch structure
-                int offset_L0 = L0 * L0;
+                // Accumulate for all m0
+                #pragma unroll
                 for (int m0 = 0; m0 < num_m0; m0++)
                 {
                     double ylm0_val = ylm0[offset_L0 + m0];
