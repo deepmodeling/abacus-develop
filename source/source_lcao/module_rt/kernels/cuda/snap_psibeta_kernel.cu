@@ -32,11 +32,36 @@ __constant__ double d_gl_w[RADIAL_GRID_NUM];
  *        Based on the recursive formula used in ModuleBase::Ylm
  *        OPTIMIZED: Use atan2, sincos for better performance
  */
-__device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm)
+/**
+ * @brief Helper to access linear-stored P_l^m value
+ *        Linear index for (l,m): sum_{i=0}^{l-1}(i+1) + m = l*(l+1)/2 + m
+ */
+__device__ __forceinline__ double& p_access(double* p, int l, int m)
 {
-    const double PI = 3.14159265358979323846;
-    const double FOUR_PI = 4.0 * PI;
-    const double SQRT2 = 1.41421356237309504880;
+    return p[l * (l + 1) / 2 + m];
+}
+
+__device__ __forceinline__ double p_get(const double* p, int l, int m)
+{
+    return p[l * (l + 1) / 2 + m];
+}
+
+/**
+ * @brief Compute real spherical harmonics Y_lm (TEMPLATED VERSION)
+ *        L is now a compile-time constant for better optimization
+ *        Uses linear array for Legendre polynomials to reduce register pressure
+ *
+ * @tparam L Maximum angular momentum (compile-time constant)
+ * @param x, y, z Direction components (should be normalized)
+ * @param ylm Output array of size (L+1)^2
+ */
+template <int L>
+__device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
+{
+    constexpr double PI = 3.14159265358979323846;
+    constexpr double FOUR_PI = 4.0 * PI;
+    constexpr double SQRT2 = 1.41421356237309504880;
+    constexpr int P_SIZE = (L + 1) * (L + 2) / 2; // Lower triangular storage
 
     // Y_00
     ylm[0] = 0.5 * sqrt(1.0 / PI);
@@ -46,7 +71,7 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
         return;
     }
 
-    // Compute r and cost
+    // Compute cost, sint, phi
     double r2 = x * x + y * y + z * z;
     double r = sqrt(r2);
 
@@ -61,81 +86,100 @@ __device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm
     {
         cost = z / r;
         sint = sqrt(1.0 - cost * cost);
-        // Use atan2 for robust phi computation (replaces multiple conditionals)
         phi = atan2(y, x);
     }
 
-    // Ensure sint is non-negative (numerical safety)
     if (sint < 0.0)
     {
         sint = 0.0;
     }
 
-    // Associated Legendre polynomials P_l^m
-    double p[MAX_L + 1][MAX_L + 1] = {0};
+    // Associated Legendre polynomials P_l^m in linear storage
+    double p[P_SIZE];
 
-    p[0][0] = 1.0;
+    // Initialize
+    p_access(p, 0, 0) = 1.0;
 
     if (L >= 1)
     {
-        p[1][0] = cost;
-        p[1][1] = -sint;
+        p_access(p, 1, 0) = cost;
+        p_access(p, 1, 1) = -sint;
     }
 
+// Recurrence for l >= 2
+#pragma unroll
     for (int l = 2; l <= L; l++)
     {
+#pragma unroll
         for (int m = 0; m <= l - 2; m++)
         {
-            p[l][m] = ((2 * l - 1) * cost * p[l - 1][m] - (l - 1 + m) * p[l - 2][m]) / (double)(l - m);
+            p_access(p, l, m)
+                = ((2 * l - 1) * cost * p_get(p, l - 1, m) - (l - 1 + m) * p_get(p, l - 2, m)) / (double)(l - m);
         }
-        p[l][l - 1] = (2 * l - 1) * cost * p[l - 1][l - 1];
+        p_access(p, l, l - 1) = (2 * l - 1) * cost * p_get(p, l - 1, l - 1);
+
+        // Compute (2l-1)!! = 1*3*5*...*(2l-1)
         double fact = 1.0;
+#pragma unroll
         for (int i = 1; i <= 2 * l - 1; i += 2)
         {
             fact *= i;
         }
+
+        // Compute sint^l
         double sint_pow = 1.0;
+#pragma unroll
         for (int i = 0; i < l; i++)
         {
             sint_pow *= sint;
         }
-        p[l][l] = fact * sint_pow;
+
+        p_access(p, l, l) = fact * sint_pow;
         if (l % 2 == 1)
         {
-            p[l][l] = -p[l][l];
+            p_access(p, l, l) = -p_access(p, l, l);
         }
     }
 
-    // Compute Y_lm
+    // Compute Y_lm from P_l^m
     int lm = 0;
+#pragma unroll
     for (int l = 0; l <= L; l++)
     {
         double c = sqrt((2.0 * l + 1.0) / FOUR_PI);
 
-        ylm[lm] = c * p[l][0];
+        ylm[lm] = c * p_get(p, l, 0);
         lm++;
 
+#pragma unroll
         for (int m = 1; m <= l; m++)
         {
             double fact_ratio = 1.0;
+#pragma unroll
             for (int i = l - m + 1; i <= l + m; i++)
             {
                 fact_ratio *= i;
             }
             double same = c * sqrt(1.0 / fact_ratio) * SQRT2;
 
-            // Use sincos for efficiency (computes both sin and cos together)
             double sin_mphi, cos_mphi;
             sincos(m * phi, &sin_mphi, &cos_mphi);
 
-            ylm[lm] = same * p[l][m] * cos_mphi;
+            ylm[lm] = same * p_get(p, l, m) * cos_mphi;
             lm++;
 
-            ylm[lm] = same * p[l][m] * sin_mphi;
+            ylm[lm] = same * p_get(p, l, m) * sin_mphi;
             lm++;
         }
     }
 }
+
+// Explicit template instantiations for L = 0, 1, 2, 3, 4
+template __device__ void compute_ylm_gpu<0>(double x, double y, double z, double* ylm);
+template __device__ void compute_ylm_gpu<1>(double x, double y, double z, double* ylm);
+template __device__ void compute_ylm_gpu<2>(double x, double y, double z, double* ylm);
+template __device__ void compute_ylm_gpu<3>(double x, double y, double z, double* ylm);
+template __device__ void compute_ylm_gpu<4>(double x, double y, double z, double* ylm);
 
 //=============================================================================
 // Warp Reduction for double
@@ -214,10 +258,10 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     __shared__ double s_temp_im[BLOCK_SIZE];
 
     // Initialize accumulators in registers
-    double result_re[MAX_YLM_SIZE];
-    double result_im[MAX_YLM_SIZE];
-    double result_r_re[3][MAX_YLM_SIZE];
-    double result_r_im[3][MAX_YLM_SIZE];
+    double result_re[MAX_M0_SIZE];
+    double result_im[MAX_M0_SIZE];
+    double result_r_re[3][MAX_M0_SIZE];
+    double result_r_im[3][MAX_M0_SIZE];
 
     int num_m0 = 2 * L0 + 1;
     for (int m0 = 0; m0 < num_m0; m0++)
@@ -243,7 +287,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 
         // Precompute ylm0 ONCE per angular point (doesn't depend on r_val)
         double ylm0[MAX_YLM_SIZE];
-        compute_ylm_gpu(L0, leb_x, leb_y, leb_z, ylm0);
+        DISPATCH_YLM(L0, leb_x, leb_y, leb_z, ylm0);
         int offset_L0 = L0 * L0;
 
         // Precompute A dot direction (doesn't depend on r_val)
@@ -279,11 +323,11 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 if (tnorm > 1e-10)
                 {
                     double inv_tnorm = 1.0 / tnorm;
-                    compute_ylm_gpu(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
+                    DISPATCH_YLM(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
                 }
                 else
                 {
-                    compute_ylm_gpu(L1, 0.0, 0.0, 1.0, ylm1);
+                    DISPATCH_YLM(L1, 0.0, 0.0, 1.0, ylm1);
                 }
 
                 // Interpolate psi

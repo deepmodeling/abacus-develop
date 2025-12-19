@@ -15,6 +15,7 @@ constexpr int ANGULAR_GRID_NUM = 110;
 constexpr int BLOCK_SIZE = 128;                         // >= ANGULAR_GRID_NUM for efficient reduction
 constexpr int MAX_L = 4;                                // Maximum angular momentum supported
 constexpr int MAX_YLM_SIZE = (MAX_L + 1) * (MAX_L + 1); // = 25
+constexpr int MAX_M0_SIZE = 2 * MAX_L + 1;              // = 9
 
 //=============================================================================
 // Device Helper Functions
@@ -88,13 +89,44 @@ __device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double
 
 /**
  * @brief Compute real spherical harmonics Y_lm at given direction (x, y, z)
- *        This is a simplified version for small L values
+ *        TEMPLATED VERSION - L is compile-time constant for optimization
  *
- * @param L Angular momentum (0 <= L <= MAX_L)
+ * @tparam L Maximum angular momentum (0 <= L <= MAX_L)
  * @param x, y, z Direction (should be normalized)
  * @param ylm Output array of size (L+1)^2
  */
-__device__ void compute_ylm_gpu(int L, double x, double y, double z, double* ylm);
+template <int L>
+__device__ void compute_ylm_gpu(double x, double y, double z, double* ylm);
+
+/**
+ * @brief Runtime dispatch macro for templated compute_ylm_gpu
+ *        Converts runtime L to compile-time template call
+ */
+#define DISPATCH_YLM(L_val, x, y, z, ylm)                                                                              \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        switch (L_val)                                                                                                 \
+        {                                                                                                              \
+        case 0:                                                                                                        \
+            compute_ylm_gpu<0>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        case 1:                                                                                                        \
+            compute_ylm_gpu<1>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        case 2:                                                                                                        \
+            compute_ylm_gpu<2>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        case 3:                                                                                                        \
+            compute_ylm_gpu<3>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        case 4:                                                                                                        \
+            compute_ylm_gpu<4>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        default:                                                                                                       \
+            compute_ylm_gpu<4>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        }                                                                                                              \
+    } while (0)
 
 //=============================================================================
 // Kernel Input/Output Structures
