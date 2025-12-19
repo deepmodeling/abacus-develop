@@ -633,9 +633,9 @@ double DiagoCG<T, Device>::diag(const Func& hpsi_func,
 // this should not be output in production log
     std::cout << "\n DiagoCG::diag' avg_iter_ = " << avg_iter_;
     std::cout << "\n DiagoCG::diag' iter_band = ";
-    for (auto iter : iter_band)
+    for (auto iter_in_band : iter_band)
     {
-        std::cout << iter << " ";
+        std::cout << iter_in_band << " ";
     }
     std::cout << "\n";
 #endif
