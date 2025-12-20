@@ -1,3 +1,16 @@
+/**
+ * @file snap_psibeta_gpu.cu
+ * @brief Host-side GPU interface for <psi|beta> overlap computation
+ *
+ * This file provides the high-level interface for GPU-accelerated computation
+ * of overlap integrals between atomic orbitals (psi) and non-local projectors
+ * (beta). It handles:
+ * - GPU resource initialization and cleanup
+ * - Data marshalling from ABACUS structures to GPU-friendly formats
+ * - Kernel launch configuration
+ * - Result unpacking back to ABACUS data structures
+ */
+
 #include "../snap_psibeta_gpu.h"
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/timer.h"
@@ -12,9 +25,12 @@ namespace gpu
 {
 
 //=============================================================================
-// CUDA Error Checking Macro
+// CUDA Error Handling
 //=============================================================================
 
+/**
+ * @brief CUDA error checking macro with file/line information
+ */
 #define CUDA_CHECK(call)                                                                                               \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -26,12 +42,21 @@ namespace gpu
     } while (0)
 
 //=============================================================================
-// Resource Management - Simplified (using constant memory for grids)
+// GPU Resource Management
 //=============================================================================
 
+/**
+ * @brief Initialize GPU resources for snap_psibeta computation
+ *
+ * Checks for available CUDA devices and copies integration grids
+ * (Lebedev-Laikov angular and Gauss-Legendre radial) to constant memory.
+ *
+ * @note Call this once at the start of a calculation session before any
+ *       snap_psibeta_atom_batch_gpu calls.
+ */
 void initialize_gpu_resources()
 {
-    // Check for CUDA device
+    // Verify CUDA device availability
     int device_count = 0;
     cudaError_t err = cudaGetDeviceCount(&device_count);
     if (err != cudaSuccess || device_count == 0)
@@ -40,24 +65,58 @@ void initialize_gpu_resources()
         return;
     }
 
-    // Copy integration grids (Lebedev and Gauss-Legendre) to constant memory
+    // Initialize integration grids in constant memory
     copy_grids_to_device();
 
-    // Sync to ensure all initialization is complete
+    // Synchronize to ensure initialization is complete
     cudaDeviceSynchronize();
 }
 
-void finalize_gpu_resources()
+//=============================================================================
+// Internal Helper Structures
+//=============================================================================
+
+/**
+ * @brief Mapping structure for reconstructing output data
+ *
+ * Associates each orbital in the flattened GPU array with its original
+ * neighbor and orbital indices for proper result placement.
+ */
+struct OrbitalMapping
 {
-    // No explicit cleanup needed - constant memory is managed by CUDA runtime
-    // Just reset any CUDA errors that may have accumulated
-    cudaGetLastError();
-}
+    int neighbor_idx; ///< Index of neighbor atom in adjacency list
+    int iw_index;     ///< Global orbital index for output mapping
+};
 
 //=============================================================================
-// Atom-Level GPU Batch Interface - Processes ALL neighbors in single kernel
+// Main GPU Interface Function
 //=============================================================================
 
+/**
+ * @brief Compute <psi|beta> overlap integrals on GPU
+ *
+ * This function processes ALL neighbor atoms for a single center atom (where
+ * the projectors are located) in a single kernel launch, providing significant
+ * performance improvement over per-neighbor processing.
+ *
+ * Workflow:
+ * 1. Collect all (neighbor, orbital) pairs into flattened arrays
+ * 2. Prepare projector data for the center atom
+ * 3. Transfer data to GPU and launch kernel
+ * 4. Retrieve results and reconstruct nlm_tot structure
+ *
+ * @param orb       LCAO orbital information
+ * @param infoNL_   Non-local projector information
+ * @param T0        Atom type of center atom (projector location)
+ * @param R0        Position of center atom
+ * @param A         Vector potential for phase factor
+ * @param adjs      Adjacent atom information
+ * @param ucell     Unit cell information
+ * @param paraV     Parallel orbital distribution
+ * @param npol      Number of spin polarizations
+ * @param nlm_dim   Output dimension (1 for overlap only, 4 for overlap + current)
+ * @param nlm_tot   Output: overlap integrals indexed as [neighbor][direction][orbital]
+ */
 void snap_psibeta_atom_batch_gpu(
     const LCAO_Orbitals& orb,
     const InfoNonlocal& infoNL_,
@@ -73,7 +132,10 @@ void snap_psibeta_atom_batch_gpu(
 {
     ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
 
-    // Get projector info
+    //=========================================================================
+    // Early exit if no projectors on center atom
+    //=========================================================================
+
     const int nproj = infoNL_.nproj[T0];
     if (nproj == 0)
     {
@@ -81,13 +143,19 @@ void snap_psibeta_atom_batch_gpu(
         return;
     }
 
-    // Calculate natomwfc
-    int natomwfc = 0;
+    //=========================================================================
+    // Compute projector output indices
+    //=========================================================================
+
+    int natomwfc = 0; // Total number of projector components
     std::vector<int> proj_m0_offset_h(nproj);
+
     for (int ip = 0; ip < nproj; ip++)
     {
         proj_m0_offset_h[ip] = natomwfc;
         int L0 = infoNL_.Beta[T0].Proj[ip].getL();
+
+        // Validate angular momentum
         if (L0 > MAX_L)
         {
             fprintf(stderr,
@@ -99,18 +167,11 @@ void snap_psibeta_atom_batch_gpu(
     }
 
     //=========================================================================
-    // Collect all neighbor-orbital pairs
+    // Collect all (neighbor, orbital) pairs
     //=========================================================================
 
     std::vector<NeighborOrbitalData> neighbor_orbitals_h;
     std::vector<double> psi_radial_h;
-
-    // Track neighbor index for each orbital for output reconstruction
-    struct OrbitalMapping
-    {
-        int neighbor_idx;
-        int iw_index;
-    };
     std::vector<OrbitalMapping> orbital_mappings;
 
     for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -121,7 +182,7 @@ void snap_psibeta_atom_batch_gpu(
         const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
         const Atom* atom1 = &ucell->atoms[T1];
 
-        // Get orbital indices
+        // Get unique orbital indices (union of row and column indices)
         auto all_indexes = paraV->get_indexes_row(iat1);
         auto col_indexes = paraV->get_indexes_col(iat1);
         all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
@@ -136,19 +197,19 @@ void snap_psibeta_atom_batch_gpu(
             const int m1 = atom1->iw2m[iw1];
             const int N1 = atom1->iw2n[iw1];
 
+            // Skip orbitals with angular momentum beyond supported limit
             if (L1 > MAX_L)
             {
-                continue; // Skip orbitals with L > MAX_L
+                continue;
             }
 
-            // Get orbital radial data
-            // Use getPsi() to match CPU implementation (not getPsi_r() which returns psi*r)
+            // Get orbital radial function (use getPsi(), not getPsi_r())
             const double* phi_psi = orb.Phi[T1].PhiLN(L1, N1).getPsi();
             int mesh = orb.Phi[T1].PhiLN(L1, N1).getNr();
             double dk = orb.Phi[T1].PhiLN(L1, N1).getDk();
             double rcut = orb.Phi[T1].getRcut();
 
-            // Add to flattened psi array
+            // Append to flattened psi array
             size_t psi_offset = psi_radial_h.size();
             psi_radial_h.insert(psi_radial_h.end(), phi_psi, phi_psi + mesh);
 
@@ -167,6 +228,7 @@ void snap_psibeta_atom_batch_gpu(
 
             neighbor_orbitals_h.push_back(norb);
 
+            // Track mapping for result reconstruction
             OrbitalMapping mapping;
             mapping.neighbor_idx = ad;
             mapping.iw_index = all_indexes[iw1l];
@@ -203,7 +265,6 @@ void snap_psibeta_atom_batch_gpu(
         projectors_h[ip].beta_mesh = mesh;
         projectors_h[ip].beta_dk = dk;
         projectors_h[ip].beta_rcut = rcut;
-        // Use actual radial grid range
         projectors_h[ip].r_min = radial[0];
         projectors_h[ip].r_max = radial[mesh - 1];
 
@@ -211,7 +272,7 @@ void snap_psibeta_atom_batch_gpu(
     }
 
     //=========================================================================
-    // Allocate Device Memory
+    // Allocate GPU memory
     //=========================================================================
 
     NeighborOrbitalData* neighbor_orbitals_d = nullptr;
@@ -231,7 +292,7 @@ void snap_psibeta_atom_batch_gpu(
     CUDA_CHECK(cudaMalloc(&nlm_out_d, output_size * sizeof(cuDoubleComplex)));
 
     //=========================================================================
-    // Copy Data to Device
+    // Transfer data to GPU
     //=========================================================================
 
     CUDA_CHECK(cudaMemcpy(neighbor_orbitals_d,
@@ -247,7 +308,7 @@ void snap_psibeta_atom_batch_gpu(
     CUDA_CHECK(cudaMemset(nlm_out_d, 0, output_size * sizeof(cuDoubleComplex)));
 
     //=========================================================================
-    // Launch Kernel - SINGLE launch for ALL neighbors!
+    // Launch kernel
     //=========================================================================
 
     double3 R0_d3 = make_double3(R0.x, R0.y, R0.z);
@@ -269,6 +330,7 @@ void snap_psibeta_atom_batch_gpu(
                                                     nlm_dim,
                                                     nlm_out_d);
 
+    // Check for launch errors
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess)
     {
@@ -286,14 +348,14 @@ void snap_psibeta_atom_batch_gpu(
     CUDA_CHECK(cudaDeviceSynchronize());
 
     //=========================================================================
-    // Copy Results Back
+    // Retrieve results
     //=========================================================================
 
     std::vector<cuDoubleComplex> nlm_out_h(output_size);
     CUDA_CHECK(cudaMemcpy(nlm_out_h.data(), nlm_out_d, output_size * sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost));
 
     //=========================================================================
-    // Reconstruct nlm_tot structure
+    // Reconstruct output structure
     //=========================================================================
 
     for (int i = 0; i < total_neighbor_orbitals; i++)
@@ -312,7 +374,7 @@ void snap_psibeta_atom_batch_gpu(
             }
         }
 
-        // Insert into nlm_tot[ad][dir][iw_index]
+        // Insert into nlm_tot[neighbor][direction][orbital]
         for (int dir = 0; dir < nlm_dim; dir++)
         {
             nlm_tot[ad][dir].insert({iw_index, nlm[dir]});
@@ -320,7 +382,7 @@ void snap_psibeta_atom_batch_gpu(
     }
 
     //=========================================================================
-    // Cleanup
+    // Cleanup GPU memory
     //=========================================================================
 
     cudaFree(neighbor_orbitals_d);

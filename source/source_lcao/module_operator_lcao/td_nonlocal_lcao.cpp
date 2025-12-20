@@ -306,12 +306,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         } // end omp parallel for matrix assembly
     }     // end for iat0
-
-#ifdef __CUDA
-    // Release GPU resources at end of calculation
-    module_rt::gpu::finalize_gpu_resources();
-#endif
-
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
 }
 

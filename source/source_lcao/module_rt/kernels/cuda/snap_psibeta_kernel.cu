@@ -1,3 +1,16 @@
+/**
+ * @file snap_psibeta_kernel.cu
+ * @brief CUDA kernel implementation for <psi|beta> overlap integrals
+ *
+ * This file implements the GPU-accelerated numerical integration for computing
+ * overlap integrals between atomic orbitals (psi) and non-local projectors (beta).
+ * The implementation uses:
+ * - Lebedev-Laikov quadrature (110 points) for angular integration
+ * - Gauss-Legendre quadrature (140 points) for radial integration
+ * - Templated spherical harmonics with compile-time L for optimization
+ * - Warp-level shuffle reduction for efficient parallel summation
+ */
+
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/math_integral.h"
 
@@ -10,60 +23,75 @@ namespace gpu
 {
 
 //=============================================================================
-// Constant Memory for Integration Grids
+// Constant Memory - Integration Grids
 //=============================================================================
 
-// Lebedev-Laikov angular grid (110 points)
-__constant__ double d_lebedev_x[ANGULAR_GRID_NUM];
-__constant__ double d_lebedev_y[ANGULAR_GRID_NUM];
-__constant__ double d_lebedev_z[ANGULAR_GRID_NUM];
-__constant__ double d_lebedev_w[ANGULAR_GRID_NUM];
+// Lebedev-Laikov angular quadrature grid (110 points)
+__constant__ double d_lebedev_x[ANGULAR_GRID_NUM]; ///< x-direction cosines
+__constant__ double d_lebedev_y[ANGULAR_GRID_NUM]; ///< y-direction cosines
+__constant__ double d_lebedev_z[ANGULAR_GRID_NUM]; ///< z-direction cosines
+__constant__ double d_lebedev_w[ANGULAR_GRID_NUM]; ///< Angular integration weights
 
-// Gauss-Legendre radial grid (140 points)
-__constant__ double d_gl_x[RADIAL_GRID_NUM];
-__constant__ double d_gl_w[RADIAL_GRID_NUM];
+// Gauss-Legendre radial quadrature grid (140 points)
+__constant__ double d_gl_x[RADIAL_GRID_NUM]; ///< Quadrature abscissae on [-1, 1]
+__constant__ double d_gl_w[RADIAL_GRID_NUM]; ///< Quadrature weights
 
 //=============================================================================
-// Spherical Harmonics Implementation
+// Spherical Harmonics - Helper Functions
 //=============================================================================
 
 /**
- * @brief Compute real spherical harmonics Y_lm
- *        Based on the recursive formula used in ModuleBase::Ylm
- *        OPTIMIZED: Use atan2, sincos for better performance
- */
-/**
- * @brief Helper to access linear-stored P_l^m value
- *        Linear index for (l,m): sum_{i=0}^{l-1}(i+1) + m = l*(l+1)/2 + m
+ * @brief Access element in lower-triangular stored Legendre polynomial array
+ *
+ * For associated Legendre polynomials P_l^m, we only need 0 <= m <= l.
+ * Storage layout: P_0^0, P_1^0, P_1^1, P_2^0, P_2^1, P_2^2, ...
+ * Linear index: l*(l+1)/2 + m
  */
 __device__ __forceinline__ double& p_access(double* p, int l, int m)
 {
     return p[l * (l + 1) / 2 + m];
 }
 
+/**
+ * @brief Read-only access to Legendre polynomial array
+ */
 __device__ __forceinline__ double p_get(const double* p, int l, int m)
 {
     return p[l * (l + 1) / 2 + m];
 }
 
+//=============================================================================
+// Spherical Harmonics - Main Implementation
+//=============================================================================
+
 /**
- * @brief Compute real spherical harmonics Y_lm (TEMPLATED VERSION)
- *        L is now a compile-time constant for better optimization
- *        Uses linear array for Legendre polynomials to reduce register pressure
+ * @brief Compute real spherical harmonics Y_lm (templated version)
+ *
+ * Uses the recursive computation of associated Legendre polynomials:
+ *   P_l^m = ((2l-1)*cos(theta)*P_{l-1}^m - (l-1+m)*P_{l-2}^m) / (l-m)
+ *   P_l^{l-1} = (2l-1)*cos(theta)*P_{l-1}^{l-1}
+ *   P_l^l = (-1)^l * (2l-1)!! * sin^l(theta)
+ *
+ * Real spherical harmonics are defined as:
+ *   Y_{lm} = c_l * P_l^0                           for m = 0
+ *   Y_{l,2m-1} = c_l * sqrt(2/(l-m)!/(l+m)!) * P_l^m * cos(m*phi)  for m > 0
+ *   Y_{l,2m}   = c_l * sqrt(2/(l-m)!/(l+m)!) * P_l^m * sin(m*phi)  for m > 0
+ * where c_l = sqrt((2l+1)/(4*pi))
  *
  * @tparam L Maximum angular momentum (compile-time constant)
- * @param x, y, z Direction components (should be normalized)
- * @param ylm Output array of size (L+1)^2
+ * @param x, y, z Direction vector components (need not be normalized)
+ * @param ylm Output array storing Y_lm values in order: Y_00, Y_10, Y_11c, Y_11s, ...
  */
 template <int L>
 __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
 {
+    // Mathematical constants
     constexpr double PI = 3.14159265358979323846;
     constexpr double FOUR_PI = 4.0 * PI;
     constexpr double SQRT2 = 1.41421356237309504880;
-    constexpr int P_SIZE = (L + 1) * (L + 2) / 2; // Lower triangular storage
+    constexpr int P_SIZE = (L + 1) * (L + 2) / 2; // Lower triangular storage size
 
-    // Y_00
+    // Y_00 = 1/(2*sqrt(pi))
     ylm[0] = 0.5 * sqrt(1.0 / PI);
 
     if (L == 0)
@@ -71,13 +99,14 @@ __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
         return;
     }
 
-    // Compute cost, sint, phi
+    // Compute spherical angles
     double r2 = x * x + y * y + z * z;
     double r = sqrt(r2);
 
     double cost, sint, phi;
     if (r < 1e-10)
     {
+        // At origin, default to z-axis direction
         cost = 1.0;
         sint = 0.0;
         phi = 0.0;
@@ -89,86 +118,92 @@ __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
         phi = atan2(y, x);
     }
 
+    // Ensure sint is non-negative (numerical safety)
     if (sint < 0.0)
     {
         sint = 0.0;
     }
 
-    // Associated Legendre polynomials P_l^m in linear storage
+    // Associated Legendre polynomials P_l^m in lower-triangular storage
     double p[P_SIZE];
 
-    // Initialize
+    // Base cases
     p_access(p, 0, 0) = 1.0;
 
     if (L >= 1)
     {
-        p_access(p, 1, 0) = cost;
-        p_access(p, 1, 1) = -sint;
+        p_access(p, 1, 0) = cost;  // P_1^0 = cos(theta)
+        p_access(p, 1, 1) = -sint; // P_1^1 = -sin(theta)
     }
 
-// Recurrence for l >= 2
+    // Recurrence relations for l >= 2
 #pragma unroll
     for (int l = 2; l <= L; l++)
     {
+        // P_l^m for m = 0 to l-2: standard recurrence
 #pragma unroll
         for (int m = 0; m <= l - 2; m++)
         {
-            p_access(p, l, m)
-                = ((2 * l - 1) * cost * p_get(p, l - 1, m) - (l - 1 + m) * p_get(p, l - 2, m)) / (double)(l - m);
+            p_access(p, l, m) = ((2 * l - 1) * cost * p_get(p, l - 1, m) - (l - 1 + m) * p_get(p, l - 2, m))
+                                / static_cast<double>(l - m);
         }
+
+        // P_l^{l-1} = (2l-1) * cos(theta) * P_{l-1}^{l-1}
         p_access(p, l, l - 1) = (2 * l - 1) * cost * p_get(p, l - 1, l - 1);
 
-        // Compute (2l-1)!! = 1*3*5*...*(2l-1)
-        double fact = 1.0;
+        // P_l^l = (-1)^l * (2l-1)!! * sin^l(theta)
+        double double_factorial = 1.0;
 #pragma unroll
         for (int i = 1; i <= 2 * l - 1; i += 2)
         {
-            fact *= i;
+            double_factorial *= i;
         }
 
-        // Compute sint^l
-        double sint_pow = 1.0;
+        double sint_power = 1.0;
 #pragma unroll
         for (int i = 0; i < l; i++)
         {
-            sint_pow *= sint;
+            sint_power *= sint;
         }
 
-        p_access(p, l, l) = fact * sint_pow;
+        p_access(p, l, l) = double_factorial * sint_power;
         if (l % 2 == 1)
         {
             p_access(p, l, l) = -p_access(p, l, l);
         }
     }
 
-    // Compute Y_lm from P_l^m
+    // Transform Legendre polynomials to real spherical harmonics
     int lm = 0;
 #pragma unroll
     for (int l = 0; l <= L; l++)
     {
         double c = sqrt((2.0 * l + 1.0) / FOUR_PI);
 
+        // m = 0 component
         ylm[lm] = c * p_get(p, l, 0);
         lm++;
 
+        // m > 0 components (cosine and sine parts)
 #pragma unroll
         for (int m = 1; m <= l; m++)
         {
-            double fact_ratio = 1.0;
+            // Compute normalization factor: sqrt(2 * (l-m)! / (l+m)!)
+            double factorial_ratio = 1.0;
 #pragma unroll
             for (int i = l - m + 1; i <= l + m; i++)
             {
-                fact_ratio *= i;
+                factorial_ratio *= i;
             }
-            double same = c * sqrt(1.0 / fact_ratio) * SQRT2;
+            double norm = c * sqrt(1.0 / factorial_ratio) * SQRT2;
 
             double sin_mphi, cos_mphi;
             sincos(m * phi, &sin_mphi, &cos_mphi);
 
-            ylm[lm] = same * p_get(p, l, m) * cos_mphi;
+            ylm[lm] = norm * p_get(p, l, m) * cos_mphi; // Y_{l,m} cosine part
             lm++;
 
-            ylm[lm] = same * p_get(p, l, m) * sin_mphi;
+            ylm[lm] = norm * p_get(p, l, m) * sin_mphi; // Y_{l,m} sine part
             lm++;
         }
     }
@@ -182,9 +217,18 @@ template __device__ void compute_ylm_gpu<3>(double x, double y, double z, double
 template __device__ void compute_ylm_gpu<4>(double x, double y, double z, double* ylm);
 
 //=============================================================================
-// Warp Reduction for double
+// Warp-Level Reduction
 //=============================================================================
 
+/**
+ * @brief Warp-level sum reduction using shuffle instructions
+ *
+ * Performs a parallel reduction within a warp (32 threads) using __shfl_down_sync.
+ * After this function, lane 0 contains the sum of all input values in the warp.
+ *
+ * @param val Input value from each thread
+ * @return Sum across all threads in the warp (valid only in lane 0)
+ */
 __device__ __forceinline__ double warp_reduce_sum(double val)
 {
     for (int offset = 16; offset > 0; offset /= 2)
@@ -195,10 +239,20 @@ __device__ __forceinline__ double warp_reduce_sum(double val)
 }
 
 //=============================================================================
-// Atom-Level Batch Kernel Implementation
-// Processes ALL neighbors for a center atom in a single kernel launch
+// Main Kernel Implementation
 //=============================================================================
 
+/**
+ * @brief Atom-level batch kernel for <psi|beta> overlap integrals
+ *
+ * Integration is performed using restructured loops for efficiency:
+ * - Outer loop: angular points (each thread handles different angles)
+ * - Inner loop: radial points (each thread accumulates all radii)
+ *
+ * This structure exploits the fact that Y_lm for the projector (ylm0) only
+ * depends on the angular direction, not the radial distance, saving
+ * RADIAL_GRID_NUM redundant ylm0 computations per angular point.
+ */
 __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                                                double3 A,
                                                const NeighborOrbitalData* __restrict__ neighbor_orbitals,
@@ -212,59 +266,74 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                                                int nlm_dim,
                                                cuDoubleComplex* __restrict__ nlm_out)
 {
-    int norb_idx = blockIdx.x; // Which (neighbor, orbital) pair
-    int proj_idx = blockIdx.y; // Which projector
-    int tid = threadIdx.x;
+    // Thread/block indices
+    const int norb_idx = blockIdx.x; // Which (neighbor, orbital) pair
+    const int proj_idx = blockIdx.y; // Which projector
+    const int tid = threadIdx.x;
 
+    // Early exit for out-of-bounds blocks
     if (norb_idx >= total_neighbor_orbitals || proj_idx >= nproj)
     {
         return;
     }
 
-    // Load neighbor-orbital data (includes R1)
+    //-------------------------------------------------------------------------
+    // Load input data
+    //-------------------------------------------------------------------------
+
     const NeighborOrbitalData& norb = neighbor_orbitals[norb_idx];
     const ProjectorData& proj = projectors[proj_idx];
 
-    double3 R1 = norb.R1;
-    int L1 = norb.L1;
-    int m1 = norb.m1;
-    int L0 = proj.L0;
-    int m0_offset = proj_m0_offset[proj_idx];
+    const double3 R1 = norb.R1;
+    const int L1 = norb.L1;
+    const int m1 = norb.m1;
+    const int L0 = proj.L0;
+    const int m0_offset = proj_m0_offset[proj_idx];
 
-    // Skip if L values exceed our precomputed limit
+    // Skip if angular momentum exceeds supported limit
     if (L1 > MAX_L || L0 > MAX_L)
     {
         return;
     }
 
+    //-------------------------------------------------------------------------
     // Compute geometry
-    double3 dR = make_double3(R1.x - R0.x, R1.y - R0.y, R1.z - R0.z);
-    double distance01 = sqrt(dR.x * dR.x + dR.y * dR.y + dR.z * dR.z);
+    //-------------------------------------------------------------------------
 
-    double r1_max = norb.psi_rcut;
-    // Integration range: use projector's radial grid range [r_min, r_max]
-    // This matches the CPU implementation in snap_psibeta_half_tddft.cpp
-    double r_min = proj.r_min;
-    double r_max = proj.r_max;
-    double xl = 0.5 * (r_max - r_min);
-    double xmean = 0.5 * (r_max + r_min);
+    // Note: dR (R1 - R0) is computed inline as dRx/dRy/dRz in the integration loop
 
-    // Phase factor exp(i A · R0)
-    double AdotR0 = A.x * R0.x + A.y * R0.y + A.z * R0.z;
-    cuDoubleComplex exp_iAR0 = cu_exp_i(AdotR0);
+    // Orbital cutoff
+    const double r1_max = norb.psi_rcut;
 
-    // Shared memory for warp-level reduction (only need space for warp sums)
+    // Integration range from projector radial grid
+    const double r_min = proj.r_min;
+    const double r_max = proj.r_max;
+    const double xl = 0.5 * (r_max - r_min);    // Half-range for Gauss-Legendre
+    const double xmean = 0.5 * (r_max + r_min); // Midpoint
+
+    // Phase factor exp(i * A · R0)
+    const double AdotR0 = A.x * R0.x + A.y * R0.y + A.z * R0.z;
+    const cuDoubleComplex exp_iAR0 = cu_exp_i(AdotR0);
+
+    //-------------------------------------------------------------------------
+    // Shared memory for warp reduction
+    //-------------------------------------------------------------------------
+
     constexpr int NUM_WARPS = BLOCK_SIZE / 32; // 128 / 32 = 4 warps
     __shared__ double s_temp_re[NUM_WARPS];
     __shared__ double s_temp_im[NUM_WARPS];
 
-    // Initialize accumulators in registers
+    //-------------------------------------------------------------------------
+    // Initialize accumulators (per-thread registers)
+    //-------------------------------------------------------------------------
+
+    const int num_m0 = 2 * L0 + 1;
+
     double result_re[MAX_M0_SIZE];
     double result_im[MAX_M0_SIZE];
-    double result_r_re[3][MAX_M0_SIZE];
+    double result_r_re[3][MAX_M0_SIZE]; // For current operator: x, y, z components
     double result_r_im[3][MAX_M0_SIZE];
 
-    int num_m0 = 2 * L0 + 1;
     for (int m0 = 0; m0 < num_m0; m0++)
     {
         result_re[m0] = 0.0;
@@ -276,54 +345,60 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }
     }
 
-    // Main integration loop - RESTRUCTURED: angular loop outside, radial inside
-    // ylm0 only depends on angular direction (leb_x,y,z), not radial distance
-    // This saves 140x redundant ylm0 computations per angular point
+    //-------------------------------------------------------------------------
+    // Main integration loop
+    // Outer: angular points (parallelized across threads)
+    // Inner: radial points (accumulated per thread)
+    //-------------------------------------------------------------------------
+
     for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE)
     {
-        double leb_x = d_lebedev_x[ian];
-        double leb_y = d_lebedev_y[ian];
-        double leb_z = d_lebedev_z[ian];
-        double w_ang = d_lebedev_w[ian];
+        // Load angular grid point
+        const double leb_x = d_lebedev_x[ian];
+        const double leb_y = d_lebedev_y[ian];
+        const double leb_z = d_lebedev_z[ian];
+        const double w_ang = d_lebedev_w[ian];
 
-        // Precompute ylm0 ONCE per angular point (doesn't depend on r_val)
+        // Precompute Y_lm for projector (independent of radial distance)
         double ylm0[MAX_YLM_SIZE];
         DISPATCH_YLM(L0, leb_x, leb_y, leb_z, ylm0);
-        int offset_L0 = L0 * L0;
+        const int offset_L0 = L0 * L0;
 
-        // Precompute A dot direction (doesn't depend on r_val)
-        double A_dot_leb = A.x * leb_x + A.y * leb_y + A.z * leb_z;
+        // Precompute A · direction (for phase factor)
+        const double A_dot_leb = A.x * leb_x + A.y * leb_y + A.z * leb_z;
 
-        // Precompute dR components
-        double dRx = R0.x - R1.x;
-        double dRy = R0.y - R1.y;
-        double dRz = R0.z - R1.z;
+        // Vector from R1 to R0 (for computing distance to orbital center)
+        const double dRx = R0.x - R1.x;
+        const double dRy = R0.y - R1.y;
+        const double dRz = R0.z - R1.z;
 
+        // Radial integration
 #pragma unroll 4
         for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
         {
-            double r_val = xmean + xl * d_gl_x[ir];
-            double w_rad = xl * d_gl_w[ir];
+            // Transform Gauss-Legendre point from [-1,1] to [r_min, r_max]
+            const double r_val = xmean + xl * d_gl_x[ir];
+            const double w_rad = xl * d_gl_w[ir];
 
-            // Local position relative to R0
-            double rx = r_val * leb_x;
-            double ry = r_val * leb_y;
-            double rz = r_val * leb_z;
+            // Integration point position relative to R0
+            const double rx = r_val * leb_x;
+            const double ry = r_val * leb_y;
+            const double rz = r_val * leb_z;
 
             // Vector from R1 to integration point
-            double tx = rx + dRx;
-            double ty = ry + dRy;
-            double tz = rz + dRz;
-            double tnorm = sqrt(tx * tx + ty * ty + tz * tz);
+            const double tx = rx + dRx;
+            const double ty = ry + dRy;
+            const double tz = rz + dRz;
+            const double tnorm = sqrt(tx * tx + ty * ty + tz * tz);
 
-            // Check psi cutoff
+            // Check if within orbital cutoff
             if (tnorm <= r1_max)
             {
-                // Compute Y_L1 (depends on direction to R1, varies with r_val)
+                // Compute Y_lm for orbital (depends on direction from R1)
                 double ylm1[MAX_YLM_SIZE];
                 if (tnorm > 1e-10)
                 {
-                    double inv_tnorm = 1.0 / tnorm;
+                    const double inv_tnorm = 1.0 / tnorm;
                     DISPATCH_YLM(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
                 }
                 else
@@ -331,39 +406,40 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                     DISPATCH_YLM(L1, 0.0, 0.0, 1.0, ylm1);
                 }
 
-                // Interpolate psi
-                double psi_val
+                // Interpolate orbital radial function
+                const double psi_val
                     = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
 
-                // Phase factor
-                double phase = r_val * A_dot_leb;
-                cuDoubleComplex exp_iAr = cu_exp_i(phase);
-
-                // Interpolate beta
-                double beta_val
+                // Interpolate projector radial function
+                const double beta_val
                     = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
 
-                // Y_L1m1
-                double ylm_L1_val = ylm1[L1 * L1 + m1];
+                // Phase factor exp(i * A · r)
+                const double phase = r_val * A_dot_leb;
+                const cuDoubleComplex exp_iAr = cu_exp_i(phase);
 
-                // Combined factor
-                double factor = ylm_L1_val * psi_val * beta_val * r_val * w_rad * w_ang;
-                cuDoubleComplex common_factor = cu_mul_real(exp_iAr, factor);
+                // Orbital Y_lm value
+                const double ylm_L1_val = ylm1[L1 * L1 + m1];
 
-// Accumulate for all m0
+                // Combined integration factor: Y_L1m1 * psi * beta * r * dr * dOmega
+                const double factor = ylm_L1_val * psi_val * beta_val * r_val * w_rad * w_ang;
+                const cuDoubleComplex common_factor = cu_mul_real(exp_iAr, factor);
+
+                // Accumulate for all m0 components of projector
 #pragma unroll
                 for (int m0 = 0; m0 < num_m0; m0++)
                 {
-                    double ylm0_val = ylm0[offset_L0 + m0];
+                    const double ylm0_val = ylm0[offset_L0 + m0];
 
                     result_re[m0] += common_factor.x * ylm0_val;
                     result_im[m0] += common_factor.y * ylm0_val;
 
+                    // Current operator contribution (if requested)
                     if (nlm_dim == 4)
                     {
-                        double r_op_x = rx + R0.x;
-                        double r_op_y = ry + R0.y;
-                        double r_op_z = rz + R0.z;
+                        const double r_op_x = rx + R0.x;
+                        const double r_op_y = ry + R0.y;
+                        const double r_op_z = rz + R0.z;
 
                         result_r_re[0][m0] += common_factor.x * ylm0_val * r_op_x;
                         result_r_im[0][m0] += common_factor.y * ylm0_val * r_op_x;
@@ -374,13 +450,17 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                     }
                 }
             }
-        }
-    }
+        } // End radial loop
+    }     // End angular loop
 
-    // Reduction and output using warp shuffle - more efficient than shared memory
-    int out_base = norb_idx * nlm_dim * natomwfc;
-    int warp_id = tid / 32;
-    int lane_id = tid % 32;
+    //-------------------------------------------------------------------------
+    // Parallel reduction and output
+    // Uses warp shuffle for efficiency, followed by cross-warp reduction
+    //-------------------------------------------------------------------------
+
+    const int out_base = norb_idx * nlm_dim * natomwfc;
+    const int warp_id = tid / 32;
+    const int lane_id = tid % 32;
 
     for (int m0 = 0; m0 < num_m0; m0++)
     {
@@ -396,7 +476,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }
         __syncthreads();
 
-        // Step 3: First warp reduces across all warps
+        // Step 3: First warp reduces across all warps and writes output
         if (warp_id == 0)
         {
             sum_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
@@ -414,15 +494,14 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }
         __syncthreads();
 
+        // Process current operator components (if nlm_dim == 4)
         if (nlm_dim == 4)
         {
             for (int d = 0; d < 3; d++)
             {
-                // Step 1: Warp-level reduction
                 double sum_r_re = warp_reduce_sum(result_r_re[d][m0]);
                 double sum_r_im = warp_reduce_sum(result_r_im[d][m0]);
 
-                // Step 2: First lane writes to shared memory
                 if (lane_id == 0)
                 {
                     s_temp_re[warp_id] = sum_r_re;
@@ -430,7 +509,6 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 }
                 __syncthreads();
 
-                // Step 3: First warp reduces across warps
                 if (warp_id == 0)
                 {
                     sum_r_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
@@ -453,9 +531,12 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 }
 
 //=============================================================================
-// Host-side Helper Function Implementations
+// Host-side Helper Functions
 //=============================================================================
 
+/**
+ * @brief CUDA error checking macro for kernel-related operations
+ */
 #define CUDA_CHECK_KERNEL(call)                                                                                        \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -466,9 +547,15 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         }                                                                                                              \
     } while (0)
 
+/**
+ * @brief Copy integration grids to GPU constant memory
+ *
+ * Initializes the constant memory arrays with Lebedev-Laikov angular grid
+ * and Gauss-Legendre radial grid for use in kernel integration.
+ */
 void copy_grids_to_device()
 {
-    // Copy Lebedev-Laikov angular grid to constant memory
+    // Copy Lebedev-Laikov 110-point angular quadrature grid
     CUDA_CHECK_KERNEL(cudaMemcpyToSymbol(d_lebedev_x,
                                          ModuleBase::Integral::Lebedev_Laikov_grid110_x,
                                          ANGULAR_GRID_NUM * sizeof(double)));
@@ -482,7 +569,7 @@ void copy_grids_to_device()
                                          ModuleBase::Integral::Lebedev_Laikov_grid110_w,
                                          ANGULAR_GRID_NUM * sizeof(double)));
 
-    // Prepare and copy Gauss-Legendre radial grid to constant memory
+    // Compute and copy Gauss-Legendre radial quadrature grid
     std::vector<double> h_gl_x(RADIAL_GRID_NUM);
     std::vector<double> h_gl_w(RADIAL_GRID_NUM);
     ModuleBase::Integral::Gauss_Legendre_grid_and_weight(RADIAL_GRID_NUM, h_gl_x.data(), h_gl_w.data());
