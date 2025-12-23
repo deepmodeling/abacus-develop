@@ -90,7 +90,7 @@ class ESolver_NEP : public ESolver
      * @note These variables are only defined if the __NEP preprocessor macro is defined.
      */
 #ifdef __NEP
-    NEP3 nep; ///< NEP3 object for NEP calculations
+    NEP nep; ///< NEP object for NEP calculations
 #endif
 
     std::string nep_file;                ///< directory of NEP model file
