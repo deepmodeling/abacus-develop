@@ -22,15 +22,16 @@ void ElecState::cal_bandgap()
     int nks = this->klist->get_nks();
     double vbm = -std::numeric_limits<double>::infinity(); // Valence Band Maximum
     double cbm = std::numeric_limits<double>::infinity(); // Conduction Band Minimum
+    const double threshold = 1.0e-5; // threshold to avoid E_gap(k) = 0
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ik = 0; ik < nks; ik++)
         {
-            if (this->ekb(ik, ib) <= this->eferm.ef && this->ekb(ik, ib) > vbm)
+            if (this->ekb(ik, ib) <= this->eferm.ef + threshold && this->ekb(ik, ib) > vbm)
             {
                 vbm = this->ekb(ik, ib);
             }
-            if (this->ekb(ik, ib) >= this->eferm.ef && this->ekb(ik, ib) < cbm)
+            if (this->ekb(ik, ib) > this->eferm.ef + threshold && this->ekb(ik, ib) < cbm)
             {
                 cbm = this->ekb(ik, ib);
             }
@@ -62,28 +63,29 @@ void ElecState::cal_bandgap_updw()
     double cbm_up = std::numeric_limits<double>::infinity();
     double vbm_dw = -std::numeric_limits<double>::infinity();
     double cbm_dw = std::numeric_limits<double>::infinity();
+    const double threshold = 1.0e-5;
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ik = 0; ik < nks; ik++)
         {
             if (this->klist->isk[ik] == 0)
             {
-                if (this->ekb(ik, ib) <= this->eferm.ef_up && this->ekb(ik, ib) > vbm_up)
+                if (this->ekb(ik, ib) <= this->eferm.ef_up + threshold && this->ekb(ik, ib) > vbm_up)
                 {
                     vbm_up = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) >= this->eferm.ef_up && this->ekb(ik, ib) < cbm_up)
+                if (this->ekb(ik, ib) > this->eferm.ef_up + threshold && this->ekb(ik, ib) < cbm_up)
                 {
                     cbm_up = this->ekb(ik, ib);
                 }
             }
             if (this->klist->isk[ik] == 1)
             {
-                if (this->ekb(ik, ib) <= this->eferm.ef_dw && this->ekb(ik, ib) > vbm_dw)
+                if (this->ekb(ik, ib) <= this->eferm.ef_dw + threshold && this->ekb(ik, ib) > vbm_dw)
                 {
                     vbm_dw = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) >= this->eferm.ef_dw && this->ekb(ik, ib) < cbm_dw)
+                if (this->ekb(ik, ib) > this->eferm.ef_dw + threshold && this->ekb(ik, ib) < cbm_dw)
                 {
                     cbm_dw = this->ekb(ik, ib);
                 }
