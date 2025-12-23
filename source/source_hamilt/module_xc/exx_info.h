@@ -67,6 +67,7 @@ struct Exx_Info
         double ccp_rmesh_times = 10;
         bool exx_symmetry_realspace = true;
         double kmesh_times = 4;
+        double Cs_inv_thr = -1;
 
         int abfs_Lmax = 0; // tmp
 

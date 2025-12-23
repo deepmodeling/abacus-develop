@@ -2971,6 +2971,12 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
+### exx_cs_inv_thr
+
+- **Type**: Real
+- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When `exx_cs_inv_thr > 0`, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than `exx_cs_inv_thr` are discarded to improve numerical stability. A relatively safe and commonly recommended value is `1e-5`.
+- **Default**: -1
+
 ### exx_v_threshold
 
 - **Type**: Real

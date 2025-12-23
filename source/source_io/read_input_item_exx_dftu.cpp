@@ -244,6 +244,12 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_cs_inv_thr");
+        item.annotation = "threshold to inverse Vq in abfs for generating Cs";
+        read_sync_double(input.exx_cs_inv_thr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_c_threshold");
         item.annotation = "threshold to screen C matrix in exx";
         read_sync_double(input.exx_c_threshold);
