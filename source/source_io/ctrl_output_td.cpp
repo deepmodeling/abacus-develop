@@ -59,9 +59,9 @@ void ctrl_output_td(const UnitCell& ucell,
     }
 
     // (3) Output file for restart
-    if (PARAM.inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
     {
-        if (istep % PARAM.inp.out_freq_ion == 0)
+        if (istep % PARAM.inp.out_freq_td == 0)
         {
             if (td_p != nullptr)
             {
