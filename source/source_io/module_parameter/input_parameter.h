@@ -367,6 +367,7 @@ struct Input_para
     bool out_stru = false;                ///< outut stru file each ion step
     int out_freq_elec = 0;                ///< print information every few electronic steps 
     int out_freq_ion = 0;                 ///< print information every few ionic steps 
+    int out_freq_td = 0;                  ///< print information every few completed electronic iterations in RT-TDDFT
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no

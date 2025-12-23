@@ -182,6 +182,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
     EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
+    EXPECT_EQ(param.inp.out_freq_td, 0);
     EXPECT_EQ(param.inp.out_chg[0], 0);
     EXPECT_EQ(param.inp.out_chg[1], 3);
     EXPECT_EQ(param.inp.out_elf[0], 0);
@@ -207,7 +208,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.out_mat_xc);
     EXPECT_FALSE(param.inp.out_mat_xc2);
     EXPECT_FALSE(param.inp.out_eband_terms);
-    EXPECT_EQ(param.inp.out_freq_ion, 0);
     EXPECT_EQ(param.inp.out_app_flag, 0);
     EXPECT_EQ(param.inp.out_mat_r, 0);
     EXPECT_FALSE(param.inp.out_wfc_lcao);

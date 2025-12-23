@@ -135,6 +135,7 @@
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_ion](#out_freq_ion)
+    - [out\_freq\_td](#out_freq_td)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -535,7 +536,7 @@ These variables are used to control general system parameters.
   - ofdft: orbital-free density functional theory
   - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
-  - tddft: real-time time-dependent density functional theory (TDDFT)
+  - tddft: real-time time-dependent density functional theory (RT-TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
   - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
@@ -1688,15 +1689,22 @@ These variables are used to control the output of properties.
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Controls the output interval in **ionic steps**. When set to a positive integer $N$, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every $N$ ionic steps.
 - **Default**: 0
-- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
+- **Note**: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by [`out_freq_td`](#out_freq_td)—see its description for details.
+
+### out_freq_td
+
+- **Type**: Integer
+- **Description**: Controls the output interval in **completed electronic evolution steps** during RT-TDDFT calculations. When set to a positive integer $N$, detailed information (see [`out_freq_ion`](#out_freq_ion)) is printed every $N$ electron time-evolution steps (i.e., every $N$ `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to [`estep_per_md`](#estep_per_md), since one ionic step corresponds to [`estep_per_md`](#estep_per_md) electronic evolution steps.
+- **Default**: 0
+- **Note**: This parameter is **only active in RT-TDDFT mode** (`esolver_type = tddft`). It has no effect in ground-state calculations.
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
-- **Default**: [scf_nmax](#scf_nmax)
+- **Description**: Output the charge density (only binary format, controlled by [`out_chg`](#out_chg)), wavefunction (controlled by [`out_wfc_pw`](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [`scf_nmax`](#scf_nmax).
+- **Default**: [`scf_nmax`](#scf_nmax)
 
 ### out_chg
 
