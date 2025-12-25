@@ -9,38 +9,27 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/global.h"
 
-void Matrix_Orbs22::init(const int mode, 
+int Matrix_Orbs22::init(const int mode, 
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb, 
                         const double kmesh_times, 
-                        const double rmax,
-                        int& Lmax)
+                        const double rmax)
 {
     ModuleBase::TITLE("Matrix_Orbs22", "init");
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
 
     this->lat0   = &ucell.lat0;
+
     const int ntype = orb.get_ntype();
     int lmax_orb = -1;
     for (int it = 0; it < ntype; it++)
         { lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax()); }
-    const double dr = orb.get_dR();
-    const double dk = orb.get_dk();
-    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
-    int Rmesh = static_cast<int>(rmax / dr) + 4;
-    Rmesh += 1 - Rmesh % 2;
-
+    int Lmax;
 	int Lmax_used;
     if(mode==1)
         { Center2_Orb::init_Lmax_4_1(lmax_orb, Lmax_used, Lmax); }
     else
         { throw std::invalid_argument("mode = "+std::to_string(mode)+"in file "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
-                                             dr,
-                                             dk,
-                                             kmesh,
-                                             Rmesh,
-                                             psb_);
 
     //=========================================
     // (3) make Gaunt coefficients table
@@ -49,7 +38,20 @@ void Matrix_Orbs22::init(const int mode,
     // this->MGT.init_Gaunt(2 * Lmax + 1);
     Lmax = 2 * Lmax + 1;
 
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
+    int Rmesh = static_cast<int>(rmax / dr) + 4;
+    Rmesh += 1 - Rmesh % 2;
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
+                                             dr,
+                                             dk,
+                                             kmesh,
+                                             Rmesh,
+                                             psb_);
+
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
+    return Lmax;
 }
 
 void Matrix_Orbs22::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,

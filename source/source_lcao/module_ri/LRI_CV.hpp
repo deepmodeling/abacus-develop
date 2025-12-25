@@ -69,12 +69,11 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-    int Lmax_v = std::numeric_limits<double>::min();
-    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
+    const int Lmax_v = this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax);
     int Lmax_c = std::numeric_limits<double>::min();
     if (init_C)
-        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, Lmax_c);
-    int Lmax = std::max(Lmax_v, Lmax_c);
+        Lmax_c = this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax);
+    const int Lmax = std::max(Lmax_v, Lmax_c);
 
     if (init_MGT) {
         MGT.init_Gaunt_CH(Lmax);

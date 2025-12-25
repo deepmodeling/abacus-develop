@@ -182,10 +182,9 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
 
 		Matrix_Orbs21 m_abfslcaos_lcaos;
 		ORB_gaunt_table MGT;
-		int Lmax;
-    m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, orb.get_Rmax(), Lmax);
+    const int Lmax = m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, orb.get_Rmax());
 		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
+    MGT.init_Gaunt(Lmax);
     m_abfslcaos_lcaos.init_radial(abfs, lcaos, lcaos, MGT);
 
     std::map<std::size_t, std::map<std::size_t, std::set<double>>> delta_R;
