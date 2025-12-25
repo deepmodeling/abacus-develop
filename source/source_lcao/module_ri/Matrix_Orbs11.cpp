@@ -27,14 +27,13 @@ int Matrix_Orbs11::init(const int mode,
     //    lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
     //    lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     //}
-    int Lmax;
-	int Lmax_used;
+    int Lmax, Lmax_used;
     //if(mode==1)
-    //    { Center2_Orb::init_Lmax_2_1(lmax_orb, lmax_beta, Lmax_used, Lmax); }
+    //    { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_1(lmax_orb, lmax_beta); }
     if(mode==2)
-        { Center2_Orb::init_Lmax_2_2(GlobalC::exx_info.info_ri.abfs_Lmax, Lmax_used, Lmax); }
+        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_2(GlobalC::exx_info.info_ri.abfs_Lmax); }
     //else if(mode==3)
-    //    { Center2_Orb::init_Lmax_2_3(lmax_orb, Lmax_used, Lmax); }
+    //    { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb); }
     else
         { throw std::invalid_argument("mode = "+std::to_string(mode)+"in file "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 

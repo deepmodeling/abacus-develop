@@ -26,27 +26,15 @@ class Center2_Orb
     static int get_rmesh(const double& R1, const double& R2, const double dr);
 
     // used in <Phi|Phi> or <Beta|Phi>
-    static void init_Lmax_2_1(const int lmax_orb,
-                              const int lmax_beta,
-                              int& Lmax_used,
-                              int& Lmax);
+    static std::pair<int,int> init_Lmax_2_1(const int lmax_orb, const int lmax_beta);
     // used in <jY|jY> or <Abfs|Abfs>
-    static void init_Lmax_2_2(const int& lmax_exx,
-                              int& Lmax_used,
-                              int& Lmax);
+    static std::pair<int,int> init_Lmax_2_2(const int& lmax_exx);
     // used in berryphase by jingan
-    static void init_Lmax_2_3(const int lmax_orb,
-                              int& Lmax_used,
-                              int& Lmax);
+    static std::pair<int,int> init_Lmax_2_3(const int lmax_orb);
     // used in <jY|PhiPhi> or <Abfs|PhiPhi>
-    static void init_Lmax_3_1(const int& lmax_exx,
-                              const int lmax_orb,
-                              int& Lmax_used,
-                              int& Lmax);
+    static std::pair<int,int> init_Lmax_3_1(const int& lmax_exx, const int lmax_orb);
     // used in <PhiPhi|PhiPhi>
-    static void init_Lmax_4_1(const int lmax_orb,
-                              int& Lmax_used,
-                              int& Lmax);
+    static std::pair<int,int> init_Lmax_4_1(const int lmax_orb);
 
     static void init_Table_Spherical_Bessel(const int Lmax_used,
                                             const double dr,

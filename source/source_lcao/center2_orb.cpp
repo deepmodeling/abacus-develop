@@ -29,58 +29,51 @@ int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
 }
 
 // used in <Phi|Phi> or <Beta|Phi>
-void Center2_Orb::init_Lmax_2_1(const int lmax_orb,
-                                const int lmax_beta,
-                                int& Lmax_used,
-                                int& Lmax)
+std::pair<int,int> Center2_Orb::init_Lmax_2_1(const int lmax_orb, const int lmax_beta)
 {
-    Lmax = std::max({-1, lmax_orb, lmax_beta});
-    Lmax_used = 2 * Lmax + 1;
+    const int Lmax = std::max({-1, lmax_orb, lmax_beta});
+    const int Lmax_used = 2 * Lmax + 1;
     assert(Lmax_used >= 1);
+    return {Lmax_used, Lmax};
 }
 
 // used in <jY|jY> or <Abfs|Abfs>
-void Center2_Orb::init_Lmax_2_2(const int& lmax_exx,
-                                int& Lmax_used,
-                                int& Lmax)
+std::pair<int,int> Center2_Orb::init_Lmax_2_2(const int& lmax_exx)
 {
-    Lmax = std::max(-1, lmax_exx);
-    Lmax_used = 2 * Lmax + 1;
+    const int Lmax = std::max(-1, lmax_exx);
+    const int Lmax_used = 2 * Lmax + 1;
     assert(Lmax_used >= 1);
+    return {Lmax_used, Lmax};
 }
 
 // used in berryphase by jingan
-void Center2_Orb::init_Lmax_2_3(const int lmax_orb,
-                                int& Lmax_used,
-                                int& Lmax)
+std::pair<int,int> Center2_Orb::init_Lmax_2_3(const int lmax_orb)
 {
-    Lmax = std::max(-1, lmax_orb);
+    int Lmax = std::max(-1, lmax_orb);
     Lmax++;
-    Lmax_used = 2 * Lmax + 1;
+    const int Lmax_used = 2 * Lmax + 1;
     assert(Lmax_used >= 1);
+    return {Lmax_used, Lmax};
 }
 
 // used in <jY|PhiPhi> or <Abfs|PhiPhi>
-void Center2_Orb::init_Lmax_3_1(const int& lmax_exx,
-                                const int lmax_orb,
-                                int& Lmax_used,
-                                int& Lmax)
+std::pair<int,int> Center2_Orb::init_Lmax_3_1(const int& lmax_exx, const int lmax_orb)
 {
-    Lmax = std::max(-1, lmax_orb);
-    Lmax_used = 2 * Lmax + 1;
+    int Lmax = std::max(-1, lmax_orb);
+    int Lmax_used = 2 * Lmax + 1;
     Lmax = std::max(Lmax, lmax_exx);
     Lmax_used += lmax_exx;
     assert(Lmax_used >= 1);
+    return {Lmax_used, Lmax};
 }
 
 // used in <PhiPhi|PhiPhi>
-void Center2_Orb::init_Lmax_4_1(const int lmax_orb,
-                                int& Lmax_used,
-                                int& Lmax)
+std::pair<int,int> Center2_Orb::init_Lmax_4_1(const int lmax_orb)
 {
-    Lmax = std::max(-1, lmax_orb);
-    Lmax_used = 2 * (2 * Lmax + 1);
+    const int Lmax = std::max(-1, lmax_orb);
+    const int Lmax_used = 2 * (2 * Lmax + 1);
     assert(Lmax_used >= 1);
+    return {Lmax_used, Lmax};
 }
 
 // Peize Lin update 2016-01-26

@@ -23,10 +23,9 @@ int Matrix_Orbs21::init(const int mode,
     int lmax_orb = -1;
     for (int it = 0; it < ntype; it++)
         { lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax()); }
-    int Lmax;
-	int Lmax_used;
+    int Lmax, Lmax_used;
     if(mode==1)
-        { Center2_Orb::init_Lmax_3_1(GlobalC::exx_info.info_ri.abfs_Lmax, lmax_orb, Lmax_used, Lmax); }
+        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_3_1(GlobalC::exx_info.info_ri.abfs_Lmax, lmax_orb); }
     else
         { throw std::invalid_argument("mode = "+std::to_string(mode)+"in file "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 
