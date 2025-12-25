@@ -28,73 +28,58 @@ int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
     return rmesh;
 }
 
-// Peize Lin update 2016-01-26
-void Center2_Orb::init_Lmax(const int orb_num,
-                            const int mode,
-                            int& Lmax_used,
-                            int& Lmax,
-                            const int& Lmax_exx,
-                            const int lmax_orb,
-                            const int lmax_beta)
+// used in <Phi|Phi> or <Beta|Phi>
+void Center2_Orb::init_Lmax_2_1(const int lmax_orb,
+                                const int lmax_beta,
+                                int& Lmax_used,
+                                int& Lmax)
 {
+    Lmax = std::max({-1, lmax_orb, lmax_beta});
+    Lmax_used = 2 * Lmax + 1;
+    assert(Lmax_used >= 1);
+}
 
-    Lmax = -1;
+// used in <jY|jY> or <Abfs|Abfs>
+void Center2_Orb::init_Lmax_2_2(const int& lmax_exx,
+                                int& Lmax_used,
+                                int& Lmax)
+{
+    Lmax = std::max(-1, lmax_exx);
+    Lmax_used = 2 * Lmax + 1;
+    assert(Lmax_used >= 1);
+}
 
-    switch (orb_num)
-    {
-    case 2:
-        switch (mode)
-        {
-        case 1: // used in <Phi|Phi> or <Beta|Phi>
-            Lmax = std::max({Lmax, lmax_orb, lmax_beta});
-            // use 2lmax+1 in dS
-            Lmax_used = 2 * Lmax + 1;
-            break;
-        case 2: // used in <jY|jY> or <Abfs|Abfs>
-            Lmax = std::max(Lmax, Lmax_exx);
-            Lmax_used = 2 * Lmax + 1;
-            break;
-        case 3: // used in berryphase by jingan
-            Lmax = std::max(Lmax, lmax_orb);
-            Lmax++;
-            Lmax_used = 2 * Lmax + 1;
-            break;
-        default:
-            throw std::invalid_argument("Center2_Orb::init_Lmax orb_num=2, mode error");
-            break;
-        }
-        break;
-    case 3:
-        switch (mode)
-        {
-        case 1: // used in <jY|PhiPhi> or <Abfs|PhiPhi>
-            Lmax = std::max(Lmax, lmax_orb);
-            Lmax_used = 2 * Lmax + 1;
-            Lmax = std::max(Lmax, Lmax_exx);
-            Lmax_used += Lmax_exx;
-            break;
-        default:
-            throw std::invalid_argument("Center2_Orb::init_Lmax orb_num=3, mode error");
-            break;
-        }
-        break;
-    case 4:
-        switch (mode)
-        {
-        case 1: // used in <PhiPhi|PhiPhi>
-            Lmax = std::max(Lmax, lmax_orb);
-            Lmax_used = 2 * (2 * Lmax + 1);
-            break;
-        default:
-            throw std::invalid_argument("Center2_Orb::init_Lmax orb_num=4, mode error");
-            break;
-        }
-        break;
-    default:
-        throw std::invalid_argument("Center2_Orb::init_Lmax orb_num error");
-        break;
-    }
+// used in berryphase by jingan
+void Center2_Orb::init_Lmax_2_3(const int lmax_orb,
+                                int& Lmax_used,
+                                int& Lmax)
+{
+    Lmax = std::max(-1, lmax_orb);
+    Lmax++;
+    Lmax_used = 2 * Lmax + 1;
+    assert(Lmax_used >= 1);
+}
 
+// used in <jY|PhiPhi> or <Abfs|PhiPhi>
+void Center2_Orb::init_Lmax_3_1(const int& lmax_exx,
+                                const int lmax_orb,
+                                int& Lmax_used,
+                                int& Lmax)
+{
+    Lmax = std::max(-1, lmax_orb);
+    Lmax_used = 2 * Lmax + 1;
+    Lmax = std::max(Lmax, lmax_exx);
+    Lmax_used += lmax_exx;
+    assert(Lmax_used >= 1);
+}
+
+// used in <PhiPhi|PhiPhi>
+void Center2_Orb::init_Lmax_4_1(const int lmax_orb,
+                                int& Lmax_used,
+                                int& Lmax)
+{
+    Lmax = std::max(-1, lmax_orb);
+    Lmax_used = 2 * (2 * Lmax + 1);
     assert(Lmax_used >= 1);
 }
 

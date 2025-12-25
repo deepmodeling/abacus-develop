@@ -25,13 +25,28 @@ class Center2_Orb
 
     static int get_rmesh(const double& R1, const double& R2, const double dr);
 
-    static void init_Lmax(const int orb_num,
-                          const int mode,
-                          int& Lmax_used,
-                          int& Lmax,
-                          const int& Lmax_exx,
-                          const int lmax_orb,
-                          const int lmax_beta);
+    // used in <Phi|Phi> or <Beta|Phi>
+    static void init_Lmax_2_1(const int lmax_orb,
+                              const int lmax_beta,
+                              int& Lmax_used,
+                              int& Lmax);
+    // used in <jY|jY> or <Abfs|Abfs>
+    static void init_Lmax_2_2(const int& lmax_exx,
+                              int& Lmax_used,
+                              int& Lmax);
+    // used in berryphase by jingan
+    static void init_Lmax_2_3(const int lmax_orb,
+                              int& Lmax_used,
+                              int& Lmax);
+    // used in <jY|PhiPhi> or <Abfs|PhiPhi>
+    static void init_Lmax_3_1(const int& lmax_exx,
+                              const int lmax_orb,
+                              int& Lmax_used,
+                              int& Lmax);
+    // used in <PhiPhi|PhiPhi>
+    static void init_Lmax_4_1(const int lmax_orb,
+                              int& Lmax_used,
+                              int& Lmax);
 
     static void init_Table_Spherical_Bessel(const int Lmax_used,
                                             const double dr,

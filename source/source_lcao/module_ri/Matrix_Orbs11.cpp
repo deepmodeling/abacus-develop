@@ -34,7 +34,14 @@ void Matrix_Orbs11::init(const int mode,
     Rmesh += 1 - Rmesh % 2;
 
 	int Lmax_used;
-    Center2_Orb::init_Lmax(2, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, lmax_orb, lmax_beta);
+    //if(mode==1)
+    //    { Center2_Orb::init_Lmax_2_1(lmax_orb, lmax_beta, Lmax_used, Lmax); }
+    if(mode==2)
+        { Center2_Orb::init_Lmax_2_2(GlobalC::exx_info.info_ri.abfs_Lmax, Lmax_used, Lmax); }
+    //else if(mode==3)
+    //    { Center2_Orb::init_Lmax_2_3(lmax_orb, Lmax_used, Lmax); }
+    else
+        { throw std::invalid_argument("mode = "+std::to_string(mode)+"in file "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
