@@ -35,7 +35,6 @@ class Center2_Orb
 
     static void init_Table_Spherical_Bessel(const int orb_num,
                                             const int mode,
-                                            int& Lmax_used,
                                             int& Lmax,
                                             const int& Lmax_exx,
                                             const int lmax_orb,

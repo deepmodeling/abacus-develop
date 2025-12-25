@@ -18,7 +18,6 @@ cal_r_overlap_R::~cal_r_overlap_R()
 void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
                                            const LCAO_Orbitals& orb)
 {
-    int Lmax_used = 0;
     int Lmax = 0;
     int exx_lmax = 0;
 #ifdef __EXX
@@ -40,7 +39,6 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
                                              3,
-                                             Lmax_used,
                                              Lmax,
                                              exx_lmax,
                                              lmax_orb,

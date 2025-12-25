@@ -265,7 +265,6 @@ void toWannier90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
 
 void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 {
-    int Lmax_used = 0;
     int Lmax = 0;
     int exx_lmax = 0;
 #ifdef __EXX
@@ -288,7 +287,6 @@ void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
                                              3,
-                                             Lmax_used,
                                              Lmax,
                                              exx_lmax,
                                              lmax_orb,

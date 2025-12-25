@@ -101,7 +101,6 @@ void Center2_Orb::init_Lmax(const int orb_num,
 // Peize Lin update 2016-01-26
 void Center2_Orb::init_Table_Spherical_Bessel(const int orb_num,
                                               const int mode,
-                                              int& Lmax_used,
                                               int& Lmax,
                                               const int& Lmax_exx,
                                               const int lmax_orb,
@@ -114,6 +113,7 @@ void Center2_Orb::init_Table_Spherical_Bessel(const int orb_num,
 {
     ModuleBase::TITLE("Center2_Orb", "init_Table_Spherical_Bessel");
 
+    int Lmax_used;
     init_Lmax(orb_num, mode, Lmax_used, Lmax, Lmax_exx, lmax_orb, lmax_beta); // Peize Lin add 2016-01-26
 
     for (auto& sb: ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool)

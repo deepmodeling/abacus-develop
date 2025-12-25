@@ -18,7 +18,6 @@ void Matrix_Orbs22::init(const int mode,
 {
     ModuleBase::TITLE("Matrix_Orbs22", "init");
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
-    int Lmax_used;
 
     this->lat0   = &ucell.lat0;
     const int ntype = orb.get_ntype();
@@ -36,7 +35,6 @@ void Matrix_Orbs22::init(const int mode,
 
     Center2_Orb::init_Table_Spherical_Bessel(4,
                                              mode,
-                                             Lmax_used,
                                              Lmax,
                                              GlobalC::exx_info.info_ri.abfs_Lmax,
                                              lmax_orb,
