@@ -33,12 +33,9 @@ void Matrix_Orbs11::init(const int mode,
     int Rmesh = static_cast<int>(rmax / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(2,
-                                             mode,
-                                             Lmax,
-                                             GlobalC::exx_info.info_ri.abfs_Lmax,
-                                             lmax_orb,
-                                             lmax_beta,
+	int Lmax_used;
+    Center2_Orb::init_Lmax(2, mode, Lmax_used, Lmax, GlobalC::exx_info.info_ri.abfs_Lmax, lmax_orb, lmax_beta);
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
                                              kmesh,

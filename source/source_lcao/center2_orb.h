@@ -33,12 +33,7 @@ class Center2_Orb
                           const int lmax_orb,
                           const int lmax_beta);
 
-    static void init_Table_Spherical_Bessel(const int orb_num,
-                                            const int mode,
-                                            int& Lmax,
-                                            const int& Lmax_exx,
-                                            const int lmax_orb,
-                                            const int lmax_beta,
+    static void init_Table_Spherical_Bessel(const int Lmax_used,
                                             const double dr,
                                             const double dk,
                                             const int kmesh,
