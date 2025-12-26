@@ -3,7 +3,6 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/mathzone_add1.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
@@ -101,9 +100,7 @@ void Center2_Orb::init_Table_Spherical_Bessel(const int Lmax_used,
     }
 
     psb->set_dx(dr * dk);
-    psb->cal_jlx(Lmax_used, Rmesh, kmesh);
-
-    ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (Lmax_used + 1) * kmesh * Rmesh);
+    psb->cal_jlx(Lmax_used+1, Rmesh, kmesh);                // +1 for drs needs psb.jlx[l+1]
 }
 
 // Peize Lin accelerate 2017-10-02
