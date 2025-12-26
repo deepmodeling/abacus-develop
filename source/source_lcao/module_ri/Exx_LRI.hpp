@@ -50,9 +50,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
-	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
-
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
 	
 	std::shared_ptr<ORB_gaunt_table> MGT = std::make_shared<ORB_gaunt_table>();

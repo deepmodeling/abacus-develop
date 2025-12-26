@@ -69,8 +69,6 @@ struct Exx_Info
         double kmesh_times = 4;
         double Cs_inv_thr = -1;
 
-        int abfs_Lmax = 0; // tmp
-
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
             : coulomb_param(info_global.coulomb_param)
         {
@@ -80,7 +78,7 @@ struct Exx_Info
 
     struct Exx_Info_Opt_ABFs
     {
-        int abfs_Lmax = 0; // tmp
+        int abfs_Lmax = 0;
         double ecut_exx = 60;
         double tolerence = 1E-12;
         std::vector<std::string> files_jles;
