@@ -25,23 +25,6 @@ namespace gpu
 {
 
 //=============================================================================
-// CUDA Error Handling
-//=============================================================================
-
-/**
- * @brief CUDA error checking macro with file/line information
- */
-#define CUDA_CHECK(call)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        cudaError_t err = (call);                                                                                      \
-        if (err != cudaSuccess)                                                                                        \
-        {                                                                                                              \
-            fprintf(stderr, "[CUDA] Error at %s:%d - %s\n", __FILE__, __LINE__, cudaGetErrorString(err));              \
-        }                                                                                                              \
-    } while (0)
-
-//=============================================================================
 // GPU Resource Management
 //=============================================================================
 
