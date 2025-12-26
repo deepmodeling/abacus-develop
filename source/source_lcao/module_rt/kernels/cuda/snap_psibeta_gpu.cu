@@ -14,9 +14,11 @@
 #include "../snap_psibeta_gpu.h"
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 #include <cstdio>
 #include <cuda_runtime.h>
+#include <string>
 #include <vector>
 
 namespace module_rt
@@ -44,8 +46,7 @@ void initialize_gpu_resources()
     cudaError_t err = cudaGetDeviceCount(&device_count);
     if (err != cudaSuccess || device_count == 0)
     {
-        fprintf(stderr, "[CUDA] No CUDA devices found or error getting device count!\n");
-        return;
+        ModuleBase::WARNING_QUIT("snap_psibeta_gpu", "No CUDA devices found or error getting device count!");
     }
 
     // Initialize integration grids in constant memory
@@ -141,10 +142,8 @@ void snap_psibeta_atom_batch_gpu(
         // Validate angular momentum
         if (L0 > MAX_L)
         {
-            fprintf(stderr,
-                    "[CUDA] Error: L0=%d exceeds MAX_L=%d, GPU kernel may produce incorrect results\n",
-                    L0,
-                    MAX_L);
+            ModuleBase::WARNING_QUIT("snap_psibeta_gpu",
+                                     "L0=" + std::to_string(L0) + " exceeds MAX_L=" + std::to_string(MAX_L));
         }
         natomwfc += 2 * L0 + 1;
     }
@@ -317,15 +316,14 @@ void snap_psibeta_atom_batch_gpu(
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess)
     {
-        fprintf(stderr, "[CUDA] Atom batch kernel launch error: %s\n", cudaGetErrorString(err));
         cudaFree(neighbor_orbitals_d);
         cudaFree(projectors_d);
         cudaFree(psi_radial_d);
         cudaFree(beta_radial_d);
         cudaFree(proj_m0_offset_d);
         cudaFree(nlm_out_d);
-        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
-        return;
+        ModuleBase::WARNING_QUIT("snap_psibeta_gpu",
+                                 std::string("Atom batch kernel launch error: ") + cudaGetErrorString(err));
     }
 
     CUDA_CHECK(cudaDeviceSynchronize());

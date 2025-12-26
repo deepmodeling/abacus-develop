@@ -17,9 +17,12 @@
 #ifndef SNAP_PSIBETA_KERNEL_CUH
 #define SNAP_PSIBETA_KERNEL_CUH
 
+#include "source_base/tool_quit.h"
+
 #include <cstdio>
 #include <cuComplex.h>
 #include <cuda_runtime.h>
+#include <string>
 
 //=============================================================================
 // CUDA Error Checking Macro
@@ -28,8 +31,8 @@
 /**
  * @brief CUDA error checking macro with file/line information
  *
- * Checks the return value of CUDA API calls and prints an error message
- * with file and line information if the call fails.
+ * Checks the return value of CUDA API calls and calls WARNING_QUIT
+ * with error information if the call fails.
  */
 #define CUDA_CHECK(call)                                                                                               \
     do                                                                                                                 \
@@ -37,7 +40,9 @@
         cudaError_t err = (call);                                                                                      \
         if (err != cudaSuccess)                                                                                        \
         {                                                                                                              \
-            fprintf(stderr, "[CUDA] Error at %s:%d - %s\n", __FILE__, __LINE__, cudaGetErrorString(err));              \
+            ModuleBase::WARNING_QUIT("CUDA_CHECK",                                                                     \
+                                     std::string("Error at ") + __FILE__ + ":" + std::to_string(__LINE__) + " - "      \
+                                         + cudaGetErrorString(err));                                                   \
         }                                                                                                              \
     } while (0)
 
