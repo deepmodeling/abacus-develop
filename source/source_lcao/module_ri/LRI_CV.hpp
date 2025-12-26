@@ -69,16 +69,16 @@ void LRI_CV<Tdata>::set_orbitals(
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
 	this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
-    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, GlobalC::exx_info.info_ri.abfs_Lmax);
+    this->m_abfs_abfs.init(
+		this->abfs_ccp, this->abfs,
+		ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax);
     if (init_C)
-        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, GlobalC::exx_info.info_ri.abfs_Lmax);
+        this->m_abfslcaos_lcaos.init(
+			this->abfs_ccp, this->lcaos, this->lcaos,
+			ucell, orb, kmesh_times, lcaos_rmax);
 
-    this->m_abfs_abfs.init_radial(this->abfs_ccp, this->abfs);
     this->m_abfs_abfs.init_radial_table();
     if (init_C) {
-        this->m_abfslcaos_lcaos.init_radial(this->abfs_ccp,
-                                            this->lcaos,
-                                            this->lcaos);
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 

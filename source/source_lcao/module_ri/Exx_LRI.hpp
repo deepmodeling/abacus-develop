@@ -39,6 +39,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->orb_cutoff_ = orb.cutoffs();
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
@@ -46,6 +47,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = abfs_same_atom;}
 	else
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
