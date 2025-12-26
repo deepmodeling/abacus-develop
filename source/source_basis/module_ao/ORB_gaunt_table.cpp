@@ -20,6 +20,7 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
     ModuleBase::TITLE("ORB_gaunt_table", "init_Gaunt");
     ModuleBase::timer::tick("ORB_gaunt_table", "init_Gaunt");
     
+	this->Lmax_Gaunt_Coefficients = lmax;
 	const int nlm = (lmax * 2 + 1) * (lmax * 2 + 1);
 	this->Gaunt_Coefficients.create(nlm, nlm, nlm);
 
@@ -184,6 +185,7 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 	ModuleBase::TITLE("ORB_gaunt_table","init_Gaunt_CH");
 	ModuleBase::timer::tick("ORB_gaunt_table","init_Gaunt_CH");
 
+	this->Lmax_Gaunt_CH = Lmax;
 	int L = 2*Lmax + 1;
 	int Eff_Np = this->EP_EL(L);
 

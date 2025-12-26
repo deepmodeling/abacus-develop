@@ -9,7 +9,7 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/global.h"
 
-int Matrix_Orbs21::init(
+void Matrix_Orbs21::init(
     const int mode, 
     const UnitCell& ucell,
     const LCAO_Orbitals& orb, 
@@ -34,9 +34,13 @@ int Matrix_Orbs21::init(
     //=========================================
     // (3) make Gaunt coefficients table
     //=========================================
-    // this->MGT.init_Gaunt_CH(2 * Lmax + 1); // why +1
-    // this->MGT.init_Gaunt(2 * Lmax + 1);
-    Lmax = 2 * Lmax + 1;
+    Lmax = 2*Lmax+1;
+    if(!this->MGT)
+        { this->MGT = std::make_shared<ORB_gaunt_table>(); }
+    if(this->MGT->get_Lmax_Gaunt_CH() < Lmax)
+        { this->MGT->init_Gaunt_CH(Lmax); }
+    if(this->MGT->get_Lmax_Gaunt_Coefficients() < Lmax)
+        { this->MGT->init_Gaunt(Lmax); }
 
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
@@ -51,13 +55,11 @@ int Matrix_Orbs21::init(
                                              psb_);
 
     ModuleBase::timer::tick("Matrix_Orbs21", "init");
-    return Lmax;
 }
 
 void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                                 const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
-                                const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
-                                const ORB_gaunt_table& MGT)
+                                const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial");
@@ -84,7 +86,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                           orb_A2[TA][LA2][NA2],
                                                                           orb_B[TB][LB][NB],
                                                                           psb_,
-                                                                          MGT)));
+                                                                          *this->MGT)));
                                 }
                             }
                         }
@@ -98,8 +100,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
 
 void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                                 const LCAO_Orbitals& orb_A2,
-                                const LCAO_Orbitals& orb_B,
-                                const ORB_gaunt_table& MGT)
+                                const LCAO_Orbitals& orb_B)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial");
@@ -126,7 +127,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                           orb_A2.Phi[TA].PhiLN(LA2, NA2),
                                                                           orb_B.Phi[TB].PhiLN(LB, NB),
                                                                           psb_,
-                                                                          MGT)));
+                                                                          *this->MGT)));
                                 }
                             }
                         }

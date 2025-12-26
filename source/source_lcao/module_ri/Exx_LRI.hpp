@@ -53,14 +53,13 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
 	
-	bool init_MGT = true;
+	std::shared_ptr<ORB_gaunt_table> MGT = std::make_shared<ORB_gaunt_table>();
 	for(const auto &settings_list : this->coulomb_settings)
 	{
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->MGT, init_MGT, settings_list.second.first );
-		init_MGT = false; // only init once
+															this->info.kmesh_times, MGT, settings_list.second.first );
 	}
 
 	ModuleBase::timer::tick("Exx_LRI", "init");

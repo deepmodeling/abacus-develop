@@ -24,7 +24,7 @@ class Matrix_Orbs11
     // mode:
     //    1: <lcaos|lcaos>
     //    2: <jYs|jYs>  <abfs|abfs>
-    int init(
+    void init(
         const int mode,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,
@@ -33,9 +33,8 @@ class Matrix_Orbs11
         const int lmax_abfs); 
 
     void init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
-                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
-                     const ORB_gaunt_table& MGT);
-    void init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B, const ORB_gaunt_table& MGT);
+                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B);
+    void init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B);
 
     void init_radial_table();
     void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
@@ -69,6 +68,8 @@ class Matrix_Orbs11
         const UnitCell &ucell,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_r,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_c) const;
+    
+    std::shared_ptr<ORB_gaunt_table> MGT;
 
   private:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
