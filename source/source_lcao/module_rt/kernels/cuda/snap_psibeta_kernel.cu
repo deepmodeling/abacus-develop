@@ -12,6 +12,7 @@
  */
 
 #include "snap_psibeta_kernel.cuh"
+#include "source_base/constants.h"
 #include "source_base/math_integral.h"
 
 #include <cstdio>
@@ -85,14 +86,11 @@ __device__ __forceinline__ double p_get(const double* p, int l, int m)
 template <int L>
 __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
 {
-    // Mathematical constants
-    constexpr double PI = 3.14159265358979323846;
-    constexpr double FOUR_PI = 4.0 * PI;
-    constexpr double SQRT2 = 1.41421356237309504880;
+
     constexpr int P_SIZE = (L + 1) * (L + 2) / 2; // Lower triangular storage size
 
     // Y_00 = 1/(2*sqrt(pi))
-    ylm[0] = 0.5 * sqrt(1.0 / PI);
+    ylm[0] = 0.5 * sqrt(1.0 / ModuleBase::PI);
 
     if (L == 0)
     {
@@ -178,7 +176,7 @@ __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
 #pragma unroll
     for (int l = 0; l <= L; l++)
     {
-        double c = sqrt((2.0 * l + 1.0) / FOUR_PI);
+        double c = sqrt((2.0 * l + 1.0) / ModuleBase::FOUR_PI);
 
         // m = 0 component
         ylm[lm] = c * p_get(p, l, 0);
@@ -195,7 +193,7 @@ __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
             {
                 factorial_ratio *= i;
             }
-            double norm = c * sqrt(1.0 / factorial_ratio) * SQRT2;
+            double norm = c * sqrt(1.0 / factorial_ratio) * ModuleBase::SQRT2;
 
             double sin_mphi, cos_mphi;
             sincos(m * phi, &sin_mphi, &cos_mphi);
