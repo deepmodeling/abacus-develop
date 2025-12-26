@@ -109,11 +109,14 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  const Numerical_Orbital_Lm& n1,
                                  const Numerical_Orbital_Lm& n2,
                                  const int& rmesh,
-                                 double* rs,
-                                 double* drs,
+                                 std::vector<double> &rs,
+                                 std::vector<double> &drs,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
     ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
+
+    assert(rmesh <= rs.size());
+    assert(rmesh <= drs.size());
 
     const int kmesh = n1.getNk();
     const double* kpoint = n1.getKpoint();
@@ -249,8 +252,8 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  const Numerical_Orbital_Lm& n1,
                                  const Numerical_Orbital_Lm& n2,
                                  const std::set<size_t>& radials,
-                                 double* rs,
-                                 double* drs,
+                                 std::vector<double> &rs,
+                                 std::vector<double> &drs,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
     //	ModuleBase::TITLE("Center2_Orb","cal_ST_Phi12_R");
@@ -314,7 +317,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         // if(rs[ir])  => rs[ir]  has been calculated
         // if(drs[ir]) => drs[ir] has been calculated
         // Actually, if(ir[ir]||dr[ir]) is enough. Double insurance for the sake of avoiding numerical errors
-        if (rs[ir] && drs[ir]) {
+        if (rs.at(ir) && drs.at(ir)) {
             continue;
         }
 
@@ -327,7 +330,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         double temp = 0.0;
 
         ModuleBase::Integral::Simpson_Integral(kmesh, ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func), dk, temp);
-        rs[ir] = temp * ModuleBase::FOUR_PI;
+        rs.at(ir) = temp * ModuleBase::FOUR_PI;
 
         const std::vector<double>& jlm1_r = jlm1.at(ir);
         const std::vector<double>& jlp1_r = jlp1.at(ir);
@@ -350,7 +353,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         }
 
         ModuleBase::Integral::Simpson_Integral(kmesh, ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func), dk, temp);
-        drs[ir] = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
+        drs.at(ir) = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
     }
 
     // cal rs[0] special
@@ -371,7 +374,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
             // PLEASE try to make dualfac function as input parameters
             // mohan note 2021-03-23
-            rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * temp;
+            rs.at(0) = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * temp;
         }
     }
 

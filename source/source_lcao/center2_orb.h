@@ -48,8 +48,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const int& rmesh,
-                               double* rs,
-                               double* drs,
+                               std::vector<double> &rs,
+                               std::vector<double> &drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
     // Peize Lin add 2017-10-13
@@ -58,8 +58,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const std::set<size_t>& radials, // only calculate ir in radials
-                               double* rs,
-                               double* drs,
+                               std::vector<double> &rs,
+                               std::vector<double> &drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 };
 

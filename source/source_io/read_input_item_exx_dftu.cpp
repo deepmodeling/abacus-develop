@@ -331,12 +331,12 @@ void ReadInput::item_exx()
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
-            }
-        };
+        //item.check_value = [](const Input_Item& item, const Parameter& para) {
+        //    if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
+        //    {
+        //        ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
+        //    }
+        //};
         this->add_item(item);
     }
     {
