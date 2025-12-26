@@ -132,15 +132,26 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     ModuleBase::TITLE("TDNonlocal", "calculate_HR");
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
 
+    // Determine whether to use GPU path:
+    // GPU is only used when both __CUDA is defined AND device is set to "gpu"
 #ifdef __CUDA
-    // Initialize GPU resources before entering the computation loop
-    // Use set_device_by_rank for multi-GPU support
-    int dev_id = 0;
+    const bool use_gpu = (PARAM.inp.device == "gpu");
+#else
+    const bool use_gpu = false;
+#endif
+
+    // Initialize GPU resources if using GPU
+    if (use_gpu)
+    {
+#ifdef __CUDA
+        // Use set_device_by_rank for multi-GPU support
+        int dev_id = 0;
 #ifdef __MPI
-    dev_id = base_device::information::set_device_by_rank(MPI_COMM_WORLD);
+        dev_id = base_device::information::set_device_by_rank(MPI_COMM_WORLD);
 #endif
-    module_rt::gpu::initialize_gpu_resources();
+        module_rt::gpu::initialize_gpu_resources();
 #endif
+    }
 
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
@@ -160,59 +171,64 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             nlm_tot[i].resize(nlm_dim);
         }
 
-#ifdef __CUDA
-        // GPU path: Atom-level GPU batch processing
-        module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
-                                                    this->ucell->infoNL,
-                                                    T0,
-                                                    tau0 * this->ucell->lat0,
-                                                    cart_At,
-                                                    adjs,
-                                                    this->ucell,
-                                                    paraV,
-                                                    npol,
-                                                    nlm_dim,
-                                                    nlm_tot);
-#else
-        // CPU path: OpenMP parallel over neighbors to compute nlm_tot
-#pragma omp parallel for schedule(dynamic)
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        if (use_gpu)
         {
-            const int T1 = adjs.ntype[ad];
-            const int I1 = adjs.natom[ad];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-            const Atom* atom1 = &ucell->atoms[T1];
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
-            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-            std::sort(all_indexes.begin(), all_indexes.end());
-            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-
-            // CPU path: loop over orbitals
-            for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+#ifdef __CUDA
+            // GPU path: Atom-level GPU batch processing
+            module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
+                                                        this->ucell->infoNL,
+                                                        T0,
+                                                        tau0 * this->ucell->lat0,
+                                                        cart_At,
+                                                        adjs,
+                                                        this->ucell,
+                                                        paraV,
+                                                        npol,
+                                                        nlm_dim,
+                                                        nlm_tot);
+#endif
+        }
+        else
+        {
+            // CPU path: OpenMP parallel over neighbors to compute nlm_tot
+#pragma omp parallel for schedule(dynamic)
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
-                const int iw1 = all_indexes[iw1l] / npol;
-                std::vector<std::vector<std::complex<double>>> nlm;
-                module_rt::snap_psibeta_half_tddft(orb_,
-                                                   this->ucell->infoNL,
-                                                   nlm,
-                                                   tau1 * this->ucell->lat0,
-                                                   T1,
-                                                   atom1->iw2l[iw1],
-                                                   atom1->iw2m[iw1],
-                                                   atom1->iw2n[iw1],
-                                                   tau0 * this->ucell->lat0,
-                                                   T0,
-                                                   cart_At,
-                                                   TD_info::out_current);
-                for (int dir = 0; dir < nlm_dim; dir++)
+                const int T1 = adjs.ntype[ad];
+                const int I1 = adjs.natom[ad];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+                const Atom* atom1 = &ucell->atoms[T1];
+                auto all_indexes = paraV->get_indexes_row(iat1);
+                auto col_indexes = paraV->get_indexes_col(iat1);
+                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+                std::sort(all_indexes.begin(), all_indexes.end());
+                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+
+                // CPU path: loop over orbitals
+                for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
                 {
-                    nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
+                    const int iw1 = all_indexes[iw1l] / npol;
+                    std::vector<std::vector<std::complex<double>>> nlm;
+                    module_rt::snap_psibeta_half_tddft(orb_,
+                                                       this->ucell->infoNL,
+                                                       nlm,
+                                                       tau1 * this->ucell->lat0,
+                                                       T1,
+                                                       atom1->iw2l[iw1],
+                                                       atom1->iw2m[iw1],
+                                                       atom1->iw2n[iw1],
+                                                       tau0 * this->ucell->lat0,
+                                                       T0,
+                                                       cart_At,
+                                                       TD_info::out_current);
+                    for (int dir = 0; dir < nlm_dim; dir++)
+                    {
+                        nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
+                    }
                 }
             }
         }
-#endif
 
         // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
         // This runs for BOTH GPU and CPU paths
