@@ -13,7 +13,8 @@ int Matrix_Orbs11::init(const int mode,
                          const UnitCell& ucell,
                          const LCAO_Orbitals& orb, 
                          const double kmesh_times, 
-                         const double rmax)
+                         const double rmax,
+                         const int lmax_abfs)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
     ModuleBase::timer::tick("Matrix_Orbs11", "init");
@@ -31,7 +32,7 @@ int Matrix_Orbs11::init(const int mode,
     //if(mode==1)
     //    { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_1(lmax_orb, lmax_beta); }
     if(mode==2)
-        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_2(GlobalC::exx_info.info_ri.abfs_Lmax); }
+        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_2(lmax_abfs); }
     //else if(mode==3)
     //    { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb); }
     else

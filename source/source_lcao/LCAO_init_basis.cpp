@@ -62,11 +62,6 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
     }
 
-    int Lmax = 0;
-#ifdef __EXX
-    Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
-#endif
-
 #ifdef USE_NEW_TWO_CENTER
     two_center_bundle.tabulate();
 #else

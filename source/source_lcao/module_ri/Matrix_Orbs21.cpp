@@ -9,11 +9,13 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/global.h"
 
-int Matrix_Orbs21::init(const int mode, 
-                         const UnitCell& ucell,
-                         const LCAO_Orbitals& orb, 
-                         const double kmesh_times, 
-                         const double rmax)
+int Matrix_Orbs21::init(
+    const int mode, 
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb, 
+    const double kmesh_times, 
+    const double rmax,
+    const int lmax_abfs)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init");
     ModuleBase::timer::tick("Matrix_Orbs21", "init");
@@ -25,7 +27,7 @@ int Matrix_Orbs21::init(const int mode,
         { lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax()); }
     int Lmax, Lmax_used;
     if(mode==1)
-        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_3_1(GlobalC::exx_info.info_ri.abfs_Lmax, lmax_orb); }
+        { std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_3_1(lmax_abfs, lmax_orb); }
     else
         { throw std::invalid_argument("mode = "+std::to_string(mode)+"in file "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 

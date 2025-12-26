@@ -22,11 +22,13 @@ class Matrix_Orbs21
   public:
     // mode:
     //    1: <jYs lcaos|lcaos>  <abfs lcaos|lcaos>
-    int init(const int mode,
-              const UnitCell& ucell,
-              const LCAO_Orbitals& orb,
-              const double kmesh_times,  // extend Kcut, keep dK
-              const double rmax); // extend Rcut, keep dR
+    int init(
+        const int mode, 
+        const UnitCell& ucell,
+        const LCAO_Orbitals& orb, 
+        const double kmesh_times,       // extend Kcut, keep dK
+        const double rmax,              // extend Rcut, keep dR
+        const int lmax_abfs);
 
     void init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,

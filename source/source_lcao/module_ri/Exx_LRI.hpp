@@ -73,11 +73,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	ModuleBase::TITLE("Exx_LRI","cal_exx_ions");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 
-	// init_radial_table_ions( cal_atom_centres_core(atom_pairs_core_origin), atom_pairs_core_origin );
-
-	// this->m_abfsabfs.init_radial_table(Rradial);
-	// this->m_abfslcaos_lcaos.init_radial_table(Rradial);
-
 	std::vector<TA> atoms(ucell.nat);
 	for(int iat=0; iat<ucell.nat; ++iat)
 		{ atoms[iat] = iat; }
