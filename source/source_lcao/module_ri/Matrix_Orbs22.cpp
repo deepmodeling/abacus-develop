@@ -25,9 +25,9 @@ void Matrix_Orbs22::init(
     this->lat0 = &ucell.lat0;
 
     const int Lmax = std::max({
-        Exx_Abfs::get_Lmax(orb_A1) + Exx_Abfs::get_Lmax(orb_A2),
-        Exx_Abfs::get_Lmax(orb_B1) + Exx_Abfs::get_Lmax(orb_B2) });
-    const int Lmax_used = Exx_Abfs::get_Lmax(orb_A1) + Exx_Abfs::get_Lmax(orb_A2) + Exx_Abfs::get_Lmax(orb_B1) + Exx_Abfs::get_Lmax(orb_B2);
+        Exx_Abfs::Construct_Orbs::get_Lmax(orb_A1) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_A2),
+        Exx_Abfs::Construct_Orbs::get_Lmax(orb_B1) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_B2) });
+    const int Lmax_used = Exx_Abfs::Construct_Orbs::get_Lmax(orb_A1) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_A2) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_B1) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_B2);
 
     //=========================================
     // (3) make Gaunt coefficients table
