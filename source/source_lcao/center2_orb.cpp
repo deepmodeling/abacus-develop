@@ -27,53 +27,6 @@ int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
     return rmesh;
 }
 
-// used in <Phi|Phi> or <Beta|Phi>
-//std::pair<int,int> Center2_Orb::init_Lmax_2_1(const int lmax_orb, const int lmax_beta)
-//{
-//    const int Lmax = std::max({-1, lmax_orb, lmax_beta});
-//    const int Lmax_used = 2 * Lmax + 1;
-//    assert(Lmax_used >= 1);
-//    return {Lmax_used, Lmax};
-//}
-
-// used in <jY|jY> or <Abfs|Abfs>
-//std::pair<int,int> Center2_Orb::init_Lmax_2_2(const int& lmax_exx)
-//{
-//    const int Lmax = std::max(-1, lmax_exx);
-//    const int Lmax_used = 2 * Lmax + 1;
-//    assert(Lmax_used >= 1);
-//    return {Lmax_used, Lmax};
-//}
-
-// used in berryphase by jingan
-std::pair<int,int> Center2_Orb::init_Lmax_2_3(const int lmax_orb)
-{
-    const int Lmax = std::max(-1, lmax_orb) + 1;
-    const int Lmax_used = 2 * Lmax + 1;
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
-}
-
-// used in <jY|PhiPhi> or <Abfs|PhiPhi>
-//std::pair<int,int> Center2_Orb::init_Lmax_3_1(const int& lmax_exx, const int lmax_orb)
-//{
-//    int Lmax = std::max(-1, lmax_orb);
-//    int Lmax_used = 2 * Lmax + 1;
-//    Lmax = std::max(Lmax, lmax_exx);
-//    Lmax_used += lmax_exx;
-//    assert(Lmax_used >= 1);
-//    return {Lmax_used, Lmax};
-//}
-
-// used in <PhiPhi|PhiPhi>
-//std::pair<int,int> Center2_Orb::init_Lmax_4_1(const int lmax_orb)
-//{
-//    const int Lmax = std::max(-1, lmax_orb);
-//    const int Lmax_used = 2 * (2 * Lmax + 1);
-//    assert(Lmax_used >= 1);
-//    return {Lmax_used, Lmax};
-//}
-
 // Peize Lin update 2016-01-26
 void Center2_Orb::init_Table_Spherical_Bessel(const int Lmax_used,
                                               const double dr,
@@ -100,7 +53,7 @@ void Center2_Orb::init_Table_Spherical_Bessel(const int Lmax_used,
     }
 
     psb->set_dx(dr * dk);
-    psb->cal_jlx(Lmax_used+1, Rmesh, kmesh);                // +1 for drs needs psb.jlx[l+1]
+    psb->cal_jlx(Lmax_used+1, Rmesh, kmesh);                // +1 for drs needs psb.jlx[l+1]. Peize Lin update 2025-12-27
 }
 
 // Peize Lin accelerate 2017-10-02

@@ -25,9 +25,6 @@ class Center2_Orb
 
     static int get_rmesh(const double& R1, const double& R2, const double dr);
 
-    // used in berryphase by jingan
-    static std::pair<int,int> init_Lmax_2_3(const int lmax_orb);
-
     static void init_Table_Spherical_Bessel(const int Lmax_used,
                                             const double dr,
                                             const double dk,
