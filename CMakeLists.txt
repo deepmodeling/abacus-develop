@@ -331,9 +331,13 @@ endif()
 
 if(USE_CUDA)
   cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
+  
+  # Always find CUDAToolkit to get CUDAToolkit_VERSION
+  find_package(CUDAToolkit REQUIRED)
+  
   set_if_higher(CMAKE_CXX_STANDARD 14)
-  if(CUDA_VERSION VERSION_GREATER_EQUAL "13.0")
-    message(STATUS "CUDA ${CUDA_VERSION} detected. Setting CMAKE_CUDA_STANDARD to 17.")
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL "13.0")
+    message(STATUS "CUDA ${CUDAToolkit_VERSION} detected. Setting CMAKE_CUDA_STANDARD to 17.")
     set_if_higher(CMAKE_CXX_STANDARD 17)
   endif()
   set(CMAKE_CXX_EXTENSIONS ON)
@@ -341,16 +345,24 @@ if(USE_CUDA)
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    find_package(CUDAToolkit REQUIRED)
     # check
     # https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
-    # for available architechures in different CUDA versions
-    set(CMAKE_CUDA_ARCHITECTURES
-        60 # P100
-        70 # V100
-        # Add your CUDA arch here Check the Compute Capability version of your
-        # GPU at: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
-    )
+    # for available architectures in different CUDA versions
+    
+    # CUDA 13.0+ dropped support for architectures below 75
+    if(CUDAToolkit_VERSION VERSION_LESS "13.0")
+      set(CMAKE_CUDA_ARCHITECTURES
+          60 # P100
+          70 # V100
+      )
+    else()
+      # Start with empty list; architectures 75+ will be added below
+      set(CMAKE_CUDA_ARCHITECTURES)
+    endif()
+    
+    # Add your CUDA arch here Check the Compute Capability version of your
+    # GPU at: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
+    
     if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
     endif()
