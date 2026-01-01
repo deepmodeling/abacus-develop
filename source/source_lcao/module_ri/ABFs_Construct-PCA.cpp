@@ -172,7 +172,7 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
-		Matrix_Orbs21 m_abfslcaos_lcaos;
+	Matrix_Orbs21 m_abfslcaos_lcaos;
     m_abfslcaos_lcaos.init(abfs, lcaos, lcaos, ucell, orb, kmesh_times);
 
     std::map<std::size_t, std::map<std::size_t, std::set<double>>> delta_R;
