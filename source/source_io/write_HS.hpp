@@ -193,8 +193,8 @@ void ModuleIO::save_mat(const int istep,
     } // end writing .dat file
     else // write .txt file
     {
-        std::ofstream out_matrix;
-        out_matrix << std::setprecision(precision);
+		std::ofstream out_matrix;
+		out_matrix << std::scientific << std::setprecision(precision);
 #ifdef __MPI
         if (drank == 0)
         {
@@ -206,7 +206,10 @@ void ModuleIO::save_mat(const int istep,
 			{
 				out_matrix.open(filename.c_str());
 			}
-			out_matrix << dim;
+            out_matrix << istep+1 << " Ionic Step" << std::endl; // istep starts from 0 
+            out_matrix << filename << " Filename" << std::endl;
+			out_matrix << dim << " Rows" << std::endl;
+			out_matrix << dim << " Columns" << std::endl;
 		}
 
         int ir=0;
@@ -246,9 +249,19 @@ void ModuleIO::save_mat(const int istep,
 
             if (drank == 0)
             {
+                out_matrix << "Row" << i+1 << std::endl;
+                size_t count = 0;
 				for (int j = (tri ? i : 0); j < dim; j++) 
 				{
 					out_matrix << " " << line[tri ? j - i : j];
+					++count;
+					if(count%8==0)
+					{
+						if(j!=dim-1)
+						{
+							out_matrix << std::endl;
+						}
+					}
 				}
 				out_matrix << std::endl;
             }
