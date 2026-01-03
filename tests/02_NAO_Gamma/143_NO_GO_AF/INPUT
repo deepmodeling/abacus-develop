@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 
 calculation    scf
 ecutwfc        8
-scf_thr        1.0e-6
+scf_thr        1.0e-8
 scf_nmax       50
 out_chg        1
 
