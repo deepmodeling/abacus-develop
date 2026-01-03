@@ -49,8 +49,7 @@ std::pair<int,int> Center2_Orb::init_Lmax_2_2(const int& lmax_exx)
 // used in berryphase by jingan
 std::pair<int,int> Center2_Orb::init_Lmax_2_3(const int lmax_orb)
 {
-    int Lmax = std::max(-1, lmax_orb);
-    Lmax++;
+    const int Lmax = std::max(-1, lmax_orb) + 1;
     const int Lmax_used = 2 * Lmax + 1;
     assert(Lmax_used >= 1);
     return {Lmax_used, Lmax};
@@ -172,15 +171,14 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
     // double* integrated_func = new double[kmesh];
 
-    int ll = 0;
-    if (l != 0)
-    {
-        ll = l - 1;
-    }
-
-    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx()[ll];
-    const std::vector<std::vector<double>>& jl = psb->get_jlx()[l];
-    const std::vector<std::vector<double>>& jlp1 = psb->get_jlx()[l + 1];
+    assert(psb->get_jlx().size()>=l+2);
+    const int lml = (l>0) ? (l-1) : 0;
+    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx().at(lml);
+    const std::vector<std::vector<double>>& jl = psb->get_jlx().at(l);
+    const std::vector<std::vector<double>>& jlp1 = psb->get_jlx().at(l+1);
+    assert(jlm1.size()>=rmesh);
+    assert(jl.size()>=rmesh);
+    assert(jlp1.size()>=rmesh);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -189,6 +187,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
     {
         std::vector<double> integrated_func(kmesh);
         const std::vector<double>& jl_r = jl[ir];
+        assert(jl_r.size()>=kmesh);
         for (int ik = 0; ik < kmesh; ++ik)
         {
             integrated_func[ik] = jl_r[ik] * k1_dot_k2[ik];
@@ -202,6 +201,8 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         // Peize Lin accelerate 2017-10-02
         const std::vector<double>& jlm1_r = jlm1[ir];
         const std::vector<double>& jlp1_r = jlp1[ir];
+        assert(jlm1_r.size()>=kmesh);
+        assert(jlp1_r.size()>=kmesh);
         const double fac = l / (l + 1.0);
         if (l == 0)
         {
@@ -305,10 +306,11 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
     std::vector<double> integrated_func(kmesh);
 
-    const int lm1 = (l > 0 ? l - 1 : 0);
-    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx()[lm1];
-    const std::vector<std::vector<double>>& jl = psb->get_jlx()[l];
-    const std::vector<std::vector<double>>& jlp1 = psb->get_jlx()[l + 1];
+    assert(psb->get_jlx().size()>=l+2);
+    const int lm1 = (l>0) ? (l-1) : 0;
+    const std::vector<std::vector<double>>& jlm1 = psb->get_jlx().at(lm1);
+    const std::vector<std::vector<double>>& jl = psb->get_jlx().at(l);
+    const std::vector<std::vector<double>>& jlp1 = psb->get_jlx().at(l+1);
 
     for (const size_t& ir: radials)
     {
@@ -320,6 +322,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         }
 
         const std::vector<double>& jl_r = jl[ir];
+        assert(jl_r.size()>=kmesh);
         for (int ik = 0; ik < kmesh; ++ik)
         {
             integrated_func[ik] = jl_r[ik] * k1_dot_k2[ik];
@@ -329,8 +332,10 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         ModuleBase::Integral::Simpson_Integral(kmesh, ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func), dk, temp);
         rs[ir] = temp * ModuleBase::FOUR_PI;
 
-        const std::vector<double>& jlm1_r = jlm1[ir];
-        const std::vector<double>& jlp1_r = jlp1[ir];
+        const std::vector<double>& jlm1_r = jlm1.at(ir);
+        const std::vector<double>& jlp1_r = jlp1.at(ir);
+        assert(jlm1_r.size()>=kmesh);
+        assert(jlp1_r.size()>=kmesh);
         const double fac = l / (l + 1.0);
         if (l == 0)
         {
