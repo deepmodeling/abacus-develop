@@ -8,7 +8,7 @@ gamma_only     1
 out_mat_hs     1 5
 
 #Parameters (Accuracy)
-ecutwfc		   10
+ecutwfc		   5
 scf_nmax	   50
 scf_thr        1.0e-6
 

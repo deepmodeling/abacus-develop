@@ -208,11 +208,13 @@ void ModuleIO::save_mat(const int istep,
 			{
 				out_matrix.open(filename.c_str());
 			}
+            out_matrix << "#------------------------------------------------------------------------" << std::endl;
             out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0 
             out_matrix << "# filename " << filename << std::endl;
             out_matrix << "# gamma only " << gamma_only << std::endl;
 			out_matrix << "# rows " << dim << std::endl;
 			out_matrix << "# columns" << dim << std::endl;
+            out_matrix << "#------------------------------------------------------------------------" << std::endl;
 
 		}
 

@@ -10,7 +10,7 @@ pseudo_dir	 ../../PP_ORB
 orbital_dir	 ../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc      20
+ecutwfc      5
 scf_thr      1e-9
 scf_nmax     100
 
@@ -32,3 +32,4 @@ mixing_beta 0.5
 
 gamma_only  1
 out_mat_hs  1 5
+out_app_flag 1
