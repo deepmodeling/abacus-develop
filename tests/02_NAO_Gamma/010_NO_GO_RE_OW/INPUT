@@ -1,0 +1,33 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix       autotest
+calculation  relax
+
+nbands       4
+symmetry     1
+pseudo_dir	 ../../PP_ORB
+orbital_dir	 ../../PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc      20
+scf_thr      1e-9
+scf_nmax     100
+
+#Parameters (3.Relaxation)
+relax_nmax    2
+cal_force     1
+force_thr_ev  0.01
+relax_method  bfgs 2
+
+#Parameters (4.Basis)
+basis_type    lcao
+
+#Parameters (5.Smearing)
+smearing_method fixed
+
+#Parameters (6.Mixing)
+mixing_type broyden
+mixing_beta 0.5
+
+gamma_only    1
+out_wfc_lcao  1
