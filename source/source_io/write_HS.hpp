@@ -111,6 +111,8 @@ void ModuleIO::save_mat(const int istep,
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
 
+    const bool gamma_only = std::is_same<T, double>::value;
+
     // write .dat file
 	if (bit)
 	{
@@ -206,10 +208,12 @@ void ModuleIO::save_mat(const int istep,
 			{
 				out_matrix.open(filename.c_str());
 			}
-            out_matrix << istep+1 << " Ionic Step" << std::endl; // istep starts from 0 
-            out_matrix << filename << " Filename" << std::endl;
-			out_matrix << dim << " Rows" << std::endl;
-			out_matrix << dim << " Columns" << std::endl;
+            out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0 
+            out_matrix << "# filename " << filename << std::endl;
+            out_matrix << "# gamma only " << gamma_only << std::endl;
+			out_matrix << "# rows " << dim << std::endl;
+			out_matrix << "# columns" << dim << std::endl;
+
 		}
 
         int ir=0;
