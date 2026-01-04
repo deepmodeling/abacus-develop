@@ -38,14 +38,16 @@ class PotSurChem : public PotBase
             this->surchem_->allocate(this->rho_basis_->nrxx, v_eff.nr);
             this->allocated = true;
         }
-
-        v_eff += this->surchem_->v_correction(*ucell,
-                                              *chg->pgrid,
-                                              const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
-                                              v_eff.nr,
-                                              chg->rho,
-                                              this->vlocal,
-                                              this->structure_factors_);
+        ModuleBase::matrix v_sol_correction(v_eff.nr, this->rho_basis_->nrxx);
+        this->surchem_->v_correction(*ucell,
+                                 *chg->pgrid,
+                                 const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
+                                 v_eff.nr,
+                                 chg->rho,
+                                 this->vlocal,
+                                 this->structure_factors_,
+                                 v_sol_correction);
+        v_eff += v_sol_correction;
     }
 
   private:

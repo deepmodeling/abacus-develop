@@ -162,10 +162,11 @@ void surchem::createcavity(const UnitCell& ucell,
     delete[] ggn;
 }
 
-ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
-                                     const ModulePW::PW_Basis* rho_basis,
-                                     std::complex<double>* ps_totn,
-                                     int nspin)
+void surchem::cal_vcav(const UnitCell& ucell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       std::complex<double>* ps_totn,
+                       int nspin,
+                       ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vcav");
     ModuleBase::timer::tick("surchem", "cal_vcav");
@@ -181,6 +182,7 @@ ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
             Vcav(0, ir) += tmp_Vcav[ir];
+            v(0, ir) += Vcav(0, ir);
         }
     }
     else
@@ -190,11 +192,12 @@ ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
             for (int ir = 0; ir < rho_basis->nrxx; ir++)
             {
                 Vcav(is, ir) += tmp_Vcav[ir];
+                v(is, ir) += Vcav(is, ir);
             }
         }
     }
 
     delete[] tmp_Vcav;
     ModuleBase::timer::tick("surchem", "cal_vcav");
-    return Vcav;
+    return;
 }
