@@ -54,12 +54,12 @@ void eps_pot(const double* PS_TOTN_real,
     delete[] phisq;
 }
 
-ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
-                                    const ModulePW::PW_Basis* rho_basis,
-                                    std::complex<double>* TOTN,
-                                    std::complex<double>* PS_TOTN,
-                                    int nspin,
-                                    ModuleBase::matrix& v)
+void surchem::cal_vel(const UnitCell& cell,
+                      const ModulePW::PW_Basis* rho_basis,
+                      std::complex<double>* TOTN,
+                      std::complex<double>* PS_TOTN,
+                      int nspin,
+                      ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::tick("surchem", "cal_vel");
