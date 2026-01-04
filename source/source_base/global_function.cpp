@@ -16,6 +16,11 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cerrno>
+#include <unistd.h>
+
 namespace ModuleBase
 {
 namespace GlobalFunc
@@ -61,20 +66,14 @@ void OUT(std::ofstream &ofs, const std::string &name)
 void MAKE_DIR(const std::string &fn)
 {
     //	ModuleBase::TITLE("global_function","MAKE_DIR");
-    #ifndef __SW
     if (GlobalV::MY_RANK == 0)
     {
-        std::stringstream ss;
-        ss << " test -d " << fn << " || mkdir " << fn;
-        //----------------------------------------------------------
-        // EXPLAIN : 'system' function return '0' if success
-        //----------------------------------------------------------
-        if (system(ss.str().c_str()))
+        int ret = mkdir(fn.c_str(), 0755);
+        if (ret != 0 && errno != EEXIST)
         {
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
         }
     }
-    #endif
     return;
 }
 
