@@ -39,6 +39,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->orb_cutoff_ = orb.cutoffs();
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
@@ -46,21 +47,18 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = abfs_same_atom;}
 	else
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
-
-	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
 	
-	bool init_MGT = true;
+	std::shared_ptr<ORB_gaunt_table> MGT = std::make_shared<ORB_gaunt_table>();
 	for(const auto &settings_list : this->coulomb_settings)
 	{
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->MGT, init_MGT, settings_list.second.first );
-		init_MGT = false; // only init once
+															this->info.kmesh_times, MGT, settings_list.second.first );
 	}
 
 	ModuleBase::timer::tick("Exx_LRI", "init");
@@ -72,11 +70,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_ions");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
-
-	// init_radial_table_ions( cal_atom_centres_core(atom_pairs_core_origin), atom_pairs_core_origin );
-
-	// this->m_abfsabfs.init_radial_table(Rradial);
-	// this->m_abfslcaos_lcaos.init_radial_table(Rradial);
 
 	std::vector<TA> atoms(ucell.nat);
 	for(int iat=0; iat<ucell.nat; ++iat)

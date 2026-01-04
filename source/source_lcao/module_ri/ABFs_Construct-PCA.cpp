@@ -172,29 +172,13 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
-		const int Lmax_bak = GlobalC::exx_info.info_ri.abfs_Lmax;
-		GlobalC::exx_info.info_ri.abfs_Lmax = std::numeric_limits<int>::min();
-    for (std::size_t T = 0; T != abfs.size(); ++T)
-    {
-        GlobalC::exx_info.info_ri.abfs_Lmax
-            = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size()) - 1);
-}
-
-		Matrix_Orbs21 m_abfslcaos_lcaos;
-		ORB_gaunt_table MGT;
-    const int Lmax = m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, orb.get_Rmax());
-		MGT.init_Gaunt_CH(Lmax);
-    MGT.init_Gaunt(Lmax);
-    m_abfslcaos_lcaos.init_radial(abfs, lcaos, lcaos, MGT);
+	Matrix_Orbs21 m_abfslcaos_lcaos;
+    m_abfslcaos_lcaos.init(abfs, lcaos, lcaos, ucell, orb, kmesh_times, orb.get_Rmax());
 
     std::map<std::size_t, std::map<std::size_t, std::set<double>>> delta_R;
     for (std::size_t it = 0; it != abfs.size(); ++it)
-    {
-			delta_R[it][it] = {0.0};
-}
+        { delta_R[it][it] = {0.0}; }
 		m_abfslcaos_lcaos.init_radial_table(delta_R);
-
-		GlobalC::exx_info.info_ri.abfs_Lmax = Lmax_bak;
 		
     std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> eig(abfs.size());
     for (std::size_t T = 0; T != abfs.size(); ++T)
