@@ -11,7 +11,7 @@ out_mat_hs     1 5
 #Parameters (Accuracy)
 ecutwfc		   5
 scf_nmax	   50
-scf_thr        1.0e-6
+scf_thr        1.0e-8
 
 cal_stress     1
 stress_thr     1e-6

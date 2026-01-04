@@ -213,7 +213,7 @@ void ModuleIO::save_mat(const int istep,
             out_matrix << "# filename " << filename << std::endl;
             out_matrix << "# gamma only " << gamma_only << std::endl;
 			out_matrix << "# rows " << dim << std::endl;
-			out_matrix << "# columns" << dim << std::endl;
+			out_matrix << "# columns " << dim << std::endl;
             out_matrix << "#------------------------------------------------------------------------" << std::endl;
 
 		}
@@ -255,7 +255,7 @@ void ModuleIO::save_mat(const int istep,
 
             if (drank == 0)
             {
-                out_matrix << "Row" << i+1 << std::endl;
+                out_matrix << "Row " << i+1 << std::endl;
                 size_t count = 0;
 				for (int j = (tri ? i : 0); j < dim; j++) 
 				{
