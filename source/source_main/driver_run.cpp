@@ -128,7 +128,7 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
-    if (GlobalV::NPROC > PARAM.inp.KPAR)
+    if (GlobalV::NPROC > PARAM.inp.kpar)
     {
         ModuleBase::WARNING_QUIT(
             "Driver::init_hardware",
