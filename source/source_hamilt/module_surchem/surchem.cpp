@@ -50,6 +50,9 @@ void surchem::clear()
     this->TOTN_real = nullptr;
     this->delta_phi = nullptr;
     this->epspot = nullptr;
+
+    this->Vcav.create(0, 0); 
+    this->Vel.create(0, 0);
 }
 
 surchem::~surchem()
