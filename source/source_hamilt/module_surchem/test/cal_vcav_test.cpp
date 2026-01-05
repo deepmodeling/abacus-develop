@@ -251,7 +251,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     }
 
     int nspin = 2;
-    // solvent_model.Vcav.create(nspin, nrxx);
+    solvent_model.Vcav.create(nspin, nrxx);
 
     ModuleBase::matrix v_res(nspin, nrxx);
     ModuleBase::GlobalFunc::ZEROS(v_res.c, nspin * nrxx);
