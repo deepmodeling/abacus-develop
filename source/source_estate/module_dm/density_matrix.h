@@ -179,6 +179,7 @@ class DensityMatrix
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
+     * @param ik_in
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
@@ -186,6 +187,7 @@ class DensityMatrix
 
     /**
      * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
+     * @param ik_in
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
@@ -195,8 +197,11 @@ class DensityMatrix
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
      * the stored dm(k) has been used to calculate the passin DMR
      * @param dmR_out pointer of HContainer object to store the calculated complex DMR
+     * @param ik_in
+     * if ik_in < 0, calculate all k-points
+     * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const;
+    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in = -1) const;
 
     /**
      * @brief (Only nspin=2) switch DMR to total density matrix or magnetization density matrix
