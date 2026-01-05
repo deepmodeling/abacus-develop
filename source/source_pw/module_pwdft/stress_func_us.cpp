@@ -148,7 +148,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     ModuleBase::matrix fac(PARAM.inp.nspin, 3);
                     const char transc = 'T';
                     const int three = 3;
-                    BlasConnector::gemm(transc,
+                    BlasConnector::gemm_cm(transc,
                            transb,
                            three,
                            PARAM.inp.nspin,

@@ -229,7 +229,7 @@ void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, doubl
     const char N_char = 'N', T_char = 'T';
     const int nlocal = psi1.get_nbasis();
     const int nbands = psi1.get_nbands();
-    BlasConnector::gemm(N_char,
+    BlasConnector::gemm_cm(N_char,
            T_char,
            nlocal,
            nlocal,
@@ -254,7 +254,7 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
     const int nbands = psi1.get_nbands();
     const std::complex<double> one_complex = {1.0, 0.0};
     const std::complex<double> zero_complex = {0.0, 0.0};
-    BlasConnector::gemm(N_char,
+    BlasConnector::gemm_cm(N_char,
            T_char,
            nlocal,
            nlocal,

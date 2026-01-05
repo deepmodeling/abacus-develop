@@ -166,12 +166,12 @@ namespace LR
             // ============== = [C_occ^* * X^T * C_virt^T]^T=============
             // 1. X*C_occ^\dagger
             container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, nmo2 });
-            BlasConnector::gemm(transa, transb, nmo2, naos, nmo1, alpha,
+            BlasConnector::gemm_cm(transa, transb, nmo2, naos, nmo1, alpha,
                 X_istate + x_start, nmo2, c.get_pointer(imo1), naos,
                 beta, Xc.data<std::complex<double>>(), nmo2);
             // 2. [X*C_occ^\dagger]^TC_virt^T
             transa = transb = 'T';
-            BlasConnector::gemm(transa, transb, naos, naos, nmo2, factor,
+            BlasConnector::gemm_cm(transa, transb, naos, naos, nmo2, factor,
                 Xc.data<std::complex<double>>(), nmo2, c.get_pointer(imo2), naos, beta,
                 dm_trans[isk].data<std::complex<double>>(), naos);
         }
