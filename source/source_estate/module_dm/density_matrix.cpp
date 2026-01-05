@@ -86,10 +86,9 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
-            std::vector<std::complex<double>> tmp_DMR( (PARAM.inp.nspin==4) ? mat_size*R_size : 0);
 
             // calculate kphase and target_mat_ptr
-            std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, {R_size});
+            std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, std::vector<std::complex<double>>(R_size));
             std::vector<TR*> target_DMR_mat_vec(R_size);
             for(int iR = 0; iR < R_size; ++iR)
             {
@@ -117,6 +116,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             }
 
             std::vector<std::complex<double>> DMK_mat_trans(mat_size);
+            std::vector<std::complex<double>> tmp_DMR( (PARAM.inp.nspin==4) ? mat_size*R_size : 0);
             for(int ik = 0; ik < this->_nk; ++ik)
             {
                 if(ik_in >= 0 && ik_in != ik) { continue; }
@@ -233,10 +233,9 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& uce
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
-            std::vector<std::complex<double>> tmp_DMR( (PARAM.inp.nspin==4) ? mat_size*R_size : 0);
 
             // calculate kphase and target_mat_ptr
-            std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, {R_size});
+            std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, std::vector<std::complex<double>>(R_size));
             std::vector<TR*> target_DMR_mat_vec(R_size);
             for(int iR = 0; iR < R_size; ++iR)
             {
@@ -268,6 +267,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& uce
             }
 
             std::vector<std::complex<double>> DMK_mat_trans(mat_size);
+            std::vector<std::complex<double>> tmp_DMR( (PARAM.inp.nspin==4) ? mat_size*R_size : 0);
             for(int ik = 0; ik < this->_nk; ++ik)
             {
                 if(ik_in >= 0 && ik_in != ik) { continue; }
@@ -381,7 +381,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
         const int R_size = target_ap.get_R_size();
 
         // calculate kphase and target_mat_ptr
-        std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, {R_size});
+        std::vector<std::vector<std::complex<double>>> kphase_vec(this->_nk, std::vector<std::complex<double>>(R_size));
         std::vector<std::complex<double>*> target_DMR_mat_vec(R_size);
         for(int iR = 0; iR < R_size; ++iR)
         {
