@@ -112,13 +112,13 @@ namespace LR
             const double alpha = 1.0;
             const double beta = 0.0;
             container::Tensor Xc(DAT::DT_DOUBLE, DEV::CpuDevice, { nmo2, naos });
-            dgemm_(&transa, &transb, &naos, &nmo2, &nmo1, &alpha,
-                c.get_pointer(imo1), &naos, X_istate + x_start, &nmo2,
-                &beta, Xc.data<double>(), &naos);
+            BlasConnector::gemm(transa, transb, naos, nmo2, nmo1, alpha,
+                c.get_pointer(imo1), naos, X_istate + x_start, nmo2,
+                beta, Xc.data<double>(), naos);
             // 2. C_virt*[X*C_occ^T]
-            dgemm_(&transa, &transb, &naos, &naos, &nmo2, &factor,
-                c.get_pointer(imo2), &naos, Xc.data<double>(), &naos, &beta,
-                dm_trans[isk].data<double>(), &naos);
+            BlasConnector::gemm(transa, transb, naos, naos, nmo2, factor,
+                c.get_pointer(imo2), naos, Xc.data<double>(), naos, beta,
+                dm_trans[isk].data<double>(), naos);
         }
         return dm_trans;
     }
