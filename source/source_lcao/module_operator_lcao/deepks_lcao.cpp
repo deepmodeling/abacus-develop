@@ -351,15 +351,15 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
 
-                BlasConnector::gemm(transa,
-                       transb,
-                       col_size,
+                BlasConnector::gemm(transb,
+                       transa,
                        row_size,
+                       col_size,
                        trace_alpha_size,
                        gemm_alpha,
-                       s_2t.data(),
-                       trace_alpha_size,
                        s_1t.data(),
+                       trace_alpha_size,
+                       s_2t.data(),
                        trace_alpha_size,
                        gemm_beta,
                        hr_current.data(),

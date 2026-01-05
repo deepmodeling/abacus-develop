@@ -110,14 +110,14 @@ namespace LR
             char transb = 'N';  //coeff is col major
             const double alpha = 1.0;
             const double beta = add_on ? 1.0 : 0.0;
-            BlasConnector::gemm(transa, transb, naos, nmo1, naos, alpha,
-                mat_ao[isk].data<double>(), naos, coeff.get_pointer(imo1), naos, beta,
+            BlasConnector::gemm(transb, transa, nmo1, naos, naos, alpha,
+                coeff.get_pointer(imo1), naos, mat_ao[isk].data<double>(), naos, beta,
                 Vc.data<double>(), naos);
 
             transa = 'T';
             //mat_mo=coeff^TVc (nvirt major)
-            BlasConnector::gemm(transa, transb, nmo2, nmo1, naos, alpha,
-                coeff.get_pointer(imo2), naos, Vc.data<double>(), naos, beta,
+            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, alpha,
+                Vc.data<double>(), naos, coeff.get_pointer(imo2), naos, beta,
                 mat_mo + start, nmo2);
         }
     }
@@ -151,14 +151,14 @@ namespace LR
             char transb = 'N';  //coeff is col major
             const std::complex<double> alpha(1.0, 0.0);
             const std::complex<double> beta = add_on ? std::complex<double>(1.0, 0.0) : std::complex<double>(0.0, 0.0);
-            BlasConnector::gemm(transa, transb, naos, nmo1, naos, alpha,
-                mat_ao[isk].data<std::complex<double>>(), naos, coeff.get_pointer(imo1), naos, beta,
+            BlasConnector::gemm(transb, transa, nmo1, naos, naos, alpha,
+                coeff.get_pointer(imo1), naos, mat_ao[isk].data<std::complex<double>>(), naos, beta,
                 Vc.data<std::complex<double>>(), naos);
 
             transa = 'C';
             //mat_mo=coeff^\dagger Vc (nvirt major)
-            BlasConnector::gemm(transa, transb, nmo2, nmo1, naos, alpha,
-                coeff.get_pointer(imo2), naos, Vc.data<std::complex<double>>(), naos, beta,
+            BlasConnector::gemm(transb, transa, nmo1, nmo2, naos, alpha,
+                Vc.data<std::complex<double>>(), naos, coeff.get_pointer(imo2), naos, beta,
                 mat_mo + start, nmo2);
         }
     }

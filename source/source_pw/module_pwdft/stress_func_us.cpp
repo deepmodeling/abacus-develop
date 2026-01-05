@@ -111,16 +111,16 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     const int dim = 2 * npw;
                     const double one = 1;
                     const double zero = 0;
-                    BlasConnector::gemm(transa,
-                           transb,
-                           dim,
+                    BlasConnector::gemm(transb,
+                           transa,
                            PARAM.inp.nspin,
+                           dim,
                            nij,
                            one,
-                           qgm_data,
-                           dim,
                            tbecsum.c,
                            nij,
+                           qgm_data,
+                           dim,
                            zero,
                            aux2_data,
                            dim);

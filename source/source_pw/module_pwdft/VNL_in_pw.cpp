@@ -1468,15 +1468,15 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
                 double* qg_ptr = reinterpret_cast<double*>(qg.c);
                 double* aux_ptr = reinterpret_cast<double*>(aux.c);
 
-                BlasConnector::gemm(transa,
-                       transb,
-                       nij,
+                BlasConnector::gemm(transb,
+                       transa,
                        natom,
+                       nij,
                        complex_npw,
                        fact,
-                       qg_ptr,
-                       complex_npw,
                        aux_ptr,
+                       complex_npw,
+                       qg_ptr,
                        complex_npw,
                        zero,
                        deeaux.c,
