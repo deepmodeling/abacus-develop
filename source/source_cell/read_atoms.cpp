@@ -26,7 +26,9 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
     std::string& Coordinate  = ucell.Coordinate;
-    const int    ntype       = ucell.ntype;
+    const int ntype = ucell.ntype;
+    const int nspin = PARAM.inp.nspin; 
+    assert (nspin==1 || nspin==2 || nspin==4);
 
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
@@ -95,14 +97,22 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
             {
                 std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-                elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+                bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+				if(!normal)
+				{
+					return false;
+				}
             }
             else if(PARAM.inp.basis_type == "pw")
             {
                 if ((PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
                 {
                     std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-                    elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+					bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+					if(!normal)
+					{
+						return false;
+					}
                 }
                 else
                 {
@@ -219,14 +229,14 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                             ifpos.putback(tmp);
                             ifpos >> tmpid;
                         }
-                        if ( tmpid == "m" )
-                        {
-                                ifpos >> mv.x >> mv.y >> mv.z ;
-                        }
-                        else if ( tmpid == "v" ||tmpid == "vel" || tmpid == "velocity" )
-                        {
-                                ifpos >> ucell.atoms[it].vel[ia].x >> ucell.atoms[it].vel[ia].y >> ucell.atoms[it].vel[ia].z;
-                        }
+						if ( tmpid == "m" )
+						{
+							ifpos >> mv.x >> mv.y >> mv.z ;
+						}
+						else if ( tmpid == "v" ||tmpid == "vel" || tmpid == "velocity" )
+						{
+							ifpos >> ucell.atoms[it].vel[ia].x >> ucell.atoms[it].vel[ia].y >> ucell.atoms[it].vel[ia].z;
+						}
                         else if ( tmpid == "mag" || tmpid == "magmom")
                         {
                             set_element_mag_zero = true;
@@ -352,7 +362,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         ucell.atoms[it].m_loc_[ia].z = ucell.atoms[it].mag[ia];
                     }
 
-                    if(PARAM.inp.nspin==4)
+                    if(nspin==4)
                     {
                         if(!PARAM.inp.noncolin)
                         {
@@ -382,7 +392,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         }
                         ModuleBase::GlobalFunc::ZEROS(ucell.magnet.ux_ ,3);
                     }
-                    else if(PARAM.inp.nspin==2)
+                    else if(nspin==2)
                     {// collinear case with nspin = 2, only z component is used
                         ucell.atoms[it].mag[ia] = ucell.atoms[it].m_loc_[ia].z;
                         //print only ia==0 && mag>0 to avoid too much output
@@ -514,7 +524,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
         }
         if (autoset_mag)
         {
-            if(PARAM.inp.nspin==4)
+            if(nspin==4)
             {
                 for (int it = 0;it < ntype; it++)
                 {
@@ -530,7 +540,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     }
                 }
             }
-            else if(PARAM.inp.nspin==2)
+            else if(nspin==2)
             {
                 for (int it = 0;it < ntype; it++)
                 {
