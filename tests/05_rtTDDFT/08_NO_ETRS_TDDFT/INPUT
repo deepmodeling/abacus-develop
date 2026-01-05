@@ -6,7 +6,7 @@ esolver_type       tddft
 gamma_only         0     # multiple k points
 md_type            nve
 md_dt              0.05  # MD time step
-md_nstep           2     # number of MD steps
+md_nstep           3     # number of MD steps
 estep_per_md       1 
 init_vel           1     # initial velocity
 

@@ -15,7 +15,7 @@ cal_force           1
 cal_stress          1
 
 #Parameters (MD)
-md_nstep            14
+md_nstep            15
 md_type             nvt
 md_dt               1
 md_tfirst           300

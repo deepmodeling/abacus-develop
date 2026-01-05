@@ -417,24 +417,24 @@ namespace ModuleSymmetry
         if (TRS_conj)
         {
             // D^T* = M^T [M^T (D^T)^T]^\dagger
-            pzgemm_(&transpose, &transpose, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
-                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(transpose, transpose, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
+                beta, DMkibz_M.data(), i1, i1, pv.desc);
             alpha.real(1.0 / static_cast<double>(kstar_size));
-            pzgemm_(&transpose, &dagger, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz_M.data(), &i1, &i1, pv.desc,
-                &beta, DMk.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(transpose, dagger, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz_M.data(), i1, i1, pv.desc,
+                beta, DMk.data(), i1, i1, pv.desc);
         }
         else
         {
             // D^T = M^\daggger D^T M
-            pzgemm_(&dagger, &notrans, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
-                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
+                beta, DMkibz_M.data(), i1, i1, pv.desc);
             alpha.real(1.0 / static_cast<double>(kstar_size));
-            pzgemm_(&notrans, &notrans, &nbasis, &nbasis, &nbasis,
-                &alpha, DMkibz_M.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
-                &beta, DMk.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
+                alpha, DMkibz_M.data(), i1, i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc,
+                beta, DMk.data(), i1, i1, pv.desc);
         }
         return DMk;
     }
