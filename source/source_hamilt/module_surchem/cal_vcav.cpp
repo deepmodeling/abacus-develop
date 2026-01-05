@@ -40,7 +40,7 @@ void lapl_rho(const double& tpiba2,
     ModuleBase::GlobalFunc::ZEROS(lapn, rho_basis->nrxx);
 
 
-    std::complex<double> *aux = new std::complex<double>[rho_basis->nrxx];
+    std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
 
  
     for (int ig = 0; ig < rho_basis->npw; ig++) {
@@ -50,7 +50,7 @@ void lapl_rho(const double& tpiba2,
     for(int i = 0 ; i < 3 ; ++i)
     {
  
-        ModuleBase::GlobalFunc::ZEROS(aux, rho_basis->nrxx);
+        ModuleBase::GlobalFunc::ZEROS(aux, rho_basis->nmaxgr);
         
         for (int ig = 0; ig < rho_basis->npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
