@@ -16,7 +16,7 @@ void surchem::minimize_cg(const UnitCell& ucell,
     // r * r
     double r2 = 0;
     // precond loop parameter
-    // int i = 0; // Unused
+ 
     
     ModuleBase::GlobalFunc::ZEROS(phi, rho_basis->npw);
     
@@ -179,92 +179,102 @@ void surchem::minimize_cg(const UnitCell& ucell,
     delete[] aux_grad_grad_phi_real;
 }
 
+void helper_grad_rho(const UnitCell& ucell,
+                     const ModulePW::PW_Basis* rho_basis,
+                     const std::complex<double>* rho_G, // G
+                     ModuleBase::Vector3<double>* grad_rho_R, // R
+                     std::complex<double>* buffer_G,   
+                     double* buffer_R)                 
+{
+    // 1.x, y, z
+    for (int i = 0; i < 3; ++i)
+    {
+        // 2. 
+
+        for (int ig = 0; ig < rho_basis->npw; ig++)
+        {
+            buffer_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
+        }
+
+        // 3. FFT: G -> R
+
+        rho_basis->recip2real(buffer_G, buffer_R);
+
+
+        for (int ir = 0; ir < rho_basis->nrxx; ir++)
+        {
+            grad_rho_R[ir][i] = buffer_R[ir] * ucell.tpiba;
+        }
+    }
+}
+
 void surchem::Leps2(const UnitCell& ucell,
                     const ModulePW::PW_Basis* rho_basis,
                     std::complex<double>* phi,
-                    double* epsilon,            
+                    double* epsilon,
                     std::complex<double>* gradphi_x,
                     std::complex<double>* gradphi_y,
                     std::complex<double>* gradphi_z,
                     std::complex<double>* lp,
-                    // New arguments for memory buffers
-                    ModuleBase::Vector3<double>* grad_phi,
-                    std::complex<double>* grad_grad_phi_G,
-                    ModuleBase::Vector3<double>* tmp_vector3,
-                    double* lp_real,
-                    double* grad_grad_phi_real)
+                    ModuleBase::Vector3<double>* grad_phi_R,   // size: nrxx
+                    std::complex<double>* aux_G,               // size: npw
+                    ModuleBase::Vector3<double>* tmp_vector3,  // size: nrxx)
+                    double* lp_real,                           // size: nrxx
+                    double* aux_R)                             // size: nrxx
 {
-    // RESET BUFFERS at the start of call
-    // Previously these were "new" allocations, now we must clear them manually
-    ModuleBase::GlobalFunc::ZEROS(grad_phi, rho_basis->nrxx);
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_G, rho_basis->npw);
-    ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
+
+    helper_grad_rho(ucell, rho_basis, phi, grad_phi_R, aux_G, aux_R);
+
+
+    for (int ir = 0; ir < rho_basis->nrxx; ir++)
+    {
+        grad_phi_R[ir].x *= epsilon[ir];
+        grad_phi_R[ir].y *= epsilon[ir];
+        grad_phi_R[ir].z *= epsilon[ir];
+    }
+
+
     ModuleBase::GlobalFunc::ZEROS(lp_real, rho_basis->nrxx);
-    // grad_grad_phi_real is overwritten by assignment, so ZEROS is optional but safe
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_real, rho_basis->nrxx);
-    ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
 
-    // Calculate grad_rho
-    XC_Functional::grad_rho(phi, grad_phi, rho_basis, ucell.tpiba);
-    
-    // Multiply by epsilon
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        grad_phi[ir].x *= epsilon[ir];
-        grad_phi[ir].y *= epsilon[ir];
-        grad_phi[ir].z *= epsilon[ir];
-    }
+ 
 
-    // --- X Component ---
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        grad_grad_phi_real[ir] = grad_phi[ir].x;
+    // 1. R -> G
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].x;
+    rho_basis->real2recip(aux_R, gradphi_x); // 
+    
+ 
+    for(int ig=0; ig<rho_basis->npw; ig++) {
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_x[ig] * rho_basis->gcar[ig][0]; // 0 = x
     }
-    rho_basis->real2recip(grad_grad_phi_real, grad_grad_phi_G);
-    
-    // reuse tmp_vector3
-    ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx); 
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
-    
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        lp_real[ir] += tmp_vector3[ir].x;
+    rho_basis->recip2real(aux_G, aux_R);
+    for(int ir=0; ir<rho_basis->nrxx; ir++) {
+        lp_real[ir] += aux_R[ir] * ucell.tpiba; 
     }
 
-    // --- Y Component ---
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_real, rho_basis->nrxx); // Clear buffer
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        grad_grad_phi_real[ir] = grad_phi[ir].y;
+ 
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].y;
+    rho_basis->real2recip(aux_R, gradphi_y); 
+    
+    for(int ig=0; ig<rho_basis->npw; ig++) {
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_y[ig] * rho_basis->gcar[ig][1]; // 1 = y
     }
-    rho_basis->real2recip(grad_grad_phi_real, grad_grad_phi_G);
-    
-    ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
-    
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        lp_real[ir] += tmp_vector3[ir].y;
+    rho_basis->recip2real(aux_G, aux_R);
+    for(int ir=0; ir<rho_basis->nrxx; ir++) {
+        lp_real[ir] += aux_R[ir] * ucell.tpiba; 
     }
 
-    // --- Z Component ---
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_real, rho_basis->nrxx); // Clear buffer
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        grad_grad_phi_real[ir] = grad_phi[ir].z;
+
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].z;
+    rho_basis->real2recip(aux_R, gradphi_z);
+    
+    for(int ig=0; ig<rho_basis->npw; ig++) {
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_z[ig] * rho_basis->gcar[ig][2]; // 2 = z
     }
-    rho_basis->real2recip(grad_grad_phi_real, grad_grad_phi_G);
-    
-    ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
-    XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
-    
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        lp_real[ir] += tmp_vector3[ir].z;
+    rho_basis->recip2real(aux_G, aux_R);
+    for(int ir=0; ir<rho_basis->nrxx; ir++) {
+        lp_real[ir] += aux_R[ir] * ucell.tpiba; 
     }
 
-    // Final transfer to Reciprocal space
+
     rho_basis->real2recip(lp_real, lp);
-
-    // No delete[] calls here anymore!
 }
