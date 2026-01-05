@@ -6,10 +6,10 @@
 
 static void local_grad_rho_vel(const UnitCell& ucell,
                                const ModulePW::PW_Basis* rho_basis,
-                               const std::complex<double>* rho_G, // G 
-                               ModuleBase::Vector3<double>* grad_R, // R 
-                               std::complex<double>* aux_G,       // 
-                               double* aux_R)                     // 
+                               const std::complex<double>* rho_G, 
+                               ModuleBase::Vector3<double>* grad_R,  
+                               std::complex<double>* aux_G,       
+                               double* aux_R)                      
 {
     for (int i = 0; i < 3; ++i)
     {
@@ -91,9 +91,7 @@ void eps_pot(const double* PS_TOTN_real,
     delete[] aux_G;
     delete[] aux_R;
 
-    // ========================================================
-    // 修复结束
-    // ========================================================
+
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {

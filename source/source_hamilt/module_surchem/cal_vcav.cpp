@@ -6,10 +6,10 @@
 
 static void local_grad_rho(const UnitCell& ucell,
                            const ModulePW::PW_Basis* rho_basis,
-                           const std::complex<double>* rho_G, // 
-                           ModuleBase::Vector3<double>* grad_R, // 
-                           std::complex<double>* aux_G,       // 
-                           double* aux_R)                     //
+                           const std::complex<double>* rho_G, 
+                           ModuleBase::Vector3<double>* grad_R, 
+                           std::complex<double>* aux_G,        
+                           double* aux_R)                     
 {
 
     for (int i = 0; i < 3; ++i)
@@ -30,9 +30,7 @@ static void local_grad_rho(const UnitCell& ucell,
     }
 }
 
-// ---------------------------------------------------------
-// Helper 2: Laplacian
-// ---------------------------------------------------------
+
 void lapl_rho(const double& tpiba2,
               const std::complex<double>* rhog, 
               double* lapn, 

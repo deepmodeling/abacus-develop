@@ -8,14 +8,12 @@ void surchem::minimize_cg(const UnitCell& ucell,
                           std::complex<double>* phi,
                           int& ncgsol)
 {
-    // parameters of CG method
+
     double alpha = 0;
     double beta = 0;
-    // r * r'
     double rinvLr = 0;
-    // r * r
     double r2 = 0;
-    // precond loop parameter
+
  
     
     ModuleBase::GlobalFunc::ZEROS(phi, rho_basis->npw);
@@ -186,17 +184,13 @@ void helper_grad_rho(const UnitCell& ucell,
                      std::complex<double>* buffer_G,   
                      double* buffer_R)                 
 {
-    // 1.x, y, z
     for (int i = 0; i < 3; ++i)
     {
-        // 2. 
 
         for (int ig = 0; ig < rho_basis->npw; ig++)
         {
             buffer_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
         }
-
-        // 3. FFT: G -> R
 
         rho_basis->recip2real(buffer_G, buffer_R);
 
