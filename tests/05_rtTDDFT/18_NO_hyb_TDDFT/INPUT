@@ -4,7 +4,7 @@ INPUT_PARAMETERS
 calculation        md
 esolver_type       tddft
 md_type            nve
-md_nstep           0
+md_nstep           1
 estep_per_md       10
 td_dt              0.005
 md_tfirst          0

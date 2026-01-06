@@ -213,19 +213,19 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         gemm_alpha = 2.0;
                     }
 
-                    dgemm_(&transa,
-                           &transb,
-                           &row_size_nks,
-                           &trace_alpha_size,
-                           &col_size,
-                           &gemm_alpha,
-                           dm_array.data(),
-                           &col_size,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           trace_alpha_size,
+                           row_size_nks,
+                           col_size,
+                           gemm_alpha,
                            s_2t.data(),
-                           &col_size,
-                           &gemm_beta,
+                           col_size,
+                           dm_array.data(),
+                           col_size,
+                           gemm_beta,
                            g_1dmt.data(),
-                           &row_size_nks);
+                           row_size_nks);
                 } // ad2
 
                 for (int ik = 0; ik < nks; ik++)

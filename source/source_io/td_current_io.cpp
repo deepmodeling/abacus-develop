@@ -180,12 +180,14 @@ void ModuleIO::write_current(const UnitCell& ucell,
     // write end
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = PARAM.globalv.global_out_dir + "current_total.txt";
+        std::string filename = PARAM.globalv.global_out_dir + "current_tot.txt";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep << " " << current_total[0]/omega << " " << current_total[1]/omega << " " << current_total[2]/omega << std::endl;
+        fout << istep+1 << " " << current_total[0]/omega 
+             << " " << current_total[1]/omega 
+             << " " << current_total[2]/omega << std::endl;
         fout.close();
     }
 
@@ -559,13 +561,15 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
             {
-                std::string filename = PARAM.globalv.global_out_dir + "current_spin" + std::to_string(is) + "_ik"
-                                       + std::to_string(ik) + ".txt";
+                std::string filename = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is) + "k"
+                                       + std::to_string(ik+1) + ".txt";
                 std::ofstream fout;
                 fout.open(filename, std::ios::app);
                 fout << std::setprecision(16);
                 fout << std::scientific;
-                fout << istep << " " << current_ik[0]/omega << " " << current_ik[1]/omega << " " << current_ik[2]/omega << std::endl;
+                fout << istep+1 << " " << current_ik[0]/omega 
+                     << " " << current_ik[1]/omega 
+                     << " " << current_ik[2]/omega << std::endl;
                 fout.close();
             }
             // write end
@@ -573,12 +577,14 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     } // end is
     if (GlobalV::MY_RANK == 0)
     {
-        std::string filename = PARAM.globalv.global_out_dir + "current_total.txt";
+        std::string filename = PARAM.globalv.global_out_dir + "current_tot.txt";
         std::ofstream fout;
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep << " " << current_total[0]/omega << " " << current_total[1]/omega << " " << current_total[2]/omega << std::endl;
+        fout << istep+1 << " " << current_total[0]/omega 
+                        << " " << current_total[1]/omega 
+                        << " " << current_total[2]/omega << std::endl;
         fout.close();
     }
 

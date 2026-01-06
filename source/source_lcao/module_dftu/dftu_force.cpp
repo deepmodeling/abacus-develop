@@ -5,6 +5,7 @@
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
@@ -112,11 +113,11 @@ void Plus_U::force_stress(const UnitCell& ucell,
             this->cal_VU_pot_mat_real(spin, false, VU);
 
 #ifdef __MPI
-            pdgemm_(&transT, &transN, &nlocal, &nlocal, &nlocal,
-                    &alpha, (*dmk_d)[spin].data(), &one_int, &one_int, // important to add () outside *dmk_d, mohan note 20251103
-                    pv.desc, VU, &one_int, &one_int,
-                    pv.desc, &beta, &rho_VU[0],
-                    &one_int, &one_int, pv.desc);
+            ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
+                    alpha, (*dmk_d)[spin].data(), 1, 1,
+                    pv.desc, VU, 1, 1,
+                    pv.desc, beta, &rho_VU[0],
+                    1, 1, pv.desc);
 #endif
 
             delete[] VU;
@@ -444,24 +445,24 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc);
 #endif
 
@@ -482,24 +483,24 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc);
 #endif
 
@@ -582,24 +583,24 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
             this->fold_dSR_gamma(ucell, pv, gd, dsloc_x, dsloc_y, dsloc_z, dh_r, dim1, dim2, &dSR_gamma[0]);
 
 #ifdef __MPI
-            pdgemm_(&transN,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &minus_half,
+            ScalapackConnector::gemm(transN,
+                    transN,
+                    nlocal,
+                    nlocal,
+                    nlocal,
+                    minus_half,
                     rho_VU,
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc,
                     &dSR_gamma[0],
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc,
-                    &zero,
+                    zero,
                     &dm_VU_sover[0],
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc);
 #endif
 

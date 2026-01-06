@@ -103,7 +103,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         velocity_mat->calculate_vcomm_r();
     }
     int estep_max = (istep == 0 && !PARAM.inp.mdp.md_restart) ? 1 : PARAM.inp.estep_per_md;
-    if (PARAM.inp.mdp.md_nstep == 0)
+    // mohan change md_nstep from 0 to 1, 2026-01-04
+    if (PARAM.inp.mdp.md_nstep == 1)
     {
         estep_max = PARAM.inp.estep_per_md + 1;
     }
@@ -194,7 +195,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
             {
                 break;
             }
-            if (PARAM.inp.mdp.md_nstep != 0)
+            // mohan add 2026-01-04, change md_nstep!=0 to md_nstep!=1
+            if (PARAM.inp.mdp.md_nstep != 1)
             {
                 estep -= 1;
             }
