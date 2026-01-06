@@ -96,8 +96,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
         for (int ig = 0; ig < npw; ig++)
         {
-            chr->rhog[0][ig] = std::max(0.0, 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]));
-            chr->rhog[1][ig] = std::max(0.0, 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]));
+            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]);
+            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]);
         }
         // delete
         delete[] rhog_mag;
