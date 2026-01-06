@@ -8,6 +8,7 @@ symmetry            0
 pseudo_dir          ../../PP_ORB
 
 device              gpu
+init_wfc            random
 
 #Parameters (2.Iteration)
 ecutwfc             100
