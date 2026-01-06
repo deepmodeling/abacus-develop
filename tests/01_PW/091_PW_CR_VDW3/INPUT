@@ -1,5 +1,6 @@
 INPUT_PARAMETERS
 
+init_wfc                      random
 ecutwfc                       20
 scf_thr                           1e-08
 scf_nmax                         400
