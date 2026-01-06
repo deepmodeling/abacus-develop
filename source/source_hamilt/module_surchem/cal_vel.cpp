@@ -4,29 +4,6 @@
 #include "surchem.h"
 
 
-static void local_grad_rho_vel(const UnitCell& ucell,
-                               const ModulePW::PW_Basis* rho_basis,
-                               const std::complex<double>* rho_G, 
-                               ModuleBase::Vector3<double>* grad_R,  
-                               std::complex<double>* aux_G,       
-                               double* aux_R)                      
-{
-    for (int i = 0; i < 3; ++i)
-    {
-        // 1. iG * rho(G)
-        for (int ig = 0; ig < rho_basis->npw; ig++) {
-            aux_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
-        }
-
-        // 2. FFT: G -> R
-        rho_basis->recip2real(aux_G, aux_R);
-
-        // 3. 2pi/a
-        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
-            grad_R[ir][i] = aux_R[ir] * ucell.tpiba; 
-        }
-    }
-}
 
 void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
 {
@@ -40,24 +17,6 @@ void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis
     }
 }
 
-static void local_grad_rho_vel_tpiba(const double tpiba,
-                                     const ModulePW::PW_Basis* rho_basis,
-                                     const std::complex<double>* rho_G, 
-                                     ModuleBase::Vector3<double>* grad_R,
-                                     std::complex<double>* aux_G,       
-                                     double* aux_R)                     
-{
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int ig = 0; ig < rho_basis->npw; ig++) {
-            aux_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
-        }
-        rho_basis->recip2real(aux_G, aux_R);
-        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
-            grad_R[ir][i] = aux_R[ir] * tpiba; 
-        }
-    }
-}
 
 void eps_pot(const double* PS_TOTN_real,
              const double& tpiba,
@@ -80,17 +39,7 @@ void eps_pot(const double* PS_TOTN_real,
     double *phisq = new double[rho_basis->nrxx];
 
 
-
-    std::complex<double> *aux_G = new std::complex<double>[rho_basis->npw];
-    double *aux_R = new double[rho_basis->nrxx];
-
-
-    local_grad_rho_vel_tpiba(tpiba, rho_basis, phi, nabla_phi, aux_G, aux_R);
-
-
-    delete[] aux_G;
-    delete[] aux_R;
-
+    XC_Functional::grad_rho(phi, nabla_phi, rho_basis, tpiba);
 
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
@@ -174,7 +123,6 @@ void surchem::cal_vel(const UnitCell& cell,
     this->Ael *= cell.omega / rho_basis->nxyz;
 
     // the 2nd item of tmp_Vel
-    // eps_pot internally calls shape_gradn and now the SAFE local_grad_rho_vel_tpiba
     eps_pot(PS_TOTN_real, cell.tpiba, Sol_phi, rho_basis, epsilon, epspot);
 
     for (int i = 0; i < rho_basis->nrxx; i++)

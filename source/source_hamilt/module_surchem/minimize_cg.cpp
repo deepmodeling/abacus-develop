@@ -177,30 +177,6 @@ void surchem::minimize_cg(const UnitCell& ucell,
     delete[] aux_grad_grad_phi_real;
 }
 
-void helper_grad_rho(const UnitCell& ucell,
-                     const ModulePW::PW_Basis* rho_basis,
-                     const std::complex<double>* rho_G, // G
-                     ModuleBase::Vector3<double>* grad_rho_R, // R
-                     std::complex<double>* buffer_G,   
-                     double* buffer_R)                 
-{
-    for (int i = 0; i < 3; ++i)
-    {
-
-        for (int ig = 0; ig < rho_basis->npw; ig++)
-        {
-            buffer_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
-        }
-
-        rho_basis->recip2real(buffer_G, buffer_R);
-
-
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
-            grad_rho_R[ir][i] = buffer_R[ir] * ucell.tpiba;
-        }
-    }
-}
 
 void surchem::Leps2(const UnitCell& ucell,
                     const ModulePW::PW_Basis* rho_basis,
@@ -217,7 +193,7 @@ void surchem::Leps2(const UnitCell& ucell,
                     double* aux_R)                             // size: nrxx
 {
 
-    helper_grad_rho(ucell, rho_basis, phi, grad_phi_R, aux_G, aux_R);
+    XC_Functional::grad_rho(phi, grad_phi_R, rho_basis, ucell.tpiba);
 
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)

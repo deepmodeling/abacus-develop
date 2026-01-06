@@ -4,33 +4,6 @@
 #include "surchem.h"
 
 
-static void local_grad_rho(const UnitCell& ucell,
-                           const ModulePW::PW_Basis* rho_basis,
-                           const std::complex<double>* rho_G, 
-                           ModuleBase::Vector3<double>* grad_R, 
-                           std::complex<double>* aux_G,        
-                           double* aux_R)                     
-{
-
-    for (int i = 0; i < 3; ++i)
-    {
-        // 1.  iG * rho(G)
-        for (int ig = 0; ig < rho_basis->npw; ig++) {
-            aux_G[ig] = ModuleBase::IMAG_UNIT * rho_G[ig] * rho_basis->gcar[ig][i];
-        }
-
-        // 2. FFT: G -> R
-
-        rho_basis->recip2real(aux_G, aux_R);
-
-        // 3.  2pi/a
-        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
-            grad_R[ir][i] = aux_R[ir] * ucell.tpiba;
-        }
-    }
-}
-
-
 void lapl_rho(const double& tpiba2,
               const std::complex<double>* rhog, 
               double* lapn, 
@@ -111,10 +84,7 @@ void surchem::createcavity(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(lapn, rho_basis->nrxx);
 
 
-    std::complex<double> *aux_G = new std::complex<double>[rho_basis->npw];
-    double *aux_R = new double[rho_basis->nrxx];
-
-    local_grad_rho(ucell, rho_basis, ps_totn, nablan, aux_G, aux_R);
+    XC_Functional::grad_rho(ps_totn, nablan, rho_basis, ucell.tpiba);
 
     // | \nabla n |^2
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
@@ -164,7 +134,7 @@ void surchem::createcavity(const UnitCell& ucell,
     ModuleBase::Vector3<double> *ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     
  
-    local_grad_rho(ucell, rho_basis, inv_gn, ggn, aux_G, aux_R);
+    XC_Functional::grad_rho(inv_gn, ggn, rho_basis, ucell.tpiba);
 
     // --------------------------------------------------------
     // add -(\nabla n . \nabla(1/ |\nabla n|)) to Vcav
@@ -181,8 +151,7 @@ void surchem::createcavity(const UnitCell& ucell,
     }
 
 
-    delete[] aux_G;     
-    delete[] aux_R;    
+  
     delete[] nablan;
     delete[] nablan_2;
     delete[] sqrt_nablan_2;
