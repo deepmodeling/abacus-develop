@@ -96,8 +96,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
         for (int ig = 0; ig < npw; ig++)
         {
-            chr->rhog[0][ig] = max(0.0, 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]));
-            chr->rhog[1][ig] = max(0.0, 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]));
+            chr->rhog[0][ig] = std::max(0.0, 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]));
+            chr->rhog[1][ig] = std::max(0.0, 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]));
         }
         // delete
         delete[] rhog_mag;
@@ -389,8 +389,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         }
         for (int ir = 0; ir < nrxx; ir++)
         {
-            chr->rho[0][ir] = max(0.0, 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]));
-            chr->rho[1][ir] = max(0.0, 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]));
+            chr->rho[0][ir] = std::max(0.0, 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]));
+            chr->rho[1][ir] = std::max(0.0, 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]));
         }
         // delete
         delete[] rho_mag;
