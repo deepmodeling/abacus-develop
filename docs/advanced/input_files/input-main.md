@@ -135,6 +135,7 @@
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_ion](#out_freq_ion)
+    - [out\_freq\_td](#out_freq_td)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -535,7 +536,7 @@ These variables are used to control general system parameters.
   - ofdft: orbital-free density functional theory
   - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
-  - tddft: real-time time-dependent density functional theory (TDDFT)
+  - tddft: real-time time-dependent density functional theory (RT-TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
   - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
@@ -1688,15 +1689,22 @@ These variables are used to control the output of properties.
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Controls the output interval in **ionic steps**. When set to a positive integer $N$, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every $N$ ionic steps.
 - **Default**: 0
-- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
+- **Note**: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by [`out_freq_td`](#out_freq_td)—see its description for details.
+
+### out_freq_td
+
+- **Type**: Integer
+- **Description**: Controls the output interval in **completed electronic evolution steps** during RT-TDDFT calculations. When set to a positive integer $N$, detailed information (see [`out_freq_ion`](#out_freq_ion)) is printed every $N$ electron time-evolution steps (i.e., every $N$ `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to [`estep_per_md`](#estep_per_md), since one ionic step corresponds to [`estep_per_md`](#estep_per_md) electronic evolution steps.
+- **Default**: 0
+- **Note**: This parameter is **only active in RT-TDDFT mode** (`esolver_type = tddft`). It has no effect in ground-state calculations.
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
-- **Default**: [scf_nmax](#scf_nmax)
+- **Description**: Output the charge density (only binary format, controlled by [`out_chg`](#out_chg)), wavefunction (controlled by [`out_wfc_pw`](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [`scf_nmax`](#scf_nmax).
+- **Default**: [`scf_nmax`](#scf_nmax)
 
 ### out_chg
 
@@ -2970,6 +2978,12 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Type**: Real
 - **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
+
+### exx_cs_inv_thr
+
+- **Type**: Real
+- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When `exx_cs_inv_thr > 0`, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than `exx_cs_inv_thr` are discarded to improve numerical stability. A relatively safe and commonly recommended value is `1e-5`.
+- **Default**: -1
 
 ### exx_v_threshold
 

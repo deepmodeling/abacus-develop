@@ -63,7 +63,7 @@ CXXFLAGS = -O2 -fPIC -std=c++11
 INCLUDES = -I./src
 
 # Source files
-SRCS = ./src/nep.cpp
+SRCS = ./src/nep.cpp ./src/ewald.cpp ./src/neighbor.cpp
 
 # Object files
 OBJS = \$(SRCS:.cpp=.o)
@@ -91,7 +91,7 @@ install:
 	mkdir -p \$(PREFIX)/lib
 	mkdir -p \$(PREFIX)/include
 	cp \$(TARGET) \$(PREFIX)/lib/
-	cp src/nep.h \$(PREFIX)/include/
+	cp src/*.h \$(PREFIX)/include/
 EOF
 
         make > make.log 2>&1 || tail -n ${LOG_LINES} make.log

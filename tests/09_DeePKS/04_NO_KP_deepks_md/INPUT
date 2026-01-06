@@ -35,7 +35,7 @@ cal_stress              1
 deepks_model            ../Model_ProjOrb/model_lda_pbe_18.ptg
 
 md_type                 nvt
-md_nstep                1
+md_nstep                2
 md_dt                   1
 md_tfirst               300
 md_tfreq                0.025

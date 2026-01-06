@@ -170,11 +170,24 @@ void zhegv_(const int* itype, const char* jobz, const char* uplo, const int* n,
 
 // === Standard Hermitian eigenproblem ===
 
-void dsyev_(const char* jobz, const char* uplo, const int* n,
-            double* a, const int* lda,
-            double* w,
-            double* work, const int* lwork,
-            int* info);
+    void ssyev_(const char* jobz,
+                const char* uplo,
+                const int* n,
+                float* a,
+                const int* lda,
+                float* w,
+                float* work,
+                const int* lwork,
+                int* info);
+    void dsyev_(const char* jobz,
+                const char* uplo,
+                const int* n,
+                double* a,
+                const int* lda,
+                double* w,
+                double* work,
+                const int* lwork,
+                int* info);
 
 void cheev_(const char* jobz, const char* uplo, const int* n,
             std::complex<float>* a, const int* lda,

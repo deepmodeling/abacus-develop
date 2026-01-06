@@ -1,16 +1,21 @@
 #include "td_nonlocal_lcao.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/module_operator_lcao/operator_lcao.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
+#ifdef __CUDA
+#include "source_base/module_device/device.h"
+#include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
+#endif
+
 #include "source_pw/module_pwdft/global.h"
 #ifdef _OPENMP
-#include <unordered_set>
 #include <omp.h>
+#include <unordered_set>
 #endif
 
 template <typename TK, typename TR>
@@ -127,6 +132,27 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     ModuleBase::TITLE("TDNonlocal", "calculate_HR");
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
 
+    // Determine whether to use GPU path:
+    // GPU is only used when both __CUDA is defined AND device is set to "gpu"
+#ifdef __CUDA
+    const bool use_gpu = (PARAM.inp.device == "gpu");
+#else
+    const bool use_gpu = false;
+#endif
+
+    // Initialize GPU resources if using GPU
+    if (use_gpu)
+    {
+#ifdef __CUDA
+        // Use set_device_by_rank for multi-GPU support
+        int dev_id = 0;
+#ifdef __MPI
+        dev_id = base_device::information::set_device_by_rank(MPI_COMM_WORLD);
+#endif
+        module_rt::gpu::initialize_gpu_resources();
+#endif
+    }
+
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
     const int nlm_dim = TD_info::out_current ? 4 : 1;
@@ -145,9 +171,27 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             nlm_tot[i].resize(nlm_dim);
         }
 
-        #pragma omp parallel
+        if (use_gpu)
         {
-            #pragma omp for schedule(dynamic)
+#ifdef __CUDA
+            // GPU path: Atom-level GPU batch processing
+            module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
+                                                        this->ucell->infoNL,
+                                                        T0,
+                                                        tau0 * this->ucell->lat0,
+                                                        cart_At,
+                                                        adjs,
+                                                        this->ucell,
+                                                        paraV,
+                                                        npol,
+                                                        nlm_dim,
+                                                        nlm_tot);
+#endif
+        }
+        else
+        {
+            // CPU path: OpenMP parallel over neighbors to compute nlm_tot
+#pragma omp parallel for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
                 const int T1 = adjs.ntype[ad];
@@ -160,35 +204,36 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
                 std::sort(all_indexes.begin(), all_indexes.end());
                 all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+
+                // CPU path: loop over orbitals
+                for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
                 {
                     const int iw1 = all_indexes[iw1l] / npol;
                     std::vector<std::vector<std::complex<double>>> nlm;
-                    // nlm is a vector of vectors, but size of outer vector is only 1 when out_current is false
-                    // and size of outer vector is 4 when out_current is true (3 for <psi|r_i * exp(-iAr)|beta>, 1 for
-                    // <psi|exp(-iAr)|beta>) inner loop : all projectors (L0,M0)
-
-                    // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
-                    // and <psi|rexp(-iAr)|beta> as well if current are needed
                     module_rt::snap_psibeta_half_tddft(orb_,
-                                                          this->ucell->infoNL,
-                                                          nlm,
-                                                          tau1 * this->ucell->lat0,
-                                                          T1,
-                                                          atom1->iw2l[iw1],
-                                                          atom1->iw2m[iw1],
-                                                          atom1->iw2n[iw1],
-                                                          tau0 * this->ucell->lat0,
-                                                          T0,
-                                                          cart_At,
-                                                          TD_info::out_current);
+                                                       this->ucell->infoNL,
+                                                       nlm,
+                                                       tau1 * this->ucell->lat0,
+                                                       T1,
+                                                       atom1->iw2l[iw1],
+                                                       atom1->iw2m[iw1],
+                                                       atom1->iw2n[iw1],
+                                                       tau0 * this->ucell->lat0,
+                                                       T0,
+                                                       cart_At,
+                                                       TD_info::out_current);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
                         nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
                     }
                 }
             }
+        }
 
+        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // This runs for BOTH GPU and CPU paths
+#pragma omp parallel
+        {
 #ifdef _OPENMP
             // record the iat number of the adjacent atoms
             std::set<int> ad_atom_set;
@@ -205,7 +250,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for(const auto iat1 : ad_atom_set)
+            for (const auto iat1: ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {
@@ -215,7 +260,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
 #endif
 
-            // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
                 const int T1 = adjs.ntype[ad1];
@@ -228,7 +272,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     continue;
                 }
 #endif
-                
+
                 const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
                 for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
@@ -247,9 +291,9 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                         if (TD_info::out_current)
                         {
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
-                            for (int i = 0; i < 3; i++)
+                            for (int ii = 0; ii < 3; ii++)
                             {
-                                tmp_c[i] = TD_info::td_vel_op->get_current_term_pointer(i)
+                                tmp_c[ii] = TD_info::td_vel_op->get_current_term_pointer(ii)
                                                 ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                 ->get_pointer();
                             }
@@ -276,13 +320,13 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                 }
             }
-        }
-    }
-
+        } // end omp parallel for matrix assembly
+    }     // end for iat0
     ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
 }
 
 // cal_HR_IJR()
+
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat1,
@@ -396,7 +440,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 
-
 // contributeHR()
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
@@ -435,7 +478,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
     return;
 }
-
 
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)

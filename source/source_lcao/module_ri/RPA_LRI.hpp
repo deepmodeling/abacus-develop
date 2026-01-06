@@ -95,7 +95,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
             Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
-        symrot.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
+        symrot.set_abfs_Lmax(Exx_Abfs::get_Lmax(exx_lri_rpa.abfs));
         symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);

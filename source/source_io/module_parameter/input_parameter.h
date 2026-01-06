@@ -367,6 +367,7 @@ struct Input_para
     bool out_stru = false;                ///< outut stru file each ion step
     int out_freq_elec = 0;                ///< print information every few electronic steps 
     int out_freq_ion = 0;                 ///< print information every few ionic steps 
+    int out_freq_td = 0;                  ///< print information every few completed electronic iterations in RT-TDDFT
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
@@ -552,6 +553,7 @@ struct Input_para
         = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0; ///< how many times larger the radial mesh required for
                                        ///< calculating Columb potential is to that of atomic orbitals
+    double exx_cs_inv_thr = -1;        ///< threshold to inverse Vq in abfs for generating Cs
     bool out_ri_cv = false; ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     // ==============   #Parameters (16.dft+u) ======================
     //    DFT+U       Xin Qu added on 2020-10-29

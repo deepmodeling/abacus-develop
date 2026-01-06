@@ -246,6 +246,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     delmem_var_op()(r_d);
     delmem_var_op()(rhoc_d);
     delmem_var_op()(rab_d);
+	delmem_var_op()(aux_d);
     delmem_var_op()(gx_arr_d);
     delmem_var_op()(drhocg_d);
     return;

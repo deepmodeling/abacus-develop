@@ -98,19 +98,19 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const double zero = 0;
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
-                    dgemm_(&transa,
-                           &transb,
-                           &nij,
-                           &atom->na,
-                           &dim,
-                           &(ucell.omega),
-                           qgm_data,
-                           &dim,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           atom->na,
+                           nij,
+                           dim,
+                           ucell.omega,
                            &aux1_data[ipol * dim * atom->na],
-                           &dim,
-                           &zero,
+                           dim,
+                           qgm_data,
+                           dim,
+                           zero,
                            &ddeeq(is, ipol, 0, 0),
-                           &nij);
+                           nij);
                 }
             }
 

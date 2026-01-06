@@ -93,6 +93,9 @@ class ORB_gaunt_table
 
 	static int Index_M(const int& m);
 
+	int get_Lmax_Gaunt_Coefficients() const { return Lmax_Gaunt_Coefficients; }
+	int get_Lmax_Gaunt_CH()           const { return Lmax_Gaunt_CH; }
+
 	private:
 	
 	// Index Function
@@ -122,5 +125,8 @@ class ORB_gaunt_table
 	
 	//direct integral
 	ModuleBase::matrix Ylm_Gaunt;
+
+	int Lmax_Gaunt_Coefficients = -1;
+	int Lmax_Gaunt_CH = -1;
 };
 #endif

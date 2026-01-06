@@ -265,20 +265,12 @@ void toWannier90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
 
 void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 {
-    int Lmax_used = 0;
-    int Lmax = 0;
-    int exx_lmax = 0;
-#ifdef __EXX
-    exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
-#endif
-
 #ifdef __LCAO
     const int ntype = orb_.get_ntype();
-    int lmax_orb = -1, lmax_beta = -1;
+    int lmax_orb = -1;
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb_.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb_.get_dR();
     const double dk = orb_.get_dk();
@@ -286,13 +278,9 @@ void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
     int Rmesh = static_cast<int>(orb_.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(2,
-                                             3,
-                                             Lmax_used,
-                                             Lmax,
-                                             exx_lmax,
-                                             lmax_orb,
-                                             lmax_beta,
+    int Lmax, Lmax_used;
+    std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb);
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
                                              kmesh,
@@ -435,44 +423,44 @@ void toWannier90_LCAO::unkdotkb(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(out_matrix, nloc);
 
 #ifdef __MPI
-    pzgemm_(&transa,
-            &transb,
-            &Bands,
-            &nlocal,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transa,
+            transb,
+            Bands,
+            nlocal,
+            nlocal,
+            alpha,
             &psi_in(ik, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
             midmatrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
-            &beta,
+            beta,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc);
 
-    pzgemm_(&transb,
-            &transb,
-            &Bands,
-            &Bands,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transb,
+            transb,
+            Bands,
+            Bands,
+            nlocal,
+            alpha,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
             &psi_in(ikb, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
-            &beta,
+            beta,
             out_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc);
 #endif
 

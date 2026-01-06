@@ -18,19 +18,11 @@ cal_r_overlap_R::~cal_r_overlap_R()
 void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
                                            const LCAO_Orbitals& orb)
 {
-    int Lmax_used = 0;
-    int Lmax = 0;
-    int exx_lmax = 0;
-#ifdef __EXX
-    exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
-#endif
-
     const int ntype = orb.get_ntype();
-    int lmax_orb = -1, lmax_beta = -1;
+    int lmax_orb = -1;
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
@@ -38,13 +30,9 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(2,
-                                             3,
-                                             Lmax_used,
-                                             Lmax,
-                                             exx_lmax,
-                                             lmax_orb,
-                                             lmax_beta,
+    int Lmax, Lmax_used;
+    std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb);
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
                                              kmesh,

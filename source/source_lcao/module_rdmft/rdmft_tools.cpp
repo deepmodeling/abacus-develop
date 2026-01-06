@@ -44,8 +44,8 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    pdgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
-        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->desc,
+        &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
 }
@@ -71,8 +71,8 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
-    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
 #endif
 }
 
