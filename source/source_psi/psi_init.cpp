@@ -53,7 +53,7 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
     {
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init",
             "init_wfc = atomic requires pseudo wavefunctions, but number of atom wfc = 0. \n"
-            "Please use init_wfc = random or try a pseudopotential with pseudo wavefunctions.");
+            " Please use init_wfc = random or try a pseudopotential with pseudo wavefunctions.");
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
     else if (this->init_wfc == "atomic"
@@ -163,7 +163,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
             }
-                
+
 
             if (this->ks_solver == "cg")
             {
@@ -221,7 +221,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 MPI_Status status;
                 Parallel_Common::recv_dev<T, Device>(kspw_psi->get_pointer(), nbands_l * nbasis, 0, 0, BP_WORLD, &status);
-            }            
+            }
         }
 #endif
     } // end k-point loop
