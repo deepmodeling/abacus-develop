@@ -24,7 +24,8 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
     std::vector<int> ngk_tot = kv.ngk;
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
+    std::vector<int> send_ngk_tot = kv.ngk;
+    MPI_Allreduce(send_ngk_tot.data(), ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
 
     const int nk_fac = nspin == 2 ? 2 : 1;
@@ -207,9 +208,9 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     }
 
     std::vector<int> ngk_tot = kv.ngk;
-
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
+    std::vector<int> send_ngk_tot = kv.ngk;
+    MPI_Allreduce(send_ngk_tot.data(), ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif    
 
     // file name to store eigenvalues
