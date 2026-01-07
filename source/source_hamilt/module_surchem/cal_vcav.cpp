@@ -20,9 +20,7 @@ void lapl_rho(const double& tpiba2,
     
     for(int i = 0 ; i < 3 ; ++i)
     {
-        // calculate the charge density gradient in reciprocal space.
-        ModuleBase::GlobalFunc::ZEROS(aux, rho_basis->nmaxgr);
-        
+        // calculate the charge density gradient in reciprocal space.        
         for (int ig = 0; ig < rho_basis->npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
         }
