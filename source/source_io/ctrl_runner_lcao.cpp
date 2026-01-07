@@ -133,7 +133,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
 
 // TK: double  TR: double 
-template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
+template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecState* pelec,// electronic info

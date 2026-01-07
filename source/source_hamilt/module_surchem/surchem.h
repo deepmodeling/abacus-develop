@@ -62,16 +62,18 @@ class surchem
                       const std::complex<double>* PS_TOTN,
                       double* vwork);
 
-    ModuleBase::matrix cal_vcav(const UnitCell& ucell,
-                                const ModulePW::PW_Basis* rho_basis,
-                                std::complex<double>* PS_TOTN,
-                                int nspin);
+    void cal_vcav(const UnitCell& ucell,
+                  const ModulePW::PW_Basis* rho_basis,
+                  std::complex<double>* PS_TOTN,
+                  int nspin,
+                  ModuleBase::matrix& v);
 
-    ModuleBase::matrix cal_vel(const UnitCell& cell,
-                               const ModulePW::PW_Basis* rho_basis,
-                               std::complex<double>* TOTN,
-                               std::complex<double>* PS_TOTN,
-                               int nspin);
+    void cal_vel(const UnitCell& cell,
+                 const ModulePW::PW_Basis* rho_basis,
+                 std::complex<double>* TOTN,
+                 std::complex<double>* PS_TOTN,
+                 int nspin,
+                 ModuleBase::matrix& v);
 
     double cal_Ael(const UnitCell& cell,
                    const int& nrxx,  // num. of real space grids on current core
@@ -96,19 +98,22 @@ class surchem
                const ModulePW::PW_Basis* rho_basis,
                std::complex<double>* phi,
                double* epsilon,            // epsilon from shapefunc, dim=nrxx
-               std::complex<double>* gradphi_x, // dim=ngmc
-               std::complex<double>* gradphi_y,
-               std::complex<double>* gradphi_z,
-               std::complex<double>* phi_work,
-               std::complex<double>* lp);
+               std::complex<double>* gradphi_G_work,
+               std::complex<double>* lp,
+               // New buffers
+               ModuleBase::Vector3<double>* grad_phi_R,
+               std::complex<double>* grad_grad_phi_G,
+               double* lp_real,
+               double* grad_grad_phi_real);
 
-    ModuleBase::matrix v_correction(const UnitCell& cell,
-                                    const Parallel_Grid& pgrid,
-                                    const ModulePW::PW_Basis* rho_basis,
-                                    const int& nspin,
-                                    const double* const* const rho,
-                                    const double* vlocal,
-                                    Structure_Factor* sf);
+    void v_correction(const UnitCell& cell,
+                      const Parallel_Grid& pgrid,
+                      const ModulePW::PW_Basis* rho_basis,
+                      const int& nspin,
+                      const double* const* const rho,
+                      const double* vlocal,
+                      Structure_Factor* sf,
+                      ModuleBase::matrix& v);
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,

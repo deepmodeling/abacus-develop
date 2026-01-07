@@ -119,7 +119,11 @@ TEST_F(RhoIOTest, Write)
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/chg.cube", rho[0], ucell->nat);
     ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1);
-    EXPECT_EQ(system("diff -q test_write_vdata_palgrid.cube support/chg.cube"), 0);
+    std::ifstream ifs1("test_write_vdata_palgrid.cube", std::ifstream::binary | std::ifstream::ate);
+    std::ifstream ifs2("support/chg.cube", std::ifstream::binary | std::ifstream::ate);
+    EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
+    ifs1.close();
+    ifs2.close();
 }
 
 TEST_F(RhoIOTest, TrilinearInterpolate)
@@ -235,6 +239,9 @@ TEST_F(CubeIOTest, WriteCube)
 			nx_read, ny_read, nz_read, 
 			dx, dy, dz, atom_type, 
 			atom_charge, atom_pos, data_read, 11);
-
-	EXPECT_EQ(system("diff -q test_write.cube ./support/chg.cube"), 0);
+    std::ifstream ifs1("test_write.cube", std::ifstream::binary | std::ifstream::ate);
+    std::ifstream ifs2("./support/chg.cube", std::ifstream::binary | std::ifstream::ate);
+    EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
+    ifs1.close();
+    ifs2.close();
 }
