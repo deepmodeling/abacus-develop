@@ -34,36 +34,6 @@ static void init_gauss_legendre_grid(int grid_size, std::vector<double>& gl_x, s
     }
 }
 
-/**
- * @brief Interpolate radial function value at a given distance using cubic interpolation.
- * 
- * @param psi Pointer to radial function array
- * @param mesh Number of mesh points
- * @param inv_dk Inverse of grid spacing (1/dk)
- * @param distance Distance to interpolate at
- * @return double Interpolated value
- */
-inline double interpolate_radial(
-    const double* psi, 
-    int mesh, 
-    double inv_dk, 
-    double distance)
-{
-    double position = distance * inv_dk;
-    int iq = static_cast<int>(position);
-    
-    // Boundary check safe-guard
-    if (iq > mesh - 4) return 0.0;
-
-    const double x0 = position - static_cast<double>(iq);
-    const double x1 = 1.0 - x0;
-    const double x2 = 2.0 - x0;
-    const double x3 = 3.0 - x0;
-    
-    // Cubic interpolation formula
-    return x1*x2*(psi[iq]*x3+psi[iq+3]*x0)/6.0
-         + x0*x3*(psi[iq+1]*x2-psi[iq+2]*x1)/2.0;
-}
 
 /**
  * @brief Main function to calculate overlap integrals <phi|exp^{-iAr}|beta>
@@ -294,7 +264,8 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                 const std::complex<double> exp_iAr = std::exp(ModuleBase::IMAG_UNIT * phase);
 
                 // Interpolate Psi at |r'|
-                double interp_psi = interpolate_radial(psi_1, mesh_r1, inv_dk_1, tnorm);
+                double interp_psi = ModuleBase::PolyInt::Polynomial_Interpolation(
+                                psi_1, mesh_r1, inv_dk_1, tnorm);
                 
                 const int offset_L1 = L1 * L1 + m1;
                 const double ylm_L1_val = rly1[offset_L1];
