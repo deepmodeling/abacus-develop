@@ -24,9 +24,7 @@ void surchem::minimize_cg(const UnitCell& ucell,
     std::complex<double> *gsqu = new std::complex<double>[rho_basis->npw];
     std::complex<double> *d = new std::complex<double>[rho_basis->npw];
 
-    std::complex<double> *gradphi_x = new std::complex<double>[rho_basis->npw];
-    std::complex<double> *gradphi_y = new std::complex<double>[rho_basis->npw];
-    std::complex<double> *gradphi_z = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *gradphi_G_work = new std::complex<double>[rho_basis->npw];
 
     // Removed unused phi_work allocation
     // std::complex<double> *phi_work = new std::complex<double>[rho_basis->npw];
@@ -36,7 +34,6 @@ void surchem::minimize_cg(const UnitCell& ucell,
     // ==========================================================
     ModuleBase::Vector3<double> *aux_grad_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     std::complex<double> *aux_grad_grad_phi_G = new std::complex<double>[rho_basis->npw];
-    ModuleBase::Vector3<double> *aux_tmp_vector3 = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     double *aux_lp_real = new double[rho_basis->nrxx];
     double *aux_grad_grad_phi_real = new double[rho_basis->nrxx];
 
@@ -45,10 +42,7 @@ void surchem::minimize_cg(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(gsqu, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(d, rho_basis->npw);
-
-    ModuleBase::GlobalFunc::ZEROS(gradphi_x, rho_basis->npw);
-    ModuleBase::GlobalFunc::ZEROS(gradphi_y, rho_basis->npw);
-    ModuleBase::GlobalFunc::ZEROS(gradphi_z, rho_basis->npw);
+    ModuleBase::GlobalFunc::ZEROS(gradphi_G_work, rho_basis->npw);
 
     int count = 0;
     double gg = 0;
@@ -73,8 +67,8 @@ void surchem::minimize_cg(const UnitCell& ucell,
 
     // call leps to calculate div ( epsilon * grad ) phi
     // Updated Leps2 call with new buffers
-    Leps2(ucell, rho_basis, phi, d_eps, gradphi_x, gradphi_y, gradphi_z, lp,
-          aux_grad_phi, aux_grad_grad_phi_G, aux_tmp_vector3, aux_lp_real, aux_grad_grad_phi_real);
+    Leps2(ucell, rho_basis, phi, d_eps, gradphi_G_work, lp,
+          aux_grad_phi, aux_grad_grad_phi_G, aux_lp_real, aux_grad_grad_phi_real);
 
     // the residue
     // r = A*phi + (chtot + N)
@@ -111,8 +105,8 @@ void surchem::minimize_cg(const UnitCell& ucell,
         }
 
         // Updated Leps2 call inside loop
-        Leps2(ucell, rho_basis, d, d_eps, gradphi_x, gradphi_y, gradphi_z, lp,
-              aux_grad_phi, aux_grad_grad_phi_G, aux_tmp_vector3, aux_lp_real, aux_grad_grad_phi_real);
+        Leps2(ucell, rho_basis, d, d_eps, gradphi_G_work, lp,
+              aux_grad_phi, aux_grad_grad_phi_G, aux_lp_real, aux_grad_grad_phi_real);
 
         // calculate alpha
         alpha = -rinvLr / ModuleBase::GlobalFunc::ddot_real(rho_basis->npw, d, lp);
@@ -163,15 +157,11 @@ void surchem::minimize_cg(const UnitCell& ucell,
     delete[] lp;
     delete[] gsqu;
     delete[] d;
-    delete[] gradphi_x;
-    delete[] gradphi_y;
-    delete[] gradphi_z;
-    // delete[] phi_work; // Removed
+    delete[] gradphi_G_work;
 
     // Clean up auxiliary buffers
     delete[] aux_grad_phi;
     delete[] aux_grad_grad_phi_G;
-    delete[] aux_tmp_vector3;
     delete[] aux_lp_real;
     delete[] aux_grad_grad_phi_real;
 }
@@ -181,13 +171,10 @@ void surchem::Leps2(const UnitCell& ucell,
                     const ModulePW::PW_Basis* rho_basis,
                     std::complex<double>* phi,
                     double* epsilon, // epsilon from shapefunc, dim=nrxx
-                    std::complex<double>* gradphi_x,
-                    std::complex<double>* gradphi_y,
-                    std::complex<double>* gradphi_z,
+                    std::complex<double>* gradphi_G_work,
                     std::complex<double>* lp,
                     ModuleBase::Vector3<double>* grad_phi_R,   // size: nrxx
                     std::complex<double>* aux_G,               // size: npw
-                    ModuleBase::Vector3<double>* tmp_vector3,  // size: nrxx)
                     double* lp_real,                           // size: nrxx
                     double* aux_R)                             // size: nrxx
 {
@@ -207,11 +194,11 @@ void surchem::Leps2(const UnitCell& ucell,
 
     // 1. R -> G
     for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].x;
-    rho_basis->real2recip(aux_R, gradphi_x); // 
+    rho_basis->real2recip(aux_R, gradphi_G_work); // 
     
  
     for(int ig=0; ig<rho_basis->npw; ig++) {
-        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_x[ig] * rho_basis->gcar[ig][0]; // 0 = x
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_G_work[ig] * rho_basis->gcar[ig][0]; // 0 = x
     }
     rho_basis->recip2real(aux_G, aux_R);
     for(int ir=0; ir<rho_basis->nrxx; ir++) {
@@ -220,10 +207,10 @@ void surchem::Leps2(const UnitCell& ucell,
 
  
     for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].y;
-    rho_basis->real2recip(aux_R, gradphi_y); 
+    rho_basis->real2recip(aux_R, gradphi_G_work); 
     
     for(int ig=0; ig<rho_basis->npw; ig++) {
-        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_y[ig] * rho_basis->gcar[ig][1]; // 1 = y
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_G_work[ig] * rho_basis->gcar[ig][1]; // 1 = y
     }
     rho_basis->recip2real(aux_G, aux_R);
     for(int ir=0; ir<rho_basis->nrxx; ir++) {
@@ -232,10 +219,10 @@ void surchem::Leps2(const UnitCell& ucell,
 
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++) aux_R[ir] = grad_phi_R[ir].z;
-    rho_basis->real2recip(aux_R, gradphi_z);
+    rho_basis->real2recip(aux_R, gradphi_G_work);
     
     for(int ig=0; ig<rho_basis->npw; ig++) {
-        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_z[ig] * rho_basis->gcar[ig][2]; // 2 = z
+        aux_G[ig] = ModuleBase::IMAG_UNIT * gradphi_G_work[ig] * rho_basis->gcar[ig][2]; // 2 = z
     }
     rho_basis->recip2real(aux_G, aux_R);
     for(int ir=0; ir<rho_basis->nrxx; ir++) {

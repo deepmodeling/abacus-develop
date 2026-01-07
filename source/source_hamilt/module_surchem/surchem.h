@@ -98,14 +98,11 @@ class surchem
                const ModulePW::PW_Basis* rho_basis,
                std::complex<double>* phi,
                double* epsilon,            // epsilon from shapefunc, dim=nrxx
-               std::complex<double>* gradphi_x, // dim=ngmc
-               std::complex<double>* gradphi_y,
-               std::complex<double>* gradphi_z,
+               std::complex<double>* gradphi_G_work,
                std::complex<double>* lp,
                // New buffers
-               ModuleBase::Vector3<double>* grad_phi,
+               ModuleBase::Vector3<double>* grad_phi_R,
                std::complex<double>* grad_grad_phi_G,
-               ModuleBase::Vector3<double>* tmp_vector3,
                double* lp_real,
                double* grad_grad_phi_real);
 
