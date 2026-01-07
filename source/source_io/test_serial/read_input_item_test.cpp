@@ -1397,7 +1397,7 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_ccp_rmesh_times, "1");
 
-        param.input.exx_ccp_rmesh_times = "0";
+        param.input.exx_ccp_rmesh_times = "-1";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

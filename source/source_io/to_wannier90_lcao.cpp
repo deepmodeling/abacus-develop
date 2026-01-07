@@ -278,8 +278,8 @@ void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
     int Rmesh = static_cast<int>(orb_.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    int Lmax, Lmax_used;
-    std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb);
+    const int Lmax = lmax_orb + 1;
+    const int Lmax_used = 2 * lmax_orb + 1;
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
@@ -423,44 +423,44 @@ void toWannier90_LCAO::unkdotkb(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(out_matrix, nloc);
 
 #ifdef __MPI
-    pzgemm_(&transa,
-            &transb,
-            &Bands,
-            &nlocal,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transa,
+            transb,
+            Bands,
+            nlocal,
+            nlocal,
+            alpha,
             &psi_in(ik, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
             midmatrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
-            &beta,
+            beta,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc);
 
-    pzgemm_(&transb,
-            &transb,
-            &Bands,
-            &Bands,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transb,
+            transb,
+            Bands,
+            Bands,
+            nlocal,
+            alpha,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
             &psi_in(ikb, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc,
-            &beta,
+            beta,
             out_matrix,
-            &one,
-            &one,
+            one,
+            one,
             this->ParaV->desc);
 #endif
 

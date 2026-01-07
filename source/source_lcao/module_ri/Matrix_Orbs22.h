@@ -28,8 +28,7 @@ class Matrix_Orbs22
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B2,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,
-        const double kmesh_times,  // extend Kcut, keep dK
-        const double rmax);        // extend Rcut, keep dR
+        const double kmesh_times);  // extend Kcut, keep dK
 
     void init_radial_table();
     void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0

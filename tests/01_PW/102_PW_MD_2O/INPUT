@@ -1,7 +1,8 @@
 INPUT_PARAMETERS
 #Parameters	(General)
 suffix      	autotest
-	
+init_wfc        random
+
 nbands			8
 calculation 	md
 

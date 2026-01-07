@@ -2,8 +2,9 @@ INPUT_PARAMETERS
 #Parameters (General)
 suffix         autotest
 pseudo_dir     ../../PP_ORB
+init_wfc       random
 pw_seed        1
- 
+
 nbands         8
 calculation    cell-relax
 symmetry       0
