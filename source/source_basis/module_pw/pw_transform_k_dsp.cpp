@@ -83,7 +83,7 @@ void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
     {
         const int one = 1;
         const std::complex<double> factor1 = std::complex<double>(factor, 0);
-        zaxpy_(&nrxx, &factor1, auxr, &one, out, &one);
+        BlasConnector::axpy(nrxx, factor1, auxr, one, out, one);
     }
     else
     {
