@@ -18,7 +18,7 @@ smearing_sigma     0.02
 ks_solver          scalapack_gvx
 basis_type         lcao
 gamma_only         0
-md_nstep           2
+md_nstep           3
 estep_per_md       1
 
 mixing_type        broyden

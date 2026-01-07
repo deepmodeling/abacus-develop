@@ -3,6 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 kpar            2
+init_wfc        random
 
 pseudo_dir	../../PP_ORB
 

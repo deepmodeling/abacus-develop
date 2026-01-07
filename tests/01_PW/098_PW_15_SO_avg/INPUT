@@ -2,6 +2,7 @@ INPUT_PARAMETERS
 #Parameters	(General)
 suffix	         autotest
 pseudo_dir	     ../../PP_ORB
+init_wfc         random
 #nbands          40
 gamma_only       0
 

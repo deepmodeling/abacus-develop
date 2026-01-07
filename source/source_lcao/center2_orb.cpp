@@ -3,7 +3,6 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/mathzone_add1.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
@@ -26,53 +25,6 @@ int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
         ModuleBase::WARNING_QUIT("Center2_Orb::get_rmesh", "rmesh <= 0");
     }
     return rmesh;
-}
-
-// used in <Phi|Phi> or <Beta|Phi>
-std::pair<int,int> Center2_Orb::init_Lmax_2_1(const int lmax_orb, const int lmax_beta)
-{
-    const int Lmax = std::max({-1, lmax_orb, lmax_beta});
-    const int Lmax_used = 2 * Lmax + 1;
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
-}
-
-// used in <jY|jY> or <Abfs|Abfs>
-std::pair<int,int> Center2_Orb::init_Lmax_2_2(const int& lmax_exx)
-{
-    const int Lmax = std::max(-1, lmax_exx);
-    const int Lmax_used = 2 * Lmax + 1;
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
-}
-
-// used in berryphase by jingan
-std::pair<int,int> Center2_Orb::init_Lmax_2_3(const int lmax_orb)
-{
-    const int Lmax = std::max(-1, lmax_orb) + 1;
-    const int Lmax_used = 2 * Lmax + 1;
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
-}
-
-// used in <jY|PhiPhi> or <Abfs|PhiPhi>
-std::pair<int,int> Center2_Orb::init_Lmax_3_1(const int& lmax_exx, const int lmax_orb)
-{
-    int Lmax = std::max(-1, lmax_orb);
-    int Lmax_used = 2 * Lmax + 1;
-    Lmax = std::max(Lmax, lmax_exx);
-    Lmax_used += lmax_exx;
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
-}
-
-// used in <PhiPhi|PhiPhi>
-std::pair<int,int> Center2_Orb::init_Lmax_4_1(const int lmax_orb)
-{
-    const int Lmax = std::max(-1, lmax_orb);
-    const int Lmax_used = 2 * (2 * Lmax + 1);
-    assert(Lmax_used >= 1);
-    return {Lmax_used, Lmax};
 }
 
 // Peize Lin update 2016-01-26
@@ -101,9 +53,7 @@ void Center2_Orb::init_Table_Spherical_Bessel(const int Lmax_used,
     }
 
     psb->set_dx(dr * dk);
-    psb->cal_jlx(Lmax_used, Rmesh, kmesh);
-
-    ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (Lmax_used + 1) * kmesh * Rmesh);
+    psb->cal_jlx(Lmax_used+1, Rmesh, kmesh);                // +1 for drs needs psb.jlx[l+1]. Peize Lin update 2025-12-27
 }
 
 // Peize Lin accelerate 2017-10-02
@@ -112,11 +62,14 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  const Numerical_Orbital_Lm& n1,
                                  const Numerical_Orbital_Lm& n2,
                                  const int& rmesh,
-                                 double* rs,
-                                 double* drs,
+                                 std::vector<double> &rs,
+                                 std::vector<double> &drs,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
     ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
+
+    assert(rmesh <= rs.size());
+    assert(rmesh <= drs.size());
 
     const int kmesh = n1.getNk();
     const double* kpoint = n1.getKpoint();
@@ -252,8 +205,8 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  const Numerical_Orbital_Lm& n1,
                                  const Numerical_Orbital_Lm& n2,
                                  const std::set<size_t>& radials,
-                                 double* rs,
-                                 double* drs,
+                                 std::vector<double> &rs,
+                                 std::vector<double> &drs,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
     //	ModuleBase::TITLE("Center2_Orb","cal_ST_Phi12_R");
@@ -317,7 +270,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         // if(rs[ir])  => rs[ir]  has been calculated
         // if(drs[ir]) => drs[ir] has been calculated
         // Actually, if(ir[ir]||dr[ir]) is enough. Double insurance for the sake of avoiding numerical errors
-        if (rs[ir] && drs[ir]) {
+        if (rs.at(ir) && drs.at(ir)) {
             continue;
         }
 
@@ -330,7 +283,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         double temp = 0.0;
 
         ModuleBase::Integral::Simpson_Integral(kmesh, ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func), dk, temp);
-        rs[ir] = temp * ModuleBase::FOUR_PI;
+        rs.at(ir) = temp * ModuleBase::FOUR_PI;
 
         const std::vector<double>& jlm1_r = jlm1.at(ir);
         const std::vector<double>& jlp1_r = jlp1.at(ir);
@@ -353,7 +306,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         }
 
         ModuleBase::Integral::Simpson_Integral(kmesh, ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func), dk, temp);
-        drs[ir] = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
+        drs.at(ir) = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
     }
 
     // cal rs[0] special
@@ -374,7 +327,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
             // PLEASE try to make dualfac function as input parameters
             // mohan note 2021-03-23
-            rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * temp;
+            rs.at(0) = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * temp;
         }
     }
 
