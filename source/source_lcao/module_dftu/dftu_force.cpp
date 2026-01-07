@@ -23,52 +23,6 @@
 #include <string.h>
 
 
-extern "C"
-{
-    // I'm not sure what's happenig here, but the interface in scalapack_connecter.h
-    // does not seem to work, so I'll use this one here
-    void pzgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const std::complex<double>* alpha,
-                 const std::complex<double>* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const std::complex<double>* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const std::complex<double>* beta,
-                 std::complex<double>* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
-
-    void pdgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const double* alpha,
-                 const double* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const double* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const double* beta,
-                 double* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
-}
-
-
 void Plus_U::force_stress(const UnitCell& ucell,
                         const Grid_Driver& gd,
                         std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
@@ -161,10 +115,10 @@ void Plus_U::force_stress(const UnitCell& ucell,
 
 
 #ifdef __MPI
-            pzgemm_(&transT, &transN, &nlocal, &nlocal, &nlocal,
-                    &alpha, (*dmk_c)[ik].data(), &one_int, &one_int, // important to add (), 20251103
-                    pv.desc, VU, &one_int, &one_int, pv.desc, &beta,
-                    &rho_VU[0], &one_int, &one_int, pv.desc);
+            ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
+                    alpha, (*dmk_c)[ik].data(), one_int, one_int,
+                    pv.desc, VU, one_int, one_int, pv.desc, beta,
+                    &rho_VU[0], one_int, one_int, pv.desc);
 #endif
 
             delete[] VU;
@@ -237,24 +191,24 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
         this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
 
 #ifdef __MPI
-        pzgemm_(&transN,
-                &transC,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transC,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 &dSm_k[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -275,24 +229,24 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pzgemm_(&transN,
-                &transN,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transN,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 &dSm_k[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -371,24 +325,24 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
             this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
 
 #ifdef __MPI
-            pzgemm_(&transN,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &minus_half,
+            ScalapackConnector::gemm(transN,
+                    transN,
+                    nlocal,
+                    nlocal,
+                    nlocal,
+                    minus_half,
                     rho_VU,
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
                     &dSR_k[0],
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
-                    &zero,
+                    zero,
                     &dm_VU_sover[0],
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc);
 #endif
 
