@@ -112,13 +112,13 @@ namespace LR
             const double alpha = 1.0;
             const double beta = 0.0;
             container::Tensor Xc(DAT::DT_DOUBLE, DEV::CpuDevice, { nmo2, naos });
-            dgemm_(&transa, &transb, &naos, &nmo2, &nmo1, &alpha,
-                c.get_pointer(imo1), &naos, X_istate + x_start, &nmo2,
-                &beta, Xc.data<double>(), &naos);
+            BlasConnector::gemm(transb, transa, nmo2, naos, nmo1, alpha,
+                X_istate + x_start, nmo2, c.get_pointer(imo1), naos,
+                beta, Xc.data<double>(), naos);
             // 2. C_virt*[X*C_occ^T]
-            dgemm_(&transa, &transb, &naos, &naos, &nmo2, &factor,
-                c.get_pointer(imo2), &naos, Xc.data<double>(), &naos, &beta,
-                dm_trans[isk].data<double>(), &naos);
+            BlasConnector::gemm(transb, transa, naos, naos, nmo2, factor,
+                Xc.data<double>(), naos, c.get_pointer(imo2), naos, beta,
+                dm_trans[isk].data<double>(), naos);
         }
         return dm_trans;
     }
@@ -166,14 +166,14 @@ namespace LR
             // ============== = [C_occ^* * X^T * C_virt^T]^T=============
             // 1. X*C_occ^\dagger
             container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, nmo2 });
-            zgemm_(&transa, &transb, &nmo2, &naos, &nmo1, &alpha,
-                X_istate + x_start, &nmo2, c.get_pointer(imo1), &naos,
-                &beta, Xc.data<std::complex<double>>(), &nmo2);
+            BlasConnector::gemm_cm(transa, transb, nmo2, naos, nmo1, alpha,
+                X_istate + x_start, nmo2, c.get_pointer(imo1), naos,
+                beta, Xc.data<std::complex<double>>(), nmo2);
             // 2. [X*C_occ^\dagger]^TC_virt^T
             transa = transb = 'T';
-            zgemm_(&transa, &transb, &naos, &naos, &nmo2, &factor,
-                Xc.data<std::complex<double>>(), &nmo2, c.get_pointer(imo2), &naos, &beta,
-                dm_trans[isk].data<std::complex<double>>(), &naos);
+            BlasConnector::gemm_cm(transa, transb, naos, naos, nmo2, factor,
+                Xc.data<std::complex<double>>(), nmo2, c.get_pointer(imo2), naos, beta,
+                dm_trans[isk].data<std::complex<double>>(), naos);
         }
         return dm_trans;
     }

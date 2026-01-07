@@ -2,6 +2,7 @@ INPUT_PARAMETERS
 #Parameters	(General)
 suffix          autotest
 calculation     md
+init_wfc        random
 pseudo_dir      ../../PP_ORB
 pw_seed         1
 nbands          8
@@ -17,10 +18,10 @@ ks_solver       cg
 mixing_type     broyden
 mixing_beta     0.7
 
-cal_stress          1
-cal_force           1
+cal_stress      1
+cal_force       1
 
-md_nstep         3
+md_nstep         4
 md_type          npt
 md_pmode         iso
 md_dt            1

@@ -22,7 +22,7 @@ public:
 
 	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom( 
 		const UnitCell &ucell,
-        const LCAO_Orbitals& orb,
+		const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const double kmesh_times_mot,
 		const double times_threshold=0);
@@ -32,30 +32,36 @@ public:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		std::ostream &os);		
 
-    // get the max number of orbitals among all elements
-    // static int get_nmax_total(const
-    // std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in); get
-    // number of orbitals for each element static std::map<int, int>
-    // get_nw(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-    // &orb_in);
+	// get the max number of orbitals among all elements
+	// static int get_nmax_total(const
+	// std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in); get
+	// number of orbitals for each element static std::map<int, int>
+	// get_nw(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+	// &orb_in);
 
-    // get multipole of orbitals for each element and angular moment
-    static std::vector<std::vector<std::vector<double>>> get_multipole(
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
-            orb_in);
+	// get multipole of orbitals for each element and angular moment
+	static std::vector<std::vector<std::vector<double>>> get_multipole(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in);
 
-    static std::vector<double> get_Rcut(
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
-            orb_in);
-    static inline double get_Rmax(const std::vector<double>& rcut) {
-        return *std::max_element(rcut.begin(), rcut.end());
-    }
-    static inline double get_Rmax(
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
-            orb_in) {
-        std::vector<double> rcut = get_Rcut(orb_in);
-        return get_Rmax(rcut);
-    }
+	static std::vector<double> get_Rcut(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in);
+	static inline double get_Rmax(const std::vector<double>& rcut)
+	{
+		return *std::max_element(rcut.begin(), rcut.end());
+	}
+	static inline double get_Rmax(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in)
+	{
+		std::vector<double> rcut = get_Rcut(orb_in);
+		return get_Rmax(rcut);
+	}
+	template<typename T>
+	static int get_Lmax(const std::vector<std::vector<T>> &orb)
+	{
+		return	max_element(orb.begin(), orb.end(),
+				            [](const std::vector<T> &orb_A, const std::vector<T> &orb_B){ return orb_A.size() < orb_B.size(); })
+				->size() - 1;
+	}
 
 	static void filter_empty_orbs(
 		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs);
@@ -74,7 +80,7 @@ public:
 
 	static std::vector<std::vector<std::vector<std::vector<double>>>> pca(
 		const UnitCell &ucell,
-        const LCAO_Orbitals& orb,
+		const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		const double kmesh_times_mot,

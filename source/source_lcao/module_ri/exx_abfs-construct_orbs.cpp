@@ -86,6 +86,8 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	const double times_threshold )
 {
 	ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::abfs_same_atom");
+	if(times_threshold>1)
+		{ return std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>(orb.get_ntype()); }
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
 		abfs_same_atom_psi = psi_mult_psi( orbs );

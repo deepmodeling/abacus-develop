@@ -45,10 +45,13 @@ double ElecState::get_local_pp_energy()
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         local_pseudopot_energy
-            += BlasConnector::dot(this->charge->rhopw->nrxx, this->pot->get_fixed_v(), 1, this->charge->rho[is], 1)
-               * this->charge->rhopw->omega / this->charge->rhopw->nxyz;
+            += BlasConnector::dot(this->charge->rhopw->nrxx, 
+                                  this->pot->get_fixed_v(), 
+                                  1, 
+                                  this->charge->rho[is], 1)
+                                  * this->charge->rhopw->omega / this->charge->rhopw->nxyz;
     }
-    Parallel_Reduce::reduce_all(local_pseudopot_energy);
+    Parallel_Reduce::reduce_pool(local_pseudopot_energy);
     return local_pseudopot_energy;
 }
 

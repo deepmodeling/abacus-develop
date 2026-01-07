@@ -30,8 +30,8 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    int Lmax, Lmax_used;
-    std::tie(Lmax_used, Lmax) = Center2_Orb::init_Lmax_2_3(lmax_orb);
+    const int Lmax = lmax_orb + 1;
+    const int Lmax_used = 2 * lmax_orb + 1;
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,

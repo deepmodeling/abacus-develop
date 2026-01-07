@@ -47,27 +47,33 @@ std::string filename_output(
 
 	// spin part
 	std::string spin_block;
-	if(nspin == 1)
+
+    // mohan add 2026-01-04, overlap matrix is the same for any spin
+	if(property != "sk")
 	{
-	}
-	else if(nspin == 2)
-	{
-		const int half_k = nkstot/2;
-		if(ik0 >= half_k)
+		if(nspin == 1)
 		{
-			is0 = 2;
-			ik0 -= half_k;
+			// do nothing
 		}
-		else
+		else if(nspin == 2)
 		{
-			is0 = 1;
+			const int half_k = nkstot/2;
+			if(ik0 >= half_k)
+			{
+				is0 = 2;
+				ik0 -= half_k;
+			}
+			else
+			{
+				is0 = 1;
+			}
+			spin_block = "s" + std::to_string(is0);
 		}
-        spin_block = "s" + std::to_string(is0);
-	}
-	else if(nspin==4)
-	{
-		is0 = 4;
-        spin_block = "s" + std::to_string(is0);
+		else if(nspin==4)
+		{
+			is0 = 4;
+			spin_block = "s" + std::to_string(is0);
+		}
 	}
 
 

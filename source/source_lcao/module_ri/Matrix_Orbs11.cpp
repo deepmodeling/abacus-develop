@@ -5,6 +5,7 @@
 
 #include "Matrix_Orbs11.h"
 
+#include "exx_abfs-construct_orbs.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/global.h"
@@ -14,16 +15,15 @@ void Matrix_Orbs11::init(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B, 
     const UnitCell& ucell,
     const LCAO_Orbitals& orb, 
-    const double kmesh_times, 
-    const double rmax)
+    const double kmesh_times)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
     ModuleBase::timer::tick("Matrix_Orbs11", "init");
 
     this->lat0 = &ucell.lat0;
 
-    const int Lmax = std::max({ Exx_Abfs::get_Lmax(orb_A), Exx_Abfs::get_Lmax(orb_B) });
-    const int Lmax_used = Exx_Abfs::get_Lmax(orb_A) + Exx_Abfs::get_Lmax(orb_B);
+    const int Lmax = std::max({ Exx_Abfs::Construct_Orbs::get_Lmax(orb_A), Exx_Abfs::Construct_Orbs::get_Lmax(orb_B) });
+    const int Lmax_used = Exx_Abfs::Construct_Orbs::get_Lmax(orb_A) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_B);
 
     //=========================================
     // (3) make Gaunt coefficients table
@@ -38,7 +38,10 @@ void Matrix_Orbs11::init(
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
     const int kmesh = orb.get_kmesh() * kmesh_times + 1;
-    int Rmesh = static_cast<int>(rmax / dr) + 4;
+    const double rmax
+        = Exx_Abfs::Construct_Orbs::get_Rmax(orb_A)
+        + Exx_Abfs::Construct_Orbs::get_Rmax(orb_B);
+    int Rmesh = static_cast<int>(rmax / dr) + 4;                            // extend Rcut, keep dR
     Rmesh += 1 - Rmesh % 2;
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,

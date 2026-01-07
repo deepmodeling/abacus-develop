@@ -24,7 +24,7 @@ basis_type	pw
 
 md_restart	0
 md_type		nvt
-md_nstep	2
+md_nstep	3
 md_dt		0.25
 md_tfirst	58022.52706
 md_dumpfreq	10
