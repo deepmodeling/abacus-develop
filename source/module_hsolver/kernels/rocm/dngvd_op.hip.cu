@@ -128,8 +128,8 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
         hipsolverErrcheck(hipsolverDnChegvd_bufferSize(
             hipsolver_H, HIPSOLVER_EIG_TYPE_1, HIPSOLVER_EIG_MODE_VECTOR, uplo,
             nstart,
-            reinterpret_cast<const float2 *>(_vcc), ldh,
-            reinterpret_cast<const float2 *>(_scc), ldh,
+            const_cast<float2*>(reinterpret_cast<const float2 *>(_vcc)), ldh,
+            const_cast<float2*>(reinterpret_cast<const float2 *>(_scc)), ldh,
             _eigenvalue,
             &lwork));
 
@@ -140,7 +140,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
         hipsolverErrcheck(hipsolverDnChegvd(
             hipsolver_H, HIPSOLVER_EIG_TYPE_1, HIPSOLVER_EIG_MODE_VECTOR, uplo,
             nstart,
-            reinterpret_cast<float2 *>(_vcc), ldh,
+            const_cast<float2*>(reinterpret_cast<float2 *>(_vcc)), ldh,
             const_cast<float2 *>(reinterpret_cast<const float2 *>(_scc)), ldh,
             _eigenvalue,
             work, lwork, devInfo));
@@ -206,8 +206,8 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
         hipsolverErrcheck(hipsolverDnZhegvd_bufferSize(
             hipsolver_H, HIPSOLVER_EIG_TYPE_1, HIPSOLVER_EIG_MODE_VECTOR, uplo,
             nstart,
-            reinterpret_cast<const double2 *>(_vcc), ldh,
-            reinterpret_cast<const double2 *>(_scc), ldh,
+            const_cast<double2*>(reinterpret_cast<const double2 *>(_vcc)), ldh,
+            const_cast<double2*>(reinterpret_cast<const double2 *>(_scc)), ldh,
             _eigenvalue,
             &lwork));
 
