@@ -16,7 +16,7 @@
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "kernels/force_op.h"
-
+#include <type_traits>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -579,7 +579,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, forcelc_d, forcelc.c, this->nat * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, vloc_d, vloc.c, vloc.nr * vloc.nc);
 
-        hamilt::cal_force_loc_op<FPTYPE, Device>()(
+       hamilt::cal_force_loc_op<FPTYPE, Device>()(
             this->nat,
             rho_basis->npw,
             ucell.tpiba * ucell.omega,
@@ -591,6 +591,8 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             vloc_d,
             vloc.nc,
             forcelc_d);
+
+
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcelc.c, forcelc_d, this->nat * 3);
 
         delmem_int_op()(this->ctx,iat2it_d);
@@ -799,6 +801,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             aux_d,
             forceion_d);
         
+
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forceion.c, forceion_d, this->nat * 3);
         delmem_int_op()(this->ctx,iat2it_d);
         delmem_var_op()(this->ctx,gcar_d);
@@ -917,8 +920,25 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     return;
 }
 
+namespace hamilt {
 
+#if defined(__ROCM) || defined(__HIP_PLATFORM_AMD__)
+    template struct cal_force_ew_sincos_op<double, base_device::DEVICE_GPU>;
+    template struct cal_force_ew_sincos_op<float, base_device::DEVICE_GPU>;
 
+    template struct cal_force_loc_sincos_op<double, base_device::DEVICE_GPU>;
+    template struct cal_force_loc_sincos_op<float, base_device::DEVICE_GPU>;
+#endif
+
+#if defined(__CUDA) || defined(__NVCC__)
+    template struct cal_force_ew_op<double, base_device::DEVICE_GPU>;
+    template struct cal_force_ew_op<float, base_device::DEVICE_GPU>;
+
+    template struct cal_force_loc_op<double, base_device::DEVICE_GPU>;
+    template struct cal_force_loc_op<float, base_device::DEVICE_GPU>;
+#endif
+
+} // namespace hamilt
 template class Forces<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class Forces<double, base_device::DEVICE_GPU>;
