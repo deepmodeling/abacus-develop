@@ -1,6 +1,7 @@
 name: Container
 
 on:
+  create:
   push:
     branches:
       - develop
