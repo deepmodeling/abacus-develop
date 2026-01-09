@@ -206,7 +206,6 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_eig_file", "Eigenvalues are too large!");
     }
-
     std::vector<int> ngk_tot = kv.ngk;
 #ifdef __MPI
     std::vector<int> send_ngk_tot = kv.ngk;
