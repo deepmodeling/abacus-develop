@@ -75,6 +75,8 @@ class DiagoPrepare
         if (ks_solver == "scalapack_gvx")
             ;
 //             dh = new hsolver::DiagoScalapack<T>;
+        else if (ks_solver == "lapack")
+            ;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             ;
