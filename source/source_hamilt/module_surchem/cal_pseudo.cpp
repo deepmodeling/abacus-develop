@@ -9,8 +9,8 @@ void surchem::gauss_charge(const UnitCell& cell,
                            std::complex<double>* N,
                            Structure_Factor* sf)
 {
-    sf->setup(&cell, pgrid, rho_basis); // this is strange, should be removed to other places, mohan add 2025-11-04
-
+    //sf->setup(&cell, pgrid, rho_basis); // this is strange, should be removed to other places, mohan add 2025-11-04
+    //sf here was only needed in the test.
     const int ig0 = rho_basis->ig_gge0; // G=0 index
     for (int it = 0; it < cell.ntype; it++)
     {

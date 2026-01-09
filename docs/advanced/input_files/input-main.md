@@ -3030,7 +3030,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
   - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
   - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*

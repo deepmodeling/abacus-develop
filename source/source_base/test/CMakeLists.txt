@@ -77,7 +77,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter 
-  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp
+  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp ../memory.cpp ../global_variable.cpp
 )
 AddTest(
   TARGET MODULE_BASE_ylmreal

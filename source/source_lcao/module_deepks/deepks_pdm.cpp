@@ -373,19 +373,19 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 // all the input should be data pointer
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
-                dgemm_(&transa,
-                       &transb,
-                       &row_size,
-                       &trace_alpha_size,
-                       &col_size,
-                       &gemm_alpha,
-                       dm_current,
-                       &col_size,
+                BlasConnector::gemm(transb,
+                       transa,
+                       trace_alpha_size,
+                       row_size,
+                       col_size,
+                       gemm_alpha,
                        s_2t.data(),
-                       &col_size,
-                       &gemm_beta,
+                       col_size,
+                       dm_current,
+                       col_size,
+                       gemm_beta,
                        g_1dmt.data(),
-                       &row_size);
+                       row_size);
             } // ad2
             if (!PARAM.inp.deepks_equiv)
             {

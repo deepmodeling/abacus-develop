@@ -22,14 +22,6 @@ public:
 	
 	int rmesh_times = 5;				// Peize Lin test
 	int kmesh_times = 1;				// Peize Lin test
-
-	static int get_Lmax(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb)
-	{
-		int Lmax = -1;
-		for( const auto &orb_T : orb )
-			{ Lmax = std::max( Lmax, static_cast<int>(orb_T.size())-1 ); }
-		return Lmax;
-	}
 };
 
 #endif

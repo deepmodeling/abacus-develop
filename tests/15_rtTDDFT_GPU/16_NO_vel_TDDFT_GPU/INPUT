@@ -15,7 +15,7 @@ device             gpu
 ks_solver          cusolver
 basis_type         lcao
 gamma_only         0
-md_nstep           3
+md_nstep           4
 estep_per_md       1
 
 mixing_type        broyden

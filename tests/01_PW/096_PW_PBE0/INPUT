@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(System)
 suffix                  autotest
+init_wfc        random
 
 nbands			2
 stru_file		STRU
@@ -11,7 +12,7 @@ calculation             scf
 #Parameters (PW)
 ecutwfc			10.0              # Rydberg
 #Parameters (electronic)
-basis_type		pw 	
+basis_type		pw
 scf_thr			1e-3
 smearing_method fixed
 
