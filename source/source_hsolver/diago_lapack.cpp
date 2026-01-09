@@ -142,11 +142,37 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
             ifail.data(),
             &info);*/
 
-    double *ev = new double[ncol * ncol];
+        // Use dsygvx_ to compute only the requested eigenvalues (range 'I').
+        int lwork2 = std::max(1, ncol * ncol);
+        std::vector<double> work_large(lwork2, 0.0);
+        int liwork = std::max(1, 5 * ncol);
+        std::vector<int> iwork_large(liwork, 0);
 
-    dsygv_(&itype, &jobz, &uplo, &PARAM.globalv.nlocal, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, &info);
+        dsygvx_(&itype,
+            &jobz,
+            &range,
+            &uplo,
+            &PARAM.globalv.nlocal,
+            h_tmp.c,
+            &ncol,
+            s_tmp.c,
+            &ncol,
+            &vl,
+            &vu,
+            &il,
+            &iu,
+            &abstol,
+            &M,
+            ekb,
+            wfc_2d.get_pointer(),
+            &ncol,
+            work_large.data(),
+            &lwork2,
+            iwork_large.data(),
+            ifail.data(),
+            &info);
 
-    return info;
+        return info;
 }
 
 template <typename T>
@@ -243,11 +269,42 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
 
     */
 
-    std::complex<double> *ev = new std::complex<double>[ncol * ncol];
+        // Use zhegvx_ to compute only the requested eigenvalues (range 'I').
+        // Allocate a reasonably large complex workspace and integer workspace.
+        int lwork2 = std::max(1, ncol * ncol);
+        std::complex<double> *workc = new std::complex<double>[lwork2];
+        int liwork = std::max(1, 5 * ncol);
+        std::vector<int> iwork_large(liwork, 0);
 
-    zhegv_(&itype, &jobz, &uplo, &PARAM.globalv.nlocal, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, rwork, &info);
+        zhegvx_(&itype,
+            &jobz,
+            &range,
+            &uplo,
+            &PARAM.globalv.nlocal,
+            h_tmp.c,
+            &ncol,
+            s_tmp.c,
+            &ncol,
+            &vl,
+            &vu,
+            &il,
+            &iu,
+            &abstol,
+            &M,
+            ekb,
+            wfc_2d.get_pointer(),
+            &ncol,
+            workc,
+            &lwork2,
+            rwork,
+            iwork_large.data(),
+            ifail.data(),
+            &info);
 
-    return info;
+        delete[] workc;
+        delete[] rwork;
+
+        return info;
 }
 
 template <typename T>
