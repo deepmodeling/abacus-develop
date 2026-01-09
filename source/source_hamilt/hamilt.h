@@ -21,7 +21,7 @@ class Hamilt
     virtual void updateHk(const int ik){return;}
 
     /// refresh status of Hamiltonian, for example, refresh H(R) and S(R) in LCAO case
-    virtual void refresh(void){return;}
+    virtual void refresh(bool yes = true){return;}
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
 	virtual void hPsi(
@@ -54,8 +54,6 @@ class Hamilt
     virtual std::vector<T> matrix() { return std::vector<T>(); }
 
     std::string classname = "none";
-
-    int non_first_scf=0;
 
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;

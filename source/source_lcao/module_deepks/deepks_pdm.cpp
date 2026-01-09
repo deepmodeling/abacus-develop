@@ -19,6 +19,7 @@
 #include "deepks_pdm.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
 #ifdef __MPI
@@ -402,11 +403,11 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         {
                             for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                accessor[m1][m2] += ddot_(&row_size,
-                                                          g_1dmt.data() + index * row_size,
-                                                          &inc,
-                                                          s_1t.data() + index * row_size,
-                                                          &inc);
+                                accessor[m1][m2] += BlasConnector::dot(row_size,
+                                                                       g_1dmt.data() + index * row_size,
+                                                                       inc,
+                                                                       s_1t.data() + index * row_size,
+                                                                       inc);
                                 index++;
                             }
                         }
@@ -428,11 +429,11 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     {
                         // ddot_: dot product of two vectors
                         // inc means the increment of the index
-                        accessor[iproj * nproj + jproj] += ddot_(&row_size,
-                                                                 g_1dmt.data() + index * row_size,
-                                                                 &inc,
-                                                                 s_1t.data() + index * row_size,
-                                                                 &inc);
+                        accessor[iproj * nproj + jproj] += BlasConnector::dot(row_size,
+                                                                              g_1dmt.data() + index * row_size,
+                                                                              inc,
+                                                                              s_1t.data() + index * row_size,
+                                                                              inc);
                         index++;
                     }
                 }
