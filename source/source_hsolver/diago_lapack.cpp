@@ -105,39 +105,39 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
-        // LAPACK dsygvx signature:
-        // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
-        //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, IWORK, IFAIL, INFO)
-        int n = PARAM.globalv.nlocal;
-        int lda = n, ldb = n, ldz = n;
-        dsygvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            iwork.data(),
-            ifail.data(),
-            &info);
+    // LAPACK dsygvx signature:
+    // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
+    //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, IWORK, IFAIL, INFO)
+    int n = PARAM.globalv.nlocal;
+    int lda = n, ldb = n, ldz = n;
+    dsygvx_(&itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        ifail.data(),
+        &info);
     if (info) {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
                                  + std::string(__FILE__) + " line "
                                  + std::to_string(__LINE__));
-}
+    }
 
     // Query returned optimal lwork in work[0]
     lwork = static_cast<int>(work[0]);
@@ -146,29 +146,29 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     liwork = std::max(1, 5 * n);
     iwork.resize(liwork, 0);
 
-        dsygvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            iwork.data(),
-            ifail.data(),
-            &info);
+    dsygvx_(&itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        ifail.data(),
+        &info);
     //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
@@ -218,40 +218,40 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
-        // LAPACK zhegvx signature:
-        // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
-        //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, RWORK, IWORK, IFAIL, INFO)
-        int n = PARAM.globalv.nlocal;
-        int lda = n, ldb = n, ldz = n;
-        zhegvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            rwork.data(),
-            iwork.data(),
-            ifail.data(),
-            &info);
+    // LAPACK zhegvx signature:
+    // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
+    //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, RWORK, IWORK, IFAIL, INFO)
+    int n = PARAM.globalv.nlocal;
+    int lda = n, ldb = n, ldz = n;
+    zhegvx_(&itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        rwork.data(),
+        iwork.data(),
+        ifail.data(),
+        &info);
     if (info) {
         throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
                                  + std::string(__FILE__) + " line "
                                  + std::to_string(__LINE__));
-}
+    }
 
     // Query returned optimal lwork in work[0]
     lwork = static_cast<int>(work[0].real());
@@ -263,30 +263,30 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     liwork = std::max(1, 5 * n);
     iwork.resize(liwork, 0);
 
-        zhegvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            rwork.data(),
-            iwork.data(),
-            ifail.data(),
-            &info);
+    zhegvx_(&itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        rwork.data(),
+        iwork.data(),
+        ifail.data(),
+        &info);
     //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
@@ -371,7 +371,7 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
         std::string str_ifail = "ifail = ";
         for (const int i: vec) {
             str_ifail += ModuleBase::GlobalFunc::TO_STRING(i) + " ";
-}
+        }
         throw std::runtime_error(str_info_FILE + str_ifail);
     }
     else if (info / 2 % 2)
@@ -379,7 +379,7 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
         int degeneracy_need = 0;
         for (int irank = 0; irank < GlobalV::DSIZE; ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
-}
+        }
         const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";
         const std::string str_saved
             = "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n";
