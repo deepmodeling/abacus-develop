@@ -119,7 +119,7 @@ if (ENABLE_MPI)
     ../kernels/cuda/diag_cusolver.cu
   )
   endif()
-else()
+#else()
   if(ENABLE_LCAO)
   AddTest(
         TARGET MODULE_HSOLVER_Lapack
