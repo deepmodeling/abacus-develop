@@ -98,7 +98,7 @@ if (ENABLE_MPI)
       AddTest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter  ${math_libs} base psi device
-        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp 
+        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
       )
     endif()
 
