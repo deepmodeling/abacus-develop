@@ -100,11 +100,8 @@ class surchem
                double* epsilon,            // epsilon from shapefunc, dim=nrxx
                std::complex<double>* gradphi_G_work,
                std::complex<double>* lp,
-               // New buffers
-               ModuleBase::Vector3<double>* grad_phi_R,
-               std::complex<double>* grad_grad_phi_G,
-               double* lp_real,
-               double* grad_grad_phi_real);
+               ModuleBase::Vector3<double>* grad_phi_R,   // size: nrxx
+               double* aux_R);
 
     void v_correction(const UnitCell& cell,
                       const Parallel_Grid& pgrid,
