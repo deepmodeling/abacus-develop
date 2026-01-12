@@ -40,6 +40,20 @@ void gather_min_double_all(const int& nproc, double& v);
 void gather_max_double_pool(const int& nproc_in_pool, double& v);
 void gather_min_double_pool(const int& nproc_in_pool, double& v);
 
+void gather_max_int_all(const int& nproc, int& v);
+void gather_max_int_pool(const int& nproc_in_pool, int& v);
+
+void gather_or_bool_all(bool& v);
+void gather_or_bool_bp(bool& v);
+
+void reduce_kp(double* object, const int n);
+void reduce_bp(double* object, const int n);
+void reduce_bgroup(double* object, const int n);
+
+void reduce_kp(int* object, const int n);
+void reduce_bp(int* object, const int n);
+void reduce_bgroup(int* object, const int n);
+
 // mohan add 2011-04-21
 void gather_int_all(int& v, int* all);
 
