@@ -1,6 +1,7 @@
 #include "symmetry_rho.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_global.h"
+#include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 
@@ -9,8 +10,8 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	//(1) get fftixy2is and do Allreduce
 	int * fftixy2is = new int [rho_basis->fftnxy];
 	rho_basis->getfftixy2is(fftixy2is);		//current proc
+    Parallel_Reduce::reduce_pool(fftixy2is, rho_basis->fftnxy);
 #ifdef __MPI
-	MPI_Allreduce(MPI_IN_PLACE, fftixy2is, rho_basis->fftnxy, MPI_INT, MPI_SUM, POOL_WORLD);
 	if(rho_basis->poolnproc>1)
 		for (int i=0;i<rho_basis->fftnxy;++i)
 			fftixy2is[i]+=rho_basis->poolnproc-1;

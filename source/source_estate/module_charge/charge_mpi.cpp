@@ -30,7 +30,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
     if (KP_WORLD != MPI_COMM_NULL)
     {
-        MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
+        Parallel_Reduce::reduce_kp(array_rho, this->nrxx);
     }
     else
     {
@@ -92,7 +92,11 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //==================================
         // Reduce all the rho in each cpu
         //==================================
-        MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+        for (int i = 0; i < this->rhopw->nxyz; i++)
+        {
+            array_tot[i] = array_tot_aux[i];
+        }
+        Parallel_Reduce::reduce_bgroup(array_tot, this->rhopw->nxyz);
 
         //=====================================
         // Change the order of rho in each cpu
@@ -111,7 +115,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
     }
     if(PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
     {
-        MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+        Parallel_Reduce::reduce_bp(array_rho, this->nrxx);
     }
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
 }

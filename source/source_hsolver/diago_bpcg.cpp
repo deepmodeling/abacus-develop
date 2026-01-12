@@ -4,6 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds
+#include "source_base/parallel_reduce.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
 
@@ -85,9 +86,7 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vecto
             not_conv = true;
         }
     }
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &not_conv, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
-#endif
+    Parallel_Reduce::gather_or_bool_bp(not_conv);
     return not_conv;
 }
 

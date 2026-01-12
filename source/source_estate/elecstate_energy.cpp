@@ -171,11 +171,8 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
         }
     }
 
-#ifdef __MPI
-    MPI_Allreduce(&deband_aux, &deband0, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-#else
     deband0 = deband_aux;
-#endif
+    Parallel_Reduce::reduce_pool(deband0);
 
     deband0 *= ucell.omega / this->charge->rhopw->nxyz;
 
