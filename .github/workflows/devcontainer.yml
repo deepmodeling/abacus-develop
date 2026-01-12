@@ -1,6 +1,7 @@
 name: Container
 
 on:
+  create:
   push:
     branches:
       - develop
@@ -29,6 +30,11 @@ jobs:
           tags: |
             type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
             type=raw,value=latest
+
+      - name: Fix Docker Directory Permissions
+        run: |
+          sudo mkdir -p /home/runner/.docker
+          sudo chown -R $USER:$USER /home/runner/.docker
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3

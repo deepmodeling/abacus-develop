@@ -607,7 +607,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
 
     int* ipiv = new int[para_orb.nrow];
     int info = 0;
-    pzgetrf_(&occBands, &occBands, out_matrix, &one, &one, para_orb.desc, ipiv, &info);
+    ScalapackConnector::getrf(occBands, occBands, out_matrix, one, one, para_orb.desc, ipiv, &info);
 
     for (int i = 0; i < occBands; i++) // global
     {

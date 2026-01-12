@@ -53,10 +53,23 @@ void set_pot(
         Setup_DeePKS<TK> &deepks,
         const Input_para &inp);
 
+/**
+ * @brief read in DMR from file, and save it into dmat
+ */
 template <typename TK>
 void init_dm_from_file(
 	const std::string dmfile,
 	LCAO_domain::Setup_DM<TK>& dmat,
+	const UnitCell& ucell,
+	const Parallel_Orbitals* pv);
+
+/**
+ * @brief read in HR from file, and save it into hmat
+ */
+template <typename TK>
+void init_hr_from_file(
+	const std::string hrfile,
+	hamilt::HContainer<TK>* hmat,
 	const UnitCell& ucell,
 	const Parallel_Orbitals* pv);
 } // end namespace
