@@ -123,8 +123,7 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
             vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }
     }
-
-    Parallel_Reduce::reduce_all(&vec_global[0], 3 * this->nkstot_np);
+    Parallel_Reduce::reduce_all(reinterpret_cast<double*>(vec_global.data()), 3 * this->nkstot_np);
     return;
 }
 #endif
