@@ -17,9 +17,9 @@ class ElecState
     ElecState()
     {
     }
-    ElecState(Charge* charge_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
+    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
     {
-        this->charge = charge_in;
+        this->charge = chr_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
         this->eferm.two_efermi = PARAM.globalv.two_fermi;
@@ -32,10 +32,9 @@ class ElecState
             this->pot = nullptr;
         }
     }
-    void init_ks(Charge* chg_in, // pointer for class Charge
+    void init_ks(Charge* chr_in, // pointer for class Charge
                  const K_Vectors* klist_in,
                  int nk_in, // number of k points
-                 ModulePW::PW_Basis* rhopw_in,
                  const ModulePW::PW_Basis_Big* bigpw_in);
 
     // return current electronic density rho, as a input for constructing Hamiltonian
@@ -98,14 +97,12 @@ class ElecState
     /**
      * @brief Init rho_core, init rho, renormalize rho, init pot
      *
-     * @param istep i-th step
      * @param ucell unit cell
      * @param strucfac structure factor
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
      */
-    void init_scf(const int istep,
-                  const UnitCell& ucell,
+    void init_scf(const UnitCell& ucell,
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
                   const bool* numeric,
@@ -114,7 +111,6 @@ class ElecState
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
-    double omega = 0.0;                            ///< volume
     Potential* pot = nullptr;                      ///< pointer to potential
     Charge* charge = nullptr;                      ///< pointer to charge density
     const K_Vectors* klist = nullptr;              ///< pointer to k points lists
@@ -150,7 +146,7 @@ class ElecState
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
-    efermi eferm; ///< fermi energies
+    Efermi eferm; ///< fermi energies
 
     // below defines the bandgap:
 

@@ -2,7 +2,8 @@ FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
-    libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev
+    libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev \
+    pkg-config build-essential autoconf automake libtool
 
 # Following steps by https://software.intel.com/content/www/us/en/develop/documentation/installation-guide-for-intel-oneapi-toolkits-linux/top/installation/install-using-package-managers/apt.html .
 RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
@@ -16,20 +17,43 @@ RUN apt-get update && \
         intel-oneapi-compiler-dpcpp-cpp \
         intel-oneapi-compiler-fortran \
         intel-oneapi-mkl-devel \
-        intel-oneapi-mpi-devel="2021.11.*" \
+        intel-oneapi-mkl-sycl-devel \
+        intel-oneapi-mkl-sycl-distributed-dft-devel \
+        intel-oneapi-mpi-devel \
         intel-oneapi-vtune && \
-        rm /opt/intel/oneapi/mpi/latest && ln -s /opt/intel/oneapi/mpi/2021.11 /opt/intel/oneapi/mpi/latest
-ENV I_MPI_ROOT=/opt/intel/oneapi/mpi/latest \
-    LIBRARY_PATH=/opt/intel/oneapi/tbb/latest/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/mpi/latest/lib:/opt/intel/oneapi/mkl/latest/lib/:/opt/intel/oneapi/ippcp/latest/lib/:/opt/intel/oneapi/ipp/latest/lib:/opt/intel/oneapi/dpl/latest/lib:/opt/intel/oneapi/dnnl/latest/lib:/opt/intel/oneapi/dal/latest/lib:/opt/intel/oneapi/compiler/latest/lib:/opt/intel/oneapi/ccl/latest/lib/ \
-    LD_LIBRARY_PATH=/opt/intel/oneapi/tbb/latest/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/mpi/latest/opt/mpi/libfabric/lib:/opt/intel/oneapi/mpi/latest/lib:/opt/intel/oneapi/mkl/latest/lib:/opt/intel/oneapi/itac/latest/slib:/opt/intel/oneapi/ippcp/latest/lib/:/opt/intel/oneapi/ipp/latest/lib:/opt/intel/oneapi/dpl/latest/lib:/opt/intel/oneapi/dnnl/latest/lib:/opt/intel/oneapi/debugger/latest/opt/debugger/lib:/opt/intel/oneapi/dal/latest/lib:/opt/intel/oneapi/compiler/latest/opt/oclfpga/host/linux64/lib:/opt/intel/oneapi/compiler/latest/opt/compiler/lib:/opt/intel/oneapi/compiler/latest/lib:/opt/intel/oneapi/ccl/latest/lib/ \
-    PATH=/opt/intel/oneapi/vtune/latest/bin64:/opt/intel/oneapi/mpi/latest/opt/mpi/libfabric/bin:/opt/intel/oneapi/mpi/latest/bin:/opt/intel/oneapi/mkl/latest/bin/:/opt/intel/oneapi/itac/latest/bin:/opt/intel/oneapi/inspector/latest/bin64:/opt/intel/oneapi/dpcpp-ct/latest/bin:/opt/intel/oneapi/dev-utilities/latest/bin:/opt/intel/oneapi/debugger/latest/opt/debugger/bin:/opt/intel/oneapi/compiler/latest/opt/oclfpga/bin:/opt/intel/oneapi/compiler/latest/bin:/opt/intel/oneapi/advisor/latest/bin64:/opt/mamba/bin:/opt/mamba/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    MKLROOT=/opt/intel/oneapi/mkl/latest \
-    FI_PROVIDER_PATH=/opt/intel/oneapi/mpi/latest/opt/mpi/libfabric/lib/prov:/usr/lib/x86_64-linux-gnu/libfabric \
-    CMAKE_PREFIX_PATH=/opt/intel/oneapi/tbb/latest/env/..:/opt/intel/oneapi/mkl/latest/lib/cmake:/opt/intel/oneapi/ipp/latest/lib/cmake/ipp:/opt/intel/oneapi/dpl/latest/lib/cmake/oneDPL:/opt/intel/oneapi/dnnl/latest/lib/cmake:/opt/intel/oneapi/dal/latest:/opt/intel/oneapi/compiler/latest \
-    CMPLR_ROOT=/opt/intel/oneapi/compiler/latest
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*sycl*dft*
+RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*dis*
+
+# Set oneAPI environment variables
+ENV ONEAPI_ROOT=/opt/intel/oneapi
+ENV I_MPI_ROOT=${ONEAPI_ROOT}/mpi/latest
+ENV MKLROOT=${ONEAPI_ROOT}/mkl/latest
+ENV CMPLR_ROOT=${ONEAPI_ROOT}/compiler/latest
+
+# Set library paths and include paths
+ENV LIBRARY_PATH=${ONEAPI_ROOT}/tbb/latest/lib/intel64/gcc4.8:${ONEAPI_ROOT}/mpi/latest/lib:${MKLROOT}/lib/intel64:${ONEAPI_ROOT}/compiler/latest/lib/:${LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=${ONEAPI_ROOT}/tbb/latest/lib/intel64/gcc4.8:${ONEAPI_ROOT}/mpi/latest/lib:${MKLROOT}/lib/intel64:${ONEAPI_ROOT}/compiler/latest/lib/:${LD_LIBRARY_PATH}
+ENV PATH=${ONEAPI_ROOT}/vtune/latest/bin64:${ONEAPI_ROOT}/mpi/latest/bin:${MKLROOT}/bin/intel64:${ONEAPI_ROOT}/compiler/latest/bin:${PATH}
+ENV CPATH=${MKLROOT}/include:${ONEAPI_ROOT}/mpi/latest/include:${CPATH}
+ENV PKG_CONFIG_PATH=${MKLROOT}/lib/pkgconfig:${ONEAPI_ROOT}/mpi/latest/lib/pkgconfig:${PKG_CONFIG_PATH}
+
+# Set CMAKE related paths
+ENV CMAKE_PREFIX_PATH=${ONEAPI_ROOT}/tbb/latest:${MKLROOT}/lib/cmake:${ONEAPI_ROOT}/dpl/latest/lib/cmake:${ONEAPI_ROOT}/dnnl/latest/lib/cmake:${ONEAPI_ROOT}/dal/latest:${ONEAPI_ROOT}/compiler/latest:${CMAKE_PREFIX_PATH}
 
 SHELL ["/bin/bash", "-c"]
 ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
+
+# Verify oneAPI installation
+RUN source ${ONEAPI_ROOT}/setvars.sh && \
+    echo "=== Verify compiler ===" && \
+    which mpiicx && mpiicx --version && \
+    echo "=== Verify MKL ===" && \
+    ls ${MKLROOT}/lib/intel64/ && \
+    echo "=== Verify MPI ===" && \
+    which mpirun && mpirun --version
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN source /opt/intel/oneapi/setvars.sh && \
@@ -39,28 +63,141 @@ RUN source /opt/intel/oneapi/setvars.sh && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
     ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
-    make -j`nproc` && \
+    make -j$(nproc) && \
     make PREFIX=/usr/local install && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
-RUN cd /tmp && git clone https://github.com/Tencent/rapidjson.git && cp -r rapidjson/include/rapidjson /usr/include/ \
-    && rm -rf rapidjson
+# rapidjson and libtorch
+RUN cd /tmp && git clone --depth 1 https://github.com/Tencent/rapidjson.git && cp -r rapidjson/include/rapidjson /usr/include/ && rm -rf rapidjson
+RUN wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip -O /tmp/libtorch.zip && \
+    unzip -q /tmp/libtorch.zip -d /opt && rm -f /tmp/libtorch.zip
+ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake:${CMAKE_PREFIX_PATH}
 
-RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
-        --no-check-certificate --quiet -O libtorch.zip && \
-    unzip -q libtorch.zip -d /opt  && rm libtorch.zip
 
-ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
+###### PEXSI PART: pexsi and gklib and metis and parmetis and superlu_dist
+ENV GKLIB_VERSION="master" 
+ENV METIS_VERSION="master"
+ENV PARMETIS_VERSION="main"
+ENV SUPERLU_DIST_VERSION=7.2.0
+ENV PEXSI_VERSION=2.0.0
+ENV GKLIB_ROOT=/usr/local/gklib-${GKLIB_VERSION}
+ENV METIS32_ROOT=/usr/local/metis32-${METIS_VERSION}
+ENV PARMETIS32_ROOT=/usr/local/parmetis32-${PARMETIS_VERSION}
+ENV PEXSI32_ROOT=/usr/local/pexsi32-${PEXSI_VERSION}
+ENV SUPERLU_DIST32_ROOT=/usr/local/superlu_dist32-${SUPERLU_DIST_VERSION}
 
+# 2. install GKlib
+RUN wget https://codeload.github.com/KarypisLab/GKlib/zip/refs/heads/${GKLIB_VERSION} -O GKlib-${GKLIB_VERSION}.zip && \
+    unzip GKlib-${GKLIB_VERSION}.zip && \
+    cd GKlib-${GKLIB_VERSION} && \
+    make config shared=1 prefix=${GKLIB_ROOT} openmp=set && \
+    make -j$(nproc) && \
+    make install && \
+    ls ${GKLIB_ROOT}/lib && \
+    cp ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so && \ 
+    cd / && rm -rf GKlib-${GKLIB_VERSION} GKlib-${GKLIB_VERSION}.zip
+#.so file CANNOT be found otherwise.
+# 2. install METIS
+RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    wget https://codeload.github.com/KarypisLab/METIS/zip/refs/heads/${METIS_VERSION} -O METIS-${METIS_VERSION}.zip && \
+    unzip METIS-${METIS_VERSION}.zip && \
+    cd METIS-${METIS_VERSION} && \
+    make config shared=1 prefix=${METIS32_ROOT} gklib_path=${GKLIB_ROOT} && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf METIS-${METIS_VERSION} METIS-${METIS_VERSION}.zip
+
+# 3. install ParMETIS
+RUN export LD_LIBRARY_PATH=${METIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    wget https://codeload.github.com/KarypisLab/ParMETIS/zip/refs/heads/${PARMETIS_VERSION} -O ParMETIS-${PARMETIS_VERSION}.zip && \
+    unzip ParMETIS-${PARMETIS_VERSION}.zip && \
+    cd ParMETIS-${PARMETIS_VERSION} && \
+    make config shared=1 prefix=${PARMETIS32_ROOT} gklib_path=${GKLIB_ROOT} metis_path=${METIS32_ROOT} && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf ParMETIS-${PARMETIS_VERSION} ParMETIS-${PARMETIS_VERSION}.zip
+
+# 4. install SuperLU_DIST 
+RUN wget https://codeload.github.com/xiaoyeli/superlu_dist/tar.gz/refs/tags/v${SUPERLU_DIST_VERSION} -O v${SUPERLU_DIST_VERSION}.tar.gz && \
+    tar -xzf v${SUPERLU_DIST_VERSION}.tar.gz && \
+    cd superlu_dist-${SUPERLU_DIST_VERSION} && \
+    mkdir build && cd build && \
+    cmake .. \
+    -DTPL_ENABLE_PARMETISLIB=ON \
+    -DTPL_PARMETIS_LIBRARIES="${PARMETIS32_ROOT}/lib/libparmetis.so;${METIS32_ROOT}/lib/libmetis.so;${GKLIB_ROOT}/lib/libGKlib.so" \
+    -DTPL_PARMETIS_INCLUDE_DIRS="${PARMETIS32_ROOT}/include;${METIS32_ROOT}/include;${GKLIB_ROOT}/include" \
+    -DTPL_ENABLE_INTERNAL_BLASLIB=OFF \
+    -DTPL_ENABLE_LAPACKLIB=ON \
+    -DTPL_ENABLE_COMBBLASLIB=OFF \
+    -DTPL_ENABLE_CUDALIB=OFF \
+    -Denable_complex16=ON \
+    -DXSDK_INDEX_SIZE=32 \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX=${SUPERLU_DIST32_ROOT} \
+    -DCMAKE_C_FLAGS="-O3 -fopenmp" \
+    -DCMAKE_CXX_FLAGS="-O3 -fopenmp" \
+    -DXSDK_ENABLE_Fortran=ON \
+    -DCMAKE_Fortran_COMPILER=mpiifx && \                             
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf superlu_dist-${SUPERLU_DIST_VERSION} v${SUPERLU_DIST_VERSION}.tar.gz
+
+###     -DCMAKE_C_COMPILER=mpiicc \
+###     -DCMAKE_CXX_COMPILER=mpiicpc \
+###     -DCMAKE_CUDA_COMPILER=nvcc \
+
+# 5. install PEXSI
+RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
+    export LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LIBRARY_PATH} && \
+    export PKG_CONFIG_PATH=${SUPERLU_DIST32_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${GKLIB_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH} && \
+    export CPATH=${SUPERLU_DIST32_ROOT}/include:${PARMETIS32_ROOT}/include:${METIS32_ROOT}/include:${GKLIB_ROOT}/include:${CMAKE_PREFIX_PATH} && \
+    export CMAKE_PREFIX_PATH=${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH} && \
+    wget https://bitbucket.org/berkeleylab/pexsi/downloads/pexsi_v${PEXSI_VERSION}.tar.gz && \
+    tar -xzf pexsi_v${PEXSI_VERSION}.tar.gz && \
+    cd pexsi_v${PEXSI_VERSION} && \
+    sed -i 's/^add_pexsi_f_example_exe/# add_pexsi_f_example_exe/g' fortran/CMakeLists.txt && \
+    sed -i 's/^add_pexsi_example_exe/# add_pexsi_example_exe/g' examples/CMakeLists.txt && \
+    sed -i 's/add_executable/# add_executable/g' fortran/CMakeLists.txt && \
+    sed -i 's/add_executable/# add_executable/g' examples/CMakeLists.txt && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=${PEXSI32_ROOT} \
+        -DPEXSI_ENABLE_OPENMP=ON \
+        -DPEXSI_ENABLE_FORTRAN=OFF && \
+    make pexsi -j$(nproc) && \
+    make install && \
+    cd / && rm -rf pexsi_v${PEXSI_VERSION} pexsi_v${PEXSI_VERSION}.tar.gz
+
+ENV LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH}
+ENV PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
+ENV CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH}
+ENV CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
+
+###         -DCMAKE_C_COMPILER=mpiicc \
+###        -DCMAKE_CXX_COMPILER=mpiicpc \
+###### END of PEXSI PART
+
+# Clone and build abacus (optional during image build; keep for CI image)
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
-
-RUN source /opt/intel/oneapi/setvars.sh && \
-    git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
+RUN cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
-    cmake --build build -j`nproc` && \
+    cmake -B build \
+        -DENABLE_MLALGO=ON \
+        -DENABLE_PEXSI=ON \
+        -DENABLE_LIBXC=ON \
+        -DENABLE_LIBRI=ON \
+        -DENABLE_RAPIDJSON=ON \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build -j"$(nproc)" && \
     cmake --install build && \
-    rm -rf build && \
-    abacus --version
-    #&& rm -rf abacus-develop
+    (/usr/local/bin/abacus --version || echo "ABACUS installed but version check failed") && \
+    rm -rf /tmp/abacus-develop
+        # -DMKL_SYCL=OFF \
+        # -DMKL_SYCL_DISTRIBUTED_DFT:BOOL=OFF \
+    # cd /tmp && wget https://github.com/deepmodeling/abacus-develop/archive/refs/tags/v3.9.0.17.zip -O abacus-develop-3.9.0.17.zip && \
+    # unzip abacus-develop-3.9.0.17.zip && \
+    # cd abacus-develop-3.9.0.17 && \
+    # sed -i '3i\#include "source_estate/elecstate_lcao.h"' source/source_lcao/edm.cpp && \
+# Default entry
+CMD ["/bin/bash"]

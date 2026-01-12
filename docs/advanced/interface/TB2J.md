@@ -66,7 +66,6 @@ out_mul                        1
 #Parameters (4.Relaxation)
 ks_solver                      genelpa
 scf_nmax                       200
-out_bandgap                    0
 
 #Parameters (5.LCAO)
 basis_type                     lcao

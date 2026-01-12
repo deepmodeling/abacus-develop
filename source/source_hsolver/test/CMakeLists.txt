@@ -92,13 +92,13 @@ if (ENABLE_MPI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ${math_libs} ELPA::ELPA base genelpa psi device
-      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter  ${math_libs} base psi device
-        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp 
+        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
       )
     endif()
 
@@ -118,14 +118,6 @@ if (ENABLE_MPI)
     ../kernels/hegvd_op.cpp
     ../kernels/cuda/diag_cusolver.cu
   )
-  endif()
-else()
-  if(ENABLE_LCAO)
-  AddTest(
-        TARGET MODULE_HSOLVER_Lapack
-        LIBS parameter  ${math_libs} base psi device
-        SOURCES diago_lapack_test.cpp ../diago_lapack.cpp 
-      )
   endif()
 endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

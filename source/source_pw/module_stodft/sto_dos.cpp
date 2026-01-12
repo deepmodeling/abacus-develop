@@ -157,7 +157,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;
-                dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv.data(), &N);
+                BlasConnector::gemm(normal, trans, N, N, M, kweight, vec_all, LDA, vec_all, LDA, one, spolyv.data(), N);
             }
         }
     }

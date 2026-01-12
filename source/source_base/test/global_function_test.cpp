@@ -13,6 +13,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <ctime>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
 /************************************************
  *  unit test of functions in global_function
@@ -420,9 +424,13 @@ TEST_F(GlobalFunctionTest, MakeDir)
 {
     GlobalV::MY_RANK = 0;
     ModuleBase::GlobalFunc::MAKE_DIR("scf");
-    auto error1 = std::system("test -d ");
+    
+    struct stat st;
+    int error1 = stat("scf", &st);
     EXPECT_EQ(error1, 0);
-    auto error2 = std::system("rm -r scf ");
+    EXPECT_TRUE(S_ISDIR(st.st_mode));
+
+    int error2 = rmdir("scf");
     EXPECT_EQ(error2, 0);
     SUCCEED();
 }

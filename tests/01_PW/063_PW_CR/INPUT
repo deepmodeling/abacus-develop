@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (General)
 suffix       autotest
+init_wfc     random
 pseudo_dir   ../../PP_ORB
 calculation  cell-relax
 basis_type   pw
@@ -19,7 +20,7 @@ relax_new    0
 cal_stress   1
 stress_thr   0.1
 cal_force    1
-force_thr_ev 0.001 
+force_thr_ev 0.001
 
 mixing_type  broyden
 mixing_beta  0.7

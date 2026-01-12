@@ -367,6 +367,7 @@ struct Input_para
     bool out_stru = false;                ///< outut stru file each ion step
     int out_freq_elec = 0;                ///< print information every few electronic steps 
     int out_freq_ion = 0;                 ///< print information every few ionic steps 
+    int out_freq_td = 0;                  ///< print information every few completed electronic iterations in RT-TDDFT
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
@@ -379,7 +380,6 @@ struct Input_para
     std::string out_level = "ie";         ///< control the output information.
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
     std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
-    bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
@@ -553,6 +553,7 @@ struct Input_para
         = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0; ///< how many times larger the radial mesh required for
                                        ///< calculating Columb potential is to that of atomic orbitals
+    double exx_cs_inv_thr = -1;        ///< threshold to inverse Vq in abfs for generating Cs
     bool out_ri_cv = false; ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     // ==============   #Parameters (16.dft+u) ======================
     //    DFT+U       Xin Qu added on 2020-10-29
@@ -657,6 +658,7 @@ struct Input_para
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
     std::string exx_thr_type = "density"; // threshold type for exx outer loop, energy or density
     double exx_ene_thr = 1e-5; // threshold for exx outer loop when exx_thr_type = energy
+    double ecutexx = 0.0; // energy cutoff for exx calculation, Ry
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*
@@ -691,6 +693,9 @@ struct Input_para
     // ==============   #Parameters (24.td-ofdft) ===========================
     bool of_cd = false;      ///< add CD potential or not   https://doi.org/10.1103/PhysRevB.98.144302
     double of_mCD_alpha = 1.0;     /// parameter of modified CD Potential
+
+    // ==============   #Parameters (25.uncommon hardware) =================
+    int dsp_count = 4;   /// the count of dsp hardwares in one node
 
 };
 #endif

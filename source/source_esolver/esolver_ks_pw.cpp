@@ -22,12 +22,11 @@
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
-//#include <chrono>
-
 #include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_estate/setup_estate_pw.h" // mohan add 20251005
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_estate/update_pot.h" // mohan add 20251016
 
 namespace ModuleESolver
 {
@@ -49,23 +48,20 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 	// delete Hamilt
     this->deallocate_hamilt();
 
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
-    {
-        delete this->kspw_psi;
-    }
-    if (PARAM.inp.precision == "single")
-    {
-        delete this->__kspw_psi;
-    }
-
-    delete this->psi;
-    delete this->p_psi_init;
+    // mohan add 2025-10-12
+    this->stp.clean();
 }
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
-    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell, &ucell);
+	this->p_hamilt = new hamilt::HamiltPW<T, Device>(
+			this->pelec->pot, 
+			this->pw_wfc, 
+			&this->kv, 
+			&this->ppcell, 
+			&this->dftu,
+			&ucell);
 }
 
 template <typename T, typename Device>
@@ -84,23 +80,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! Call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
-    //! setup and allocation for pelec, charge density, potentials, etc. 
+    //! setup and allocation for pelec, potentials, etc. 
     elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
-    //! Allocate and initialize psi
-    this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
-      inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
-      this->sf, this->kv, this->ppcell, *this->pw_wfc);
-
-    allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
-
-    this->p_psi_init->prepare_init(inp.pw_seed);
-
-    this->kspw_psi = inp.device == "gpu" || inp.precision == "single"
-                         ? new psi::Psi<T, Device>(this->psi[0])
-                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
+    this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell, PARAM.inp);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
@@ -142,7 +127,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
         this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
 
-        this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
 
     //! Init Hamiltonian (cell changed)
@@ -154,16 +139,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
+    // note: init DFT+U is done here for pw basis for every scf iteration, however, 
+    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
-              this->chr, this->locpp, this->ppcell, this->vsep_cell,
-              this->kspw_psi, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
+              this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
-    //! Initialize wave functions
-    if (!this->already_initpsi)
-    {
-        this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
-        this->already_initpsi = true;
-    }
+    // setup psi (electronic wave functions)
+    this->stp.init(this->p_hamilt);
 
     //! Exx calculations
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" 
@@ -173,7 +156,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         {
             auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
             hamilt_pw->set_exx_helper(exx_helper);
-            exx_helper.set_psi(kspw_psi);
+            exx_helper.set_psi(this->stp.psi_t);
         }
     }
 
@@ -183,28 +166,27 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    // Call iter_init() of ESolver_KS
+    // 1) Call iter_init() of ESolver_KS
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
-    // perform charge mixing
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, PARAM.inp);
+    // 2) perform charge mixing for KSDFT using pw basis
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, this->dftu, PARAM.inp);
 
-    // mohan move harris functional to here, 2012-06-05
+    // 3) mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
-    // update local occupations for DFT+U
+    // 4) update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
     if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
         // only old DFT+U method should calculate energy correction in esolver,
         // new DFT+U method will calculate energy when evaluating the Hamiltonian
-        if (dftu->omc != 2)
+        if (this->dftu.omc != 2)
         {
-            dftu->cal_occ_pw(iter, this->kspw_psi, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
+            this->dftu.cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
         }
-        dftu->output(ucell);
+        this->dftu.output(ucell);
     }
 }
 
@@ -222,7 +204,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     // be careful that istep start from 0 and iter start from 1
     // if (iter == 1)
     hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-
     hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
@@ -270,15 +251,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                      PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(this->p_hamilt,
-                             this->kspw_psi[0],
-                             this->pelec,
-                             this->pelec->ekb.c,
-                             GlobalV::RANK_IN_POOL,
-                             GlobalV::NPROC_IN_POOL,
-                             skip_charge,
-                             ucell.tpiba,
-                             ucell.nat);
+        hsolver_pw_obj.solve(this->p_hamilt, this->stp.psi_t[0], this->pelec, this->pelec->ekb.c,
+          GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, skip_charge, ucell.tpiba, ucell.nat);
     }
 
     // symmetrize the charge density
@@ -291,24 +265,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 }
 
-// Temporary, it should be rewritten with Hamilt class.
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
-{
-    if (!conv_esolver)
-    {
-        elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(&this->chr, &ucell);
-        this->pelec->f_en.descf = this->pelec->cal_delta_escf();
-#ifdef __MPI
-        MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, BP_WORLD);
-#endif
-    }
-    else
-    {
-        this->pelec->cal_converged();
-    }
-}
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
@@ -316,7 +272,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     if (GlobalC::exx_info.info_global.cal_exx && !exx_helper.op_exx->first_iter)
     {
-        this->pelec->set_exx(exx_helper.cal_exx_energy(kspw_psi));
+        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.psi_t));
     }
 
     // deband is calculated from "output" charge density
@@ -330,7 +286,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // pp projectors, liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
-        ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+        ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
@@ -347,12 +303,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                 double dexx = 0.0;
                 if (PARAM.inp.exx_thr_type == "energy")
                 {
-                    dexx = exx_helper.cal_exx_energy(this->kspw_psi);
+                    dexx = exx_helper.cal_exx_energy(this->stp.psi_t);
                 }
-                exx_helper.set_psi(this->kspw_psi);
+                exx_helper.set_psi(this->stp.psi_t);
                 if (PARAM.inp.exx_thr_type == "energy")
                 {
-                    dexx -= exx_helper.cal_exx_energy(this->kspw_psi);
+                    dexx -= exx_helper.cal_exx_energy(this->stp.psi_t);
                     // std::cout << "dexx = " << dexx << std::endl;
                 }
                 bool conv_ene = std::abs(dexx) < PARAM.inp.exx_ene_thr;
@@ -366,14 +322,14 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                               << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    update_pot(ucell, istep, iter, conv_esolver);
-                    exx_helper.iter_inc();
+					elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
+					exx_helper.iter_inc();
                 }
             }
         }
         else
         {
-            exx_helper.set_psi(this->kspw_psi);
+            exx_helper.set_psi(this->stp.psi_t);
         }
     }
 
@@ -394,7 +350,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->psi, 
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, 
               this->kv, this->pw_wfc, PARAM.inp);
 }
 
@@ -409,24 +365,17 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // sunliang 2025-04-10
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->psi[0]);
+        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->stp.psi_cpu[0]);
+        this->pelec->cal_tau(*(this->psi));
     }
 
     // Call 'after_scf' of ESolver_KS
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-    // Transfer data from GPU to CPU in pw basis
-    if (this->device == base_device::GpuDevice)
-    {
-        castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
-                            this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
-                            this->psi[0].size());
-    }
-
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
-              this->pw_rho, this->pw_rhod, this->pw_big, this->psi, this->kspw_psi, 
-              this->__kspw_psi, this->ctx, this->Pgrid, PARAM.inp);
+              this->pw_rho, this->pw_rhod, this->pw_big, this->stp,
+              this->ctx, this->device, this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
@@ -442,20 +391,13 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
 {
     Forces<double, Device> ff(ucell.nat);
 
-    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
-    {
-        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
-    }
-
-    // Refresh __kspw_psi
-    this->__kspw_psi = PARAM.inp.precision == "single"
-                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
+    // mohan add 2025-10-12
+    this->stp.update_psi_d();
 
     // Calculate forces
     ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
-                 &this->sf, this->solvent, &this->locpp, &this->ppcell, 
-                 &this->kv, this->pw_wfc, this->__kspw_psi);
+                 &this->sf, this->solvent, &this->dftu, &this->locpp, &this->ppcell, 
+                 &this->kv, this->pw_wfc, this->stp.psi_d);
 }
 
 template <typename T, typename Device>
@@ -463,18 +405,11 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 {
     Stress_PW<double, Device> ss(this->pelec);
 
-    if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
-    {
-        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
-    }
+    // mohan add 2025-10-12
+    this->stp.update_psi_d();
 
-    // Refresh __kspw_psi
-    this->__kspw_psi = PARAM.inp.precision == "single"
-                           ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
-                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
-
-    ss.cal_stress(stress, ucell, this->locpp, this->ppcell, this->pw_rhod,
-                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
+    ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
+                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.psi_d);
 
     // external stress
     double unit_transform = 0.0;
@@ -492,9 +427,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
-            this->pw_rho, this->pw_rhod, this->chr, this->kv, this->psi,
-            this->kspw_psi, this->__kspw_psi, this->sf, 
-            this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
+            this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 
+            this->sf, this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
 
     elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
     

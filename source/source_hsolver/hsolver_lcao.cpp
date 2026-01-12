@@ -3,9 +3,9 @@
 #ifdef __MPI
 #include "diago_scalapack.h"
 #include "source_base/module_external/scalapack_connector.h"
-#else
-#include "diago_lapack.h"
 #endif
+
+#include "diago_lapack.h"
 
 #ifdef __CUSOLVERMP
 #include "diago_cusolvermp.h"
@@ -34,13 +34,18 @@
 #include "source_hsolver/parallel_k2d.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+
 namespace hsolver
 {
 
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
-                                   psi::Psi<T>& psi,
-                                   elecstate::ElecState* pes,
+template <typename TK, typename Device>
+void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
+                                   psi::Psi<TK>& psi,
+								   elecstate::ElecState* pes,
+								   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
+								   Charge &chr,
+                                   const int nspin,
                                    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
@@ -90,16 +95,14 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
                                      pes->nelec_spin,
                                      pes->skip_weights);
 
-        auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
-        elecstate::calEBand(_pes_lcao->ekb, _pes_lcao->wg, _pes_lcao->f_en);
-        elecstate::cal_dm_psi(_pes_lcao->DM->get_paraV_pointer(), _pes_lcao->wg, psi, *(_pes_lcao->DM));
-        _pes_lcao->DM->cal_DMR();
+        elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
+        elecstate::cal_dm_psi(dm.get_paraV_pointer(), pes->wg, psi, dm);
+        dm.cal_DMR();
 
         if (!skip_charge)
         {
-            // used in scf calculation
-            // calculate charge by eigenpairs(eigenvalues and eigenvectors)
-            pes->psiToRho(psi);
+            // compute charge density from density matrix, mohan update 20251024
+            LCAO_domain::dm2rho(dm.get_DMR_vector(), nspin, &chr);
         }
         else
         {
@@ -109,7 +112,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<T> pe(ParaV);
+        DiagoPexsi<TK> pe(ParaV);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
@@ -118,10 +121,10 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             pe.diag(pHamilt, psi, nullptr);
         }
-        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
-        _pes->dmToRho(pe.DM, pe.EDM);
+        _pes->dm2rho(pe.DM, pe.EDM, &dm);
 #endif
     }
 
@@ -171,13 +174,11 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     }
 #endif
 #endif
-#ifndef __MPI
     else if (this->method == "lapack") // only for single core
     {
         DiagoLapack<T> la;
         la.diag(hm, psi, eigenvalue);
     }
-#endif
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");

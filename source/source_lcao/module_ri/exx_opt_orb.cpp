@@ -2,10 +2,10 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "exx_abfs.h"
-#include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_ri/Matrix_Orbs11.h"
 #include "source_lcao/module_ri/Matrix_Orbs21.h"
@@ -47,19 +47,13 @@ void Exx_Opt_Orb::generate_matrix(
 		{ jle = Exx_Abfs::IO::construct_abfs( jle, orb, info.files_jles, info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(jle);
 
-	// GlobalC::exx_info.info_ri.abfs_Lmax is used for Center2 temporarily
-	for(const auto &orb_T : abfs)
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(orb_T.size())-1 ); }
-	for(const auto &orb_T : jle)
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(orb_T.size())-1 ); }
-
-	const ModuleBase::Element_Basis_Index::Range    range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
+	const ModuleBase::Element_Basis_Index::Range    range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
 
-	const ModuleBase::Element_Basis_Index::Range    range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
+	const ModuleBase::Element_Basis_Index::Range    range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	const ModuleBase::Element_Basis_Index::Range    range_jys = Exx_Abfs::Abfs_Index::construct_range( jle );
+	const ModuleBase::Element_Basis_Index::Range    range_jys = ModuleBase::Element_Basis_Index::construct_range( jle );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_jys = ModuleBase::Element_Basis_Index::construct_index( range_jys );
 
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs, GlobalV::ofs_running);
@@ -72,12 +66,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_lcaoslcaos_lcaoslcaos.init( 1, ucell,orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_lcaoslcaos_lcaoslcaos.init_radial( lcaos, lcaos, lcaos, lcaos, MGT );
+		m_lcaoslcaos_lcaoslcaos.init( lcaos, lcaos, lcaos, lcaos, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_lcaoslcaos_lcaoslcaos.init_radial_table(radial_R);
 		#else
@@ -92,12 +81,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs21 m_jyslcaos_lcaos;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_jyslcaos_lcaos.init( 1, ucell , orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_jyslcaos_lcaos.init_radial( jle, lcaos, lcaos, MGT);
+		m_jyslcaos_lcaos.init( jle, lcaos, lcaos, ucell , orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jyslcaos_lcaos.init_radial_table( radial_R);
 		#else
@@ -111,12 +95,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs11 m_jys_jys;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_jys_jys.init( 2,ucell,orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_jys_jys.init_radial( jle, jle, MGT );
+		m_jys_jys.init( jle, jle, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_jys.init_radial_table(radial_R);
 		#else
@@ -130,12 +109,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_abfs_abfs;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_abfs_abfs.init( 2, ucell, orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_abfs_abfs.init_radial( abfs, abfs, MGT );
+		m_abfs_abfs.init( abfs, abfs, ucell, orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_abfs_abfs.init_radial_table(radial_R);
 		#else
@@ -150,12 +124,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs21 m_abfslcaos_lcaos;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_abfslcaos_lcaos.init( 1, ucell , orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos, MGT );
+		m_abfslcaos_lcaos.init( abfs, lcaos, lcaos, ucell , orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_abfslcaos_lcaos.init_radial_table(radial_R);
 		#else
@@ -170,12 +139,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(jle))	{ return {}; }
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_jys_abfs;
-		ORB_gaunt_table MGT;
-		int Lmax;
-		m_jys_abfs.init( 2, ucell,orb, info.kmesh_times, orb.get_Rmax(), Lmax );
-		MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-		m_jys_abfs.init_radial( jle, abfs, MGT );
+		m_jys_abfs.init( jle, abfs, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_abfs.init_radial_table(radial_R);
 		#else

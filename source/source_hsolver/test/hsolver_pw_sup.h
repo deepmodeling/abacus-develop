@@ -92,7 +92,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template <typename T, typename Device>
-void DiagoCG<T, Device>::diag(const Func& hpsi_func,
+double DiagoCG<T, Device>::diag(const Func& hpsi_func,
                               const Func& spsi_func,
                               ct::Tensor& psi,
                               ct::Tensor& eigen,
@@ -112,7 +112,7 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
         eigen_pack[ib] /= n_basis;
     }
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
-    return;
+    return avg_iter_;
 }
 
 template class DiagoCG<std::complex<float>, base_device::DEVICE_CPU>;

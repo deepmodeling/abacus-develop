@@ -53,6 +53,19 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
     this->rhopw = rhopw_in;
 }
 
+// mohan add 2025-12-02
+bool Charge::kin_density()
+{
+	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void Charge::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
@@ -77,12 +90,19 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int& nspin_in)
+void Charge::allocate(const int& nspin_in, const bool kin_den)
 {
     ModuleBase::TITLE("Charge", "allocate");
+
+	if (this->rhopw == nullptr)
+	{
+		ModuleBase::WARNING_QUIT("Charge::allocate","rhopw is nullptr.");
+	}
+
     this->nrxx = this->rhopw->nrxx;
     this->nxyz = this->rhopw->nxyz;
     this->ngmc = this->rhopw->npw;
+
 
     if (allocate_rho == true)
     {
@@ -105,7 +125,7 @@ void Charge::allocate(const int& nspin_in)
     _space_rho_save = new double[nspin * nrxx];
     _space_rhog = new std::complex<double>[nspin * ngmc];
     _space_rhog_save = new std::complex<double>[nspin * ngmc];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         _space_kin_r = new double[nspin * nrxx];
         _space_kin_r_save = new double[nspin * nrxx];
@@ -114,7 +134,7 @@ void Charge::allocate(const int& nspin_in)
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
     rhog_save = new std::complex<double>*[nspin];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
@@ -129,7 +149,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
-        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+        if(kin_den) 
         {
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
@@ -142,7 +162,7 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
     ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
     ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
@@ -634,6 +654,8 @@ void Charge::save_rho_before_sum_band()
 
 double Charge::cal_rho2ne(const double* rho_in) const
 {
+    assert(this->rhopw->nxyz > 0); // mohan add 2025-12-02
+
     double ne = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {

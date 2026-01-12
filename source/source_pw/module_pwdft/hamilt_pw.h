@@ -9,6 +9,7 @@
 #include "source_pw/module_pwdft/VNL_in_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 namespace hamilt
 {
@@ -21,10 +22,19 @@ class HamiltPW : public Hamilt<T, Device>
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
+
   public:
-    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl* nlpp,const UnitCell* ucell);
+
+	HamiltPW(elecstate::Potential* pot_in, 
+			ModulePW::PW_Basis_K* wfc_basis, 
+			K_Vectors* p_kv, 
+			pseudopot_cell_vnl* nlpp,
+			Plus_U *p_dftu, // mohan add 2025-11-06
+			const UnitCell* ucell);
+
     template<typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
+
     ~HamiltPW();
 
     // for target K point, update consequence of hPsi() and matrix()

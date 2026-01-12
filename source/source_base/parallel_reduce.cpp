@@ -13,6 +13,15 @@ void Parallel_Reduce::reduce_all<int>(int& object)
     return;
 }
 
+template <>
+void Parallel_Reduce::reduce_all<long long>(long long& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
 void Parallel_Reduce::reduce_int_diag(int& object)
 {
 #ifdef __MPI
@@ -44,6 +53,15 @@ void Parallel_Reduce::reduce_all<int>(int* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_all<long long>(long long* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #endif
     return;
 }

@@ -4,6 +4,7 @@ suffix			autotest
 calculation     scf
 esolver_type    sdft
 method_sto      1
+init_wfc        random
 
 symmetry		0
 pseudo_dir	../../PP_ORB

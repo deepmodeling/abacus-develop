@@ -16,6 +16,7 @@
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
@@ -179,8 +180,9 @@ class Stress_Func
     void stress_onsite(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
                        const ModulePW::PW_Basis_K* wfc_basis,
-                       const UnitCell& ucell_in,
-                       const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
+					   const UnitCell& ucell_in,
+					   const Plus_U &dftu, // mohan add 2025-11-06
+					   const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                        ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,

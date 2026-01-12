@@ -21,7 +21,7 @@ jobs:
       
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -33,6 +33,7 @@ jobs:
       - name: Build
         run: |
           nvidia-smi
+          rm -rf build
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build

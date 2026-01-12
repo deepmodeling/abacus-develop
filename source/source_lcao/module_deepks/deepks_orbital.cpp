@@ -9,7 +9,6 @@
 template <typename TK, typename TH>
 void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 const std::vector<std::vector<TK>>& h_delta,
-                                // std::vector<double>& o_delta,
                                 ModuleBase::matrix& o_delta,
                                 const Parallel_Orbitals& pv,
                                 const int nks,
@@ -48,7 +47,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
             }
         }
         Parallel_Reduce::reduce_all(o_delta_tmp);
-        
+
         const double* o_delta_ptr = reinterpret_cast<const double*>(&o_delta_tmp);
         o_delta(ik, 0) = o_delta_ptr[0]; // real part in complex case
     }
@@ -58,7 +57,6 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
 
 template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::vector<ModuleBase::matrix>& dm_hl,
                                                                      const std::vector<std::vector<double>>& h_delta,
-                                                                     //  std::vector<double>& o_delta,
                                                                      ModuleBase::matrix& o_delta,
                                                                      const Parallel_Orbitals& pv,
                                                                      const int nks,
@@ -67,7 +65,6 @@ template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::
 template void DeePKS_domain::cal_o_delta<std::complex<double>, ModuleBase::ComplexMatrix>(
     const std::vector<ModuleBase::ComplexMatrix>& dm_hl,
     const std::vector<std::vector<std::complex<double>>>& h_delta,
-    // std::vector<double>& o_delta,
     ModuleBase::matrix& o_delta,
     const Parallel_Orbitals& pv,
     const int nks,

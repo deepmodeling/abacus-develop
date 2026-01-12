@@ -4,7 +4,7 @@ suffix               autotest
 calculation          md
 esolver_type         ksdft
 md_type              nve
-md_nstep             3
+md_nstep             4
 symmetry             -1
                  
 #Parameters (2.Iteration)

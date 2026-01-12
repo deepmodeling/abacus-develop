@@ -14,6 +14,7 @@
 
 #if defined(__CUDA)
 #include <cuda_runtime.h>
+#include "source_base/module_device/cuda_compat.h"
 #endif
 
 #if defined(__ROCM)
@@ -115,7 +116,13 @@ void output_device_info(std::ostream &output)
     int local_rank = get_node_rank_with_mpi_shared(MPI_COMM_WORLD);
 
     // Get local hardware info
-    int local_gpu_count = local_rank == 0 ? get_device_num("gpu") : 0;
+    int local_gpu_count = 0;
+    #if defined(__CUDA) || defined(__ROCM)
+    if(PARAM.inp.device == "gpu" && local_rank == 0)
+    {
+        local_gpu_count = get_device_num("gpu");
+    }
+    #endif
     int local_cpu_sockets = local_rank == 0 ? get_device_num("cpu") : 0;
 
     // Prepare vectors to gather data from all ranks
@@ -133,7 +140,13 @@ void output_device_info(std::ostream &output)
 
         // Get device model names (from rank 0 node)
         std::string cpu_name = get_device_name("cpu");
-        std::string gpu_name = get_device_name("gpu");
+        std::string gpu_name;
+        #if defined(__CUDA) || defined(__ROCM)
+        if(PARAM.inp.device == "gpu" && total_gpus > 0)
+        {
+            gpu_name = get_device_name("gpu");
+        }
+        #endif
 
         // Output all collected information
         output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
@@ -207,26 +220,12 @@ void print_device_info<base_device::DEVICE_GPU>(
           deviceProp.major, deviceProp.minor);
   ofs_device << msg << std::endl;
   sprintf(msg,
-          "  GPU Max Clock rate:                            %.0f MHz (%0.2f "
-          "GHz)\n",
-          deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
-  ofs_device << msg << std::endl;
-  // This is supported in CUDA 5.0 (runtime API device properties)
-  sprintf(msg, "  Memory Clock rate:                             %.0f Mhz\n",
-          deviceProp.memoryClockRate * 1e-3f);
-  ofs_device << msg << std::endl;
-
-  sprintf(msg, "  Memory Bus Width:                              %d-bit\n",
-          deviceProp.memoryBusWidth);
-  ofs_device << msg << std::endl;
-  sprintf(msg,
           "  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
           "%d), 3D=(%d, %d, %d)\n",
           deviceProp.maxTexture1D, deviceProp.maxTexture2D[0],
           deviceProp.maxTexture2D[1], deviceProp.maxTexture3D[0],
           deviceProp.maxTexture3D[1], deviceProp.maxTexture3D[2]);
   ofs_device << msg << std::endl;
-
   sprintf(
       msg,
       "  Maximum Layered 1D Texture Size, (num) layers  1D=(%d), %d layers\n",
@@ -273,15 +272,6 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Texture alignment:                             %zu bytes\n",
           deviceProp.textureAlignment);
   ofs_device << msg << std::endl;
-  sprintf(msg,
-          "  Concurrent copy and kernel execution:          %s with %d copy "
-          "engine(s)\n",
-          (deviceProp.deviceOverlap ? "Yes" : "No"),
-          deviceProp.asyncEngineCount);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Run time limit on kernels:                     %s\n",
-          deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No");
-  ofs_device << msg << std::endl;
   sprintf(msg, "  Integrated GPU sharing Host Memory:            %s\n",
           deviceProp.integrated ? "Yes" : "No");
   ofs_device << msg << std::endl;
@@ -306,28 +296,14 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Supports Cooperative Kernel Launch:            %s\n",
           deviceProp.cooperativeLaunch ? "Yes" : "No");
   ofs_device << msg << std::endl;
-  sprintf(msg, "  Supports MultiDevice Co-op Kernel Launch:      %s\n",
-          deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
-  ofs_device << msg << std::endl;
   sprintf(msg,
           "  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
           deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
   ofs_device << msg << std::endl;
-  const char *sComputeMode[] = {
-      "Default (multiple host threads can use ::cudaSetDevice() with device "
-      "simultaneously)",
-      "Exclusive (only one host thread in one process is able to use "
-      "::cudaSetDevice() with this device)",
-      "Prohibited (no host thread can use ::cudaSetDevice() with this "
-      "device)",
-      "Exclusive Process (many threads in one process is able to use "
-      "::cudaSetDevice() with this device)",
-      "Unknown",
-      NULL};
-  sprintf(msg, "  Compute Mode:\n");
-  ofs_device << msg << std::endl;
-  ofs_device << "  " << sComputeMode[deviceProp.computeMode] << std::endl
-             << std::endl;
+
+  ModuleBase::cuda_compat::printDeprecatedDeviceInfo(ofs_device, deviceProp);
+ 
+  ModuleBase::cuda_compat::printComputeModeInfo(ofs_device, deviceProp);
 
   // If there are 2 or more GPUs, query to determine whether RDMA is supported
   if (deviceCount >= 2) {

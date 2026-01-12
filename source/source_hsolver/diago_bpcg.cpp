@@ -112,14 +112,14 @@ void DiagoBPCG<T, Device>::line_minimize(
 // Finally, the last two!
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::orth_cholesky(
-		ct::Tensor& workspace_in, 
-		ct::Tensor& psi_out, 
-		ct::Tensor& hpsi_out, 
+		ct::Tensor& workspace_in,
+		ct::Tensor& psi_out,
+		ct::Tensor& hpsi_out,
 		ct::Tensor& hsub_out)
 {
     // gemm: hsub_out(n_band x n_band) = psi_out^T(n_band x n_basis) * psi_out(n_basis x n_band)
     this->pmmcn.multiply(1.0, psi_out.data<T>(), psi_out.data<T>(), 0.0, hsub_out.data<T>());
-    
+
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
         'L', hsub_out.data<T>(), this->n_band);
@@ -209,7 +209,8 @@ void DiagoBPCG<T, Device>::diag_hsub(
     // gemm: hsub_out(n_band x n_band) = hpsi_in^T(n_band x n_basis) * psi_in(n_basis x n_band)
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
 
-    ct::kernels::lapack_heevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
+    // ct::kernels::lapack_heevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
+    ct::kernels::lapack_heevd<T, ct_Device>()(this->n_band, hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 
     return;
 }
@@ -235,15 +236,15 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block(
     // hpsi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
- 
+
     return;
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
-        ct::Tensor& psi_out, 
+        ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
-        ct::Tensor& hsub_out, 
+        ct::Tensor& hsub_out,
         ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out)
 {

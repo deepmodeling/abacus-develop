@@ -28,22 +28,14 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
         {
             //! SDFT only supports double precision currently
             pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(pw_wfc,
-                &chr, &kv, &ucell, &ppcell,
-                pw_rhod, pw_rho, pw_big);
+                &chr, &kv, &ucell, &ppcell, pw_rho, pw_big);
         }
         else
         {
             pelec = new elecstate::ElecStatePW<T, Device>(pw_wfc,
-                &chr, &kv, &ucell, &ppcell,
-                pw_rhod, pw_rho, pw_big);
+                &chr, &kv, &ucell, &ppcell, pw_rho, pw_big);
         }
     }
-
-    //! Set the cell volume variable in pelec
-    pelec->omega = ucell.omega;
-
-    //! Inititlize the charge density.
-    chr.allocate(inp.nspin);
 
     //! Initialize DFT-1/2
     if (PARAM.inp.dfthalf_type > 0)

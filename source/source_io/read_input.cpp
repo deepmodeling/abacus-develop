@@ -15,6 +15,10 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_base/module_device/device.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
 namespace ModuleIO
 {
@@ -69,7 +73,7 @@ std::string to_dir(const std::string& str)
     return str_dir;
 }
 
-void read_information(std::ifstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
+void read_information(std::stringstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
 {
     std::string line;
     getline(ifs, line);
@@ -87,6 +91,62 @@ void read_information(std::ifstream& ifs, std::vector<std::string>& output, cons
 }
 
 bool ReadInput::check_mode = false;
+
+bool filter_nonascii_and_comment(std::ifstream& ifs,
+                       std::stringstream& out_ascii_stream)
+{
+    // 
+    if (!ifs.is_open()) {
+        if (!ifs) return false;
+    }
+
+    std::streampos old_pos = ifs.tellg();
+    ifs.clear();
+    ifs.seekg(0, std::ios::beg);
+
+    char c;
+    while (ifs.get(c)) {
+        // If comment start, skip until end of line (but keep the newline)
+        if (c == '#') {
+            char d;
+            bool newline_found = false;
+            while (ifs.get(d)) {
+                if (d == '\n' || d == '\r') {
+                    // preserve line break in output
+                    out_ascii_stream.put('\n');
+                    // If CRLF, consume the LF after CR (already wrote a single '\n')
+                    if (d == '\r' && ifs.peek() == '\n') {
+                        ifs.get(d); // consume '\n'
+                    }
+                    newline_found = true;
+                    break;
+                }
+            }
+            if (!newline_found) {
+                // reached EOF while skipping comment
+                break;
+            }
+            continue;
+        }
+
+        unsigned char uc = static_cast<unsigned char>(c);
+        if (uc <= 0x7F) {
+            // ASCII character
+            out_ascii_stream.put(c);
+        }
+        else {
+            // replace non-ASCII with space character
+            out_ascii_stream.put(' ');
+        }
+    }
+
+    // recover ifstream state and position
+    ifs.clear();
+    ifs.seekg(old_pos, std::ios::beg);
+
+    return true;
+}
+
 
 ReadInput::ReadInput(const int& rank)
 {
@@ -197,7 +257,6 @@ void ReadInput::create_directory(const Parameter& param)
     }
     // NOTE: "make_dir_out" must be called by all processes!!!
     //       Maybe it is not good, because only rank 0 can create the directory.
-    #ifndef __SW
     ModuleBase::Global_File::make_dir_out(param.input.suffix,
                                           param.input.calculation,
                                           out_dir,
@@ -205,14 +264,12 @@ void ReadInput::create_directory(const Parameter& param)
                                           this->rank,
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
-    #endif
-    const std::string ss = "test -d " + PARAM.inp.read_file_dir;
-    #ifndef __SW
-    if (system(ss.c_str()))
+    //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
+    struct stat st;
+    if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
     {
         ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");
     }
-    #endif
     return;
 }
 
@@ -228,32 +285,38 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("ReadInput", "read_txt_input");
 
-    std::ifstream ifs(filename.c_str(), std::ios::in);
+    std::stringstream ascii_stream;
 
-    if (!ifs)
     {
-        std::cout << " Can't find the INPUT file." << std::endl;
-        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+        std::ifstream ifs(filename.c_str(), std::ios::in);
+
+        if (!ifs)
+        {
+            std::cout << " Can't find the INPUT file." << std::endl;
+            ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+        }
+
+        ifs.clear();
+        ifs.seekg(0);
+
+        filter_nonascii_and_comment(ifs, ascii_stream);
+        ifs.clear();
+
+        // file close after reading
     }
-
-    ifs.clear();
-    ifs.seekg(0);
-
-    std::string word;
+    
     int ierr = 0;
-
-    // ifs >> std::setiosflags(ios::uppercase);
-    ifs.rdstate();
-    while (ifs.good())
+    ascii_stream.rdstate();
+    while (ascii_stream.good())
     {
-        ifs >> word;
-        ifs.ignore(150, '\n');
+        std::string word;
+        ascii_stream >> word;
+        ascii_stream.ignore(150, '\n');
         if (word == "INPUT_PARAMETERS")
         {
             ierr = 1;
             break;
         }
-        ifs.rdstate();
     }
 
     if (ierr == 0)
@@ -266,14 +329,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
-    ifs.rdstate();
-    // the `word1` is moved here and is renamed to improve the code-readability
-    std::string word_; // temporary variable to store the keyword read-in
-    while (ifs.good())
+    ascii_stream.rdstate();
+    while (ascii_stream.good())
     {
-        ifs >> word_;
-        if (ifs.eof()) { break; }
-        word = FmtCore::lower(word_); // the lowercase of the keyword
+        std::string word; // temporary variable to store the keyword read-in
+        ascii_stream >> word;
+        if (ascii_stream.eof()) { break; }
+        word = FmtCore::lower(word); // the lowercase of the keyword
         auto it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
@@ -286,7 +348,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             // qianrui delete '/' 2024-07-10, because path has '/' head.
-            read_information(ifs, p_item->str_values, "#!");
+            read_information(ascii_stream, p_item->str_values, "#!");
         }
         else // otherwise, it should be a comment or an unrecognized parameter
         {
@@ -299,25 +361,24 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             // otherwise, it is a comment. However, ...
             // but it is not always to be shorter than 150 characters
             // we can use ignore to skip the rest of the line
-            ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            ascii_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
 
-        ifs.rdstate();
-        if (ifs.eof())
+        ascii_stream.rdstate();
+        if (ascii_stream.eof())
         {
             break;
         }
-        else if (ifs.bad())
+        else if (ascii_stream.bad())
         {
-            std::cout << " Bad input parameters. " << std::endl;
-            exit(1);
+            ModuleBase::WARNING_QUIT("Input", 
+                                    " Bad input parameters. ", 1);
         }
-        else if (ifs.fail())
+        else if (ascii_stream.fail())
         {
-            std::cout << " word = " << word << std::endl;
-            std::cout << " Fail to read parameters. " << std::endl;
-            ifs.clear();
-            exit(1);
+            ascii_stream.clear();
+            ModuleBase::WARNING_QUIT("Input", 
+                                    " fail to read parameters. ", 1);
         }
     }
 
@@ -488,12 +549,12 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
 int ReadInput::current_md_step(const std::string& file_dir)
 {
     std::stringstream ssc;
-    ssc << file_dir << "Restart_md.dat";
+    ssc << file_dir << "Restart_md.txt";
     std::ifstream file(ssc.str().c_str());
 
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.dat");
+        ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.txt");
     }
 
     int md_step;

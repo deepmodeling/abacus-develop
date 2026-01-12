@@ -5,8 +5,7 @@
 
 namespace ModuleIO
 {
-
-template <>
+template <typename T>
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
                        const bool& out_mat_ds,
@@ -15,39 +14,20 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const int& istep,
                        const ModuleBase::matrix& v_eff,
                        const Parallel_Orbitals& pv,
-                       Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-                       hamilt::Hamilt<double>* p_ham)
-{
-}
-
-template <>
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
-                       const bool& out_mat_ds,
-                       const bool& out_mat_t,
-                       const bool& out_mat_r,
-                       const int& istep,
-                       const ModuleBase::matrix& v_eff,
-                       const Parallel_Orbitals& pv,
-                       Gint_k& gint_k,
-                       const TwoCenterBundle& two_center_bundle,
-                       const LCAO_Orbitals& orb,
-                       UnitCell& ucell,
-                       const Grid_Driver& grid,
-                       const K_Vectors& kv,
-                       hamilt::Hamilt<std::complex<double>>* p_ham)
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U* p_dftu)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (out_mat_hsR)
     {
-        output_HSR(ucell,istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
+        output_HSR(ucell, istep, pv, HS_Arrays, grid, kv, *p_dftu, p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
@@ -61,7 +41,6 @@ void output_mat_sparse(const bool& out_mat_hsR,
     {
         output_dHR(istep,
                    v_eff,
-                   gint_k, // mohan add 2024-04-01
                    ucell,
                    pv,
                    HS_Arrays,
@@ -90,7 +69,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
         r_matrix.init(ucell, pv, orb);
         if (out_mat_hsR)
         {
-            r_matrix.out_rR_other(ucell,istep, HS_Arrays.output_R_coor);
+            r_matrix.out_rR_other(ucell, istep, HS_Arrays.output_R_coor);
         }
         else
         {
@@ -100,5 +79,37 @@ void output_mat_sparse(const bool& out_mat_hsR,
 
     return;
 }
+
+template void output_mat_sparse<double>(const bool& out_mat_hsR,
+                                        const bool& out_mat_dh,
+                                        const bool& out_mat_ds,
+                                        const bool& out_mat_t,
+                                        const bool& out_mat_r,
+                                        const int& istep,
+                                        const ModuleBase::matrix& v_eff,
+                                        const Parallel_Orbitals& pv,
+                                        const TwoCenterBundle& two_center_bundle,
+                                        const LCAO_Orbitals& orb,
+                                        UnitCell& ucell,
+                                        const Grid_Driver& grid,
+                                        const K_Vectors& kv,
+										hamilt::Hamilt<double>* p_ham,
+										Plus_U* p_dftu);
+
+template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
+                                                      const bool& out_mat_dh,
+                                                      const bool& out_mat_ds,
+                                                      const bool& out_mat_t,
+                                                      const bool& out_mat_r,
+                                                      const int& istep,
+                                                      const ModuleBase::matrix& v_eff,
+                                                      const Parallel_Orbitals& pv,
+                                                      const TwoCenterBundle& two_center_bundle,
+                                                      const LCAO_Orbitals& orb,
+                                                      UnitCell& ucell,
+                                                      const Grid_Driver& grid,
+                                                      const K_Vectors& kv,
+													  hamilt::Hamilt<std::complex<double>>* p_ham,
+													  Plus_U* p_dftu);
 
 } // namespace ModuleIO

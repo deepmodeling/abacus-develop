@@ -31,7 +31,9 @@ void ReadInput::item_relax()
             ModuleBase::WARNING_QUIT("ReadInput", warningstr);
         }
         };
+        sync_stringvec(input.relax_method, para.input.relax_method.size(), "");
         this->add_item(item);
+        
         
         // Input_Item item("relax_method");
         // item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";

@@ -10,6 +10,7 @@
 #include "source_io/cube_io.h"
 #include "source_io/io_npz.h"
 #include "source_io/print_info.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
 namespace ModuleESolver
 {
@@ -47,19 +48,20 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 
     // file name of DM
     std::string zipname = "output_DM0.npz";
-    elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
 
     // read DM from file
-    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
+    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(1)));
 
     // if nspin=2, need extra reading
     if (PARAM.inp.nspin == 2)
     {
         zipname = "output_DM1.npz";
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
+        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(2)));
     }
 
-    this->pelec->psiToRho(*this->psi);
+    // it's dangerous to design psiToRho function like this, mohan note 20251024
+    // this->pelec->psiToRho(*this->psi);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 
     int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
 

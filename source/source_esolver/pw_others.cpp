@@ -1,41 +1,9 @@
 #include "esolver_ks_pw.h"
-
-#include "source_base/global_variable.h"
-#include "source_pw/module_pwdft/elecond.h"
-#include "source_io/input_conv.h"
-#include "source_io/output_log.h"
-
-#include <iostream>
-
-//--------------temporary----------------------------
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_estate/occupy.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/print_info.h"
-//-----force-------------------
-#include "source_pw/module_pwdft/forces.h"
-//-----stress------------------
-#include "source_pw/module_pwdft/stress_pw.h"
-//---------------------------------------------------
 #include "source_base/memory.h"
 #include "source_base/module_device/device.h"
-#include "source_estate/elecstate_pw.h"
-#include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_hsolver/diago_iter_assist.h"
-#include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/hegvd_op.h"
-#include "source_base/kernels/math_kernel_op.h"
-#include "source_io/berryphase.h"
 #include "source_io/numerical_basis.h"
 #include "source_io/numerical_descriptor.h"
-#include "source_io/to_wannier90_pw.h"
-#include "source_io/write_elecstat_pot.h"
-#include "source_io/module_parameter/parameter.h"
 
-#include <ATen/kernels/blas.h>
-#include <ATen/kernels/lapack.h>
 #include "source_base/formatter.h"
 
 // mohan add 2025-03-06

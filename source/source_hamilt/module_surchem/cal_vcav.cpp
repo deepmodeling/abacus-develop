@@ -16,25 +16,26 @@ void lapl_rho(const double& tpiba2,
     // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
     for (int ig = 0; ig < rho_basis->npw; ig++) {
         gdrtmpg[ig] = rhog[ig];
-}
+    }
+    
     for(int i = 0 ; i < 3 ; ++i)
     {
-        // calculate the charge density gradient in reciprocal space.
+        // calculate the charge density gradient in reciprocal space.        
         for (int ig = 0; ig < rho_basis->npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
-}
+        }
+        
         // bring the gdr from G --> R
         rho_basis->recip2real(aux, aux);
+        
         // remember to multily 2pi/a0, which belongs to G vectors.
         for (int ir = 0; ir < rho_basis->nrxx; ir++) {
             lapn[ir] -= aux[ir].real() * tpiba2;
-}
-
+        }
     }
 
     delete[] gdrtmpg;
     delete[] aux;
-    return;
 }
 
 // calculates first derivative of the shape function in realspace
@@ -66,6 +67,7 @@ void surchem::createcavity(const UnitCell& ucell,
 {
     ModuleBase::Vector3<double> *nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(nablan, rho_basis->nrxx);
+    
     double *nablan_2 = new double[rho_basis->nrxx];
     double *sqrt_nablan_2 = new double[rho_basis->nrxx];
     double *lapn = new double[rho_basis->nrxx];
@@ -77,14 +79,14 @@ void surchem::createcavity(const UnitCell& ucell,
     // nabla n
     XC_Functional::grad_rho(ps_totn, nablan, rho_basis, ucell.tpiba);
 
-    //  |\nabla n |^2 = nablan_2
+    // |\nabla n |^2 = nablan_2
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         nablan_2[ir] = pow(nablan[ir].x, 2) + pow(nablan[ir].y, 2) + pow(nablan[ir].z, 2);
     }
 
     // Laplacian of n
-    lapl_rho(ucell.tpiba2,ps_totn, lapn, rho_basis);
+    lapl_rho(ucell.tpiba2, ps_totn, lapn, rho_basis);
 
     //-------------------------------------------------------------
     // add -Lap(n)/|\nabla n| to vwork and copy \sqrt(|\nabla n|^2)
@@ -162,10 +164,13 @@ void surchem::createcavity(const UnitCell& ucell,
     delete[] ggn;
 }
 
-ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
-                                     const ModulePW::PW_Basis* rho_basis,
-                                     std::complex<double>* ps_totn,
-                                     int nspin)
+//The interface is changed to use an explicit output parameter to
+//clarify lifetime management and avoid hidden allocations.
+void surchem::cal_vcav(const UnitCell& ucell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       std::complex<double>* ps_totn,
+                       int nspin,
+                       ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vcav");
     ModuleBase::timer::tick("surchem", "cal_vcav");
@@ -175,12 +180,12 @@ ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
 
     createcavity(ucell, rho_basis, ps_totn, tmp_Vcav);
 
-    ModuleBase::GlobalFunc::ZEROS(Vcav.c, nspin * rho_basis->nrxx);
     if (nspin == 4)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
-            Vcav(0, ir) += tmp_Vcav[ir];
+            Vcav(0, ir) = tmp_Vcav[ir];
+            v(0, ir) += Vcav(0, ir);
         }
     }
     else
@@ -189,12 +194,13 @@ ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
         {
             for (int ir = 0; ir < rho_basis->nrxx; ir++)
             {
-                Vcav(is, ir) += tmp_Vcav[ir];
+                Vcav(is, ir) = tmp_Vcav[ir];
+                v(is, ir) += Vcav(is, ir);
             }
         }
     }
 
     delete[] tmp_Vcav;
     ModuleBase::timer::tick("surchem", "cal_vcav");
-    return Vcav;
+    return;
 }

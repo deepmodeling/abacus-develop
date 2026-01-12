@@ -1,10 +1,17 @@
 # This is the Makefile of ABACUS
-include Makefile.vars
+ABACUS_ROOT := $(dir $(firstword $(MAKEFILE_LIST)))
+
+BUILD_DIR ?= build
+OBJ_DIR = $(BUILD_DIR)/obj
+BIN_DIR = $(BUILD_DIR)/bin
+BUILD_INFO_DIR = $(BUILD_DIR)/source_io
+
+include $(ABACUS_ROOT)Makefile.vars
+
 #==========================
 # Compiler information 
 #==========================
-
-INCLUDES = -I. -Isource_main -Isource_main/commands -Icommands -I../ -Isource_base/module_container
+INCLUDES = -I$(ABACUS_ROOT) -I$(ABACUS_ROOT)source_main -I$(ABACUS_ROOT)source_main/commands -I$(ABACUS_ROOT)commands -I$(BUILD_INFO_DIR) -I$(ABACUS_ROOT)../ -I$(ABACUS_ROOT)source_base/module_container
 
 LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
@@ -21,9 +28,8 @@ ifeq ($(OPENMP), ON)
 else
     ELPA_NAME = elpa
 endif
-OBJ_DIR = obj
-BIN_DIR = ../bin
-SOURCE_DIR = .
+
+SOURCE_DIR = $(ABACUS_ROOT)
 ifeq ($(findstring mpi, $(CXX)), mpi)
      # We do not support EXX in sequential version temporarily.
      HONG += -D__MPI  -DUSE_CEREAL_SERIALIZATION
@@ -186,7 +192,9 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
-include Makefile.Objects
+include $(ABACUS_ROOT)Makefile.Objects
+VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
+HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
 
 #==========================
 # Optional HONG
@@ -208,6 +216,44 @@ endif
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OBJS_ABACUS})
 
+###### START of ABACUS INFO PART ######
+
+# Rule to generate the build_info.h file using the shell script.
+# This rule is executed whenever build_info.h.in, the script, or any of the
+# relevant Makefile variables change.
+$(BUILD_INFO_DIR)/build_info.h:$(ABACUS_ROOT)source_io/build_info.h.in $(ABACUS_ROOT)../generate_build_info.sh
+	@echo "Generating build information header..."
+	@# Make sure directory is available
+	@mkdir -p $(dir $@)
+	@# Export all necessary Makefile variables as environment for the script
+	@export BUILD_TYPE="Release"; \
+	if [ "$(DEBUG)" = "ON" ]; then export BUILD_TYPE="Debug"; export ENABLE_ASAN="yes"; else export ENABLE_ASAN="no"; fi; \
+	export CXX="${CXX}"; \
+	export CXXFLAGS="${OPTS} ${HONG}"; \
+	export MKLROOT="${MKLROOT}"; \
+	export ELPA_DIR="${ELPA_DIR}"; \
+	export FFTW_DIR="${FFTW_DIR}"; \
+	export CEREAL_DIR="${CEREAL_DIR}"; \
+	export LIBXC_DIR="${LIBXC_DIR}"; \
+	export LIBRI_DIR="${LIBRI_DIR}"; \
+	export DeePMD_DIR="${DeePMD_DIR}"; \
+	export TensorFlow_DIR="${TensorFlow_DIR}"; \
+	export PEXSI_DIR="${PEXSI_DIR}"; \
+	export ENABLE_MPI="no"; \
+	if [ "$(MPI)" = "ON" ]; then export ENABLE_MPI="ON"; fi; \
+	export USE_CUDA="no"; \
+	if [ "$(GPU)" = "CUDA" ]; then export USE_CUDA="ON"; fi; \
+	$(ABACUS_ROOT)../generate_build_info.sh $@
+	@echo "Build information header generated."
+
+    # Specific rule for parse_args.o to enforce dependency on build_info.h.
+    # This overrides the generic %.o:%.cpp rule for this specific file.
+${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR)/build_info.h
+	@mkdir -p $(dir $@)
+	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+
+###### END of ABACUS INFO PART ######
+
 #==========================
 # MAKING OPTIONS
 #==========================
@@ -218,25 +264,26 @@ abacus:
 
 test:
 	@ $(MAKE) abacus
-	@ cd ../tests/integrate/;sh Autotest.sh -a ../../../bin/ABACUS.mpi -n $(TESTNP)
+	@ cd $(ABACUS_ROOT)../tests/integrate/;sh Autotest.sh -a $(realpath $(BIN_DIR))/ABACUS.mpi -n $(TESTNP)
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd source_pw/module_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
-	@ cp source_pw/module_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
+	@ cd $(ABACUS_ROOT)source_pw/module_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
+	@ cp $(ABACUS_ROOT)source_pw/module_pwdft/${VERSION}-PW.x $(realpath $(BIN_DIR))/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
+	@mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
-
 
 #==========================
 # rules
 #==========================
-${OBJ_DIR}/%.o:%.cpp
+# Note: The specific rule for parse_args.o above is more precise.
+# This generic rule will apply to all other .cpp files.
+${OBJ_DIR}/%.o:$(realpath $(BIN_DIR))%.cpp
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 	
 .PHONY:clean test
 clean:
-	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
-	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
-	@ cd source_pw/module_pwdft; make clean
+	@ echo "Cleaning build directory: $(BUILD_DIR)"
+	@ rm -rf $(BUILD_DIR)

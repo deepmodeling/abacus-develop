@@ -4,6 +4,7 @@ suffix          autotest
 calculation     scf
 ks_solver       dav
 dfthalf_type    1
+init_wfc        random
 
 symmetry                1
 pseudo_dir      ../../PP_ORB
@@ -25,8 +26,5 @@ mixing_type     broyden
 mixing_beta     0.7
 
 dft_functional PBE
-
-#OUT
-out_bandgap true
 
 pw_seed 1

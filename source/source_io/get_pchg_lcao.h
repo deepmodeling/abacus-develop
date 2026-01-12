@@ -1,8 +1,6 @@
 #ifndef GET_PCHG_LCAO_H
 #define GET_PCHG_LCAO_H
 
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_dm/density_matrix.h"
 
@@ -22,8 +20,7 @@ class Get_pchg_lcao
     ~Get_pchg_lcao();
 
     // For gamma_only
-    void begin(Gint_Gamma& gg,
-               double** rho,
+    void begin(double** rho,
                const ModuleBase::matrix& wg,
                const std::vector<double>& ef_all_spin,
                const int rhopw_nrxx,
@@ -39,8 +36,7 @@ class Get_pchg_lcao
                std::ofstream& ofs_running);
 
     // For multi-k
-    void begin(Gint_k& gk,
-               double** rho,
+    void begin(double** rho,
                std::complex<double>** rhog,
                const ModuleBase::matrix& wg,
                const std::vector<double>& ef_all_spin,

@@ -25,24 +25,14 @@ unkOverlap_lcao::~unkOverlap_lcao()
 }
 
 void unkOverlap_lcao::init(const UnitCell& ucell,
-                           const Grid_Technique& gt, 
                            const int nkstot, 
                            const LCAO_Orbitals& orb)
 {
-
-    int Lmax_used = 0;
-    int Lmax = 0;
-    int exx_lmax = 0;
-#ifdef __EXX
-    exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
-#endif
-
     const int ntype = orb.get_ntype();
-    int lmax_orb = -1, lmax_beta = -1;
+    int lmax_orb = -1;
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
@@ -50,13 +40,9 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    Center2_Orb::init_Table_Spherical_Bessel(2,
-                                             3,
-                                             Lmax_used,
-                                             Lmax,
-                                             exx_lmax,
-                                             lmax_orb,
-                                             lmax_beta,
+    const int Lmax = lmax_orb + 1;
+    const int Lmax_used = 2 * lmax_orb + 1;
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
                                              kmesh,
@@ -577,51 +563,51 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
     std::complex<double> alpha = {1.0, 0.0}, beta = {0.0, 0.0};
     int one = 1;
 #ifdef __MPI
-    pzgemm_(&transa,
-            &transb,
-            &occBands,
-            &nlocal,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transa,
+            transb,
+            occBands,
+            nlocal,
+            nlocal,
+            alpha,
             &psi_in[0](ik_L, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc,
             midmatrix,
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc,
-            &beta,
+            beta,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc);
 
-    pzgemm_(&transb,
-            &transb,
-            &occBands,
-            &occBands,
-            &nlocal,
-            &alpha,
+    ScalapackConnector::gemm(transb,
+            transb,
+            occBands,
+            occBands,
+            nlocal,
+            alpha,
             C_matrix,
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc,
             &psi_in[0](ik_R, 0, 0),
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc,
-            &beta,
+            beta,
             out_matrix,
-            &one,
-            &one,
+            one,
+            one,
             para_orb.desc);
 
     assert(para_orb.nrow>0);
 
     int* ipiv = new int[para_orb.nrow];
     int info = 0;
-    pzgetrf_(&occBands, &occBands, out_matrix, &one, &one, para_orb.desc, ipiv, &info);
+    ScalapackConnector::getrf(occBands, occBands, out_matrix, one, one, para_orb.desc, ipiv, &info);
 
     for (int i = 0; i < occBands; i++) // global
     {

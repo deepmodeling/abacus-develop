@@ -8,8 +8,6 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/hs_matrix_k.hpp"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
@@ -19,6 +17,10 @@
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
+
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
+
 namespace hamilt
 {
 
@@ -39,9 +41,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
-    HamiltLCAO(Gint_Gamma* GG_in,
-               Gint_k* GK_in,
-               const UnitCell& ucell,
+    HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
 			   const Parallel_Orbitals* paraV,
 			   elecstate::Potential* pot_in,
@@ -49,15 +49,10 @@ class HamiltLCAO : public Hamilt<TK>
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
 			   elecstate::DensityMatrix<TK, double>* DM_in,
-			   Setup_DeePKS<TK> &deepks
-#ifdef __EXX
-               ,
-               const int istep,
-               int* exx_two_level_step = nullptr,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
-#endif
-    );
+			   Plus_U* p_dftu, // mohan add 2025-11-05
+			   Setup_DeePKS<TK> &deepks,
+			   const int istep, 
+			   Exx_NAO<TK> &exx_nao);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
@@ -105,9 +100,17 @@ class HamiltLCAO : public Hamilt<TK>
     {
         return this->hR;
     }
+    const HContainer<TR>* getHR() const
+    {
+        return this->hR;
+    }
 
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
     HContainer<TR>*& getSR()
+    {
+        return this->sR;
+    }
+    const HContainer<TR>* getSR() const
     {
         return this->sR;
     }
@@ -121,7 +124,7 @@ class HamiltLCAO : public Hamilt<TK>
 #endif
 
     /// refresh the status of HR
-    void refresh() override;
+    void refresh(bool yes) override;
 
     // for target K point, update consequence of hPsi() and matrix()
     virtual void updateHk(const int ik) override;

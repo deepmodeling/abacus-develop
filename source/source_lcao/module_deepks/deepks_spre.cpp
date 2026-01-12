@@ -8,19 +8,17 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_hcontainer/atom_pair.h"
 
 /// this subroutine calculates the gradient of PDM wrt strain tensor:
 /// gdmepsl = d/d\epsilon_{ab} *
 ///           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 template <typename TK>
-void DeePKS_domain::cal_gdmepsl(const int lmaxd,
-                                const int inlmax,
-                                const int nks,
+void DeePKS_domain::cal_gdmepsl(const int nks,
+                                const DeePKS_Param& deepks_param,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
-                                const ModuleBase::IntArray* inl_index,
                                 const hamilt::HContainer<double>* dmr,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
@@ -33,10 +31,10 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
     // get DS_alpha_mu and S_nu_beta
 
     int nrow = pv.nrow;
-    const int nm = 2 * lmaxd + 1;
+    const int nm = 2 * deepks_param.lmaxd + 1;
     // gdmepsl: dD/d\epsilon_{\alpha\beta}
     // size: [6][tot_Inl][2l+1][2l+1]
-    gdmepsl = torch::zeros({6, inlmax, nm, nm}, torch::dtype(torch::kFloat64));
+    gdmepsl = torch::zeros({6, deepks_param.inlmax, nm, nm}, torch::dtype(torch::kFloat64));
     auto accessor = gdmepsl.accessor<double, 4>();
 
     DeePKS_domain::iterate_ad2(
@@ -111,7 +109,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                     {
                         for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                         {
-                            const int inl = inl_index[ucell.iat2it[iat]](ucell.iat2ia[iat], L0, N0);
+                            const int inl = deepks_param.inl_index[ucell.iat2it[iat]](ucell.iat2ia[iat], L0, N0);
                             const int nm = 2 * L0 + 1;
                             for (int m1 = 0; m1 < nm; ++m1)
                             {
@@ -147,7 +145,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
     );
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * inlmax * nm * nm);
+    Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * deepks_param.inlmax * nm * nm);
 #endif
     ModuleBase::timer::tick("DeePKS_domain", "cal_gdmepsl");
     return;
@@ -156,9 +154,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
 // calculates stress of descriptors from gradient of projected density matrices
 // gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
 void DeePKS_domain::cal_gvepsl(const int nat,
-                               const int inlmax,
-                               const int des_per_atom,
-                               const std::vector<int>& inl2l,
+                               const DeePKS_Param& deepks_param,
                                const std::vector<torch::Tensor>& gevdm,
                                const torch::Tensor& gdmepsl,
                                torch::Tensor& gvepsl,
@@ -172,11 +168,12 @@ void DeePKS_domain::cal_gvepsl(const int nat,
     if (rank == 0)
     {
         // make gdmepsl as tensor
-        int nlmax = inlmax / nat;
+        int nlmax = deepks_param.inlmax / nat;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            int nm = 2 * inl2l[nl] + 1;
-            torch::Tensor gdmepsl_sliced = gdmepsl.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            int nm = 2 * deepks_param.inl2l[nl] + 1;
+            torch::Tensor gdmepsl_sliced
+                = gdmepsl.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
             gdmepsl_vector.push_back(gdmepsl_sliced);
         }
         assert(gdmepsl_vector.size() == nlmax);
@@ -197,19 +194,17 @@ void DeePKS_domain::cal_gvepsl(const int nat,
         gvepsl = torch::cat(gvepsl_vector, -1);
         assert(gvepsl.size(0) == 6);
         assert(gvepsl.size(1) == nat);
-        assert(gvepsl.size(2) == des_per_atom);
+        assert(gvepsl.size(2) == deepks_param.des_per_atom);
     }
 
     ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
     return;
 }
 
-template void DeePKS_domain::cal_gdmepsl<double>(const int lmaxd,
-                                                 const int inlmax,
-                                                 const int nks,
+template void DeePKS_domain::cal_gdmepsl<double>(const int nks,
+                                                 const DeePKS_Param& deepks_param,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
-                                                 const ModuleBase::IntArray* inl_index,
                                                  const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
@@ -217,12 +212,10 @@ template void DeePKS_domain::cal_gdmepsl<double>(const int lmaxd,
                                                  const Grid_Driver& GridD,
                                                  torch::Tensor& gdmepsl);
 
-template void DeePKS_domain::cal_gdmepsl<std::complex<double>>(const int lmaxd,
-                                                               const int inlmax,
-                                                               const int nks,
+template void DeePKS_domain::cal_gdmepsl<std::complex<double>>(const int nks,
+                                                               const DeePKS_Param& deepks_param,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
-                                                               const ModuleBase::IntArray* inl_index,
                                                                const hamilt::HContainer<double>* dmr,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,

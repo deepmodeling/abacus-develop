@@ -16,7 +16,7 @@ namespace ModuleIO
 			const K_Vectors& kv,
 			const int nbands,
 			const int istep_in,
-			const elecstate::efermi &energy_fermi,
+			const elecstate::Efermi &energy_fermi,
 			const double &dos_edelta_ev,
 			const double &dos_scale,
 			const double &bcoeff,

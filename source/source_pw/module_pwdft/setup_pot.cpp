@@ -16,6 +16,7 @@ void pw::setup_pot(const int istep,
 		const Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+        Plus_U &dftu, // mohan add 2025-11-06
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<T, Device>* kspw_psi, // electronic wave functions
         hamilt::Hamilt<T, Device>* p_hamilt, // hamiltonian
@@ -37,13 +38,8 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
-    pelec->init_scf(istep,
-            ucell,
-            para_grid,
-            sf.strucFac,
-            locpp.numeric,
-			ucell.symm,
-			(void*)pw_wfc);
+    pelec->init_scf(ucell, para_grid, sf.strucFac,
+            locpp.numeric, ucell.symm, (void*)pw_wfc);
 
 	//----------------------------------------------------------
 	//! 2) Symmetrize the charge density (rho)
@@ -65,7 +61,7 @@ void pw::setup_pot(const int istep,
 	//! D in uspp need vloc, thus behind init_scf()
 	//! calculate the effective coefficient matrix
 	//! for non-local pseudopotential projectors
-	ModuleBase::matrix veff = pelec->pot->get_effective_v();
+	ModuleBase::matrix veff = pelec->pot->get_eff_v();
 
 	ppcell.cal_effective_D(veff, pw_rhod, ucell);
 
@@ -102,22 +98,27 @@ void pw::setup_pot(const int istep,
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
                    ucell,
-                   nullptr,
+                   nullptr, // parallel orbitals
                    PARAM.inp.nspin,
                    kv,
                    p_hamilt,
                    kspw_psi,
+#ifdef __LCAO
+                   nullptr, // density matrix, not useful in LCAO, mohan note 2025-11-03
+#endif
                    pelec,
                    pw_wfc);
     }
 
     //----------------------------------------------------------
     //! 6) DFT+U algorithm
+    // This should not called in before_scf (esolver), it should be
+    // called in before_all_runners (esolver), which should 
+    // be improved later. Mohan note 2025-11-06
     //----------------------------------------------------------
     if (PARAM.inp.dft_plus_u)
     {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
-        dftu->init(ucell, nullptr, kv.get_nks());
+        dftu.init(ucell, nullptr, kv.get_nks());
     }
 
     return;
@@ -133,6 +134,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
 		const Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+        Plus_U &dftu, // mohan add 2025-11-06
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
@@ -151,6 +153,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
 		const Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+        Plus_U &dftu, // mohan add 2025-11-06
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
         hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
@@ -170,6 +173,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
 		const Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+        Plus_U &dftu, // mohan add 2025-11-06
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian
@@ -187,6 +191,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
 		const Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+        Plus_U &dftu, // mohan add 2025-11-06
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
         hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian

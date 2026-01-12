@@ -22,6 +22,34 @@
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal_new.h"
 
+
+// mohan add 2025-11-04
+template <>
+void assign_dmk_ptr<double>(
+    elecstate::DensityMatrix<double,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_d = &dmk_tmp;
+    dmk_c = nullptr;
+}
+
+template <>
+void assign_dmk_ptr<std::complex<double>>(
+    elecstate::DensityMatrix<std::complex<double>,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+) {
+    auto& dmk_tmp = dm->get_DMK_vector();
+    dmk_c = &dmk_tmp;
+    dmk_d = nullptr;
+}
+
+
+
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), nat(nat_in)
 {
@@ -39,9 +67,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
+                                          LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
                                           const psi::Psi<T>* psi,
-                                          Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                                          Gint_k& gint_k,         // mohan add 2024-04-01
                                           const TwoCenterBundle& two_center_bundle,
                                           const LCAO_Orbitals& orb,
                                           ModuleBase::matrix& fcs,
@@ -50,7 +77,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
-                                          surchem& solvent,
+										  surchem& solvent,
+										  Plus_U &dftu, // mohan add 2025-11-07
                                           Setup_DeePKS<T>& deepks,
 										  Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm)
@@ -135,10 +163,10 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
     //! atomic forces from integration (4 terms)
     this->integral_part(PARAM.globalv.gamma_only_local, isforce, isstress,
-                        ucell, gd, fsr, pelec, psi, foverlap, ftvnl_dphi,
+                        ucell, gd, fsr, pelec, dmat.dm, psi, foverlap, ftvnl_dphi, // add dmat.dm, mohan 20251104
                         fvnl_dbeta, fvl_dphi, soverlap, stvnl_dphi, svnl_dbeta,
-                        svl_dphi, fvnl_dalpha, svnl_dalpha, deepks, gint_gamma,
-                        gint_k, two_center_bundle, orb, pv, kv);
+                        svl_dphi, fvnl_dalpha, svnl_dalpha, deepks, 
+                        two_center_bundle, orb, pv, kv);
 
     // calculate force and stress for Nonlocal part
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
@@ -146,18 +174,16 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(nullptr,
           kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd, two_center_bundle.overlap_orb_beta.get());
 
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(pelec)->get_DM();
-
         if (PARAM.inp.nspin == 2)
         {
-            const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(1);
+            dmat.dm->switch_dmr(1);
         }
 
-        const hamilt::HContainer<double>* dmr = dm_p->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmr = dmat.dm->get_DMR_pointer(1);
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmr, fvnl_dbeta, svnl_dbeta);
         if (PARAM.inp.nspin == 2)
         {
-            const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(0);
+            dmat.dm->switch_dmr(0);
         }
     }
     else if (PARAM.inp.nspin == 4)
@@ -168,12 +194,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
         // calculate temporary complex DMR for nonlocal force&stress
         // In fact, only SOC part need the imaginary part of DMR for correct force&stress
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
-        hamilt::HContainer<std::complex<double>> tmp_dmr(dm_p->get_DMR_pointer(1)->get_paraV());
-        std::vector<int> ijrs = dm_p->get_DMR_pointer(1)->get_ijr_info();
+        hamilt::HContainer<std::complex<double>> tmp_dmr(dmat.dm->get_DMR_pointer(1)->get_paraV());
+        std::vector<int> ijrs = dmat.dm->get_DMR_pointer(1)->get_ijr_info();
         tmp_dmr.insert_ijrs(&ijrs);
         tmp_dmr.allocate();
-        dm_p->cal_DMR_full(&tmp_dmr);
+        dmat.dm->cal_DMR_full(&tmp_dmr);
         tmp_nonlocal.cal_force_stress(isforce, isstress, &tmp_dmr, fvnl_dbeta, svnl_dbeta);
     }
 
@@ -235,35 +260,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     }
 
     //! atomic forces from DFT+U (Quxin version)
-    ModuleBase::matrix force_dftu;
-    ModuleBase::matrix stress_dftu;
+    ModuleBase::matrix force_u;
+    ModuleBase::matrix stress_u;
 
     if (PARAM.inp.dft_plus_u) // Quxin add for DFT+U on 20201029
     {
         if (isforce)
         {
-            force_dftu.create(nat, 3);
+            force_u.create(nat, 3);
         }
         if (isstress)
         {
-            stress_dftu.create(3, 3);
+            stress_u.create(3, 3);
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-            GlobalC::dftu.force_stress(ucell, gd, pelec, pv, fsr, force_dftu, stress_dftu, kv);
+			// dftu.force_stress(ucell, gd, pelec, pv, fsr, force_u, stress_u, kv);
+			// mohan modify 2025-11-03
+            std::vector<std::vector<double>>* dmk_d = nullptr;
+            std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
+            // add a new template function
+            assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
+		    dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr, force_u, stress_u, kv);
         }
         else
         {
-            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(nullptr, // HK and SK are not used for force&stress
+            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmpu(nullptr, // HK and SK are not used for force&stress
                                                                    kv.kvec_d,
                                                                    nullptr, // HR are not used for force&stress
                                                                    ucell,
                                                                    &gd,
                                                                    two_center_bundle.overlap_orb_onsite.get(),
                                                                    orb.cutoffs(),
-                                                                   &GlobalC::dftu);
+                                                                   &dftu);
 
-            tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
+            tmpu.cal_force_stress(isforce, isstress, force_u, stress_u);
         }
     }
 
@@ -289,16 +320,15 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                                      two_center_bundle.overlap_orb_onsite.get(),
                                                                      orb.cutoffs());
 
-        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
         if (PARAM.inp.nspin == 2)
         {
-            const_cast<elecstate::DensityMatrix<std::complex<double>, double>*>(dm_p)->switch_dmr(2);
+            dmat.dm->switch_dmr(2);
         }
-        const hamilt::HContainer<double>* dmr = dm_p->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmr = dmat.dm->get_DMR_pointer(1);
         tmp_dspin.cal_force_stress(isforce, isstress, dmr, force_dspin, stress_dspin);
         if (PARAM.inp.nspin == 2)
         {
-            const_cast<elecstate::DensityMatrix<std::complex<double>, double>*>(dm_p)->switch_dmr(0);
+            dmat.dm->switch_dmr(0);
         }
     }
 
@@ -364,7 +394,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // Force contribution from DFT+U, Quxin add on 20201029
                 if (PARAM.inp.dft_plus_u)
                 {
-                    fcs(iat, i) += force_dftu(iat, i);
+                    fcs(iat, i) += force_u(iat, i);
                 }
                 if (PARAM.inp.sc_mag_switch)
                 {
@@ -507,7 +537,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DFT+U      FORCE", force_dftu, false);
+                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DFT+U      FORCE", force_u, false);
             }
             if (PARAM.inp.sc_mag_switch)
             {
@@ -536,7 +566,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 GlobalV::ofs_running << " " << std::setw(8) << iat;
                 for (int i = 0; i < 3; i++)
                 {
-                    if (std::abs(fcs(iat, i) * ModuleBase::Ry_to_eV / 0.529177)
+                    if (std::abs(fcs(iat, i) * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A)
                         < Force_Stress_LCAO::force_invalid_threshold_ev)
                     {
                         fcs(iat, i) = 0.0;
@@ -575,7 +605,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // DFT plus U stress from qux
                 if (PARAM.inp.dft_plus_u)
                 {
-                    scs(i, j) += stress_dftu(i, j);
+                    scs(i, j) += stress_u(i, j);
                 }
                 if (PARAM.inp.sc_mag_switch)
                 {
@@ -644,7 +674,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, screen, ry, GlobalV::ofs_running);
+                ModuleIO::print_stress("DFTU     STRESS", stress_u, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.sc_mag_switch)
             {
@@ -714,71 +744,68 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
 template <>
 void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
-                                              const bool isforce,
-                                              const bool isstress,
-                                              const UnitCell& ucell,
-                                              const Grid_Driver& gd,
-                                              ForceStressArrays& fsr, // mohan add 2024-06-15
-                                              const elecstate::ElecState* pelec,
-                                              const psi::Psi<double>* psi,
-                                              ModuleBase::matrix& foverlap,
-                                              ModuleBase::matrix& ftvnl_dphi,
-                                              ModuleBase::matrix& fvnl_dbeta,
-                                              ModuleBase::matrix& fvl_dphi,
-                                              ModuleBase::matrix& soverlap,
-                                              ModuleBase::matrix& stvnl_dphi,
-                                              ModuleBase::matrix& svnl_dbeta,
-                                              ModuleBase::matrix& svl_dphi,
-                                              ModuleBase::matrix& fvnl_dalpha,
-                                              ModuleBase::matrix& svnl_dalpha,
-                                              Setup_DeePKS<double>& deepks,
-                                              Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                                              Gint_k& gint_k,         // mohan add 2024-04-01
-                                              const TwoCenterBundle& two_center_bundle,
-                                              const LCAO_Orbitals& orb,
-                                              const Parallel_Orbitals& pv,
-                                              const K_Vectors& kv)
+		const bool isforce,
+		const bool isstress,
+		const UnitCell& ucell,
+		const Grid_Driver& gd,
+		ForceStressArrays& fsr, // mohan add 2024-06-15
+		const elecstate::ElecState* pelec,
+		const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+		const psi::Psi<double>* psi,
+		ModuleBase::matrix& foverlap,
+		ModuleBase::matrix& ftvnl_dphi,
+		ModuleBase::matrix& fvnl_dbeta,
+		ModuleBase::matrix& fvl_dphi,
+		ModuleBase::matrix& soverlap,
+		ModuleBase::matrix& stvnl_dphi,
+		ModuleBase::matrix& svnl_dbeta,
+		ModuleBase::matrix& svl_dphi,
+		ModuleBase::matrix& fvnl_dalpha,
+		ModuleBase::matrix& svnl_dalpha,
+		Setup_DeePKS<double>& deepks,
+		const TwoCenterBundle& two_center_bundle,
+		const LCAO_Orbitals& orb,
+		const Parallel_Orbitals& pv,
+		const K_Vectors& kv)
 {
 
-    flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec,
+    flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,
                soverlap, stvnl_dphi, svnl_dbeta, svl_dphi,
-               fvnl_dalpha, svnl_dalpha, deepks, gint_gamma,
-               two_center_bundle, orb, pv);
+               fvnl_dalpha, svnl_dalpha, deepks, two_center_bundle, orb, pv);
     return;
 }
 
 template <>
 void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOnly,
-                                                            const bool isforce,
-                                                            const bool isstress,
-                                                            const UnitCell& ucell,
-                                                            const Grid_Driver& gd,
-                                                            ForceStressArrays& fsr, // mohan add 2024-06-15
-                                                            const elecstate::ElecState* pelec,
-                                                            const psi::Psi<std::complex<double>>* psi,
-                                                            ModuleBase::matrix& foverlap,
-                                                            ModuleBase::matrix& ftvnl_dphi,
-                                                            ModuleBase::matrix& fvnl_dbeta,
-                                                            ModuleBase::matrix& fvl_dphi,
-                                                            ModuleBase::matrix& soverlap,
-                                                            ModuleBase::matrix& stvnl_dphi,
-                                                            ModuleBase::matrix& svnl_dbeta,
-                                                            ModuleBase::matrix& svl_dphi,
-                                                            ModuleBase::matrix& fvnl_dalpha,
-                                                            ModuleBase::matrix& svnl_dalpha,
-                                                            Setup_DeePKS<std::complex<double>>& deepks,
-                                                            Gint_Gamma& gint_gamma,
-                                                            Gint_k& gint_k,
-                                                            const TwoCenterBundle& two_center_bundle,
-                                                            const LCAO_Orbitals& orb,
-                                                            const Parallel_Orbitals& pv,
-                                                            const K_Vectors& kv)
+		const bool isforce,
+		const bool isstress,
+		const UnitCell& ucell,
+		const Grid_Driver& gd,
+		ForceStressArrays& fsr, // mohan add 2024-06-15
+		const elecstate::ElecState* pelec,
+		const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+		const psi::Psi<std::complex<double>>* psi,
+		ModuleBase::matrix& foverlap,
+		ModuleBase::matrix& ftvnl_dphi,
+		ModuleBase::matrix& fvnl_dbeta,
+		ModuleBase::matrix& fvl_dphi,
+		ModuleBase::matrix& soverlap,
+		ModuleBase::matrix& stvnl_dphi,
+		ModuleBase::matrix& svnl_dbeta,
+		ModuleBase::matrix& svl_dphi,
+		ModuleBase::matrix& fvnl_dalpha,
+		ModuleBase::matrix& svnl_dalpha,
+		Setup_DeePKS<std::complex<double>>& deepks,
+		const TwoCenterBundle& two_center_bundle,
+		const LCAO_Orbitals& orb,
+		const Parallel_Orbitals& pv,
+		const K_Vectors& kv)
 {
-    flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec,
+    flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,
                soverlap, stvnl_dphi, svnl_dbeta, svl_dphi,
-               fvnl_dalpha, svnl_dalpha, deepks, gint_k,
+               fvnl_dalpha, svnl_dalpha, deepks,
                two_center_bundle, orb, pv, &kv, this->RA);
     return;
 }

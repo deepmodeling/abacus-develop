@@ -15,7 +15,6 @@ using std::map;
 class Exx_Abfs
 {
 public:
-	class Abfs_Index;
 	class Jle;
 	class IO;
 	class Construct_Orbs;
@@ -23,7 +22,6 @@ public:
 	
 	int rmesh_times = 5;				// Peize Lin test
 	int kmesh_times = 1;				// Peize Lin test
-
 };
 
 #endif

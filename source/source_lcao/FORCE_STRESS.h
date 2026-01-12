@@ -14,10 +14,10 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
 #include "force_stress_arrays.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
+#include "source_lcao/setup_dm.h" // mohan add 2025-11-03
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 
 template <typename T>
@@ -40,9 +40,8 @@ class Force_Stress_LCAO
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
+                        LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
                         const psi::Psi<T>* psi,
-                        Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                        Gint_k& gint_k,         // mohan add 2024-04-01
                         const TwoCenterBundle& two_center_bundle,
                         const LCAO_Orbitals& orb,
                         ModuleBase::matrix& fcs,
@@ -51,7 +50,8 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
-                        surchem& solvent,
+						surchem& solvent,
+						Plus_U &dftu, // mohan add 2025-11-07
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);
@@ -83,8 +83,9 @@ class Force_Stress_LCAO
                        const UnitCell& ucell,
                        const Grid_Driver& gd,
                        ForceStressArrays& fsr, // mohan add 2024-06-15
-                       const elecstate::ElecState* pelec,
-                       const psi::Psi<T>* psi,
+					   const elecstate::ElecState* pelec,
+					   const elecstate::DensityMatrix<T, double>* dm, // mohan add 2025-11-04
+					   const psi::Psi<T>* psi,
                        ModuleBase::matrix& foverlap,
                        ModuleBase::matrix& ftvnl_dphi,
                        ModuleBase::matrix& fvnl_dbeta,
@@ -96,8 +97,6 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
                        Setup_DeePKS<T>& deepks,
-                       Gint_Gamma& gint_gamma,
-                       Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        const Parallel_Orbitals& pv,
@@ -120,5 +119,14 @@ class Force_Stress_LCAO
 
 template <typename T>
 double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
+
+// only for DFT+U, mohan add 2025-11-04
+template <typename T>
+void assign_dmk_ptr(
+    elecstate::DensityMatrix<T,double>* dm,
+    std::vector<std::vector<double>>*& dmk_d,
+    std::vector<std::vector<std::complex<double>>>*& dmk_c,
+    bool gamma_only_local
+);
 
 #endif

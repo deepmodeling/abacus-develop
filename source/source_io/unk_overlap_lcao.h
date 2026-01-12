@@ -12,7 +12,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "source_lcao/module_gint/grid_technique.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 #include <map>
 #include <set>
@@ -48,7 +48,7 @@ class unkOverlap_lcao
     unkOverlap_lcao();
     ~unkOverlap_lcao();
 
-    void init(const UnitCell& ucell, const Grid_Technique& gt, const int nkstot, const LCAO_Orbitals& orb);
+    void init(const UnitCell& ucell, const int nkstot, const LCAO_Orbitals& orb);
     int iw2it(const UnitCell& ucell, int iw);
     int iw2ia(const UnitCell& ucell, int iw);
     int iw2iL(const UnitCell& ucell, int iw);

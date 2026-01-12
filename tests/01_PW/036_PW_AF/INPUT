@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 suffix    autotest
 
+init_wfc        random
 #nbands   40
 
 calculation   scf
@@ -18,7 +19,7 @@ out_chg    0
 smearing_method    gaussian
 smearing_sigma       0.07
 
-mixing_type    broyden 
+mixing_type    broyden
 mixing_beta    0.2
 
 ks_solver     cg

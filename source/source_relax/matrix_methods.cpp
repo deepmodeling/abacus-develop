@@ -2,15 +2,18 @@
 
 
 
-std::vector<double> ReshapeMToV(std::vector<std::vector<double>>& matrix) 
+
+std::vector<double> ReshapeMToV(std::vector<ModuleBase::Vector3<double>>& matrix) 
 {
     assert(!matrix.empty());
-    assert(matrix[0].size() == 3);
     int size = matrix.size();
     std::vector<double> result;
     result.reserve(3*size);
-    for (const auto& row : matrix) {
-        result.insert(result.end(), row.begin(), row.end());
+    for (const auto& v : matrix) 
+    {
+        result.push_back(v.x);
+        result.push_back(v.y);
+        result.push_back(v.z);
     }
     return result;
 }
@@ -42,16 +45,15 @@ std::vector<double> VSubV(std::vector<double>& a, std::vector<double>& b)
     return result;
 }
 
-std::vector<std::vector<double>> ReshapeVToM(std::vector<double>& matrix) 
+std::vector<ModuleBase::Vector3<double>> ReshapeVToM(std::vector<double>& matrix) 
 {
     assert(matrix.size() % 3 == 0);
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(matrix.size() / 3, std::vector<double>(3));
+    std::vector<ModuleBase::Vector3<double>> result = std::vector<ModuleBase::Vector3<double>>(matrix.size() / 3, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for(int i = 0; i < result.size(); i++)
     {
-        for(int j = 0; j < 3; j++)
-        {
-            result[i][j] = matrix[i*3 + j];
-        }
+        result[i].x = matrix[i*3 ];
+        result[i].y = matrix[i*3 + 1];
+        result[i].z = matrix[i*3 + 2];
     }
     return result;
 }

@@ -10,7 +10,8 @@ template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
                                             const ModuleBase::matrix& wg,
                                             const ModulePW::PW_Basis_K* wfc_basis,
-                                            const UnitCell& ucell_in,
+											const UnitCell& ucell_in,
+											const Plus_U &dftu, // mohan add 2025-11-06
                                             const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                                             ModuleSymmetry::Symmetry* p_symm)
 {
@@ -56,13 +57,12 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
                 onsite_p->get_fs_tools()->cal_dbecp_s(ik, npm, ipol, jpol);
                 if(PARAM.inp.dft_plus_u)
                 {
-                    auto* dftu = ModuleDFTU::DFTU::get_instance();
 					onsite_p->get_fs_tools()->cal_stress_dftu(ik, 
 							npm, 
 							stress_device_tmp, 
-							dftu->orbital_corr.data(), 
-							dftu->get_eff_pot_pw(0), 
-							dftu->get_size_eff_pot_pw(), 
+							dftu.orbital_corr.data(), 
+							dftu.get_eff_pot_pw(0), 
+							dftu.get_size_eff_pot_pw(), 
 							wg.c);
                 }
                 if(PARAM.inp.sc_mag_switch)

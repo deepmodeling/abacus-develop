@@ -16,7 +16,8 @@ template <typename TK, typename TR>
 void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
-		elecstate::ElecStateLCAO<TK>* pelec,// electronic info
+		elecstate::ElecState* pelec,// electronic info
+        const LCAO_domain::Setup_DM<TK> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -24,17 +25,12 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<TK, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc,
-#endif
+		Exx_NAO<TK> &exx_nao,
         surchem &solvent)             // solvent model
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
@@ -49,7 +45,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 	// 2) out ldos
 	if (inp.out_ldos[0])
     {
-        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec, psi[0], pgrid, ucell);
+        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv, 
+          pelec->ekb, pelec->wg, psi[0], pgrid, ucell);
     }
 
     // 3) print out exchange-correlation potential
@@ -67,16 +64,14 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     *pw_rhod,
                                     vloc,
                                     chr,
-                                    gg,
-                                    gk,
                                     kv,
                                     orb.cutoffs(),
                                     pelec->wg,
                                     gd
 #ifdef __EXX
                                     ,
-                                    exd ? &exd->get_Hexxs() : nullptr,
-                                    exc ? &exc->get_Hexxs() : nullptr
+                                    exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                    exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
         );
     }
@@ -92,15 +87,13 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       *pw_rhod,
                                       vloc,
                                       chr,
-                                      gg,
-                                      gk,
                                       kv,
                                       orb.cutoffs(),
                                       gd
 #ifdef __EXX
                                       ,
-                                      exd ? &exd->get_Hexxs() : nullptr,
-                                      exc ? &exc->get_Hexxs() : nullptr
+                                      exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                      exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
         );
     }
@@ -121,8 +114,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             *pw_rhod,
                                             vloc,
                                             chr,
-                                            gg,
-                                            gk,
                                             kv,
                                             pelec->wg,
                                             gd,
@@ -130,8 +121,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             two_center_bundle
 #ifdef __EXX
                                             ,
-                                            exd ? &exd->get_Hexxs() : nullptr,
-                                            exc ? &exc->get_Hexxs() : nullptr
+                                            exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                            exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
        );
     }
@@ -142,10 +133,11 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
 
 // TK: double  TR: double 
-template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
+template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
-		elecstate::ElecStateLCAO<double>* pelec,// electronic info
+		elecstate::ElecState* pelec,// electronic info
+        const LCAO_domain::Setup_DM<double> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -153,24 +145,20 @@ template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      /
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<double, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<double, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<double, std::complex<double>>> exc,
-#endif
+        Exx_NAO<double> &exx_nao,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec,// electronic info
+		elecstate::ElecState* pelec,// electronic info
+        const LCAO_domain::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -178,24 +166,20 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
-		elecstate::ElecStateLCAO<std::complex<double>>* pelec,// electronic info
+		elecstate::ElecState* pelec,// electronic info
+        const LCAO_domain::Setup_DM<std::complex<double>> &dmat, // mohan add 2025-11-02
 		Parallel_Orbitals &pv,              // orbital info
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
@@ -203,17 +187,12 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
         Charge &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
-        Gint_Gamma &gg,                     // gint for Gamma-only
-		Gint_k &gk,                         // gint for multi k-points
 		LCAO_Orbitals &orb,                 // LCAO orbitals
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         surchem &solvent);             // solvent model
 
 } // end namespace

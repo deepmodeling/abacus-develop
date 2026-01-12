@@ -14,7 +14,7 @@
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
-void Potential::init_pot(int, Charge const*)
+void Potential::init_pot(Charge const*)
 {
 }
 void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
@@ -80,11 +80,7 @@ void ModulePW::PW_Basis::distribute_r()
 void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge::set_rho_core_paw()
-{
-}
-void Charge::init_rho(elecstate::efermi&,
-                      const UnitCell&,
+void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -201,11 +197,10 @@ TEST_F(ElecStateTest, Constructor)
 TEST_F(ElecStateTest, InitKS)
 {
     Charge* charge = new Charge;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
-    EXPECT_NO_THROW(elecstate->init_ks(charge, klist, nk, rhopw, bigpw));
+    EXPECT_NO_THROW(elecstate->init_ks(charge, klist, nk, bigpw));
     EXPECT_EQ(elecstate->charge, charge);
     EXPECT_EQ(elecstate->bigpw, bigpw);
     EXPECT_EQ(elecstate->klist, klist);
@@ -215,14 +210,12 @@ TEST_F(ElecStateTest, InitKS)
     EXPECT_EQ(elecstate->wg.nc, PARAM.input.nbands);
     delete klist;
     delete bigpw;
-    delete rhopw;
     delete charge;
 }
 
 TEST_F(ElecStateTest, GetRho)
 {
     Charge* charge = new Charge;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
@@ -236,7 +229,7 @@ TEST_F(ElecStateTest, GetRho)
             charge->rho[i][j] = 1.0;
         }
     }
-    elecstate->init_ks(charge, klist, nk, rhopw, bigpw);
+    elecstate->init_ks(charge, klist, nk, bigpw);
     EXPECT_EQ(elecstate->getRho(0), &(charge->rho[0][0]));
     EXPECT_EQ(elecstate->getRho(0)[nrxx - 1], 1.0);
     for (int i = 0; i < PARAM.input.nspin; ++i)
@@ -246,7 +239,6 @@ TEST_F(ElecStateTest, GetRho)
     delete[] charge->rho;
     delete klist;
     delete bigpw;
-    delete rhopw;
     delete charge;
 }
 
@@ -266,12 +258,12 @@ TEST_F(ElecStateTest, InitSCF)
     Charge* charge = new Charge;
     elecstate->charge = charge;
     elecstate->pot = new elecstate::Potential;
-    elecstate::efermi efermi;
+    elecstate::Efermi efermi;
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
     ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, ucell, pgrid, strucfac, nullptr, symm));
+    EXPECT_NO_THROW(elecstate->init_scf(ucell, pgrid, strucfac, nullptr, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

@@ -158,9 +158,10 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const UnitCell& ucell,
                                 const Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
-                                const elecstate::ElecState* pelec,
-                                ModuleBase::matrix& foverlap,
-                                ModuleBase::matrix& ftvnl_dphi,
+								const elecstate::ElecState* pelec,
+								const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+								ModuleBase::matrix& foverlap,
+								ModuleBase::matrix& ftvnl_dphi,
                                 ModuleBase::matrix& fvnl_dbeta,
                                 ModuleBase::matrix& fvl_dphi,
                                 ModuleBase::matrix& soverlap,
@@ -170,7 +171,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
                                 Setup_DeePKS<double>& deepks,
-                                TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
@@ -179,10 +179,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
 {
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::tick("Forces", "ftable");
-
-    // get DM
-    const elecstate::DensityMatrix<double, double>* dm
-        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
 
     this->ParaV = dm->get_paraV_pointer();
 
@@ -220,7 +216,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    *dm,
                                    ucell,
                                    pelec->pot,
-                                   gint,
                                    isforce,
                                    isstress,
                                    false /*reset dm to gint*/);
@@ -236,10 +231,10 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            gd,
                                            *this->ParaV,
                                            nks,
+                                           deepks.ld.deepks_param,
                                            kv->kvec_d,
                                            deepks.ld.phialpha,
                                            deepks.ld.gedm,
-                                           deepks.ld.inl_index,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);

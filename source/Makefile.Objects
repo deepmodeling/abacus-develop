@@ -62,7 +62,6 @@ VPATH=./src_global:\
 ./source_lcao/module_deltaspin:\
 ./source_lcao/module_operator_lcao:\
 ./source_lcao/module_gint:\
-./source_lcao/module_gint/temp_gint:\
 ./source_relax:\
 ./source_hamilt/module_vdw:\
 ./source_io:\
@@ -229,18 +228,17 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
+    elecstate_tools.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     elecstate_op.o\
-    elecstate_tools.o\
     efield.o\
     gatefield.o\
     potential_new.o\
     potential_types.o\
     pot_sep.o\
     pot_local.o\
-    pot_local_paw.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
@@ -250,10 +248,10 @@ OBJS_ELECSTAT=elecstate.o\
     read_pseudo.o\
     cal_wfc.o\
     setup_estate_pw.o\
+    update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      elecstate_lcao_cal_tau.o\
-      setup_dm.o\
+      init_dm.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\
@@ -267,48 +265,21 @@ OBJS_ESOLVER=esolver.o\
     esolver_sdft_pw.o\
     esolver_lj.o\
     esolver_dp.o\
+    esolver_nep.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
-    pw_setup.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
-      lcao_before_scf.o\
-      lcao_after_scf.o\
       esolver_gets.o\
       lcao_others.o\
       esolver_dm2rho.o\
       esolver_double_xc.o\
 
-OBJS_GINT=gint_old.o\
-      gint_gamma_env.o\
-      gint_gamma_vl.o\
-      gint_fvl_old.o\
-      gint_rho_old.o\
-      gint_tau_old.o\
-      gint_vl_old.o\
-      gint_k_env.o\
-      gint_k_sparse1.o\
-      gint_k_pvpr.o\
-      gint_k_pvdpr.o\
-      gint_tools.o\
-      grid_bigcell.o\
-      grid_meshball.o\
-      grid_meshcell.o\
-      grid_meshk.o\
-      grid_technique.o\
-      gint_force_cpu_interface.o\
-      gint_rho_cpu_interface.o\
-      gint_vl_cpu_interface.o\
-      cal_psir_ylm.o\
-      cal_dpsir_ylm.o\
-      cal_ddpsir_ylm.o\
-      mult_psi_dmr.o\
-      init_orb.o\
-      batch_biggrid.o\
+OBJS_GINT=batch_biggrid.o\
       big_grid.o\
       biggrid_info.o\
       divide_info.o\
@@ -385,6 +356,7 @@ OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
     hcontainer.o\
     output_hcontainer.o\
+    read_hcontainer.o\
     func_folding.o\
     func_transfer.o\
     transfer.o\
@@ -545,7 +517,7 @@ OBJS_IO=input_conv.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_fermi_surf.o\
-    nscf_band.o\
+    write_bands.o\
     cal_dos.o\
     cal_pdos_gamma.o\
     cal_pdos_multik.o\
@@ -578,6 +550,7 @@ OBJS_IO=input_conv.o\
     write_elecstat_pot.o\
     write_elf.o\
     write_dipole.o\
+    write_init.o\
     td_current_io.o\
     write_libxc_r.o\
     output_log.o\
@@ -587,6 +560,7 @@ OBJS_IO=input_conv.o\
     ctrl_iter_lcao.o\
     ctrl_output_fp.o\
     ctrl_output_pw.o\
+    ctrl_output_td.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
@@ -623,7 +597,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
-      read_wfc_lcao.o\
       write_wfc_nao.o\
       write_HS_sparse.o\
       single_R_io.o\
@@ -649,6 +622,7 @@ OBJS_LCAO=evolve_elec.o\
       velocity_op.o\
       snap_psibeta_half_tddft.o\
       solve_propagation.o\
+      boundary_fix.o\
       upsi.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
@@ -656,12 +630,12 @@ OBJS_LCAO=evolve_elec.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
-	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
+      LCAO_set.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
@@ -671,6 +645,8 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
+      setup_dm.o\
+      rho_tau_lcao.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
@@ -723,6 +699,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     fp_energy.o\
     setup_pot.o\
     setup_pwrho.o\
+    setup_pwwfc.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
@@ -762,8 +739,11 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
+    of_print_info.o\
     symmetry_rho.o\
     symmetry_rhog.o\
+    setup_psi_pw.o\
+    setup_psi.o\
     psi_init.o\
     elecond.o\
     sto_tool.o\

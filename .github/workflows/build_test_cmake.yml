@@ -17,17 +17,17 @@ jobs:
             name: "Build with Intel toolchain"
 
           - tag: gnu
-            build_args: "-DENABLE_LIBXC=1 -DDENABLE_MLALGO=1 -DENABLE_LIBRI=1"
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
             name: "Build extra components with GNU toolchain"
           - tag: intel
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_PEXSI=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
             build_args: "-DUSE_CUDA=1"
             name: "Build with CUDA support"
           - tag: gnu
-            build_args: "-DENABLE_LCAO=OFF"
+            build_args: "-DENABLE_LCAO=0"
             name: "Build without LCAO"
           - tag: gnu
             build_args: "-DUSE_ELPA=0 "
@@ -43,12 +43,17 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
+          export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH}
+          export PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
+          export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH}
+          export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
+          rm -rf build
           cmake -B build ${{ matrix.build_args }}
           cmake --build build -j2

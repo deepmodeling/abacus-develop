@@ -135,6 +135,7 @@
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_ion](#out_freq_ion)
+    - [out\_freq\_td](#out_freq_td)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -147,7 +148,6 @@
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
-    - [out\_bandgap](#out_bandgap)
     - [out\_level](#out_level)
     - [out\_alllog](#out_alllog)
     - [out\_mat\_hs](#out_mat_hs)
@@ -303,6 +303,9 @@
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
+    - [ecutexx](#ecutexx)
+    - [exx_thr_type](#exx_thr_type)
+    - [exx_ene_thr](#exx_ene_thr)
   - [Molecular Dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -533,9 +536,10 @@ These variables are used to control general system parameters.
   - ofdft: orbital-free density functional theory
   - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
-  - tddft: real-time time-dependent density functional theory (TDDFT)
+  - tddft: real-time time-dependent density functional theory (RT-TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
+  - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
 - **Default**: ksdft
@@ -636,6 +640,8 @@ These variables are used to control general system parameters.
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
   - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
+  - dm: the density will be calculated by real space density matrix(DMR) of LCAO base. DMR is read in from file `dmrs1_nao.csr` in directory [read_file_dir](#read_file_dir).
+  - hr: the real space Hamiltonian matrix(HR) will be read in from file `hrs1_nao.csr` in directory [read_file_dir](#read_file_dir), and DMR and charge density will be calculated from it.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -1591,14 +1597,14 @@ These variables are used to control the geometry relaxation.
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`
+- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`. 
 - **Unit**: Bohr
 - **Default**: 0.8
 
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Description**: For geometry optimization. It indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down.
+- **Description**: In old bfgs algorithm, it indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down. In the current default bfgs algorithm, this parameter is not used.
 - **Default**: 1e-5
 - **Unit**: Bohr
 
@@ -1685,15 +1691,22 @@ These variables are used to control the output of properties.
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Controls the output interval in **ionic steps**. When set to a positive integer $N$, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every $N$ ionic steps.
 - **Default**: 0
-- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
+- **Note**: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by [`out_freq_td`](#out_freq_td)—see its description for details.
+
+### out_freq_td
+
+- **Type**: Integer
+- **Description**: Controls the output interval in **completed electronic evolution steps** during RT-TDDFT calculations. When set to a positive integer $N$, detailed information (see [`out_freq_ion`](#out_freq_ion)) is printed every $N$ electron time-evolution steps (i.e., every $N$ `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to [`estep_per_md`](#estep_per_md), since one ionic step corresponds to [`estep_per_md`](#estep_per_md) electronic evolution steps.
+- **Default**: 0
+- **Note**: This parameter is **only active in RT-TDDFT mode** (`esolver_type = tddft`). It has no effect in ground-state calculations.
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
-- **Default**: [scf_nmax](#scf_nmax)
+- **Description**: Output the charge density (only binary format, controlled by [`out_chg`](#out_chg)), wavefunction (controlled by [`out_wfc_pw`](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [`scf_nmax`](#scf_nmax).
+- **Default**: [`scf_nmax`](#scf_nmax)
 
 ### out_chg
 
@@ -1842,14 +1855,6 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
-- **Default**: False
-
-### out_bandgap
-
-- **Type**: Boolean
-- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
-  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
-  - [nupdown](#nupdown) = 0: `E_bandgap`
 - **Default**: False
 
 ### out_level
@@ -2319,7 +2324,7 @@ Warning: this function is not robust enough for the current version. Please try 
   - 0: Don't include bandgap label
   - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
   - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
-  - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
+  - 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
 - **Default**: 0
 
 ### deepks_band_range
@@ -2976,6 +2981,12 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
+### exx_cs_inv_thr
+
+- **Type**: Real
+- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When `exx_cs_inv_thr > 0`, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than `exx_cs_inv_thr` are discarded to improve numerical stability. A relatively safe and commonly recommended value is `1e-5`.
+- **Default**: -1
+
 ### exx_v_threshold
 
 - **Type**: Real
@@ -3021,7 +3032,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
   - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
   - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*
@@ -3109,6 +3120,26 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See [https://doi.org/10.1103/PhysRevB.79.205114](https://doi.org/10.1103/PhysRevB.79.205114) for details. Should be set to true most of the time.
 - **Default**: True
 
+### ecutexx
+- **Type**: Real
+- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing `ecutexx` below `ecutrho` may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+- **Default**: same as *[ecutrho](#ecutrho)*
+- **Unit**: Ry
+
+### exx_thr_type
+- **Type**: String
+- **Description**: The type of threshold used to judge whether the outer loop has converged in the separate loop EXX calculation.
+  - energy: use the change of exact exchange energy to judge convergence.
+  - density: if the change of charge density difference between two successive outer loop iterations is seen as converged according to *[scf_thr](#scf_thr)*, then the outer loop is seen as converged.
+- **Default**: `density`
+
+### exx_ene_thr
+- **Type**: Real
+- **Availability**: *[exx_thr_type](#exx_thr_type)*==`energy`
+- **Description**: The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.
+- **Default**: 1e-5
+- **Unit**: Ry
+
 ## Molecular dynamics
 
 These variables are used to control molecular dynamics calculations. For more information, please refer to [md.md](../md.md#molecular-dynamics) in detail.
@@ -3170,14 +3201,14 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Boolean
 - **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_NAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.txt` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_NAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
   - False: ABACUS will start molecular dynamics calculations normally from the first step.
 - **Default**: False
 
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of `OUT.${suffix}/Restart_md.dat` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
+- **Description**: The output frequency of `OUT.${suffix}/Restart_md.txt` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
 - **Default**: 5
 
 ### md_dumpfreq
@@ -3336,7 +3367,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
+- **Description**: The filename of DP/NEP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### dp_rescaling
@@ -3867,10 +3898,13 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   Type of electric field in the time domain.
   - 0: Gaussian type function:
+
   $$
     E(t) = A \cos\left[2\pi f(t-t_0)+\varphi\right]\exp\left[-\frac{(t-t_0)^2}{2\sigma^2}\right]
   $$
+
   - 1: Trapezoid function:
+
   $$
     E(t) =
     \begin{cases}
@@ -3880,11 +3914,15 @@ These variables are used to control berry phase and wannier90 interface paramete
         0, & t \geqslant t_3
     \end{cases}
   $$
+
   - 2: Trigonometric function:
+
   $$
     E(t) = A \cos(2\pi f_1 t + \varphi_1) \sin^2(2\pi f_2 t + \varphi_2)
   $$
+
   - 3: Heaviside step function:
+
   $$
     E(t) =
     \begin{cases}
@@ -3892,6 +3930,7 @@ These variables are used to control berry phase and wannier90 interface paramete
         0, & t \geqslant t_0
     \end{cases}
   $$
+
 - **Default**: 0
 
 ### td_tstart
