@@ -15,7 +15,7 @@ class ESolver_OF_TDDFT : public ESolver_OF
     virtual void runner(UnitCell& ucell, const int istep) override;
 
   protected:
-    std::vector<std::complex<double>> phi_td;                     // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
+    std::vector<std::complex<double>> phi_td;                     // time dependent wavefunction
     Evolve_OFDFT* evolve_ofdft=nullptr;
 };
 } // namespace ModuleESolver
