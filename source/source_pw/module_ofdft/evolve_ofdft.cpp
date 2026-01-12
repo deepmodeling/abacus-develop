@@ -26,10 +26,10 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     this->renormalize_psi(chr, pw_rho, psi_);
 
     pelec->pot->update_from_charge(&chr, &ucell); // Hartree + XC + external
-    this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_effective_v()); // TF potential
+    this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_eff_v()); // TF potential
     if (PARAM.inp.of_cd)
     {
-        this->cal_CD_potential(psi_, pw_rho, pelec->pot->get_effective_v(), PARAM.inp.of_mCD_alpha); // CD potential
+        this->cal_CD_potential(psi_, pw_rho, pelec->pot->get_eff_v(), PARAM.inp.of_mCD_alpha); // CD potential
     }
 
 #ifdef _OPENMP
