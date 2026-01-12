@@ -20,14 +20,6 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
 	const int nkstot = kv.get_nkstot();
-
-    std::vector<int> ngk_tot = kv.ngk;
-
-#ifdef __MPI
-    std::vector<int> send_ngk_tot = kv.ngk;
-    MPI_Allreduce(send_ngk_tot.data(), ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
-#endif
-
     const int nk_fac = nspin == 2 ? 2 : 1;
     const int nks_np = nks / nk_fac;
     const int nkstot_np = nkstot / nk_fac;
