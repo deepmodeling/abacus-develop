@@ -1369,28 +1369,46 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: Whether to consider spin-orbital coupling effect in the calculation.
-  - True: Consider spin-orbital coupling effect, and `nspin` is also automatically set to 4.
-  - False: Do not consider spin-orbital coupling effect.
+- **Description**: Whether to consider spin-orbit coupling (SOC) effect in the calculation.
+  - **True**: Consider spin-orbit coupling effect. When enabled:
+    - `nspin` is automatically set to 4 (noncollinear spin representation)
+    - Symmetry is automatically disabled (SOC breaks inversion symmetry)
+    - **Requires** full-relativistic pseudopotentials with `has_so=true` in the UPF header
+  - **False**: Do not consider spin-orbit coupling effect.
+  - **Common Error**: "no soc upf used for lspinorb calculation" - ensure you are using full-relativistic pseudopotentials
+  - See [Spin-polarization and SOC](../scf/spin.md#soc-effects) for detailed usage and examples
 - **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account.
-  - True: Allow non-collinear polarization, and `nspin` is also automatically set to 4.
-  - False: Do not allow non-collinear polarization.
+- **Description**: Whether to allow non-collinear magnetic moments, where magnetization can point in arbitrary directions (x, y, z components) rather than being constrained to the z-axis.
+  - **True**: Allow non-collinear polarization. When enabled:
+    - `nspin` is automatically set to 4
+    - Wave function dimension is doubled (`npol=2`), and the number of occupied states is doubled
+    - Charge density has 4 components (Pauli spin matrices: ρ_total, ρ_x, ρ_y, ρ_z)
+    - **Constraint**: Cannot be used with `gamma_only=true`
+    - Can be combined with `lspinorb=true` for SOC effects with non-collinear magnetism
+  - **False**: Do not allow non-collinear polarization (magnetization constrained to z-axis).
+  - **Relationship with lspinorb**:
+    - `noncolin=0, lspinorb=1`: SOC with z-axis magnetism only (for non-magnetic materials with SOC)
+    - `noncolin=1, lspinorb=0`: Non-collinear magnetism without SOC
+    - `noncolin=1, lspinorb=1`: Both non-collinear magnetism and SOC
+  - See [Noncollinear Spin Polarized Calculations](../scf/spin.md#noncollinear-spin-polarized-calculations) for usage examples
 - **Default**: False
 
 ### soc_lambda
 
 - **Type**: Real
-- **Availability**: Relevant for soc calculations.
-- **Description**: Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
+- **Availability**: Only works when `lspinorb=true`
+- **Description**: Modulates the strength of spin-orbit coupling effect. Sometimes, for some real materials, both scalar-relativistic and full-relativistic pseudopotentials cannot describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
 
-  `soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect.
+  `soc_lambda`, which has value range [0.0, 1.0], is used to modulate SOC effect:
+  - `soc_lambda 0.0`: Scalar-relativistic case (no SOC)
+  - `soc_lambda 1.0`: Full-relativistic case (full SOC)
+  - Intermediate values: Partial-relativistic SOC (interpolation between scalar and full)
 
-  In particular, `soc_lambda 0.0` refers to scalar-relativistic case and `soc_lambda 1.0` refers to full-relativistic case.
+  **Use case**: When experimental or high-level theoretical results suggest that the SOC effect is weaker or stronger than what full-relativistic pseudopotentials predict, you can adjust this parameter to match the target behavior.
 - **Default**: 1.0
 
 ### dfthalf_type
