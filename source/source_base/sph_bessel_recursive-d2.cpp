@@ -4,11 +4,11 @@
 //==========================================================
 
 #include "sph_bessel_recursive.h"
+#include "constants.h"
+#include "source_base/memory.h"
 
 #include<cmath>
 #include<stdexcept>
-
-#include "constants.h"
 
 namespace ModuleBase
 {
@@ -33,6 +33,7 @@ const std::vector<std::vector<std::vector<double>>> & Sph_Bessel_Recursive::D2::
 	cal_jlx_0( lmax+1, ix1_size, ix2_size );
 	cal_jlx_smallx( lmax+1, ix1_size, ix2_size );
 	cal_jlx_recursive( lmax+1, ix1_size, ix2_size );
+	ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (lmax+1) * ix1_size * ix2_size);
 	return jlx;
 }
 
@@ -41,7 +42,7 @@ void Sph_Bessel_Recursive::D2::cal_jlx_0( const int l_size, const size_t ix1_siz
 	if(jlx.size() < static_cast<size_t>(l_size))
 		jlx.resize(l_size);
 	
-	for( int l=0; l!=l_size; ++l )
+	for( int l=0; l<l_size; ++l )
 	{
 		const double jlx0 = (0==l) ? 1.0 : 0.0;
 

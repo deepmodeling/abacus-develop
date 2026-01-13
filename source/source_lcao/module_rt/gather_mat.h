@@ -46,6 +46,24 @@ void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock
 }
 
 template <typename T>
+void distributeMatrix(hamilt::MatrixBlock<T>& mat_l, const module_rt::Matrix_g<T>& mat_g)
+{
+    const int* desc_local = mat_l.desc; // Obtain the descriptor from Parallel_Orbitals
+    int ctxt = desc_local[1];           // BLACS context
+    int nrows = desc_local[2];          // Global matrix row number
+    int ncols = desc_local[3];          // Global matrix column number
+
+    // Check matrix size consistency
+    if (mat_g.row != static_cast<size_t>(nrows) || mat_g.col != static_cast<size_t>(ncols))
+    {
+        throw std::invalid_argument("module_rt::distributeMatrix: Global matrix size mismatch.");
+    }
+
+    // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
+    Cpxgemr2d(nrows, ncols, mat_g.p.get(), 1, 1, mat_g.desc.get(), mat_l.p, 1, 1, const_cast<int*>(desc_local), ctxt);
+}
+
+template <typename T>
 void gatherPsi(const int myid,
                const int root_proc,
                T* psi_l,

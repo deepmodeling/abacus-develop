@@ -552,7 +552,7 @@ void ReadInput::item_system()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm"};
+            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "hr"};
             if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
             {
                 const std::string warningstr = nofound_str(init_chgs, "init_chg");

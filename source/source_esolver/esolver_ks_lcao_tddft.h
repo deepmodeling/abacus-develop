@@ -6,6 +6,7 @@
 #include "source_lcao/module_rt/gather_mat.h"              // MPI gathering and distributing functions
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/module_rt/boundary_fix.h"
 
 namespace ModuleESolver
 {

@@ -482,6 +482,7 @@ void periodic_boundary_adjustment(Atom* atoms,
 	for (int it = 0; it < ntype; it++) 
 	{
 		Atom* atom = &atoms[it];
+        atom->boundary_shift.assign(atom->na, {0,0,0});
 		for (int ia = 0; ia < atom->na; ia++) 
 		{
             // mohan update 2011-03-21
@@ -489,10 +490,12 @@ void periodic_boundary_adjustment(Atom* atoms,
             {
                 if (atom->taud[ia][ik] < 0) 
                 {
+                    atom->boundary_shift[ia][ik] += 1;
                     atom->taud[ia][ik] += 1.0;
                 }
                 if (atom->taud[ia][ik] >= 1.0) 
                 {
+                    atom->boundary_shift[ia][ik] -= 1;
                     atom->taud[ia][ik] -= 1.0;
                 }
             }

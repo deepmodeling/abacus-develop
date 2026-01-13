@@ -135,6 +135,7 @@
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_ion](#out_freq_ion)
+    - [out\_freq\_td](#out_freq_td)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -535,7 +536,7 @@ These variables are used to control general system parameters.
   - ofdft: orbital-free density functional theory
   - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
-  - tddft: real-time time-dependent density functional theory (TDDFT)
+  - tddft: real-time time-dependent density functional theory (RT-TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
   - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
@@ -639,6 +640,8 @@ These variables are used to control general system parameters.
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
   - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
+  - dm: the density will be calculated by real space density matrix(DMR) of LCAO base. DMR is read in from file `dmrs1_nao.csr` in directory [read_file_dir](#read_file_dir).
+  - hr: the real space Hamiltonian matrix(HR) will be read in from file `hrs1_nao.csr` in directory [read_file_dir](#read_file_dir), and DMR and charge density will be calculated from it.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -1688,15 +1691,22 @@ These variables are used to control the output of properties.
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Controls the output interval in **ionic steps**. When set to a positive integer $N$, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every $N$ ionic steps.
 - **Default**: 0
-- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
+- **Note**: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by [`out_freq_td`](#out_freq_td)—see its description for details.
+
+### out_freq_td
+
+- **Type**: Integer
+- **Description**: Controls the output interval in **completed electronic evolution steps** during RT-TDDFT calculations. When set to a positive integer $N$, detailed information (see [`out_freq_ion`](#out_freq_ion)) is printed every $N$ electron time-evolution steps (i.e., every $N$ `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to [`estep_per_md`](#estep_per_md), since one ionic step corresponds to [`estep_per_md`](#estep_per_md) electronic evolution steps.
+- **Default**: 0
+- **Note**: This parameter is **only active in RT-TDDFT mode** (`esolver_type = tddft`). It has no effect in ground-state calculations.
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
-- **Default**: [scf_nmax](#scf_nmax)
+- **Description**: Output the charge density (only binary format, controlled by [`out_chg`](#out_chg)), wavefunction (controlled by [`out_wfc_pw`](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [`scf_nmax`](#scf_nmax).
+- **Default**: [`scf_nmax`](#scf_nmax)
 
 ### out_chg
 
@@ -2971,6 +2981,12 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
+### exx_cs_inv_thr
+
+- **Type**: Real
+- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When `exx_cs_inv_thr > 0`, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than `exx_cs_inv_thr` are discarded to improve numerical stability. A relatively safe and commonly recommended value is `1e-5`.
+- **Default**: -1
+
 ### exx_v_threshold
 
 - **Type**: Real
@@ -3016,7 +3032,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
   - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
   - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*

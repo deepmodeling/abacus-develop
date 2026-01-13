@@ -1,4 +1,5 @@
 #include "source_hsolver/diago_scalapack.h"
+#include "source_hsolver/diago_lapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -74,6 +75,8 @@ class DiagoPrepare
         if (ks_solver == "scalapack_gvx")
             ;
 //             dh = new hsolver::DiagoScalapack<T>;
+        else if (ks_solver == "lapack")
+            ;
 #ifdef __ELPA
         else if (ks_solver == "genelpa")
             ;
@@ -226,6 +229,11 @@ class DiagoPrepare
                 hsolver::DiagoScalapack<T> dh;
                 dh.diag(&hmtest, psi, e_solver.data());
             }
+            else if (ks_solver == "lapack")
+            {
+                hsolver::DiagoLapack<T> la;
+                la.diag(&hmtest, psi, e_solver.data());
+            }
     #ifdef __ELPA
             else if (ks_solver == "genelpa")
             {
@@ -316,7 +324,9 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<double>(0, 0, 32, 0, "genelpa", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
 #endif
         DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
-        DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
+        DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
+        DiagoPrepare<double>(0, 0, 1, 0, "lapack", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
+        DiagoPrepare<double>(0, 0, 32, 0, "lapack", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
 
 class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
 {

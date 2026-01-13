@@ -2,7 +2,8 @@ INPUT_PARAMETERS
 #Parameters	(General)
 suffix              autotest
 pseudo_dir	../../PP_ORB
-	
+init_wfc            random
+
 nbands			8
 calculation             cell-relax
 #Parameters (Accuracy)

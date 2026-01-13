@@ -6,11 +6,11 @@
 #include "source_base/parallel_reduce.h"
 
 void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec, 
-                            const Charge& chr, 
+                            Charge& chr, 
                             UnitCell& ucell, 
-                            std::vector<std::complex<double>> psi_, 
+                            std::vector<std::complex<double>>& psi_, 
                             ModulePW::PW_Basis* pw_rho, 
-                            std::vector<std::complex<double>> Hpsi)
+                            std::vector<std::complex<double>>& Hpsi)
 {
     // update rho
 #ifdef _OPENMP
@@ -23,6 +23,7 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
             chr.rho[is][ir] = abs(psi_[is * pw_rho->nrxx + ir])*abs(psi_[is * pw_rho->nrxx + ir]);
         }
     }
+    this->renormalize_psi(chr, pw_rho, psi_);
 
     pelec->pot->update_from_charge(&chr, &ucell); // Hartree + XC + external
     this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_eff_v()); // TF potential
@@ -43,6 +44,26 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
         }
     }
     this->cal_vw_potential_phi(psi_, pw_rho, Hpsi);
+}
+
+void Evolve_OFDFT::renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_)
+{
+    const double sr = chr.sum_rho();
+    const double normalize_factor = PARAM.inp.nelec / sr;
+
+    std::cout<<"sr="<<sr<<" nelec="<<PARAM.inp.nelec<<" normalize_factor="<<normalize_factor<<std::endl;
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+    for (int is = 0; is < PARAM.inp.nspin; is++)
+    {
+        for (int ir = 0; ir < pw_rho->nrxx; ir++)
+        {
+            pphi_[is * pw_rho->nrxx + ir] *= sqrt(normalize_factor);
+            chr.rho[is][ir] *= normalize_factor;
+        }
+    }
+    return;
 }
 
 void Evolve_OFDFT::cal_tf_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot)
@@ -72,9 +93,9 @@ void Evolve_OFDFT::cal_tf_potential(const double* const* prho, ModulePW::PW_Basi
     }
 }
 
-void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi, 
+void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>>& pphi, 
                                         ModulePW::PW_Basis* pw_rho, 
-                                        std::vector<std::complex<double>> Hpsi)
+                                        std::vector<std::complex<double>>& Hpsi)
 {
     if (PARAM.inp.nspin <= 0) {
         ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
@@ -107,7 +128,7 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi,
         pw_rho->recip2real(recipPhi[is], rLapPhi[is]);
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            Hpsi[is * pw_rho->nrxx + ir]+=rLapPhi[is][ir];
+            Hpsi[is * pw_rho->nrxx + ir] += rLapPhi[is][ir];
         }
     }
 
@@ -123,7 +144,7 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi,
     delete[] rLapPhi;
 }
 
-void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_, 
+void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_, 
                                     ModulePW::PW_Basis* pw_rho, 
                                     ModuleBase::matrix& rpot,
                                     double mCD_para)
@@ -151,20 +172,20 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
 #endif
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        std::complex<double> *recipCurrent_x=new std::complex<double>[pw_rho->npw];
-        std::complex<double> *recipCurrent_y=new std::complex<double>[pw_rho->npw];
-        std::complex<double> *recipCurrent_z=new std::complex<double>[pw_rho->npw];
-        std::complex<double> *recipCDPotential=new std::complex<double>[pw_rho->npw];
-        std::complex<double> *rCurrent_x=new std::complex<double>[pw_rho->nrxx];
-        std::complex<double> *rCurrent_y=new std::complex<double>[pw_rho->nrxx];
-        std::complex<double> *rCurrent_z=new std::complex<double>[pw_rho->nrxx];
-        std::complex<double> *kF_r=new std::complex<double>[pw_rho->nrxx];
-        std::complex<double> *rCDPotential=new std::complex<double>[pw_rho->nrxx];
+        std::vector<std::complex<double>> recipCurrent_x(pw_rho->npw);
+        std::vector<std::complex<double>> recipCurrent_y(pw_rho->npw);
+        std::vector<std::complex<double>> recipCurrent_z(pw_rho->npw);
+        std::vector<std::complex<double>> recipCDPotential(pw_rho->npw);
+        std::vector<std::complex<double>> rCurrent_x(pw_rho->nrxx);
+        std::vector<std::complex<double>> rCurrent_y(pw_rho->nrxx);
+        std::vector<std::complex<double>> rCurrent_z(pw_rho->nrxx);
+        std::vector<std::complex<double>> kF_r(pw_rho->nrxx);
+        std::vector<std::complex<double>> rCDPotential(pw_rho->nrxx);
         recipPhi[is] = new std::complex<double>[pw_rho->npw];
 
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            kF_r[ir]=std::pow(3*std::pow(ModuleBase::PI*std::abs(rPhi[is][ir]),2),1/3);
+            kF_r[ir]=std::pow(3*std::pow(ModuleBase::PI*std::abs(rPhi[is][ir]),2),1.0/3.0);
         }
 
         pw_rho->real2recip(rPhi[is], recipPhi[is]);
@@ -174,38 +195,40 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
             recipCurrent_y[ik]=imag*pw_rho->gcar[ik].y*recipPhi[is][ik]* pw_rho->tpiba;
             recipCurrent_z[ik]=imag*pw_rho->gcar[ik].z*recipPhi[is][ik]* pw_rho->tpiba;
         }
-        pw_rho->recip2real(recipCurrent_x,rCurrent_x);
-        pw_rho->recip2real(recipCurrent_y,rCurrent_y);
-        pw_rho->recip2real(recipCurrent_z,rCurrent_z);
+        pw_rho->recip2real(recipCurrent_x.data(),rCurrent_x.data());
+        pw_rho->recip2real(recipCurrent_y.data(),rCurrent_y.data());
+        pw_rho->recip2real(recipCurrent_z.data(),rCurrent_z.data());
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             rCurrent_x[ir]=std::imag(rCurrent_x[ir]*std::conj(rPhi[is][ir]));
             rCurrent_y[ir]=std::imag(rCurrent_y[ir]*std::conj(rPhi[is][ir]));
             rCurrent_z[ir]=std::imag(rCurrent_z[ir]*std::conj(rPhi[is][ir]));
         }
-        pw_rho->real2recip(rCurrent_x,recipCurrent_x);
-        pw_rho->real2recip(rCurrent_y,recipCurrent_y);
-        pw_rho->real2recip(rCurrent_z,recipCurrent_z);
+        pw_rho->real2recip(rCurrent_x.data(),recipCurrent_x.data());
+        pw_rho->real2recip(rCurrent_y.data(),recipCurrent_y.data());
+        pw_rho->real2recip(rCurrent_z.data(),recipCurrent_z.data());
         for (int ik = 0; ik < pw_rho->npw; ++ik)
         {
-            recipCDPotential[ik]=recipCurrent_x[ik]*pw_rho->gcar[ik].x
-              +recipCurrent_y[ik]*pw_rho->gcar[ik].y
-              +recipCurrent_z[ik]*pw_rho->gcar[ik].z;
-            recipCDPotential[ik]*=imag/pw_rho->gg[ik];
+            recipCDPotential[ik]=recipCurrent_x[ik]*pw_rho->gcar[ik].x+recipCurrent_y[ik]*pw_rho->gcar[ik].y+recipCurrent_z[ik]*pw_rho->gcar[ik].z;
+            if (pw_rho->gg[ik]==0) 
+            {
+                recipCDPotential[ik]=0.0;
+            }
+            else
+            {
+                recipCDPotential[ik]*=imag/sqrt(pw_rho->gg[ik]);
+            }
         }
-        pw_rho->recip2real(recipCDPotential,rCDPotential);
+        pw_rho->recip2real(recipCDPotential.data(),rCDPotential.data());
 
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) 
-              / (2.0*std::pow(std::real(kF_r[ir]),2));
+            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) / (2.0*std::pow(std::real(kF_r[ir]),2));
+            if (isnan(rpot(0, ir))) 
+            {
+                rpot(0, ir)=0.0;
+            }
         }
-        delete[] recipCurrent_x;
-        delete[] recipCurrent_y;
-        delete[] recipCurrent_z;
-        delete[] rCurrent_x;
-        delete[] rCurrent_y;
-        delete[] rCurrent_z;
     }
 
 #ifdef _OPENMP
@@ -220,15 +243,16 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
     delete[] rPhi;
 }
 
-void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec, 
-                                 const Charge& chr, UnitCell& ucell, 
-                                 std::vector<std::complex<double>> pphi_, 
+void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec, 
+                                 Charge& chr, 
+                                 UnitCell& ucell, 
+                                 std::vector<std::complex<double>>& pphi_, 
                                  ModulePW::PW_Basis* pw_rho)
 {
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagte_psi");
+    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK4");
 
     std::complex<double> imag(0.0,1.0);
-    double dt=PARAM.inp.mdp.md_dt;
+    double dt=PARAM.inp.mdp.md_dt / ModuleBase::AU_to_FS;
     const int nspin = PARAM.inp.nspin;
     const int nrxx = pw_rho->nrxx;
     const int total_size = nspin * nrxx;
@@ -247,7 +271,7 @@ void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec,
     for (int is = 0; is < PARAM.inp.nspin; ++is){
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            K1[is * nrxx + ir]=-1.0*K1[is * nrxx + ir]*dt*imag;
+            K1[is * nrxx + ir]=-0.5*K1[is * nrxx + ir]*dt*imag;   // 0.5 convert Ry to Hartree
             psi1[is * nrxx + ir]=pphi_[is * nrxx + ir]+0.5*K1[is * nrxx + ir];
         }
     }
@@ -258,7 +282,7 @@ void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec,
     for (int is = 0; is < PARAM.inp.nspin; ++is){
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            K2[is * nrxx + ir]=-1.0*K2[is * nrxx + ir]*dt*imag;
+            K2[is * nrxx + ir]=-0.5*K2[is * nrxx + ir]*dt*imag;
             psi2[is * nrxx + ir]=pphi_[is * nrxx + ir]+0.5*K2[is * nrxx + ir];
         }
     }
@@ -269,7 +293,7 @@ void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec,
     for (int is = 0; is < PARAM.inp.nspin; ++is){
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            K3[is * nrxx + ir]=-1.0*K3[is * nrxx + ir]*dt*imag;
+            K3[is * nrxx + ir]=-0.5*K3[is * nrxx + ir]*dt*imag;
             psi3[is * nrxx + ir]=pphi_[is * nrxx + ir]+K3[is * nrxx + ir];
         }
     }
@@ -280,12 +304,80 @@ void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec,
     for (int is = 0; is < PARAM.inp.nspin; ++is){
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            K4[is * nrxx + ir]=-1.0*K4[is * nrxx + ir]*dt*imag;
-            pphi_[is * nrxx + ir]+=1.0/6.0*(K1[is * nrxx + ir]
-              +2.0*K2[is * nrxx + ir]+2.0*K3[is * nrxx + ir]
-              +K4[is * nrxx + ir]);
+            K4[is * nrxx + ir]=-0.5*K4[is * nrxx + ir]*dt*imag;
+            pphi_[is * nrxx + ir]+=1.0/6.0*(K1[is * nrxx + ir]+2.0*K2[is * nrxx + ir]+2.0*K3[is * nrxx + ir]+K4[is * nrxx + ir]);
         }
     }
 
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagte_psi");
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            chr.rho[is][ir] = abs(pphi_[is * pw_rho->nrxx + ir])*abs(pphi_[is * pw_rho->nrxx + ir]);
+        }
+    }
+    this->renormalize_psi(chr, pw_rho, pphi_);
+
+    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK4");
+}
+
+void Evolve_OFDFT::propagate_psi_RK2(elecstate::ElecState* pelec, 
+                                 Charge& chr, 
+                                 UnitCell& ucell, 
+                                 std::vector<std::complex<double>>& pphi_, 
+                                 ModulePW::PW_Basis* pw_rho)
+{
+    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK2");
+
+    const std::complex<double> imag(0.0, 1.0);
+    double dt=PARAM.inp.mdp.md_dt / ModuleBase::AU_to_FS;
+    const int nspin = PARAM.inp.nspin;
+    const int nrxx = pw_rho->nrxx;
+    const int total_size = nspin * nrxx;
+
+    std::vector<std::complex<double>> K1(total_size);
+    std::vector<std::complex<double>> K2(total_size);
+    std::vector<std::complex<double>> psi_mid(total_size);
+
+    cal_Hpsi(pelec, chr, ucell, pphi_, pw_rho, K1);
+
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+    for (int is = 0; is < nspin; ++is) {
+        for (int ir = 0; ir < nrxx; ++ir) {
+            const int idx = is * nrxx + ir;
+            K1[idx] = -0.5 * K1[idx] * dt * imag;
+            psi_mid[idx] = pphi_[idx] + 0.5 * K1[idx];
+        }
+    }
+
+    cal_Hpsi(pelec, chr, ucell, psi_mid, pw_rho, K2);
+
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+    for (int is = 0; is < nspin; ++is) {
+        for (int ir = 0; ir < nrxx; ++ir) {
+            const int idx = is * nrxx + ir;
+            K2[idx] = -0.5 * K2[idx] * dt * imag;
+            pphi_[idx] += K2[idx];
+        }
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+    for (int is = 0; is < nspin; ++is) {
+        for (int ir = 0; ir < nrxx; ++ir) {
+            chr.rho[is][ir] = std::norm(pphi_[is * nrxx + ir]); 
+        }
+    }
+
+    this->renormalize_psi(chr, pw_rho, pphi_);
+
+    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK2");
 }

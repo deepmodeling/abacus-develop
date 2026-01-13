@@ -46,7 +46,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
     {
         phm->updateHk(ik);
 
-        ModuleBase::timer::tick("Efficiency", "evolve_k");
+        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
 
@@ -70,6 +70,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
         }
         else
         {
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
             const int len_psi_k_2 = use_lapack ? nlocal : psi->get_nbasis();
             const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
@@ -135,6 +137,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                      len_HS_laststep);
             syncmem_double_h2d_op()(ekb_tensor.data<double>(), &(ekb(ik, 0)), nband);
 
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+
             evolve_psi_tensor<Device>(nband,
                                       nlocal,
                                       &(para_orb),
@@ -149,6 +153,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                       print_matrix,
                                       use_lapack);
 
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
             if (use_lapack)
             {
@@ -192,11 +197,14 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 MPI_Bcast(&(ekb(ik, 0)), nband, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
             }
 #endif
+
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
         }
 
-        ModuleBase::timer::tick("Efficiency", "evolve_k");
+        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
     } // end k
 
     ModuleBase::timer::tick("Evolve_elec", "solve_psi");

@@ -22,7 +22,6 @@ public:
 	
 	int rmesh_times = 5;				// Peize Lin test
 	int kmesh_times = 1;				// Peize Lin test
-
 };
 
 #endif

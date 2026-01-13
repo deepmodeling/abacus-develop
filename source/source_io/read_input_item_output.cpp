@@ -345,12 +345,24 @@ void ReadInput::item_output()
         Input_Item item("out_freq_ion");
         item.annotation = "print information every few ionic steps";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-			if (para.input.out_freq_ion <= 0)
-			{
-				para.input.out_freq_ion = 0; // 0 means no output of info
-			}
-		};
-		read_sync_int(input.out_freq_ion);
+            if (para.input.out_freq_ion <= 0)
+            {
+                para.input.out_freq_ion = 0; // 0 means no output of info
+            }
+        };
+        read_sync_int(input.out_freq_ion);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_freq_td");
+        item.annotation = "print information every few completed electronic iterations in RT-TDDFT";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.out_freq_td <= 0)
+            {
+                para.input.out_freq_td = 0; // 0 means no output of info
+            }
+        };
+        read_sync_int(input.out_freq_td);
         this->add_item(item);
     }
     {

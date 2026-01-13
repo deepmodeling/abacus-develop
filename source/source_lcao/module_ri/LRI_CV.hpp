@@ -44,8 +44,7 @@ void LRI_CV<Tdata>::set_orbitals(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 	const double &kmesh_times,
-	ORB_gaunt_table& MGT,
-    const bool& init_MGT,
+	std::shared_ptr<ORB_gaunt_table> MGT,
     const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
@@ -57,9 +56,6 @@ void LRI_CV<Tdata>::set_orbitals(
 
 	this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos);
     this->abfs_ccp_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs_ccp);
-    const double lcaos_rmax = Exx_Abfs::Construct_Orbs::get_Rmax(this->lcaos);
-    const double abfs_ccp_rmax
-        = Exx_Abfs::Construct_Orbs::get_Rmax(this->abfs_ccp);
 
 	const ModuleBase::Element_Basis_Index::Range
 		range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
@@ -69,25 +65,17 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-    int Lmax_v = std::numeric_limits<double>::min();
-    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
-    int Lmax_c = std::numeric_limits<double>::min();
+	this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
+    this->m_abfs_abfs.init(
+		this->abfs_ccp, this->abfs,
+		ucell, orb, kmesh_times);
     if (init_C)
-        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, Lmax_c);
-    int Lmax = std::max(Lmax_v, Lmax_c);
+        this->m_abfslcaos_lcaos.init(
+			this->abfs_ccp, this->lcaos, this->lcaos,
+			ucell, orb, kmesh_times);
 
-    if (init_MGT) {
-        MGT.init_Gaunt_CH(Lmax);
-        MGT.init_Gaunt(Lmax);
-    }
-
-    this->m_abfs_abfs.init_radial(this->abfs_ccp, this->abfs, MGT);
     this->m_abfs_abfs.init_radial_table();
     if (init_C) {
-        this->m_abfslcaos_lcaos.init_radial(this->abfs_ccp,
-                                            this->lcaos,
-                                            this->lcaos,
-                                            MGT);
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 
@@ -363,8 +351,12 @@ LRI_CV<Tdata>::DPcal_C_dC(
 						it0, it1, {0,0,0}, {0,0,0},
 						this->index_abfs, this->index_lcaos, this->index_lcaos,
 						Matrix_Orbs21::Matrix_Order::A1A2B);
-			const RI::Tensor<Tdata> V = this->DPcal_V( it0, it0, {0,0,0}, {{"writable_Vws",true}});
-			const RI::Tensor<Tdata> L = LRI_CV_Tools::cal_I(V);
+            const RI::Tensor<Tdata> V = this->DPcal_V(it0, it0, {0, 0, 0}, {{"writable_Vws", true}});
+            RI::Tensor<Tdata> L;
+            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
+            else
+                L = LRI_CV_Tools::cal_I(V);
 
 			const RI::Tensor<Tdata> C = RI::Global_Func::convert<Tdata>(0.5) * LRI_CV_Tools::mul1(L,A);					// Attention 0.5!
 			if(flags.at("writable_Cws"))
@@ -412,7 +404,10 @@ LRI_CV<Tdata>::DPcal_C_dC(
 				     {DPcal_V(it1, it0, Rm,      flags),
 				      DPcal_V(it1, it1, {0,0,0}, {{"writable_Vws",true}})}};
 
-			const std::vector<std::vector<RI::Tensor<Tdata>>>
+            std::vector<std::vector<RI::Tensor<Tdata>>> L;
+            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
+            else
 				L = LRI_CV_Tools::cal_I(V);
 
 			const std::vector<RI::Tensor<Tdata>> C = LRI_CV_Tools::mul2(L,A);

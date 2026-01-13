@@ -2,6 +2,7 @@
 #define MODULE_HSOLVER_DIAGO_CG_H_
 
 #include <functional>
+#include <vector>
 
 #include <source_base/macros.h>
 #include <source_base/kernels/math_kernel_op.h>
@@ -35,13 +36,14 @@ class DiagoCG final
         const Real& pw_diag_thr,
         const int& pw_diag_nmax,
         const int& nproc_in_pool);
-    
+
     ~DiagoCG();
 
     // virtual void init(){};
     // refactor hpsi_info
     // this is the diag() function for CG method
-    void diag(const Func& hpsi_func,
+    // returns avg_iter
+    double diag(const Func& hpsi_func,
               const Func& spsi_func,
               ct::Tensor& psi,
               ct::Tensor& eigen,
@@ -59,7 +61,9 @@ class DiagoCG final
     /// col size for input psi matrix
     int n_basis_ = 0;
     /// average iteration steps for cg diagonalization
-    int avg_iter_ = 0;
+    double avg_iter_ = 0;
+    /// std::vector for iter count of each band
+    std::vector<int> iter_band;
     /// threshold for cg diagonalization
     Real pw_diag_thr_ = 1e-5;
     /// maximum iteration steps for cg diagonalization
@@ -87,15 +91,15 @@ class DiagoCG final
         ct::Tensor& pphi);
 
     void orth_grad(
-        const ct::Tensor& psi, 
-        const int& m, 
-        ct::Tensor& grad, 
+        const ct::Tensor& psi,
+        const int& m,
+        ct::Tensor& grad,
         ct::Tensor& scg,
         ct::Tensor& lagrange);
 
     void calc_gamma_cg(
         const int& iter,
-        const Real& cg_norm, 
+        const Real& cg_norm,
         const Real& theta,
         const ct::Tensor& prec,
         const ct::Tensor& scg,
@@ -110,8 +114,8 @@ class DiagoCG final
         const ct::Tensor& cg,
         const ct::Tensor& scg,
         const double& ethreshold,
-        Real &cg_norm, 
-        Real &theta, 
+        Real &cg_norm,
+        Real &theta,
         Real &eigen,
         ct::Tensor& phi_m,
         ct::Tensor& sphi,

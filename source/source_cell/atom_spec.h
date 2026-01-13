@@ -36,6 +36,7 @@ class Atom
     std::vector<ModuleBase::Vector3<double>> tau; // Cartesian coordinates of each atom in this type.
     std::vector<ModuleBase::Vector3<double>> dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
     std::vector<ModuleBase::Vector3<double>> taud;  // Direct coordinates of each atom in this type.
+    std::vector<ModuleBase::Vector3<int>> boundary_shift;  // record for periodic boundary adjustment.
     std::vector<ModuleBase::Vector3<double>> vel;   // velocities of each atom in this type.
     std::vector<ModuleBase::Vector3<double>> force; // force acting on each atom in this type.
     std::vector<ModuleBase::Vector3<double>> lambda; // Lagrange multiplier for each atom in this type. used in deltaspin

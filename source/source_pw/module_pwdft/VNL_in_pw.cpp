@@ -1468,19 +1468,19 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
                 double* qg_ptr = reinterpret_cast<double*>(qg.c);
                 double* aux_ptr = reinterpret_cast<double*>(aux.c);
 
-                dgemm_(&transa,
-                       &transb,
-                       &nij,
-                       &natom,
-                       &complex_npw,
-                       &fact,
-                       qg_ptr,
-                       &complex_npw,
+                BlasConnector::gemm(transb,
+                       transa,
+                       natom,
+                       nij,
+                       complex_npw,
+                       fact,
                        aux_ptr,
-                       &complex_npw,
-                       &zero,
+                       complex_npw,
+                       qg_ptr,
+                       complex_npw,
+                       zero,
                        deeaux.c,
-                       &nij);
+                       nij);
                 // I'm not sure if this is correct for gamma_only
                 if (rho_basis->gamma_only && rho_basis->ig_gge0 >= 0)
                 {

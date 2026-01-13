@@ -4,6 +4,7 @@ suffix          autotest
 calculation     scf
 ks_solver       dav
 dfthalf_type    1
+init_wfc        random
 
 symmetry                1
 pseudo_dir      ../../PP_ORB

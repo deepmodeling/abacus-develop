@@ -76,6 +76,8 @@ TEST_F(cal_pseudo_test, gauss_charge)
     Structure_Factor sf;
     sf.nbspline = -1;
 
+    sf.setup(&ucell, pgrid, &pwtest);
+
     solvent_model.gauss_charge(ucell, pgrid, &pwtest, N, &sf);
 
     EXPECT_NEAR(N[14].real(), 0.002, 1e-9);
@@ -126,6 +128,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     Structure_Factor sf;
     sf.nbspline = -1;
+    sf.setup(&ucell, pgrid, &pwtest); // sf.setup is moved to here
 
     std::complex<double>* Porter_g = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);

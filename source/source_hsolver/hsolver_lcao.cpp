@@ -3,9 +3,9 @@
 #ifdef __MPI
 #include "diago_scalapack.h"
 #include "source_base/module_external/scalapack_connector.h"
-#else
-#include "diago_lapack.h"
 #endif
+
+#include "diago_lapack.h"
 
 #ifdef __CUSOLVERMP
 #include "diago_cusolvermp.h"
@@ -174,13 +174,11 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     }
 #endif
 #endif
-#ifndef __MPI
     else if (this->method == "lapack") // only for single core
     {
         DiagoLapack<T> la;
         la.diag(hm, psi, eigenvalue);
     }
-#endif
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");

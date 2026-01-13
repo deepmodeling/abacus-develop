@@ -87,7 +87,7 @@ void Driver::driver_run()
     {
         p_esolver->runner(ucell, 0);
     }
-    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" || 
+    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
              cal == "test_memory" || cal == "test_neighbour")
     {
         //! supported "other" functions:
@@ -128,6 +128,13 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
+    if (GlobalV::NPROC > PARAM.inp.kpar)
+    {
+        ModuleBase::WARNING_QUIT(
+            "Driver::init_hardware",
+            "Number of processors must be equal to KPAR for DSP hardware initialization."
+        );
+    }
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif

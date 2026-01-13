@@ -15,13 +15,16 @@ namespace ABFs_Construct
 {
 namespace PCA
 {
-	extern std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> cal_PCA( 
+extern std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> cal_PCA(
 		const UnitCell& ucell,
-        const LCAO_Orbitals &orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,		// abfs must be orthonormal
-		const double kmesh_times );
-}
-}
+    const LCAO_Orbitals& orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs, // abfs must be orthonormal
+    const double kmesh_times);
 
-#endif	// ABFS_CONSTRUCT_PCA_H
+template <typename T>
+void tensor_syev(char jobz, char uplo, RI::Tensor<T>& a, RI::Global_Func::To_Real_t<T>* w, int& info);
+} // namespace PCA
+} // namespace ABFs_Construct
+
+#endif // ABFS_CONSTRUCT_PCA_H
