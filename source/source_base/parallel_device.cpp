@@ -2,100 +2,135 @@
 #ifdef __MPI
 namespace Parallel_Common
 {
+
+// optimize: use a global static variable to avoid the overhead of function-static thread-safety checks
+static bool is_mpi_active = false;
+inline static bool is_mpi_initialized() {
+    if (is_mpi_active) return true;
+    int flag = 0;
+    MPI_Initialized(&flag);
+    if (flag) is_mpi_active = true;
+    return flag != 0;
+}
+
 void isend_data(const double* buf, int count, int dest, int tag, MPI_Comm& comm, MPI_Request* request)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Isend(buf, count, MPI_DOUBLE, dest, tag, comm, request);
 }
 void isend_data(const std::complex<double>* buf, int count, int dest, int tag, MPI_Comm& comm, MPI_Request* request)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Isend(buf, count, MPI_DOUBLE_COMPLEX, dest, tag, comm, request);
 }
 void isend_data(const float* buf, int count, int dest, int tag, MPI_Comm& comm, MPI_Request* request)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Isend(buf, count, MPI_FLOAT, dest, tag, comm, request);
 }
 void isend_data(const std::complex<float>* buf, int count, int dest, int tag, MPI_Comm& comm, MPI_Request* request)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Isend(buf, count, MPI_COMPLEX, dest, tag, comm, request);
 }
 void send_data(const double* buf, int count, int dest, int tag, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Send(buf, count, MPI_DOUBLE, dest, tag, comm);
 }
 void send_data(const std::complex<double>* buf, int count, int dest, int tag, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Send(buf, count, MPI_DOUBLE_COMPLEX, dest, tag, comm);
 }
 void send_data(const float* buf, int count, int dest, int tag, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Send(buf, count, MPI_FLOAT, dest, tag, comm);
 }
 void send_data(const std::complex<float>* buf, int count, int dest, int tag, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Send(buf, count, MPI_COMPLEX, dest, tag, comm);
 }
 void recv_data(double* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Recv(buf, count, MPI_DOUBLE, source, tag, comm, status);
 }
 void recv_data(std::complex<double>* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Recv(buf, count, MPI_DOUBLE_COMPLEX, source, tag, comm, status);
 }
 void recv_data(float* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Recv(buf, count, MPI_FLOAT, source, tag, comm, status);
 }
 void recv_data(std::complex<float>* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Recv(buf, count, MPI_COMPLEX, source, tag, comm, status);
 }
 void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Bcast(object, n * 2, MPI_DOUBLE, 0, comm);
 }
 void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Bcast(object, n * 2, MPI_FLOAT, 0, comm);
 }
 void bcast_data(double* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Bcast(object, n, MPI_DOUBLE, 0, comm);
 }
 void bcast_data(float* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Bcast(object, n, MPI_FLOAT, 0, comm);
 }
 void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allreduce(MPI_IN_PLACE, object, n * 2, MPI_DOUBLE, MPI_SUM, comm);
 }
 void reduce_data(std::complex<float>* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allreduce(MPI_IN_PLACE, object, n * 2, MPI_FLOAT, MPI_SUM, comm);
 }
 void reduce_data(double* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, comm);
 }
 void reduce_data(float* object, const int& n, const MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_FLOAT, MPI_SUM, comm);
 }
 void gatherv_data(const double* sendbuf, int sendcount, double* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allgatherv(sendbuf, sendcount, MPI_DOUBLE, recvbuf, recvcounts, displs, MPI_DOUBLE, comm);
 }
 void gatherv_data(const std::complex<double>* sendbuf, int sendcount, std::complex<double>* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allgatherv(sendbuf, sendcount, MPI_DOUBLE_COMPLEX, recvbuf, recvcounts, displs, MPI_DOUBLE_COMPLEX, comm);
 }
 void gatherv_data(const float* sendbuf, int sendcount, float* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allgatherv(sendbuf, sendcount, MPI_FLOAT, recvbuf, recvcounts, displs, MPI_FLOAT, comm);
 }
 void gatherv_data(const std::complex<float>* sendbuf, int sendcount, std::complex<float>* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm)
 {
+    if (!is_mpi_initialized()) return;
     MPI_Allgatherv(sendbuf, sendcount, MPI_COMPLEX, recvbuf, recvcounts, displs, MPI_COMPLEX, comm);
 }
 
