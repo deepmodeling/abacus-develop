@@ -24,5 +24,7 @@ namespace Parallel_Reduce
 
     void reduce_min_double_pool(double& val) { return; }
 
-    void reduce_max_int_pool(int& val) { return; }}
+    void reduce_max_int_pool(int& val) { return; }
+    void reduce_max_int_pool(int* object, const int n) { return; }
+}
 #endif

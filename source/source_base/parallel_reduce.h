@@ -42,6 +42,7 @@ void reduce_min_double_pool(double& object);
 
 void reduce_max_int_all(int& object);
 void reduce_max_int_pool(int& object);
+void reduce_max_int_pool(int* object, const int n);
 
 void reduce_or_bool_all(bool& v);
 void reduce_or_bool_bp(bool& v);

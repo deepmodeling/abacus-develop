@@ -299,6 +299,13 @@ void Parallel_Reduce::reduce_max_int_pool(int& object)
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 #endif
 }
+
+void Parallel_Reduce::reduce_max_int_pool(int* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_MAX, POOL_WORLD);
+#endif
+}
 void Parallel_Reduce::reduce_or_bool_all(bool& v)
 {
 #ifdef __MPI
