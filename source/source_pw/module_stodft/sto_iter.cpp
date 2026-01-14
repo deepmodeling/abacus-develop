@@ -204,9 +204,8 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     if (ik == nks - 1)
     {
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
+            Parallel_Reduce::reduce_max_all(*p_hamilt_sto->emax);
+            Parallel_Reduce::reduce_min_all(*p_hamilt_sto->emin);
 #endif
         if (change)
         {
@@ -468,10 +467,10 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     }
     KS_ne /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+    Parallel_Reduce::reduce_double_bgroup(KS_ne);
     if(PARAM.globalv.all_ks_run)
     {
-        MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+        Parallel_Reduce::reduce_double_bp(KS_ne);
     }
     Parallel_Reduce::reduce_all(sto_ne);
 #endif
@@ -535,10 +534,10 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     }
     pes->f_en.demet /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+    Parallel_Reduce::reduce_double_bgroup(pes->f_en.demet);
     if(PARAM.globalv.all_ks_run)
     {
-        MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+        Parallel_Reduce::reduce_double_bp(pes->f_en.demet);
     }
     Parallel_Reduce::reduce_all(stodemet);
 #endif
@@ -673,7 +672,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
             pes->charge->reduce_diff_pools(sto_rho[is]);
             if (!PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
             {
-                MPI_Allreduce(MPI_IN_PLACE, sto_rho[is], nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+                Parallel_Reduce::reduce_double_bp(sto_rho[is], nrxx);
             }
         }
     }

@@ -2,6 +2,7 @@
 #define PW_BASIS_BIG_H
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -167,7 +168,7 @@ public:
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
+    Parallel_Reduce::reduce_max_pool(ibox, 3);
 #endif
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
@@ -350,7 +351,7 @@ public:
             }
         }
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
+        Parallel_Reduce::reduce_min_pool(this->gridecut_lat);
 #endif
         this->gridecut_lat -= 1e-6;
 

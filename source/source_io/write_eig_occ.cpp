@@ -5,6 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_comm.h" // use POOL_WORLD
+#include "source_base/parallel_reduce.h"
 
 #ifdef __MPI
 #include <mpi.h> // use MPI_Barrier
@@ -192,7 +193,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 	}
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_or_all(wrong);
 #endif
     if (wrong)
     {
