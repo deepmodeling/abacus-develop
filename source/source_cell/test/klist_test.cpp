@@ -727,6 +727,32 @@ TEST_F(KlistTest, NormalizeWk)
     EXPECT_DOUBLE_EQ(kv->wk[1], 1.0);
 }
 
+TEST_F(KlistTest, NormalizeWkZeroWeights)
+{
+    // Test that zero weights are handled correctly
+    kv->nspin = 1;
+    kv->set_nkstot(3);
+    kv->set_nks(3);
+    kv->renew(kv->get_nkstot());
+    kv->wk[0] = 0.0;
+    kv->wk[1] = 0.0;
+    kv->wk[2] = 0.0;
+    int deg = 2;
+
+    // Should not crash and should set equal weights
+    kv->normalize_wk(deg);
+
+    // Each k-point should have weight = deg / nkstot = 2 / 3
+    EXPECT_NEAR(kv->wk[0], 2.0 / 3.0, 1e-10);
+    EXPECT_NEAR(kv->wk[1], 2.0 / 3.0, 1e-10);
+    EXPECT_NEAR(kv->wk[2], 2.0 / 3.0, 1e-10);
+
+    // Sum should equal deg
+    double sum = kv->wk[0] + kv->wk[1] + kv->wk[2];
+    EXPECT_NEAR(sum, 2.0, 1e-10);
+}
+
+
 TEST_F(KlistTest, UpdateUseIBZ)
 {
     kv->nspin = 1;

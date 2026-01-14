@@ -30,6 +30,7 @@
 30_NO_KP_S2_eminus
 31_NO_KP_nupdown0
 32_NO_KP_get_wf
+32_NO_KP_get_wf_zero_weight
 33_NO_KP_OW
 34_NO_KP_MU
 35_NO_KP_MU_nscf
