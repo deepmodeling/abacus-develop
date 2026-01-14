@@ -1,3 +1,4 @@
+// Force recompilation
 #include "parallel_reduce.h"
 
 #include "parallel_comm.h"
@@ -95,6 +96,141 @@ void Parallel_Reduce::reduce_double_diag(double* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, DIAG_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_pool<int>(int* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, POOL_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_or_all(bool& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_max_all<double>(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_max_all<float>(float& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_max_all<int>(int& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_min_all<double>(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_min_all<float>(float& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+template <>
+void Parallel_Reduce::reduce_min_all<int>(int& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_max_pool(int* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_MAX, POOL_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_min_pool(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_or_bp(bool& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_double_bgroup(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_double_bgroup(double* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_double_kp(double* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, KP_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_double_bp(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+#endif
+    return;
+}
+
+void Parallel_Reduce::reduce_double_bp(double* object, const int n)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, BP_WORLD);
 #endif
     return;
 }

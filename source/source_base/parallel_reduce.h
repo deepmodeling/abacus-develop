@@ -31,6 +31,25 @@ void reduce_int_grid(int* object, const int n); // mohan add 2012-01-12
 void reduce_double_grid(double* object, const int n);
 void reduce_double_diag(double* object, const int n);
 
+void reduce_or_all(bool& object);
+template <typename T>
+void reduce_max_all(T& object);
+template <typename T>
+void reduce_min_all(T& object);
+
+void reduce_max_pool(int* object, const int n);
+void reduce_min_pool(double& object);
+
+void reduce_or_bp(bool& object);
+
+void reduce_double_bgroup(double& object);
+void reduce_double_bgroup(double* object, const int n);
+
+void reduce_double_bp(double& object);
+void reduce_double_bp(double* object, const int n);
+
+void reduce_double_kp(double* object, const int n);
+
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object);
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
 
