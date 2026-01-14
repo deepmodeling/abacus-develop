@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/parallel_device.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 namespace LR_Util
 {
@@ -172,7 +174,7 @@ namespace LR_Util
 }
 
         //reduce to root
-        MPI_Allreduce(MPI_IN_PLACE, fullmat, global_nrow * global_ncol, get_mpi_datatype(), MPI_SUM, pv.comm());
+        Parallel_Common::reduce_dev<T, base_device::DEVICE_CPU>(fullmat, global_nrow * global_ncol, pv.comm());
     };
 #endif
 

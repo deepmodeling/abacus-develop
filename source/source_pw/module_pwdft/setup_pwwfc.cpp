@@ -1,5 +1,6 @@
 #include "source_pw/module_pwdft/setup_pwwfc.h" // pw_wfc
 #include "source_base/parallel_comm.h" // POOL_WORLD
+#include "source_base/parallel_reduce.h"
 #include "source_io/print_info.h" // print information
 
 void pw::teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc)
@@ -56,7 +57,7 @@ void pw::setup_pwwfc(const Input_para& inp,
 #ifdef __MPI
     if (inp.pw_seed > 0)
     {
-        MPI_Allreduce(MPI_IN_PLACE, &pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        Parallel_Reduce::reduce_max_all(pw_wfc->ggecut);
     }
     // qianrui add 2021-8-13 to make different kpar parameters can get the same
     // results

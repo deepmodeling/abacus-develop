@@ -6,6 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_pw/module_pwdft/global.h"
+#include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/restart_exx_csr.h"
 
@@ -245,7 +246,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 // Add MPI communication to synchronize all_exist across processes
 #ifdef __MPI
                 // don't read in any files if one of the processes doesn't have it
-                MPI_Allreduce(MPI_IN_PLACE, &all_exist, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+                Parallel_Reduce::reduce_min_all(all_exist);
 #endif                
                 if (all_exist)
                 {
@@ -264,7 +265,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
 #ifdef __MPI                    
-                    MPI_Allreduce(MPI_IN_PLACE, &all_exist_cereal, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+                    Parallel_Reduce::reduce_min_all(all_exist_cereal);
 #endif                     
                     if (!all_exist_cereal)
                     {
