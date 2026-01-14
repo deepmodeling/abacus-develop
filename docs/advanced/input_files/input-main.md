@@ -557,6 +557,7 @@ These variables are used to control general system parameters.
     - If ([dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0 or [rpa](#rpa)==True).
     - If [efield_flag](#efield_flag)==1
   - 1: else
+- **Note**: When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see [KPT file](./kpt.md#k-point-weights-and-symmetry)), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.
 
 ### symmetry_prec
 
