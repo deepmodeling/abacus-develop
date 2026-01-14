@@ -2,6 +2,7 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
+#include "source_base/parallel_reduce.h"
 
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
@@ -123,8 +124,7 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
             vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }
     }
-
-    MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3 * this->nkstot_np, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(reinterpret_cast<double*>(vec_global.data()), 3 * this->nkstot_np);
     return;
 }
 #endif
