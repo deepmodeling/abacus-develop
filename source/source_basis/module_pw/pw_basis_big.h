@@ -168,9 +168,9 @@ public:
     ibox[0] = 2*n1+1;
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
-    Parallel_Reduce::gather_max_int_pool(GlobalV::NPROC_IN_POOL, ibox[0]);
-    Parallel_Reduce::gather_max_int_pool(GlobalV::NPROC_IN_POOL, ibox[1]);
-    Parallel_Reduce::gather_max_int_pool(GlobalV::NPROC_IN_POOL, ibox[2]);
+    Parallel_Reduce::reduce_max_int_pool(ibox[0]);
+    Parallel_Reduce::reduce_max_int_pool(ibox[1]);
+    Parallel_Reduce::reduce_max_int_pool(ibox[2]);
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
     for (int i = 0; i < 3; i++)
@@ -351,7 +351,7 @@ public:
                 }
             }
         }
-        Parallel_Reduce::gather_min_double_pool(GlobalV::NPROC_IN_POOL, this->gridecut_lat);
+        Parallel_Reduce::reduce_min_double_pool(this->gridecut_lat);
         this->gridecut_lat -= 1e-6;
 
         delete[] ibox;

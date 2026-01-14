@@ -6,6 +6,7 @@
 namespace GlobalV
 { 
     std::ofstream ofs_running;
+    int NPROC_IN_POOL = 1;
 }
 #ifdef __MPI
 MPI_Comm POOL_WORLD;
@@ -20,5 +21,8 @@ namespace Parallel_Reduce
     void reduce_pool<double>(double& object) { return; };
     template<>
     void reduce_pool<float>(float& object) { return; };
-}
+
+    void reduce_min_double_pool(double& val) { return; }
+
+    void reduce_max_int_pool(int& val) { return; }}
 #endif

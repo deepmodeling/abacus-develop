@@ -251,130 +251,62 @@ void Parallel_Reduce::gather_int_all(int& v, int* all)
     return;
 }
 
-void Parallel_Reduce::gather_min_int_all(const int& nproc, int& v)
+void Parallel_Reduce::reduce_min_int_all(int& object)
 {
 #ifdef __MPI
-    std::vector<int> all(nproc, 0);
-    MPI_Allgather(&v, 1, MPI_INT, all.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v > all[i])
-        {
-            v = all[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_max_double_all(const int& nproc, double& v)
+void Parallel_Reduce::reduce_max_double_all(double& object)
 {
 #ifdef __MPI
-    std::vector<double> value(nproc, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v)
+void Parallel_Reduce::reduce_max_double_pool(double& object)
 {
 #ifdef __MPI
-    if (nproc_in_pool == 1) 
-    {
-        return;
-    }
-    std::vector<double> value(nproc_in_pool, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
-    for (int i = 0; i < nproc_in_pool; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, POOL_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_min_double_pool(const int& nproc_in_pool, double& v)
+void Parallel_Reduce::reduce_min_double_pool(double& object)
 {
 #ifdef __MPI
-    if (nproc_in_pool == 1) 
-    {
-        return;
-    }
-    std::vector<double> value(nproc_in_pool, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
-    for (int i = 0; i < nproc_in_pool; i++)
-    {
-        if (v > value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_min_double_all(const int& nproc, double& v)
+void Parallel_Reduce::reduce_min_double_all(double& object)
 {
 #ifdef __MPI
-    std::vector<double> value(nproc, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v > value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_max_int_all(const int& nproc, int& v)
+void Parallel_Reduce::reduce_max_int_all(int& object)
 {
 #ifdef __MPI
-    std::vector<int> value(nproc, 0);
-    MPI_Allgather(&v, 1, MPI_INT, value.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_max_int_pool(const int& nproc_in_pool, int& v)
+void Parallel_Reduce::reduce_max_int_pool(int& object)
 {
 #ifdef __MPI
-    if (nproc_in_pool == 1) 
-    {
-        return;
-    }
-    std::vector<int> value(nproc_in_pool, 0);
-    MPI_Allgather(&v, 1, MPI_INT, value.data(), 1, MPI_INT, POOL_WORLD);
-    for (int i = 0; i < nproc_in_pool; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 #endif
 }
-void Parallel_Reduce::gather_or_bool_all(bool& v)
+void Parallel_Reduce::reduce_or_bool_all(bool& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::gather_or_bool_bp(bool& v)
+void Parallel_Reduce::reduce_or_bool_bp(bool& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
