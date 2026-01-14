@@ -56,8 +56,8 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_max_double_all(emax);
-    Parallel_Reduce::reduce_min_double_all(emin);
+    Parallel_Reduce::reduce_max_all(emax);
+    Parallel_Reduce::reduce_min_all(emin);
 #endif
 
     emax *= ModuleBase::Ry_to_eV;

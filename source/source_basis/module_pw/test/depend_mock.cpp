@@ -19,12 +19,12 @@ namespace Parallel_Reduce
     void reduce_all<double>(double& object) { return; };
     template<>
     void reduce_pool<double>(double& object) { return; };
-    template<>
-    void reduce_pool<float>(float& object) { return; };
+    template<> void reduce_pool<float>(float& object) { return; };
 
-    void reduce_min_double_pool(double& val) { return; }
+    template <typename T> void reduce_min_pool(T& object) { return; }
+    template <typename T> void reduce_max_pool(T* object, const int n) { return; }
 
-    void reduce_max_int_pool(int& val) { return; }
-    void reduce_max_int_pool(int* object, const int n) { return; }
+    template<> void reduce_min_pool<double>(double& val) { return; }
+    template<> void reduce_max_pool<int>(int* object, const int n) { return; }
 }
 #endif

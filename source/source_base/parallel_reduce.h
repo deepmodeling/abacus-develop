@@ -34,15 +34,16 @@ void reduce_double_diag(double* object, const int n);
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object);
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
 
-void reduce_min_int_all(int& object);
-void reduce_max_double_all(double& object);
-void reduce_min_double_all(double& object);
-void reduce_max_double_pool(double& object);
-void reduce_min_double_pool(double& object);
-
-void reduce_max_int_all(int& object);
-void reduce_max_int_pool(int& object);
-void reduce_max_int_pool(int* object, const int n);
+template <typename T>
+void reduce_max_all(T& object);
+template <typename T>
+void reduce_min_all(T& object);
+template <typename T>
+void reduce_max_pool(T& object);
+template <typename T>
+void reduce_max_pool(T* object, const int n);
+template <typename T>
+void reduce_min_pool(T& object);
 
 void reduce_or_bool_all(bool& v);
 void reduce_or_bool_bp(bool& v);

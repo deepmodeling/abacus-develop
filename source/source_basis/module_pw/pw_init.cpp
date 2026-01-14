@@ -86,7 +86,7 @@ void PW_Basis:: initgrids(
     ibox[0] = 2*n1+1;
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
-    Parallel_Reduce::reduce_max_int_pool(ibox, 3);
+    Parallel_Reduce::reduce_max_pool(ibox, 3);
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
     for (int i = 0; i < 3; i++)
@@ -198,7 +198,7 @@ void PW_Basis:: initgrids(
             }
         }
     }
-            Parallel_Reduce::reduce_min_double_pool(this->gridecut_lat);    this->gridecut_lat -= 1e-6;
+            Parallel_Reduce::reduce_min_pool(this->gridecut_lat);    this->gridecut_lat -= 1e-6;
 
     delete[] ibox;
     return;

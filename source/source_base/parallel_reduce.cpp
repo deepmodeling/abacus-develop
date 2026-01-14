@@ -251,59 +251,67 @@ void Parallel_Reduce::gather_int_all(int& v, int* all)
     return;
 }
 
-void Parallel_Reduce::reduce_min_int_all(int& object)
+template<>
+void Parallel_Reduce::reduce_min_all<int>(int& object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_double_all(double& object)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-#endif
-}
-
-void Parallel_Reduce::reduce_max_double_pool(double& object)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, POOL_WORLD);
-#endif
-}
-
-void Parallel_Reduce::reduce_min_double_pool(double& object)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
-#endif
-}
-
-void Parallel_Reduce::reduce_min_double_all(double& object)
+template<>
+void Parallel_Reduce::reduce_min_all<double>(double& object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_int_all(int& object)
+template<>
+void Parallel_Reduce::reduce_max_all<int>(int& object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_int_pool(int& object)
+template<>
+void Parallel_Reduce::reduce_max_all<double>(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_max_pool<double>(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MAX, POOL_WORLD);
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_max_pool<int>(int& object)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_int_pool(int* object, const int n)
+template<>
+void Parallel_Reduce::reduce_max_pool<int>(int* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_MAX, POOL_WORLD);
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_min_pool<double>(double& object)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
 #endif
 }
 void Parallel_Reduce::reduce_or_bool_all(bool& v)

@@ -180,7 +180,7 @@ void Occupy::iweights(
         }
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_max_double_all(ef);
+    Parallel_Reduce::reduce_max_all(ef);
 #endif
 
     return;
@@ -309,9 +309,9 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
 
 #ifdef __MPI
     // find min and max across pools
-    Parallel_Reduce::reduce_max_double_all(ef);
-    Parallel_Reduce::reduce_max_double_all(eup);
-    Parallel_Reduce::reduce_min_double_all(elw);
+    Parallel_Reduce::reduce_max_all(ef);
+    Parallel_Reduce::reduce_max_all(eup);
+    Parallel_Reduce::reduce_min_all(elw);
 
 #endif
     //=================
