@@ -1,9 +1,6 @@
 #include "parallel_reduce.h"
-
 #include "parallel_comm.h"
-
 #include <vector>
-#include <iostream>
 #include <cassert>
 
 // Helper to safely check MPI status for WORLD comm
@@ -364,5 +361,65 @@ void Parallel_Reduce::reduce_bgroup<int>(int* object, const int n)
 #ifdef __MPI
     if (!is_mpi_initialized()) return;
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, INT_BGROUP);
+#endif
+}
+
+template <>
+void Parallel_Reduce::reduce_min_all<int>(int& object)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+#endif
+}
+
+template <>
+void Parallel_Reduce::reduce_min_all<double>(double& object)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+#endif
+}
+
+void Parallel_Reduce::gather_int_all(int& v, int* all)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, MPI_COMM_WORLD);
+#else
+    all[0] = v;
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_kp<double>(double* object, const int n)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    if (KP_WORLD != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, KP_WORLD);
+    }
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_bp<double>(double* object, const int n)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+#endif
+}
+
+template<>
+void Parallel_Reduce::reduce_or_bp<bool>(bool& object)
+{
+#ifdef __MPI
+    if (!is_mpi_initialized()) return;
+    int v_int = object ? 1 : 0;
+    MPI_Allreduce(MPI_IN_PLACE, &v_int, 1, MPI_INT, MPI_LOR, BP_WORLD);
+    object = (v_int != 0);
 #endif
 }
