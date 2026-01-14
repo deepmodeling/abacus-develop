@@ -5,6 +5,7 @@
 #include "source_base/memory.h"
 #include "source_base/module_container/ATen/tensor.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_io/module_parameter/parameter.h"
@@ -1059,9 +1060,9 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
     } // ik loop
     ModuleBase::timer::tick("Sto_EleCond", "kloop");
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ct11.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct12.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct22.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(ct11.data(), nt);
+    Parallel_Reduce::reduce_all(ct12.data(), nt);
+    Parallel_Reduce::reduce_all(ct22.data(), nt);
 #endif
 
     //------------------------------------------------------------------

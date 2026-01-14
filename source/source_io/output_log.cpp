@@ -6,6 +6,7 @@
 #include "source_base/global_variable.h"
 
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -154,7 +155,7 @@ void output_vacuum_level(const UnitCell* ucell,
         }
 
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, ave, length, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+        Parallel_Reduce::reduce_pool(ave, length);
 #endif
 
         int surface = nxyz / length;

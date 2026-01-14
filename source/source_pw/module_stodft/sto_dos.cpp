@@ -1,5 +1,6 @@
 #include "sto_dos.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
@@ -235,8 +236,8 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(sto_dos.data(), ndos);
+    Parallel_Reduce::reduce_all(error.data(), ndos);
 #endif
     if (GlobalV::MY_RANK == 0)
     {
