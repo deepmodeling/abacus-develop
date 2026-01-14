@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include <mpi.h>
 
 #define private public
 #define protected public
@@ -219,5 +220,29 @@ TEST_F(ChargeTest, InitFinalScf)
     PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);
+}
+
+int main(int argc, char **argv)
+{
+    int NPROC, MY_RANK, NTHREAD_PER_PROC;
+    Parallel_Global::read_pal_param(argc, argv, NPROC, NTHREAD_PER_PROC, MY_RANK);
+
+    int NPROC_IN_BNDGROUP;
+    int RANK_IN_BPGROUP;
+    int MY_BNDGROUP;
+    int NPROC_IN_POOL;
+    int RANK_IN_POOL;
+    int MY_POOL;
+    int BNDPAR = 1;
+    int KPAR = 1;
+
+    Parallel_Global::init_pools(NPROC, MY_RANK, BNDPAR, KPAR, 
+                                NPROC_IN_BNDGROUP, RANK_IN_BPGROUP, MY_BNDGROUP, 
+                                NPROC_IN_POOL, RANK_IN_POOL, MY_POOL);
+
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
 }
 

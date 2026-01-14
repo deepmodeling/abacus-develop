@@ -1,5 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <mpi.h>
+#include "source_base/parallel_global.h"
+
 #define private public
 #include "../module_charge/charge_mixing.h"
 #include "source_base/module_mixing/broyden_mixing.h"
@@ -1139,4 +1142,18 @@ TEST_F(ChargeMixingTest, SCFOscillationTest)
         scf_oscillate = CMtest.if_scf_oscillate(i,drho[i-1],scf_os_ndim,scf_os_thr);
         EXPECT_EQ(scf_oscillate, scf_oscillate_ref[i-1]);
     } 
+}
+
+int main(int argc, char **argv)
+{
+    int NPROC, MY_RANK, NTHREAD_PER_PROC;
+    Parallel_Global::read_pal_param(argc, argv, NPROC, NTHREAD_PER_PROC, MY_RANK);
+    int NPROC_IN_BNDGROUP, RANK_IN_BPGROUP, MY_BNDGROUP;
+    int NPROC_IN_POOL, RANK_IN_POOL, MY_POOL;
+    int BNDPAR = 1, KPAR = 1;
+    Parallel_Global::init_pools(NPROC, MY_RANK, BNDPAR, KPAR, NPROC_IN_BNDGROUP, RANK_IN_BPGROUP, MY_BNDGROUP, NPROC_IN_POOL, RANK_IN_POOL, MY_POOL);
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
 }

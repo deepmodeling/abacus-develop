@@ -1,10 +1,12 @@
 #include "gtest/gtest.h"
+#include <mpi.h>
 #include <vector>
 
 #define private public
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/parallel_global.h"
 // mock functions
 Structure_Factor::Structure_Factor()
 {
@@ -675,4 +677,18 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
         }
     }
 
+}
+
+int main(int argc, char **argv)
+{
+    int NPROC, MY_RANK, NTHREAD_PER_PROC;
+    Parallel_Global::read_pal_param(argc, argv, NPROC, NTHREAD_PER_PROC, MY_RANK);
+    int NPROC_IN_BNDGROUP, RANK_IN_BPGROUP, MY_BNDGROUP;
+    int NPROC_IN_POOL, RANK_IN_POOL, MY_POOL;
+    int BNDPAR = 1, KPAR = 1;
+    Parallel_Global::init_pools(NPROC, MY_RANK, BNDPAR, KPAR, NPROC_IN_BNDGROUP, RANK_IN_BPGROUP, MY_BNDGROUP, NPROC_IN_POOL, RANK_IN_POOL, MY_POOL);
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
 }
