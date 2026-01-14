@@ -86,7 +86,7 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vecto
             not_conv = true;
         }
     }
-    Parallel_Reduce::reduce_or_bool_bp(not_conv);
+    Parallel_Reduce::reduce_or_bp(not_conv);
     return not_conv;
 }
 

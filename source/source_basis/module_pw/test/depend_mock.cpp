@@ -23,6 +23,11 @@ namespace Parallel_Reduce
 
     template <typename T> void reduce_min_pool(T& object) { return; }
     template <typename T> void reduce_max_pool(T* object, const int n) { return; }
+    template <typename T> void reduce_or_all(T& v) { return; }
+    template <typename T> void reduce_or_bp(T& v) { return; }
+    template <typename T> void reduce_kp(T* object, const int n) { return; }
+    template <typename T> void reduce_bp(T* object, const int n) { return; }
+    template <typename T> void reduce_bgroup(T* object, const int n) { return; }
 
     template<> void reduce_min_pool<double>(double& val) { return; }
     template<> void reduce_max_pool<int>(int* object, const int n) { return; }

@@ -314,21 +314,24 @@ void Parallel_Reduce::reduce_min_pool<double>(double& object)
     MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
 #endif
 }
-void Parallel_Reduce::reduce_or_bool_all(bool& v)
+template<>
+void Parallel_Reduce::reduce_or_all<bool>(bool& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_or_bool_bp(bool& v)
+template<>
+void Parallel_Reduce::reduce_or_bp<bool>(bool& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_kp(double* object, const int n)
+template<>
+void Parallel_Reduce::reduce_kp<double>(double* object, const int n)
 {
 #ifdef __MPI
     if (KP_WORLD != MPI_COMM_NULL)
@@ -336,21 +339,24 @@ void Parallel_Reduce::reduce_kp(double* object, const int n)
 #endif
 }
 
-void Parallel_Reduce::reduce_bp(double* object, const int n)
+template<>
+void Parallel_Reduce::reduce_bp<double>(double* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, BP_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_bgroup(double* object, const int n)
+template<>
+void Parallel_Reduce::reduce_bgroup<double>(double* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
 #endif
 }
 
-void Parallel_Reduce::reduce_kp(int* object, const int n)
+template<>
+void Parallel_Reduce::reduce_kp<int>(int* object, const int n)
 {
 #ifdef __MPI
     if (KP_WORLD != MPI_COMM_NULL)
@@ -358,14 +364,16 @@ void Parallel_Reduce::reduce_kp(int* object, const int n)
 #endif
 }
 
-void Parallel_Reduce::reduce_bp(int* object, const int n)
+template<>
+void Parallel_Reduce::reduce_bp<int>(int* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, BP_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_bgroup(int* object, const int n)
+template<>
+void Parallel_Reduce::reduce_bgroup<int>(int* object, const int n)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, INT_BGROUP);

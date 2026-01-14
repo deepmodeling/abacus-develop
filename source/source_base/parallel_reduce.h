@@ -45,16 +45,17 @@ void reduce_max_pool(T* object, const int n);
 template <typename T>
 void reduce_min_pool(T& object);
 
-void reduce_or_bool_all(bool& v);
-void reduce_or_bool_bp(bool& v);
+template <typename T>
+void reduce_or_all(T& v);
+template <typename T>
+void reduce_or_bp(T& v);
 
-void reduce_kp(double* object, const int n);
-void reduce_bp(double* object, const int n);
-void reduce_bgroup(double* object, const int n);
-
-void reduce_kp(int* object, const int n);
-void reduce_bp(int* object, const int n);
-void reduce_bgroup(int* object, const int n);
+template <typename T>
+void reduce_kp(T* object, const int n);
+template <typename T>
+void reduce_bp(T* object, const int n);
+template <typename T>
+void reduce_bgroup(T* object, const int n);
 
 // mohan add 2011-04-21
 void gather_int_all(int& v, int* all);
