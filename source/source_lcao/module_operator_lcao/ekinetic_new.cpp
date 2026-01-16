@@ -16,7 +16,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,
     const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor), gridD(GridD_in)
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
@@ -25,7 +25,11 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     assert(this->hsk != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
-    this->initialize_HR(GridD_in);
+    // Only initialize if hR_in is not nullptr (for force calculation, hR_in can be nullptr)
+    if (hR_in != nullptr)
+    {
+        this->initialize_HR(GridD_in);
+    }
 }
 
 // destructor
@@ -250,6 +254,9 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("EkineticNew", "contributeHR");
     return;
 }
+
+// Include force/stress implementation
+#include "ekinetic_force_stress.hpp"
 
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
