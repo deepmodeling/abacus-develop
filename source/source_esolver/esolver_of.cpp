@@ -217,7 +217,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         }
 
         delete this->ptemp_rho_;
-        this->ptemp_rho_ = new Charge();
+        this->ptemp_rho_ = new Charge<double>();
 		this->ptemp_rho_->set_rhopw(this->pw_rho);
 		const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
 		this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
@@ -250,7 +250,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
                 // Here we initialize rho to be uniform,
-                // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
+                // because the rho got by pot.init_pot -> Charge<double>::atomic_rho may contain minus elements.
                 this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
                 this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
             }

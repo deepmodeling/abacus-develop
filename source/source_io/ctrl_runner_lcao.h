@@ -23,7 +23,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
 		psi::Psi<TK>* psi,                  // wave function
-        Charge &chr,                  // charge density
+        Charge<double> &chr,                  // charge density
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
 		LCAO_Orbitals &orb,                 // LCAO orbitals

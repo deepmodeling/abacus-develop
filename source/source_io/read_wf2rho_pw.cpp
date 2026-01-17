@@ -8,10 +8,11 @@
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_io/filename.h"
 
-void ModuleIO::read_wf2rho_pw(
+template<>
+void ModuleIO::read_wf2rho_pw<double>(
 		const ModulePW::PW_Basis_K* pw_wfc,
 		ModuleSymmetry::Symmetry& symm,
-		Charge& chg,
+		Charge<double>& chg,
         const std::string &readin_dir,
 		const int kpar,
 		const int my_pool,
@@ -182,4 +183,27 @@ void ModuleIO::read_wf2rho_pw(
     }
 
     ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
+}
+
+
+template<>
+void ModuleIO::read_wf2rho_pw<std::complex<double>>(
+		const ModulePW::PW_Basis_K* pw_wfc,
+		ModuleSymmetry::Symmetry& symm,
+		Charge<std::complex<double>>& chg,
+        const std::string &readin_dir,
+		const int kpar,
+		const int my_pool,
+		const int my_rank,
+        const int nproc_in_pool,
+        const int rank_in_pool,
+		const int nbands,
+		const int nspin,
+		const int npol,
+		const int nkstot,
+		const std::vector<int> &ik2iktot,
+		const std::vector<int> &isk,
+		std::ofstream &ofs_running)
+{
+	ModuleBase::WARNING_QUIT("ModuleIO::read_wf2rho_pw", "std::complex<double> unsupported yet.");
 }

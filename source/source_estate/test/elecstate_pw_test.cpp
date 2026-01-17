@@ -12,10 +12,10 @@
 int XC_Functional::func_type = 1;
 namespace elecstate
 {
-void Potential::init_pot(Charge const*)
+void Potential::init_pot(Charge<double> const*)
 {
 }
-void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge<double>* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
 {
 }
 void Potential::cal_fixed_v(double* vl_pseudo)
@@ -25,10 +25,10 @@ Potential::~Potential()
 {
 }
 } // namespace elecstate
-Charge::Charge()
+Charge<double>::Charge()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge()
 {
 }
 UnitCell::UnitCell()
@@ -127,10 +127,10 @@ Fcoef::~Fcoef()
 }
 #include "source_cell/klist.h"
 
-void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
+void Charge<double>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge::init_rho(const UnitCell&,
+void Charge<double>::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -138,13 +138,13 @@ void Charge::init_rho(const UnitCell&,
                       const void*)
 {
 }
-void Charge::set_rhopw(ModulePW::PW_Basis*)
+void Charge<double>::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge::renormalize_rho()
+void Charge<double>::renormalize_rho()
 {
 }
-void Charge::check_rho()
+void Charge<double>::check_rho()
 {
 }
 
@@ -190,7 +190,7 @@ class ElecStatePWTest : public ::testing::Test
     elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>* elecstate_pw_d = nullptr;
     elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>* elecstate_pw_s = nullptr;
     ModulePW::PW_Basis_K* wfcpw = nullptr;
-    Charge* chg = nullptr;
+    Charge<double>* chg = nullptr;
     K_Vectors* klist = nullptr;
     UnitCell* ucell = nullptr;
     pseudopot_cell_vnl* ppcell = nullptr;
@@ -201,7 +201,7 @@ class ElecStatePWTest : public ::testing::Test
     {
         Set_GlobalV_Default();
         wfcpw = new ModulePW::PW_Basis_K;
-        chg = new Charge;
+        chg = new Charge<double>;
         klist = new K_Vectors;
         klist->set_nks(5);
         ucell = new UnitCell;

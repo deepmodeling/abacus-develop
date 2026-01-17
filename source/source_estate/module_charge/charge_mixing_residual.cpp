@@ -5,7 +5,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 
-double Charge_Mixing::get_drho(Charge* chr, const double nelec)
+double Charge_Mixing::get_drho(Charge<double>* chr, const double nelec)
 {
     ModuleBase::TITLE("Charge_Mixing", "get_drho");
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
@@ -72,7 +72,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
-double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
+double Charge_Mixing::get_dkin(Charge<double>* chr, const double nelec)
 {
     if (!(XC_Functional::get_ked_flag()))
     {

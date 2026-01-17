@@ -23,7 +23,7 @@
 
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
-	const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
+	const Charge<double>* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
 	std::vector<double> &stress_gga, const bool is_stress)
 {
 	ModuleBase::TITLE("XC_Functional","gradcorr");

@@ -29,7 +29,7 @@ void ModuleIO::write_libxc_r(
 	const int &nrxx, // number of real-space grid
 	const double &omega, // volume of cell
 	const double tpiba,
-	const Charge &chr,
+	const Charge<double> &chr,
 	const ModulePW::PW_Basis_Big &pw_big,
 	const ModulePW::PW_Basis &pw_rhod)
 {

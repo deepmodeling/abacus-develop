@@ -8,10 +8,10 @@
 #include "source_io/module_parameter/parameter.h"
 
 bool XC_Functional::ked_flag = false;
-Charge::Charge()
+Charge<double>::Charge()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge()
 {
     delete[] rec;
     delete[] dis;
@@ -40,13 +40,13 @@ auto sum_array = [](const double* v, const int& nv) {
 class ChargeMpiTest : public ::testing::Test
 {
   protected:
-    Charge* charge;
+    Charge<double>* charge;
     std::string output;
     double lat0 = 4;
     ModuleBase::Matrix3 latvec;
     void SetUp() override
     {
-        charge = new Charge;
+        charge = new Charge<double>;
     }
     void TearDown() override
     {

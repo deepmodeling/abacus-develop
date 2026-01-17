@@ -22,7 +22,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
 		psi::Psi<TK>* psi,                  // wave function
-        Charge &chr,                  // charge density
+        Charge<double> &chr,                  // charge density
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
 		LCAO_Orbitals &orb,                 // LCAO orbitals
@@ -142,7 +142,7 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
 		psi::Psi<double>* psi,                  // wave function
-        Charge &chr,                  // charge density
+        Charge<double> &chr,                  // charge density
 		hamilt::HamiltLCAO<double, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
 		LCAO_Orbitals &orb,                 // LCAO orbitals
@@ -163,7 +163,7 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
 		psi::Psi<std::complex<double>>* psi,                  // wave function
-        Charge &chr,                  // charge density
+        Charge<double> &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
 		LCAO_Orbitals &orb,                 // LCAO orbitals
@@ -184,7 +184,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
         Parallel_Grid &pgrid,               // grid info
 		Grid_Driver &gd,                    // search for adjacent atoms
 		psi::Psi<std::complex<double>>* psi,                  // wave function
-        Charge &chr,                  // charge density
+        Charge<double> &chr,                  // charge density
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt, // hamiltonian
 		TwoCenterBundle &two_center_bundle,   // use two-center integration
 		LCAO_Orbitals &orb,                 // LCAO orbitals

@@ -32,7 +32,7 @@ class PotSurChem : public PotBase
     }
 
     // Passing an explicit output matrix makes the lifetime and allocation explicit and avoids hidden allocations.
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
+    void cal_v_eff(const Charge<double>*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
     {
         if (!this->allocated)
         {

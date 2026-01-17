@@ -17,7 +17,7 @@ class ElecState
     ElecState()
     {
     }
-    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
+    ElecState(Charge<double>* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
     {
         this->charge = chr_in;
         this->charge->set_rhopw(rhopw_in);
@@ -32,7 +32,7 @@ class ElecState
             this->pot = nullptr;
         }
     }
-    void init_ks(Charge* chr_in, // pointer for class Charge
+    void init_ks(Charge<double>* chr_in, // pointer for class Charge<double>
                  const K_Vectors* klist_in,
                  int nk_in, // number of k points
                  const ModulePW::PW_Basis_Big* bigpw_in);
@@ -112,7 +112,7 @@ class ElecState
 
     int iter = 0;                                  ///< scf iteration
     Potential* pot = nullptr;                      ///< pointer to potential
-    Charge* charge = nullptr;                      ///< pointer to charge density
+    Charge<double>* charge = nullptr;                      ///< pointer to charge density
     const K_Vectors* klist = nullptr;              ///< pointer to k points lists
     const ModulePW::PW_Basis_Big* bigpw = nullptr; ///< bigpw will be removed later
 

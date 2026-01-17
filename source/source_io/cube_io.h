@@ -8,11 +8,12 @@ class Parallel_Grid;
 namespace ModuleIO
 {
 /// read volumetric data from .cube file into the parallel distributed grid.
+template<typename T>
 bool read_vdata_palgrid(const Parallel_Grid& pgrid,
                         const int my_rank,
                         std::ofstream& ofs_running,
                         const std::string& fn,
-                        double* const data,
+                        T* const data,
                         const int nat);
 
 /// write volumetric data on the parallized grid into a .cube file

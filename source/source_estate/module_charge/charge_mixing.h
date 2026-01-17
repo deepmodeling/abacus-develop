@@ -64,9 +64,9 @@ class Charge_Mixing
 
     /**
      * @brief charge mixing
-     * @param chr pointer of Charge object
+     * @param chr pointer of Charge<double> object
      */
-    void mix_rho(Charge* chr);
+    void mix_rho(Charge<double>* chr);
 
     /**
      * @brief density matrix mixing, only for LCAO
@@ -79,8 +79,8 @@ class Charge_Mixing
      * @brief Get the drho between rho and rho_save, similar for get_dkin
      *
      */
-    double get_drho(Charge* chr, const double nelec);
-    double get_dkin(Charge* chr, const double nelec);
+    double get_drho(Charge<double>* chr, const double nelec);
+    double get_dkin(Charge<double>* chr, const double nelec);
 
     /**
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function 
@@ -145,15 +145,15 @@ class Charge_Mixing
 
     /**
      * @brief charge mixing for reciprocal space
-     * @param chr pointer of Charge object
+     * @param chr pointer of Charge<double> object
      */
-    void mix_rho_recip(Charge* chr);
+    void mix_rho_recip(Charge<double>* chr);
 
     /**
      * @brief charge mixing for real space
-     * @param chr pointer of Charge object
+     * @param chr pointer of Charge<double> object
      */
-    void mix_rho_real(Charge* chr);
+    void mix_rho_real(Charge<double>* chr);
 
     /**
      * @brief Kerker screen method for reciprocal space

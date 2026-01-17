@@ -20,7 +20,7 @@ class ElecStatePW : public ElecState
 
   public:
     ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
-                Charge* chr_in,
+                Charge<double>* chr_in,
                 K_Vectors* pkv_in,
                 UnitCell* ucell_in,
                 pseudopot_cell_vnl* ppcell_in,

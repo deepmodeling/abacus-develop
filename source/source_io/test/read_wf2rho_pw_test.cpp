@@ -28,10 +28,10 @@ Parallel_Grid::Parallel_Grid()
 Parallel_Grid::~Parallel_Grid()
 {
 }
-Charge::Charge()
+Charge<double>::Charge()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge()
 {
 }
 UnitCell::UnitCell()
@@ -60,7 +60,7 @@ Symmetry_rho::~Symmetry_rho()
 {
 }
 void Symmetry_rho::begin(const int& spin_now,
-                         const Charge& CHR,
+                         const Charge<double>& CHR,
                          const ModulePW::PW_Basis* rho_basis,
                          ModuleSymmetry::Symmetry& symm) const
 {
@@ -113,7 +113,7 @@ class ReadWfcRhoTest : public ::testing::Test
     ModulePW::PW_Basis* rhopw = nullptr;
     K_Vectors* kv = nullptr;
     psi::Psi<std::complex<double>>* psi = nullptr;
-    Charge chg;
+    Charge<double> chg;
     ModuleSymmetry::Symmetry symm;
     virtual void SetUp()
     {
@@ -242,7 +242,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     //----------------------------------------
     // set charge_ref
     //----------------------------------------
-    Charge chg_ref;
+    Charge<double> chg_ref;
     chg_ref.rho = new double*[nspin];
     chg_ref._space_rho = new double[rhopw->nrxx];
     chg_ref.rho[0] = chg_ref._space_rho;

@@ -25,7 +25,7 @@ class Evolve_OFDFT
     {
     }
     void propagate_psi(elecstate::ElecState* pelec, 
-                       const Charge& chr, UnitCell& ucell, 
+                       const Charge<double>& chr, UnitCell& ucell, 
                        std::vector<std::complex<double>> pphi_, 
                        ModulePW::PW_Basis* pw_rho);
 
@@ -35,7 +35,7 @@ class Evolve_OFDFT
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
 
     void cal_Hpsi(elecstate::ElecState* pelec, 
-                  const Charge& chr, 
+                  const Charge<double>& chr, 
                   UnitCell& ucell, 
                   std::vector<std::complex<double>> psi_, 
                   ModulePW::PW_Basis* pw_rho, 

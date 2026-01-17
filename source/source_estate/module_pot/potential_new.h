@@ -17,9 +17,9 @@ namespace elecstate
  * 1. Constructors and deconstructor
  * 2. Func init_pot()
  *     a. need istep for update_for_tddft();
- *     b. need Charge for update_from_charge();
+ *     b. need Charge<double> for update_from_charge();
  *     c. it will reset fixed_done to false, v_eff_fixed will be calculated;
- *     d. it should be called after Charge is initialized;
+ *     d. it should be called after Charge<double> is initialized;
  *     e. it can only be called once in one SCF loop
  * 3. Func pot_register() and components
  *     a. need vector<string> for choose target potentials
@@ -67,13 +67,13 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(const Charge*const chg);
+    void init_pot(const Charge<double>*const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge
-    void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
+    void update_from_charge(const Charge<double>*const chg, const UnitCell*const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
-    void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
+    void get_vnew(const Charge<double>* chg, ModuleBase::matrix& vnew);
 
     PotBase* get_pot_type(const std::string& pot_type);
 
@@ -188,7 +188,7 @@ class Potential : public PotBase
     }
 
   private:
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge<double>*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
     // interpolate potential on the smooth mesh if necessary
     void interpolate_vrs();

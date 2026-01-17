@@ -18,7 +18,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
         const double tpiba,
-        const Charge* const chr,
+        const Charge<double>* const chr,
         const std::map<int, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
@@ -173,7 +173,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const int &nrxx, // number of real-space grid
     const double &omega, // volume of cell
     const double tpiba,
-    const Charge* const chr)
+    const Charge<double>* const chr)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
     ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_meta");

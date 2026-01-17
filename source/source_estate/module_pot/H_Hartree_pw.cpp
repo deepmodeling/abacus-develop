@@ -103,7 +103,7 @@ PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
     this->fixed_mode = false;
 }
 
-void PotHartree::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void PotHartree::cal_v_eff(const Charge<double>*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
     return;

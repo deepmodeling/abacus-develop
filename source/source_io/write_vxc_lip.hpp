@@ -113,7 +113,7 @@ namespace ModuleIO
                    const ModulePW::PW_Basis& rho_basis,
                    const ModulePW::PW_Basis& rhod_basis,
                    const ModuleBase::matrix& vloc,
-                   const Charge& chg,
+                   const Charge<double>& chg,
                    const K_Vectors& kv,
                    const ModuleBase::matrix& wg
 #ifdef __EXX

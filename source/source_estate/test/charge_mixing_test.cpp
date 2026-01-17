@@ -21,14 +21,17 @@ Magnetism::~Magnetism()
 Magnetism::Magnetism()
 {
 }
-Charge::~Charge()
+template<>
+Charge<double>::~Charge()
 {
 }
-Charge::Charge()
+template<>
+Charge<double>::Charge()
 {
 }
 
-void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+template<>
+void Charge<double>::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
 }
@@ -106,7 +109,7 @@ class ChargeMixingTest : public ::testing::Test
     }
     ModulePW::PW_Basis pw_basis;
     ModulePW::PW_Basis_Sup pw_dbasis;
-    Charge charge;    
+    Charge<double> charge;    
 };
 
 TEST_F(ChargeMixingTest, SetMixingTest)

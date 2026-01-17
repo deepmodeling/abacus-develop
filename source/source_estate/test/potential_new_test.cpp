@@ -36,10 +36,10 @@ InfoNonlocal::~InfoNonlocal()
 {
 }
 #endif
-Charge::Charge()
+Charge<double>::Charge()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge()
 {
 }
 surchem::surchem()
@@ -315,7 +315,7 @@ TEST_F(PotentialNewTest, CalVeff)
     {
         pot->components[i]->dynamic_mode = dynamic[i];
     }
-    Charge* chg = new Charge;
+    Charge<double>* chg = new Charge<double>;
     ModuleBase::matrix v_eff;
     v_eff.create(2, 100);
     pot->cal_v_eff(chg,this->ucell,v_eff);
@@ -347,7 +347,7 @@ TEST_F(PotentialNewTest, UpdateFromCharge)
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
-    Charge* chg = new Charge;
+    Charge<double>* chg = new Charge<double>;
     EXPECT_FALSE(pot->fixed_done);
     pot->update_from_charge(chg, this->ucell);
     EXPECT_TRUE(pot->fixed_done);
@@ -375,7 +375,7 @@ TEST_F(PotentialNewTest, InitPot)
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
-    Charge* chg = new Charge;
+    Charge<double>* chg = new Charge<double>;
     EXPECT_FALSE(pot->fixed_done);
     pot->init_pot(chg);
     EXPECT_TRUE(pot->fixed_done);
@@ -403,7 +403,7 @@ TEST_F(PotentialNewTest, GetVnew)
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
-    Charge* chg = new Charge;
+    Charge<double>* chg = new Charge<double>;
     ModuleBase::matrix vnew;
     pot->get_vnew(chg, vnew);
     EXPECT_EQ(vnew.nr, PARAM.input.nspin);

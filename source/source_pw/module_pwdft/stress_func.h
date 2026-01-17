@@ -75,7 +75,7 @@ class Stress_Func
                     ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const bool is_pw,
-                    const Charge* const chr); // hartree part in PW or LCAO basis
+                    const Charge<double>* const chr); // hartree part in PW or LCAO basis
 
     // 3) the stress from the ewald term (ion-ion intraction under
     //		periodic boundary conditions).
@@ -91,7 +91,7 @@ class Stress_Func
                     const ModuleBase::matrix& vloc,
                     const Structure_Factor* p_sf,
                     const bool is_pw,
-                    const Charge* const chr); // local pseudopotential part in PW or LCAO
+                    const Charge<double>* const chr); // local pseudopotential part in PW or LCAO
 
     void dvloc_of_g(const int& msh,
                     const FPTYPE* rab,
@@ -119,7 +119,7 @@ class Stress_Func
                    const Structure_Factor* p_sf,
                    const bool is_pw,
                    const bool *numeric,
-                   const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
+                   const Charge<double>* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
                      const double& omega,
@@ -136,12 +136,12 @@ class Stress_Func
     void stress_gga(const UnitCell& ucell,
                     ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
-                    const Charge* const chr); // gga part in both PW and LCAO basis
+                    const Charge<double>* const chr); // gga part in both PW and LCAO basis
     void stress_mgga(const UnitCell& ucell,
                      ModuleBase::matrix& sigma,
                      const ModuleBase::matrix& wg,
                      const ModuleBase::matrix& v_ofk,
-                     const Charge* const chr,
+                     const Charge<double>* const chr,
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
                      const psi::Psi <std::complex<FPTYPE>, Device>* psi_in); // gga part in PW basis

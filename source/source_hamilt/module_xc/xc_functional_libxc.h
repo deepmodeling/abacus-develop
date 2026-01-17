@@ -15,7 +15,7 @@
 #include <map> // added by jghan, 2024-10-10
 #include <utility>
 
-class Charge;
+	template<typename Tr> class Charge;
 
 namespace XC_Functional_Libxc
 {
@@ -58,7 +58,7 @@ namespace XC_Functional_Libxc
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
         const double tpiba,
-        const Charge* const chr, // charge density
+        const Charge<double>* const chr, // charge density
         const std::map<int, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
 
     // for mGGA functional
@@ -67,7 +67,7 @@ namespace XC_Functional_Libxc
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
         const double tpiba,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
 
 //-------------------
@@ -78,13 +78,13 @@ namespace XC_Functional_Libxc
     extern std::vector<double> convert_rho(
         const int nspin,
         const std::size_t nrxx,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
     // converting rho (abacus=>libxc)
     extern std::tuple<std::vector<double>, std::vector<double>> convert_rho_amag_nspin4(
         const int nspin,
         const std::size_t nrxx,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
     // calculating grho
     extern std::vector<std::vector<ModuleBase::Vector3<double>>> cal_gdr(
@@ -92,7 +92,7 @@ namespace XC_Functional_Libxc
         const std::size_t nrxx,
         const std::vector<double> &rho,
         const double tpiba,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
     // converting grho (abacus=>libxc)
     extern std::vector<double> convert_sigma(
@@ -127,7 +127,7 @@ namespace XC_Functional_Libxc
         const std::vector<double> &vrho,
         const std::vector<double> &vsigma,
         const double tpiba,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
     // dh for gga v
     extern std::vector<std::vector<double>> cal_dh(
@@ -137,12 +137,12 @@ namespace XC_Functional_Libxc
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
         const std::vector<double> &vsigma,
         const double tpiba,
-        const Charge* const chr);
+        const Charge<double>* const chr);
 
     // convert v for NSPIN=4
     extern ModuleBase::matrix convert_v_nspin4(
         const std::size_t nrxx,
-        const Charge* const chr,
+        const Charge<double>* const chr,
         const std::vector<double> &amag,
         const ModuleBase::matrix &v);
 

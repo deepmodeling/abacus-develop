@@ -12,7 +12,7 @@ class Symmetry_rho
     ~Symmetry_rho();
 
     void begin(const int& spin_now,
-               const Charge& CHR,
+               const Charge<double>& CHR,
                const ModulePW::PW_Basis* pw,
                ModuleSymmetry::Symmetry& symm) const;
 

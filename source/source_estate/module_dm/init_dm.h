@@ -15,7 +15,7 @@ void init_dm(UnitCell& ucell,
 		ElecState* pelec,
         LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
-		Charge &chr,
+		Charge<double> &chr,
         const int iter,
         const int exx_two_level_step);
 

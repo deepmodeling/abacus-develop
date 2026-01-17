@@ -17,7 +17,7 @@ void setup_estate_pw(UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState* &pelec, // pointer of electrons
-		Charge &chr, // charge density
+		Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* &vsep_cell, // U-1/2 method

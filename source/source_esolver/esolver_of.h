@@ -62,7 +62,7 @@ class ESolver_OF : public ESolver_FP
     int tn_spin_flag_ = -1;                       // spin flag used in cal_potential, which will be called by opt_tn
     int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                               // flag of TN
-    Charge* ptemp_rho_ = nullptr;                 // used in line search
+    Charge<double>* ptemp_rho_ = nullptr;                 // used in line search
     psi::Psi<double>* psi_ = nullptr;             // sqrt(rho)
 
     // ----------------- used for convergence check -------------------
@@ -90,7 +90,7 @@ class ESolver_OF : public ESolver_FP
     std::function<void(double*, double*)> bound_cal_potential_;
     void cal_potential_wrapper(double* ptemp_phi, double* rdLdphi);
     void cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
-    void cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
+    void cal_dEdtheta(double** ptemp_phi, Charge<double>* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
     double cal_mu(double* pphi, double* pdEdphi, double nelec);
 
     // --------------------- determine the optimization direction -------

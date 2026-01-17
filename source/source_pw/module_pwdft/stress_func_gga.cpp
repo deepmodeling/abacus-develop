@@ -8,7 +8,7 @@ template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
 											 ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
-                                             const Charge* const chr)
+                                             const Charge<double>* const chr)
 {
     ModuleBase::TITLE("Stress","stress_gga");
 	ModuleBase::timer::tick("Stress","stress_gga");

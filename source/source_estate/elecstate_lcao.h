@@ -15,7 +15,7 @@ class ElecStateLCAO : public ElecState
     ElecStateLCAO()
     {
     } // will be called by ElecStateLCAO_TDDFT
-    ElecStateLCAO(Charge* chr_in,
+    ElecStateLCAO(Charge<double>* chr_in,
                   const K_Vectors* klist_in,
                   int nks_in,
                   ModulePW::PW_Basis_Big* bigpw_in)

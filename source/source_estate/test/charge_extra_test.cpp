@@ -28,8 +28,9 @@ Magnetism::~Magnetism()
 Parallel_Grid::~Parallel_Grid(){};
 
 
-// mock functions for Charge
-Charge::Charge()
+// mock functions for Charge<double>
+template<>
+Charge<double>::Charge()
 {
     rhopw = new ModulePW::PW_Basis;
     rhopw->nrxx = 8;
@@ -44,13 +45,15 @@ Charge::Charge()
         rho[0][i] = i + 1;
     }
 }
-Charge::~Charge()
+template<>
+Charge<double>::~Charge()
 {
     delete[] rho[0];
     delete[] rho;
     delete rhopw;
 }
-void Charge::atomic_rho(const int spin_number_need,
+template<>
+void Charge<double>::atomic_rho(const int spin_number_need,
                         const double& omega,
                         double** rho_in,
                         const ModuleBase::ComplexMatrix& strucFac,
@@ -116,7 +119,7 @@ class ChargeExtraTest : public ::testing::Test
     UcellTestPrepare utp = UcellTestLib["Si"];
     std::unique_ptr<UnitCell> ucell;
     Parallel_Grid* pgrid = nullptr;
-    Charge charge;
+    Charge<double> charge;
     Structure_Factor sf;
     void SetUp() override
     {

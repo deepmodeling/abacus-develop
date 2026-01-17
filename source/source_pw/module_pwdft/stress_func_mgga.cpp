@@ -13,7 +13,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
                                               ModuleBase::matrix& sigma,
                                               const ModuleBase::matrix& wg,
                                               const ModuleBase::matrix& v_ofk,
-                                              const Charge* const chr,
+                                              const Charge<double>* const chr,
                                               K_Vectors* p_kv,
                                               ModulePW::PW_Basis_K* wfc_basis,
                                               const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)

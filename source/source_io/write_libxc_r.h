@@ -11,7 +11,7 @@
 #include <vector>
 #include <fstream>
 
-	class Charge;
+	template<typename Tr> class Charge;
 	namespace ModulePW{ class PW_Basis_Big; }
 	namespace ModulePW{ class PW_Basis; }
 
@@ -23,7 +23,7 @@ namespace ModuleIO
 		const int &nrxx, // number of real-space grid
 		const double &omega, // volume of cell
 		const double tpiba,
-		const Charge &chr,
+		const Charge<double> &chr,
 		const ModulePW::PW_Basis_Big &pw_big,
 		const ModulePW::PW_Basis &pw_rhod);
 	

@@ -23,7 +23,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
-        Charge &chr, // charge density *
+        Charge<double> &chr, // charge density *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *

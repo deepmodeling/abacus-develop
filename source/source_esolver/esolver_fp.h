@@ -54,7 +54,7 @@ class ESolver_FP: public ESolver
     K_Vectors kv;
 
     //! Electorn charge density
-    Charge chr;
+    Charge<double> chr;
 
     //! pw_rho: Plane-wave basis set for charge density
     //! pw_rhod: same as pw_rho for NCPP. Here 'd' stands for 'dense',

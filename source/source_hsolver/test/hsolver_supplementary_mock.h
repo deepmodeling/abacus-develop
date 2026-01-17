@@ -29,7 +29,7 @@ void ElecState::init_scf(const UnitCell& ucell,
     return;
 }
 
-void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
+void ElecState::init_ks(Charge<double>* chg_in, // pointer for class Charge<double>
                         const K_Vectors* klist_in,
                         int nk_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
@@ -39,7 +39,7 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
 
 template <typename T, typename Device>
 ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                    Charge* chg_in,
+                                    Charge<double>* chg_in,
                                     K_Vectors* pkv_in,
                                     UnitCell* ucell_in,
                                     pseudopot_cell_vnl* ppcell_in,
@@ -80,7 +80,7 @@ Potential::~Potential()
 {
 }
 
-void Potential::cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge<double>* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
 {
 }
 

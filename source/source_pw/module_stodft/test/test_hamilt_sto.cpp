@@ -5,7 +5,7 @@
 #include <vector>
 
 elecstate::Potential::~Potential(){}
-void elecstate::Potential::cal_v_eff(Charge const*, UnitCell const*, ModuleBase::matrix&){}
+void elecstate::Potential::cal_v_eff(Charge<double> const*, UnitCell const*, ModuleBase::matrix&){}
 void elecstate::Potential::cal_fixed_v(double*){}
 
 template <typename T, typename Device>

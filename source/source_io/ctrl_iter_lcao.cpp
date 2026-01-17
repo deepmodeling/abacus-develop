@@ -18,7 +18,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
-        Charge &chr, // charge density *
+        Charge<double> &chr, // charge density *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
@@ -87,7 +87,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<double>* psi, // wave functions *
-        Charge &chr, // charge density *
+        Charge<double> &chr, // charge density *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<double, double>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
@@ -107,7 +107,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
-        Charge &chr, // charge density *
+        Charge<double> &chr, // charge density *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
@@ -127,7 +127,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
-        Charge &chr, // charge density *
+        Charge<double> &chr, // charge density *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *

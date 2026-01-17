@@ -30,7 +30,7 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
 
     Symmetry_rho srho;
 
-    Charge* ptempRho = new Charge();
+    Charge<double>* ptempRho = new Charge<double>();
     ptempRho->nspin = PARAM.inp.nspin;
     ptempRho->nrxx = this->cal_tool->nx;
     ptempRho->rho_core = pelec->charge->rho_core;

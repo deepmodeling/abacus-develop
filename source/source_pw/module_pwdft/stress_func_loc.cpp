@@ -14,7 +14,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 											 const ModuleBase::matrix& vloc,
                                              const Structure_Factor* p_sf,
                                              const bool is_pw,
-                                             const Charge* const chr)
+                                             const Charge<double>* const chr)
 {
     ModuleBase::TITLE("Stress","stress_loc");
     ModuleBase::timer::tick("Stress","stress_loc");

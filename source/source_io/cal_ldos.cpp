@@ -14,7 +14,7 @@ namespace ModuleIO
 template <typename T>
 void Cal_ldos<T>::cal_ldos_lcao(
         const elecstate::Efermi &eferm, // mohan add 2025-11-02
-        const Charge &chr, // mohan add add 2025-11-02
+        const Charge<double> &chr, // mohan add add 2025-11-02
         const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
 		const K_Vectors &kv, // k points, mohan add 2025-11-02
         const ModuleBase::matrix &ekb, // mohan add 2025-11-02

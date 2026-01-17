@@ -4,7 +4,7 @@
 
 void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
-    Charge* chr,
+    Charge<double>* chr,
     bool skip_normalize)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2rho");
@@ -34,7 +34,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 
 void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
-    Charge* chr)
+    Charge<double>* chr)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2tau");
     ModuleBase::timer::tick("LCAO_domain", "dm2tau");

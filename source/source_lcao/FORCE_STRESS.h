@@ -72,7 +72,7 @@ class Force_Stress_LCAO
                         const double& etxc,
                         const ModuleBase::matrix& vnew,
                         const bool vnew_exist,
-                        const Charge* const chr,
+                        const Charge<double>* const chr,
                         ModulePW::PW_Basis* rhopw,
                         const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf);
@@ -109,7 +109,7 @@ class Force_Stress_LCAO
                          ModuleBase::matrix& sigmacc,
                          ModuleBase::matrix& sigmaxc,
                          const double& etxc,
-                         const Charge* const chr,
+                         const Charge<double>* const chr,
                          ModulePW::PW_Basis* rhopw,
                          const pseudopot_cell_vl& locpp,
                          const Structure_Factor& sf);

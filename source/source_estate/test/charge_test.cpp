@@ -28,7 +28,7 @@ Magnetism::~Magnetism()
     delete[] this->start_mag;
 }
 
-// mock functions for Charge
+// mock functions for Charge<Tr>
 int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 namespace elecstate
@@ -49,21 +49,21 @@ void Set_GlobalV_Default()
 
 /**
  * - Tested Functions:
- *   - Constructor: Charge::Charge() and Charge::~Charge()
+ *   - Constructor: Charge<Tr>::Charge() and Charge<Tr>::~Charge()
  *     - this is a trivial test
- *   - Allocate: Charge::set_rhopw(), Charge::allocate(), Charge::destroy()
+ *   - Allocate: Charge<Tr>::set_rhopw(), Charge<Tr>::allocate(), Charge<Tr>::destroy()
  *     - allocate rho, rhog, rho_save, rhog_save, kin_r, kin_r_save
  *     - using rhopw and PARAM.input.nspin
- *   - SumRho: Charge::sum_rho()
+ *   - SumRho: Charge<Tr>::sum_rho()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
- *   - RenormalizeRho: Charge::renormalize_rho()
+ *   - RenormalizeRho: Charge<Tr>::renormalize_rho()
  *     - renormalize rho so as to ensure the sum of rho equals to total number of electrons
- *   - CheckNe: Charge::cal_rho2ne()
+ *   - CheckNe: Charge<Tr>::cal_rho2ne()
  *     - check the total number of electrons summed from rho[is]
- *   - SaveRhoBeforeSumBand: Charge::save_rho_before_sum_band()
+ *   - SaveRhoBeforeSumBand: Charge<Tr>::save_rho_before_sum_band()
  *     - meaning as the function name
- *   - InitFinalScf:: Charge::init_final_scf()
- *     - similar to Charge::allocate(), but for final scf
+ *   - InitFinalScf:: Charge<Tr>::init_final_scf()
+ *     - similar to Charge<Tr>::allocate(), but for final scf
  */
 
 class ChargeTest : public ::testing::Test
@@ -71,14 +71,14 @@ class ChargeTest : public ::testing::Test
   protected:
     UcellTestPrepare utp = UcellTestLib["Si"];
     std::unique_ptr<UnitCell> ucell;
-    Charge* charge;
+    Charge<double>* charge;
     ModulePW::PW_Basis* rhopw;
     std::string output;
     void SetUp() override
     {
         elecstate::Set_GlobalV_Default();
         ucell = utp.SetUcellInfo();
-        charge = new Charge;
+        charge = new Charge<double>;
         rhopw = new ModulePW::PW_Basis;
         rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
         rhopw->distribute_r();
@@ -111,7 +111,7 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->nrxx, 13824);
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
-    // call Charge::allocate()
+    // call Charge<Tr>::allocate()
     PARAM.input.test_charge = 2;
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
@@ -120,7 +120,7 @@ TEST_F(ChargeTest, Allocate)
     const bool kin_den = charge->kin_density();
     charge->allocate(PARAM.input.nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
-    // test if Charge::allocate() be called twice
+    // test if Charge<Tr>::allocate() be called twice
     EXPECT_NO_THROW(charge->allocate(PARAM.input.nspin, kin_den));
     EXPECT_TRUE(charge->allocate_rho);
 }

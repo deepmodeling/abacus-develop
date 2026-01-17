@@ -9,7 +9,7 @@ namespace elecstate
 
 void update_pot(UnitCell& ucell, // unitcell 
 		elecstate::ElecState* &pelec, // pointer of electrons
-		const Charge &chr,
+		const Charge<double> &chr,
         const bool conv_esolver); // charge density
 }
 

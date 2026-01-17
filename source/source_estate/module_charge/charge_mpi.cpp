@@ -6,7 +6,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MPI
-void Charge::init_chgmpi()
+template<typename Tr>
+void Charge<Tr>::init_chgmpi()
 {
     if (KP_WORLD == MPI_COMM_NULL)
     {
@@ -24,8 +25,12 @@ void Charge::init_chgmpi()
     }
 }
 
-void Charge::reduce_diff_pools(double* array_rho) const
+template<>
+void Charge<double>::reduce_diff_pools(double* array_rho) const
 {
+	using Tr=double;
+	// MPI_DOUBLE should change following Tr in the future code 
+
     ModuleBase::TITLE("Charge", "reduce_diff_pools");
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
     if (KP_WORLD != MPI_COMM_NULL)
@@ -34,9 +39,9 @@ void Charge::reduce_diff_pools(double* array_rho) const
     }
     else
     {
-        double* array_tmp = new double[this->rhopw->nxyz];
-        double* array_tot = new double[this->rhopw->nxyz];
-        double* array_tot_aux = new double[this->rhopw->nxyz];
+        Tr* array_tmp = new Tr[this->rhopw->nxyz];
+        Tr* array_tot = new Tr[this->rhopw->nxyz];
+        Tr* array_tot_aux = new Tr[this->rhopw->nxyz];
         //==================================
         // Collect the rho in each pool
         //==================================
@@ -116,7 +121,14 @@ void Charge::reduce_diff_pools(double* array_rho) const
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
 }
 
-void Charge::rho_mpi()
+template<>
+void Charge<std::complex<double>>::reduce_diff_pools(std::complex<double>* array_rho) const
+{
+	ModuleBase::WARNING_QUIT("Charge::reduce_diff_pools", "std::complex<double> unsupported yet.");
+}
+
+template<typename Tr>
+void Charge<Tr>::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
 	if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) 
@@ -137,4 +149,8 @@ void Charge::rho_mpi()
     ModuleBase::timer::tick("Charge", "rho_mpi");
     return;
 }
+
+
+template class Charge<double>;
+template class Charge<std::complex<double>>;
 #endif

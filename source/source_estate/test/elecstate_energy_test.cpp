@@ -14,7 +14,7 @@ int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-void Potential::get_vnew(Charge const*, ModuleBase::matrix&)
+void Potential::get_vnew(Charge<double> const*, ModuleBase::matrix&)
 {
     return;
 }

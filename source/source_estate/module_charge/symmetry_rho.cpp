@@ -11,7 +11,7 @@ Symmetry_rho::~Symmetry_rho()
 }
 
 void Symmetry_rho::begin(const int& spin_now,
-                         const Charge& chr,
+                         const Charge<double>& chr,
                          const ModulePW::PW_Basis* rho_basis,
                          ModuleSymmetry::Symmetry& symm) const
 {

@@ -31,10 +31,10 @@ Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
-Charge::Charge()
+Charge<double>::Charge()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge()
 {
 }
 SepPot::SepPot(){}
@@ -127,7 +127,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
-    elecstate.charge = new Charge;
+    elecstate.charge = new Charge<double>;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
     PARAM.input.out_freq_elec = 1;
@@ -211,7 +211,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
-    elecstate.charge = new Charge;
+    elecstate.charge = new Charge<double>;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
 
@@ -240,7 +240,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
-    elecstate.charge = new Charge;
+    elecstate.charge = new Charge<double>;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
 

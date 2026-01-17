@@ -39,7 +39,7 @@ class XCTest_GRADCORR : public XCTest
         {
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
-            Charge chr;
+            Charge<double> chr;
 
             rhopw.nrxx = 5;
             rhopw.npw = 5;

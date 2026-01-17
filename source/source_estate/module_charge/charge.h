@@ -14,9 +14,10 @@
 class UnitCell;
 
 // Electron Charge Density
+template<typename Tr>
 class Charge
 {
-
+	using Tg = std::complex<double>;
   public:
 
     Charge();
@@ -34,25 +35,25 @@ class Charge
     // NAME : rhog_core [ngm], the core charge in reciprocal space
     //==========================================================
 
-    double **rho = nullptr;
-    double **rho_save = nullptr;
+    Tr **rho = nullptr;
+    Tr **rho_save = nullptr;
 
-    std::complex<double> **rhog = nullptr;
-    std::complex<double> **rhog_save = nullptr;
+    Tg **rhog = nullptr;
+    Tg **rhog_save = nullptr;
 
-    double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
-    double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
+    Tr **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
+    Tr **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
     const Parallel_Grid* pgrid = nullptr;
 
   private:
 
     //temporary
-    double *_space_rho = nullptr; 
-    double *_space_rho_save = nullptr;
-    std::complex<double> *_space_rhog = nullptr;
-    std::complex<double> *_space_rhog_save = nullptr;
-    double *_space_kin_r = nullptr;
-    double *_space_kin_r_save = nullptr;
+    Tr *_space_rho = nullptr; 
+    Tr *_space_rho_save = nullptr;
+    Tg *_space_rhog = nullptr;
+    Tg *_space_rhog_save = nullptr;
+    Tr *_space_kin_r = nullptr;
+    Tr *_space_kin_r_save = nullptr;
 
   public:
 
@@ -60,8 +61,8 @@ class Charge
     double **nhat_save = nullptr; //compensation charge for PAW
                                  // wenfei 2023-09-05
 
-    double *rho_core = nullptr;
-    std::complex<double> *rhog_core = nullptr;
+    Tr *rho_core = nullptr;
+    Tg *rhog_core = nullptr;
 
     int prenspin = 1;
 
@@ -91,7 +92,7 @@ class Charge
 
     void atomic_rho(const int spin_number_need,
                     const double& omega,
-                    double** rho_in,
+                    Tr** rho_in,
                     const ModuleBase::ComplexMatrix& strucFac,
                     const UnitCell& ucell) const;
 
@@ -101,7 +102,7 @@ class Charge
 
     void renormalize_rho();
 
-    double sum_rho() const;
+    Tr sum_rho() const;
 
     void save_rho_before_sum_band();
 
@@ -118,7 +119,7 @@ class Charge
         double *rhocg
     ) const;
 
-	double cal_rho2ne(const double *rho_in) const;
+	Tr cal_rho2ne(const Tr *rho_in) const;
 
     void check_rho(); // to check whether the charge density is normal
 
@@ -143,7 +144,7 @@ class Charge
 	 * 
 	 * @param array_rho f(rho): an array [nrxx]
 	 */
-	void reduce_diff_pools(double* array_rho) const;
+	void reduce_diff_pools(Tr* array_rho) const;
 
     void set_omega(double* omega_in){this->omega_ = omega_in;};
 

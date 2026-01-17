@@ -359,7 +359,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nrxx,
         pw_big->nbz,
         pw_big->bz);
-    Charge chg_gs;
+    Charge<double> chg_gs;
     if (input.ri_hartree_benchmark != "aims") { this->read_ks_chg(chg_gs); }
     this->init_pot(chg_gs);
 
@@ -629,7 +629,7 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
+void LR::ESolver_LR<T, TR>::init_pot(const Charge<double>& chg_gs)
 {
     this->pot.resize(nspin, nullptr);
     if (this->input.ri_hartree_benchmark != "none") { return; } //no need to initialize potential for Hxc kernel in the RI-benchmark routine
@@ -681,7 +681,7 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
+void LR::ESolver_LR<T, TR>::read_ks_chg(Charge<double>& chg_gs)
 {
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = chg_gs.kin_density(); // mohan add 20251202

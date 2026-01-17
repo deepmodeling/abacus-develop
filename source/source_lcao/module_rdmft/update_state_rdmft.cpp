@@ -50,7 +50,7 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::update_elec(UnitCell& ucell,
                                 const ModuleBase::matrix& occ_number_in, 
-                                const psi::Psi<TK>& wfc_in, const Charge* charge_in)
+                                const psi::Psi<TK>& wfc_in, const Charge<double>* charge_in)
 {
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);

@@ -33,13 +33,15 @@
 
 #include <vector>
 
-Charge::Charge()
+template<typename Tr>
+Charge<Tr>::Charge()
 {
     allocate_rho = false;
     allocate_rho_final_scf = false; // LiuXh add 20180619
 }
 
-Charge::~Charge()
+template<typename Tr>
+Charge<Tr>::~Charge()
 {
     this->destroy();
 #ifdef __MPI
@@ -48,13 +50,15 @@ Charge::~Charge()
 #endif
 }
 
-void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+template<typename Tr>
+void Charge<Tr>::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
 }
 
 // mohan add 2025-12-02
-bool Charge::kin_density()
+template<typename Tr>
+bool Charge<Tr>::kin_density()
 {
 	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
 	{
@@ -66,7 +70,8 @@ bool Charge::kin_density()
 	}
 }
 
-void Charge::destroy()
+template<typename Tr>
+void Charge<Tr>::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
     {
@@ -90,7 +95,8 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int& nspin_in, const bool kin_den)
+template<typename Tr>
+void Charge<Tr>::allocate(const int& nspin_in, const bool kin_den)
 {
     ModuleBase::TITLE("Charge", "allocate");
 
@@ -121,23 +127,23 @@ void Charge::allocate(const int& nspin_in, const bool kin_den)
     }
 
     // allocate memory
-    _space_rho = new double[nspin * nrxx];
-    _space_rho_save = new double[nspin * nrxx];
-    _space_rhog = new std::complex<double>[nspin * ngmc];
-    _space_rhog_save = new std::complex<double>[nspin * ngmc];
+    _space_rho = new Tr[nspin * nrxx];
+    _space_rho_save = new Tr[nspin * nrxx];
+    _space_rhog = new Tg[nspin * ngmc];
+    _space_rhog_save = new Tg[nspin * ngmc];
     if(kin_den)
     {
-        _space_kin_r = new double[nspin * nrxx];
-        _space_kin_r_save = new double[nspin * nrxx];
+        _space_kin_r = new Tr[nspin * nrxx];
+        _space_kin_r_save = new Tr[nspin * nrxx];
     }
-    rho = new double*[nspin];
-    rhog = new std::complex<double>*[nspin];
-    rho_save = new double*[nspin];
-    rhog_save = new std::complex<double>*[nspin];
+    rho = new Tr*[nspin];
+    rhog = new Tg*[nspin];
+    rho_save = new Tr*[nspin];
+    rhog_save = new Tg*[nspin];
     if(kin_den)
     {
-        kin_r = new double*[nspin];
-        kin_r_save = new double*[nspin];
+        kin_r = new Tr*[nspin];
+        kin_r_save = new Tr*[nspin];
     }
     for (int is = 0; is < nspin; is++)
     {
@@ -158,34 +164,35 @@ void Charge::allocate(const int& nspin_in, const bool kin_den)
         }
     }
 
-    ModuleBase::Memory::record("Chg::rho", sizeof(double) * nspin * nrxx);
-    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
-    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
-    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
+    ModuleBase::Memory::record("Chg::rho", sizeof(Tr) * nspin * nrxx);
+    ModuleBase::Memory::record("Chg::rho_save", sizeof(Tr) * nspin * nrxx);
+    ModuleBase::Memory::record("Chg::rhog", sizeof(Tg) * nspin * ngmc);
+    ModuleBase::Memory::record("Chg::rhog_save", sizeof(Tg) * nspin * ngmc);
     if(kin_den)
     {
-        ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
-        ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
+        ModuleBase::Memory::record("Chg::kin_r", sizeof(Tr) * nspin * ngmc);
+        ModuleBase::Memory::record("Chg::kin_r_save", sizeof(Tr) * nspin * ngmc);
     }
 
-    this->rho_core = new double[nrxx]; // core charge in real space
+    this->rho_core = new Tr[nrxx]; // core charge in real space
     ModuleBase::GlobalFunc::ZEROS(rho_core, nrxx);
 
-    this->rhog_core = new std::complex<double>[ngmc]; // reciprocal core charge
+    this->rhog_core = new Tg[ngmc]; // reciprocal core charge
     ModuleBase::GlobalFunc::ZEROS(rhog_core, ngmc);
 
-    ModuleBase::Memory::record("Chg::rho_core", sizeof(double) * nrxx);
-    ModuleBase::Memory::record("Chg::rhog_core", sizeof(double) * ngmc);
+    ModuleBase::Memory::record("Chg::rho_core", sizeof(Tr) * nrxx);
+    ModuleBase::Memory::record("Chg::rhog_core", sizeof(Tg) * ngmc);
 
     this->allocate_rho = true;
     return;
 }
 
-double Charge::sum_rho() const
+template<typename Tr>
+Tr Charge<Tr>::sum_rho() const
 {
     ModuleBase::TITLE("Charge", "sum_rho");
 
-    double sum_rho = 0.0;
+    Tr sum_rho = 0.0;
     int nspin0 = (nspin == 2) ? 2 : 1;
 
     for (int is = 0; is < nspin0; is++)
@@ -197,7 +204,7 @@ double Charge::sum_rho() const
     }
 
     // multiply the sum of charge density by a factor
-    sum_rho *= *this->omega_ / static_cast<double>(this->rhopw->nxyz);
+    sum_rho *= *this->omega_ / static_cast<Tr>(this->rhopw->nxyz);
 
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum_rho);
@@ -205,7 +212,7 @@ double Charge::sum_rho() const
 
     // mohan fixed bug 2010-01-18,
     // sum_rho may be smaller than 1, like Na bcc.
-    if (sum_rho <= 0.1)
+    if (std::abs(sum_rho) <= 0.1)
     {
         GlobalV::ofs_warning << " sum_rho=" << sum_rho << std::endl;
         ModuleBase::WARNING_QUIT("Charge::renormalize_rho", "Can't find even an electron!");
@@ -214,14 +221,15 @@ double Charge::sum_rho() const
     return sum_rho;
 }
 
-void Charge::renormalize_rho()
+template<typename Tr>
+void Charge<Tr>::renormalize_rho()
 {
     ModuleBase::TITLE("Charge", "renormalize_rho");
 
-    const double sr = this->sum_rho();
+    const Tr sr = this->sum_rho();
     GlobalV::ofs_warning << std::setprecision(15);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge before normalized", sr);
-    const double normalize_factor = PARAM.inp.nelec / sr;
+    const Tr normalize_factor = PARAM.inp.nelec / sr;
 
     for (int is = 0; is < nspin; is++)
     {
@@ -242,9 +250,10 @@ void Charge::renormalize_rho()
 // rho_at (read from pseudopotential files)
 // allocate work space (psic must already be allocated)
 //-------------------------------------------------------
-void Charge::atomic_rho(const int spin_number_need,
+template<typename Tr>
+void Charge<Tr>::atomic_rho(const int spin_number_need,
                         const double& omega,
-                        double** rho_in,
+                        Tr** rho_in,
                         const ModuleBase::ComplexMatrix& strucFac,
                         const UnitCell& ucell) const // Peize Lin refactor 2021.04.08
 {
@@ -366,15 +375,15 @@ void Charge::atomic_rho(const int spin_number_need,
                             // G=0 term only belong to 1 cpu.
                             // Other processors start from '0'
                             //----------------------------------------------------------
-    #ifdef _OPENMP
-    #pragma omp parallel
+                        #ifdef _OPENMP
+                        #pragma omp parallel
                         {
-    #endif
+                        #endif
                             std::vector<double> rho1d(ucell.meshx);
 
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
+                            #ifdef _OPENMP
+                            #pragma omp for
+                            #endif
                             for (int igg = gstart; igg < this->rhopw->ngg; ++igg)
                             {
                                 const double gx = sqrt(this->rhopw->gg_uniq[igg]) * ucell.tpiba;
@@ -392,9 +401,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 }
                                 ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[igg]);
                             }
-    #ifdef _OPENMP
-    #pragma omp single
-    #endif
+                            #ifdef _OPENMP
+                            #pragma omp single
+                            #endif
                             {
                                 if (PARAM.inp.test_charge > 0)
                                     std::cout << " |G|>0 term done." << std::endl;
@@ -403,16 +412,16 @@ void Charge::atomic_rho(const int spin_number_need,
                             // EXPLAIN : Complete the transfer of rho from real space to
                             // reciprocal space
                             //----------------------------------------------------------
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
+                            #ifdef _OPENMP
+                            #pragma omp for
+                            #endif
 							for (int igg = 0; igg < this->rhopw->ngg; igg++)
 							{
 								rho_lgl[igg] /= omega;
 							}
-    #ifdef _OPENMP
+                        #ifdef _OPENMP
                         }
-    #endif
+                        #endif
                         return rho_lgl;
                     }();
                     //----------------------------------------------------------
@@ -420,9 +429,9 @@ void Charge::atomic_rho(const int spin_number_need,
                     //----------------------------------------------------------
                     if (spin_number_need == 1)
                     {
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+                        #ifdef _OPENMP
+                        #pragma omp parallel for
+                        #endif
                         for (int ig = 0; ig < this->rhopw->npw; ig++)
                         {
                             rho_g3d(0, ig) += strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -433,9 +442,9 @@ void Charge::atomic_rho(const int spin_number_need,
                     {
                         if (startmag_type == 1)
                         {
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+                            #ifdef _OPENMP
+                            #pragma omp parallel for
+                            #endif
                             for (int ig = 0; ig < this->rhopw->npw; ig++)
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -456,9 +465,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 const double up = 0.5 * (1 + atom->mag[ia] / atom->ncpp.zv);
                                 const double dw = 0.5 * (1 - atom->mag[ia] / atom->ncpp.zv);
                                 // std::cout << " atom " << ia << " up=" << up << " dw=" << dw << std::endl;
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+                                #ifdef _OPENMP
+                                #pragma omp parallel for
+                                #endif
                                 for (int ig = 0; ig < this->rhopw->npw; ig++)
                                 {
                                     const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
@@ -485,9 +494,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
                                 ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
                             }
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+                            #ifdef _OPENMP
+                            #pragma omp parallel for
+                            #endif
                             for (int ig = 0; ig < this->rhopw->npw; ig++)
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -523,9 +532,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 {
                                     ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
                                 }
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+                                #ifdef _OPENMP
+                                #pragma omp parallel for
+                                #endif
                                 for (int ig = 0; ig < this->rhopw->npw; ig++)
                                 {
                                     const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
@@ -566,7 +575,7 @@ void Charge::atomic_rho(const int spin_number_need,
         }();
 
         assert(spin_number_need > 0);
-        std::vector<double> ne(spin_number_need);
+        std::vector<Tr> ne(spin_number_need);
         for (int is = 0; is < spin_number_need; is++)
         {
             this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
@@ -576,10 +585,10 @@ void Charge::atomic_rho(const int spin_number_need,
 				ne[is] += rho_in[is][ir];
 			}
 
-			ne[is] *= omega / (double)this->rhopw->nxyz;
-    #ifdef __MPI
+			ne[is] *= omega / (Tr)this->rhopw->nxyz;
+            #ifdef __MPI
             Parallel_Reduce::reduce_pool(ne[is]);
-    #endif
+            #endif
             // we check that everything is correct
             double neg = 0.0;
             double rea = 0.0;
@@ -593,11 +602,11 @@ void Charge::atomic_rho(const int spin_number_need,
                 ima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
             }
 
-    #ifdef __MPI
+            #ifdef __MPI
             Parallel_Reduce::reduce_pool(neg);
             Parallel_Reduce::reduce_pool(ima);
             Parallel_Reduce::reduce_pool(sumrea);
-    #endif
+            #endif
             // mohan fix bug 2011-04-03
             neg = neg / (double)this->rhopw->nxyz * omega;
             ima = ima / (double)this->rhopw->nxyz * omega;
@@ -611,7 +620,7 @@ void Charge::atomic_rho(const int spin_number_need,
 
         } // end is
 
-        double ne_tot = 0.0;
+        Tr ne_tot = 0.0;
         int spin0 = 1;
 		if (spin_number_need == 2) 
 		{
@@ -639,7 +648,8 @@ void Charge::atomic_rho(const int spin_number_need,
     return;
 }
 
-void Charge::save_rho_before_sum_band()
+template<typename Tr>
+void Charge<Tr>::save_rho_before_sum_band()
 {
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -652,28 +662,30 @@ void Charge::save_rho_before_sum_band()
     return;
 }
 
-double Charge::cal_rho2ne(const double* rho_in) const
+template<typename Tr>
+Tr Charge<Tr>::cal_rho2ne(const Tr* rho_in) const
 {
     assert(this->rhopw->nxyz > 0); // mohan add 2025-12-02
 
-    double ne = 0.0;
+    Tr ne = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {
         ne += rho_in[ir];
     }
-#ifdef __MPI
+    #ifdef __MPI
     Parallel_Reduce::reduce_pool(ne);
-#endif
-    ne = ne * *this->omega_ / (double)this->rhopw->nxyz;
+    #endif
+    ne = ne * *this->omega_ / (Tr)this->rhopw->nxyz;
 
     return ne;
 }
 
-void Charge::check_rho()
+template<typename Tr>
+void Charge<Tr>::check_rho()
 {
     if (this->nspin==1 || this->nspin==4)
     {
-        double ne = 0.0;
+        Tr ne = 0.0;
         ne = this->cal_rho2ne(rho[0]);
         if (std::abs(ne - PARAM.inp.nelec) > 1.0e-6)
         {
@@ -683,16 +695,16 @@ void Charge::check_rho()
     else if (this->nspin == 2)
     {
         // for spin up
-        double ne_up = 0.0;
+        Tr ne_up = 0.0;
         ne_up = this->cal_rho2ne(rho[0]);
-        if (ne_up < 0.0)
+        if (std::real(ne_up) < 0.0)
         {
             ModuleBase::WARNING_QUIT("Charge", "Number of spin-down electrons set in starting magnetization exceeds all available.");
         }
         // for spin down
-        double ne_dn = 0.0;
+        Tr ne_dn = 0.0;
         ne_dn = this->cal_rho2ne(rho[1]);
-        if (ne_dn < 0.0)
+        if (std::real(ne_dn) < 0.0)
         {
             ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
         }
@@ -705,7 +717,8 @@ void Charge::check_rho()
 }
 
 // LiuXh add 20180619
-void Charge::init_final_scf()
+template<typename Tr>
+void Charge<Tr>::init_final_scf()
 {
     ModuleBase::TITLE("Charge", "init_after_scf");
 
@@ -716,37 +729,41 @@ void Charge::init_final_scf()
     }
 
     // allocate memory
-    rho = new double*[PARAM.inp.nspin];
-    rhog = new std::complex<double>*[PARAM.inp.nspin];
-    rho_save = new double*[PARAM.inp.nspin];
-    rhog_save = new std::complex<double>*[PARAM.inp.nspin];
+    rho = new Tr*[PARAM.inp.nspin];
+    rhog = new Tg*[PARAM.inp.nspin];
+    rho_save = new Tr*[PARAM.inp.nspin];
+    rhog_save = new Tg*[PARAM.inp.nspin];
 
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        rho[is] = new double[this->rhopw->nrxx];
-        rhog[is] = new std::complex<double>[this->rhopw->npw];
-        rho_save[is] = new double[this->rhopw->nrxx];
-        rhog_save[is] = new std::complex<double>[this->rhopw->npw];
+        rho[is] = new Tr[this->rhopw->nrxx];
+        rhog[is] = new Tg[this->rhopw->npw];
+        rho_save[is] = new Tr[this->rhopw->nrxx];
+        rhog_save[is] = new Tg[this->rhopw->npw];
         ModuleBase::GlobalFunc::ZEROS(rho[is], this->rhopw->nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog[is], this->rhopw->npw);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], this->rhopw->nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], this->rhopw->npw);
     }
 
-    ModuleBase::Memory::record("Chg::rho", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
-    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rho", sizeof(Tr) * PARAM.inp.nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rho_save", sizeof(Tr) * PARAM.inp.nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rhog", sizeof(Tg) * PARAM.inp.nspin * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rhog_save", sizeof(Tg) * PARAM.inp.nspin * this->rhopw->npw);
 
-    this->rho_core = new double[this->rhopw->nrxx]; // core charge in real space
+    this->rho_core = new Tr[this->rhopw->nrxx]; // core charge in real space
     ModuleBase::GlobalFunc::ZEROS(rho_core, this->rhopw->nrxx);
 
-    this->rhog_core = new std::complex<double>[this->rhopw->npw]; // reciprocal core charge
+    this->rhog_core = new Tg[this->rhopw->npw]; // reciprocal core charge
     ModuleBase::GlobalFunc::ZEROS(rhog_core, this->rhopw->npw);
 
-    ModuleBase::Memory::record("Chg::rho_core", sizeof(double) * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rhog_core", sizeof(double) * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rho_core", sizeof(Tr) * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rhog_core", sizeof(Tg) * this->rhopw->npw);
 
     this->allocate_rho_final_scf = true;
     return;
 }
+
+
+template class Charge<double>;
+template class Charge<std::complex<double>>;

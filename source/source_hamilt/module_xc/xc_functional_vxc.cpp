@@ -15,7 +15,7 @@
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nrxx, // number of real-space grid
-                                                                   const Charge* const chr,
+                                                                   const Charge<double>* const chr,
                                                                    const UnitCell* ucell) // core charge density
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");

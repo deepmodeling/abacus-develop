@@ -41,7 +41,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const ModuleBase::matrix& ekb = elec.ekb;
-    const Charge* const chr = elec.charge;
+    const Charge<double>* const chr = elec.charge;
     force.create(nat, 3);
 
     ModuleBase::matrix forcelc(nat, 3);
@@ -327,7 +327,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
                                            ModuleBase::matrix& forcelc,
                                            const ModulePW::PW_Basis* const rho_basis,
                                            const ModuleBase::matrix& vloc,
-                                           const Charge* const chr)
+                                           const Charge<double>* const chr)
 {
     ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");

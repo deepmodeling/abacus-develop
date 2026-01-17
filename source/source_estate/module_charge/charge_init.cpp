@@ -18,7 +18,8 @@
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
 
-void Charge::init_rho(const UnitCell& ucell,
+template<typename Tr>
+void Charge<Tr>::init_rho(const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,
                       ModuleSymmetry::Symmetry& symm,
@@ -134,8 +135,8 @@ void Charge::init_rho(const UnitCell& ucell,
             {
                 GlobalV::ofs_running << " try to read kinetic energy density from file" << std::endl;
                 // try to read charge from binary file first, which is the same as QE
-                std::vector<std::complex<double>> kin_g_space(nspin * this->ngmc, {0.0, 0.0});
-                std::vector<std::complex<double>*> kin_g;
+                std::vector<Tg> kin_g_space(nspin * this->ngmc, {0.0, 0.0});
+                std::vector<Tg*> kin_g;
                 for (int is = 0; is < nspin; is++)
                 {
                     kin_g.push_back(kin_g_space.data() + is * this->ngmc);
@@ -270,7 +271,8 @@ void Charge::init_rho(const UnitCell& ucell,
 //==========================================================
 // computes the core charge on the real space 3D mesh.
 //==========================================================
-void Charge::set_rho_core(const UnitCell& ucell,
+template<typename Tr>
+void Charge<Tr>::set_rho_core(const UnitCell& ucell,
                           const ModuleBase::ComplexMatrix& structure_factor, 
                           const bool* numeric)
 {
@@ -298,7 +300,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(rhocg, this->rhopw->ngg );
 
 	// three dimension.
-    std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];	
+    Tg *vg = new Tg[this->rhopw->npw];	
 
     for (int it = 0; it < ucell.ntype;it++)
     {
@@ -372,7 +374,8 @@ void Charge::set_rho_core(const UnitCell& ucell,
 } // end subroutine set_rhoc
 
 
-void Charge::non_linear_core_correction
+template<typename Tr>
+void Charge<Tr>::non_linear_core_correction
 (
     const bool &numeric,
     const double omega,
@@ -452,3 +455,8 @@ void Charge::non_linear_core_correction
 
     return;
 }
+
+
+
+template class Charge<double>;
+template class Charge<std::complex<double>>;

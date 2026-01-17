@@ -15,7 +15,7 @@ namespace LR
     public:
         KernelXC(const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell,
-            const Charge& chg_gs,
+            const Charge<double>& chg_gs,
             const Parallel_Grid& pgrid,
             const int& nspin,
             const std::string& kernel_name,

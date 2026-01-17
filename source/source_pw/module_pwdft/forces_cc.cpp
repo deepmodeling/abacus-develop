@@ -30,7 +30,7 @@
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                           const ModulePW::PW_Basis* const rho_basis,
-                                          const Charge* const chr,
+                                          const Charge<double>* const chr,
                                           const bool* numeric,
                                            UnitCell& ucell_in)
 {

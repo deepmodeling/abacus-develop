@@ -23,7 +23,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                  const K_Vectors& kv,
                  const int kpar,
                  const int my_pool,
-                 const Charge* chr) // Charge class is needed for the charge density reduce
+                 const Charge<double>* chr) // Charge<double> class is needed for the charge density reduce
 {
     // Get necessary parameters from kv
     const int nks = kv.get_nks();       // current process pool k-point count

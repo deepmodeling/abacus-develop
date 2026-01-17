@@ -19,7 +19,7 @@ void write_elecstat_pot(
     const std::string& fn,
     const int& istep,
     ModulePW::PW_Basis* rho_basis,
-    const Charge* const chr,
+    const Charge<double>* const chr,
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent)

@@ -13,7 +13,7 @@ void pw::setup_pot(const int istep,
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
 		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
+		const Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         Plus_U &dftu, // mohan add 2025-11-06
@@ -131,7 +131,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
 		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
+		const Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         Plus_U &dftu, // mohan add 2025-11-06
@@ -150,7 +150,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
 		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
+		const Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         Plus_U &dftu, // mohan add 2025-11-06
@@ -170,7 +170,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
 		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
+		const Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         Plus_U &dftu, // mohan add 2025-11-06
@@ -188,7 +188,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
 		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
+		const Charge<double> &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
         Plus_U &dftu, // mohan add 2025-11-06

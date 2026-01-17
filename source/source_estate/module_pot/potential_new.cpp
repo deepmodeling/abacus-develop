@@ -155,7 +155,7 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
+void Potential::update_from_charge(const Charge<double>*const chg, const UnitCell*const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
     //ModuleBase::timer::tick("Potential", "update_from_charge");
@@ -214,7 +214,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge<double>*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
     ModuleBase::timer::tick("Potential", "cal_veff");
@@ -247,7 +247,7 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     ModuleBase::timer::tick("Potential", "cal_veff");
 }
 
-void Potential::init_pot(const Charge*const chg)
+void Potential::init_pot(const Charge<double>*const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");
@@ -261,7 +261,7 @@ void Potential::init_pot(const Charge*const chg)
     return;
 }
 
-void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
+void Potential::get_vnew(const Charge<double>* chg, ModuleBase::matrix& vnew)
 {
     ModuleBase::TITLE("Potential", "get_vnew");
     vnew.create(this->v_eff.nr, this->v_eff.nc);

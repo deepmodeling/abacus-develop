@@ -36,7 +36,7 @@ class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
     LCAO_domain::Setup_DM<TK> dmat_base;
 
     //! Electorn charge density
-    Charge chr_base;
+    Charge<double> chr_base;
 };
 } // namespace ModuleESolver
 #endif

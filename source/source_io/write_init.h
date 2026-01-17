@@ -13,7 +13,7 @@ namespace ModuleIO
 void write_chg_init(
     const UnitCell& ucell,
     const Parallel_Grid &para_grid,
-    const Charge &chr,
+    const Charge<double> &chr,
     const elecstate::Efermi &efermi,
     const int istep,
     const Input_para& inp);

@@ -34,7 +34,7 @@ class XCTest_VXC : public XCTest
         {
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
-            Charge chr;
+            Charge<double> chr;
             
             rhopw.nrxx = 5;
             rhopw.npw = 5;
@@ -132,7 +132,7 @@ class XCTest_VXC_Libxc : public XCTest
         {
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
-            Charge chr;
+            Charge<double> chr;
 
             rhopw.nrxx = 5;
             rhopw.npw = 5;
@@ -230,7 +230,7 @@ class XCTest_VXC_meta : public XCTest
         {
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
-            Charge chr;
+            Charge<double> chr;
 
             rhopw.nrxx = 5;
             rhopw.npw = 5;

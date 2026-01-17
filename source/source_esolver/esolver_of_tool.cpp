@@ -19,7 +19,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 {
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
+        this->pelec = new elecstate::ElecState((Charge<double>*)(&chr), this->pw_rho, pw_big);
     }
 
     delete this->pelec->pot;
@@ -84,7 +84,7 @@ void ESolver_OF::allocate_array()
 
     // initialize chemical potential, step length, ...
     delete this->ptemp_rho_;
-    this->ptemp_rho_ = new Charge();
+    this->ptemp_rho_ = new Charge<double>();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
     this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
@@ -173,7 +173,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
  * @param [in] ptheta
  * @param [out] rdEdtheta dE/dTheta
  */
-void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta)
+void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge<double>* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta)
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 

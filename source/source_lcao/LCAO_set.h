@@ -29,7 +29,7 @@ void set_psi_occ_dm_chg(
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
-		Charge &chr, // charge density 
+		Charge<double> &chr, // charge density 
 		const Input_para& inp); // input parameters
 
 /**

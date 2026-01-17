@@ -21,7 +21,7 @@ class HSolverLCAO
                psi::Psi<TK>& psi,
                elecstate::ElecState* pes,
 			   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
-			   Charge &chr, // charge density
+			   Charge<double> &chr, // charge density
 			   const int nspin,
 			   const bool skip_charge);
 

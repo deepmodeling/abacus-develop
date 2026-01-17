@@ -57,14 +57,14 @@ class Forces
                        ModuleBase::matrix& forcelc,
                        const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& vloc,
-                       const Charge* const chr);
+                       const Charge<double>* const chr);
     void cal_force_ew(const UnitCell& ucell,
                       ModuleBase::matrix& forceion, 
                       const ModulePW::PW_Basis* const rho_basis, 
                       const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc,
                       const ModulePW::PW_Basis* const rho_basis,
-                      const Charge* const chr,
+                      const Charge<double>* const chr,
                       const bool* numeric,
                       UnitCell& ucell_in);
     /**

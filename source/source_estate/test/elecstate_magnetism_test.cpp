@@ -27,10 +27,10 @@
 #define private public
 #include "source_estate/magnetism.h"
 #undef private
-Charge::Charge()
+Charge<double>::Charge<double>()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge<double>()
 {
 }
 
@@ -71,7 +71,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 	PARAM.sys.two_fermi = false;
 	PARAM.input.nelec = 10.0;
 
-	Charge* chr = new Charge;
+	Charge<double>* chr = new Charge<double>;
 	chr->nrxx = 100;
 	chr->nxyz = 1000;
 	chr->rho = new double*[PARAM.input.nspin];
@@ -103,7 +103,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
 	PARAM.input.nspin = 4;
 
-	Charge* chr = new Charge;
+	Charge<double>* chr = new Charge<double>;
 	chr->rho = new double*[PARAM.input.nspin];
 	chr->nrxx = 100;
 	chr->nxyz = 1000;

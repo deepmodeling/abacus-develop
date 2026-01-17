@@ -14,7 +14,7 @@ namespace module_charge
 void chgmixing_ks(const int iter, // scf iteration number
 		UnitCell& ucell,
         elecstate::ElecState* pelec, 
-        Charge &chr, // charge density
+        Charge<double> &chr, // charge density
         Charge_Mixing* p_chgmix, // charge mixing class
         const int nrxx, // charge density
         double &drho, // charge density deviation

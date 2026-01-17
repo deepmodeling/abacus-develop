@@ -65,7 +65,7 @@ class Charge_Extra
     void extrapolate_charge(
         Parallel_Grid* Pgrid,
         UnitCell& ucell,
-        Charge* chr,
+        Charge<double>* chr,
         Structure_Factor* sf,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
@@ -87,7 +87,7 @@ class Charge_Extra
      * @param chr the charge density
      * @param sf the structure factor
      */
-    void update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf);
+    void update_delta_rho(const UnitCell& ucell, const Charge<double>* chr, const Structure_Factor* sf);
 
   private:
     int istep = 0; ///< the current step

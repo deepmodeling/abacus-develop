@@ -19,10 +19,11 @@ namespace ModuleIO
  * @param chg charge density
  */
 
+template<typename Tr>
 void read_wf2rho_pw(
 		const ModulePW::PW_Basis_K* pw_wfc,
 		ModuleSymmetry::Symmetry& symm,
-		Charge& chg,
+		Charge<Tr>& chg,
         const std::string &readin_dir,
 		const int kpar,
 		const int my_pool,

@@ -10,7 +10,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 											 ModuleBase::matrix& sigma, 
 											 ModulePW::PW_Basis* rho_basis, 
 											 const bool is_pw, 
-											 const Charge* const chr)
+											 const Charge<double>* const chr)
 {
     ModuleBase::TITLE("Stress","stress_har");
 	ModuleBase::timer::tick("Stress","stress_har");

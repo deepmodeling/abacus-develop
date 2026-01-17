@@ -3,7 +3,8 @@
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include <cstring>  // use std::memcpy
 
-bool ModuleIO::read_vdata_palgrid(
+template<>
+bool ModuleIO::read_vdata_palgrid<double>(
     const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
@@ -71,6 +72,18 @@ bool ModuleIO::read_vdata_palgrid(
     std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif
     return true;
+}
+
+template<>
+bool ModuleIO::read_vdata_palgrid<std::complex<double>>(
+    const Parallel_Grid& pgrid,
+    const int my_rank,
+    std::ofstream& ofs_running,
+    const std::string& fn,
+    std::complex<double>* const data,
+    const int natom)
+{
+	ModuleBase::WARNING_QUIT("ModuleIO::read_vdata_palgrid", "std::complex<double> unsupported yet.");
 }
 
 void ModuleIO::trilinear_interpolate(

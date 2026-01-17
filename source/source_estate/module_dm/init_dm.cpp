@@ -9,7 +9,7 @@ void elecstate::init_dm(UnitCell& ucell,
 		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<TK> &dmat,
         psi::Psi<TK>* psi,
-		Charge &chr,
+		Charge<double> &chr,
         const int iter,
         const int exx_two_level_step)
 {
@@ -44,7 +44,7 @@ template void elecstate::init_dm<double>(UnitCell& ucell,
 		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<double> &dmat,
         psi::Psi<double>* psi,
-		Charge &chr,
+		Charge<double> &chr,
         const int iter,
         const int exx_two_level_step);
 
@@ -52,7 +52,7 @@ template void elecstate::init_dm<std::complex<double>>(UnitCell& ucell,
 		elecstate::ElecState* pelec,
         LCAO_domain::Setup_DM<std::complex<double>> &dmat,
         psi::Psi<std::complex<double>>* psi,
-		Charge &chr,
+		Charge<double> &chr,
         const int iter,
         const int exx_two_level_step);
 

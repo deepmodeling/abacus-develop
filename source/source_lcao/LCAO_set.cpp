@@ -12,7 +12,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
-		Charge &chr, // charge density 
+		Charge<double> &chr, // charge density 
 		const Input_para &inp) // input parameters
 {
 
@@ -138,7 +138,7 @@ template void LCAO_domain::set_psi_occ_dm_chg<double>(
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<double> &dmat, // density matrix 
-		Charge &chr, // charge density 
+		Charge<double> &chr, // charge density 
 		const Input_para &inp);
 
 template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
@@ -147,7 +147,7 @@ template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
 		LCAO_domain::Setup_DM<std::complex<double>> &dmat, // density matrix 
-		Charge &chr, // charge density 
+		Charge<double> &chr, // charge density 
 		const Input_para &inp);
 
 template void LCAO_domain::set_pot<double>(

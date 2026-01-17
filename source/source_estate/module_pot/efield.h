@@ -90,7 +90,7 @@ class PotEfield : public PotBase
         }
     }
 
-    void cal_v_eff(const Charge *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
+    void cal_v_eff(const Charge<double> *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
     {
         v_eff += Efield::add_efield(*ucell,
                                     const_cast<const ModulePW::PW_Basis*>(rho_basis_),

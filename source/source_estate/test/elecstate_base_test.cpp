@@ -14,10 +14,10 @@
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
-void Potential::init_pot(Charge const*)
+void Potential::init_pot(Charge<double> const*)
 {
 }
-void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge<double>* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
 {
 }
 void Potential::cal_fixed_v(double* vl_pseudo)
@@ -27,10 +27,10 @@ Potential::~Potential()
 {
 }
 } // namespace elecstate
-Charge::Charge()
+Charge<double>::Charge<double>()
 {
 }
-Charge::~Charge()
+Charge<double>::~Charge<double>()
 {
 }
 UnitCell::UnitCell()
@@ -77,10 +77,10 @@ void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
 void ModulePW::PW_Basis::distribute_r()
 {
 }
-void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
+void Charge<double>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge::init_rho(const UnitCell&,
+void Charge<double>::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -88,13 +88,13 @@ void Charge::init_rho(const UnitCell&,
                       const void*)
 {
 }
-void Charge::set_rhopw(ModulePW::PW_Basis*)
+void Charge<double>::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge::renormalize_rho()
+void Charge<double>::renormalize_rho()
 {
 }
-void Charge::check_rho()
+void Charge<double>::check_rho()
 {
 }
 
@@ -181,7 +181,7 @@ TEST_F(ElecStateTest, InitNelecSpin)
 
 TEST_F(ElecStateTest, Constructor)
 {
-    Charge* charge = new Charge;
+    Charge<double>* charge = new Charge<double>;
     ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     elecstate::ElecState* elecstate_new = new elecstate::ElecState(charge, rhopw, bigpw);
@@ -196,7 +196,7 @@ TEST_F(ElecStateTest, Constructor)
 
 TEST_F(ElecStateTest, InitKS)
 {
-    Charge* charge = new Charge;
+    Charge<double>* charge = new Charge<double>;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
@@ -215,7 +215,7 @@ TEST_F(ElecStateTest, InitKS)
 
 TEST_F(ElecStateTest, GetRho)
 {
-    Charge* charge = new Charge;
+    Charge<double>* charge = new Charge<double>;
     ModulePW::PW_Basis_Big* bigpw = new ModulePW::PW_Basis_Big;
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
@@ -255,7 +255,7 @@ TEST_F(ElecStateTest, VirtualBaseFuncs)
 
 TEST_F(ElecStateTest, InitSCF)
 {
-    Charge* charge = new Charge;
+    Charge<double>* charge = new Charge<double>;
     elecstate->charge = charge;
     elecstate->pot = new elecstate::Potential;
     elecstate::Efermi efermi;

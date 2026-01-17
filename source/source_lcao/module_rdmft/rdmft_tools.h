@@ -266,7 +266,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                const std::vector<double>& orb_cutoff,
                const Grid_Driver* GridD_in,
                const int& nspin,
-               const Charge* charge_in,
+               const Charge<double>* charge_in,
                const ModulePW::PW_Basis* rho_basis_in,
                const ModuleBase::matrix* vloc_in,
                const ModuleBase::ComplexMatrix* sf_in,
@@ -300,7 +300,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     std::vector<double> orb_cutoff_;
 
-    // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
+    // Charge<double> calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
 
     elecstate::Potential* pot = nullptr;
 
@@ -316,7 +316,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     // added by jghan
 
-    const Charge* charge_;
+    const Charge<double>* charge_;
 
     std::string potential_;
 

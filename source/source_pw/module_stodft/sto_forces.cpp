@@ -34,7 +34,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::TITLE("Sto_Forces", "init");
     this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
-    const Charge* chr = elec.charge;
+    const Charge<double>* chr = elec.charge;
     force.create(this->nat, 3);
 
     ModuleBase::matrix forcelc(this->nat, 3);

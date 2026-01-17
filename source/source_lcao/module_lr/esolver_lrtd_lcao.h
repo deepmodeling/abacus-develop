@@ -106,9 +106,9 @@ namespace LR
         /// @brief read in the ground state wave function, band energy and occupation
         void read_ks_wfc();
         /// @brief  read in the ground state charge density
-        void read_ks_chg(Charge& chg);
+        void read_ks_chg(Charge<double>& chg);
 
-        void init_pot(const Charge& chg_gs);
+        void init_pot(const Charge<double>& chg_gs);
 
         /// @brief check the legality of the input parameters
         void parameter_check() const;

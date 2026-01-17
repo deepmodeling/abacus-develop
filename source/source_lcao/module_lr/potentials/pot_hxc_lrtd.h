@@ -18,7 +18,7 @@ namespace LR
         enum XCType { None = 0, LDA = 1, GGA = 2, HYB_GGA = 4 };
         /// constructor for exchange-correlation kernel
         PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis& rho_basis,
-            const UnitCell& ucell, const Charge& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
+            const UnitCell& ucell, const Charge<double>& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
             const SpinType& st = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "default" });
         ~PotHxcLR() {}
         void cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 });

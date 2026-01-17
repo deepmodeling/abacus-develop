@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/global.h"
 
-void Charge_Mixing::mix_rho_recip(Charge* chr)
+void Charge_Mixing::mix_rho_recip(Charge<double>* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_recip");
     ModuleBase::timer::tick("Charge_Mixing", "mix_rho_recip");
@@ -310,7 +310,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     return;
 }
 
-void Charge_Mixing::mix_rho_real(Charge* chr)
+void Charge_Mixing::mix_rho_real(Charge<double>* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_real");
     ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real");
@@ -519,7 +519,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 }
 
 
-void Charge_Mixing::mix_rho(Charge* chr)
+void Charge_Mixing::mix_rho(Charge<double>* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge_Mixing", "mix_rho");

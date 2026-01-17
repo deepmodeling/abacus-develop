@@ -77,7 +77,7 @@ void Charge_Extra::Init_CE(const int& nspin, const int& natom, const int& nrxx, 
 void Charge_Extra::extrapolate_charge(
     Parallel_Grid* Pgrid,
     UnitCell& ucell,
-    Charge* chr,
+    Charge<double>* chr,
     Structure_Factor* sf,
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
@@ -85,7 +85,7 @@ void Charge_Extra::extrapolate_charge(
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
     ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
     //-------------------------------------------------------
-    // Charge density extrapolation:
+    // Charge<double> density extrapolation:
     //
     // * pot_order=0 : copy the old potential (nothing is done);
     // * pot_order=1 : subtract old atomic charge density and sum the new
@@ -279,7 +279,7 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
     return;
 }
 
-void Charge_Extra::update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf)
+void Charge_Extra::update_delta_rho(const UnitCell& ucell, const Charge<double>* chr, const Structure_Factor* sf)
 {
     if (pot_order == 0)
     {

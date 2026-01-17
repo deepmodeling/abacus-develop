@@ -9,7 +9,7 @@
 std::vector<double> XC_Functional_Libxc::convert_rho(
 	const int nspin,
 	const std::size_t nrxx,
-	const Charge* const chr)
+	const Charge<double>* const chr)
 {
 	std::vector<double> rho(nrxx*nspin);
 	#ifdef _OPENMP
@@ -30,7 +30,7 @@ std::tuple<std::vector<double>, std::vector<double>>
 XC_Functional_Libxc::convert_rho_amag_nspin4(
 	const int nspin,
 	const std::size_t nrxx,
-	const Charge* const chr)
+	const Charge<double>* const chr)
 {
 	assert(PARAM.inp.nspin==4);
 	std::vector<double> rho(nrxx*nspin);
@@ -58,7 +58,7 @@ XC_Functional_Libxc::cal_gdr(
 	const std::size_t nrxx,
 	const std::vector<double> &rho,
 	const double tpiba,
-	const Charge* const chr)
+	const Charge<double>* const chr)
 {
 	std::vector<std::vector<ModuleBase::Vector3<double>>> gdr(nspin);
 	for( int is=0; is!=nspin; ++is )
@@ -191,7 +191,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const std::vector<double> &vrho,
 	const std::vector<double> &vsigma,
 	const double tpiba,
-	const Charge* const chr)
+	const Charge<double>* const chr)
 {
     // assert(nrxx>0); // will cause error
 	double vtxc = 0.0;
@@ -243,7 +243,7 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
 	const std::vector<double> &vsigma,
 	const double tpiba,
-	const Charge* const chr)
+	const Charge<double>* const chr)
 {
     //assert(nrxx>0); // this line will cause bug
 	std::vector<std::vector<ModuleBase::Vector3<double>>> h(
@@ -288,7 +288,7 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 // convert v for NSPIN=4
 ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 	const std::size_t nrxx,
-	const Charge* const chr,
+	const Charge<double>* const chr,
 	const std::vector<double> &amag,
 	const ModuleBase::matrix &v)
 {

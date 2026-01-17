@@ -45,7 +45,7 @@ void ElecState::init_scf(const UnitCell& ucell,
 }
 
 
-void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
+void ElecState::init_ks(Charge<double>* chr_in, // pointer for class Charge<double>
                         const K_Vectors* klist_in,
                         int nk_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)

@@ -19,7 +19,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                                             const Structure_Factor* p_sf,
                                             const bool is_pw,
 											const bool *numeric,
-                                            const Charge* const chr)
+                                            const Charge<double>* const chr)
 {
     ModuleBase::TITLE("Stress","stress_cc");
 	ModuleBase::timer::tick("Stress","stress_cc");
