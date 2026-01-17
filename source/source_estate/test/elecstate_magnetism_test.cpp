@@ -27,10 +27,10 @@
 #define private public
 #include "source_estate/magnetism.h"
 #undef private
-Charge<double>::Charge<double>()
+template<> Charge<double>::Charge()
 {
 }
-Charge<double>::~Charge<double>()
+template<> Charge<double>::~Charge()
 {
 }
 

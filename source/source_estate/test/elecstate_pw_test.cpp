@@ -25,10 +25,10 @@ Potential::~Potential()
 {
 }
 } // namespace elecstate
-Charge<double>::Charge()
+template<typename Tr> Charge<Tr>::Charge()
 {
 }
-Charge<double>::~Charge()
+template<typename Tr> Charge<Tr>::~Charge()
 {
 }
 UnitCell::UnitCell()
@@ -126,11 +126,10 @@ Fcoef::~Fcoef()
 {
 }
 #include "source_cell/klist.h"
-
-void Charge<double>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
+template<typename Tr> void Charge<Tr>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge<double>::init_rho(const UnitCell&,
+template<typename Tr> void Charge<Tr>::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -138,13 +137,13 @@ void Charge<double>::init_rho(const UnitCell&,
                       const void*)
 {
 }
-void Charge<double>::set_rhopw(ModulePW::PW_Basis*)
+template<typename Tr> void Charge<Tr>::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge<double>::renormalize_rho()
+template<typename Tr> void Charge<Tr>::renormalize_rho()
 {
 }
-void Charge<double>::check_rho()
+template<typename Tr> void Charge<Tr>::check_rho()
 {
 }
 

@@ -250,7 +250,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
                 // Here we initialize rho to be uniform,
-                // because the rho got by pot.init_pot -> Charge<double>::atomic_rho may contain minus elements.
+                // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
                 this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
                 this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
             }

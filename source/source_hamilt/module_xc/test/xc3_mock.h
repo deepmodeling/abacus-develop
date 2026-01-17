@@ -181,8 +181,8 @@ namespace GlobalC
 UnitCell::UnitCell(){};
 UnitCell::~UnitCell(){};
 
-Charge<double>::Charge(){};
-Charge<double>::~Charge(){};
+template<> Charge<double>::Charge(){};
+template<> Charge<double>::~Charge(){};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};

@@ -183,8 +183,8 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
 }
 template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
 
-Charge<double>::Charge(){};
-Charge<double>::~Charge(){};
+template<> Charge<double>::Charge(){};
+template<> Charge<double>::~Charge(){};
 
 // Mock implementations for the template functions causing linking errors
 namespace ModulePW {

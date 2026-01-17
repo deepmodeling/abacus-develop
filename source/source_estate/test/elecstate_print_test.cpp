@@ -31,10 +31,10 @@ Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
-Charge<double>::Charge()
+template<> Charge<double>::Charge()
 {
 }
-Charge<double>::~Charge()
+template<> Charge<double>::~Charge()
 {
 }
 SepPot::SepPot(){}

@@ -27,10 +27,10 @@ Potential::~Potential()
 {
 }
 } // namespace elecstate
-Charge<double>::Charge<double>()
+template<typename Tr> Charge<Tr>::Charge()
 {
 }
-Charge<double>::~Charge<double>()
+template<typename Tr> Charge<Tr>::~Charge()
 {
 }
 UnitCell::UnitCell()
@@ -77,10 +77,10 @@ void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
 void ModulePW::PW_Basis::distribute_r()
 {
 }
-void Charge<double>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
+template<typename Tr> void Charge<Tr>::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge<double>::init_rho(const UnitCell&,
+template<typename Tr> void Charge<Tr>::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -88,13 +88,13 @@ void Charge<double>::init_rho(const UnitCell&,
                       const void*)
 {
 }
-void Charge<double>::set_rhopw(ModulePW::PW_Basis*)
+template<typename Tr> void Charge<Tr>::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge<double>::renormalize_rho()
+template<typename Tr> void Charge<Tr>::renormalize_rho()
 {
 }
-void Charge<double>::check_rho()
+template<typename Tr> void Charge<Tr>::check_rho()
 {
 }
 

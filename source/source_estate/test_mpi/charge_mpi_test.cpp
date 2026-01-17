@@ -8,10 +8,10 @@
 #include "source_io/module_parameter/parameter.h"
 
 bool XC_Functional::ked_flag = false;
-Charge<double>::Charge()
+template<> Charge<double>::Charge()
 {
 }
-Charge<double>::~Charge()
+template<> Charge<double>::~Charge()
 {
     delete[] rec;
     delete[] dis;

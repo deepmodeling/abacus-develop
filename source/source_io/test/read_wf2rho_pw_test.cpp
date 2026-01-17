@@ -28,10 +28,10 @@ Parallel_Grid::Parallel_Grid()
 Parallel_Grid::~Parallel_Grid()
 {
 }
-Charge<double>::Charge()
+template<> Charge<double>::Charge()
 {
 }
-Charge<double>::~Charge()
+template<> Charge<double>::~Charge()
 {
 }
 UnitCell::UnitCell()
