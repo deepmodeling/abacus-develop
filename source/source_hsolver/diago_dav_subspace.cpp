@@ -323,7 +323,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // vcc = - vcc * eigenvalue
-    ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, eigenvalue_iter->data(), -1.0, vcc, this->nbase_x);
+    ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, e_temp_hd, -1.0, vcc, this->nbase_x);
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()

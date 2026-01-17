@@ -33,8 +33,9 @@ void Gint_rho::cal_rho_()
         std::vector<double> phi;
         std::vector<double> phi_dm;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
+            const auto& biggrid = gint_info_->get_biggrids()[i];
             if(biggrid->get_atoms().size() == 0)
             {
                 continue;

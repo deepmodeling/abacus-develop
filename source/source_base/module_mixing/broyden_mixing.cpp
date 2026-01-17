@@ -32,7 +32,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
     const size_t length = mdata.length;
     std::vector<FPTYPE> F_tmp(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < length; ++i)
     {
@@ -72,7 +72,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
         dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
         FP_dF = static_cast<FPTYPE*>(dF);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -84,7 +84,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
         this->ndim_cal_dF = std::min(this->ndim_cal_dF + 1, this->mixing_ndim);
         start_dF = (this->start_dF + 1) % this->mixing_ndim;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -192,7 +192,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
 
     FPTYPE* dFnext = FP_dF + dFindex_move(1) * length;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < length; ++i)
     {

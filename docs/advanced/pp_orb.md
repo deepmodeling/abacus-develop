@@ -65,7 +65,57 @@ $$
 
 ## Pseudopotentials
 ### Supported formats
-ABACUS supports both norm-conserving and ultrasoft pseudopotentials. For norm-conserving pseudopotentials, UPF, UPF2, VWR, and BLPS formats are supported. For ultrasoft pseudopotentials, UPF and UPF2 formats are supported. 
+ABACUS supports both norm-conserving and ultrasoft pseudopotentials. For norm-conserving pseudopotentials, UPF, UPF2, VWR, and BLPS formats are supported. For ultrasoft pseudopotentials, UPF and UPF2 formats are supported.
+
+### Pseudopotentials for SOC Calculations
+
+When performing spin-orbit coupling (SOC) calculations with `lspinorb=1`, specific pseudopotential requirements must be met:
+
+#### Identifying SOC Pseudopotentials
+
+Full-relativistic pseudopotentials suitable for SOC calculations can be identified by checking the UPF file header (`PP_HEADER` section):
+
+```xml
+<PP_HEADER
+   ...
+   relativistic="full"
+   has_so="T"
+   ...
+/>
+```
+
+- **`relativistic="full"`**: Indicates a full-relativistic pseudopotential
+- **`has_so="T"` or `has_so="1"`**: Indicates SOC information is included in the pseudopotential
+
+#### Usage Rules
+
+1. **SOC calculations** (`lspinorb=1`):
+   - **Required**: Full-relativistic pseudopotentials with `has_so=true`
+   - **Error if not met**: "no soc upf used for lspinorb calculation"
+
+2. **Non-SOC calculations** (`lspinorb=0`):
+   - **Flexible**: Can use either scalar-relativistic (`relativistic="scalar"`) or full-relativistic pseudopotentials
+   - **Automatic conversion**: If full-relativistic PP is used, ABACUS automatically transforms it to scalar-relativistic version
+
+3. **Ultrasoft pseudopotentials (USPP)**:
+   - **Constraint**: Full-relativistic USPP must be used with `lspinorb=true`
+   - **Warning if violated**: "FR-USPP please use lspinorb=.true."
+
+#### Validation by ABACUS
+
+ABACUS performs automatic validation when reading pseudopotentials:
+- Checks if `lspinorb=1` but pseudopotential has `has_so=false` → terminates with error
+- Checks if full-relativistic USPP is used without `lspinorb=1` → shows warning
+- Automatically averages SOC-related beta functions when `lspinorb=0`
+
+#### Where to Find SOC Pseudopotentials
+
+For SOC calculations, download full-relativistic pseudopotentials from:
+- **SG15_ONCV**: [quantum-simulation.org](http://quantum-simulation.org/potentials/sg15_oncv/upf/) - widely used in ABACUS
+- **PseudoDOJO**: [pseudo-dojo.org](http://www.pseudo-dojo.org/) - provides both scalar and full-relativistic versions
+- **ABACUS official**: [abacus.ustc.edu.cn](http://abacus.ustc.edu.cn/pseudo/list.htm) - includes both pseudopotentials and numerical atomic orbitals
+
+For more details on SOC calculations, see [Spin-polarization and SOC](./scf/spin.md#soc-effects).
 
 ### Usage
 For more information about pseudopotential usage, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).

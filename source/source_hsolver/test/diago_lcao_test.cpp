@@ -302,6 +302,15 @@ TEST_P(DiagoGammaOnlyTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<double> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
+
+    // Skip lapack tests in multi-process environment
+    // LAPACK is a serial solver and cannot work with distributed matrices
+    if (dp.ks_solver == "lapack" && dp.dsize > 1)
+    {
+        GTEST_SKIP() << "Skipping lapack test with " << dp.dsize
+                     << " MPI processes (lapack only supports single process)";
+    }
+
     dp.diago();
 
     if (dp.myrank == 0)
@@ -336,6 +345,15 @@ TEST_P(DiagoKPointsTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<std::complex<double>> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
+
+    // Skip lapack tests in multi-process environment
+    // LAPACK is a serial solver and cannot work with distributed matrices
+    if (dp.ks_solver == "lapack" && dp.dsize > 1)
+    {
+        GTEST_SKIP() << "Skipping lapack test with " << dp.dsize
+                     << " MPI processes (lapack only supports single process)";
+    }
+
     dp.diago();
 
     if (dp.myrank == 0)
@@ -378,9 +396,6 @@ int main(int argc, char** argv)
         std::cout << "ERROR:some tests are not passed" << std::endl;
         return result;
     }
-    else
-    {
-        MPI_Finalize();
-        return 0;
-    }
+    MPI_Finalize();
+    return 0;
 }

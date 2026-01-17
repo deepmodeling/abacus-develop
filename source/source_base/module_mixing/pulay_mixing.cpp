@@ -32,7 +32,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
     std::vector<FPTYPE> F_tmp(length);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (std::size_t i = 0; i < length; ++i)
     {
@@ -67,7 +67,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
         F = malloc(sizeof(FPTYPE) * length * mixing_ndim);
         FP_F = static_cast<FPTYPE*>(F);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
         {
@@ -79,7 +79,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
         start_F = (this->start_F + 1) % this->mixing_ndim;
         FPTYPE* FP_startF = FP_F + start_F * length;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
         {
