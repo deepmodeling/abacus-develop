@@ -91,7 +91,12 @@ case "${with_openmpi}" in
             #   else
             #     EXTRA_CONFIGURE_FLAGS=""
             #   fi
-            ./configure CFLAGS="${CFLAGS}" \
+            ./configure \
+                CC=gcc \
+                CXX=g++ \
+                FC=gfortran \
+                F77=gfortran \
+                CFLAGS="${CFLAGS}" \
                 --prefix=${pkg_install_dir} \
                 --libdir="${pkg_install_dir}/lib" \
                 --with-libevent=internal \
