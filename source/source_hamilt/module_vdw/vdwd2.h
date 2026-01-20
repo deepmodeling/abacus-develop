@@ -36,9 +36,9 @@ class Vdwd2 : public Vdw
         int yidx = para_.period().y / 2;
         int zidx = para_.period().z / 2;
 
-        for (int it1 = 0; it1 != ucell_.ntype; ++it1)
+        for (int it1 = 0; it1 < ucell_.ntype; ++it1)
         {
-            for (int it2 = 0; it2 != ucell_.ntype; ++it2)
+            for (int it2 = 0; it2 < ucell_.ntype; ++it2)
             {
                 const double C6_product
                     = sqrt(para_.C6().at(ucell_.atoms[it1].ncpp.psd) * para_.C6().at(ucell_.atoms[it2].ncpp.psd))
