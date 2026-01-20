@@ -289,7 +289,7 @@ struct lapack_hegvd<T, DEVICE_GPU> {
     {
         const int itype = 1;
         const char jobz = 'V';
-        const char uplo = 'L';
+        const char uplo = 'U';
         cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
 
         // prevent B from being overwritten by Cholesky

@@ -322,9 +322,10 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
         // decide which pool does the iq belong to
         int iq_pool = kv->para_k.whichpool[iq];
         int iq_loc  = iq - kv->para_k.startk_pool[iq_pool];
+        int iq_loc_spin = iq_loc;
         if (ispin == 1)
         {
-            iq_loc += wfcpw->nks / nspin_fac;
+            iq_loc_spin += wfcpw->nks / nspin_fac;
         }
 
         for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
@@ -332,7 +333,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
             double wg_mqb = 0;
             if (iq_pool == GlobalV::MY_POOL)
             {
-                wg_mqb = (*wg)(iq_loc, m_iband);
+                wg_mqb = (*wg)(iq_loc_spin, m_iband);
             }
 #ifdef __MPI
             MPI_Bcast(&wg_mqb, 1, MPI_DOUBLE, kv->para_k.get_startpro_pool(iq_pool), MPI_COMM_WORLD);
@@ -342,7 +343,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
             if (iq_pool == GlobalV::MY_POOL)
             {
-                const T* psi_mq = get_pw(m_iband, iq_loc + ispin * wfcpw->nks / nspin_fac);
+                const T* psi_mq = get_pw(m_iband, iq_loc_spin);
                 wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
                 // send
             }

@@ -63,7 +63,7 @@ CXXFLAGS = -O2 -fPIC -std=c++11
 INCLUDES = -I./src
 
 # Source files
-SRCS = ./src/nep.cpp ./src/ewald.cpp ./src/neighbor.cpp
+SRCS = ./src/nep.cpp ./src/ewald_nep.cpp ./src/neighbor_nep.cpp
 
 # Object files
 OBJS = \$(SRCS:.cpp=.o)

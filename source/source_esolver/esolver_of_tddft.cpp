@@ -16,6 +16,8 @@
 //-----stress------------------
 #include "source_pw/module_ofdft/of_stress_pw.h"
 
+#include <iostream>
+
 namespace ModuleESolver
 {
 
@@ -45,12 +47,13 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     this->iter_time = std::chrono::system_clock::now();
 #endif
 
-    if (istep==0)
+    if (this->phi_td.empty())
     {
-        this->phi_td.resize(PARAM.inp.nspin*this->pw_rho->nrxx);
+        const int size = PARAM.inp.nspin * this->pw_rho->nrxx;
+        this->phi_td.resize(size, std::complex<double>(0.0, 0.0));
     }
 
-    if ((istep<1) && PARAM.inp.init_chg != "file")
+    if ((istep==0) && PARAM.inp.init_chg != "file")
     {
         while (true)
         {
@@ -91,7 +94,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
             }
         }
     }
-    else if ((istep<1) && PARAM.inp.init_chg == "file")
+    else if ((istep==0) && PARAM.inp.init_chg == "file")
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -107,7 +110,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     }
     else
     {
-        this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
+        this->evolve_ofdft->propagate_psi_RK4(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif

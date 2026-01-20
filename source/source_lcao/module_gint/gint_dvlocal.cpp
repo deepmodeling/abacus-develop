@@ -33,9 +33,10 @@ void Gint_dvlocal::cal_hr_gint_()
         std::vector<double> dphi_y;
         std::vector<double> dphi_z;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            if(biggrid->get_atoms().empty())
+            const auto& biggrid = gint_info_->get_biggrids()[i];
+            if(biggrid->get_atoms().size() == 0)
             {
                 continue;
             }

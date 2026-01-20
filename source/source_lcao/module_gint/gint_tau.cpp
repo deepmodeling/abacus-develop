@@ -37,8 +37,9 @@ void Gint_tau::cal_tau_()
         std::vector<double> dphi_y_dm;
         std::vector<double> dphi_z_dm;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
+            const auto& biggrid = gint_info_->get_biggrids()[i];
             if(biggrid->get_atoms().size() == 0)
             {
                 continue;

@@ -206,41 +206,45 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
                 return new ESolver_GetS();
             }
         }
-        if (PARAM.globalv.gamma_only_local)
+        else if (PARAM.inp.deepks_out_base != "none")
         {
-            if (PARAM.inp.deepks_out_base != "none")
+            if (PARAM.globalv.gamma_only_local)
             {
                 return new ESolver_DoubleXC<double, double>();
             }
-            else
-            {
-                return new ESolver_KS_LCAO<double, double>();
-            }
-        }
-        else if (PARAM.inp.nspin < 4)
-        {
-            if (PARAM.inp.dm_to_rho)
-            {
-                return new ESolver_DM2rho<std::complex<double>, double>();
-            }
-            else if (PARAM.inp.deepks_out_base != "none")
+            else if (PARAM.inp.nspin < 4)
             {
                 return new ESolver_DoubleXC<std::complex<double>, double>();
             }
             else
             {
-                return new ESolver_KS_LCAO<std::complex<double>, double>();
+                return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
+            }
+        }
+        else if (PARAM.inp.dm_to_rho)
+        {
+            if (PARAM.globalv.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "dm_to_rho is not implemented for gamma_only");
+            }
+            else if (PARAM.inp.nspin < 4)
+            {
+                return new ESolver_DM2rho<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
             }
         }
         else
         {
-            if (PARAM.inp.dm_to_rho)
+            if (PARAM.globalv.gamma_only_local)
             {
-                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+                return new ESolver_KS_LCAO<double, double>();
             }
-            else if (PARAM.inp.deepks_out_base != "none")
+            else if (PARAM.inp.nspin < 4)
             {
-                return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
             }
             else
             {

@@ -5,14 +5,15 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
-
-ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
-                                         const Parallel_Grid& pgrid,
-                                         const ModulePW::PW_Basis* rho_basis,
-                                         const int& nspin,
-                                         const double* const* const rho,
-                                         const double* vlocal,
-                                         Structure_Factor* sf)
+// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden allocations.
+void surchem::v_correction(const UnitCell& cell,
+                           const Parallel_Grid& pgrid,
+                           const ModulePW::PW_Basis* rho_basis,
+                           const int& nspin,
+                           const double* const* const rho,
+                           const double* vlocal,
+                           Structure_Factor* sf,
+                           ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::tick("surchem", "v_cor");
@@ -46,10 +47,15 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
 
     cal_pseudo(cell, pgrid, rho_basis, porter_g, ps_totn, sf);
 
-    ModuleBase::matrix v(nspin, rho_basis->nrxx);
+    // ModuleBase::matrix v(nspin, rho_basis->nrxx);
+    if (v.nr != nspin || v.nc != rho_basis->nrxx)
+    {
+        v.create(nspin, rho_basis->nrxx);
+    }
+    ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis->nrxx);
 
-    v += cal_vel(cell, rho_basis, total_n, ps_totn, nspin);
-    v += cal_vcav(cell, rho_basis, ps_totn, nspin);
+    cal_vel(cell, rho_basis, total_n, ps_totn, nspin, v);
+    cal_vcav(cell, rho_basis, ps_totn, nspin, v);
 
     delete[] porter;
     delete[] porter_g;
@@ -58,5 +64,5 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
     delete[] total_n;
 
     ModuleBase::timer::tick("surchem", "v_cor");
-    return v;
+    return;
 }

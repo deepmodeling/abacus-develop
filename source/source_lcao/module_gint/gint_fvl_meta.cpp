@@ -61,8 +61,9 @@ void Gint_fvl_meta::cal_fvl_svl_()
             svl_thread->zero_out();
         }
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
+            const auto& biggrid = gint_info_->get_biggrids()[i];
             if(biggrid->get_atoms().size() == 0)
             {
                 continue;

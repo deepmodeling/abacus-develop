@@ -247,11 +247,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    accessor[ik][inl][m1][m2] += ddot_(&row_size,
+                                    accessor[ik][inl][m1][m2] += BlasConnector::dot(row_size,
                                                                        p_g1dmt + index * row_size * nks,
-                                                                       &inc,
+                                                                       inc,
                                                                        s_1t.data() + index * row_size,
-                                                                       &inc);
+                                                                       inc);
                                     index++;
                                 }
                             }

@@ -264,7 +264,7 @@ void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
     std::vector<double> qnorm(npw);
     std::vector<ModuleBase::Vector3<double>> q(npw);
 
-#pragma omp parallel for schedule(static, 4096 / sizeof(double))
+#pragma omp parallel for schedule(static)
     for (int ig = 0; ig < npw; ig++)
     {
         q[ig] = this->pw_wfc_->getgpluskcar(ik, ig);

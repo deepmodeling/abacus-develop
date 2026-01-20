@@ -108,7 +108,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
                     const size_t size)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE_out))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ii = 0; ii < size; ii++)
         {

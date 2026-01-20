@@ -566,7 +566,19 @@ void K_Vectors::normalize_wk(const int& degspin)
     {
         sum += this->wk[ik];
     }
-    assert(sum > 0.0);
+
+    // If sum of weights is zero or very small, set equal weights
+    if (sum < 1e-10)
+    {
+        ModuleBase::WARNING("K_Vectors::normalize_wk",
+                            "Sum of k-point weights is zero or very small. "
+                            "Setting equal weights for all k-points.");
+        for (int ik = 0; ik < nkstot; ik++)
+        {
+            this->wk[ik] = 1.0 / double(nkstot);
+        }
+        sum = 1.0;
+    }
 
     for (int ik = 0; ik < nkstot; ik++)
     {

@@ -493,20 +493,32 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
 }
 
 template <typename TK, typename TR>
-void HamiltLCAO<TK, TR>::refresh()
+void HamiltLCAO<TK, TR>::refresh(bool yes)
 {
     ModuleBase::TITLE("HamiltLCAO", "refresh");
-    dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
-    if (PARAM.inp.nspin == 2)
+    if(yes)
     {
-        this->refresh_times = 1;
-        this->current_spin = 0;
-        if (this->hR->get_nnr() != this->hRS2.size() / 2)
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
+        if (PARAM.inp.nspin == 2)
         {
-            // operator has changed, resize hRS2
-            this->hRS2.resize(this->hR->get_nnr() * 2);
+            this->refresh_times = 1;
+            this->current_spin = 0;
+            if (this->hR->get_nnr() != this->hRS2.size() / 2)
+            {
+                // operator has changed, resize hRS2
+                this->hRS2.resize(this->hR->get_nnr() * 2);
+            }
+            this->hR->allocate(this->hRS2.data(), 0);
         }
-        this->hR->allocate(this->hRS2.data(), 0);
+    }
+    else {
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(true);
+        this->refresh_times = 0;
+        if (PARAM.inp.nspin == 2)
+        {
+            ModuleBase::WARNING_QUIT("HamiltLCAO::refresh",
+                                      "When turning off the refresh flag, the nspin==2 case is not supported yet.");
+        }
     }
 }
 

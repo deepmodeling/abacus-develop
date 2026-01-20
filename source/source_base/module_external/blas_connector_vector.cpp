@@ -368,7 +368,7 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -391,7 +391,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
 		for (int i = 0; i < dim; i++)
         {
@@ -412,7 +412,7 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(float))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -433,7 +433,7 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -454,7 +454,7 @@ void vector_add_vector(const int& dim, std::complex<float> *result, const std::c
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<float>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -475,7 +475,7 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {

@@ -26,6 +26,10 @@
 #include "source_base/timer.h"
 
 #include <limits>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::cal_exx()
@@ -487,12 +491,20 @@ void Exx_Lip<T, Device>::write_q_pack() const
     if (!GlobalV::RANK_IN_POOL)
     {
         const std::string exx_q_pack = "exx_q_pack/";
+        const std::string dir_path = PARAM.globalv.global_out_dir + exx_q_pack;
 
-        const std::string command_mkdir = "test -d " + PARAM.globalv.global_out_dir + exx_q_pack + " || mkdir " + PARAM.globalv.global_out_dir + exx_q_pack;
-        assert( system(command_mkdir.c_str()) == 0);
+        int ret = mkdir(dir_path.c_str(), 0755);
+        assert(ret == 0 || errno == EEXIST);
 
-        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file + " || cp " + PARAM.inp.kpoint_file + " " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
-        assert( system(command_kpoint.c_str()) == 0);
+        const std::string kpoint_dest = dir_path + PARAM.inp.kpoint_file;
+        struct stat st;
+        if (stat(kpoint_dest.c_str(), &st) != 0)
+        {
+            std::ifstream src(PARAM.inp.kpoint_file, std::ios::binary);
+            std::ofstream dst(kpoint_dest, std::ios::binary);
+            dst << src.rdbuf();
+            assert(dst.good());
+        }
 
         std::stringstream ss_wf_wg;
         ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;

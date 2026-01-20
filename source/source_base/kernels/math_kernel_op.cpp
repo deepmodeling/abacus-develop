@@ -81,7 +81,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
         T* temp = nullptr;
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(temp, row * col, "MTransOp");
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int j = 0; j < col; j++)
         {
@@ -91,7 +91,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
             }
         }
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < row * col; i++)
         {
@@ -107,7 +107,7 @@ struct matrixCopy<T, base_device::DEVICE_CPU>
     void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int i = 0; i < n1; i++)
         {
@@ -130,7 +130,7 @@ struct matrix_mul_vector_op<T, base_device::DEVICE_CPU> {
                   T *c,
                   const int &ldc){
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int j = 0; j < n; j++){
             for (int i = 0; i < m; i++){

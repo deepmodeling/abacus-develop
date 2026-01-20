@@ -33,9 +33,10 @@ void Gint_env_k::cal_env_band(const int iband)
         PhiOperator phi_op;
         std::vector<double> phi;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            if(biggrid->get_atoms().empty())
+            const auto& biggrid = gint_info_->get_biggrids()[i];
+            if(biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
