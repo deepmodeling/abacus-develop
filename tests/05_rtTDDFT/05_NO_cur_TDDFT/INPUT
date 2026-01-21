@@ -6,16 +6,14 @@ orbital_dir        ../../PP_ORB
 nbands             5
 calculation        md
 esolver_type       tddft
+basis_type         lcao
+gamma_only         0
 
-#Parameter (Accuracy)
+#Parameter (Electronic Structure)
 ecutwfc            20
 scf_nmax           50
 
 ks_solver          scalapack_gvx
-basis_type         lcao
-gamma_only         0
-md_nstep           4
-estep_per_md       1
 
 mixing_type        broyden
 mixing_beta        0.7
@@ -27,10 +25,14 @@ stress_thr         1e-6
 cal_force          1
 force_thr_ev       1.0e-3
 
+#Parameter (MD)
+md_nstep           4
+estep_per_md       1
 md_type            nve
 md_dt              0.05
 init_vel           1
 
+#Parameter (External Field)
 td_vext            1
 td_vext_dire       1
 td_stype           0
@@ -38,13 +40,13 @@ td_ttype           0
 td_tstart          1
 td_tend            2
 
-# Gauss external field
+#Parameter (Gauss external field)
 td_gauss_freq      2.44
 td_gauss_phase     0.0
 td_gauss_sigma     0.5
 td_gauss_t0        0
 td_gauss_amp       0.1
 
-# print out information
+#Parameter (print out information)
 out_current        1
 out_current_k      1
