@@ -105,7 +105,9 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     ModuleBase::TITLE("EkineticNew", "calculate_HR");
     if (this->HR_fixed == nullptr || this->HR_fixed->size_atom_pairs() <= 0)
     {
-        ModuleBase::WARNING_QUIT("hamilt::EkineticNew::calculate_HR", "HR_fixed is nullptr or empty");
+        // Skip calculation if HR_fixed is empty (e.g., zero cutoff case)
+        // This is not an error, just means there are no atom pairs to calculate
+        return;
     }
     ModuleBase::timer::tick("EkineticNew", "calculate_HR");
 
@@ -246,7 +248,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->HR_fixed_done = true;
     }
     // last node of sub-chain, add HR_fixed into HR
-    if (this->next_sub_op == nullptr)
+    // skip if HR_fixed is nullptr or empty
+    if (this->next_sub_op == nullptr && this->HR_fixed != nullptr && this->HR_fixed->size_atom_pairs() > 0)
     {
         this->hR->add(*(this->HR_fixed));
     }
