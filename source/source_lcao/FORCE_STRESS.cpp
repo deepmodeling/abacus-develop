@@ -179,6 +179,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.nspin == 2)
         {
             dmat.dm->switch_dmr(1);
+            edm.switch_dmr(1);
         }
 
         const hamilt::HContainer<double>* dmR = dmat.dm->get_DMR_pointer(1);
@@ -209,6 +210,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.nspin == 2)
         {
             dmat.dm->switch_dmr(0);
+            edm.switch_dmr(0);
         }
 
         // Calculate local potential force/stress (vl_dphi)
