@@ -71,7 +71,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_force_stress(const bool cal_force,
                           const bool cal_stress,
-                          const HContainer<TR>* dmR,
+                          const HContainer<double>* dmR,
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 

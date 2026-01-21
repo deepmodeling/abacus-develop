@@ -22,7 +22,7 @@ inline double get_real<double>(const double& val)
 template <typename TK, typename TR>
 void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                           const bool cal_stress,
-                                                          const HContainer<TR>* dmR,
+                                                          const HContainer<double>* dmR,
                                                           ModuleBase::matrix& force,
                                                           ModuleBase::matrix& stress)
 {
@@ -71,7 +71,7 @@ void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 }
 
                 // Find density matrix for this atom pair
-                const hamilt::BaseMatrix<TR>* dm_matrix = dmR->find_matrix(iat1, iat2, R_index[0], R_index[1], R_index[2]);
+                const hamilt::BaseMatrix<double>* dm_matrix = dmR->find_matrix(iat1, iat2, R_index[0], R_index[1], R_index[2]);
                 if (dm_matrix == nullptr)
                 {
                     continue;
@@ -90,8 +90,16 @@ void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                     continue;
                 }
 
-                const TR* dm_pointer = dm_matrix->get_pointer();
+                const double* dm_pointer = dm_matrix->get_pointer();
                 double olm[4] = {0, 0, 0, 0}; // value, dx, dy, dz
+
+                // step_trace = 0 for npol=1; ={0, 1, col_size, col_size+1} for npol=2
+                std::vector<int> step_trace(npol * npol, 0);
+                if (npol == 2) {
+                    step_trace[1] = 1;
+                    step_trace[2] = col_indexes.size();
+                    step_trace[3] = col_indexes.size() + 1;
+                }
 
                 // Loop over orbital pairs
                 for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
@@ -115,34 +123,36 @@ void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                         dtau * this->ucell->lat0,
                                         &olm[0], &olm[1]);
 
+                        // only charge should be considered
+                        double dm_current = get_real(dm_pointer[0]);
+
                         // Calculate force contribution
                         if (cal_force)
                         {
-                            double dm_real = get_real(dm_pointer[iw2l]);
-
                             // F = -sum(dm * dT/dr)
                             // Factor of 2 for Hermitian matrix will be applied later
                             for (int i = 0; i < 3; i++)
                             {
-                                force_tmp1[i] -= dm_real * olm[i + 1];
-                                force_tmp2[i] += dm_real * olm[i + 1];
+                                force_tmp1[i] += dm_current * olm[i + 1];
+                                force_tmp2[i] -= dm_current * olm[i + 1];
                             }
                         }
 
                         // Calculate stress contribution
                         if (cal_stress)
                         {
-                            double dm_real = get_real(dm_pointer[iw2l]);
-
                             // stress_ij = sum(dm * dT/dr_i * r_j)
-                            stress_local[0] += dm_real * olm[1] * dtau.x; // xx
-                            stress_local[1] += dm_real * olm[2] * dtau.y; // yy
-                            stress_local[2] += dm_real * olm[3] * dtau.z; // zz
-                            stress_local[3] += dm_real * olm[1] * dtau.y; // xy
-                            stress_local[4] += dm_real * olm[2] * dtau.z; // yz
-                            stress_local[5] += dm_real * olm[3] * dtau.x; // zx
+                            stress_local[0] -= dm_current * olm[1] * dtau.x; // xx
+                            stress_local[1] -= dm_current * olm[1] * dtau.y; // xy
+                            stress_local[2] -= dm_current * olm[1] * dtau.z; // xz
+                            stress_local[3] -= dm_current * olm[2] * dtau.y; // yy
+                            stress_local[4] -= dm_current * olm[2] * dtau.z; // yz
+                            stress_local[5] -= dm_current * olm[3] * dtau.z; // zz
                         }
+
+                        dm_pointer += npol;
                     }
+                    dm_pointer += (npol - 1) * col_indexes.size();
                 }
             }
         }
@@ -168,11 +178,6 @@ void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 #ifdef __MPI
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        // Factor of 2 for Hermitian matrix
-        for (int i = 0; i < force.nr * force.nc; i++)
-        {
-            force.c[i] *= 2.0;
-        }
     }
 
     if (cal_stress)
@@ -183,7 +188,7 @@ void EkineticNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         const double weight = this->ucell->lat0 / this->ucell->omega;
         for (int i = 0; i < 6; i++)
         {
-            stress.c[i] = stress_tmp[i] * weight * 2.0; // Factor of 2 for Hermitian
+            stress.c[i] = stress_tmp[i] * weight;
         }
         // Rearrange to 3x3 matrix format
         stress.c[8] = stress.c[5]; // stress(2,2)
