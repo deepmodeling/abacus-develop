@@ -179,6 +179,35 @@ struct cal_force_ew_op{
         FPTYPE* forceion
     ) {};
 };
+
+template <typename FPTYPE, typename Device>
+struct cal_force_loc_sincos_op{
+    void operator()(
+            const Device* ctx,
+            const int nat,
+            const int npw,
+            const int ntype,
+            const FPTYPE* gcar,
+            const FPTYPE* tau,
+            const FPTYPE* vloc_per_type,
+            const std::complex<FPTYPE>* aux,
+            const FPTYPE& scale_factor,
+            FPTYPE* force) {};
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_ew_sincos_op{
+    void operator()(
+            const Device* ctx,
+            const int nat,
+            const int npw,
+            const int ig_gge0,
+            const FPTYPE* gcar,
+            const FPTYPE* tau,
+            const FPTYPE* it_facts,
+            const std::complex<FPTYPE>* aux,
+            FPTYPE* force) {};
+};
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
@@ -334,6 +363,32 @@ struct cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>{
         const std::complex<FPTYPE>* aux,
         FPTYPE* forceion
     );
+};
+template <typename FPTYPE>
+struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const base_device::DEVICE_GPU* ctx,
+            const int& nat,
+            const int& npw,
+            const int& ntype,
+            const FPTYPE* gcar,
+            const FPTYPE* tau,
+            const FPTYPE* vloc_per_type,
+            const std::complex<FPTYPE>* aux,
+            const FPTYPE& scale_factor,
+            FPTYPE* force);
+};
+
+template <typename FPTYPE>
+struct cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const base_device::DEVICE_GPU* ctx,
+            const int& nat,
+            const int& npw,
+            const int& ig_gge0,
+            const FPTYPE* gcar,
+            const FPTYPE* tau,
+            const FPTYPE* it_facts,
+            const std::complex<FPTYPE>* aux,
+            FPTYPE* force);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

@@ -12,6 +12,7 @@
 
 #if defined(__CUDA)
 #include <cuda_runtime.h>
+#include <cuda.h>
 #endif
 
 #if defined(__ROCM)
@@ -299,6 +300,7 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  CUDA Capability Major/Minor version number:    %d.%d\n",
           deviceProp.major, deviceProp.minor);
   ofs_device << msg << std::endl;
+#if defined(CUDA_VERSION) && CUDA_VERSION < 13000
   sprintf(msg,
           "  GPU Max Clock rate:                            %.0f MHz (%0.2f "
           "GHz)\n",
@@ -312,6 +314,7 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Memory Bus Width:                              %d-bit\n",
           deviceProp.memoryBusWidth);
   ofs_device << msg << std::endl;
+#endif
   sprintf(msg,
           "  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
           "%d), 3D=(%d, %d, %d)\n",
@@ -366,6 +369,7 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Texture alignment:                             %zu bytes\n",
           deviceProp.textureAlignment);
   ofs_device << msg << std::endl;
+#if defined(CUDA_VERSION) && CUDA_VERSION < 13000
   sprintf(msg,
           "  Concurrent copy and kernel execution:          %s with %d copy "
           "engine(s)\n",
@@ -375,6 +379,7 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Run time limit on kernels:                     %s\n",
           deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No");
   ofs_device << msg << std::endl;
+#endif
   sprintf(msg, "  Integrated GPU sharing Host Memory:            %s\n",
           deviceProp.integrated ? "Yes" : "No");
   ofs_device << msg << std::endl;
@@ -399,13 +404,15 @@ void print_device_info<base_device::DEVICE_GPU>(
   sprintf(msg, "  Supports Cooperative Kernel Launch:            %s\n",
           deviceProp.cooperativeLaunch ? "Yes" : "No");
   ofs_device << msg << std::endl;
-  sprintf(msg, "  Supports MultiDevice Co-op Kernel Launch:      %s\n",
-          deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
-  ofs_device << msg << std::endl;
   sprintf(msg,
           "  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
           deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
   ofs_device << msg << std::endl;
+#if defined(CUDA_VERSION) && CUDA_VERSION < 13000
+  sprintf(msg, "  Supports MultiDevice Co-op Kernel Launch:      %s\n",
+          deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
+  ofs_device << msg << std::endl;
+
   const char *sComputeMode[] = {
       "Default (multiple host threads can use ::cudaSetDevice() with device "
       "simultaneously)",
@@ -421,7 +428,7 @@ void print_device_info<base_device::DEVICE_GPU>(
   ofs_device << msg << std::endl;
   ofs_device << "  " << sComputeMode[deviceProp.computeMode] << std::endl
              << std::endl;
-
+#endif
   // If there are 2 or more GPUs, query to determine whether RDMA is supported
   if (deviceCount >= 2) {
     cudaDeviceProp prop[64];
