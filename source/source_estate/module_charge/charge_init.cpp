@@ -456,7 +456,5 @@ void Charge<Tr>::non_linear_core_correction
     return;
 }
 
-
-
 template class Charge<double>;
 template class Charge<std::complex<double>>;

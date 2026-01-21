@@ -31,12 +31,9 @@ Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
-template<> Charge<double>::Charge()
-{
-}
-template<> Charge<double>::~Charge()
-{
-}
+template<> Charge<double>::Charge(){}
+template<> Charge<double>::~Charge(){}
+template class Charge<double>;
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}

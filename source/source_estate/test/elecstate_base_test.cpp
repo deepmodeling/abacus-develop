@@ -97,6 +97,7 @@ template<typename Tr> void Charge<Tr>::renormalize_rho()
 template<typename Tr> void Charge<Tr>::check_rho()
 {
 }
+template class Charge<double>;
 
 /************************************************
  *  unit test of elecstate.cpp

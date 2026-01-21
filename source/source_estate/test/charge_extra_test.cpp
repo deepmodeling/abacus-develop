@@ -29,8 +29,7 @@ Parallel_Grid::~Parallel_Grid(){};
 
 
 // mock functions for Charge<double>
-template<>
-Charge<double>::Charge()
+template<> Charge<double>::Charge()
 {
     rhopw = new ModulePW::PW_Basis;
     rhopw->nrxx = 8;
@@ -45,21 +44,20 @@ Charge<double>::Charge()
         rho[0][i] = i + 1;
     }
 }
-template<>
-Charge<double>::~Charge()
+template<> Charge<double>::~Charge()
 {
     delete[] rho[0];
     delete[] rho;
     delete rhopw;
 }
-template<>
-void Charge<double>::atomic_rho(const int spin_number_need,
+template<> void Charge<double>::atomic_rho(const int spin_number_need,
                         const double& omega,
                         double** rho_in,
                         const ModuleBase::ComplexMatrix& strucFac,
                         const UnitCell& ucell) const
 {
 }
+template class Charge<double>;
 
 // mock functions for PW_Basis
 namespace ModulePW

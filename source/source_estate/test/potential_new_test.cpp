@@ -42,6 +42,7 @@ template<> Charge<double>::Charge()
 template<> Charge<double>::~Charge()
 {
 }
+template class Charge<double>;
 surchem::surchem()
 {
 }

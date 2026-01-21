@@ -150,7 +150,7 @@ void Charge<Tr>::rho_mpi()
     return;
 }
 
-
 template class Charge<double>;
 template class Charge<std::complex<double>>;
+
 #endif

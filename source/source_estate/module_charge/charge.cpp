@@ -764,6 +764,5 @@ void Charge<Tr>::init_final_scf()
     return;
 }
 
-
 template class Charge<double>;
 template class Charge<std::complex<double>>;

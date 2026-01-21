@@ -15,26 +15,23 @@ int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 
 // mock function
-Magnetism::~Magnetism()
+Magnetism::~Magnetism() 
 {
 }
 Magnetism::Magnetism()
 {
 }
-template<>
-Charge<double>::~Charge()
+template<> Charge<double>::~Charge()
 {
 }
-template<>
-Charge<double>::Charge()
+template<> Charge<double>::Charge()
 {
 }
-
-template<>
-void Charge<double>::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+template<> void Charge<double>::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
 }
+template class Charge<double>;
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {

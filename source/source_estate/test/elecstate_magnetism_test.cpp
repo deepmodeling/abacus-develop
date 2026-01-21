@@ -33,6 +33,7 @@ template<> Charge<double>::Charge()
 template<> Charge<double>::~Charge()
 {
 }
+template class Charge<double>;
 
 
 class MagnetismTest : public ::testing::Test
