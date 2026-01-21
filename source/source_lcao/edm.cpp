@@ -43,6 +43,8 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
     {
         elecstate::cal_dm_psi(edm.get_paraV_pointer(), wg_ekb, psi, edm);
     }
+    edm.init_DMR(ra, &ucell);
+    edm.cal_DMR();
     return edm;
 }
 
