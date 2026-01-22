@@ -58,7 +58,7 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    ModuleBase::TITLE("DiagoScalapack", "diag_pool");
+    ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
@@ -72,7 +72,7 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    ModuleBase::TITLE("DiagoScalapack", "diag_pool");
+    ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
@@ -207,9 +207,7 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = 0, orfac = -1;
-    //Note: pzhegvx_ has a bug
-    //      We must give vl,vu a value, although we do not use range 'V'
-    //      We must give rwork at least a memory of sizeof(double) * 3
+    
     const double vl = 0, vu = 0;
     std::vector<std::complex<double>> work(1, 0);
     std::vector<double> rwork(3, 0);
