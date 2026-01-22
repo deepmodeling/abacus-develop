@@ -177,7 +177,6 @@ void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Bas
     if ((this->ml_tanhp || this->ml_tanhp_nl) && !this->ml_tanh_pnl) this->potTanhpTanhp_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
     if ((this->ml_tanhq || this->ml_tanhq_nl) && !this->ml_tanh_qnl) this->potTanhqTanhq_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
 
-    // Common output logic, using virtual local term functions
     for (int ir = 0; ir < this->nx; ++ir)
     {
         double factor = tau_lda[ir] / prho[0][ir];       

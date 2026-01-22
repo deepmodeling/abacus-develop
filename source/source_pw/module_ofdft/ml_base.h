@@ -17,10 +17,10 @@ class ML_Base
 {
 public:
     ML_Base();
-    virtual ~ML_Base();
+    ~ML_Base();
 
     // Common Interface
-    virtual void set_device(std::string device_inpt);
+    void set_device(std::string device_inpt);
     
     // Tools
     void loadVector(std::string filename, std::vector<double> &data);
@@ -37,28 +37,28 @@ protected:
     void get_potential_(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
 
     // Potential Terms - these appear identical in both classes or are intended to be shared
-    virtual double potGammaTerm(int ir);
-    virtual double potPTerm1(int ir);
-    virtual double potQTerm1(int ir);
-    virtual double potXiTerm1(int ir);
-    virtual double potTanhxiTerm1(int ir);
-    virtual double potTanhpTerm1(int ir);
-    virtual double potTanhqTerm1(int ir);
+    double potGammaTerm(int ir);
+    double potPTerm1(int ir);
+    double potQTerm1(int ir);
+    double potXiTerm1(int ir);
+    double potTanhxiTerm1(int ir);
+    double potTanhpTerm1(int ir);
+    double potTanhqTerm1(int ir);
 
     // Derived classes should ensure they can work with these signatures.
     // Note: ML_EXX originally passed tau_lda for some of these. 
     // If tau_lda is needed, derived classes can override or we can add it to member variables.
     // For now, keeping signatures compatible with member access.
-    virtual void potGammanlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rGammanlTerm);
-    virtual void potXinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rXinlTerm);
-    virtual void potTanhxinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxinlTerm);
-    virtual void potTanhxi_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxi_nlTerm); 
-    virtual void potPPnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rPPnlTerm);
-    virtual void potQQnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rQQnlTerm);
-    virtual void potTanhpTanh_pnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanh_pnlTerm);
-    virtual void potTanhqTanh_qnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanh_qnlTerm);
-    virtual void potTanhpTanhp_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm);
-    virtual void potTanhqTanhq_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm);
+    void potGammanlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rGammanlTerm);
+    void potXinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rXinlTerm);
+    void potTanhxinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxinlTerm);
+    void potTanhxi_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxi_nlTerm); 
+    void potPPnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rPPnlTerm);
+    void potQQnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rQQnlTerm);
+    void potTanhpTanh_pnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanh_pnlTerm);
+    void potTanhqTanh_qnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanh_qnlTerm);
+    void potTanhpTanhp_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm);
+    void potTanhqTanhq_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm);
 
 protected: 
     // --- Member Variables (Common) ---

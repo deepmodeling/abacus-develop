@@ -173,7 +173,7 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
 
     std::vector<double> temp_prho(this->nx);
     // Note: Assuming path is still valid or user handles it. Kept hardcoded path.
-    this->loadVector("/home/xianyuer/data/1_sunliang/1_work/0_ml_kedf/1_test/0_generate_data/17_ks-pbe-chip0.2q0.1-r_min-scaling/1_fccAl-eq-2024-07-09/rho.npy", temp_prho);
+    this->loadVector("dir_to_rho_file", temp_prho);
     
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
