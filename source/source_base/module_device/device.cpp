@@ -5,6 +5,7 @@
 #include <base/macros/macros.h>
 #include <cstring>
 #include <iostream>
+#include <string>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -48,68 +49,6 @@ template <> std::string get_current_precision(const std::complex<double> *var) {
 namespace information {
 
 #if __MPI
-int stringCmp(const void *a, const void *b) {
-  char *m = (char *)a;
-  char *n = (char *)b;
-  int i, sum = 0;
-
-  for (i = 0; i < MPI_MAX_PROCESSOR_NAME; i++) {
-    if (m[i] == n[i]) {
-      continue;
-    } else {
-      sum = m[i] - n[i];
-      break;
-    }
-  }
-  return sum;
-}
-int get_node_rank() {
-  char host_name[MPI_MAX_PROCESSOR_NAME];
-  memset(host_name, '\0', sizeof(char) * MPI_MAX_PROCESSOR_NAME);
-  char(*host_names)[MPI_MAX_PROCESSOR_NAME];
-  int n, namelen, color, rank, nprocs, myrank;
-  size_t bytes;
-  MPI_Comm nodeComm;
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-  MPI_Get_processor_name(host_name, &namelen);
-
-  bytes = nprocs * sizeof(char[MPI_MAX_PROCESSOR_NAME]);
-  host_names = (char(*)[MPI_MAX_PROCESSOR_NAME])malloc(bytes);
-  for (int ii = 0; ii < nprocs; ii++) {
-    memset(host_names[ii], '\0', sizeof(char) * MPI_MAX_PROCESSOR_NAME);
-  }
-
-  strcpy(host_names[rank], host_name);
-
-  for (n = 0; n < nprocs; n++) {
-    MPI_Bcast(&(host_names[n]), MPI_MAX_PROCESSOR_NAME, MPI_CHAR, n,
-              MPI_COMM_WORLD);
-  }
-  qsort(host_names, nprocs, sizeof(char[MPI_MAX_PROCESSOR_NAME]), stringCmp);
-
-  color = 0;
-  for (n = 0; n < nprocs - 1; n++) {
-    if (strcmp(host_name, host_names[n]) == 0) {
-      break;
-    }
-    if (strcmp(host_names[n], host_names[n + 1])) {
-      color++;
-    }
-  }
-
-  MPI_Comm_split(MPI_COMM_WORLD, color, 0, &nodeComm);
-  MPI_Comm_rank(nodeComm, &myrank);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  int looprank = myrank;
-  // printf (" Assigning device %d  to process on node %s rank %d,
-  // OK\n",looprank,  host_name, rank );
-  free(host_names);
-  return looprank;
-}
-
 int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm) {
   // 20240530 zhanghaochong
   // The main difference between this function and the above is that it does not
@@ -123,27 +62,6 @@ int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm) {
   MPI_Comm_free(&localComm);
   return localMpiRank;
 }
-#if defined(__CUDA)
-
-int set_device_by_rank(const MPI_Comm mpi_comm) {
-  int localMpiRank = get_node_rank_with_mpi_shared(mpi_comm);
-  int device_num = -1;
-
-  cudaGetDeviceCount(&device_num);
-  if (device_num <= 0) {
-    ModuleBase::WARNING_QUIT("device", "can not find gpu device!");
-  }
-  // warning: this is not a good way to assign devices, user should assign One
-  // process per GPU
-  int local_device_id = localMpiRank % device_num;
-  int ret = cudaSetDevice(local_device_id);
-  if (ret != cudaSuccess) {
-    ModuleBase::WARNING_QUIT("device", "cudaSetDevice failed!");
-  }
-  return local_device_id;
-}
-#endif
-
 #endif
 
 bool probe_gpu_availability() {
@@ -231,4 +149,87 @@ int get_device_kpar(const int& kpar, const int& bndpar)
 }
 
 } // end of namespace information
+
+// ============================================================================
+// DeviceContext singleton implementation
+// ============================================================================
+
+DeviceContext& DeviceContext::instance() {
+    static DeviceContext instance;
+    return instance;
+}
+
+#ifdef __MPI
+void DeviceContext::init(MPI_Comm comm) {
+#else
+void DeviceContext::init() {
+#endif
+    // Thread-safe initialization using mutex
+    std::lock_guard<std::mutex> lock(init_mutex_);
+
+    // If already initialized, do nothing (idempotent)
+    if (initialized_) {
+        return;
+    }
+
+#if defined(__CUDA) || defined(__ROCM)
+
+#ifdef __MPI
+    // Get local rank within the node using MPI_COMM_TYPE_SHARED
+    // This is the modern and recommended way to get node-local rank
+    MPI_Comm local_comm;
+    MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
+    MPI_Comm_rank(local_comm, &local_rank_);
+    MPI_Comm_free(&local_comm);
+#else
+    local_rank_ = 0;
+#endif
+
+    // Get the number of available GPU devices
+#if defined(__CUDA)
+    cudaError_t err = cudaGetDeviceCount(&device_count_);
+    if (err != cudaSuccess || device_count_ <= 0) {
+        ModuleBase::WARNING_QUIT("DeviceContext::init",
+            "No CUDA-capable GPU device found! Please check your hardware/drivers.");
+        return;
+    }
+
+    // Bind to GPU device based on local rank
+    device_id_ = local_rank_ % device_count_;
+    err = cudaSetDevice(device_id_);
+    if (err != cudaSuccess) {
+        ModuleBase::WARNING_QUIT("DeviceContext::init",
+            "cudaSetDevice failed! Device ID: " + std::to_string(device_id_));
+        return;
+    }
+#elif defined(__ROCM)
+    hipError_t err = hipGetDeviceCount(&device_count_);
+    if (err != hipSuccess || device_count_ <= 0) {
+        ModuleBase::WARNING_QUIT("DeviceContext::init",
+            "No ROCm-capable GPU device found! Please check your hardware/drivers.");
+        return;
+    }
+
+    // Bind to GPU device based on local rank
+    device_id_ = local_rank_ % device_count_;
+    err = hipSetDevice(device_id_);
+    if (err != hipSuccess) {
+        ModuleBase::WARNING_QUIT("DeviceContext::init",
+            "hipSetDevice failed! Device ID: " + std::to_string(device_id_));
+        return;
+    }
+#endif
+
+    gpu_enabled_ = true;
+    initialized_ = true;
+
+#else
+    // No GPU support compiled in
+    initialized_ = true;
+    gpu_enabled_ = false;
+    device_id_ = -1;
+    device_count_ = 0;
+#endif
+}
+
 } // end of namespace base_device

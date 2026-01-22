@@ -9,7 +9,6 @@
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
 #ifdef __CUDA
 #include "source_base/module_device/device.h"
-#include "source_base/module_device/device_context.h"
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
 #endif
 

@@ -25,7 +25,7 @@
 #endif
 
 #include "source_base/global_variable.h"
-#include "source_base/module_device/device_context.h"
+#include "source_base/module_device/device.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
