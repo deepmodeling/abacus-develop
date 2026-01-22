@@ -21,8 +21,8 @@ endif()
 if(ENABLE_MLALGO)
   list(APPEND hamilt_mlkedf_srcs
       kedf_ml.cpp
-      kedf_ml_pot.cpp
       kedf_ml_label.cpp
+      ml_base.cpp
       ml_tools/nn_of.cpp
   )
 
