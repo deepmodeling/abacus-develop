@@ -150,12 +150,21 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     
     // for neighbor list search
     double temp = -1.0;
+    if (search_radius < rcut_max)
+    {
+        *ofs_ << "Find the `search_radius` from the input file being smaller than the \n"
+                 "`rcut_max` of the orbitals.\n"
+              << "Reset the `search_radius` (" << search_radius << ") "
+              << "to `rcut_max` ("<< rcut_max << ")." 
+              << std::endl;
+        // we don't really set, but use std::max to mask :)
+    }
     temp = atom_arrange::set_sr_NL(*ofs_,
                                    PARAM.inp.out_level,
-                                   search_radius,
+                                   std::max(search_radius, rcut_max),
                                    ucell.infoNL.get_rcutmax_Beta(),
                                    PARAM.globalv.gamma_only_local);
-    temp = std::max(temp, search_radius);
+    temp = std::max(temp, std::max(search_radius, rcut_max));
     this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));
     atom_arrange::search(searchpbc,
                          *ofs_,
@@ -190,24 +199,29 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
     FmtCore fmt(fmtstr);
 
-    ModuleBase::Vector3<double> ri, rj, dr;
+    // placeholders
+    std::complex<double> val = 0;
+    ModuleBase::Vector3<double> taui; // the origin position
+    ModuleBase::Vector3<double> dtau; // the displacement
+    AdjacentAtomInfo adjinfo; // adjacent atom information carrier
     for (int it = 0; it < ucell.ntype; it++)
     {
         const Atom& atyp_i = ucell.atoms[it];
         for (int ia = 0; ia < atyp_i.na; ia++)
         {
-            ri = atyp_i.tau[ia];
-            neighbor_searcher_->Find_atom(ucell, ri, it, ia);
-            for (int ia_adj = 0; ia_adj < neighbor_searcher_->getAdjacentNum(); ia_adj++)
+            taui = ucell.get_tau(ucell.itia2iat(it, ia));
+            neighbor_searcher_->Find_atom(ucell, taui, it, ia, &adjinfo);
+            for (int ia_adj = 0; ia_adj < adjinfo.adj_num + 1; ia_adj++) // "+1" is to include itself
             {
-                rj = neighbor_searcher_->getAdjacentTau(ia_adj);
-                int jt = neighbor_searcher_->getType(ia_adj);
+                int jt = adjinfo.ntype[ia_adj]; // ityp
+                int ja = adjinfo.natom[ia_adj]; // iat with in atomtype
                 const Atom& atyp_j = ucell.atoms[jt];
-                int ja = neighbor_searcher_->getNatom(ia_adj);
-                dr = (ri - rj) * ucell.lat0;
-                const ModuleBase::Vector3<int> iR = neighbor_searcher_->getBox(ia_adj);
-                // the two-center-integral
+                const ModuleBase::Vector3<int> iR = adjinfo.box[ia_adj];
+                dtau = ucell.cal_dtau(ucell.itia2iat(it, ia), 
+                                      ucell.itia2iat(jt, ja), 
+                                      iR) * ucell.lat0; // convert to unit of Bohr
 
+                // nested loop: calculate the two-center-integral
                 for (int li = 0; li < atyp_i.nwl + 1; li++)
                 {
                     for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++)
@@ -220,21 +234,20 @@ void ModuleIO::AngularMomentumCalculator::kernel(
                                 {
                                     for (int mj = -lj; mj <= lj; mj++)
                                     {
-                                        std::complex<double> val = 0;
                                         if (dir == 'x')
                                         {
                                             val = cal_LxijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
                                         }
                                         else if (dir == 'y')
                                         {
                                             val = cal_LyijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
                                         }
                                         else if (dir == 'z')
                                         {
                                             val = cal_LzijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
                                         }
 
                                         *ofs << fmt.format(
@@ -266,7 +279,7 @@ void ModuleIO::AngularMomentumCalculator::calculate(
     }
     std::ofstream ofout;
     const std::string dir = "xyz";
-    const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm <a|L|b>\n"
+    const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm Re[<a|L|b>] Im[<a|L|b>]\n"
                               "# it: atomtype index of the first atom\n"
                               "# ia: atomic index of the first atom within the atomtype\n"
                               "# il: angular momentum index of the first atom\n"
@@ -278,7 +291,8 @@ void ModuleIO::AngularMomentumCalculator::calculate(
                               "# jl: angular momentum index of the second atom\n"
                               "# jz: zeta function index of the second atom\n"
                               "# jm: magnetic quantum number of the second atom\n"
-                              "# <a|L|b>: the value of the matrix element\n";
+                              "# Re[<a|L|b>], Im[<a|L|b>]: the real and imaginary parts "
+                              "of the value of the matrix element\n";
     
     for (char d : dir)
     {

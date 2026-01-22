@@ -6,12 +6,11 @@
 
 inline void write_data(std::ofstream& ofs, const double& data)
 {
-    ofs << " " << std::fixed << std::scientific << std::setprecision(8) << data;
+    ofs << " " << data;
 }
 inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
 {
-    ofs << " (" << std::fixed << std::scientific << std::setprecision(8) << data.real() << ","
-        << std::fixed << std::scientific << std::setprecision(8) << data.imag() << ")";
+    ofs << " (" << data.real() << "," << data.imag() << ")";
 }
 
 template<typename T>
@@ -23,7 +22,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     const bool& reduce)
 {
     T* line = nullptr;
-    std::vector<int> indptr;
+    std::vector<long long> indptr;
     indptr.reserve(PARAM.globalv.nlocal + 1);
     indptr.push_back(0);
 
@@ -68,7 +67,8 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 
         if (!reduce || GlobalV::DRANK == 0)
         {
-            int nonzeros_count = 0;
+            long long nonzeros_count = 0;
+            ofs << std::fixed << std::scientific << std::setprecision(8);
             for (int col = 0; col < PARAM.globalv.nlocal; ++col)
             {
                 if (std::abs(line[col]) > sparse_threshold)
@@ -106,7 +106,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             ifs_tem1.close();
             for (auto &i : indptr)
             {
-                ofs.write(reinterpret_cast<char *>(&i), sizeof(int));
+                ofs.write(reinterpret_cast<char *>(&i), sizeof(long long));
             }
         }
         else

@@ -3,12 +3,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/global.h"
 
-namespace ModuleDFTU
-{
 
-void DFTU::output(const UnitCell &ucell)
+void Plus_U::output(const UnitCell &ucell)
 {
-    ModuleBase::TITLE("DFTU", "output");
+    ModuleBase::TITLE("Plus_U", "output");
 
     GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
 
@@ -22,9 +20,10 @@ void DFTU::output(const UnitCell &ucell)
 
             if (L >= orbital_corr[T] && orbital_corr[T] != -1)
             {
-                if (L != orbital_corr[T]) {
-                    continue;
-}
+				if (L != orbital_corr[T]) 
+				{
+					continue;
+				}
 
                 if (!Yukawa)
                 {
@@ -35,10 +34,11 @@ void DFTU::output(const UnitCell &ucell)
                 {
                     for (int n = 0; n < N; n++)
                     {
-                        if (n != 0) {
-                            continue;
-}
-                        double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
+						if (n != 0) 
+						{
+							continue;
+						}
+						double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
                         GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n
                                              << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV    "
                                              << "J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV"
@@ -61,7 +61,7 @@ void DFTU::output(const UnitCell &ucell)
       }
     }
     if(!ofdftu){
-      std::cout << "DFTU::write_occup_m. Can't create file onsite.dm!" << std::endl;
+      std::cout << "Plus_U::write_occup_m. Can't create file onsite.dm!" << std::endl;
       exit(0);
     } 
     this->write_occup_m(ucell,ofdftu);
@@ -73,21 +73,24 @@ void DFTU::output(const UnitCell &ucell)
 // define the function calculate the eigenvalues of a matrix
 std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n);
 
-void DFTU::write_occup_m(const UnitCell& ucell,
+void Plus_U::write_occup_m(const UnitCell& ucell,
                          std::ofstream &ofs, 
                          bool diag)
 {
-    ModuleBase::TITLE("DFTU", "write_occup_m");
+    ModuleBase::TITLE("Plus_U", "write_occup_m");
 
-    if(GlobalV::MY_RANK != 0) { return;
-}
+	if(GlobalV::MY_RANK != 0) 
+	{ 
+		return;
+	}
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1) {
-            continue;
-}
-        const int NL = ucell.atoms[T].nwl + 1;
+		if (orbital_corr[T] == -1) 
+		{
+			continue;
+		}
+		const int NL = ucell.atoms[T].nwl + 1;
         const int LC = orbital_corr[T];
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
@@ -98,9 +101,10 @@ void DFTU::write_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T]) {
-                    continue;
-}
+				if (l != orbital_corr[T]) 
+				{
+					continue;
+				}
 
                 const int N = ucell.atoms[T].l_nchi[l];
                 ofs << "L"
@@ -109,9 +113,10 @@ void DFTU::write_occup_m(const UnitCell& ucell,
                 for (int n = 0; n < N; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-                    if (n != 0) {
-                        continue;
-}
+					if (n != 0) 
+					{
+						continue;
+					}
 
                     ofs << "zeta"
                         << "  " << n << std::endl;
@@ -158,7 +163,8 @@ void DFTU::write_occup_m(const UnitCell& ucell,
                         }
                         if(diag)
                         {
-                            ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[0] - sum0[1] << std::endl;
+                            ofs << std::setw(12) << std::setprecision(8) 
+                                << std::fixed<< "atomic mag: "<<iat<<" " << sum0[0] - sum0[1] << std::endl;
                         }
                     }
                     else if (PARAM.inp.nspin == 4) // SOC
@@ -191,29 +197,32 @@ void DFTU::write_occup_m(const UnitCell& ucell,
                                 ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                     << sum0[is] << std::endl;
                             }
-                            ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[1] <<" "<< sum0[2] << " " << sum0[3] << std::endl;
+                            ofs << std::setw(12) << std::setprecision(8) 
+                                << std::fixed<< "atomic mag: "<<iat<<" " 
+                                << sum0[1] <<" "<< sum0[2] << " " << sum0[3] << std::endl;
                         }
-                        else {
-                        for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                        {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
-                            {
-                                const int m0_all = m0 + (2 * l + 1) * ipol0;
+						else 
+						{
+							for (int m0 = 0; m0 < 2 * l + 1; m0++)
+							{
+								for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+								{
+									const int m0_all = m0 + (2 * l + 1) * ipol0;
 
-                                for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                                    {
-                                        int m1_all = m1 + (2 * l + 1) * ipol1;
-                                        ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                            << locale[iat][l][n][0](m0_all, m1_all);
-                                    }
-                                }
-                                ofs << std::endl;
-                            }
-                        }
-}
-                    }
+									for (int m1 = 0; m1 < 2 * l + 1; m1++)
+									{
+										for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+										{
+											int m1_all = m1 + (2 * l + 1) * ipol1;
+											ofs << std::setw(12) << std::setprecision(8) << std::fixed
+												<< locale[iat][l][n][0](m0_all, m1_all);
+										}
+									}
+									ofs << std::endl;
+								}
+							}
+						}
+					}
                 } // n
             } // l
         } // I
@@ -222,14 +231,15 @@ void DFTU::write_occup_m(const UnitCell& ucell,
     return;
 }
 
-void DFTU::read_occup_m(const UnitCell& ucell,
+void Plus_U::read_occup_m(const UnitCell& ucell,
                         const std::string &fn)
 {
-    ModuleBase::TITLE("DFTU", "read_occup_m");
+    ModuleBase::TITLE("Plus_U", "read_occup_m");
 
-    if (GlobalV::MY_RANK != 0) {
-        return;
-}
+	if (GlobalV::MY_RANK != 0) 
+	{
+		return;
+	}
 
     std::ifstream ifdftu(fn.c_str(), std::ios::in);
 
@@ -238,14 +248,14 @@ void DFTU::read_occup_m(const UnitCell& ucell,
         if (omc > 0)
         {
             std::cout
-                << "DFTU::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm"
+                << "Plus_U::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm"
                 << std::endl;
         }
         else
         {
             if (PARAM.inp.init_chg == "file")
             {
-                std::cout << "DFTU::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
+                std::cout << "Plus_U::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
                           << std::endl;
             }
         }
@@ -257,16 +267,21 @@ void DFTU::read_occup_m(const UnitCell& ucell,
 
     char word[10];
 
-    int T, iat, spin, L, zeta;
+    int T=0;
+    int iat=0;
+    int spin=0;
+    int L=0;
+    int zeta=0;
 
     ifdftu.rdstate();
 
     while (ifdftu.good())
     {
         ifdftu >> word;
-        if (ifdftu.eof()) {
-            break;
-}
+		if (ifdftu.eof()) 
+		{
+			break;
+		}
 
         if (strcmp("atoms", word) == 0)
         {
@@ -279,9 +294,10 @@ void DFTU::read_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T]) {
-                    continue;
-}
+				if (l != orbital_corr[T]) 
+				{
+					continue;
+				}
 
                 ifdftu >> word;
 
@@ -294,9 +310,10 @@ void DFTU::read_occup_m(const UnitCell& ucell,
                     for (int n = 0; n < N; n++)
                     {
                         // if(!Yukawa && n!=0) continue;
-                        if (n != 0) {
-                            continue;
-}
+						if (n != 0) 
+						{
+							continue;
+						}
 
                         ifdftu >> word;
                         if (strcmp("zeta", word) == 0)
@@ -327,7 +344,7 @@ void DFTU::read_occup_m(const UnitCell& ucell,
                                     }
                                     else
                                     {
-                                        std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM DFTU FILE"
+                                        std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE"
                                                   << std::endl;
                                         exit(0);
                                     }
@@ -358,21 +375,21 @@ void DFTU::read_occup_m(const UnitCell& ucell,
                         }
                         else
                         {
-                            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM DFTU FILE" << std::endl;
+                            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
                             exit(0);
                         }
                     }
                 }
                 else
                 {
-                    std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM DFTU FILE" << std::endl;
+                    std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
                     exit(0);
                 }
             }
         }
         else
         {
-            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM DFTU FILE" << std::endl;
+            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
             exit(0);
         }
 
@@ -387,15 +404,16 @@ void DFTU::read_occup_m(const UnitCell& ucell,
     return;
 }
 
-void DFTU::local_occup_bcast(const UnitCell& ucell)
+void Plus_U::local_occup_bcast(const UnitCell& ucell)
 {
-    ModuleBase::TITLE("DFTU", "local_occup_bcast");
+    ModuleBase::TITLE("Plus_U", "local_occup_bcast");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1) {
-            continue;
-}
+		if (orbital_corr[T] == -1) 
+		{
+			continue;
+		}
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -404,16 +422,18 @@ void DFTU::local_occup_bcast(const UnitCell& ucell)
 
             for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
-                if (l != orbital_corr[T]) {
-                    continue;
-}
+				if (l != orbital_corr[T]) 
+				{
+					continue;
+				}
 
                 for (int n = 0; n < ucell.atoms[T].l_nchi[l]; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-                    if (n != 0) {
-                        continue;
-}
+					if (n != 0) 
+					{
+						continue;
+					}
 
                     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
@@ -462,9 +482,11 @@ void DFTU::local_occup_bcast(const UnitCell& ucell)
     return;
 }
 
-inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n) {
-    if (std::abs(A[p][q]) > 1e-10) {
-        double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
+inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n) 
+{
+	if (std::abs(A[p][q]) > 1e-10) 
+	{
+		double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
         double t;
         if (r >= 0) {
             t = 1.0 / (r + sqrt(1.0 + r * r));
@@ -489,7 +511,8 @@ inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int 
     }
 }
 
-inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n) {
+inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n) 
+{
     std::vector<double> eigenvalues(n);
     while (true) {
         int p = 0, q = 1;
@@ -513,4 +536,3 @@ inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>
     }
     return eigenvalues;
 }
-} // namespace ModuleDFTU

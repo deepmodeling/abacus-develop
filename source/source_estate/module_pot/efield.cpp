@@ -227,7 +227,7 @@ double Efield::cal_induced_dipole(const UnitCell& cell,
 
     Parallel_Reduce::reduce_pool(induced_dipole);
     induced_dipole *= cell.lat0 / bmod * ModuleBase::FOUR_PI / rho_basis->nxyz;
-
+    delete[] induced_rho;
     return induced_dipole;
 }
 

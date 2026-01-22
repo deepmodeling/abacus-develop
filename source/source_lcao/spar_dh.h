@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_SPAR_DH_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_SPAR_DH_H
+#ifndef SPAR_DH_H
+#define SPAR_DH_H
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -19,8 +19,7 @@ void cal_dH(const UnitCell& ucell,
             const LCAO_Orbitals& orb,
             const int& current_spin,
             const double& sparse_thr,
-            const ModuleBase::matrix& v_eff,
-            Gint_k& gint_k);
+            const ModuleBase::matrix& v_eff);
 
 // calculated the derivative of the overlap matrix: <phi|dphi>
 void cal_dS(const UnitCell& ucell,

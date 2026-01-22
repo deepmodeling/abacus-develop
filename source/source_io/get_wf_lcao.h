@@ -1,9 +1,8 @@
 #ifndef GET_WF_LCAO_H
 #define GET_WF_LCAO_H
 
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/elecstate.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 class Get_wf_lcao
 {
@@ -17,7 +16,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_Gamma& gg,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
@@ -28,27 +26,6 @@ class Get_wf_lcao
                const int nlocal,
                const std::string& global_out_dir,
                std::ofstream& ofs_running);
-
-    /// tmp, delete after Gint is refactored.
-    void begin(const UnitCell& ucell,
-               const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis_K* pw_wfc,
-               const Parallel_Grid& pgrid,
-               const Parallel_Orbitals& para_orb,
-               Gint_k& gg,
-               const int& out_wfc_pw,
-               const K_Vectors& kv,
-               const double nelec,
-               const std::vector<int>& out_wfc_norm,
-               const std::vector<int>& out_wfc_re_im,
-               const int nbands,
-               const int nspin,
-               const int nlocal,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running)
-    {
-        throw std::logic_error("gint_k should use with complex psi.");
-    };
 
     /// For multi-k
     void begin(const UnitCell& ucell,
@@ -56,7 +33,6 @@ class Get_wf_lcao
                const ModulePW::PW_Basis_K* pw_wfc,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
-               Gint_k& gk,
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
@@ -67,27 +43,6 @@ class Get_wf_lcao
                const int nlocal,
                const std::string& global_out_dir,
                std::ofstream& ofs_running);
-
-    /// tmp, delete after Gint is refactored.
-    void begin(const UnitCell& ucell,
-               const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis_K* pw_wfc,
-               const Parallel_Grid& pgrid,
-               const Parallel_Orbitals& para_orb,
-               Gint_Gamma& gk,
-               const int& out_wfc_pw,
-               const K_Vectors& kv,
-               const double nelec,
-               const std::vector<int>& out_wfc_norm,
-               const std::vector<int>& out_wfc_re_im,
-               const int nbands,
-               const int nspin,
-               const int nlocal,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running)
-    {
-        throw std::logic_error("gint_gamma should use with real psi.");
-    };
 
   private:
     void prepare_get_wf(std::ofstream& ofs_running);

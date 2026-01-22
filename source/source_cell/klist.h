@@ -273,7 +273,8 @@ public:
      * @return void
      *
      * @note This function should only be called by the master process (MY_RANK == 0).
-     * @note The function assumes that the sum of the weights of the k-points is greater than 0.
+     * @note If the sum of the weights is zero or very small (< 1e-10), the function will set equal weights for all
+     * k-points and issue a warning. This allows calculations like get_wf to proceed with zero-weight k-points.
      * @note The function first normalizes the weights so that their sum is 1, and then scales them by the degeneracy of
      * spin.
      */

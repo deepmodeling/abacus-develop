@@ -11,15 +11,29 @@
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-# libri 0.2.0 and above need to be used in newer ABACUS
-# libri_ver="master"
-# libri_sha256="--no-checksum"
-libri_ver=0.2.1.1
-libri_sha256="cd33fd5428400ea696b82c9132878c07bf785847b3f56b1979e25a3a5fc0b311"
-# libri_sha256="66a5540daba36effdad6ce2fe5e8368b96ddd4a7e148af90894ef21dc20ff29f"
+
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
+source "${SCRIPT_DIR}"/package_versions.sh
+
+# Load LibRI package variables with version suffix support
+# Check for version configuration from environment or individual package setting
+version_suffix=""
+if [[ -n "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" ]]; then
+    # Check for individual package version override
+    if echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "libri:alt"; then
+        version_suffix="alt"
+    elif echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "libri:main"; then
+        version_suffix="main"
+    fi
+fi
+# Fall back to global version suffix if no individual setting
+if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
+    version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
+fi
+# Load package variables with appropriate version
+load_package_vars "libri" "$version_suffix"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -30,53 +44,72 @@ libri_CFLAGS=""
 cd "${BUILDDIR}"
 
 case "$with_libri" in
-  __INSTALL__)
-    echo "==================== Installing LIBRI ===================="
-    dirname="LibRI-${libri_ver}"
-    pkg_install_dir="${INSTALLDIR}/$dirname"
-    #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
-    install_lock_file="$pkg_install_dir/install_successful"
-    url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/v${libri_ver}"
-    filename="LibRI-${libri_ver}.tar.gz"
-    if verify_checksums "${install_lock_file}"; then
-        echo "$dirname is already installed, skipping it."
-    else
-        if [ -f $filename ]; then
-        echo "$filename is found"
+    __INSTALL__)
+        echo "==================== Installing LIBRI ===================="
+        dirname="LibRI-${libri_ver}"
+        pkg_install_dir="${INSTALLDIR}/$dirname"
+        #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
+        install_lock_file="$pkg_install_dir/install_successful"
+        # url construction rules:
+        # - Branch names (master, main, develop) without v prefix
+        # - Version tags (e.g., 1.0.0) with v prefix
+        if [[ "${libri_ver}" =~ ^(master|main|develop)$ ]]; then
+            url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${libri_ver}"
         else
-        # download from github.com and checksum
-            echo "===> Notice: This version of LibRI is downloaded in GitHub Release <==="
-            download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
+            url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/v${libri_ver}"
         fi
-    if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
-    else
-        echo "Installing from scratch into ${pkg_install_dir}"
-        [ -d $dirname ] && rm -rf $dirname
-        #unzip -q $filename
-        tar -xzf $filename
-        cp -r $dirname "${pkg_install_dir}/"
-        write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-    fi
-    fi
-    LIBRI_CFLAGS="-I'${pkg_install_dir}'"
+        filename="LibRI-${libri_ver}.tar.gz"
+        if verify_checksums "${install_lock_file}"; then
+            echo "$dirname is already installed, skipping it."
+        else
+            if [ -f $filename ]; then
+                echo "$filename is found"
+            else
+                # download from github.com and checksum
+                echo "===> Notice: This version of LibRI is downloaded in GitHub Release <==="
+                download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
+            fi
+            if [ "${PACK_RUN}" = "__TRUE__" ]; then
+                echo "--pack-run mode specified, skip installation"
+                exit 0
+            fi
+            echo "Installing from scratch into ${pkg_install_dir}"
+            [ -d $dirname ] && rm -rf $dirname
+            tar -xzf $filename
+            mkdir -p "${pkg_install_dir}"
+            cp -r $dirname/* "${pkg_install_dir}/"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+        fi
+        LIBRI_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
-        echo "==================== CANNOT Finding LIBRI from system paths NOW ===================="
-        recommend_offline_installation $filename $url
-        # How to do it in libri? -- Zhaoqing in 2023/08/23
-        # check_lib -lxcf03 "libxc"
-        # check_lib -lxc "libxc"
-        # add_include_from_paths LIBXC_CFLAGS "xc.h" $INCLUDE_PATHS
-        # add_lib_from_paths LIBXC_LDFLAGS "libxc.*" $LIB_PATHS
+        echo "==================== Finding LIBRI from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
+        # Find libri header file and derive package root directory
+        libri_header_path="$(find_in_paths "RI/version.h" $INCLUDE_PATHS)"
+        if [ "$libri_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # RI/version.h -> remove /RI/version.h -> get include dir -> get parent dir
+            libri_include_dir="$(dirname "$(dirname "$libri_header_path")")"
+            pkg_install_dir="$(dirname "$libri_include_dir")"
+            echo "Found libri at: $pkg_install_dir"
+            LIBRI_CFLAGS="-I'${libri_include_dir}'"
+        else
+            report_error "Cannot find RI/version.h in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
-    
+
     *)
-    echo "==================== Linking LIBRI to user paths ===================="
-    check_dir "${pkg_install_dir}"
-    LIBRI_CFLAGS="-I'${pkg_install_dir}'"
-    ;;
+        echo "==================== Linking LIBRI to user paths ===================="
+        pkg_install_dir="${with_libri}"
+        check_dir "${pkg_install_dir}"
+        LIBRI_CFLAGS="-I'${pkg_install_dir}'"
+        ;;
 esac
 if [ "$with_libri" != "__DONTUSE__" ]; then
     if [ "$with_libri" != "__SYSTEM__" ]; then

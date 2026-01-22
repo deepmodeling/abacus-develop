@@ -4,7 +4,6 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(
     const double lat0_in, // unit length (unit in bohr)
     const ModuleBase::Matrix3
@@ -69,7 +68,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool) {
@@ -93,7 +92,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template <typename T, typename Device>
-void DiagoCG<T, Device>::diag(const Func& hpsi_func,
+double DiagoCG<T, Device>::diag(const Func& hpsi_func,
                               const Func& spsi_func,
                               ct::Tensor& psi,
                               ct::Tensor& eigen,
@@ -113,7 +112,7 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
         eigen_pack[ib] /= n_basis;
     }
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
-    return;
+    return avg_iter_;
 }
 
 template class DiagoCG<std::complex<float>, base_device::DEVICE_CPU>;

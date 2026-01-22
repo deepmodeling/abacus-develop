@@ -220,10 +220,13 @@ TEST_F(cal_vel_test, cal_vel)
     solvent_model.TOTN_real = new double[nrxx];
     solvent_model.delta_phi = new double[nrxx];
 
-    solvent_model.cal_vel(ucell, &pwtest, TOTN, PS_TOTN, nspin);
+    ModuleBase::matrix v_res(nspin, nrxx);
+    ModuleBase::GlobalFunc::ZEROS(v_res.c, nspin * nrxx);
 
-    EXPECT_NEAR(solvent_model.Vel(0, 0), 0.0532168705, 1e-10);
-    EXPECT_NEAR(solvent_model.Vel(0, 1), 0.0447818244, 1e-10);
+    solvent_model.cal_vel(ucell, &pwtest, TOTN, PS_TOTN, nspin, v_res);
+
+    EXPECT_NEAR(v_res(0, 0), 0.0532168705, 1e-10);
+    EXPECT_NEAR(v_res(0, 1), 0.0447818244, 1e-10);
 
     delete[] PS_TOTN;
     delete[] TOTN;

@@ -23,7 +23,7 @@ double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru = 0;
-std::string Ions_Move_Basic::relax_method = "bfgs";
+std::vector<std::string> Ions_Move_Basic::relax_method = {"bfgs","2"};
 
 void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad)
 {
@@ -147,10 +147,10 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     if (PARAM.inp.out_level == "ie")
     {
         std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
-        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                   << std::endl;
 
-        GlobalV::ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
+        GlobalV::ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                              << " eV/Angstrom while threshold is " 
                              << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     }
@@ -178,7 +178,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     else
     {
         GlobalV::ofs_running << "\n Ion relaxation is not converged yet (threshold is "
-                             << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / 0.529177 << ")" << std::endl;
+                             << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << ")" << std::endl;
         // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
         //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr  << std::endl;
         Ions_Move_Basic::converged = false;

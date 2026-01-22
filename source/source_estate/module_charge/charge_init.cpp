@@ -18,8 +18,7 @@
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
 
-void Charge::init_rho(elecstate::efermi& eferm_iout,
-                      const UnitCell& ucell,
+void Charge::init_rho(const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,
                       ModuleSymmetry::Symmetry& symm,
@@ -59,8 +58,18 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         {
             for (int is = 0; is < nspin; ++is)
             {
-                std::stringstream ssc;
-                ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				std::stringstream ssc; 
+
+				if(nspin==1)
+				{
+                    ssc << PARAM.globalv.global_readin_dir << "chg.cube";
+				}
+				else
+				{               
+					ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				}
+
+
                 if (ModuleIO::read_vdata_palgrid(pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
@@ -362,11 +371,6 @@ void Charge::set_rho_core(const UnitCell& ucell,
     return;
 } // end subroutine set_rhoc
 
-void Charge::set_rho_core_paw()
-{
-    ModuleBase::TITLE("Charge","set_rho_core_paw");
-}
-
 
 void Charge::non_linear_core_correction
 (
@@ -387,7 +391,7 @@ void Charge::non_linear_core_correction
 
 	double gx = 0.0;
     double rhocg1 = 0.0;
-    double *aux;
+    double *aux = nullptr;
 
     // here we compute the fourier transform is the charge in numeric form
     if (numeric)

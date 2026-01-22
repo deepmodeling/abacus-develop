@@ -319,7 +319,7 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log)
                                     ucell.omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
 
-    ucell.lat0_angstrom = ucell.lat0 * 0.529177;
+    ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;
     ucell.tpiba = ModuleBase::TWO_PI / ucell.lat0;
     ucell.tpiba2 = ucell.tpiba * ucell.tpiba;
 
@@ -482,6 +482,7 @@ void periodic_boundary_adjustment(Atom* atoms,
 	for (int it = 0; it < ntype; it++) 
 	{
 		Atom* atom = &atoms[it];
+        atom->boundary_shift.assign(atom->na, {0,0,0});
 		for (int ia = 0; ia < atom->na; ia++) 
 		{
             // mohan update 2011-03-21
@@ -489,19 +490,22 @@ void periodic_boundary_adjustment(Atom* atoms,
             {
                 if (atom->taud[ia][ik] < 0) 
                 {
+                    atom->boundary_shift[ia][ik] += 1;
                     atom->taud[ia][ik] += 1.0;
                 }
                 if (atom->taud[ia][ik] >= 1.0) 
                 {
+                    atom->boundary_shift[ia][ik] -= 1;
                     atom->taud[ia][ik] -= 1.0;
                 }
             }
-            if (atom->taud[ia].x < 0 
-                || atom->taud[ia].y < 0
-                || atom->taud[ia].z < 0 
-                || atom->taud[ia].x >= 1.0
-                || atom->taud[ia].y >= 1.0 
-                || atom->taud[ia].z >= 1.0) 
+            const double eps = 1e-12;
+            if (atom->taud[ia].x < -eps
+                || atom->taud[ia].y < -eps
+                || atom->taud[ia].z < -eps
+                || atom->taud[ia].x >= 1.0+eps
+                || atom->taud[ia].y >= 1.0+eps
+                || atom->taud[ia].z >= 1.0+eps) 
             {
                 GlobalV::ofs_warning << " atom type=" << it + 1 << " atom index=" << ia + 1 << std::endl;
                 GlobalV::ofs_warning << " direct coordinate=" << atom->taud[ia].x << " "

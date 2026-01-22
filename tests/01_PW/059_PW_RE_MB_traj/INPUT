@@ -2,6 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix      autotest
 calculation relax
+init_wfc    random
 
 nbands     8
 symmetry   1
@@ -16,7 +17,7 @@ scf_nmax  100
 relax_nmax      2
 cal_force       1
 force_thr_ev    0.01
-relax_method    bfgs_trad
+relax_method    bfgs
 
 #Parameters (4.Basis)
 basis_type  pw

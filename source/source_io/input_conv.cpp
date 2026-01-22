@@ -43,6 +43,8 @@
 #include "source_hsolver/hsolver_pw.h"
 #include "source_md/md_func.h"
 
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c) {
     std::vector<double> params_ori;
@@ -213,16 +215,16 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
-        GlobalC::dftu.omc = PARAM.inp.omc;
-        GlobalC::dftu.orbital_corr = PARAM.inp.orbital_corr;
-        GlobalC::dftu.uramping = PARAM.globalv.uramping;
-        GlobalC::dftu.mixing_dftu = PARAM.inp.mixing_dftu;
-        GlobalC::dftu.U = PARAM.globalv.hubbard_u;
-        GlobalC::dftu.U0 = PARAM.globalv.hubbard_u;
+        Plus_U::Yukawa = PARAM.inp.yukawa_potential;
+        Plus_U::omc = PARAM.inp.omc;
+        Plus_U::orbital_corr = PARAM.inp.orbital_corr;
+        Plus_U::uramping = PARAM.globalv.uramping;
+        Plus_U::mixing_dftu = PARAM.inp.mixing_dftu;
+        Plus_U::U = PARAM.globalv.hubbard_u;
+        Plus_U::U0 = PARAM.globalv.hubbard_u;
         if (PARAM.globalv.uramping > 0.01)
         {
-            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), PARAM.inp.ntype);
+            ModuleBase::GlobalFunc::ZEROS(Plus_U::U.data(), PARAM.inp.ntype);
         }
     }
 
@@ -472,7 +474,9 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.V_grad_R_threshold = PARAM.inp.exx_v_grad_r_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
+        GlobalC::exx_info.info_ri.Cs_inv_thr = PARAM.inp.exx_cs_inv_thr;
 
+        GlobalC::exx_info.info_opt_abfs.pca_threshold = PARAM.inp.exx_pca_threshold;
         GlobalC::exx_info.info_opt_abfs.abfs_Lmax  = PARAM.inp.exx_opt_orb_lmax;
         GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
         GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;

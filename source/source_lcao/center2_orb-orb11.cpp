@@ -24,6 +24,8 @@ Center2_Orb::Orb11::Orb11(const Numerical_Orbital_Lm& nA_in,
 
 void Center2_Orb::Orb11::init_radial_table()
 {
+    const int rmesh = Center2_Orb::get_rmesh(this->nA.getRcut(), this->nB.getRcut(), dr_);
+
     const int LA = this->nA.getL();
     const int LB = this->nB.getL();
     for (int LAB = std::abs(LA - LB); LAB <= LA + LB; ++LAB)
@@ -33,8 +35,6 @@ void Center2_Orb::Orb11::init_radial_table()
             continue;
         }
 
-        const int rmesh = Center2_Orb::get_rmesh(this->nA.getRcut(), this->nB.getRcut(), dr_);
-
         this->Table_r[LAB].resize(rmesh, 0);
         this->Table_dr[LAB].resize(rmesh, 0);
 
@@ -43,8 +43,8 @@ void Center2_Orb::Orb11::init_radial_table()
                                     this->nA,
                                     this->nB,
                                     rmesh,
-                                    this->Table_r[LAB].data(),
-                                    this->Table_dr[LAB].data(),
+                                    this->Table_r[LAB],
+                                    this->Table_dr[LAB],
                                     psb_);
     }
     return;
@@ -81,8 +81,8 @@ void Center2_Orb::Orb11::init_radial_table(const std::set<size_t>& radials)
                                     this->nA,
                                     this->nB,
                                     radials_used,
-                                    this->Table_r[LAB].data(),
-                                    this->Table_dr[LAB].data(),
+                                    this->Table_r[LAB],
+                                    this->Table_dr[LAB],
                                     psb_);
     }
 }

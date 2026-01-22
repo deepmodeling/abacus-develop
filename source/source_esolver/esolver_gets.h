@@ -37,7 +37,7 @@ class ESolver_GetS : public ESolver_KS<std::complex<double>>
 
     TwoCenterBundle two_center_bundle_;
 
-    // temporary introduced during removing GlobalC::ORB
+    // temporary introduced
     LCAO_Orbitals orb_;
 };
 } // namespace ModuleESolver

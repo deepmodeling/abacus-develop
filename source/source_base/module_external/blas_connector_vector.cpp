@@ -322,7 +322,17 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 }
 
 // copies a into b
-void BlasConnector::copy(const long n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const float *a, const int incx, float *b, const int incy, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		scopy_(&n, a, &incx, b, &incy);
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+void BlasConnector::copy(const int n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		dcopy_(&n, a, &incx, b, &incy);
@@ -332,7 +342,17 @@ void BlasConnector::copy(const long n, const double *a, const int incx, double *
 	}
 }
 
-void BlasConnector::copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		ccopy_(&n, a, &incx, b, &incy);
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+void BlasConnector::copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
@@ -348,7 +368,7 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -371,7 +391,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
 		for (int i = 0; i < dim; i++)
         {
@@ -392,7 +412,7 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(float))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -413,7 +433,7 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -434,7 +454,7 @@ void vector_add_vector(const int& dim, std::complex<float> *result, const std::c
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<float>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -455,7 +475,7 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {

@@ -5,6 +5,9 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include <string>
+#include <fstream>
+#include <sstream>
+
 
 namespace ModuleIO
 {
@@ -68,7 +71,7 @@ class ReadInput
     /**
      * @brief determine the md step in restart case
      *
-     * @param file_dir directory of Restart_md.dat
+     * @param file_dir directory of Restart_md.txt
      * @return md step
      */
     int current_md_step(const std::string& file_dir);
@@ -108,6 +111,8 @@ class ReadInput
     // items for real time tddft
     void item_rt_tddft();
     // items for linear response tddft
+    void item_tdofdft();
+    // items for td-ofdft
     void item_lr_tddft();
     // items for output
     void item_output();
@@ -149,6 +154,13 @@ bool assume_as_boolean(const std::string& val);
 std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
+
+
+// filter non-ASCII characters from ifstream and output to stringstream
+// return true if successful, false otherwise
+bool filter_nonascii_and_comment(std::ifstream& ifs,
+                       std::stringstream& out_ascii_stream);
+
 
 } // namespace ModuleIO
 

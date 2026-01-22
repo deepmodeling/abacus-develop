@@ -111,16 +111,19 @@ void ModuleIO::save_mat(const int istep,
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
 
-    // print out .dat file
+    const bool gamma_only = std::is_same<T, double>::value;
+
+    // write .dat file
 	if (bit)
 	{
+// write .dat file with MPI
 #ifdef __MPI
-        FILE* g = nullptr;
+        FILE* out_matrix = nullptr;
 
         if (drank == 0)
         {
-            g = fopen(filename.c_str(), "wb");
-            fwrite(&dim, sizeof(int), 1, g);
+            out_matrix = fopen(filename.c_str(), "wb");
+            fwrite(&dim, sizeof(int), 1, out_matrix);
         }
 
         int ir=0;
@@ -162,7 +165,7 @@ void ModuleIO::save_mat(const int istep,
             {
                 for (int j = (tri ? i : 0); j < dim; ++j)
                 {
-                    fwrite(&line[tri ? j - i : j], sizeof(T), 1, g);
+                    fwrite(&line[tri ? j - i : j], sizeof(T), 1, out_matrix);
                 }
             }
             delete[] line;
@@ -172,39 +175,47 @@ void ModuleIO::save_mat(const int istep,
 
 		if (drank == 0) 
 		{
-			fclose(g);
+			fclose(out_matrix);
 		}
+// write .dat file without MPI
 #else
-        FILE* g = fopen(filename.c_str(), "wb");
+        FILE* out_matrix = fopen(filename.c_str(), "wb");
 
-        fwrite(&dim, sizeof(int), 1, g);
+        fwrite(&dim, sizeof(int), 1, out_matrix);
 
         for (int i = 0; i < dim; i++)
         {
             for (int j = (tri ? i : 0); j < dim; j++)
             {
-                fwrite(&mat[i * dim + j], sizeof(T), 1, g);
+                fwrite(&mat[i * dim + j], sizeof(T), 1, out_matrix);
             }
         }
-        fclose(g);
+        fclose(out_matrix);
 #endif
-    } // end .dat file
-    else // .txt file
+    } // end writing .dat file
+    else // write .txt file
     {
-        std::ofstream g;
-        g << std::setprecision(precision);
+		std::ofstream out_matrix;
+		out_matrix << std::scientific << std::setprecision(precision);
 #ifdef __MPI
         if (drank == 0)
         {
 			if (app && istep > 0) 
 			{
-				g.open(filename.c_str(), std::ofstream::app);
+				out_matrix.open(filename.c_str(), std::ofstream::app);
 			} 
 			else 
 			{
-				g.open(filename.c_str());
+				out_matrix.open(filename.c_str());
 			}
-			g << dim;
+            out_matrix << "#------------------------------------------------------------------------" << std::endl;
+            out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0 
+            out_matrix << "# filename " << filename << std::endl;
+            out_matrix << "# gamma only " << gamma_only << std::endl;
+			out_matrix << "# rows " << dim << std::endl;
+			out_matrix << "# columns " << dim << std::endl;
+            out_matrix << "#------------------------------------------------------------------------" << std::endl;
+
 		}
 
         int ir=0;
@@ -223,7 +234,7 @@ void ModuleIO::save_mat(const int istep,
                     ic = pv.global2local_col(j);
                     if (ic >= 0)
                     {
-                        int iic;
+                        int iic=0;
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
@@ -244,40 +255,50 @@ void ModuleIO::save_mat(const int istep,
 
             if (drank == 0)
             {
+                out_matrix << "Row " << i+1 << std::endl;
+                size_t count = 0;
 				for (int j = (tri ? i : 0); j < dim; j++) 
 				{
-					g << " " << line[tri ? j - i : j];
+					out_matrix << " " << line[tri ? j - i : j];
+					++count;
+					if(count%8==0)
+					{
+						if(j!=dim-1)
+						{
+							out_matrix << std::endl;
+						}
+					}
 				}
-				g << std::endl;
+				out_matrix << std::endl;
             }
             delete[] line;
         }
 
 		if (drank == 0) 
-		{ // Peize Lin delete ; at 2020.01.31
-			g.close();
+		{
+			out_matrix.close();
 		}
 #else
 		if (app)
 		{
-			std::ofstream g(filename.c_str(), std::ofstream::app);
+			std::ofstream out_matrix(filename.c_str(), std::ofstream::app);
 		}
 		else
 		{
-			std::ofstream g(filename.c_str());
+			std::ofstream out_matrix(filename.c_str());
 		}
 
-        g << dim;
-        g << std::setprecision(precision);
+        out_matrix << dim;
+        out_matrix << std::setprecision(precision);
         for (int i = 0; i < dim; i++)
         {
             for (int j = (tri ? i : 0); j < dim; j++)
             {
-                g << " " << mat[i * dim + j];
+                out_matrix << " " << mat[i * dim + j];
             }
-            g << std::endl;
+            out_matrix << std::endl;
         }
-        g.close();
+        out_matrix.close();
 #endif
     }
     ModuleBase::timer::tick("ModuleIO", "save_mat");

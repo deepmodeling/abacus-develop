@@ -10,6 +10,7 @@
 #include "deepks_fpre.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
+#include "deepks_param.h"
 #include "deepks_pdm.h"
 #include "deepks_phialpha.h"
 #include "deepks_spre.h"
@@ -67,14 +68,8 @@ class LCAO_Deepks
     // private variables
     //-------------------
     //  private:
-  public:                            // change to public to reconstuct the code, 2024-07-22 by mohan
-    int lmaxd = 0;                   // max l of descirptors
-    int nmaxd = 0;                   //#. descriptors per l
-    int inlmax = 0;                  // tot. number {i,n,l} - atom, n, l
-    int n_descriptor;                // natoms * des_per_atom, size of descriptor(projector) basis set
-    int des_per_atom;                // \sum_L{Nchi(L)*(2L+1)}
-    std::vector<int> inl2l;          // inl2l[inl] = inl2l[nl] = l (not related to iat) of descriptor with inl_index
-    ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
+  public:                      // change to public to reconstuct the code, 2024-07-22 by mohan
+    DeePKS_Param deepks_param; // parameters for DeePKS
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
 

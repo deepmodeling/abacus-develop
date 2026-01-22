@@ -11,16 +11,6 @@
 namespace base_device
 {
 
-// struct CPU;
-// struct GPU;
-
-// enum AbacusDevice_t
-// {
-//     UnKnown,
-//     CpuDevice,
-//     GpuDevice
-// };
-
 template <typename Device>
 base_device::AbacusDevice_t get_device_type(const Device* dev);
 
@@ -31,16 +21,34 @@ namespace information
 {
 
 /**
- * @brief Get the device info object
+ * @brief Get the device name
  * for source_esolver
  */
-std::string get_device_info(std::string device_flag);
+std::string get_device_name(std::string device_flag);
+
+/**
+ * @brief Get the device number
+ * for source_esolver
+ */
+int get_device_num(std::string device_flag);
+
+/**
+ * @brief Output the device information
+ * for source_esolver
+ */
+void output_device_info(std::ostream& output);
 
 /**
  * @brief Get the device kpar object
  * for source_io GlobalV::KPAR
  */
 int get_device_kpar(const int& kpar, const int& bndpar);
+
+/**
+ * @brief Safely probes for GPU availability without exiting on error.
+ * @return True if at least one GPU is found and usable, false otherwise.
+ */
+bool probe_gpu_availability();
 
 /**
  * @brief Get the device flag object
@@ -53,15 +61,14 @@ std::string get_device_flag(const std::string& device,
 /**
  * @brief Get the rank of current node
  *        Note that GPU can only be binded with CPU in the same node
- * 
- * @return int 
+ *
+ * @return int
  */
 int get_node_rank();
 int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 int stringCmp(const void* a, const void* b);
 
 #ifdef __CUDA
-
 int set_device_by_rank(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 #endif
 
@@ -78,6 +85,14 @@ void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::str
 {
     return;
 }
+
+#if defined(__CUDA) || defined(__ROCM)
+template <>
+void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU *ctx, std::ofstream &ofs_device);
+
+template <>
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* dev, std::ofstream& ofs_device, std::string str, size_t size);
+#endif
 
 } // end of namespace information
 } // end of namespace base_device

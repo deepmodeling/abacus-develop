@@ -104,7 +104,7 @@ class DiagoCGPrepare
         double *en = new double[npw];
         int ik = 1;
 	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 	    psi::Psi<std::complex<double>> psi;
 	    psi.resize(ik,nband,npw);
 	    //psi.fix_k(0);
@@ -136,7 +136,7 @@ class DiagoCGPrepare
         //  New interface of cg method
         /**************************************************************/
         // warp the subspace_func into a lambda function
-        auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
+        auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool S_orth) { /*do nothing*/ };
         hsolver::DiagoCG<std::complex<double>> cg(
             PARAM.input.basis_type,
             PARAM.input.calculation,

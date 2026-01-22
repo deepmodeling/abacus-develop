@@ -24,7 +24,7 @@ struct vector_mul_real_op<T, base_device::DEVICE_CPU>
     void operator()(const int dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -42,7 +42,7 @@ struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
         if (add)
         {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
             for (int i = 0; i < dim; i++)
             {
@@ -52,7 +52,7 @@ struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
         else
         {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
             for (int i = 0; i < dim; i++)
             {
@@ -69,7 +69,7 @@ struct vector_div_constant_op<T, base_device::DEVICE_CPU>
     void operator()(const int& dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -85,7 +85,7 @@ struct vector_div_vector_op<T, base_device::DEVICE_CPU>
     void operator()(const int& dim, T* result, const T* vector1, const Real* vector2)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -121,7 +121,7 @@ struct vector_add_vector_op<T, base_device::DEVICE_CPU>
                     const Real constant2)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {

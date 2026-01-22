@@ -8,16 +8,11 @@
 #include "source_io/berryphase.h"
 #include "source_io/get_pchg_lcao.h"
 #include "source_io/get_wf_lcao.h"
-#include "source_io/to_wannier90_lcao.h"
-#include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS_R.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#endif
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
@@ -95,47 +90,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     // (3) Periodic condition search for each grid.
-#ifdef __OLD_GINT
-    double dr_uniform = 0.001;
-    std::vector<double> rcuts;
-    std::vector<std::vector<double>> psi_u;
-    std::vector<std::vector<double>> dpsi_u;
-    std::vector<std::vector<double>> d2psi_u;
-
-    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
-    this->GridT.set_pbc_grid(this->pw_rho->nx,
-                             this->pw_rho->ny,
-                             this->pw_rho->nz,
-                             this->pw_big->bx,
-                             this->pw_big->by,
-                             this->pw_big->bz,
-                             this->pw_big->nbx,
-                             this->pw_big->nby,
-                             this->pw_big->nbz,
-                             this->pw_big->nbxx,
-                             this->pw_big->nbzp_start,
-                             this->pw_big->nbzp,
-                             this->pw_rho->ny,
-                             this->pw_rho->nplane,
-                             this->pw_rho->startz_current,
-                             ucell,
-                             this->gd,
-                             dr_uniform,
-                             rcuts,
-                             psi_u,
-                             dpsi_u,
-                             d2psi_u,
-                             PARAM.inp.nstream);
-        
-    psi_u.clear();
-    psi_u.shrink_to_fit();
-    dpsi_u.clear();
-    dpsi_u.shrink_to_fit();
-    d2psi_u.clear();
-    d2psi_u.shrink_to_fit();
-    // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
-#else
     gint_info_.reset(
         new ModuleGint::GintInfo(
         this->pw_big->nbx,
@@ -154,7 +108,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         ucell,
         this->gd));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
-#endif
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
@@ -202,7 +155,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
                                     this->pv,
                                     *(this->psi),
-                                    this->pelec,
+									this->pelec->ekb,
+									this->pelec->wg,
                                     this->pelec->klist->ik2iktot,
                                     this->pelec->klist->get_nkstot(),
                                     PARAM.inp.nspin))
@@ -219,10 +173,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
-        elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
-            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
-            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
             this->gd,
             &this->pv,
@@ -230,50 +181,18 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             this->kv,
             two_center_bundle_,
             orb_,
-            DM
-#ifdef __MLALGO
-            ,
-            &this->ld
-#endif
-#ifdef __EXX
-            ,
-            istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
-#endif
-        );
-    }
+            this->dmat.dm,
+            &this->dftu,
+			this->deepks,
+			istep,
+			this->exx_nao);
+	}
 
-#ifdef __MLALGO
+
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
-    if (PARAM.globalv.deepks_setorb)
-    {
-        const Parallel_Orbitals* pv = &this->pv;
-        // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
-        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
-        // build and save <phi(0)|alpha(R)> at beginning
-        DeePKS_domain::build_phialpha(PARAM.inp.cal_force,
-                                      ucell,
-                                      orb_,
-                                      this->gd,
-                                      pv,
-                                      *(two_center_bundle_.overlap_orb_alpha),
-                                      this->ld.phialpha);
+    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
 
-        if (PARAM.inp.deepks_out_unittest)
-        {
-            DeePKS_domain::check_phialpha(PARAM.inp.cal_force,
-                                          ucell,
-                                          orb_,
-                                          this->gd,
-                                          pv,
-                                          this->ld.phialpha,
-                                          GlobalV::MY_RANK);
-        }
-    }
-#endif
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
@@ -289,6 +208,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->kv,
                    this->p_hamilt,
                    this->psi,
+                   this->dmat.dm,
                    this->pelec);
     }
 
@@ -299,7 +219,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
@@ -308,8 +228,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         Get_pchg_lcao get_pchg(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            get_pchg.begin(this->GG,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
                            this->pw_rhod->nrxx,
@@ -326,8 +245,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            get_pchg.begin(this->GK,
-                           this->chr.rho,
+            get_pchg.begin(this->chr.rho,
                            this->chr.rhog,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
@@ -359,7 +277,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GG,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
@@ -378,7 +295,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         this->GK,
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,

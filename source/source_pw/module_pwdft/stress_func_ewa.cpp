@@ -64,32 +64,18 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 	}
 //    else fact=1.0;
 
-#ifdef _OPENMP
 #pragma omp parallel
 {
-    int num_threads = omp_get_num_threads();
-    int thread_id = omp_get_thread_num();
 	ModuleBase::matrix local_sigma(3, 3);
-	FPTYPE local_sdewald = 0.0;
-#else
-    int num_threads = 1;
-    int thread_id = 0;
-	ModuleBase::matrix& local_sigma = sigma;
-	FPTYPE& local_sdewald = sdewald;
-#endif
-
-	// Calculate ig range of this thread, avoid thread sync
-	int ig=0;
-    int ig_end=0;
-	ModuleBase::TASK_DIST_1D(num_threads, thread_id, rho_basis->npw, ig, ig_end);
-	ig_end = ig + ig_end;
+	FPTYPE local_sdewald = 0;
 
     FPTYPE g2,g2a;
     FPTYPE arg;
     std::complex<FPTYPE> rhostar;
     FPTYPE sewald;
 
-    for(; ig < ig_end; ig++)
+	#pragma omp for
+    for(int ig = 0; ig < rho_basis->npw; ig++)
 	{
 		if(ig == ig0)  
 		{
@@ -136,34 +122,28 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 
 	if(ig0 >= 0)
 	{
-		r = new ModuleBase::Vector3<FPTYPE>[mxr];
-		r2 = new FPTYPE[mxr];
-		irr = new int[mxr];
+		std::vector<ModuleBase::Vector3<FPTYPE>> r(mxr);
+		std::vector<FPTYPE> r2(mxr);
+		std::vector<int> irr(mxr);
 
 		FPTYPE sqa = sqrt(alpha);
 		FPTYPE sq8a_2pi = sqrt(8 * alpha / (ModuleBase::TWO_PI));
 		rmax = 4.0/sqa/ucell.lat0;
 
-		// collapse it, ia, jt, ja loop into a single loop
-		long long ijat;
-        long long ijat_end;
-		int it=0;
-        int i=0;
-        int jt=0;
-        int j=0;
-
-		ModuleBase::TASK_DIST_1D(num_threads, thread_id, (long long)ucell.nat * ucell.nat, ijat, ijat_end);
-		ijat_end = ijat + ijat_end;
-		ucell.ijat2iaitjajt(ijat, &i, &it, &j, &jt);
-
-		while (ijat < ijat_end)
+		#pragma omp for
+		for(long long ijat = 0; ijat < ucell.nat * ucell.nat; ijat++)
 		{
+			int it=0;
+			int i=0;
+			int jt=0;
+			int j=0;
+			ucell.ijat2iaitjajt(ijat, &i, &it, &j, &jt);
 			if (ucell.atoms[it].na != 0 && ucell.atoms[jt].na != 0)
 			{
 				//calculate tau[na]-tau[nb]
 				d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
 				//generates nearest-neighbors shells 
-				H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
+				H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
 				for(int nr=0; nr<nrm; nr++)
 				{
 					rr=sqrt(r2[nr]) * ucell.lat0;
@@ -183,17 +163,9 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 					}//end l
 				}//end nr
 			}
-
-			++ijat;
-			ucell.step_jajtiait(&j, &jt, &i, &it);
 		}
-
-		delete[] r;
-		delete[] r2;
-		delete[] irr;
 	}//end if
 
-#ifdef _OPENMP
 	#pragma omp critical(stress_ewa_reduce)
 	{
 		sdewald += local_sdewald;
@@ -206,7 +178,6 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 		}
 	}
 }
-#endif
 
 	for(int l=0;l<3;l++)
 	{

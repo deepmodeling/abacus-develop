@@ -7,7 +7,7 @@
 #include "solve_propagation.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
+#include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_pw/module_pwdft/global.h"
@@ -26,16 +26,12 @@ void evolve_psi(const int nband,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
                 double* ekb,
-                int htype,
                 int propagator,
                 std::ofstream& ofs_running,
                 const int print_matrix)
 {
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    // ofs_running << " Evolving electronic wave functions begins" << std::endl;
-
+    ModuleBase::TITLE("module_rt", "evolve_psi");
     time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -63,7 +59,7 @@ void evolve_psi(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (propagator != 2)
     {
         half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
@@ -113,12 +109,10 @@ void evolve_psi(const int nband,
     delete[] Hold;
     delete[] U_operator;
 
-#endif
+#endif // __MPI
 
     time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " Evolving electronic wave functions ends" << std::endl;
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
@@ -133,12 +127,14 @@ void evolve_psi_tensor(const int nband,
                        ct::Tensor& H_laststep,
                        ct::Tensor& S_laststep,
                        ct::Tensor& ekb,
-                       int htype,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack)
 {
+    ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
+    time_t time_start = time(nullptr);
+
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -148,21 +144,19 @@ void evolve_psi_tensor(const int nband,
         = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Initialize cuBLAS & cuSOLVER handle
-    ct::kernels::createGpuSolverHandle();
-    ct::kernels::createGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Initialize cuBLAS & cuSOLVER handle
+        ct::kernels::createGpuSolverHandle();
+        ct::kernels::createGpuBlasHandle();
+    }
 #endif // __CUDA
 
-    // ofs_running << " evolve_psi_tensor::start " << std::endl;
-
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
-
 #ifdef __MPI
-
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
+
+    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
 
     // Create Tensor objects for temporary data and sync from host to device
     const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
@@ -178,15 +172,15 @@ void evolve_psi_tensor(const int nband,
         MPI_Comm_rank(MPI_COMM_WORLD, &myid);
         MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-        ModuleESolver::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
+        module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
 
         // Collect H matrix
-        ModuleESolver::gatherMatrix(myid, 0, h_mat, h_mat_g);
+        module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
         syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
         syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
 
         // Collect S matrix
-        ModuleESolver::gatherMatrix(myid, 0, s_mat, s_mat_g);
+        module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
         syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat_g.p.get(), len_HS);
     }
     else
@@ -196,6 +190,8 @@ void evolve_psi_tensor(const int nband,
         syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat.p, len_HS);
         syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat.p, len_HS);
     }
+
+    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
 
     ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
     U_operator.zero();
@@ -209,7 +205,7 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (propagator != 2)
     {
         if (!use_lapack)
         {
@@ -237,7 +233,7 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute U_operator
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    Propagator prop(propagator, pv, PARAM.inp.td_dt);
     prop.compute_propagator_tensor<Device>(nlocal,
                                            Stmp,
                                            Htmp,
@@ -297,19 +293,19 @@ void evolve_psi_tensor(const int nband,
             compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
         }
     }
-
 #endif // __MPI
 
-    time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " evolve_psi_tensor::end " << std::endl;
-
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Destroy cuBLAS & cuSOLVER handle
-    ct::kernels::destroyGpuSolverHandle();
-    ct::kernels::destroyGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Destroy cuBLAS & cuSOLVER handle
+        ct::kernels::destroyGpuSolverHandle();
+        ct::kernels::destroyGpuBlasHandle();
+    }
 #endif // __CUDA
+
+    time_t time_end = time(nullptr);
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
@@ -324,7 +320,6 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
@@ -340,7 +335,6 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,

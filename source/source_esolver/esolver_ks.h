@@ -1,21 +1,13 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include <cstring>
-//#include <fstream>
-
-// for first-principles esolver
-#include "esolver_fp.h"
-// for plane wave basis set 
-#include "source_basis/module_pw/pw_basis_k.h"
-// for k-points in Brillouin zone
-#include "source_cell/klist.h"
-// for charge mixing
-#include "source_estate/module_charge/charge_mixing.h"
-// for electronic wave functions
-#include "source_psi/psi.h"
-// for Hamiltonian
-#include "source_hamilt/hamilt.h"
+#include "esolver_fp.h" // first-principles esolver
+#include "source_basis/module_pw/pw_basis_k.h" // use plane wave
+#include "source_cell/klist.h" // use k-points in Brillouin zone
+#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_psi/psi.h" // use electronic wave functions
+#include "source_hamilt/hamilt.h" // use Hamiltonian
+#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace ModuleESolver
 {
@@ -55,9 +47,6 @@ class ESolver_KS : public ESolver_FP
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver){};
-
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
 
@@ -73,6 +62,9 @@ class ESolver_KS : public ESolver_FP
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
 
+    //! DFT+U method, mohan add 2025-11-07
+    Plus_U dftu;
+
     std::string basisname;      //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0; //! number of electrons
     double diag_ethr;           //! the threshold for diagonalization
@@ -83,6 +75,7 @@ class ESolver_KS : public ESolver_FP
     int maxniter;               //! maximum iter steps for scf
     int niter;                  //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
+    bool scf_nmax_flag = false; // whether scf has reached nmax, mohan add 20250921
 };
 } // namespace ModuleESolver
 #endif

@@ -7,12 +7,10 @@
 #endif
 #include "source_base/module_external/scalapack_connector.h"
 
-namespace ModuleDFTU
+void Plus_U::copy_locale(const UnitCell& ucell)
 {
-void DFTU::copy_locale(const UnitCell& ucell)
-{
-    ModuleBase::TITLE("DFTU", "copy_locale");
-    ModuleBase::timer::tick("DFTU", "copy_locale");
+    ModuleBase::TITLE("Plus_U", "copy_locale");
+    ModuleBase::timer::tick("Plus_U", "copy_locale");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -44,13 +42,13 @@ void DFTU::copy_locale(const UnitCell& ucell)
             }
         }
     }
-    ModuleBase::timer::tick("DFTU", "copy_locale");
+    ModuleBase::timer::tick("Plus_U", "copy_locale");
 }
 
-void DFTU::zero_locale(const UnitCell& ucell)
+void Plus_U::zero_locale(const UnitCell& ucell)
 {
-    ModuleBase::TITLE("DFTU", "zero_locale");
-    ModuleBase::timer::tick("DFTU", "zero_locale");
+    ModuleBase::TITLE("Plus_U", "zero_locale");
+    ModuleBase::timer::tick("Plus_U", "zero_locale");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -82,14 +80,14 @@ void DFTU::zero_locale(const UnitCell& ucell)
             }
         }
     }
-    ModuleBase::timer::tick("DFTU", "zero_locale");
+    ModuleBase::timer::tick("Plus_U", "zero_locale");
 }
 
-void DFTU::mix_locale(const UnitCell& ucell,
+void Plus_U::mix_locale(const UnitCell& ucell,
                       const double& mixing_beta)
 {
-    ModuleBase::TITLE("DFTU", "mix_locale");
-    ModuleBase::timer::tick("DFTU", "mix_locale");
+    ModuleBase::TITLE("Plus_U", "mix_locale");
+    ModuleBase::timer::tick("Plus_U", "mix_locale");
 
     double beta = mixing_beta;
 
@@ -123,20 +121,20 @@ void DFTU::mix_locale(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("DFTU", "mix_locale");
+    ModuleBase::timer::tick("Plus_U", "mix_locale");
 }
 
 #ifdef __LCAO
 
-void DFTU::cal_occup_m_k(const int iter, 
+void Plus_U::cal_occup_m_k(const int iter, 
                          const UnitCell& ucell,
                          const std::vector<std::vector<std::complex<double>>>& dm_k,
                          const K_Vectors& kv,
                          const double& mixing_beta,
                          hamilt::Hamilt<std::complex<double>>* p_ham)
 {
-    ModuleBase::TITLE("DFTU", "cal_occup_m_k");
-    ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
+    ModuleBase::TITLE("Plus_U", "cal_occup_m_k");
+    ModuleBase::timer::tick("Plus_U", "cal_occup_m_k");
 
     this->copy_locale(ucell);
     this->zero_locale(ucell);
@@ -380,18 +378,18 @@ void DFTU::cal_occup_m_k(const int iter,
     }
 
     this->initialed_locale = true;
-    ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
+    ModuleBase::timer::tick("Plus_U", "cal_occup_m_k");
     return;
 }
 
-void DFTU::cal_occup_m_gamma(const int iter,
+void Plus_U::cal_occup_m_gamma(const int iter,
                              const UnitCell &ucell,
                              const std::vector<std::vector<double>> &dm_gamma, 
                              const double& mixing_beta, 
                              hamilt::Hamilt<double>* p_ham)
 {
-    ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
-    ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
+    ModuleBase::TITLE("Plus_U", "cal_occup_m_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_occup_m_gamma");
     this->copy_locale(ucell);
     this->zero_locale(ucell);
 
@@ -428,26 +426,6 @@ void DFTU::cal_occup_m_gamma(const int iter,
             one_int,
             one_int,
             &this->paraV->desc[0]);
-        /*pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &alpha,
-                s_gamma_pointer,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                dm_gamma[is].data(),
-                //dm_gamma[is].c,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                &beta,
-                &srho[0],
-                &one_int,
-                &one_int,
-                this->paraV->desc);*/
 #endif
 
         for (int it = 0; it < ucell.ntype; it++)
@@ -558,8 +536,7 @@ void DFTU::cal_occup_m_gamma(const int iter,
     }
 
     this->initialed_locale = true;
-    ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
+    ModuleBase::timer::tick("Plus_U", "cal_occup_m_gamma");
     return;
 }
 #endif
-} // namespace ModuleDFTU

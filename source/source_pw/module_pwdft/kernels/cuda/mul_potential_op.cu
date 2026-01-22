@@ -37,7 +37,7 @@ struct mul_potential_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
         int num_blocks = (npw + threads_per_block - 1) / threads_per_block;
 
         mul_potential_kernel<<<num_blocks, threads_per_block>>>(
-            pot + ik * nks * npw + iq * npw,
+            pot,
             reinterpret_cast<thrust::complex<FPTYPE>*>(density_recip),
             npw);
 

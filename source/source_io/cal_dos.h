@@ -9,7 +9,7 @@ namespace ModuleIO
 {
 
 	void prepare_dos(std::ofstream& ofs_running,
-			const elecstate::efermi &energy_fermi,
+			const elecstate::Efermi &energy_fermi,
 			const ModuleBase::matrix& ekb,
 			const int nks,
 			const int nbands,
@@ -24,13 +24,14 @@ namespace ModuleIO
 		const double &emax_ev,// maximal energy in ev.
 		const double &emin_ev,// minimal energy in ev.
 		const double &bcoeff,
-		const int &nks,//number of k points
-		const int &nkstot,
+		const int &nks, //number of k points
+		const int &nkstot, // total number of k points
 		const std::vector<double> &wk,//weight of k points
 		const std::vector<int> &isk,
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb, //store energy for each k point and each band
-		const ModuleBase::matrix &wg); //weight of (kpoint,bands))
+		const ModuleBase::matrix &wg, //weight of (kpoint,bands))
+        const int istep_in); // ionic_step
 
 
 }

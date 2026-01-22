@@ -124,8 +124,6 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
     energy *= this->dV * this->energy_prefactor;
     this->ml_exx_energy = energy;
     Parallel_Reduce::reduce_pool(this->ml_exx_energy);
-    std::cout << "dV: " << this->dV << std::endl;
-    std::cout << "ML_EXX Energy: " << this->ml_exx_energy << std::endl;
     ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
 }
 

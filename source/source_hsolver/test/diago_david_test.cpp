@@ -77,14 +77,16 @@ public:
 	{
 		//calculate eigenvalues by LAPACK;
 		double* e_lapack = new double[npw];
-		double* ev;
-		if(mypnum == 0) { lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
-}
+		double* ev = nullptr;
+		if(mypnum == 0) 
+		{ 
+			lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
+		}
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt<std::complex<double>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};

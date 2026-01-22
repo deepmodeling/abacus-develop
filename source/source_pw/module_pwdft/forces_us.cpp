@@ -31,7 +31,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     ModuleBase::matrix forceq(ucell.nat, 3);
 
-    ModuleBase::matrix veff = elec.pot->get_effective_v();
+    ModuleBase::matrix veff = elec.pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -98,19 +98,19 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const double zero = 0;
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
-                    dgemm_(&transa,
-                           &transb,
-                           &nij,
-                           &atom->na,
-                           &dim,
-                           &(ucell.omega),
-                           qgm_data,
-                           &dim,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           atom->na,
+                           nij,
+                           dim,
+                           ucell.omega,
                            &aux1_data[ipol * dim * atom->na],
-                           &dim,
-                           &zero,
+                           dim,
+                           qgm_data,
+                           dim,
+                           zero,
                            &ddeeq(is, ipol, 0, 0),
-                           &nij);
+                           nij);
                 }
             }
 

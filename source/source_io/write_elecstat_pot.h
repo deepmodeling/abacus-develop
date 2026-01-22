@@ -18,7 +18,7 @@ namespace ModuleIO
 /// @param rho_basis
 /// @param chr
 /// @param ucell_
-/// @param v_effective_fixed
+/// @param v_eff_fixed
 void write_elecstat_pot(
 #ifdef __MPI
     const int& bz,
@@ -29,7 +29,7 @@ void write_elecstat_pot(
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell_,
-    const double* v_effective_fixed,
+    const double* v_eff_fixed,
     const surchem& solvent);
 
 } // namespace ModuleIO

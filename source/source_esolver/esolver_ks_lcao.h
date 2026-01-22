@@ -2,32 +2,14 @@
 #define ESOLVER_KS_LCAO_H
 
 #include "esolver_ks.h"
-
-// for adjacent atoms
-#include "source_lcao/record_adj.h"
-
-// for NAO basis
-#include "source_basis/module_nao/two_center_bundle.h"
-
-// for grid integration
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
-#include "source_lcao/module_gint/temp_gint/gint.h"
-#include "source_lcao/module_gint/temp_gint/gint_info.h"
-
-// for DeePKS
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#endif
-
-// for EXX
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
-#include "source_lcao/module_ri/Mix_DMk_2D.h"
-#endif
-
-// for RDMFT
-#include "source_lcao/module_rdmft/rdmft.h"
+#include "source_lcao/record_adj.h" // adjacent atoms
+#include "source_basis/module_nao/two_center_bundle.h" // nao basis
+#include "source_lcao/module_gint/gint.h" // gint
+#include "source_lcao/module_gint/gint_info.h"
+#include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/module_rdmft/rdmft.h" // rdmft
+#include "source_lcao/setup_dm.h" // mohan add 2025-10-30
 
 #include <memory>
 
@@ -69,8 +51,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
-
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
@@ -86,45 +66,49 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     //! NAO orbitals: 2d block-cyclic distribution info
     Parallel_Orbitals pv;
 
-    //! Grid integration: used for k-point-dependent algorithm
-    Gint_k GK;
-
-    //! Grid integration: used for gamma only algorithms.
-    Gint_Gamma GG;
-
-    //! Grid integration: used to store some basic information
-    Grid_Technique GridT;
-
-#ifndef __OLD_GINT
     //! GintInfo: used to store some basic infomation about module_gint
     std::unique_ptr<ModuleGint::GintInfo> gint_info_;
-#endif
+
+    //! NAO: store related information 
+    LCAO_Orbitals orb_;
 
     //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
 
+    //! Add density matrix class, mohan add 2025-10-30
+    LCAO_domain::Setup_DM<TK> dmat;
+
+
+    // For deepks method, mohan add 2025-10-08
+    Setup_DeePKS<TK> deepks;
+
+    // For exact-exchange energy, mohan add 2025-10-08
+    Exx_NAO<TK> exx_nao;
+
     //! For RDMFT calculations, added by jghan, 2024-03-16 
     rdmft::RDMFT<TK, TR> rdmft_solver;
 
-    //! NAO: store related information 
-    LCAO_Orbitals orb_;
+    //! For linear-response TDDFT
+    friend class LR::ESolver_LR<double, double>;
+    friend class LR::ESolver_LR<std::complex<double>, double>;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
     ModuleBase::matrix scs;
     bool have_force = false;
 
-#ifdef __MLALGO
-    LCAO_Deepks<TK> ld;
-#endif
 
-#ifdef __EXX
-    std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;
-    std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
-#endif
-
-    friend class LR::ESolver_LR<double, double>;
-    friend class LR::ESolver_LR<std::complex<double>, double>;
+  public:
+    const Record_adj & get_RA() const { return RA; }
+    const Grid_Driver & get_gd() const { return gd; }
+    const Parallel_Orbitals & get_pv() const { return pv; }
+    const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
+    const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
+    const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
+    const LCAO_Orbitals & get_orb() const { return orb_; }
+    const ModuleBase::matrix & get_scs() const { return scs; }
+    const Setup_DeePKS<TK> & get_deepks() const { return deepks; }
+    const Exx_NAO<TK> & get_exx_nao() const { return exx_nao; }
 };
 } // namespace ModuleESolver
 #endif

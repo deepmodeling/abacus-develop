@@ -572,7 +572,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     std::vector<int> ibz2bz(kv.get_nkstot());
 
     // nkstot is the total input k-points number.
-    const double weight = 1.0 / static_cast<double>(kv.get_nkstot());
+    double weight = 1.0 / static_cast<double>(kv.get_nkstot());
 
     ModuleBase::Vector3<double> kvec_rot;
     ModuleBase::Vector3<double> kvec_rot_k;
@@ -609,6 +609,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     // search in all k-poins.
     for (int i = 0; i < kv.get_nkstot(); ++i)
     {
+        if (!kv.get_is_mp()) { weight = kv.wk[i]; } // use the input weight, instead of 1/nkstot
+
         // restrict to [0, 1)
         restrict_kpt(kv.kvec_d[i]);
 

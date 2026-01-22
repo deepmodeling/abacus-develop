@@ -7,7 +7,7 @@ jobs:
   validate_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch complete git history for version comparison
 
@@ -33,7 +33,7 @@ jobs:
           fi
 
           # Verify that the version in version.h matches the tag
-          if [[ "${{ steps.versions.outputs.current_tag }}" != "v${CODE_VERSION}" ]]; then
+          if [[ "${{ steps.versions.outputs.current_tag }}" != "${CODE_VERSION}" ]]; then
             echo "::error::Version mismatch: tag=${{ steps.versions.outputs.current_tag }} ≠ code=${CODE_VERSION}"
             exit 1
           fi

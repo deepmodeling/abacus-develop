@@ -55,7 +55,7 @@ for directory in `ls | grep $module`; do
 	#--------------------------------------------
 	# delete exec files in tools directory (if it exists)
 	#--------------------------------------------
-	sumfile1="$directory/sum_cube.exe"
+	sumfile1="$directory/sum_cube"
 	test -e "$sumfile1" && rm -rf $sumfile1
 
 	#--------------------------------------------

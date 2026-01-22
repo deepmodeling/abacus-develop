@@ -1,5 +1,5 @@
-#ifndef PLANEWAVE_H
-#define PLANEWAVE_H
+#ifndef STRUCTURE_FACTOR_H 
+#define STRUCTURE_FACTOR_H
 
 #include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis_k.h"
@@ -23,9 +23,10 @@ public:
 
 	// structure factor (ntype, ngmc)
     ModuleBase::ComplexMatrix strucFac;
-    void setup_structure_factor(const UnitCell* Ucell,
-                                const Parallel_Grid& pgrid,
-                                const ModulePW::PW_Basis* rho_basis); // Calculate structure factors
+
+	void setup(const UnitCell* Ucell,
+			const Parallel_Grid& pgrid,
+			const ModulePW::PW_Basis* rho_basis); // Calculate structure factors
 
     /// calculate structure factors through Cardinal B-spline interpolation
     void bspline_sf(
@@ -33,6 +34,7 @@ public:
         const UnitCell* Ucell,
         const Parallel_Grid& pgrid,
         const ModulePW::PW_Basis* rho_basis); 
+
     void bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                     const int nx, const int ny, const int nz, const int norder);
 
@@ -51,7 +53,9 @@ public:
     // sf with k points
     std::complex<double>* get_sk(const int ik, const int it, const int ia, const ModulePW::PW_Basis_K* wfc_basis) const;
     template <typename FPTYPE, typename Device>
+
     void get_sk(Device* ctx, const int ik, const ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE>* sk) const;
+
     std::complex<double>* get_skq(int ik,
                                   int it,
                                   int ia,
@@ -59,9 +63,16 @@ public:
                                   ModuleBase::Vector3<double> q);
 
   private:
+
     const UnitCell* ucell=nullptr; 
-    std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
-    std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
+    std::complex<float> * c_eigts1 = nullptr;
+    std::complex<float> * c_eigts2 = nullptr;
+    std::complex<float> * c_eigts3 = nullptr;
+
+    std::complex<double> * z_eigts1 = nullptr;
+    std::complex<double> * z_eigts2 = nullptr;
+    std::complex<double> * z_eigts3 = nullptr;
+
     const ModulePW::PW_Basis* rho_basis = nullptr;
     std::string device = "cpu";
 };

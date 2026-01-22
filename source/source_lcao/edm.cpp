@@ -1,5 +1,6 @@
 #include "FORCE.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/elecstate_lcao.h"
 #include "source_base/memory.h"
 #include "source_io/module_parameter/parameter.h"
 template<>
@@ -30,10 +31,10 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
 #ifdef __PEXSI
     if (PARAM.inp.ks_solver == "pexsi")
     {
-        auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
+        // auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
         for (int ik = 0; ik < nspin; ik++)
         {
-            edm.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
+            edm.set_DMK_pointer(ik, dm.pexsi_EDM[ik]);
         }
         
     }
@@ -46,7 +47,8 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
 }
 
 template<>
-elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<double>>::cal_edm(const elecstate::ElecState* pelec,
+elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<double>>::cal_edm(
+    const elecstate::ElecState* pelec,
     const psi::Psi<std::complex<double>>& psi,
     const elecstate::DensityMatrix<std::complex<double>, double>& dm,
     const K_Vectors& kv,
