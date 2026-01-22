@@ -216,6 +216,7 @@ int get_device_kpar(const int& kpar, const int& bndpar)
 #if __MPI && (__CUDA || __ROCM)
     // This function should only be called when device mode is GPU
     // The device decision has already been made by get_device_flag()
+    // GPU device binding is now handled by DeviceContext::init() in read_input.cpp
     int temp_nproc = 0;
     int new_kpar = kpar;
     MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
@@ -224,18 +225,6 @@ int get_device_kpar(const int& kpar, const int& bndpar)
         new_kpar = temp_nproc / bndpar;
         ModuleBase::WARNING("Input_conv", "kpar is not compatible with the number of processors, auto set kpar value.");
     }
-    
-    // get the CPU rank of current node
-    int node_rank = base_device::information::get_node_rank();
-
-    int device_num = -1;
-#if defined(__CUDA)
-    cudaErrcheck(cudaGetDeviceCount(&device_num)); // get the number of GPU devices of current node
-    cudaErrcheck(cudaSetDevice(node_rank % device_num)); // bind the CPU processor to the devices
-#elif defined(__ROCM)
-    hipErrcheck(hipGetDeviceCount(&device_num));
-    hipErrcheck(hipSetDevice(node_rank % device_num));
-#endif
     return new_kpar;
 #endif
     return kpar;

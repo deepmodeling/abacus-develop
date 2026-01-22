@@ -9,6 +9,7 @@
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
 #ifdef __CUDA
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/device_context.h"
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
 #endif
 
@@ -143,11 +144,8 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     if (use_gpu)
     {
 #ifdef __CUDA
-        // Use set_device_by_rank for multi-GPU support
-        int dev_id = 0;
-#ifdef __MPI
-        dev_id = base_device::information::set_device_by_rank(MPI_COMM_WORLD);
-#endif
+        // GPU device is already bound by DeviceContext::init() in read_input.cpp
+        // Just initialize the GPU resources for this module
         module_rt::gpu::initialize_gpu_resources();
 #endif
     }

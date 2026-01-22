@@ -25,6 +25,7 @@
 #endif
 
 #include "source_base/global_variable.h"
+#include "source_base/module_device/device_context.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
@@ -317,7 +318,8 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             elecstate::ElecState* pes)
 {
     ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
-    const int dev_id = base_device::information::set_device_by_rank();
+    // GPU device is already bound by DeviceContext::init() in read_input.cpp
+    const int dev_id = base_device::DeviceContext::instance().get_device_id();
 
     int world_rank, world_size;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);

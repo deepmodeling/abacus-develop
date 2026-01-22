@@ -1,5 +1,6 @@
 #include "gint_gpu_vars.h"
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/device_context.h"
 
 namespace ModuleGint
 {
@@ -8,9 +9,10 @@ GintGpuVars::GintGpuVars(std::shared_ptr<const BigGridInfo> biggrid_info,
                          const UnitCell& ucell,
                          const Numerical_Orbital* Phi)
 {
-// set device
+// GPU device is already bound by DeviceContext::init() in read_input.cpp
+// Just get the device_id from DeviceContext for use in destructor
 #ifdef __MPI
-    dev_id_ = base_device::information::set_device_by_rank();
+    dev_id_ = base_device::DeviceContext::instance().get_device_id();
 #endif
     std::vector<double> ylmcoef_h(100);
     for (int i = 0; i < 100; i++)

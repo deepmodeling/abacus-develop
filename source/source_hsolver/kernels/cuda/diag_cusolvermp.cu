@@ -14,6 +14,7 @@ extern "C"
 #include "helper_cusolver.h"
 #include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/device_context.h"
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
 {
     MPI_Request req;
@@ -70,7 +71,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
 
     MPI_Comm_size(mpi_comm, &this->globalMpiSize);
     MPI_Comm_rank(mpi_comm, &(this->globalMpiRank));
-    int local_device_id = base_device::information::set_device_by_rank(mpi_comm);
+    // GPU device is already bound by DeviceContext::init() in read_input.cpp
+    int local_device_id = base_device::DeviceContext::instance().get_device_id();
     Cblacs_gridinfo(this->cblacs_ctxt, &this->nprows, &this->npcols, &this->myprow, &this->mypcol);
 
     this->cusolverCalComm = NULL;
