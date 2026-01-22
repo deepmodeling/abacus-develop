@@ -77,6 +77,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         if (PARAM.inp.ml_exx) // sunliang
         {
             pot_register_in.push_back("ml_exx");
+        }
         // DFT-1/2
         if (PARAM.inp.dfthalf_type == 1) {
             pot_register_in.push_back("dfthalf");
