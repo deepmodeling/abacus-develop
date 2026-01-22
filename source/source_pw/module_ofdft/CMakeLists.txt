@@ -25,6 +25,7 @@ if(ENABLE_MLALGO)
       kedf_ml.cpp
       kedf_ml_label.cpp
       ml_base.cpp
+      ml_base_pot.cpp
       ml_tools/nn_of.cpp
   )
 
