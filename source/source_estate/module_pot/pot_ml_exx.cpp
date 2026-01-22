@@ -102,29 +102,40 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
  */
 void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
-    this->updateInput(prho, pw_rho);
+    double* rho_data = new double[this->nx];
+    const double** prho_mod = new const double*[1];
+    prho_mod[0] = rho_data;
 
-    this->NN_forward(prho, pw_rho, true);
+    for (int ir = 0; ir < this->nx; ++ir)
+    {
+        rho_data[ir] = std::abs(prho[0][ir]);
+    }
+
+    this->updateInput(prho_mod, pw_rho);
+
+    this->NN_forward(prho_mod, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
     this->gradient_cpu_ptr = gradient_cpu_tensor.data_ptr<double>();
 
-    // This calls ML_Base::get_potential_ which does computation similar to original ML_EXX::get_potential_
-    this->get_potential_(prho, pw_rho, rpotential);
+    this->get_potential_(prho_mod, pw_rho, rpotential);
 
     // get energy
     ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
-        energy += this->enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], this->energy_exponent);
+        energy += this->enhancement_cpu_ptr[ir] * std::pow(prho_mod[0][ir], this->energy_exponent);
     }
     energy *= this->dV * this->energy_prefactor;
     this->ml_exx_energy = energy;
     Parallel_Reduce::reduce_pool(this->ml_exx_energy);
     ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+
+    delete[] rho_data;
+    delete[] prho_mod;
 }
 
 /**
@@ -173,7 +184,7 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
 
     std::vector<double> temp_prho(this->nx);
     // Note: Assuming path is still valid or user handles it. Kept hardcoded path.
-    this->loadVector("dir_to_rho_file", temp_prho);
+    this->loadVector("/home/xianyuer/data/1_sunliang/1_work/0_ml_kedf/1_test/0_generate_data/17_ks-pbe-chip0.2q0.1-r_min-scaling/1_fccAl-eq-2024-07-09/rho.npy", temp_prho);
     
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
