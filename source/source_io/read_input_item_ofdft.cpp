@@ -473,5 +473,11 @@ void ReadInput::item_ofdft()
         read_sync_bool(input.of_ml_local_test);
         this->add_item(item);
     }
+    {
+        Input_Item item("ml_exx");
+        item.annotation = "Use ML EXX or not";
+        read_sync_bool(input.ml_exx);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

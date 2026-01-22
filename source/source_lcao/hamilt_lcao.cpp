@@ -131,6 +131,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         {
             pot_register_in.push_back("tddft");
         }
+        if (PARAM.inp.ml_exx) // sunliang
+        {
+            pot_register_in.push_back("ml_exx");
+        }
     }
 
     // Gamma_only case to initialize HamiltLCAO

@@ -73,6 +73,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         {
             pot_register_in.push_back("gatefield");
         }
+        if (PARAM.inp.ml_exx) // sunliang
+        {
+            pot_register_in.push_back("ml_exx");
+        }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
         {

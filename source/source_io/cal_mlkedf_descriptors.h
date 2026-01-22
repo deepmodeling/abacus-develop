@@ -36,14 +36,14 @@ public:
         const std::vector<double> &yukawa_alpha,
         const std::vector<std::string> &kernel_file,
         const double &omega,
-        ModulePW::PW_Basis *pw_rho);
+        const ModulePW::PW_Basis *pw_rho);
     // get input parameters
     void getGamma(const double * const *prho, std::vector<double> &rgamma);
-    void getP(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp);
-    void getQ(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<double> &rq);
-    void getGammanl(const int ikernel, std::vector<double> &pgamma, ModulePW::PW_Basis *pw_rho, std::vector<double> &rgammanl);
-    void getPnl(const int ikernel, std::vector<double> &pp, ModulePW::PW_Basis *pw_rho, std::vector<double> &rpnl);
-    void getQnl(const int ikernel, std::vector<double> &pq, ModulePW::PW_Basis *pw_rho, std::vector<double> &rqnl);
+    void getP(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp);
+    void getQ(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rq);
+    void getGammanl(const int ikernel, std::vector<double> &pgamma, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rgammanl);
+    void getPnl(const int ikernel, std::vector<double> &pp, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rpnl);
+    void getQnl(const int ikernel, std::vector<double> &pq, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rqnl);
     // new parameters 2023-02-03
     void getXi(std::vector<double> &pgamma, std::vector<double> &pgammanl, std::vector<double> &rxi);
     void getTanhXi(const int ikernel, std::vector<double> &pgamma, std::vector<double> &pgammanl, std::vector<double> &rtanhxi);
@@ -51,31 +51,31 @@ public:
     void getTanhQ(std::vector<double> &pq, std::vector<double> &rtanhq);
     void getTanh_Pnl(const int ikernel, std::vector<double> &ppnl, std::vector<double> &rtanh_pnl);
     void getTanh_Qnl(const int ikernel, std::vector<double> &pqnl, std::vector<double> &rtanh_qnl);
-    void getTanhP_nl(const int ikernel, std::vector<double> &ptanhp, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhp_nl);
-    void getTanhQ_nl(const int ikernel, std::vector<double> &ptanhq, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhq_nl);
+    void getTanhP_nl(const int ikernel, std::vector<double> &ptanhp, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhp_nl);
+    void getTanhQ_nl(const int ikernel, std::vector<double> &ptanhq, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhq_nl);
     // 2023-03-20
-    void getTanhXi_nl(const int ikernel, std::vector<double> &ptanhxi, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhxi_nl);
+    void getTanhXi_nl(const int ikernel, std::vector<double> &ptanhxi, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhxi_nl);
 
     void getF_KS(
         psi::Psi<std::complex<double>> *psi,
         elecstate::ElecState *pelec,
         ModulePW::PW_Basis_K *pw_psi,
-        ModulePW::PW_Basis *pw_rho,
+        const ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
         const std::vector<std::vector<double>> &nablaRho,
         std::vector<double> &rF,
         std::vector<double> &rpauli
     );
     // get intermediate variables of V_Pauli
-    void getNablaRho(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &rnablaRho);
+    void getNablaRho(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &rnablaRho);
 
     // tools
     double MLkernel(double eta, double tf_weight, double vw_weight);
     double MLkernel_yukawa(double eta, double alpha);
-    void read_kernel(const std::string &fileName, const double& scaling, ModulePW::PW_Basis *pw_rho, double* kernel_);
-    void multiKernel(const int ikernel, double *pinput, ModulePW::PW_Basis *pw_rho, double *routput);
-    void Laplacian(double * pinput, ModulePW::PW_Basis *pw_rho, double * routput);
-    void divergence(double ** pinput, ModulePW::PW_Basis *pw_rho, double * routput);
+    void read_kernel(const std::string &fileName, const double& scaling, const ModulePW::PW_Basis *pw_rho, double* kernel_);
+    void multiKernel(const int ikernel, double *pinput, const ModulePW::PW_Basis *pw_rho, double *routput);
+    void Laplacian(double * pinput, const ModulePW::PW_Basis *pw_rho, double * routput);
+    void divergence(double ** pinput, const ModulePW::PW_Basis *pw_rho, double * routput);
 
     void tanh(std::vector<double> &pinput, std::vector<double> &routput, double chi=1.);
     double dtanh(double tanhx, double chi=1.);

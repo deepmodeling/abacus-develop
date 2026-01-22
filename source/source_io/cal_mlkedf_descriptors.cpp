@@ -19,7 +19,7 @@ void Cal_MLKEDF_Descriptors::set_para(
     const std::vector<double> &yukawa_alpha,
     const std::vector<std::string> &kernel_file,
     const double &omega,
-    ModulePW::PW_Basis *pw_rho
+    const ModulePW::PW_Basis *pw_rho
 )
 {
     this->nx = nx;
@@ -129,7 +129,7 @@ double Cal_MLKEDF_Descriptors::MLkernel_yukawa(double eta, double alpha)
 }
 
 // Read kernel from file
-void Cal_MLKEDF_Descriptors::read_kernel(const std::string &fileName, const double& scaling, ModulePW::PW_Basis *pw_rho, double* kernel_)
+void Cal_MLKEDF_Descriptors::read_kernel(const std::string &fileName, const double& scaling, const ModulePW::PW_Basis *pw_rho, double* kernel_)
 {
     std::ifstream ifs(fileName.c_str(), std::ios::in);
 
@@ -203,7 +203,7 @@ void Cal_MLKEDF_Descriptors::read_kernel(const std::string &fileName, const doub
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "FILL WT KERNEL");
 }
 
-void Cal_MLKEDF_Descriptors::multiKernel(const int ikernel, double *pinput, ModulePW::PW_Basis *pw_rho, double *routput)
+void Cal_MLKEDF_Descriptors::multiKernel(const int ikernel, double *pinput, const ModulePW::PW_Basis *pw_rho, double *routput)
 {
     std::complex<double> *recipOutput = new std::complex<double>[pw_rho->npw];
 
@@ -217,7 +217,7 @@ void Cal_MLKEDF_Descriptors::multiKernel(const int ikernel, double *pinput, Modu
     delete[] recipOutput;
 }
 
-void Cal_MLKEDF_Descriptors::Laplacian(double * pinput, ModulePW::PW_Basis *pw_rho, double * routput)
+void Cal_MLKEDF_Descriptors::Laplacian(double * pinput, const ModulePW::PW_Basis *pw_rho, double * routput)
 {
     std::complex<double> *recipContainer = new std::complex<double>[pw_rho->npw];
 
@@ -231,7 +231,7 @@ void Cal_MLKEDF_Descriptors::Laplacian(double * pinput, ModulePW::PW_Basis *pw_r
     delete[] recipContainer;
 }
 
-void Cal_MLKEDF_Descriptors::divergence(double ** pinput, ModulePW::PW_Basis *pw_rho, double * routput)
+void Cal_MLKEDF_Descriptors::divergence(double ** pinput, const ModulePW::PW_Basis *pw_rho, double * routput)
 {
     std::complex<double> *recipContainer = new std::complex<double>[pw_rho->npw];
     std::complex<double> img(0.0, 1.0);
@@ -270,7 +270,7 @@ void Cal_MLKEDF_Descriptors::getGamma(const double * const *prho, std::vector<do
     }
 }
 
-void Cal_MLKEDF_Descriptors::getP(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp)
+void Cal_MLKEDF_Descriptors::getP(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp)
 {
     for(int ir = 0; ir < this->nx; ++ir)
     {
@@ -283,7 +283,7 @@ void Cal_MLKEDF_Descriptors::getP(const double * const *prho, ModulePW::PW_Basis
     }
 }
 
-void Cal_MLKEDF_Descriptors::getQ(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<double> &rq)
+void Cal_MLKEDF_Descriptors::getQ(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rq)
 {
     // get Laplacian rho
     std::complex<double> *recipRho = new std::complex<double>[pw_rho->npw];
@@ -302,17 +302,17 @@ void Cal_MLKEDF_Descriptors::getQ(const double * const *prho, ModulePW::PW_Basis
     delete[] recipRho;
 }
 
-void Cal_MLKEDF_Descriptors::getGammanl(const int ikernel, std::vector<double> &pgamma, ModulePW::PW_Basis *pw_rho, std::vector<double> &rgammanl)
+void Cal_MLKEDF_Descriptors::getGammanl(const int ikernel, std::vector<double> &pgamma, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rgammanl)
 {
     this->multiKernel(ikernel, pgamma.data(), pw_rho, rgammanl.data());
 }
 
-void Cal_MLKEDF_Descriptors::getPnl(const int ikernel, std::vector<double> &pp, ModulePW::PW_Basis *pw_rho, std::vector<double> &rpnl)
+void Cal_MLKEDF_Descriptors::getPnl(const int ikernel, std::vector<double> &pp, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rpnl)
 {
     this->multiKernel(ikernel, pp.data(), pw_rho, rpnl.data());
 }
 
-void Cal_MLKEDF_Descriptors::getQnl(const int ikernel, std::vector<double> &pq, ModulePW::PW_Basis *pw_rho, std::vector<double> &rqnl)
+void Cal_MLKEDF_Descriptors::getQnl(const int ikernel, std::vector<double> &pq, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rqnl)
 {
     this->multiKernel(ikernel, pq.data(), pw_rho, rqnl.data());
 }
@@ -376,19 +376,19 @@ void Cal_MLKEDF_Descriptors::getTanh_Qnl(const int ikernel, std::vector<double> 
 }
 
 // tanh(p)_nl
-void Cal_MLKEDF_Descriptors::getTanhP_nl(const int ikernel, std::vector<double> &ptanhp, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhp_nl)
+void Cal_MLKEDF_Descriptors::getTanhP_nl(const int ikernel, std::vector<double> &ptanhp, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhp_nl)
 {
     this->multiKernel(ikernel, ptanhp.data(), pw_rho, rtanhp_nl.data());
 }
 
 // tanh(q)_nl
-void Cal_MLKEDF_Descriptors::getTanhQ_nl(const int ikernel, std::vector<double> &ptanhq, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhq_nl)
+void Cal_MLKEDF_Descriptors::getTanhQ_nl(const int ikernel, std::vector<double> &ptanhq, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhq_nl)
 {
     this->multiKernel(ikernel, ptanhq.data(), pw_rho, rtanhq_nl.data());
 }
 
 // (tanhxi)_nl
-void Cal_MLKEDF_Descriptors::getTanhXi_nl(const int ikernel, std::vector<double> &ptanhxi, ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhxi_nl)
+void Cal_MLKEDF_Descriptors::getTanhXi_nl(const int ikernel, std::vector<double> &ptanhxi, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rtanhxi_nl)
 {
     this->multiKernel(ikernel, ptanhxi.data(), pw_rho, rtanhxi_nl.data());
 }
@@ -397,7 +397,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
     psi::Psi<std::complex<double>> *psi,
     elecstate::ElecState *pelec,
     ModulePW::PW_Basis_K *pw_psi,
-    ModulePW::PW_Basis *pw_rho,
+    const ModulePW::PW_Basis *pw_rho,
     UnitCell& ucell,
     const std::vector<std::vector<double>> &nablaRho,
     std::vector<double> &rF,
@@ -497,7 +497,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
     }
 }
 
-void Cal_MLKEDF_Descriptors::getNablaRho(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &rnablaRho)
+void Cal_MLKEDF_Descriptors::getNablaRho(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &rnablaRho)
 {
     std::complex<double> *recipRho = new std::complex<double>[pw_rho->npw];
     std::complex<double> *recipNablaRho = new std::complex<double>[pw_rho->npw];

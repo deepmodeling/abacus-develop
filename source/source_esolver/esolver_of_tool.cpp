@@ -57,6 +57,10 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     {
         pot_register_in.push_back("gatefield");
     }
+    if (PARAM.inp.ml_exx)
+    {
+        pot_register_in.push_back("ml_exx");
+    }
     // only Potential is not empty, Veff and Meta are available
     if (pot_register_in.size() > 0)
     {
@@ -479,6 +483,11 @@ void ESolver_OF::print_info(const bool conv_esolver)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
+        }
+        if (PARAM.inp.ml_exx)
+        {
+            titles.push_back("E_ML-EXX");
+            energies_Ry.push_back(this->pelec->f_en.ml_exx);
         }
     }
     else
