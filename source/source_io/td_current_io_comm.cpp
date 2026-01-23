@@ -20,7 +20,7 @@
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
-
+#ifdef __LCAO
 template <typename TR, typename TA>
 void ModuleIO::init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer<TA>* aimR)
 {
@@ -202,8 +202,9 @@ void ModuleIO::sum_HR(
     const Parallel_Orbitals& pv,
     const K_Vectors& kv,
     const hamilt::HContainer<TR>* hR,
-    hamilt::HContainer<std::complex<double>>* full_hR,
+    hamilt::HContainer<std::complex<double>>* full_hR
 #ifdef __EXX
+    ,
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
         Hexxs
 #endif
@@ -921,3 +922,4 @@ void ModuleIO::write_current<std::complex<double>>(
         const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
 #endif
 );
+#endif //__LCAO
