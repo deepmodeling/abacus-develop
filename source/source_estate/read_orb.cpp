@@ -68,6 +68,7 @@ namespace elecstate {
 		ModuleBase::WARNING("elecstate::read_orb_file","get nw = 0, check the ORBITAL file");
 		return false;
     }
+    return true;
 }
 
 }
