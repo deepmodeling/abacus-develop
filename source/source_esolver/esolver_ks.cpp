@@ -1,4 +1,5 @@
 #include "esolver_ks.h"
+#include "source_base/timer_wrapper.h"
 
 // for jason output information
 #include "source_io/json_output/init_info.h"
@@ -190,11 +191,7 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
         ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
     }
 
-#ifdef __MPI
-    iter_time = MPI_Wtime();
-#else
-    iter_time = std::chrono::system_clock::now();
-#endif
+    iter_time = ModuleBase::get_time();
 
     if (PARAM.inp.esolver_type == "ksdft")
     {
@@ -281,13 +278,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
 
     // the end, print time
-#ifdef __MPI
-    double duration = (double)(MPI_Wtime() - iter_time);
-#else
-    double duration
-        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
-          / static_cast<double>(1e6);
-#endif
+    double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, 

@@ -8,17 +8,13 @@
  * and write the components of the total energy into running_log.
  */
 void OFDFT::print_info(const int iter,
-    #ifdef __MPI
-        double &iter_time,
-    #else
-        std::chrono::system_clock::time_point &iter_time,
-    #endif
-		const double &energy_current,
-		const double &energy_last,
-		const double &normdLdphi,
-		const elecstate::ElecState *pelec,
-		KEDF_Manager *kedf_manager,
-		const bool conv_esolver)
+	ModuleBase::TimePoint &iter_time,
+	const double &energy_current,
+	const double &energy_last,
+	const double &normdLdphi,
+	const elecstate::ElecState *pelec,
+	KEDF_Manager *kedf_manager,
+	const bool conv_esolver)
 {
     if (iter == 0)
     {
@@ -35,13 +31,7 @@ void OFDFT::print_info(const int iter,
         {"tn", "TN"}
     };
     std::string iteration = prefix_map[PARAM.inp.of_method] + std::to_string(iter);
-#ifdef __MPI
-    double duration = (double)(MPI_Wtime() - iter_time);
-#else
-    double duration
-        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
-          / static_cast<double>(1e6);
-#endif
+    double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
     std::cout << " " << std::setw(8) << iteration
               << std::setw(18) << std::scientific << std::setprecision(8) << energy_current * ModuleBase::Ry_to_eV
               << std::setw(18) << (energy_current - energy_last) * ModuleBase::Ry_to_eV
@@ -141,9 +131,5 @@ void OFDFT::print_info(const int iter,
     GlobalV::ofs_running << table.str() << std::endl;
 
     // reset the iter_time for the next iteration
-#ifdef __MPI
-    iter_time = MPI_Wtime();
-#else
-    iter_time = std::chrono::system_clock::now();
-#endif
+    iter_time = ModuleBase::get_time();
 }

@@ -27,10 +27,10 @@ ESolver_OF::ESolver_OF()
 
 ESolver_OF::~ESolver_OF()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
-	delete psi_;
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
+    delete psi_;
     delete[] this->pphi_;
 
     for (int i = 0; i < PARAM.inp.nspin; ++i)
@@ -137,11 +137,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->iter_ = 0;
 
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
-#ifdef __MPI
-    this->iter_time = MPI_Wtime();
-#else
-    this->iter_time = std::chrono::system_clock::now();
-#endif
+    this->iter_time = ModuleBase::get_time();
 
     while (true)
     {

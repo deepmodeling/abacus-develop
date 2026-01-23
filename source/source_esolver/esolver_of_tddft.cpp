@@ -41,11 +41,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     this->iter_ = 0;
 
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
-#ifdef __MPI
-    this->iter_time = MPI_Wtime();
-#else
-    this->iter_time = std::chrono::system_clock::now();
-#endif
+    this->iter_time = ModuleBase::get_time();
 
     if (this->phi_td.empty())
     {
