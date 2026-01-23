@@ -11,7 +11,7 @@
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/record_adj.h"
 #include "source_psi/psi.h"
-#include "source_lcao/hamilt_lcao.cpp"
+#include "source_lcao/hamilt_lcao.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
