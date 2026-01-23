@@ -16,7 +16,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,
     const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor), gridD(GridD_in)
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
@@ -25,7 +25,11 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     assert(this->hsk != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
-    this->initialize_HR(GridD_in);
+    // Only initialize if hR_in is not nullptr (for force calculation, hR_in can be nullptr)
+    if (hR_in != nullptr)
+    {
+        this->initialize_HR(GridD_in);
+    }
 }
 
 // destructor
@@ -101,7 +105,9 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     ModuleBase::TITLE("EkineticNew", "calculate_HR");
     if (this->HR_fixed == nullptr || this->HR_fixed->size_atom_pairs() <= 0)
     {
-        ModuleBase::WARNING_QUIT("hamilt::EkineticNew::calculate_HR", "HR_fixed is nullptr or empty");
+        // Skip calculation if HR_fixed is empty (e.g., zero cutoff case)
+        // This is not an error, just means there are no atom pairs to calculate
+        return;
     }
     ModuleBase::timer::tick("EkineticNew", "calculate_HR");
 
@@ -242,7 +248,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->HR_fixed_done = true;
     }
     // last node of sub-chain, add HR_fixed into HR
-    if (this->next_sub_op == nullptr)
+    // skip if HR_fixed is nullptr or empty
+    if (this->next_sub_op == nullptr && this->HR_fixed != nullptr && this->HR_fixed->size_atom_pairs() > 0)
     {
         this->hR->add(*(this->HR_fixed));
     }
@@ -250,6 +257,9 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("EkineticNew", "contributeHR");
     return;
 }
+
+// Include force/stress implementation
+#include "ekinetic_force_stress.hpp"
 
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>;

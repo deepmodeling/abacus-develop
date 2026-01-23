@@ -315,6 +315,10 @@ void ElecState::cal_energies(const int type)
 
     this->f_en.e_local_pp = get_local_pp_energy();
 
+#ifdef __MLALGO
+    this->f_en.ml_exx = this->pot->get_ml_exx_energy();
+#endif
+
     if (type == 1) // Harris-Foulkes functional
     {
         this->f_en.calculate_harris();

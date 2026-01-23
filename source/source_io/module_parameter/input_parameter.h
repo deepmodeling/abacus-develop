@@ -248,6 +248,9 @@ struct Input_para
     std::vector<double> of_ml_chi_qnl = {1.0}; ///< Hyperparameter: tanh_qnl = tanh(chi_qnl * qnl)
     bool of_ml_local_test = false;             ///< Test: read in the density, and output the F and Pauli potential
 
+    // ML EXX, temporarily located here, sunliang
+    bool ml_exx = false;            ///< Use ML EXX or not
+
     // ==============   #Parameters (7.stochastic DFT) ===========================
     int method_sto = 2;        ///< different methods for sdft, 1: slow, less memory 2:
                                ///< fast, more memory

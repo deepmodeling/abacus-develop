@@ -67,18 +67,17 @@ class Data
     void init_data(const int nkernel, const int ndata, const int fftdim, const torch::Device device);
     void load_data_(Input &input, const int ndata, const int fftdim, std::string *dir);
     
-    const double cTF = 3. /10. * std::pow(3. * std::pow(M_PI, 2.), 2. / 3.) * 2.; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
-    const double cDirac = - 3. /4. * std::pow(3. / M_PI, 1./3.) * 2.; // -3/4*(3/pi)^{1/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double cTF = 3. / 10. * std::pow(3. * std::pow(M_PI, 2.), 2. / 3.) * 2.; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double cDirac = - 3. / 4. * std::pow(3. / M_PI, 1./3.) * 2.; // -3/4*(3/pi)^{1/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double tau_exp = 5. / 3.; // 5/3 for TF KEDF, and 4/3 for Dirac term
 
   public:
     void loadTensor(std::string file,
-                    std::vector<long unsigned int> cshape,
-                    bool fortran_order,
-                    std::vector<double> &container,
                     const int index,
                     const int fftdim,
                     torch::Tensor &data);
+    void loadVector(std::string file,
+                    std::vector<double> &data);
     // -------- dump Tensor into .npy files ---------
     void dumpTensor(const torch::Tensor &data, std::string filename, int nx);
     std::string file_name(std::string parameter, const int kernel_type, const double kernel_scaling);

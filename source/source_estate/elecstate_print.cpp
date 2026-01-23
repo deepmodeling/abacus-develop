@@ -291,6 +291,11 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
         }
+        if (PARAM.inp.ml_exx)
+        {
+            titles.push_back("E_ML-EXX");
+            energies_Ry.push_back(elec.f_en.ml_exx);
+        }
 #endif
     }
     else

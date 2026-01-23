@@ -8,6 +8,7 @@
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "pot_ml_exx.h"
 
 #include <map>
 
@@ -340,6 +341,23 @@ template <>
 double* Potential::get_vofk_smooth_data()
 {
     return this->vofk_smooth.nc > 0 ? this->d_vofk_smooth : nullptr;
+}
+
+double Potential::get_ml_exx_energy() const
+{
+#ifdef __MLALGO
+    for (size_t i = 0; i < this->components.size(); i++)
+    {
+        PotML_EXX* pot_ml_exx = dynamic_cast<PotML_EXX*>(this->components[i]);
+        if (pot_ml_exx != nullptr)
+        {
+            return pot_ml_exx->get_energy();
+        }
+    }
+    return 0.0;
+#else
+    return 0.0;
+#endif
 }
 
 } // namespace elecstate

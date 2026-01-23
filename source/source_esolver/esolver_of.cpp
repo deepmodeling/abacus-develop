@@ -117,6 +117,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
+    delete[] this->kedf_manager_;
     this->kedf_manager_ = new KEDF_Manager();
     this->kedf_manager_->init(inp, this->pw_rho, this->dV_, this->nelec_[0]);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
@@ -492,10 +493,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
-    this->kedf_manager_->get_potential(this->chr.rho,
-                                       this->pphi_,
-                                       this->pw_rho,
-                                       this->pelec->pot->get_eff_v()); // KEDF potential
+        this->kedf_manager_->get_potential(this->chr.rho,
+                                        this->pphi_,
+                                        this->pw_rho,
+                                        this->pelec->pot->get_eff_v()); // KEDF potential
         
         const double* vr_eff = this->pelec->pot->get_eff_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)

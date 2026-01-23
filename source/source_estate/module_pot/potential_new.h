@@ -187,6 +187,10 @@ class Potential : public PotBase
         return this->vl_of_0;
     }
 
+    /// @brief  get the ML-EXX energy, avoiding static variable
+    /// @return E_ML-EXX
+    double get_ml_exx_energy() const;
+
   private:
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;

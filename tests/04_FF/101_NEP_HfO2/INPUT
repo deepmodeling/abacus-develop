@@ -10,7 +10,7 @@ pot_file            ../../PP_ORB/nep_hfo2.txt
 cal_force           1
 cal_stress          1
 
-md_nstep            3
+md_nstep            4
 md_type             npt
 md_dt               1
 md_tfirst           300

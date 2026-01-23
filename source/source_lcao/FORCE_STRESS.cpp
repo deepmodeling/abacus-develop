@@ -21,6 +21,9 @@
 #include "source_lcao/module_operator_lcao/dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/ekinetic_new.h"
+#include "source_lcao/module_operator_lcao/overlap_new.h"
+#include "source_lcao/pulay_fs.h"
 
 
 // mohan add 2025-11-04
@@ -94,7 +97,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
     const int nat = ucell.nat;
 
-    ForceStressArrays fsr; // mohan add 2024-06-15
+    // NOTE: ForceStressArrays is no longer needed as we use operator-based force calculation
+    // ForceStressArrays fsr; // removed - no longer needed
 
     // total force : ModuleBase::matrix fcs;
 
@@ -161,46 +165,139 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
           sigmaxc, pelec->f_en.etxc, pelec->charge, rhopw, locpp, sf);
     }
 
-    //! atomic forces from integration (4 terms)
-    this->integral_part(PARAM.globalv.gamma_only_local, isforce, isstress,
-                        ucell, gd, fsr, pelec, dmat.dm, psi, foverlap, ftvnl_dphi, // add dmat.dm, mohan 20251104
-                        fvnl_dbeta, fvl_dphi, soverlap, stvnl_dphi, svnl_dbeta,
-                        svl_dphi, fvnl_dalpha, svnl_dalpha, deepks, 
-                        two_center_bundle, orb, pv, kv);
+    // Calculate forces and stresses using new operator-based methods
+    // Step 1: Calculate Energy Density Matrix (EDM) for overlap force
+    // EDM = Σ_k w_k * ε_k * |ψ_k><ψ_k|
+    elecstate::DensityMatrix<T, double> edm = flk.cal_edm(pelec, *psi, *dmat.dm, kv, pv,
+                                                           PARAM.inp.nspin, PARAM.inp.nbands, ucell, *this->RA);
 
-    // calculate force and stress for Nonlocal part
+    // Step 2: Handle different spin cases
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
     {
-        hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(nullptr,
-          kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd, two_center_bundle.overlap_orb_beta.get());
-
+        // For nspin=1 or nspin=2, use double precision
+        // Switch to spin channel 1 for DMR access
         if (PARAM.inp.nspin == 2)
         {
             dmat.dm->switch_dmr(1);
+            edm.switch_dmr(1);
         }
 
-        const hamilt::HContainer<double>* dmr = dmat.dm->get_DMR_pointer(1);
-        tmp_nonlocal.cal_force_stress(isforce, isstress, dmr, fvnl_dbeta, svnl_dbeta);
+        const hamilt::HContainer<double>* dmR = dmat.dm->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* edmR = edm.get_DMR_pointer(1);
+
+        // Calculate kinetic force/stress (uses DM)
+        if (PARAM.inp.t_in_h)
+        {
+            hamilt::EkineticNew<hamilt::OperatorLCAO<T, double>> tmp_ekinetic(
+                nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+                two_center_bundle.kinetic_orb.get());
+            tmp_ekinetic.cal_force_stress(isforce, isstress, dmR, ftvnl_dphi, stvnl_dphi);
+        }
+
+        // Calculate overlap force/stress (uses EDM)
+        hamilt::OverlapNew<hamilt::OperatorLCAO<T, double>> tmp_overlap(
+            nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
+            two_center_bundle.overlap_orb.get());
+        tmp_overlap.cal_force_stress(isforce, isstress, edmR, foverlap, soverlap);
+
+        // Calculate nonlocal force/stress (uses DM)
+        hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
+            nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+            two_center_bundle.overlap_orb_beta.get());
+        tmp_nonlocal.cal_force_stress(isforce, isstress, dmR, fvnl_dbeta, svnl_dbeta);
+        
+        // Switch back to spin channel 0
         if (PARAM.inp.nspin == 2)
         {
             dmat.dm->switch_dmr(0);
+            edm.switch_dmr(0);
         }
+
+        // Calculate local potential force/stress (vl_dphi)
+        // This uses grid integration, not operator-based method
+        flk.ParaV = dmat.dm->get_paraV_pointer();
+        PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dmat.dm, ucell, pelec->pot,
+                                       isforce, isstress, false /*reset dm to gint*/);
     }
     else if (PARAM.inp.nspin == 4)
     {
-        hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
-            nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
-            two_center_bundle.overlap_orb_beta.get());
 
-        // calculate temporary complex DMR for nonlocal force&stress
-        // In fact, only SOC part need the imaginary part of DMR for correct force&stress
+        // Calculate kinetic force/stress (uses DM)
+        if (PARAM.inp.t_in_h)
+        {
+            hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_ekinetic(
+                nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+                two_center_bundle.kinetic_orb.get());
+            tmp_ekinetic.cal_force_stress(isforce, isstress, dmat.dm->get_DMR_pointer(1), ftvnl_dphi, stvnl_dphi);
+        }
+
+        // Calculate overlap force/stress (uses EDM)
+        hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_overlap(
+            nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
+            two_center_bundle.overlap_orb.get());
+        tmp_overlap.cal_force_stress(isforce, isstress, edm.get_DMR_pointer(1), foverlap, soverlap);
+
+        // For nspin=4 (non-collinear), need complex DMR
+        // Create temporary complex DMR for DM
         hamilt::HContainer<std::complex<double>> tmp_dmr(dmat.dm->get_DMR_pointer(1)->get_paraV());
         std::vector<int> ijrs = dmat.dm->get_DMR_pointer(1)->get_ijr_info();
         tmp_dmr.insert_ijrs(&ijrs);
         tmp_dmr.allocate();
         dmat.dm->cal_DMR_full(&tmp_dmr);
+        // Calculate nonlocal force/stress (uses DM)
+        hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
+            nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
+            two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.cal_force_stress(isforce, isstress, &tmp_dmr, fvnl_dbeta, svnl_dbeta);
+
+        // Calculate local potential force/stress (vl_dphi)
+        flk.ParaV = dmat.dm->get_paraV_pointer();
+        PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dmat.dm, ucell, pelec->pot,
+                                       isforce, isstress, false /*reset dm to gint*/);
     }
+
+    // MPI reduction for forces
+    if (isforce)
+    {
+        Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
+    }
+
+    // MPI reduction for stresses
+    if (isstress)
+    {
+        Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
+    }
+
+    // Handle DeePKS forces if enabled
+#ifdef __MLALGO
+    if (PARAM.inp.deepks_scf)
+    {
+        const int nks = (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) ? 1 : kv.get_nks();
+        if (PARAM.globalv.gamma_only_local)
+        {
+            DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r, ucell, orb, gd,
+                                               *flk.ParaV, nks, deepks.ld.deepks_param,
+                                               kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
+                                               fvnl_dalpha, isstress, svnl_dalpha);
+        }
+        else
+        {
+            DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r, ucell, orb, gd,
+                                                              *flk.ParaV, nks, deepks.ld.deepks_param,
+                                                              kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
+                                                              fvnl_dalpha, isstress, svnl_dalpha);
+        }
+
+        if (isforce)
+        {
+            Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
+        }
+        if (isstress)
+        {
+            Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+        }
+    }
+#endif
 
     //! forces and stress from vdw
     //  Peize Lin add 2014-04-04, update 2021-03-09
@@ -275,13 +372,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-			// dftu.force_stress(ucell, gd, pelec, pv, fsr, force_u, stress_u, kv);
-			// mohan modify 2025-11-03
+            // Old DFT+U implementation (dft_plus_u==2) still needs ForceStressArrays
+            ForceStressArrays fsr_dftu;
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
-            // add a new template function
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-		    dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr, force_u, stress_u, kv);
+            dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv);
         }
         else
         {
@@ -332,10 +428,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
     }
 
-    if (!PARAM.globalv.gamma_only_local)
-    {
-        this->flk.finish_ftable(fsr);
-    }
+    // NOTE: finish_ftable is no longer needed as we don't use ForceStressArrays for overlap/kinetic
+    // if (!PARAM.globalv.gamma_only_local)
+    // {
+    //     this->flk.finish_ftable(fsr);
+    // }
 
 #ifdef __EXX
     // Force and Stress contribution from exx
@@ -492,8 +589,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             //-----------------------------
             // this->print_force("OVERLAP    FORCE",foverlap,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "OVERLAP    FORCE", foverlap, false);
-            // this->print_force("TVNL_DPHI  force",ftvnl_dphi,PARAM.inp.test_force);
-            // this->print_force("VNL_DBETA  force",fvnl_dbeta,PARAM.inp.test_force);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "TVNL_DPHI  force",ftvnl_dphi,false);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "VNL_DBETA  force",fvnl_dbeta,false);
             // this->print_force("T_VNL      FORCE",ftvnl,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "T_VNL      FORCE", ftvnl, false);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "VL_dPHI    FORCE", fvl_dphi, false);

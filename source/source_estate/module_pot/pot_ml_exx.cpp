@@ -1,79 +1,57 @@
 #ifdef __MLALGO
 
-#include "kedf_ml.h"
+#include "pot_ml_exx.h"
 
 #include "npy.hpp"
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
 #include "source_pw/module_pwdft/global.h"
 
-void KEDF_ML::set_para(
-    const int nx, 
-    const double dV, 
-    const double nelec, 
-    const double tf_weight, 
-    const double vw_weight, 
-    const double chi_p,
-    const double chi_q,
-    const std::vector<double> &chi_xi,
-    const std::vector<double> &chi_pnl,
-    const std::vector<double> &chi_qnl,
-    const int &nkernel,
-    const std::vector<int> &kernel_type,
-    const std::vector<double> &kernel_scaling,
-    const std::vector<double> &yukawa_alpha,
-    const std::vector<std::string> &kernel_file,
-    const bool &of_ml_gamma,
-    const bool &of_ml_p,
-    const bool &of_ml_q,
-    const bool &of_ml_tanhp,
-    const bool &of_ml_tanhq,
-    const std::vector<int> &of_ml_gammanl,
-    const std::vector<int> &of_ml_pnl,
-    const std::vector<int> &of_ml_qnl,
-    const std::vector<int> &of_ml_xi,
-    const std::vector<int> &of_ml_tanhxi,
-    const std::vector<int> &of_ml_tanhxi_nl,
-    const std::vector<int> &of_ml_tanh_pnl,
-    const std::vector<int> &of_ml_tanh_qnl,
-    const std::vector<int> &of_ml_tanhp_nl,
-    const std::vector<int> &of_ml_tanhq_nl,
-    const std::string device_inpt,
-    ModulePW::PW_Basis *pw_rho
-)
+namespace elecstate
+{
+
+ML_EXX::ML_EXX()
+{
+    this->energy_prefactor = - 3. / 4. * std::pow(3. / M_PI, 1./3.) * 2;
+    this->energy_exponent = 4. / 3.;
+}
+
+ML_EXX::~ML_EXX(){}
+
+void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const ModulePW::PW_Basis* rho_basis_in)
 {
     torch::set_default_dtype(caffe2::TypeMeta::fromScalarType(torch::kDouble));
     auto output = torch::get_default_dtype();
     std::cout << "Default type: " << output << std::endl;
 
-    this->set_device(device_inpt);
+    this->set_device(inp.of_ml_device);
 
-    this->nx = nx;
-    this->nx_tot = nx;
-    this->dV = dV;
-    this->nkernel = nkernel;
+    this->nx = rho_basis_in->nrxx;
+    this->nx_tot = rho_basis_in->nrxx;
+    this->dV = ucell_in->omega / rho_basis_in->nxyz;
+    this->nkernel = inp.of_ml_nkernel;
 
     this->init_data(
-        nkernel,
-        of_ml_gamma,
-        of_ml_p,
-        of_ml_q,
-        of_ml_tanhp,
-        of_ml_tanhq,
-        of_ml_gammanl,
-        of_ml_pnl,
-        of_ml_qnl,
-        of_ml_xi,
-        of_ml_tanhxi,
-        of_ml_tanhxi_nl,
-        of_ml_tanh_pnl,
-        of_ml_tanh_qnl,
-        of_ml_tanhp_nl,
-        of_ml_tanhq_nl);
+        this->nkernel,
+        inp.of_ml_gamma,
+        inp.of_ml_p,
+        inp.of_ml_q,
+        inp.of_ml_tanhp,
+        inp.of_ml_tanhq,
+        inp.of_ml_gammanl,
+        inp.of_ml_pnl,
+        inp.of_ml_qnl,
+        inp.of_ml_xi,
+        inp.of_ml_tanhxi,
+        inp.of_ml_tanhxi_nl,
+        inp.of_ml_tanh_pnl,
+        inp.of_ml_tanh_qnl,
+        inp.of_ml_tanhp_nl,
+        inp.of_ml_tanhq_nl);
 
-    std::cout << "ninput = " << ninput << std::endl;
+    std::cout << "ninput = " << this->ninput << std::endl;
 
-    if (PARAM.inp.of_kinetic == "ml")
+    if (PARAM.inp.ml_exx)
     {
         int nnode = 100;
         int nlayer = 3;
@@ -99,49 +77,21 @@ void KEDF_ML::set_para(
         }
     } 
     
-    if (PARAM.inp.of_kinetic == "ml" || PARAM.inp.of_ml_gene_data == 1)
+    if (PARAM.inp.ml_exx || PARAM.inp.of_ml_gene_data == 1)
     {
         this->cal_tool = new ModuleIO::Cal_MLKEDF_Descriptors;
 
-        this->chi_p = chi_p;
-        this->chi_q = chi_q;
-        this->chi_xi = chi_xi;
-        this->chi_pnl = chi_pnl;
-        this->chi_qnl = chi_qnl;
+        this->chi_p = inp.of_ml_chi_p;
+        this->chi_q = inp.of_ml_chi_q;
+        this->chi_xi = inp.of_ml_chi_xi;
+        this->chi_pnl = inp.of_ml_chi_pnl;
+        this->chi_qnl = inp.of_ml_chi_qnl;
 
-        this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
-                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho);
+        this->cal_tool->set_para(this->nx, inp.nelec, inp.of_tf_weight, inp.of_vw_weight, this->chi_p, this->chi_q,
+                                this->chi_xi, this->chi_pnl, this->chi_qnl, this->nkernel, inp.of_ml_kernel, inp.of_ml_kernel_scaling, inp.of_ml_yukawa_alpha, inp.of_ml_kernel_file, this->dV * rho_basis_in->nxyz, rho_basis_in);
     }
 }
 
-/**
- * @brief Get the energy of ML KEDF
- * \f[ E_{ML} = c_{TF} * \int{F(\rho) \rho^{5/3} dr} \f]
- * 
- * @param prho charge density
- * @param pw_rho PW_Basis
- * @return the energy of ML KEDF
- */
-double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
-{
-    this->updateInput(prho, pw_rho);
-
-    this->NN_forward(prho, pw_rho, false);
-    
-    torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
-    this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
-
-    double energy = 0.;
-    for (int ir = 0; ir < this->nx; ++ir)
-    {
-        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], this->energy_exponent);
-    }
-    std::cout << "energy" << energy << std::endl;
-    energy *= this->dV * this->energy_prefactor;
-    this->ml_energy = energy;
-    Parallel_Reduce::reduce_all(this->ml_energy);
-    return this->ml_energy;
-}
 
 /**
  * @brief Get the potential of ML KEDF, and add it into rpotential
@@ -150,30 +100,42 @@ double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
  * @param pw_rho PW_Basis
  * @param rpotential rpotential => rpotential + V_{ML}
  */
-void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
+void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
-    this->updateInput(prho, pw_rho);
+    double* rho_data = new double[this->nx];
+    const double** prho_mod = new const double*[1];
+    prho_mod[0] = rho_data;
 
-    this->NN_forward(prho, pw_rho, true);
+    for (int ir = 0; ir < this->nx; ++ir)
+    {
+        rho_data[ir] = std::abs(prho[0][ir]);
+    }
+
+    this->updateInput(prho_mod, pw_rho);
+
+    this->NN_forward(prho_mod, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
     this->gradient_cpu_ptr = gradient_cpu_tensor.data_ptr<double>();
 
-    this->get_potential_(prho, pw_rho, rpotential);
+    this->get_potential_(prho_mod, pw_rho, rpotential);
 
     // get energy
-    ModuleBase::timer::tick("KEDF_ML", "Pauli Energy");
+    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
-        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], this->energy_exponent);
+        energy += this->enhancement_cpu_ptr[ir] * std::pow(prho_mod[0][ir], this->energy_exponent);
     }
     energy *= this->dV * this->energy_prefactor;
-    this->ml_energy = energy;
-    Parallel_Reduce::reduce_all(this->ml_energy);
-    ModuleBase::timer::tick("KEDF_ML", "Pauli Energy");
+    this->ml_exx_energy = energy;
+    Parallel_Reduce::reduce_pool(this->ml_exx_energy);
+    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+
+    delete[] rho_data;
+    delete[] prho_mod;
 }
 
 /**
@@ -185,9 +147,8 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
  * @param pw_rho PW_Basis
  * @param veff effective potential
  */
-void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
+void ML_EXX::generateTrainData(const double * const *prho, const ModulePW::PW_Basis *pw_rho, const double *veff)
 {
-    // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
     {
         this->updateInput(prho, pw_rho);
@@ -215,14 +176,15 @@ void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *
  * @param prho charge density
  * @param pw_rho PW_Basis
  */
-void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
+void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw_rho)
 {
     // for test =====================
     std::vector<long unsigned int> cshape = {(long unsigned) this->nx};
     bool fortran_order = false;
 
     std::vector<double> temp_prho(this->nx);
-    this->loadVector("dir_of_input_rho", temp_prho);
+    this->loadVector("path_to_rho_file", temp_prho);
+    
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
     for (int ir = 0; ir < this->nx; ++ir) prho[0][ir] = temp_prho[ir];
@@ -233,7 +195,6 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
         }
     };
     // ==============================
-
     this->updateInput(prho, pw_rho);
 
     this->NN_forward(prho, pw_rho, true);
@@ -252,4 +213,6 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     this->dumpMatrix("potential-abacus.npy", potential);
     exit(0);
 }
+
+}   // namespace elecstate
 #endif
