@@ -20,8 +20,15 @@ void ctrl_output_td(const UnitCell& ucell,
                     const Parallel_Orbitals* pv,
                     const LCAO_Orbitals& orb,
                     const Velocity_op<TR>* velocity_mat,
+                    const Grid_Driver& grid,
+                    hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
-                    TD_info* td_p)
+                    TD_info* td_p
+#ifdef __EXX
+                    ,
+                    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* hexxs
+#endif
+                    )
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
@@ -46,7 +53,7 @@ void ctrl_output_td(const UnitCell& ucell,
         ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_td", "Failed to cast ElecState to ElecStateLCAO");
     }
 
-    if (TD_info::out_current)
+    if (TD_info::out_current == 1)
     {
         if (TD_info::out_current_k)
         {
@@ -56,6 +63,14 @@ void ctrl_output_td(const UnitCell& ucell,
         {
             ModuleIO::write_current<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, RA);
         }
+    }
+    else if(TD_info::out_current==2)
+    {
+        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR()
+#ifdef __EXX
+                ,hexxs
+#endif
+            );
     }
 
     // (3) Output file for restart
@@ -88,8 +103,15 @@ template void ctrl_output_td<double>(const UnitCell&,
                                      const Parallel_Orbitals*,
                                      const LCAO_Orbitals&,
                                      const Velocity_op<double>*,
+                                     const Grid_Driver&,
+                                     hamilt::HamiltLCAO<std::complex<double>, double>*,
                                      Record_adj&,
-                                     TD_info*);
+                                     TD_info*
+#ifdef __EXX
+                                     ,
+                                     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
+#endif
+                                     );
 
 template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    double**,
@@ -102,7 +124,14 @@ template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    const Parallel_Orbitals*,
                                                    const LCAO_Orbitals&,
                                                    const Velocity_op<std::complex<double>>*,
+                                                   const Grid_Driver&,
+                                                   hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*,
                                                    Record_adj&,
-                                                   TD_info*);
+                                                   TD_info*
+#ifdef __EXX
+                                                   ,
+                                                   const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
+#endif
+                                                   );
 
 } // namespace ModuleIO

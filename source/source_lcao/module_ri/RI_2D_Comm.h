@@ -51,6 +51,18 @@ namespace RI_2D_Comm
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
         TK* hk);
+	
+		
+	template <typename Tdata, typename TK>
+	extern void  add_Hexx_td(
+		const UnitCell& ucell,
+		const K_Vectors& kv,
+		const int ik,
+		const double alpha,
+		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+		const Parallel_Orbitals& pv,
+		const ModuleBase::Vector3<double>& At,
+		TK* hk);
 
     template<typename Tdata, typename TR>
     extern void add_HexxR(

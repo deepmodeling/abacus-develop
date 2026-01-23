@@ -403,7 +403,7 @@ struct Input_para
     int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
     bool out_dipole = false;              ///< output the dipole or not
     bool out_efield = false;              ///< output the efield or not
-    bool out_current = false;             ///< output the current or not
+    int out_current = 0;                  ///< output the current or not
     bool out_current_k = false;           ///< output tddft current for all k points
     bool out_vecpot = false;              ///< output the vector potential or not
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04

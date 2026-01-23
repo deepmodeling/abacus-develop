@@ -443,7 +443,7 @@ void ReadInput::item_output()
     {
         Input_Item item("out_current");
         item.annotation = "output current or not";
-        read_sync_bool(input.out_current);
+        read_sync_int(input.out_current);
         this->add_item(item);
     }
     {

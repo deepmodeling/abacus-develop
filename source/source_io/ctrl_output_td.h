@@ -11,6 +11,10 @@
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/record_adj.h"
 #include "source_psi/psi.h"
+#include "source_lcao/hamilt_lcao.cpp"
+#ifdef __EXX
+#include <RI/global/Tensor.h>
+#endif
 
 namespace ModuleIO
 {
@@ -27,8 +31,15 @@ void ctrl_output_td(const UnitCell& ucell,
                     const Parallel_Orbitals* pv,
                     const LCAO_Orbitals& orb,
                     const Velocity_op<TR>* velocity_mat,
+                    const Grid_Driver& grid,
+                    hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
-                    TD_info* td_p);
+                    TD_info* td_p
+#ifdef __EXX
+                    ,
+                    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* hexxs = nullptr
+#endif
+                    );
 
 } // namespace ModuleIO
 

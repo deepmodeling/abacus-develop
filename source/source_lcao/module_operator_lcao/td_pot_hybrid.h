@@ -86,7 +86,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     bool HR_fixed_done = false;
     //tddft part
-    static cal_r_overlap_R r_calculator;
+    cal_r_overlap_R* r_calculator;
     //ETD
     //std::vector<std::complex<double>> hk_hybrid;
     //ETD
