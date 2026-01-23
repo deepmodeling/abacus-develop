@@ -834,9 +834,11 @@ void ModuleIO::write_current(
     hamilt::HContainer<std::complex<double>>* full_hR;
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
+    #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
         sum_HR(ucell, *pv, kv, hR, full_hR, Hexxs);
     else
+    #endif
         sum_HR(ucell, *pv, kv, hR, full_hR);
     cal_current_comm_k(ucell, GridD, orb, pv, kv, r_calculator, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
@@ -902,8 +904,9 @@ void ModuleIO::write_current<double>(
 #ifdef __EXX
         ,
         const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-);
 #endif
+);
+
 template 
 void ModuleIO::write_current<std::complex<double>>(
         const UnitCell& ucell,
