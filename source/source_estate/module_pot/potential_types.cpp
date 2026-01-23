@@ -16,6 +16,9 @@
 #ifdef __LCAO
 #include "H_TDDFT_pw.h"
 #endif
+#ifdef __MLALGO
+#include "pot_ml_exx.h"
+#endif
 
 namespace elecstate
 {
@@ -54,6 +57,12 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     else if (pot_type == "tddft")
     {
         return new H_TDDFT_pw(this->rho_basis_, this->ucell_);
+    }
+#endif
+#ifdef __MLALGO
+    else if (pot_type == "ml_exx")
+    {
+        return new PotML_EXX(this->rho_basis_, this->ucell_);
     }
 #endif
     else if (pot_type == "dfthalf") {

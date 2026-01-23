@@ -106,6 +106,11 @@ void OFDFT::print_info(const int iter,
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
+        if (PARAM.inp.ml_exx)
+        {
+            titles.push_back("E_ML-EXX");
+            energies_Ry.push_back(pelec->f_en.ml_exx);
+        }
     }
     else
     {

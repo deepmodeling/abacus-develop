@@ -8,15 +8,15 @@ for i in 2 3 4; do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./operator_overlap_cd_test
+    mpirun --allow-run-as-root -np $i ./operator_overlap_cd_test
     e1=$?
-    mpirun -np $i ./operator_overlap_test
+    mpirun --allow-run-as-root -np $i ./operator_overlap_test
     e2=$?
-    mpirun -np $i ./operator_ekinetic_test
+    mpirun --allow-run-as-root -np $i ./operator_ekinetic_test
     e3=$?
-    mpirun -np $i ./operator_nonlocal_test
+    mpirun --allow-run-as-root -np $i ./operator_nonlocal_test
     e4=$?
-    mpirun -np $i ./operator_T_NL_cd_test
+    mpirun --allow-run-as-root -np $i ./operator_T_NL_cd_test
     e5=$?
     if [[ $e1 -ne 0 || $e2 -ne 0 || $e3 -ne 0 || $e4 -ne 0 || $e5 -ne 0 ]]; then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\

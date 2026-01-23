@@ -16,7 +16,7 @@ namespace elecstate
 double fenergy::calculate_etot()
 {
     etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot;
 }
 
@@ -24,7 +24,7 @@ double fenergy::calculate_etot()
 double fenergy::calculate_harris()
 {
     etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot_harris;
 }
 
@@ -33,7 +33,7 @@ void fenergy::clear_all()
 {
     etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
         = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon
-        = 0.0;
+        = ml_exx = 0.0;
 }
 
 /// @brief print all energies
@@ -49,6 +49,7 @@ void fenergy::print_all() const
     std::cout << " entropy(-TS)=" << demet << std::endl;
     std::cout << " descf=" << descf << std::endl;
     std::cout << " exx=" << exx << std::endl;
+    std::cout << " ml_exx=" << ml_exx << std::endl;
     std::cout << " efiled=" << efield << std::endl;
     std::cout << " gatefiled=" << gatefield << std::endl;
     std::cout << " evdw=" << evdw << std::endl;
