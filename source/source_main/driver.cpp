@@ -124,7 +124,7 @@ void Driver::reading()
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card;
+    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card << ".info";
     input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
