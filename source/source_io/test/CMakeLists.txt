@@ -102,6 +102,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_input_help_test
+  LIBS parameter  ${math_libs} base device
+  SOURCES input_help_test.cpp ../input_help.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_bessel_basis_test
   LIBS parameter  ${math_libs} base device
   SOURCES bessel_basis_test.cpp ../bessel_basis.cpp

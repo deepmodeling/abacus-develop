@@ -46,7 +46,56 @@ In the above example, the meanings of the parameters are:
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
-> **Note:** Users cannot change the filename “INPUT” to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg 1 8` will output the charge density on realspace grid with 8 digits after the decimal point.
+> **Note:** Users cannot change the filename "INPUT" to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg 1 8` will output the charge density on realspace grid with 8 digits after the decimal point.
+
+## Getting Help with Parameters
+
+ABACUS includes a built-in help system to look up INPUT parameters directly from the command line.
+
+### Basic Commands
+
+```bash
+# Show general help and common parameters
+abacus -h
+
+# Search for parameters by keyword
+abacus -s ecut
+# Finds: ecutwfc, ecutrho, lcao_ecut, etc.
+
+# Get detailed help for a specific parameter
+abacus -h ecutwfc
+```
+
+### Example Output
+
+```
+$ abacus -h ecutwfc
+
+Parameter: ecutwfc
+Type:      Real
+Default:   50 for PW basis, 100 for LCAO basis
+Category:  Plane wave related variables
+Unit:      Ry
+
+Description:
+  Energy cutoff for plane wave functions...
+```
+
+### Fuzzy Matching
+
+If you mistype a parameter name, ABACUS suggests similar parameters:
+
+```bash
+$ abacus -h exx_hybrid_steps
+Error: Unknown parameter 'exx_hybrid_steps'
+
+Did you mean one of these?
+  - exx_hybrid_step
+
+Use 'abacus -s <keyword>' to search for parameters.
+```
+
+Parameter lookups are case-insensitive, so `ECUTWFC`, `Ecutwfc`, and `ecutwfc` all work.
 
 ## *STRU*
 

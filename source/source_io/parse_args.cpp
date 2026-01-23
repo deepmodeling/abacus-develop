@@ -1,5 +1,6 @@
 #include "parse_args.h"
 #include "build_info.h"
+#include "input_help.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -136,6 +137,74 @@ void parse_args(int argc, char** argv)
             print_build_info();
             std::exit(0);
         }
+        else if (arg == "-h" || arg == "--help")
+        {
+            // Handle -h or -h <key>
+            if (i + 1 < argc) {
+                // Next argument exists - check if it's a parameter key
+                std::string next_arg = argv[i + 1];
+                if (!next_arg.empty() && next_arg[0] != '-') {
+                    // Not another flag - treat as parameter key
+                    ParameterHelp::initialize();
+                    if (!ParameterHelp::show_parameter_help(next_arg)) {
+                        std::cerr << "Error: Unknown parameter '" << next_arg << "'" << std::endl;
+
+                        // Try to find similar parameters (fuzzy matching)
+                        auto suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
+                        if (!suggestions.empty()) {
+                            std::cerr << "\nDid you mean one of these?" << std::endl;
+                            for (const auto& suggestion : suggestions) {
+                                std::cerr << "  - " << suggestion << std::endl;
+                            }
+                        }
+
+                        std::cerr << "\nUse 'abacus -s <keyword>' to search for parameters." << std::endl;
+                        std::exit(1);
+                    }
+                    std::exit(0);
+                }
+            }
+            // No argument or next is a flag - show general help
+            ParameterHelp::show_general_help();
+            std::exit(0);
+        }
+        else if (arg == "-s" || arg == "--search")
+        {
+            // Require search query
+            if (i + 1 >= argc || argv[i + 1][0] == '-') {
+                std::cerr << "Error: -s requires a search query" << std::endl;
+                std::exit(1);
+            }
+
+            std::string query = argv[++i];
+
+            // Initialize help system
+            ParameterHelp::initialize();
+
+            auto results = ParameterHelp::search_parameters(query);
+            if (results.empty()) {
+                std::cerr << "No parameters found matching '" << query << "'" << std::endl;
+                std::exit(1);
+            }
+
+            // Display results
+            std::cout << "\nFound " << results.size() << " parameter(s) matching '" << query << "':\n\n";
+            for (const auto& param : results) {
+                auto metadata = ParameterHelp::get_metadata(param);
+                std::cout << "  " << std::left << std::setw(30) << param;
+                if (!metadata.name.empty() && !metadata.description.empty()) {
+                    // Show first 60 characters of description
+                    std::string desc = metadata.description;
+                    if (desc.length() > 60) {
+                        desc = desc.substr(0, 60) + "...";
+                    }
+                    std::cout << " - " << desc;
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "\nUse 'abacus -h <parameter>' for detailed help." << std::endl;
+            std::exit(0);
+        }
         else if (arg == "--check-input")
         {
             ModuleIO::ReadInput::check_mode = true;
@@ -146,7 +215,9 @@ void parse_args(int argc, char** argv)
             std::cerr << "Usage: abacus [options]" << std::endl;
             std::cerr << "  -v, -V, --version      Display version information." << std::endl;
             std::cerr << "  -i, -I, --info         Display detailed build information." << std::endl;
-            std::cerr << "  --check-input      Check input file syntax and exit." << std::endl;
+            std::cerr << "  -h, --help [param]     Display help for parameter (or general help)." << std::endl;
+            std::cerr << "  -s, --search <query>   Search for parameters matching query." << std::endl;
+            std::cerr << "  --check-input          Check input file syntax and exit." << std::endl;
             std::exit(1);
         }
     }
