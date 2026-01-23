@@ -12,6 +12,7 @@ AddTest(
   ../../module_rt/td_info.cpp
   ../../module_rt/td_folding.cpp
   ../../../source_estate/module_pot/H_TDDFT_pw.cpp
+  ../../../source_io/cal_r_overlap_R.cpp
 )
 
 AddTest(
@@ -25,6 +26,7 @@ AddTest(
   ../../module_rt/td_info.cpp
   ../../module_rt/td_folding.cpp
   ../../../source_estate/module_pot/H_TDDFT_pw.cpp
+  ../../../source_io/cal_r_overlap_R.cpp
 )
 
 AddTest(
@@ -38,6 +40,7 @@ AddTest(
   ../../module_rt/td_info.cpp
   ../../module_rt/td_folding.cpp
   ../../../source_estate/module_pot/H_TDDFT_pw.cpp
+  ../../../source_io/cal_r_overlap_R.cpp
 )
 
 AddTest(
