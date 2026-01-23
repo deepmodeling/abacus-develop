@@ -113,12 +113,13 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // This is because the current implementation of the cusolvermp library is ONE process ONE GPU.
     // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
+    // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
     CUSOLVER_CHECK(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
                                                    this->cusolverCalComm,
                                                    this->nprows,
                                                    this->npcols,
-                                                   CUSOLVERMP_GRID_MAPPING_COL_MAJOR));
+                                                   CUSOLVERMP_GRID_MAPPING_ROW_MAJOR));
 
     // 20240529 zhanghaochong
     // Actually, there should be three matrix descriptors, A matrix, B matrix, and output eigenvector matrix.
