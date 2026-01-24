@@ -39,7 +39,7 @@ TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCA
         //std::cout<<"estep_shift"<<estep_shift<<std::endl;
     }
     this->istep += estep_shift;
-    if(out_current==2||elecstate::H_TDDFT_pw::stype == 1)
+    if(out_current==2||elecstate::H_TDDFT_pw::stype == 2)
     {
         r_calculator.init(*ucell, pv, orb);
     }
