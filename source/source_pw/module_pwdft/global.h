@@ -21,11 +21,6 @@
 
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/unitcell.h"
-namespace GlobalC
-{
-extern Restart restart; // Peize Lin add 2020.04.04
-} // namespace GlobalC
-
 // extern Magnetism mag;
 
 #endif
