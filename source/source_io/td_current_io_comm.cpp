@@ -202,12 +202,8 @@ void ModuleIO::sum_HR(
     const Parallel_Orbitals& pv,
     const K_Vectors& kv,
     const hamilt::HContainer<TR>* hR,
-    hamilt::HContainer<std::complex<double>>* full_hR
-#ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
-        Hexxs
-#endif
+    hamilt::HContainer<std::complex<double>>* full_hR,
+    const Exx_NAO<std::complex<double>>& exx_nao
 )
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
@@ -262,9 +258,9 @@ void ModuleIO::sum_HR(
         for (size_t is = 0; is != PARAM.inp.nspin; ++is)
         {
             if (use_cell_nearest)
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, *Hexxs, pv, PARAM.globalv.npol, *full_hR, &cell_nearest);
+                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, exx_nao.exc->get_Hexxs(), pv, PARAM.globalv.npol, *full_hR, &cell_nearest);
             else
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, *Hexxs, pv, PARAM.globalv.npol, *full_hR, nullptr);
+                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, exx_nao.exc->get_Hexxs(), pv, PARAM.globalv.npol, *full_hR, nullptr);
         }
     }
 #endif
@@ -321,7 +317,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_basis_k");
     ModuleBase::timer::tick("ModuleIO", "cal_velocity_basis_k");
-
+#ifdef __MPI
     const int nlocal = PARAM.globalv.nlocal;
     const char N_char = 'N';
     const std::complex<double> one_imag = ModuleBase::IMAG_UNIT;
@@ -650,6 +646,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     delete[] r_is;
     delete[] r_is_h;
     delete[] h_is_ps;
+#endif //__MPI
     ModuleBase::timer::tick("ModuleIO", "cal_velocity_basis_k");
 }
 
@@ -661,7 +658,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_matrix");
     ModuleBase::timer::tick("ModuleIO", "cal_velocity_matrix");
-
+#ifdef __MPI
     const char N_char = 'N';
     const char C_char = 'C';
     const std::complex<double> one_real = ModuleBase::ONE;
@@ -747,7 +744,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
 
     delete[] vk_c;
     delete[] v_c;
-
+#endif //__MPI
     ModuleBase::timer::tick("ModuleIO", "cal_velocity_matrix");
 }
 template <typename TR>
@@ -819,11 +816,8 @@ void ModuleIO::write_current(
     const LCAO_Orbitals& orb,
     cal_r_overlap_R& r_calculator,
     const hamilt::HContainer<TR>* sR,
-    const hamilt::HContainer<TR>* hR
-#ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-#endif
+    const hamilt::HContainer<TR>* hR,
+    const Exx_NAO<std::complex<double>>& exx_nao
 )
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
@@ -834,12 +828,7 @@ void ModuleIO::write_current(
     hamilt::HContainer<std::complex<double>>* full_hR;
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
-    #ifdef __EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
-        sum_HR(ucell, *pv, kv, hR, full_hR, Hexxs);
-    else
-    #endif
-        sum_HR(ucell, *pv, kv, hR, full_hR);
+    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao);
     cal_current_comm_k(ucell, GridD, orb, pv, kv, r_calculator, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 
@@ -900,11 +889,8 @@ void ModuleIO::write_current<double>(
         const LCAO_Orbitals& orb,
         cal_r_overlap_R& r_calculator,
         const hamilt::HContainer<double>* sR,
-        const hamilt::HContainer<double>* hR
-#ifdef __EXX
-        ,
-        const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-#endif
+        const hamilt::HContainer<double>* hR,
+        const Exx_NAO<std::complex<double>>& exx_nao
 );
 
 template 
@@ -919,10 +905,7 @@ void ModuleIO::write_current<std::complex<double>>(
         const LCAO_Orbitals& orb,
         cal_r_overlap_R& r_calculator,
         const hamilt::HContainer<std::complex<double>>* sR,
-        const hamilt::HContainer<std::complex<double>>* hR
-#ifdef __EXX
-        ,
-        const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-#endif
+        const hamilt::HContainer<std::complex<double>>* hR,
+        const Exx_NAO<std::complex<double>>& exx_nao
 );
 #endif //__LCAO

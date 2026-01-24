@@ -6,6 +6,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_psi/psi.h"
 #include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/setup_exx.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
@@ -49,12 +50,8 @@ void write_current(
     const LCAO_Orbitals& orb,
     cal_r_overlap_R& r_calculator,
     const hamilt::HContainer<TR>* sR,
-    const hamilt::HContainer<TR>* hR
-#ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-    = nullptr
-#endif
+    const hamilt::HContainer<TR>* hR,
+    const Exx_NAO<std::complex<double>>& exx_nao
 );
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM_k(const UnitCell& ucell,
@@ -82,12 +79,8 @@ void sum_HR(
     const Parallel_Orbitals& pv,
     const K_Vectors& kv,
     const hamilt::HContainer<TR>* hR,
-    hamilt::HContainer<std::complex<double>>* full_hR
-#ifdef __EXX
-    ,
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* Hexxs
-    = nullptr
-#endif
+    hamilt::HContainer<std::complex<double>>* full_hR,
+    const Exx_NAO<std::complex<double>>& exx_nao
 );
 
 template <typename Tadd, typename Tfull>

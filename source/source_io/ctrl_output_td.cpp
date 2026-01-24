@@ -23,11 +23,8 @@ void ctrl_output_td(const UnitCell& ucell,
                     const Grid_Driver& grid,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
-                    TD_info* td_p
-#ifdef __EXX
-                    ,
-                    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* hexxs
-#endif
+                    TD_info* td_p,
+                    const Exx_NAO<std::complex<double>>& exx_nao
                     )
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
@@ -66,11 +63,7 @@ void ctrl_output_td(const UnitCell& ucell,
     }
     else if(TD_info::out_current==2)
     {
-        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR()
-#ifdef __EXX
-                ,hexxs
-#endif
-            );
+        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
     }
 
     // (3) Output file for restart
@@ -106,11 +99,8 @@ template void ctrl_output_td<double>(const UnitCell&,
                                      const Grid_Driver&,
                                      hamilt::HamiltLCAO<std::complex<double>, double>*,
                                      Record_adj&,
-                                     TD_info*
-#ifdef __EXX
-                                     ,
-                                     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
-#endif
+                                     TD_info*,
+                                     const Exx_NAO<std::complex<double>>&
                                      );
 
 template void ctrl_output_td<std::complex<double>>(const UnitCell&,
@@ -127,11 +117,8 @@ template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    const Grid_Driver&,
                                                    hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*,
                                                    Record_adj&,
-                                                   TD_info*
-#ifdef __EXX
-                                                   ,
-                                                   const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>*
-#endif
+                                                   TD_info*,
+                                                   const Exx_NAO<std::complex<double>>&
                                                    );
 
 } // namespace ModuleIO

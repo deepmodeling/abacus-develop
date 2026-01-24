@@ -12,6 +12,7 @@
 #include "source_lcao/record_adj.h"
 #include "source_psi/psi.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/setup_exx.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
@@ -34,11 +35,8 @@ void ctrl_output_td(const UnitCell& ucell,
                     const Grid_Driver& grid,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
-                    TD_info* td_p
-#ifdef __EXX
-                    ,
-                    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>* hexxs = nullptr
-#endif
+                    TD_info* td_p,
+                    const Exx_NAO<std::complex<double>>& exx_nao
                     );
 
 } // namespace ModuleIO
