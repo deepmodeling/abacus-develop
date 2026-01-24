@@ -4,20 +4,18 @@ suffix             autotest
 pseudo_dir         ../../PP_ORB
 orbital_dir        ../../PP_ORB
 
-nbands             18
 calculation        md
 esolver_type       tddft
+basis_type         lcao
+gamma_only         0
+nbands             18
 
-#Parameter (Accuracy)
+#Parameter (Electronic Structure)
 ecutwfc            20
 scf_nmax           30
 
 ks_solver          genelpa
-basis_type         lcao
-# out_chg            1
-gamma_only         0
-md_nstep           3
-estep_per_md       1
+# out_chg          1
 
 mixing_type        broyden
 mixing_beta        0.7
@@ -29,7 +27,10 @@ stress_thr         1e-6
 cal_force          1
 force_thr_ev       1.0e-3
 
+#Parameter (MD)
 md_type            nve
+md_nstep           3
+estep_per_md       1
 md_dt              0.05
 init_vel           1
 ocp                1

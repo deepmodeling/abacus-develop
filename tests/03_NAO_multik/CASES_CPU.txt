@@ -29,13 +29,12 @@
 29_NO_KP_S2_eadd
 30_NO_KP_S2_eminus
 31_NO_KP_nupdown0
-32_NO_KP_get_wf
-32_NO_KP_get_wf_zero_weight
-33_NO_KP_OW
-34_NO_KP_MU
-35_NO_KP_MU_nscf
-36_NO_KP_sol_H2
-37_NO_KP_restart
+32_NO_KP_wf
+33_NO_KP_wf0
+34_NO_KP_pchg
+35_NO_KP_pchg_k
+36_NO_KP_MU
+37_NO_KP_MU_nscf
 38_NO_OP3
 39_NO_OP_nscf
 40_NO_ELF
@@ -58,3 +57,6 @@
 57_NO_MD_1O
 58_NO_MD_2O
 59_NO_KP_initHR
+60_NO_KP_OW
+61_NO_KP_sol
+62_NO_KP_restart

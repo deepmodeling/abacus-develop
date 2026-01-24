@@ -64,7 +64,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     Parallel_Reduce::reduce_pool(dipole_elec_y);
     Parallel_Reduce::reduce_pool(dipole_elec_z);
 
-    ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
+    ofs << istep+1 << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
 
     double dipole_elec[3] = {0.0, 0.0, 0.0};
@@ -95,7 +95,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_y(t)", dipole_elec[1]);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_z(t)", dipole_elec[2]);
 
-    ofs << std::setprecision(precision) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
+    ofs << std::setprecision(precision) << istep+1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
         << dipole_elec[2] << std::endl;
 
     double dipole_ion[3] = {0.0};
