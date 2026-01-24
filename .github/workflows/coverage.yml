@@ -4,85 +4,87 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+    - 'v*'
 jobs:
   test-coverage:
     name: Generate Coverage Report
     runs-on: X64
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-      
-      - name: Install Perl Dependencies and Coverage Tools
-        run: |
-          apt update && apt install -y curl jq ca-certificates python3-pip
-          apt install -y lcov perl-modules
-          apt install -y libcapture-tiny-perl libdatetime-perl libjson-perl libperlio-gzip-perl
-          lcov --version
-      
-      - name: Building with Coverage
-        run: |
-          rm -rf build/
-          rm -f CMakeCache.txt
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
 
-          mkdir -p build
-          chmod -R 755 build/
+    - name: Install Perl Dependencies and Coverage Tools
+      run: |
+        apt update && apt install -y curl jq ca-certificates python3-pip
+        apt install -y lcov perl-modules
+        apt install -y libcapture-tiny-perl libdatetime-perl libjson-perl libperlio-gzip-perl
+        lcov --version
 
-          cmake -B build \
-            -DENABLE_COVERAGE=ON \
-            -DBUILD_TESTING=ON \
-            -DENABLE_MLALGO=ON \
-            -DENABLE_LIBXC=ON \
-            -DENABLE_LIBRI=ON \
-            -DENABLE_GOOGLEBENCH=ON \
-            -DENABLE_RAPIDJSON=ON \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
-            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-          cmake --build build -j`nproc`
-          cmake --install build
-      
-      - name: Testing
-        env:
-          OMP_NUM_THREADS: 1
-        run: |
-          chmod -R 755 build/
-          cmake --build build --target test ARGS="-V --timeout 21600" || echo "Some tests failed but continuing for coverage"
-      
-      - name: Generate Coverage Data
-        run: |
-          cd build
-          
-          lcov --directory . --capture --output-file coverage.info
-          
-          lcov --remove coverage.info '/usr/*' '*/test/*' '*/external/*' '*/build/*' --output-file coverage.filtered.info
-          
-          genhtml coverage.filtered.info --output-directory coverage-report
-          
-          cd ..
-      
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        if: ${{ ! cancelled() }}
-        with:
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./build/coverage.xml,./build/coverage.info
-          directory: ./build/
-          flags: unittests
-          name: codecov-umbrella
-          verbose: true
-      
-      - name: Upload Coverage Report Artifact
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: coverage-report
-          path: |
-            build/coverage-report/
-            build/coverage.info
-            build/coverage.xml
-          retention-days: 30
+    - name: Building with Coverage
+      run: |
+        rm -rf build/
+        rm -f CMakeCache.txt
+
+        mkdir -p build
+        chmod -R 755 build/
+
+        cmake -B build \
+          -DENABLE_COVERAGE=ON \
+          -DBUILD_TESTING=ON \
+          -DENABLE_MLALGO=ON \
+          -DENABLE_LIBXC=ON \
+          -DENABLE_LIBRI=ON \
+          -DENABLE_GOOGLEBENCH=ON \
+          -DENABLE_RAPIDJSON=ON \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake --build build -j`nproc`
+        cmake --install build
+
+    - name: Testing
+      env:
+        OMP_NUM_THREADS: 1
+      run: |
+        chmod -R 755 build/
+        cmake --build build --target test ARGS="-V --timeout 21600" || echo "Some tests failed but continuing for coverage"
+
+    - name: Generate Coverage Data
+      run: |
+        cd build
+
+        lcov --directory . --capture --output-file coverage.info
+
+        lcov --remove coverage.info '/usr/*' '*/test/*' '*/external/*' '*/build/*' --output-file coverage.filtered.info
+
+        genhtml coverage.filtered.info --output-directory coverage-report
+
+        cd ..
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v5
+      if: ${{ ! cancelled() }}
+      with:
+        fail_ci_if_error: true
+        files: ./build/coverage.xml,./build/coverage.info
+        directory: ./build/
+        flags: unittests
+        name: codecov-umbrella
+        verbose: true
+
+        use_oidc: true
+    - name: Upload Coverage Report Artifact
+      uses: actions/upload-artifact@v6
+      if: always()
+      with:
+        name: coverage-report
+        path: |
+          build/coverage-report/
+          build/coverage.info
+          build/coverage.xml
+        retention-days: 30
+permissions:
+  id-token: write
