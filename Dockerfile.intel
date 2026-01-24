@@ -80,7 +80,7 @@ ENV GKLIB_VERSION="master"
 ENV METIS_VERSION="master"
 ENV PARMETIS_VERSION="main"
 ENV SUPERLU_DIST_VERSION=7.2.0
-ENV PEXSI_VERSION=2.0.0
+ENV PEXSI_VERSION="master"
 ENV GKLIB_ROOT=/usr/local/gklib-${GKLIB_VERSION}
 ENV METIS32_ROOT=/usr/local/metis32-${METIS_VERSION}
 ENV PARMETIS32_ROOT=/usr/local/parmetis32-${PARMETIS_VERSION}
@@ -153,9 +153,9 @@ RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARM
     export PKG_CONFIG_PATH=${SUPERLU_DIST32_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${GKLIB_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH} && \
     export CPATH=${SUPERLU_DIST32_ROOT}/include:${PARMETIS32_ROOT}/include:${METIS32_ROOT}/include:${GKLIB_ROOT}/include:${CMAKE_PREFIX_PATH} && \
     export CMAKE_PREFIX_PATH=${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH} && \
-    wget https://bitbucket.org/berkeleylab/pexsi/downloads/pexsi_v${PEXSI_VERSION}.tar.gz && \
-    tar -xzf pexsi_v${PEXSI_VERSION}.tar.gz && \
-    cd pexsi_v${PEXSI_VERSION} && \
+    wget https://codeload.github.com/MCresearch/pexsi/tar.gz/refs/heads/${PEXSI_VERSION} -O pexsi-${PEXSI_VERSION}.tar.gz && \
+    tar -xzf pexsi-${PEXSI_VERSION}.tar.gz && \
+    cd pexsi-${PEXSI_VERSION} && \
     sed -i 's/^add_pexsi_f_example_exe/# add_pexsi_f_example_exe/g' fortran/CMakeLists.txt && \
     sed -i 's/^add_pexsi_example_exe/# add_pexsi_example_exe/g' examples/CMakeLists.txt && \
     sed -i 's/add_executable/# add_executable/g' fortran/CMakeLists.txt && \
@@ -167,7 +167,7 @@ RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARM
         -DPEXSI_ENABLE_FORTRAN=OFF && \
     make pexsi -j$(nproc) && \
     make install && \
-    cd / && rm -rf pexsi_v${PEXSI_VERSION} pexsi_v${PEXSI_VERSION}.tar.gz
+    cd / && rm -rf pexsi-${PEXSI_VERSION} pexsi-${PEXSI_VERSION}.tar.gz
 
 ENV LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH}
 ENV PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
