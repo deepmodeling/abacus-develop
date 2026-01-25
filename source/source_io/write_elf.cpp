@@ -1,6 +1,5 @@
 #include "write_elf.h"
 #include "source_io/cube_io.h"
-#include "source_pw/module_pwdft/global.h"
 
 namespace ModuleIO
 {

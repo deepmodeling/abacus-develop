@@ -1,7 +1,7 @@
 #include "to_wannier90_pw.h"
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
