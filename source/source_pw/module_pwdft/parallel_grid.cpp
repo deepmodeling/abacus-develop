@@ -1,8 +1,10 @@
 #include "parallel_grid.h"
-#include "source_base/parallel_comm.h" // use POOL_WORLD
 #include "source_io/module_parameter/parameter.h"
 
+#ifdef __MPI
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 #include <mpi.h>
+#endif
 
 Parallel_Grid::Parallel_Grid()
 {
