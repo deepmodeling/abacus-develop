@@ -1,6 +1,7 @@
 #include "dftu.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+#include <cstring>
 
 
 void Plus_U::output(const UnitCell &ucell)
