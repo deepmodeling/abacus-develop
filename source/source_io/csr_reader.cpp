@@ -40,7 +40,7 @@ void csrFileReader<T>::parseFile()
     for (int i = 0; i < numberOfR; i++)
     {
         std::vector<int> RCoord(3);
-        int nonZero;
+        int nonZero = 0;
 
         readLine();
         ss >> RCoord[0] >> RCoord[1] >> RCoord[2] >> nonZero;

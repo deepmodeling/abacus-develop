@@ -408,7 +408,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
 
         if (ib_local >= 0)
         {
-            double wg_value;
+            double wg_value = 0.0;
             if (if_separate_k)
             {
                 wg_value = (ib < fermi_band) ? wg_sum_k : wg_sum_k_homo;
