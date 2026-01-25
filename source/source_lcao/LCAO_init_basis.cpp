@@ -2,9 +2,6 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_comm.h"
-#ifdef __EXX
-//#include "source_pw/module_pwdft/global.h"
-#endif
 
 namespace LCAO_domain
 {
