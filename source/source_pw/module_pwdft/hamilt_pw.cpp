@@ -10,6 +10,7 @@
 #include "operator_pw/nonlocal_pw.h"
 #include "operator_pw/onsite_proj_pw.h"
 #include "operator_pw/op_exx_pw.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace hamilt
 {
