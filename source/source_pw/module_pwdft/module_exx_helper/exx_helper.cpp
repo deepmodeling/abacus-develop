@@ -57,10 +57,3 @@ template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
 template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
-#ifndef __EXX
-#include "source_hamilt/module_xc/exx_info.h"
-namespace GlobalC
-{
-    Exx_Info exx_info;
-}
-#endif

@@ -510,6 +510,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_exch_gga.o\
     xc_funct_corr_gga.o\
     xc_funct_hcth.o\
+    exx_info.o\
 
 OBJS_IO=input_conv.o\
     berryphase.o\

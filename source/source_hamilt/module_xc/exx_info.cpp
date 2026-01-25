@@ -1,10 +1,9 @@
-#include "global.h"
+#include "exx_info.h"
+
 //----------------------------------------------------------
 // init "GLOBAL CLASS" object
 //----------------------------------------------------------
 namespace GlobalC
 {
-Restart restart; // Peize Lin add 2020.04.04
+    Exx_Info exx_info;
 }
-
-//Magnetism mag;															

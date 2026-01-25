@@ -18,12 +18,6 @@
 //==========================================================
 // EXPLAIN : define "GLOBAL CLASS"
 //==========================================================
-namespace GlobalC
-{
-//#ifdef __EXX
-    extern Exx_Info exx_info;
-//#endif
-} // namespace GlobalC
 
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/unitcell.h"
