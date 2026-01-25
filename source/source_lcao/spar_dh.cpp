@@ -160,8 +160,8 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
     ModuleBase::Vector3<double> dtau, tau1, tau2;
     ModuleBase::Vector3<double> dtau1, dtau2, tau0;
 
-    double temp_value_double;
-    std::complex<double> temp_value_complex;
+    double temp_value_double = 0.0;
+    std::complex<double> temp_value_complex = 0.0;
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {

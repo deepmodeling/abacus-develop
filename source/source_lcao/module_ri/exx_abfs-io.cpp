@@ -62,7 +62,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	size_t L_size;
 	std::map<size_t,size_t> N_size;
 	size_t meshr;
-	double dr;
+	double dr = 0.0;
 	std::map<size_t,std::map<size_t,std::vector<double>>> psis;
 	
 	/*----------------------

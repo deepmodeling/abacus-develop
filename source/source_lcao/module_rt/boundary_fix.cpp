@@ -33,7 +33,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                 //skip unrelevent ik
                 if(arg==0)continue;
                 //calculate correction phase
-                double sinp, cosp;
+                double sinp = 0.0, cosp = 0.0;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 const std::complex<double> phase = std::complex<double>(cosp, sinp);
                 //phase correction for Hamiltionian, overlap matrix and c vec.
