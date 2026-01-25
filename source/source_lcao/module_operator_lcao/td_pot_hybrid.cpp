@@ -5,7 +5,6 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_pw/module_pwdft/global.h"
 
 // Constructor
 template <typename TK, typename TR>
