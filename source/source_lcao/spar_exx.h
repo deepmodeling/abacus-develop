@@ -4,27 +4,17 @@
 #ifdef __EXX
 
 // --------------------------------------------------------
-// Header files - all included at the beginning
+// Header files - minimal set for declaration only
 // --------------------------------------------------------
 
-#include <RI/global/Global_Func-2.h>
-#include <RI/ri/Cell_Nearest.h>
 #include <RI/global/Tensor.h>
 #include <array>
 #include <map>
 #include <vector>
-#include <stdexcept>
 
-#include "source_base/abfs-vector3_order.h"
-#include "source_base/global_variable.h"
-#include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "source_hamilt/module_xc/exx_info.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
-#include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_lcao/module_ri/RI_Util.hpp"
 
 // --------------------------------------------------------
 // Namespace - merged into one block

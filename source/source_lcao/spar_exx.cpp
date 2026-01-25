@@ -3,6 +3,22 @@
 #include "spar_exx.h"
 
 // --------------------------------------------------------
+// Header files needed for implementation only
+// --------------------------------------------------------
+
+#include <RI/global/Global_Func-2.h>
+#include <RI/ri/Cell_Nearest.h>
+#include <stdexcept>
+
+#include "source_base/abfs-vector3_order.h"
+#include "source_base/global_variable.h"
+#include "source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/RI_Util.hpp"
+
+// --------------------------------------------------------
 // Implementation of the cal_HR_exx function
 // --------------------------------------------------------
 
