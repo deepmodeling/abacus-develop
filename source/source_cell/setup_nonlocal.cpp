@@ -4,7 +4,6 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
-//#include "../source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/soc.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.
