@@ -4133,11 +4133,12 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### out_current
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**:
-  - True: Output current.
-  - False: Do not output current.
-- **Default**: False
+  - 0: Do not output current.
+  - 1: Output current using the two-center integral, faster.
+  - 2: Output current using the matrix commutation, more precise.
+- **Default**: 0
 
 ### out_current_k
 

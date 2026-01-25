@@ -6,10 +6,6 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 
-// Constructor
-template <typename TK, typename TR>
-cal_r_overlap_R hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::r_calculator;
-
 template <typename TK, typename TR>
 hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
     HS_Matrix_K<TK>* hsk_in,
@@ -206,7 +202,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
 
-            ModuleBase::Vector3<double> tmp_r = r_calculator.get_psi_r_psi(tau1 * this->ucell->lat0, T1, L1, m1, N1, tau2 * this->ucell->lat0, T2, L2, m2, N2);
+            ModuleBase::Vector3<double> tmp_r = r_calculator->get_psi_r_psi(tau1 * this->ucell->lat0, T1, L1, m1, N1, tau2 * this->ucell->lat0, T2, L2, m2, N2);
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
 
@@ -227,12 +223,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::init_td()
 {
     // initialize the r_calculator
-    if(TD_info::td_vel_op->get_istep()==(TD_info::estep_shift-1))
-    {
-        //std::cout << "init_r_overlap" <<std::endl;
-        r_calculator.init(*ucell, *this->hR->get_paraV(), orb_);
-    }
-    //hk_hybrid.resize(this->hR->get_paraV()->nloc);
+    this->r_calculator = &TD_info::td_vel_op->r_calculator;
 }
 template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::update_td()

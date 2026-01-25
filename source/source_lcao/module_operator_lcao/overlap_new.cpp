@@ -236,7 +236,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1, ucell, TD_info::cart_At);
+            module_rt::folding_HR_td(*ucell, *this->SR, this->hsk->get_sk(), this->kvec_d[ik], TD_info::cart_At, nrow, 1);
         }
         else
         {
@@ -248,7 +248,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0, ucell, TD_info::cart_At);
+            module_rt::folding_HR_td(*ucell, *this->SR, this->hsk->get_sk(), this->kvec_d[ik], TD_info::cart_At, ncol, 0);
         }
         else
         {

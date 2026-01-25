@@ -39,9 +39,8 @@ add_executable(
     ../../module_operator_lcao/deepks_lcao.cpp
     ../../module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
-    ../../module_rt/td_info.cpp
     ../../module_rt/td_folding.cpp
-    ../../../source_estate/module_pot/H_TDDFT_pw.cpp
+    mock_tdinfo.cpp
 )
 
 target_link_libraries(

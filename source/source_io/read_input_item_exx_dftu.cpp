@@ -164,6 +164,13 @@ void ReadInput::item_exx()
         Input_Item item("exx_separate_loop");
         item.annotation = "if 1, a two-step method is employed, else it will "
                           "start with a GGA-Loop, and then Hybrid-Loop";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.esolver_type == "tddft" && para.input.exx_separate_loop)
+            {
+                GlobalV::ofs_running << "For RT-TDDFT with hybrid functionals, only exx_separate_loop = 0 is supported" << std::endl;
+                para.input.exx_separate_loop = false;
+            }
+        };
         read_sync_bool(input.exx_separate_loop);
         this->add_item(item);
     }
