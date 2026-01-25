@@ -4,6 +4,8 @@
 #ifdef __EXX
 #include "source_lcao/module_ri/serialization_cereal.h"
 #endif
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
 namespace unitcell
 {
     void bcast_atoms_tau(Atom* atoms,
