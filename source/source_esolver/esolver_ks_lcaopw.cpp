@@ -30,6 +30,7 @@
 #include "source_io/to_wannier90_pw.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
