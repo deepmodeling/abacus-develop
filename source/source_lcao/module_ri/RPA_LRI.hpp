@@ -13,6 +13,7 @@
 
 #include "RPA_LRI.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)

@@ -1,5 +1,4 @@
 #include "exx_opt_orb.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "exx_abfs.h"
 #include "exx_abfs-construct_orbs.h"
