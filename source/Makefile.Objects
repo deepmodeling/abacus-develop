@@ -191,6 +191,7 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_vwr.o\
     unitcell.o\
     read_atoms.o\
+    read_atoms_helper.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
