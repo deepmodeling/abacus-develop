@@ -15,7 +15,6 @@
 #include "source_base/global_variable.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix.h"
-#include "exx_info.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_cell/unitcell.h"
