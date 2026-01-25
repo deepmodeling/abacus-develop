@@ -131,7 +131,8 @@ void TwoCenterIntegrator::calculate(
     const int m2,
     const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
     double* out,
-    double* grad_out) const {
+    double* grad_out,
+    double* hess_out) const {
     out[0] = 1.0;
 }
 
