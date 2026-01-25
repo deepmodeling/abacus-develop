@@ -11,7 +11,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
