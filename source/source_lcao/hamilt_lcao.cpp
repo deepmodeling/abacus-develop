@@ -4,7 +4,6 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>

@@ -12,11 +12,13 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/cube_io.h"
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
+#include "source_io/restart.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_cell/klist.h"
 
 void Charge::init_rho(const UnitCell& ucell,
                       const Parallel_Grid& pgrid,

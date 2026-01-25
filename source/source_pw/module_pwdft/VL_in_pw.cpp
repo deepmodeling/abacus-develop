@@ -3,7 +3,6 @@
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 
 pseudopot_cell_vl::pseudopot_cell_vl()
 {

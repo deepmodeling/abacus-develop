@@ -7,8 +7,8 @@
 #define RI_UTIL_HPP
 
 #include "RI_Util.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/global_function.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace RI_Util
 {

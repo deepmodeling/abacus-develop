@@ -5,9 +5,9 @@
 #include "op_exx_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/restart_exx_csr.h"
+#include "source_io/restart.h"
 
 namespace hamilt
 {

@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/module_gint/gint_interface.h"
-
+#include "source_hamilt/module_xc/xc_functional.h"
 
 namespace rdmft
 {

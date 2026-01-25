@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <tuple> 
-#include<algorithm>
-#include<cmath>
+#include <algorithm>
+#include <cmath>
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"

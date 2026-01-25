@@ -1,8 +1,6 @@
 #include "dftu.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
-
 
 #ifdef __LCAO
 void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)

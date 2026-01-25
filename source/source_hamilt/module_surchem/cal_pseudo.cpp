@@ -1,4 +1,3 @@
-#include "source_pw/module_pwdft/global.h"
 #include "surchem.h"
 
 // atom_in surchem::GetAtom;

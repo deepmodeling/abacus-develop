@@ -11,7 +11,6 @@
 #include "source_base/vector3.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
 #include "source_lcao/wavefunc_in_pw.h"
 #include "source_base/module_external/lapack_connector.h"
@@ -24,6 +23,7 @@
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 #include <limits>
 #include <sys/stat.h>

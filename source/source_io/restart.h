@@ -55,4 +55,9 @@ private:
     bool read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit = true) const;
 };
 
+namespace GlobalC
+{
+extern Restart restart; // Peize Lin add 2020.04.04
+} // namespace GlobalC
+
 #endif

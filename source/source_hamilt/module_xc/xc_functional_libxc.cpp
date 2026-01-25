@@ -6,7 +6,7 @@
 #include "source_base/formatter.h"
 
 #ifdef __EXX
-#include "source_pw/module_pwdft/global.h"		// just for GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #endif
 
 #include <xc.h>

@@ -4,7 +4,6 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/cal_test.h"
 #include "source_io/input_conv.h"
 #include "source_io/para_json.h"
@@ -12,6 +11,8 @@
 #include "source_io/read_input.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
+#include "source_base/parallel_global.h"
+
 Driver::Driver()
 {
 }

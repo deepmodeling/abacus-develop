@@ -3,7 +3,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "structure_factor.h"
 #include "source_base/constants.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/math_bspline.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"

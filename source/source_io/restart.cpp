@@ -42,6 +42,11 @@ bool Restart::write_file2(const std::string& file_name, const void* const ptr, c
     return true;
 }
 
+namespace GlobalC
+{
+Restart restart; // Peize Lin add 2020.04.04
+} // namespace GlobalC
+
 bool Restart::read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit) const
 {
 	const int file = open(file_name.c_str(), O_RDONLY);

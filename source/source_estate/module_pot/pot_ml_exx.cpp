@@ -5,7 +5,6 @@
 #include "npy.hpp"
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
-#include "source_pw/module_pwdft/global.h"
 
 namespace elecstate
 {
