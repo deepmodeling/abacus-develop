@@ -1,7 +1,6 @@
 #include "stress_func.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>

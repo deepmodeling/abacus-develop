@@ -11,8 +11,9 @@
 #include "source_base/memory.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
+
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
