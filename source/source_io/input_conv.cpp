@@ -13,6 +13,7 @@
 
 #include <algorithm>
 
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 #endif
