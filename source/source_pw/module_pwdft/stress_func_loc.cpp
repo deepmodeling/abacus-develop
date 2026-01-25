@@ -188,7 +188,7 @@ const UnitCell& ucell_in
   //
 	
 
-	int igl0;
+	int igl0 = 0;
 	this->device = base_device::get_device_type<Device>(this->ctx);
 
 	std::vector<double> gx_arr(rho_basis->ngg+1);
@@ -276,7 +276,7 @@ void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const UnitCell& ucell,
 												FPTYPE* dvloc, 
 												ModulePW::PW_Basis* rho_basis)
 {
-    int igl0;
+    int igl0 = 0;
 	// start from |G|=0 or not.
     if (rho_basis->gg_uniq[0] < 1.0e-8)
     {

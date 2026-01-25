@@ -273,7 +273,7 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
 {
     ModuleBase::TITLE("Stochastic_Iter", "itermu");
     ModuleBase::timer::tick("Stochastic_Iter", "itermu");
-    double dmu;
+    double dmu = 0.0;
     if (iter == 1)
     {
         dmu = 2;
@@ -294,8 +294,8 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
     double ne2 = calne(pes);
     double mu2 = this->stofunc.mu;
     double Dne = th_ne + 1;
-    double ne3;
-    double mu3;
+    double ne3 = 0.0;
+    double mu3 = 0.0;
 
     while (ne1 > targetne)
     {
@@ -440,7 +440,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     double totne = 0;
     KS_ne = 0;
     const int norder = p_che->norder;
-    double sto_ne;
+    double sto_ne = 0.0;
     if (this->method == 1)
     {
         // Note: spolyv contains kv.wk[ik]

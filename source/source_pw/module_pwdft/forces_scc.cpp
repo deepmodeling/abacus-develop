@@ -114,7 +114,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 						const double rhocgntigg
 							= rhocgnt[rho_basis->ig2igg[ig]];
 						const double arg = ModuleBase::TWO_PI * (gv * pos);
-						double sinp, cosp;
+						double sinp = 0.0, cosp = 0.0;
 						ModuleBase::libm::sincos(arg, &sinp, &cosp);
 						const std::complex<double> cpm
 							= std::complex<double>(sinp, cosp) * conj(psic[ig]);

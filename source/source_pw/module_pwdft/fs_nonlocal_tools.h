@@ -154,13 +154,13 @@ class FS_Nonlocal_tools
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
-    int nkb;
-    int nbands;
+    int nkb = 0;
+    int nbands = 0;
 
     int max_nh = 0;
     int max_npw = 0;
-    int ntype;
-    bool nondiagonal;
+    int ntype = 0;
+    bool nondiagonal = false;
     int pre_ik_s = -1;
     int pre_ik_f = -1;
 
