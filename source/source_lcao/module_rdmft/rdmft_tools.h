@@ -5,6 +5,8 @@
 #ifndef RDMFT_TOOLS_H
 #define RDMFT_TOOLS_H
 
+#include "source_cell/klist.h"
+#include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -15,7 +17,6 @@
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/parallel_reduce.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
