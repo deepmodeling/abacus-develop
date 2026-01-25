@@ -12,7 +12,6 @@
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
 #endif
 
-#include "source_pw/module_pwdft/global.h"
 #ifdef _OPENMP
 #include <omp.h>
 #include <unordered_set>

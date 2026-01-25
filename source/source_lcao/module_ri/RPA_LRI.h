@@ -11,6 +11,7 @@
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "source_base/matrix.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 // #include "source_lcao/module_ri/Exx_LRI.h"
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>

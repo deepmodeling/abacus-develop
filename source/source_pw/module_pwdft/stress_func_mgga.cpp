@@ -1,7 +1,6 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #include "stress_func.h"
 
 #include <ATen/core/tensor.h>

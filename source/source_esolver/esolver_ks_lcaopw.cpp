@@ -10,7 +10,6 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"

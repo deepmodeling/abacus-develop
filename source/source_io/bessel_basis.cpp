@@ -5,7 +5,6 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include <vector>
 
 Bessel_Basis::Bessel_Basis()

@@ -1,4 +1,5 @@
 #include "sto_wf.h"
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 
 #include "source_base/memory.h"
 #include "source_io/module_parameter/parameter.h"
@@ -6,10 +7,7 @@
 #include <cassert>
 #include <ctime>
 
-//---------Temporary------------------------------------
 #include "source_base/global_function.h"
-#include "source_pw/module_pwdft/global.h"
-//------------------------------------------------------
 
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()

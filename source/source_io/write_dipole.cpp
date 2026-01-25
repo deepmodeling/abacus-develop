@@ -2,7 +2,6 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_io/dipole_io.h"
 #include "source_lcao/module_rt/evolve_elec.h"
-#include "source_pw/module_pwdft/global.h"
 
 // fuxiang add 2017-03-15
 void ModuleIO::write_dipole(const UnitCell& ucell,

@@ -5,7 +5,6 @@
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/nonlocal_maths.hpp"
 #include "stress_func.h"
 // calculate the nonlocal pseudopotential stress in PW

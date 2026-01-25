@@ -22,7 +22,6 @@
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
 #include "source_lcao/wavefunc_in_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "single_R_io.h"
 #include "to_wannier90.h"

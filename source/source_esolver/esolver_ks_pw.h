@@ -3,7 +3,6 @@
 #include "./esolver_ks.h"
 #include "source_psi/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/VSep_in_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
 #include "source_pw/module_pwdft/operator_pw/velocity_pw.h"
 

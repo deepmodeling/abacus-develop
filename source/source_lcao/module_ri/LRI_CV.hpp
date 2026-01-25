@@ -13,7 +13,7 @@
 #include "../../source_basis/module_ao/element_basis_index-ORB.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
-#include "../../source_pw/module_pwdft/global.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
