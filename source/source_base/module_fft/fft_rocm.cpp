@@ -1,6 +1,7 @@
 #include "fft_rocm.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_base/module_device/device_check.h"
+
 namespace ModuleBase
 {
 template <typename FPTYPE>
