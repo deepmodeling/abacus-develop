@@ -9,7 +9,6 @@
 #include "source_base/timer.h"
 #include <cstring>
 #include "source_base/tool_quit.h"
-#include <cstring>
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
