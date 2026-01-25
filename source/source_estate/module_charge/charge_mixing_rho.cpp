@@ -1,7 +1,7 @@
 #include "charge_mixing.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
