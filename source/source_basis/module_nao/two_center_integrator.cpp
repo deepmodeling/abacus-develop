@@ -22,25 +22,27 @@ void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
     is_tabulated_ = true;
 }
 
-void TwoCenterIntegrator::calculate(const int itype1, 
-                                    const int l1, 
-                                    const int izeta1, 
-                                    const int m1, 
+void TwoCenterIntegrator::calculate(const int itype1,
+                                    const int l1,
+                                    const int izeta1,
+                                    const int m1,
                                     const int itype2,
                                     const int l2,
                                     const int izeta2,
                                     const int m2,
 	                                const ModuleBase::Vector3<double>& vR, // R = R2 - R1
                                     double* out,
-                                    double* grad_out) const
+                                    double* grad_out,
+                                    double* hess_out) const
 {
 #ifdef __DEBUG
     assert( is_tabulated_ );
-    assert( out || grad_out );
+    assert( out || grad_out || hess_out );
 #endif
 
     if (out) *out = 0.0;
     if (grad_out) std::fill(grad_out, grad_out + 3, 0.0);
+    if (hess_out) std::fill(hess_out, hess_out + 9, 0.0);
 
     double R = vR.norm();
     if (R > table_.rmax())
@@ -54,6 +56,13 @@ void TwoCenterIntegrator::calculate(const int itype1,
         return;
     }
 
+    // Check angular momentum limitation for Hessian computation
+    if (hess_out && (l1 + l2 > 6))
+    {
+        ModuleBase::WARNING_QUIT("TwoCenterIntegrator::calculate",
+            "Hessian computation not supported for l1+l2 > 6");
+    }
+
     // unit vector along R
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 
@@ -61,37 +70,75 @@ void TwoCenterIntegrator::calculate(const int itype1,
     const int lmax = l1 + l2;
 	std::vector<double> Rl_Y((lmax+1) * (lmax+1));
 	ModuleBase::Array_Pool<double> grad_Rl_Y((lmax+1) * (lmax+1), 3);
+    std::vector<std::vector<double>> hess_Rl_Y;
 
     // R^l * Y is necessary anyway
     ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
-    if (grad_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.get_ptr_2D());
+    if (grad_out || hess_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.get_ptr_2D());
+    if (hess_out) ModuleBase::Ylm::hes_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], hess_Rl_Y);
 
-    double tmp[2] = {0.0, 0.0};
+    double tmp[3] = {0.0, 0.0, 0.0};
     double* S_by_Rl = tmp;
-    double* d_S_by_Rl = grad_out ? tmp + 1 : nullptr;
+    double* d_S_by_Rl = (grad_out || hess_out) ? tmp + 1 : nullptr;
+    double* d2_S_by_Rl = hess_out ? tmp + 2 : nullptr;
 
     // the sign is given by i^(l1-l2-l) = (-1)^((l1-l2-l)/2)
     int sign = (l1 - l2 - std::abs(l1 - l2)) % 4 == 0 ? 1 : -1;
     for (int l = std::abs(l1 - l2); l <= l1 + l2; l += 2)
     {
-        // look up S/R^l and (d/dR)(S/R^l) (if necessary) from the radial table
-        table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, S_by_Rl, d_S_by_Rl);
+        // look up S/R^l, (d/dR)(S/R^l), and (d²/dR²)(S/R^l) from the radial table
+        table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, S_by_Rl, d_S_by_Rl, d2_S_by_Rl);
 
 		for (int m = -l; m <= l; ++m)
         {
             double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
+            int lm_idx = ylm_index(l, m);
 
             if (out)
             {
-                *out += sign * G * (*S_by_Rl) * Rl_Y[ylm_index(l, m)];
+                *out += sign * G * (*S_by_Rl) * Rl_Y[lm_idx];
             }
 
             if (grad_out)
             {
                 for (int i = 0; i < 3; ++i)
                 {
-                    grad_out[i] += sign * G * ( (*d_S_by_Rl) * uR[i] * Rl_Y[ylm_index(l, m)]
-                                                + (*S_by_Rl) * grad_Rl_Y[ylm_index(l, m)][i] );
+                    grad_out[i] += sign * G * ( (*d_S_by_Rl) * uR[i] * Rl_Y[lm_idx]
+                                                + (*S_by_Rl) * grad_Rl_Y[lm_idx][i] );
+                }
+            }
+
+            if (hess_out)
+            {
+                // Convert 6-element symmetric format to 9-element full matrix
+                // hess_Rl_Y[lm_idx] = [H_xx, H_xy, H_xz, H_yy, H_yz, H_zz]
+                double H_full[9] = {
+                    hess_Rl_Y[lm_idx][0], hess_Rl_Y[lm_idx][1], hess_Rl_Y[lm_idx][2],
+                    hess_Rl_Y[lm_idx][1], hess_Rl_Y[lm_idx][3], hess_Rl_Y[lm_idx][4],
+                    hess_Rl_Y[lm_idx][2], hess_Rl_Y[lm_idx][4], hess_Rl_Y[lm_idx][5]
+                };
+
+                for (int alpha = 0; alpha < 3; ++alpha)
+                {
+                    for (int beta = 0; beta < 3; ++beta)
+                    {
+                        int idx = alpha * 3 + beta;
+
+                        // Product rule: d²(f*g)/dα dβ = f''*g + f'*g'_α + f'*g'_β + f*g''
+                        double term1 = (*d2_S_by_Rl) * uR[alpha] * uR[beta] * Rl_Y[lm_idx];
+
+                        // Derivative of unit vector: du_α/dR_β = (δ_αβ - u_α*u_β)/R
+                        double du_dR = (alpha == beta ? 1.0 : 0.0) - uR[alpha] * uR[beta];
+                        if (R > 1e-10) du_dR /= R;
+                        else du_dR = 0.0;
+
+                        double term2 = (*d_S_by_Rl) * (du_dR * Rl_Y[lm_idx]
+                                                      + uR[alpha] * grad_Rl_Y[lm_idx][beta]
+                                                      + uR[beta] * grad_Rl_Y[lm_idx][alpha]);
+                        double term3 = (*S_by_Rl) * H_full[idx];
+
+                        hess_out[idx] += sign * G * (term1 + term2 + term3);
+                    }
                 }
             }
         }

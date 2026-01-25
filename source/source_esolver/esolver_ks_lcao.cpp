@@ -293,17 +293,25 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ESolver_KS<TK>::after_all_runners(ucell);
 
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-	if(!hamilt_lcao)
-	{
-		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","p_hamilt does not exist");
-	}
+    if(!hamilt_lcao)
+    {
+	    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","p_hamilt does not exist");
+    }
 
-	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		  PARAM.inp, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
-		  this->gd, this->psi, this->chr, hamilt_lcao,
-          this->two_center_bundle_,
-          this->orb_, this->pw_rho, this->pw_rhod,
-          this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
+    ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
+		    PARAM.inp, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
+		    this->gd, this->psi, this->chr, hamilt_lcao,
+		    this->two_center_bundle_,
+		    this->orb_, this->pw_rho, this->pw_rhod,
+		    this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
+
+
+#ifdef __MPI
+#ifdef __LCAO
+    // Exit BLACS environment for LCAO calculations
+    Cblacs_exit(1);
+#endif
+#endif
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }

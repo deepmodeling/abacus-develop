@@ -311,23 +311,23 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         // of LR-TDDFT is implemented.
         std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
-        ModuleESolver::ESolver* p_esolver_lr = nullptr;
-		if (PARAM.globalv.gamma_only_local)
-		{
-			p_esolver_lr = new LR::ESolver_LR<double, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
-        else
-		{
-			p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
-        // clean the 1st ESolver_KS and swap the pointer
-        ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
+	ModuleESolver::ESolver* p_esolver_lr = nullptr;
+	if (PARAM.globalv.gamma_only_local)
+	{
+		p_esolver_lr = new LR::ESolver_LR<double, double>(
+				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
+				inp,
+				ucell);
+	}
+	else
+	{
+		p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
+				inp,
+				ucell);
+	}
+	// clean the 1st ESolver_KS and swap the pointer
+	delete p_esolver;
         return p_esolver_lr;
     }
 #endif
@@ -355,20 +355,5 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
                                 + " line " + std::to_string(__LINE__));
 }
 
-void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit)
-{
-// Zhang Xiaoyang modified in 2024/7/6:
-// Note: because of the init method of serial lcao hsolver
-// it needs no release step for it, or this [delete] will cause Segmentation Fault
-// Probably it will be modified later.
-#ifdef __MPI
-    delete pesolver;
-#ifdef __LCAO
-    if (lcao_cblacs_exit)
-    {
-        Cblacs_exit(1);
-    }
-#endif
-#endif
-}
+
 } // namespace ModuleESolver

@@ -3,9 +3,7 @@
 
 #include "esolver.h"
 
-#ifndef __MPI
-#include <chrono>
-#endif
+#include "source_base/timer_wrapper.h"
 
 #include "source_basis/module_pw/pw_basis.h" // plane wave basis
 #include "source_cell/module_symmetry/symmetry.h" // symmetry analysis
@@ -83,11 +81,7 @@ class ESolver_FP: public ESolver
     bool pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
 
     //! the start time of scf iteration
-    #ifdef __MPI
-        double iter_time;
-    #else
-        std::chrono::system_clock::time_point iter_time;
-    #endif
+    ModuleBase::TimePoint iter_time;
 };
 } // namespace ModuleESolver
 
