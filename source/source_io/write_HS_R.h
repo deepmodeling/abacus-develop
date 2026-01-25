@@ -8,6 +8,10 @@
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#endif
+
 namespace ModuleIO
 {
 using TAC = std::pair<int, std::array<int, 3>>;
