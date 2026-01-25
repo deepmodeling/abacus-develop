@@ -7,6 +7,7 @@
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/restart_exx_csr.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_io/restart.h"
 
 namespace hamilt
@@ -339,7 +340,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 template<typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    ModuleBase::TITLE("OperatorEXX", "constributeHR");
+    ModuleBase::TITLE("OperatorEXX", "constributeHk");
     // Peize Lin add 2016-12-03
     if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
 
@@ -369,26 +370,40 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             }
         }
         // cal H(k) from H(R) normally
-
-        if (GlobalC::exx_info.info_ri.real_number) {
-            RI_2D_Comm::add_Hexx(
-                ucell,
-                this->kv,
-                ik,
-                GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxd,
-                *this->hR->get_paraV(),
-                this->hsk->get_hk());
-        } else {
-            RI_2D_Comm::add_Hexx(
+        if(PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        {
+            RI_2D_Comm::add_Hexx_td(
                 ucell,
                 this->kv,
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
+                TD_info::td_vel_op->cart_At,
                 this->hsk->get_hk());
-}
+        }
+        else
+        {
+            if (GlobalC::exx_info.info_ri.real_number) {
+                RI_2D_Comm::add_Hexx(
+                    ucell,
+                    this->kv,
+                    ik,
+                    GlobalC::exx_info.info_global.hybrid_alpha,
+                    *this->Hexxd,
+                    *this->hR->get_paraV(),
+                    this->hsk->get_hk());
+            } else {
+                RI_2D_Comm::add_Hexx(
+                    ucell,
+                    this->kv,
+                    ik,
+                    GlobalC::exx_info.info_global.hybrid_alpha,
+                    *this->Hexxc,
+                    *this->hR->get_paraV(),
+                    this->hsk->get_hk());
+            }
+        }
     }
 }
 

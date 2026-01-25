@@ -154,7 +154,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
-    const int nlm_dim = TD_info::out_current ? 4 : 1;
+    const int nlm_dim = TD_info::out_current==1 ? 4 : 1;
     // 1. calculate <psi|beta> for each pair of atoms
 
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
@@ -220,7 +220,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                        tau0 * this->ucell->lat0,
                                                        T0,
                                                        cart_At,
-                                                       TD_info::out_current);
+                                                       TD_info::out_current==1);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
                         nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
@@ -287,7 +287,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     // if not found , skip this pair of atoms
                     if (tmp != nullptr)
                     {
-                        if (TD_info::out_current)
+                        if (TD_info::out_current==1)
                         {
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                             for (int ii = 0; ii < 3; ii++)
@@ -337,7 +337,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     std::complex<double>* data_pointer,
     std::complex<double>** data_pointer_c)
 {
-    const int nlm_dim = TD_info::out_current ? 4 : 1;
+    const int nlm_dim = TD_info::out_current==1 ? 4 : 1;
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)

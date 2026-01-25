@@ -94,7 +94,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<std::complex<double>>* tmp = this->hR_tmp->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                if (TD_info::out_current)
+                if (TD_info::out_current == 1)
                 {
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
@@ -341,9 +341,13 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
         // initialize current term if needed
-        if (TD_info::out_current)
+        if (TD_info::out_current == 1)
         {
             TD_info::td_vel_op->initialize_current_term(this->hR_tmp, paraV);
+        }
+        if (TD_info::out_current==2)
+        {
+           TD_info::td_vel_op->set_velocity_HR(this->hR_tmp);
         }
         // calculate the values in hR_tmp
         this->update_td();

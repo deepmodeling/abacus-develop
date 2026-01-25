@@ -553,6 +553,7 @@ OBJS_IO=input_conv.o\
     write_dipole.o\
     write_init.o\
     td_current_io.o\
+    td_current_io_comm.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\

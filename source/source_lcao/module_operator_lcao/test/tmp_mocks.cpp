@@ -209,3 +209,12 @@ void Numerical_Orbital::set_orbital_info(const int&,
                                          const int&,
                                          const int*,
                                          const int&) {}
+
+// mock of TD_info
+class TD_info {
+public:
+    TD_info() {}
+    ~TD_info() {}
+    static ModuleBase::Vector3<double> cart_At;
+};
+ModuleBase::Vector3<double> TD_info::cart_At(0.0, 0.0, 0.0);

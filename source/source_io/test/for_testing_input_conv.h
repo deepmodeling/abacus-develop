@@ -30,7 +30,7 @@
 #undef private
 bool berryphase::berry_phase_flag = false;
 
-bool TD_Velocity::out_current;
+int TD_Velocity::out_current;
 bool TD_Velocity::out_current_k;
 bool TD_Velocity::out_vecpot;
 bool TD_Velocity::init_vecpot_file;

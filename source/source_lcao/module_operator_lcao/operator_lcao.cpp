@@ -194,9 +194,13 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
         case calculation_type::lcao_exx:
         {
             //update HR first
-            if (!this->hr_done)
+            if (!this->hr_done && PARAM.inp.esolver_type != "tddft")
             {
                 this->contributeHR();
+            }
+            else if(PARAM.inp.esolver_type == "tddft")
+            {
+                this->contributeHk(ik_in);
             }
 
             //update HK next
@@ -271,7 +275,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int nrow = this->hsk->get_pv()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
+            module_rt::folding_HR_td(*(TD_info::td_vel_op->get_ucell()), *this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, nrow, 1);
         }
         else
         {
@@ -283,7 +287,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
+            module_rt::folding_HR_td(*(TD_info::td_vel_op->get_ucell()), *this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, ncol, 0);
         }
         else
         {

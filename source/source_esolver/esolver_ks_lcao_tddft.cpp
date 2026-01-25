@@ -55,7 +55,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
     // Run before_all_runners in ESolver_KS_LCAO
     ESolver_KS_LCAO<std::complex<double>, TR>::before_all_runners(ucell, inp);
 
-    td_p = new TD_info(&ucell);
+    td_p = new TD_info(&ucell, this->pv, this->orb_);
     TD_info::td_vel_op = td_p;
     totstep += TD_info::estep_shift;
 
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // Initialize velocity operator for current calculation
-    if (PARAM.inp.td_stype != 1 && TD_info::out_current)
+    if (PARAM.inp.td_stype != 1 && TD_info::out_current == 1)
     {
         // initialize the velocity operator
         velocity_mat = new Velocity_op<TR>(&ucell,
@@ -203,7 +203,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    if (PARAM.inp.td_stype != 1 && TD_info::out_current)
+    if(PARAM.inp.td_stype != 1 && TD_info::out_current == 1)
     {
         delete velocity_mat;
     }
@@ -296,6 +296,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
             srho.begin(is, this->chr, this->pw_rho, ucell.symm);
         }
     }
+#ifdef __EXX
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
+    else
+        this->exx_nao.exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
+#endif
 
     // Calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
@@ -474,6 +480,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
 
     // Output dipole, current, etc.
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
     ModuleIO::ctrl_output_td<TR>(ucell,
                                  this->chr.rho_save,
                                  this->chr.rhopw,
@@ -485,8 +492,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  &this->pv,
                                  this->orb_,
                                  this->velocity_mat,
+                                 this->gd,
+                                 hamilt_lcao,
                                  this->RA,
-                                 this->td_p);
+                                 this->td_p,
+                                 this->exx_nao
+                                );
 
     ModuleBase::timer::tick(this->classname, "after_scf");
 }
