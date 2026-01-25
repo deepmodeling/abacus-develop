@@ -5,7 +5,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"

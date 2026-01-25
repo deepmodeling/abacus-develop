@@ -45,6 +45,10 @@
 
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
+#include "source_io/restart.h"
+#include "source_relax/bfgs_basic.h"
+#include "source_relax/ions_move_cg.h"
+
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c) {
     std::vector<double> params_ori;
