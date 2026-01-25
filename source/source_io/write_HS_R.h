@@ -10,6 +10,7 @@
 
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "RI/global/Tensor.h" // for RI::Tensor
 #endif
 
 namespace ModuleIO
