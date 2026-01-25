@@ -2,7 +2,6 @@
 
 #include "source_base/timer.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/output_log.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
