@@ -18,8 +18,8 @@ extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 int ELPA_Solver::eigenvector(double* A, double* EigenValue, double* EigenVector)
 {
-    int info;
-    double t;
+    int info = 0;
+    double t = 0.0;
 
     if (loglevel > 0 && myid == 0)
     {
@@ -41,7 +41,7 @@ int ELPA_Solver::generalized_eigenvector(double* A,
                                          double* EigenVector)
 {
     int info, allinfo;
-    double t;
+    double t = 0.0;
 
     if (loglevel > 0 && myid == 0)
     {
@@ -407,7 +407,7 @@ void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, dou
     maxError = 0;
     for (int i = 1; i <= nev; ++i)
     {
-        double E;
+        double E = 0.0;
         ScalapackConnector::dot(nFull, E, R, 1, i, 1, R, 1, i, 1, desc);
         // printf("myid: %d, i: %d, E: %lf\n", myid, i, E);
         sumError += E;

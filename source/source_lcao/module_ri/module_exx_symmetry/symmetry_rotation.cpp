@@ -38,7 +38,7 @@ namespace ModuleSymmetry
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
             {// in (-0.5, 0.5]
-                TCdouble kvec_res;
+                TCdouble kvec_res = 0.0;
                 kvec_res.x = fmod(kvec.x + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.y = fmod(kvec.y + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.z = fmod(kvec.z + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
