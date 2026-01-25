@@ -1315,9 +1315,224 @@ void Ylm::hes_rl_sph_harm
 	if (Lmax == 4) return;
 
 	/***************************
-			 L > 4
+			 L = 5
 	***************************/
-	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>4 not implemented!");
+	//m=0 : (63z^5 - 70z^3*r^2 + 15z*r^4)
+	coeff = sqrt(11.0 / ModuleBase::PI) / 16.0;
+	hrly[25][0] = (180*x*x*z + 60*y*y*z - 80*z*z*z) * coeff;
+	hrly[25][1] = (120*x*y*z) * coeff;
+	hrly[25][2] = (60*x*x*x + 60*x*y*y - 240*x*z*z) * coeff;
+	hrly[25][3] = (60*x*x*z + 180*y*y*z - 80*z*z*z) * coeff;
+	hrly[25][4] = (60*x*x*y + 60*y*y*y - 240*y*z*z) * coeff;
+	hrly[25][5] = (-240*x*x*z - 240*y*y*z + 160*z*z*z) * coeff;
+
+	//m=1 : x(21z^4 - 14z^2*r^2 + r^4)
+	coeff = sqrt(165.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[26][0] = (20*x*x*x + 12*x*y*y - 72*x*z*z) * coeff;
+	hrly[26][1] = (12*x*x*y + 4*y*y*y - 24*y*z*z) * coeff;
+	hrly[26][2] = (-72*x*x*z - 24*y*y*z + 32*z*z*z) * coeff;
+	hrly[26][3] = (4*x*x*x + 12*x*y*y - 24*x*z*z) * coeff;
+	hrly[26][4] = (-48*x*y*z) * coeff;
+	hrly[26][5] = (-24*x*x*x - 24*x*y*y + 96*x*z*z) * coeff;
+
+	//m=-1 : y(21z^4 - 14z^2*r^2 + r^4)
+	hrly[27][0] = (12*x*x*y + 4*y*y*y - 24*y*z*z) * coeff;
+	hrly[27][1] = (4*x*x*x + 12*x*y*y - 24*x*z*z) * coeff;
+	hrly[27][2] = (-48*x*y*z) * coeff;
+	hrly[27][3] = (12*x*x*y + 20*y*y*y - 72*y*z*z) * coeff;
+	hrly[27][4] = (-24*x*x*z - 72*y*y*z + 32*z*z*z) * coeff;
+	hrly[27][5] = (-24*x*x*y - 24*y*y*y + 96*y*z*z) * coeff;
+
+	//m=2 : (x^2 - y^2)(3z^3 - z*r^2)
+	coeff = sqrt(1155.0 / ModuleBase::PI) / 8.0;
+	hrly[28][0] = (-12*x*x*z + 4*z*z*z) * coeff;
+	hrly[28][1] = 0.0;
+	hrly[28][2] = (-4*x*x*x + 12*x*z*z) * coeff;
+	hrly[28][3] = (12*y*y*z - 4*z*z*z) * coeff;
+	hrly[28][4] = (4*y*y*y - 12*y*z*z) * coeff;
+	hrly[28][5] = (12*x*x*z - 12*y*y*z) * coeff;
+
+	//m=-2 : xy(3z^3 - z*r^2)
+	hrly[29][0] = (-6*x*y*z) * coeff;
+	hrly[29][1] = (-3*x*x*z - 3*y*y*z + 2*z*z*z) * coeff;
+	hrly[29][2] = (-3*x*x*y - y*y*y + 6*y*z*z) * coeff;
+	hrly[29][3] = (-6*x*y*z) * coeff;
+	hrly[29][4] = (-x*x*x - 3*x*y*y + 6*x*z*z) * coeff;
+	hrly[29][5] = (12*x*y*z) * coeff;
+
+	//m=3 : x(x^2 - 3y^2)(9z^2 - r^2)
+	coeff = sqrt(385.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[30][0] = (-20*x*x*x + 12*x*y*y + 48*x*z*z) * coeff;
+	hrly[30][1] = (12*x*x*y + 12*y*y*y - 48*y*z*z) * coeff;
+	hrly[30][2] = (48*x*x*z - 48*y*y*z) * coeff;
+	hrly[30][3] = (4*x*x*x + 36*x*y*y - 48*x*z*z) * coeff;
+	hrly[30][4] = (-96*x*y*z) * coeff;
+	hrly[30][5] = (16*x*x*x - 48*x*y*y) * coeff;
+
+	//m=-3 : y(3x^2 - y^2)(9z^2 - r^2)
+	hrly[31][0] = (-36*x*x*y - 4*y*y*y + 48*y*z*z) * coeff;
+	hrly[31][1] = (-12*x*x*x - 12*x*y*y + 48*x*z*z) * coeff;
+	hrly[31][2] = (96*x*y*z) * coeff;
+	hrly[31][3] = (-12*x*x*y + 20*y*y*y - 48*y*z*z) * coeff;
+	hrly[31][4] = (48*x*x*z - 48*y*y*z) * coeff;
+	hrly[31][5] = (48*x*x*y - 16*y*y*y) * coeff;
+
+	//m=4 : (x^4 - 6x^2*y^2 + y^4) * z
+	coeff = sqrt(385.0 / ModuleBase::PI) / 16.0;
+	hrly[32][0] = (12*x*x*z - 12*y*y*z) * coeff;
+	hrly[32][1] = (-24*x*y*z) * coeff;
+	hrly[32][2] = (4*x*x*x - 12*x*y*y) * coeff;
+	hrly[32][3] = (-12*x*x*z + 12*y*y*z) * coeff;
+	hrly[32][4] = (-12*x*x*y + 4*y*y*y) * coeff;
+	hrly[32][5] = 0.0;
+
+	//m=-4 : xy(x^2 - y^2) * z
+	hrly[33][0] = (6*x*y*z) * coeff;
+	hrly[33][1] = (3*x*x*z - 3*y*y*z) * coeff;
+	hrly[33][2] = (3*x*x*y - y*y*y) * coeff;
+	hrly[33][3] = (-6*x*y*z) * coeff;
+	hrly[33][4] = (x*x*x - 3*x*y*y) * coeff;
+	hrly[33][5] = 0.0;
+
+	//m=5 : x(x^4 - 10x^2*y^2 + 5y^4)
+	coeff = sqrt(77.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[34][0] =  (20.0 * x*x*x - 60.0 * x * y*y) * coeff;
+	hrly[34][1] =  (-60.0 * x*x * y + 20.0 * y*y*y) * coeff;
+	hrly[34][2] =  0.0;
+	hrly[34][3] =  (-20.0 * x*x*x + 60.0 * x * y*y) * coeff;
+	hrly[34][4] =  0.0;
+	hrly[34][5] =  0.0;
+
+	//m=-5 : y(5x^4 - 10x^2*y^2 + y^4)
+	hrly[35][0] =  (60.0 * x*x * y - 20.0 * y*y*y) * coeff;
+	hrly[35][1] =  (20.0 * x*x*x - 60.0 * x * y*y) * coeff;
+	hrly[35][2] =  0.0;
+	hrly[35][3] =  (-60.0 * x*x * y + 20.0 * y*y*y) * coeff;
+	hrly[35][4] =  0.0;
+	hrly[35][5] =  0.0;
+
+	if (Lmax == 5) return;
+
+	/***************************
+			 L = 6
+	***************************/
+	//m=0 : (231z^6 - 315z^4*r^2 + 105z^2*r^4 - 5r^6)
+	coeff = sqrt(13.0 / ModuleBase::PI) / 32.0;
+	hrly[36][0] = (-150*x*x*x*x - 180*x*x*y*y + 1080*x*x*z*z - 30*y*y*y*y + 360*y*y*z*z - 240*z*z*z*z) * coeff;
+	hrly[36][1] = (-120*x*x*x*y - 120*x*y*y*y + 720*x*y*z*z) * coeff;
+	hrly[36][2] = (720*x*x*x*z + 720*x*y*y*z - 960*x*z*z*z) * coeff;
+	hrly[36][3] = (-30*x*x*x*x - 180*x*x*y*y + 360*x*x*z*z - 150*y*y*y*y + 1080*y*y*z*z - 240*z*z*z*z) * coeff;
+	hrly[36][4] = (720*x*x*y*z + 720*y*y*y*z - 960*y*z*z*z) * coeff;
+	hrly[36][5] = (180*x*x*x*x + 360*x*x*y*y - 1440*x*x*z*z + 180*y*y*y*y - 1440*y*y*z*z + 480*z*z*z*z) * coeff;
+
+	//m=1 : x(33z^5 - 30z^3*r^2 + 5z*r^4)
+	coeff = sqrt(273.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[37][0] = (100*x*x*x*z + 60*x*y*y*z - 120*x*z*z*z) * coeff;
+	hrly[37][1] = (60*x*x*y*z + 20*y*y*y*z - 40*y*z*z*z) * coeff;
+	hrly[37][2] = (25*x*x*x*x + 30*x*x*y*y - 180*x*x*z*z + 5*y*y*y*y - 60*y*y*z*z + 40*z*z*z*z) * coeff;
+	hrly[37][3] = (20*x*x*x*z + 60*x*y*y*z - 40*x*z*z*z) * coeff;
+	hrly[37][4] = (20*x*x*x*y + 20*x*y*y*y - 120*x*y*z*z) * coeff;
+	hrly[37][5] = (-120*x*x*x*z - 120*x*y*y*z + 160*x*z*z*z) * coeff;
+
+	//m=-1 : y(33z^5 - 30z^3*r^2 + 5z*r^4)
+	hrly[38][0] = (60*x*x*y*z + 20*y*y*y*z - 40*y*z*z*z) * coeff;
+	hrly[38][1] = (20*x*x*x*z + 60*x*y*y*z - 40*x*z*z*z) * coeff;
+	hrly[38][2] = (20*x*x*x*y + 20*x*y*y*y - 120*x*y*z*z) * coeff;
+	hrly[38][3] = (60*x*x*y*z + 100*y*y*y*z - 120*y*z*z*z) * coeff;
+	hrly[38][4] = (5*x*x*x*x + 30*x*x*y*y - 60*x*x*z*z + 25*y*y*y*y - 180*y*y*z*z + 40*z*z*z*z) * coeff;
+	hrly[38][5] = (-120*x*x*y*z - 120*y*y*y*z + 160*y*z*z*z) * coeff;
+
+	//m=2 : (x^2 - y^2)(33z^4 - 18z^2*r^2 + r^4)
+	coeff = sqrt(1365.0 / ModuleBase::PI) / 32.0;
+	hrly[39][0] = (30*x*x*x*x + 12*x*x*y*y - 192*x*x*z*z - 2*y*y*y*y + 32*z*z*z*z) * coeff;
+	hrly[39][1] = (8*x*x*x*y - 8*x*y*y*y) * coeff;
+	hrly[39][2] = (-128*x*x*x*z + 128*x*z*z*z) * coeff;
+	hrly[39][3] = (2*x*x*x*x - 12*x*x*y*y - 30*y*y*y*y + 192*y*y*z*z - 32*z*z*z*z) * coeff;
+	hrly[39][4] = (128*y*y*y*z - 128*y*z*z*z) * coeff;
+	hrly[39][5] = (-32*x*x*x*x + 192*x*x*z*z + 32*y*y*y*y - 192*y*y*z*z) * coeff;
+
+	//m=-2 : xy(33z^4 - 18z^2*r^2 + r^4)
+	hrly[40][0] = (20*x*x*x*y + 12*x*y*y*y - 96*x*y*z*z) * coeff;
+	hrly[40][1] = (20*x*x*x*x + 36*x*x*y*y - 96*x*x*z*z + 20*y*y*y*y - 96*y*y*z*z + 32*z*z*z*z) * coeff;
+	hrly[40][2] = (-96*x*x*y*z - 32*y*y*y*z + 64*y*z*z*z) * coeff;
+	hrly[40][3] = (12*x*x*x*y + 20*x*y*y*y - 96*x*y*z*z) * coeff;
+	hrly[40][4] = (-32*x*x*x*z - 96*x*y*y*z + 64*x*z*z*z) * coeff;
+	hrly[40][5] = (-32*x*x*x*y - 32*x*y*y*y + 192*x*y*z*z) * coeff;
+
+	//m=3 : x(x^2 - 3y^2)(11z^3 - 3z*r^2)
+	coeff = sqrt(1365.0 / ModuleBase::PI) / 16.0;
+	hrly[41][0] = (-60*x*x*x*z + 36*x*y*y*z + 48*x*z*z*z) * coeff;
+	hrly[41][1] = (36*x*x*y*z + 36*y*y*y*z - 48*y*z*z*z) * coeff;
+	hrly[41][2] = (-30*x*x*x*x + 36*x*x*y*y + 72*x*x*z*z + 18*y*y*y*y - 72*y*y*z*z) * coeff;
+	hrly[41][3] = (12*x*x*x*z + 108*x*y*y*z - 48*x*z*z*z) * coeff;
+	hrly[41][4] = (12*x*x*x*y + 36*x*y*y*y - 144*x*y*z*z) * coeff;
+	hrly[41][5] = (48*x*x*x*z - 144*x*y*y*z) * coeff;
+
+	//m=-3 : y(3x^2 - y^2)(11z^3 - 3z*r^2)
+	hrly[42][0] = (-108*x*x*y*z - 12*y*y*y*z + 48*y*z*z*z) * coeff;
+	hrly[42][1] = (-36*x*x*x*z - 36*x*y*y*z + 48*x*z*z*z) * coeff;
+	hrly[42][2] = (-36*x*x*x*y - 12*x*y*y*y + 144*x*y*z*z) * coeff;
+	hrly[42][3] = (-36*x*x*y*z + 60*y*y*y*z - 48*y*z*z*z) * coeff;
+	hrly[42][4] = (-18*x*x*x*x - 36*x*x*y*y + 72*x*x*z*z + 30*y*y*y*y - 72*y*y*z*z) * coeff;
+	hrly[42][5] = (144*x*x*y*z - 48*y*y*y*z) * coeff;
+
+	//m=4 : (x^4 - 6x^2*y^2 + y^4)(11z^2 - r^2)
+	coeff = sqrt(91.0 / ModuleBase::PI) / 32.0;
+	hrly[43][0] = (-30*x*x*x*x + 60*x*x*y*y + 120*x*x*z*z + 10*y*y*y*y - 120*y*y*z*z) * coeff;
+	hrly[43][1] = (40*x*x*x*y + 40*x*y*y*y - 240*x*y*z*z) * coeff;
+	hrly[43][2] = (80*x*x*x*z - 240*x*y*y*z) * coeff;
+	hrly[43][3] = (10*x*x*x*x + 60*x*x*y*y - 120*x*x*z*z - 30*y*y*y*y + 120*y*y*z*z) * coeff;
+	hrly[43][4] = (-240*x*x*y*z + 80*y*y*y*z) * coeff;
+	hrly[43][5] = (20*x*x*x*x - 120*x*x*y*y + 20*y*y*y*y) * coeff;
+
+	//m=-4 : xy(x^2 - y^2)(11z^2 - r^2)
+	hrly[44][0] = (-20*x*x*x*y + 60*x*y*z*z) * coeff;
+	hrly[44][1] = (-5*x*x*x*x + 30*x*x*z*z + 5*y*y*y*y - 30*y*y*z*z) * coeff;
+	hrly[44][2] = (60*x*x*y*z - 20*y*y*y*z) * coeff;
+	hrly[44][3] = (20*x*y*y*y - 60*x*y*z*z) * coeff;
+	hrly[44][4] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[44][5] = (20*x*x*x*y - 20*x*y*y*y) * coeff;
+
+	//m=5 : x(x^4 - 10x^2*y^2 + 5y^4) * z
+	coeff = sqrt(1001.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[45][0] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[45][1] = (-60*x*x*y*z + 20*y*y*y*z) * coeff;
+	hrly[45][2] = (5*x*x*x*x - 30*x*x*y*y + 5*y*y*y*y) * coeff;
+	hrly[45][3] = (-20*x*x*x*z + 60*x*y*y*z) * coeff;
+	hrly[45][4] = (-20*x*x*x*y + 20*x*y*y*y) * coeff;
+	hrly[45][5] = 0.0;
+
+	//m=-5 : y(5x^4 - 10x^2*y^2 + y^4) * z
+	hrly[46][0] = (60*x*x*y*z - 20*y*y*y*z) * coeff;
+	hrly[46][1] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[46][2] = (20*x*x*x*y - 20*x*y*y*y) * coeff;
+	hrly[46][3] = (-60*x*x*y*z + 20*y*y*y*z) * coeff;
+	hrly[46][4] = (5*x*x*x*x - 30*x*x*y*y + 5*y*y*y*y) * coeff;
+	hrly[46][5] = 0.0;
+
+	//m=6 : (x^6 - 15x^4*y^2 + 15x^2*y^4 - y^6)
+	coeff = sqrt(3003.0 / ModuleBase::PI) / 32.0;
+	hrly[47][0] = (30*x*x*x*x - 180*x*x*y*y + 30*y*y*y*y) * coeff;
+	hrly[47][1] = (-120*x*x*x*y + 120*x*y*y*y) * coeff;
+	hrly[47][2] = 0.0;
+	hrly[47][3] = (-30*x*x*x*x + 180*x*x*y*y - 30*y*y*y*y) * coeff;
+	hrly[47][4] = 0.0;
+	hrly[47][5] = 0.0;
+
+	//m=-6 : xy(3x^4 - 10x^2*y^2 + 3y^4)
+	hrly[48][0] = (60*x*x*x*y - 60*x*y*y*y) * coeff;
+	hrly[48][1] = (15*x*x*x*x - 90*x*x*y*y + 15*y*y*y*y) * coeff;
+	hrly[48][2] = 0.0;
+	hrly[48][3] = (-60*x*x*x*y + 60*x*y*y*y) * coeff;
+	hrly[48][4] = 0.0;
+	hrly[48][5] = 0.0;
+
+	if (Lmax == 6) return;
+
+	/***************************
+			 L > 6
+	***************************/
+	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>6 not implemented!");
 
 
 	return;
