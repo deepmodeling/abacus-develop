@@ -8,7 +8,6 @@
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 #include "source_estate/cal_ux.h"
 //-----force-------------------
