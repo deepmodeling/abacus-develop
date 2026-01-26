@@ -95,7 +95,7 @@ O                       #Name of element
 
 > **Note:** users may choose a different name for their structure file using the keyword `stru_file`. The order of the pseudopotential file list and the numerical orbital list (if LCAO is applied) MUST be consistent with that of the atomic type given in `ATOMIC_POSITIONS`.
 
-For a more detailed description of STRU file, please consult [here](../advanced/input_files/stru.md).
+> **Important:** When specifying atomic positions, you can use various coordinate systems (Direct, Cartesian, Cartesian_angstrom, etc.) and add optional properties like magnetization, velocity, and movement constraints. See the [detailed STRU documentation](../advanced/input_files/stru.md) for all available options and best practices.
 
 ## *KPT*
 
