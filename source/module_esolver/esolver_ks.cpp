@@ -185,6 +185,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     {
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     }
+    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 4) setup the charge mixing parameters

@@ -82,6 +82,98 @@ XC_Functional_Libxc::cal_gdr(
 	return gdr;
 }
 
+// calculating laplacian of density: ∇²ρ(r)
+std::vector<double> XC_Functional_Libxc::cal_lapl(
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &rho,
+	const double tpiba2,
+	const Charge* const chr)
+{
+	std::vector<double> lapl(nspin * nrxx, 0.0);
+	for( int is=0; is!=nspin; ++is )
+	{
+		std::vector<double> rhor(nrxx);
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for(std::size_t ir=0; ir<nrxx; ++ir)
+			rhor[ir] = rho[ir*nspin+is];
+
+		std::vector<std::complex<double>> rhog(chr->rhopw->npw);
+		chr->rhopw->real2recip(rhor.data(), rhog.data());
+
+		// ∇²ρ(r) = -∑_G |G|² ρ(G) e^{iGr}
+		std::vector<std::complex<double>> rhog_lapl(chr->rhopw->npw);
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for(int ig=0; ig<chr->rhopw->npw; ++ig)
+			rhog_lapl[ig] = -rhog[ig] * chr->rhopw->gg[ig] * tpiba2;
+
+		std::vector<std::complex<double>> aux(chr->rhopw->nmaxgr);
+		chr->rhopw->recip2real(rhog_lapl.data(), aux.data());
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for(std::size_t ir=0; ir<nrxx; ++ir)
+			lapl[is * nrxx + ir] = aux[ir].real();
+	} // end for(is)
+	return lapl;
+}
+
+// calculating Hessian of density: ∂²ρ/∂r_α∂r_β
+// returns nspin * nrxx * 6 array (xx, yy, zz, xy, yz, zx)
+std::vector<double> XC_Functional_Libxc::cal_rho_hessian(
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &rho,
+	const Charge* const chr)
+{
+	std::vector<double> hess(nspin * nrxx * 6, 0.0);
+	// ipol2xy maps 6 components to (x,y) pairs: 0:xx, 1:yy, 2:zz, 3:xy, 4:yz, 5:zx
+	const int ipol2xy[6][2] = {{0,0}, {1,1}, {2,2}, {0,1}, {1,2}, {2,0}};
+	
+	for( int is=0; is!=nspin; ++is )
+	{
+		std::vector<double> rhor(nrxx);
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for(std::size_t ir=0; ir<nrxx; ++ir)
+			rhor[ir] = rho[ir*nspin+is];
+
+		std::vector<std::complex<double>> rhog(chr->rhopw->npw);
+		chr->rhopw->real2recip(rhor.data(), rhog.data());
+
+		// compute all 6 Hessian components in one G-space pass
+		for(int ic=0; ic<6; ++ic)
+		{
+			const int ax = ipol2xy[ic][0];
+			const int ay = ipol2xy[ic][1];
+			std::vector<std::complex<double>> rhog_hess(chr->rhopw->npw);
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for(int ig=0; ig<chr->rhopw->npw; ++ig)
+			{
+				const double gx = chr->rhopw->gcar[ig][ax];
+				const double gy = chr->rhopw->gcar[ig][ay];
+				rhog_hess[ig] = -rhog[ig] * gx * gy;
+			}
+
+			std::vector<std::complex<double>> aux(chr->rhopw->nmaxgr);
+			chr->rhopw->recip2real(rhog_hess.data(), aux.data());
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for(std::size_t ir=0; ir<nrxx; ++ir)
+				hess[is * nrxx * 6 + ic * nrxx + ir] = aux[ir].real();
+		}
+	} // end for(is)
+	return hess;
+}
+
 // converting grho (abacus=>libxc)
 std::vector<double> XC_Functional_Libxc::convert_sigma(
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr)

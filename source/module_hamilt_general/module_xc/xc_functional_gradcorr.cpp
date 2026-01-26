@@ -67,6 +67,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	ModuleBase::Vector3<double>* gdr2 = nullptr;
 	ModuleBase::Vector3<double>* h1 = nullptr;
 	ModuleBase::Vector3<double>* h2 = nullptr;
+	double* lapl1 = nullptr;
+	double* lapl2 = nullptr;
+	double* hess1 = nullptr; // nspin=1 Hessian (6 components)
+	double* hess2 = nullptr; // nspin=1 Hessian for spin-down channel
 	double* neg = nullptr;
 	double** vsave = nullptr;
 	double** vgg = nullptr;
@@ -95,6 +99,46 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
+	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
+
+	// compute laplacian of total density (rho[0] + rho_core) for nspin=1,2
+	// and as the "up" channel equivalent for nspin=4 noncollinear case
+	{
+		std::vector<double> rho_total(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<rhopw->nrxx; ++ir)
+			rho_total[ir] = rhotmp1[ir];
+		std::vector<double> lapl_all = XC_Functional_Libxc::cal_lapl(
+			1, rhopw->nrxx, rho_total, ucell->tpiba2, chr);
+		lapl1 = new double[rhopw->nrxx];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<rhopw->nrxx; ++ir)
+			lapl1[ir] = lapl_all[ir];
+	}
+
+	// compute Hessian of total density for meta-GGA stress
+	if(is_stress && (func_type == 3 || func_type == 5))
+	{
+		std::vector<double> rho_total(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int ir=0; ir<rhopw->nrxx; ++ir)
+			rho_total[ir] = rhotmp1[ir];
+		std::vector<double> hess_all = XC_Functional_Libxc::cal_rho_hessian(
+			1, rhopw->nrxx, rho_total, chr);
+		hess1 = new double[rhopw->nrxx * 6];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for(int i=0; i<rhopw->nrxx * 6; ++i)
+			hess1[i] = hess_all[i];
+	}
+
 	// for spin polarized case;
 	// calculate the gradient of (rho_core+rho) in reciprocal space.
 	if(PARAM.inp.nspin==2)
@@ -120,6 +164,43 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		if(!is_stress) { h2 = new ModuleBase::Vector3<double>[rhopw->nrxx]; }
 		
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
+
+		// compute laplacian of spin-down density (rho[1] + rho_core)
+		{
+			std::vector<double> rho_dw(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				rho_dw[ir] = rhotmp2[ir];
+			std::vector<double> lapl_all = XC_Functional_Libxc::cal_lapl(
+				1, rhopw->nrxx, rho_dw, ucell->tpiba2, chr);
+			lapl2 = new double[rhopw->nrxx];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				lapl2[ir] = lapl_all[ir];
+		}
+
+		// compute Hessian of spin-down density for meta-GGA stress
+		if(is_stress && (func_type == 3 || func_type == 5))
+		{
+			std::vector<double> rho_dw(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				rho_dw[ir] = rhotmp2[ir];
+			std::vector<double> hess_all = XC_Functional_Libxc::cal_rho_hessian(
+				1, rhopw->nrxx, rho_dw, chr);
+			hess2 = new double[rhopw->nrxx * 6];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int i=0; i<rhopw->nrxx * 6; ++i)
+				hess2[i] = hess_all[i];
+		}
 	}
 
 	if(PARAM.inp.nspin == 4&&(PARAM.globalv.domag||PARAM.globalv.domag_z))
@@ -189,6 +270,40 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
+		// re-compute laplacians after noncollinear rho update
+		{
+			std::vector<double> rho_up(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				rho_up[ir] = rhotmp1[ir];
+			std::vector<double> lapl_up = XC_Functional_Libxc::cal_lapl(
+				1, rhopw->nrxx, rho_up, ucell->tpiba2, chr);
+			lapl1 = new double[rhopw->nrxx];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				lapl1[ir] = lapl_up[ir];
+		}
+		{
+			std::vector<double> rho_dw(rhopw->nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				rho_dw[ir] = rhotmp2[ir];
+			std::vector<double> lapl_dw = XC_Functional_Libxc::cal_lapl(
+				1, rhopw->nrxx, rho_dw, ucell->tpiba2, chr);
+			lapl2 = new double[rhopw->nrxx];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+			for(int ir=0; ir<rhopw->nrxx; ++ir)
+				lapl2[ir] = lapl_dw[ir];
+		}
+
 	}
 	
 	const double epsr = 1.0e-6;
@@ -249,9 +364,20 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 #ifdef USE_LIBXC
 					if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
 					{
-						double v3xc;
+						double v3xc, vlaplc;
 						double atau = chr->kin_r[0][ir]/2.0;
-						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
+						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, lapl1[ir], atau, sxc, v1xc, v2xc, v3xc, vlaplc);
+						// add vlapl stress contribution: σ_αβ^vlapl = -2 ∫ vlapl ∂²ρ/∂r_α∂r_β dr
+						// Hessian components order: xx, yy, zz, xy, yz, zx
+						for(int l = 0; l < 3; l++)
+						{
+							for(int m = 0; m < l+1; m++)
+							{
+								int ind = l*3 + m;
+								int ic = (l==0&&m==0) ? 0 : (l==1&&m==1) ? 1 : (l==2&&m==2) ? 2 : (l==0&&m==1) ? 3 : (l==1&&m==2) ? 4 : 5;
+								local_stress_gga[ind] -= 2.0 * vlaplc * hess1[ic * rhopw->nrxx + ir] * ModuleBase::e2;
+							}
+						}
 					}
 					else
 					{
@@ -308,13 +434,27 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				double sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud;
 				if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
 				{
-					double v3xcup, v3xcdw;
+					double v3xcup, v3xcdw, vlaplup, vlapldw;
 					double atau1 = chr->kin_r[0][ir]/2.0;
 					double atau2 = chr->kin_r[1][ir]/2.0;
 					XC_Functional_Libxc::tau_xc_spin(
 						func_id,
-						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
-						atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw);
+						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
+						lapl1[ir], lapl2[ir],
+						atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, vlaplup, vlapldw);
+					// add vlapl stress contribution for both spin channels
+					if(is_stress)
+					{
+						for(int l = 0; l < 3; l++)
+						{
+							for(int m = 0; m < l+1; m++)
+							{
+								int ind = l*3 + m;
+								int ic = (l==0&&m==0) ? 0 : (l==1&&m==1) ? 1 : (l==2&&m==2) ? 2 : (l==0&&m==1) ? 3 : (l==1&&m==2) ? 4 : 5;
+								local_stress_gga[ind] -= 2.0 * (vlaplup * hess1[ic * rhopw->nrxx + ir] + vlapldw * hess2[ic * rhopw->nrxx + ir]) * ModuleBase::e2;
+							}
+						}
+					}
 				}
 				else
 				{
@@ -582,6 +722,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	delete[] rhotmp1;
 	delete[] rhogsum1;
 	delete[] gdr1;
+	delete[] lapl1;
+	delete[] hess1;
 	if(!is_stress) { delete[] h1;
 }
 
@@ -590,6 +732,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] rhotmp2;
 		delete[] rhogsum2;
 		delete[] gdr2;
+		delete[] lapl2;
+		delete[] hess2;
 		if(!is_stress) { delete[] h2;
 }
 	}
@@ -609,6 +753,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] rhotmp2;
 		delete[] rhogsum2;
 		delete[] gdr2;
+		delete[] lapl2;
+		delete[] hess2;
 	}
 
 	return;

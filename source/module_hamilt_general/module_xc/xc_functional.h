@@ -88,6 +88,7 @@ class XC_Functional
 
 	public:
 	static std::vector<int> get_func_id() { return func_id; }
+	static std::string output_info();
 
 //-------------------
 //  xc_functional_wrapper_xc.cpp

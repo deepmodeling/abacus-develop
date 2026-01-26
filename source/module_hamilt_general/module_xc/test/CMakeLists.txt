@@ -11,6 +11,7 @@ AddTest(
   TARGET XCTest_HSE
   LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc1.cpp ../xc_functional.cpp ../xc_functional_libxc.cpp
+    ../xc_functional_libxc_tools.cpp
 )
 
 
@@ -36,6 +37,7 @@ AddTest(
     ../xc_functional_libxc_wrapper_xc.cpp
     ../xc_functional_libxc_wrapper_gcxc.cpp
     ../xc_functional_libxc_wrapper_tauxc.cpp
+    ../xc_functional_libxc_tools.cpp
     ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp
     ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
     ../../../module_base/matrix.cpp
@@ -57,6 +59,7 @@ AddTest(
     ../xc_functional_libxc_wrapper_xc.cpp
     ../xc_functional_libxc_wrapper_gcxc.cpp
     ../xc_functional_libxc_wrapper_tauxc.cpp
+    ../xc_functional_libxc_tools.cpp
     ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp 
     ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp 
 )

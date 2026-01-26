@@ -43,8 +43,9 @@ class XCTest_SCAN : public XCTest
 
             for(int i=0;i<5;i++)
             {
-                double e,v,v1,v2,v3;
-                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],tau[i],e,v1,v2,v3);
+                double e,v,v1,v2,v3,v4;
+                // SCAN does not depend on laplacian, pass 0.0
+                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],0.0,tau[i],e,v1,v2,v3,v4);
                 e_.push_back(e);
                 v1_.push_back(v1);
                 v2_.push_back(v2);

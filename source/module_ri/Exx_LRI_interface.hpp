@@ -147,20 +147,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         }
         else
         {
-            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
-            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-            {
-                XC_Functional::set_xc_type("scan");
-            }
-            // added by jghan, 2024-07-07
-            else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER"
-                || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
+            XC_Functional::set_xc_first_loop(ucell);
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);

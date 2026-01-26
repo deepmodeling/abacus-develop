@@ -199,6 +199,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
 
+    // compute laplacian of density: ∇²ρ(r) for each spin channel
+    const double tpiba2 = tpiba * tpiba;
+    const std::vector<double> lapl = XC_Functional_Libxc::cal_lapl(nspin, nrxx, rho, tpiba2, chr);
+
     //converting kin_r
     std::vector<double> kin_r;
     kin_r.resize(nrxx*nspin);
@@ -264,7 +268,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     for ( xc_func_type &func : funcs )
     {
         assert(func.info->family == XC_FAMILY_MGGA);
-        xc_mgga_exc_vxc(&func, nrxx, rho.data(), sigma.data(), sigma.data(),
+        xc_mgga_exc_vxc(&func, nrxx, rho.data(), sigma.data(), lapl.data(),
             kin_r.data(), exc.data(), vrho.data(), vsigma.data(), vlapl.data(), vtau.data());
 
         //process etxc
@@ -385,6 +389,48 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                 }
 #endif
                 vofk(is,ir) += vtau[ir*nspin+is]  * sgn[ir*nspin+is];
+            }
+        }
+
+        //process vlapl: ∇²(vlapl) contribution to potential
+        // vlapl = ∂ε/∂(∇²ρ), potential contribution = +∇²(vlapl)
+        std::vector<double> vlapl_real(nrxx * nspin);
+        for( int is=0; is<nspin; ++is )
+        {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+            for( int ir=0; ir< nrxx; ++ir )
+            {
+                vlapl_real[ir*nspin+is] = vlapl[ir*nspin+is] * sgn[ir*nspin+is];
+            }
+
+            // compute ∇²(vlapl[is]) via reciprocal space
+            std::vector<std::complex<double>> vlapl_g(chr->rhopw->npw);
+            chr->rhopw->real2recip(&vlapl_real[is * nrxx], vlapl_g.data());
+
+            std::vector<std::complex<double>> vlapl_lapl_g(chr->rhopw->npw);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+            for(int ig=0; ig<chr->rhopw->npw; ++ig)
+                vlapl_lapl_g[ig] = -vlapl_g[ig] * chr->rhopw->gg[ig] * tpiba2;
+
+            std::vector<std::complex<double>> aux(chr->rhopw->nmaxgr);
+            chr->rhopw->recip2real(vlapl_lapl_g.data(), aux.data());
+
+            for( int ir=0; ir< nrxx; ++ir )
+            {
+#ifdef __EXX
+                double vlapl_contrib = aux[ir].real();
+                if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
+                {
+                    vlapl_contrib *= (1.0 - XC_Functional::get_hybrid_alpha());
+                }
+                v(is,ir) += vlapl_contrib;
+#else
+                v(is,ir) += aux[ir].real();
+#endif
             }
         }
     }
