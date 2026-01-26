@@ -10,6 +10,7 @@
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_lcao/setup_exx.h" // mohan add 20251008
 #include "source_lcao/setup_deepks.h" // mohan add 20251010
+#include "source_io/restart.h"
 
 namespace ModuleIO
 {

@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/libm/libm.h"
-#include "source_pw/module_pwdft/global.h"
 
 #ifdef _OPENMP
 #include <omp.h>

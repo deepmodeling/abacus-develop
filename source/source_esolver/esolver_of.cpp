@@ -8,13 +8,13 @@
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
-// mohan add
 #include "source_pw/module_ofdft/of_print_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+
 
 namespace ModuleESolver
 {
@@ -27,10 +27,10 @@ ESolver_OF::ESolver_OF()
 
 ESolver_OF::~ESolver_OF()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
-	delete psi_;
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
+    delete psi_;
     delete[] this->pphi_;
 
     for (int i = 0; i < PARAM.inp.nspin; ++i)
@@ -117,6 +117,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
+    delete[] this->kedf_manager_;
     this->kedf_manager_ = new KEDF_Manager();
     this->kedf_manager_->init(inp, this->pw_rho, this->dV_, this->nelec_[0]);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
@@ -136,11 +137,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->iter_ = 0;
 
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
-#ifdef __MPI
-    this->iter_time = MPI_Wtime();
-#else
-    this->iter_time = std::chrono::system_clock::now();
-#endif
+    this->iter_time = ModuleBase::get_time();
 
     while (true)
     {
@@ -492,10 +489,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
-    this->kedf_manager_->get_potential(this->chr.rho,
-                                       this->pphi_,
-                                       this->pw_rho,
-                                       this->pelec->pot->get_eff_v()); // KEDF potential
+        this->kedf_manager_->get_potential(this->chr.rho,
+                                        this->pphi_,
+                                        this->pw_rho,
+                                        this->pelec->pot->get_eff_v()); // KEDF potential
         
         const double* vr_eff = this->pelec->pot->get_eff_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)

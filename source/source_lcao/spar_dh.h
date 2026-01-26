@@ -6,7 +6,6 @@
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/force_stress_arrays.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_pw/module_pwdft/global.h"
 #include <vector>
 
 namespace sparse_format

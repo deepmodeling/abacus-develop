@@ -6,7 +6,6 @@
 #define RDMFT_H
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
@@ -25,6 +24,9 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 // there are some operator reload to print data in different formats
 #endif
+
+#include "source_estate/elecstate.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h" // use Grid_Driver
 
 #include <iostream>
 #include <type_traits>

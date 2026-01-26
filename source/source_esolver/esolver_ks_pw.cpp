@@ -28,6 +28,8 @@
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_estate/update_pot.h" // mohan add 20251016
 
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
 namespace ModuleESolver
 {
 

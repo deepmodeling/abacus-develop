@@ -3,16 +3,15 @@
 #include "source_base/abfs-vector3_order.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_io/cal_r_overlap_R.h"
 
 #include <map>
 // Class to store TDDFT infos, mainly for periodic system.
 class TD_info
 {
   public:
-    TD_info(const UnitCell* ucell_in);
+    TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
     ~TD_info();
-
-    void init();
 
     /// @brief switch to control the output of HR
     static bool out_mat_R;
@@ -24,7 +23,7 @@ class TD_info
     static bool out_vecpot;
 
     /// @brief switch to control the output of current
-    static bool out_current;
+    static int out_current;
 
     /// @brief switch to control the format of the output current, in total or in each k-point
     static bool out_current_k;
@@ -56,6 +55,15 @@ class TD_info
     {
         return this->current_term[i];
     }
+    // set velocity HR.
+    void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR)
+    {
+        this->velocity_HR = HR;
+    }
+    hamilt::HContainer<std::complex<double>>* get_velocity_HR_pointer() const
+    {
+        return this->velocity_HR;
+    }
 
     int get_istep()
     {
@@ -69,6 +77,9 @@ class TD_info
 
     // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
+
+    //r_calculator
+    cal_r_overlap_R r_calculator;
 
   private:
     /// @brief pointer to the unit cell
@@ -94,6 +105,9 @@ class TD_info
 
     /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate current.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
+
+    /// @brief store kinetic hamilton
+    hamilt::HContainer<std::complex<double>>* velocity_HR = nullptr;
 };
 
 #endif

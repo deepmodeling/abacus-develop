@@ -8,7 +8,6 @@
 #include "exx_abfs-construct_orbs.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/global.h"
 
 void Matrix_Orbs21::init(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,

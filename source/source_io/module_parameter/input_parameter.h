@@ -248,6 +248,9 @@ struct Input_para
     std::vector<double> of_ml_chi_qnl = {1.0}; ///< Hyperparameter: tanh_qnl = tanh(chi_qnl * qnl)
     bool of_ml_local_test = false;             ///< Test: read in the density, and output the F and Pauli potential
 
+    // ML EXX, temporarily located here, sunliang
+    bool ml_exx = false;            ///< Use ML EXX or not
+
     // ==============   #Parameters (7.stochastic DFT) ===========================
     int method_sto = 2;        ///< different methods for sdft, 1: slow, less memory 2:
                                ///< fast, more memory
@@ -400,7 +403,7 @@ struct Input_para
     int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
     bool out_dipole = false;              ///< output the dipole or not
     bool out_efield = false;              ///< output the efield or not
-    bool out_current = false;             ///< output the current or not
+    int out_current = 0;                  ///< output the current or not
     bool out_current_k = false;           ///< output tddft current for all k points
     bool out_vecpot = false;              ///< output the vector potential or not
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04

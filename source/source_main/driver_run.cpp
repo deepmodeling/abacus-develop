@@ -1,7 +1,7 @@
 #include "source_main/driver.h"
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_relax/relax_driver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/para_json.h"
 #include "source_io/print_info.h"
@@ -90,11 +90,6 @@ void Driver::driver_run()
     else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
              cal == "test_memory" || cal == "test_neighbour")
     {
-        //! supported "other" functions:
-        //! get_pchg(LCAO),
-        //! test_memory(PW,LCAO),
-        //! test_neighbour(LCAO),
-        //! gen_bessel(PW), et al.
         const int istep = 0;
         p_esolver->others(ucell, istep);
     }
@@ -106,7 +101,8 @@ void Driver::driver_run()
     //! 5: clean up esolver
     p_esolver->after_all_runners(ucell);
 
-    ModuleESolver::clean_esolver(p_esolver);
+    delete p_esolver;
+
     this->finalize_hardware();
 
     //! 6: output the json file

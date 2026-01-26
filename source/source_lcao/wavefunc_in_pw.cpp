@@ -1,7 +1,6 @@
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 #include "wavefunc_in_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
-#include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 #include "source_base/math_integral.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_polyint.h"

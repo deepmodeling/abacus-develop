@@ -4,7 +4,6 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>
@@ -121,6 +120,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         if (PARAM.inp.esolver_type == "tddft")
         {
             pot_register_in.push_back("tddft");
+        }
+        if (PARAM.inp.ml_exx) // sunliang
+        {
+            pot_register_in.push_back("ml_exx");
         }
     }
 
@@ -427,17 +430,35 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs
-        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                                  this->hR,
-                                                                  ucell,
-                                                                  *kv,
-                                                                  Hexxd,
-                                                                  Hexxc,
-                                                                  Add_Hexx_Type::R,
-                                                                  istep,
-                                                                  exx_two_level_step,
-                                                                  !GlobalC::restart.info_load.restart_exx
-                                                                      && GlobalC::restart.info_load.load_H);
+        Operator<TK>* exx;
+        if (PARAM.inp.esolver_type == "tddft")
+        {
+            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
+                                                        this->hR,
+                                                        ucell,
+                                                        *this->kv,
+                                                        Hexxd,
+                                                        Hexxc,
+                                                        Add_Hexx_Type::k,
+                                                        istep,
+                                                        exx_two_level_step,
+                                                        !GlobalC::restart.info_load.restart_exx
+                                                        && GlobalC::restart.info_load.load_H);
+        }
+        else
+        {
+            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
+                                                        this->hR,
+                                                        ucell,
+                                                        *kv,
+                                                        Hexxd,
+                                                        Hexxc,
+                                                        Add_Hexx_Type::R,
+                                                        istep,
+                                                        exx_two_level_step,
+                                                        !GlobalC::restart.info_load.restart_exx
+                                                        && GlobalC::restart.info_load.load_H);
+        }
         this->getOperator()->add(exx);
     }
 #endif

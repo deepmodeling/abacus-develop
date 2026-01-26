@@ -191,6 +191,7 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_vwr.o\
     unitcell.o\
     read_atoms.o\
+    read_atoms_helper.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
@@ -510,6 +511,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_exch_gga.o\
     xc_funct_corr_gga.o\
     xc_funct_hcth.o\
+    exx_info.o\
 
 OBJS_IO=input_conv.o\
     berryphase.o\
@@ -552,6 +554,7 @@ OBJS_IO=input_conv.o\
     write_dipole.o\
     write_init.o\
     td_current_io.o\
+    td_current_io_comm.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
@@ -714,7 +717,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     onsite_op.o\
     wf_op.o\
     vnl_op.o\
-    global.o\
     magnetism.o\
     occupy.o\
     structure_factor.o\

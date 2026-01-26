@@ -10,7 +10,6 @@
 #include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_pw/module_pwdft/global.h"
 #include "upsi.h"
 
 #include <complex>

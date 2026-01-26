@@ -52,6 +52,20 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     TK* getSk();
 
+    /**
+     * @brief calculate force and stress for overlap operator
+     * @param cal_force whether to calculate force
+     * @param cal_stress whether to calculate stress
+     * @param dmR density matrix in real space
+     * @param force output force matrix (nat x 3)
+     * @param stress output stress matrix (3 x 3)
+     */
+    void cal_force_stress(const bool cal_force,
+                          const bool cal_stress,
+                          const HContainer<double>* dmR,
+                          ModuleBase::matrix& force,
+                          ModuleBase::matrix& stress);
+
   private:
     const UnitCell* ucell = nullptr;
 
@@ -60,6 +74,8 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* SR = nullptr;
 
     const TwoCenterIntegrator* intor_ = nullptr;
+
+    const Grid_Driver* gridD = nullptr;
 
     bool SR_fixed_done = false;
 
@@ -85,6 +101,31 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     TR* data_pointer);
+
+    /**
+     * @brief calculate force contribution for atom pair <I,J,R>
+     */
+    void cal_force_IJR(const int& iat1,
+                       const int& iat2,
+                       const Parallel_Orbitals* paraV,
+                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                       const hamilt::BaseMatrix<TR>* dmR_pointer,
+                       double* force1,
+                       double* force2);
+
+    /**
+     * @brief calculate stress contribution for atom pair <I,J,R>
+     */
+    void cal_stress_IJR(const int& iat1,
+                        const int& iat2,
+                        const Parallel_Orbitals* paraV,
+                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                        const hamilt::BaseMatrix<TR>* dmR_pointer,
+                        const ModuleBase::Vector3<double>& dis1,
+                        const ModuleBase::Vector3<double>& dis2,
+                        double* stress);
 
     // if k vector is not changed, then do nothing and return
     // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector

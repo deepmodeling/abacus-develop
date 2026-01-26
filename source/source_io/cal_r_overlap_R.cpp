@@ -4,7 +4,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/mathzone_add1.h"
 
 cal_r_overlap_R::cal_r_overlap_R()

@@ -1,4 +1,3 @@
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/global_function.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -60,12 +59,6 @@ void Cal_Test::test_memory(const int nat,
 
 	const int ngmw = Cal_Test::cal_np(GGT,wfcpw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
 	const int ngmc = Cal_Test::cal_np(GGT,rhopw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
-
-//  const int ecut_wfc = INPUT.ecutwfc;
-//  const int ecut_chg = INPUT.ecutrho;
-
-//	const int ngmw = Cal_Test::cal_np(ecut_wfc, rhopw->nx, rhopw->ny, rhopw->nz);
-//	const int ngmc = Cal_Test::cal_np(ecut_chg, rhopw->nx, rhopw->ny, rhopw->nz);
 
 	std::cout << " number of atoms = " << nat << std::endl;
 	std::cout << " plane wave number for wave functions = " << ngmw << std::endl;

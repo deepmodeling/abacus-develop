@@ -4,7 +4,6 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/cal_test.h"
 #include "source_io/input_conv.h"
 #include "source_io/para_json.h"
@@ -12,6 +11,8 @@
 #include "source_io/read_input.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
+#include "source_base/parallel_global.h"
+
 Driver::Driver()
 {
 }
@@ -115,17 +116,17 @@ void Driver::reading()
     GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
-    ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
-    read_input.read_parameters(PARAM,  PARAM.globalv.global_in_card);
+    ModuleIO::ReadInput input(PARAM.globalv.myrank);
+    input.read_parameters(PARAM, PARAM.globalv.global_in_card);
 
     // (2) create the output directory, running_*.log and print info
-    read_input.create_directory(PARAM);
+    input.create_directory(PARAM);
     this->print_start_info();
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card;
-    read_input.write_parameters(PARAM, ss1.str());
+    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card << ".info";
+    input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
     Input_Conv::Convert();

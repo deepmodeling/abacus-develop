@@ -95,4 +95,12 @@ struct Exx_Info
     }
 };
 
+//==========================================================
+// EXPLAIN : define "GLOBAL CLASS"
+//==========================================================
+namespace GlobalC
+{
+    extern Exx_Info exx_info;
+} // namespace GlobalC
+
 #endif

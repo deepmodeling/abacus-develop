@@ -22,6 +22,7 @@ if(ENABLE_LCAO)
         module_operator_lcao/td_pot_hybrid.cpp
         module_operator_lcao/dspin_lcao.cpp
         module_operator_lcao/dftu_lcao.cpp
+        module_operator_lcao/operator_force_stress_utils.cpp
         pulay_fs_center2.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp

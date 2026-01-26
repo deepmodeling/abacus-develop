@@ -3,7 +3,6 @@
 #include "source_base/memory.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 
@@ -54,6 +53,10 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     if (PARAM.inp.gate_flag)
     {
         pot_register_in.push_back("gatefield");
+    }
+    if (PARAM.inp.ml_exx)
+    {
+        pot_register_in.push_back("ml_exx");
     }
     // only Potential is not empty, Veff and Meta are available
     if (pot_register_in.size() > 0)

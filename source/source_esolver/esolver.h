@@ -69,7 +69,7 @@ std::string determine_type();
  */
 ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
-void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
+
 
 } // namespace ModuleESolver
 

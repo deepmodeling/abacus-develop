@@ -1,9 +1,9 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/kernels/wf_op.h"
 #include "source_base/module_device/device.h"
 #include "structure_factor.h"
+
 std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
                                                const int ia,

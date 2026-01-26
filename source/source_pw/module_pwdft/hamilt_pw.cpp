@@ -3,7 +3,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_pw/module_pwdft/global.h"
 
 #include "operator_pw/veff_pw.h"
 #include "operator_pw/ekinetic_pw.h"
@@ -11,8 +10,7 @@
 #include "operator_pw/nonlocal_pw.h"
 #include "operator_pw/onsite_proj_pw.h"
 #include "operator_pw/op_exx_pw.h"
-
-
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace hamilt
 {
@@ -73,6 +71,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         if (PARAM.inp.gate_flag)
         {
             pot_register_in.push_back("gatefield");
+        }
+        if (PARAM.inp.ml_exx) // sunliang
+        {
+            pot_register_in.push_back("ml_exx");
         }
         // DFT-1/2
         if (PARAM.inp.dfthalf_type == 1) {

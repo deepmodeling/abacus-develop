@@ -4,23 +4,22 @@
 #include "source_base/tool_threading.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
-#include "source_pw/module_pwdft/global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
-											 ModuleBase::matrix& sigma,
-                                             ModulePW::PW_Basis* rho_basis,
-											 const ModuleBase::matrix& vloc,
-                                             const Structure_Factor* p_sf,
-                                             const bool is_pw,
-                                             const Charge* const chr)
+		ModuleBase::matrix& sigma,
+		ModulePW::PW_Basis* rho_basis,
+		const ModuleBase::matrix& vloc,
+		const Structure_Factor* p_sf,
+		const bool is_pw,
+		const Charge* const chr)
 {
-    ModuleBase::TITLE("Stress","stress_loc");
-    ModuleBase::timer::tick("Stress","stress_loc");
+	ModuleBase::TITLE("Stress","stress_loc");
+	ModuleBase::timer::tick("Stress","stress_loc");
 
 	std::vector<FPTYPE> dvloc(rho_basis->npw);
-    FPTYPE evloc=0.0;
+	FPTYPE evloc=0.0;
 	FPTYPE fact=1.0;
 
 	const int nspin_rho = (PARAM.inp.nspin == 2) ? 2 : 1;

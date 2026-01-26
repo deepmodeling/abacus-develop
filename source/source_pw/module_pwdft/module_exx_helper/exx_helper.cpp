@@ -1,4 +1,6 @@
 #include "exx_helper.h"
+#include "source_io/module_parameter/parameter.h" // use PARAM
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 template <typename T, typename Device>
 double Exx_Helper<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_)
@@ -57,10 +59,3 @@ template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
 template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
-#ifndef __EXX
-#include "source_hamilt/module_xc/exx_info.h"
-namespace GlobalC
-{
-    Exx_Info exx_info;
-}
-#endif

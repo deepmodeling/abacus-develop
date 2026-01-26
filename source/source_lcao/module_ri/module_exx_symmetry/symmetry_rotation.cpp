@@ -8,8 +8,6 @@
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"
 
-#include "source_pw/module_pwdft/global.h"
-
 namespace ModuleSymmetry
 {
     void Symmetry_rotation::set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi)

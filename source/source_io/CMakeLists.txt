@@ -34,6 +34,7 @@ list(APPEND objects
     write_init.cpp
     write_mlkedf_descriptors.cpp
     td_current_io.cpp
+    td_current_io_comm.cpp
     write_libxc_r.cpp
     output_log.cpp
     para_json.cpp

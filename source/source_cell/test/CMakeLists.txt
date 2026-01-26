@@ -21,6 +21,7 @@ list(APPEND cell_simple_srcs
     ../read_stru.cpp
     ../read_atom_species.cpp
     ../read_atoms.cpp
+    ../read_atoms_helper.cpp
     ../atom_spec.cpp
     ../atom_pseudo.cpp
     ../pseudo.cpp
@@ -91,6 +92,31 @@ AddTest(
   LIBS parameter  MPI::MPI_CXX
   SOURCES parallel_kpoints_test.cpp ../../source_base/global_variable.cpp ../../source_base/parallel_global.cpp
   	../../source_base/parallel_common.cpp ../../source_base/parallel_comm.cpp ../parallel_kpoints.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory.cpp ../../source_base/timer.cpp ../../source_base/parallel_reduce.cpp
+)
+
+# Add unit test for read_atoms_helper
+AddTest(
+  TARGET MODULE_CELL_read_atoms_helper_test
+  LIBS parameter ${math_libs} base device
+  SOURCES read_atoms_helper_test.cpp
+    ../read_atoms_helper.cpp
+    ../read_stru.cpp
+    ../print_cell.cpp
+    ../atom_spec.cpp
+    ../unitcell.cpp
+    ../update_cell.cpp
+    ../bcast_cell.cpp
+    ../atom_pseudo.cpp
+    ../pseudo.cpp
+    ../read_pp.cpp
+    ../read_pp_complete.cpp
+    ../read_pp_upf201.cpp
+    ../read_pp_upf100.cpp
+    ../read_pp_vwr.cpp
+    ../read_pp_blps.cpp
+    ../read_atom_species.cpp
+    ../sep.cpp
+    ../sep_cell.cpp
 )
 
 find_program(BASH bash)

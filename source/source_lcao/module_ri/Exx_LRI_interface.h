@@ -5,6 +5,7 @@
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
+#include "source_hamilt/hamilt.h"
 #include <memory>
 
 class LCAO_Matrix;

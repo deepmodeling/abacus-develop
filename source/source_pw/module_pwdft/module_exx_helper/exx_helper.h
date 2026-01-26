@@ -3,7 +3,6 @@
 //
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/operator_pw/op_exx_pw.h"
 
 #ifndef EXX_HELPER_H

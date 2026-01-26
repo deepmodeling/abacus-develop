@@ -10,11 +10,12 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
 #include "source_psi/psi.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/kernels/cal_density_real_op.h"
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_pw/module_pwdft/kernels/mul_potential_op.h"
 #include "source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.h"
+#include "source_io/module_parameter/parameter.h" // use PARAM
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 #include <cmath>
 #include <complex>

@@ -39,7 +39,6 @@ list(APPEND objects
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
-    global.cpp
     parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp

@@ -19,7 +19,7 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hs
                                                              const std::vector<double>& orb_cutoff,
                                                              const Grid_Driver* GridD_in,
                                                              const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor), gridD(GridD_in)
 {
     this->cal_type = calculation_type::lcao_overlap;
     this->ucell = ucell_in;
@@ -29,7 +29,11 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hs
     assert(this->SR != nullptr);
 #endif
     // initialize SR to allocate sparse overlap matrix memory
-    this->initialize_SR(GridD_in);
+    // Only initialize if SR_in is not nullptr (for force calculation, SR_in can be nullptr)
+    if (SR_in != nullptr)
+    {
+        this->initialize_SR(GridD_in);
+    }
 }
 
 // initialize_SR()
@@ -232,7 +236,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1, ucell, TD_info::cart_At);
+            module_rt::folding_HR_td(*ucell, *this->SR, this->hsk->get_sk(), this->kvec_d[ik], TD_info::cart_At, nrow, 1);
         }
         else
         {
@@ -244,7 +248,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0, ucell, TD_info::cart_At);
+            module_rt::folding_HR_td(*ucell, *this->SR, this->hsk->get_sk(), this->kvec_d[ik], TD_info::cart_At, ncol, 0);
         }
         else
         {
@@ -266,6 +270,9 @@ TK* hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::getSk()
     }
     return nullptr;
 }
+
+// Include force/stress implementation
+#include "overlap_force_stress.hpp"
 
 template class hamilt::OverlapNew<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
