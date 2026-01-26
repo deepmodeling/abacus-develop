@@ -17,6 +17,9 @@ jobs:
       matrix:
         dockerfile: ["gnu","intel","cuda"]
     steps:
+      - name: Force Clean Workspace
+        run: rm -rf ${{ github.workspace }}/*
+        
       - name: Checkout
         uses: actions/checkout@v6
 
