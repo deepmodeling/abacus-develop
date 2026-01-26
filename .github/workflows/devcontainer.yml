@@ -18,7 +18,7 @@ jobs:
         dockerfile: ["gnu","intel","cuda"]
     steps:
       - name: Force Clean Workspace
-        run: rm -rf ${{ github.workspace }}/*
+        run: rm -rf /root/actions-runner/_work/abacus-develop/abacus-develop/
         
       - name: Checkout
         uses: actions/checkout@v6
