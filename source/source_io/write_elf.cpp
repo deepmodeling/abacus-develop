@@ -75,6 +75,24 @@ void write_elf(
             }
         }
     }
+    else if (nspin == 4)
+    {
+        for (int is = 0; is < nspin; ++is)
+        {
+            for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+            {
+                // Handle negative densities for numerical stability
+                if (rho[is][ir] > 0.0)
+                {
+                    tau_TF[is][ir] = c_tf * std::pow(rho[is][ir], 5.0 / 3.0);
+                }
+                else
+                {
+                    tau_TF[is][ir] = 0.0;
+                }
+            }
+        }
+    }
 
     // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
     double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
@@ -82,8 +100,15 @@ void write_elf(
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            elf[is][ir] = (tau[is][ir] - tau_vw[is][ir] + eps) / tau_TF[is][ir];
-            elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
+            if (tau_TF[is][ir] > 1.0e-12)
+            {
+                elf[is][ir] = (tau[is][ir] - tau_vw[is][ir] + eps) / tau_TF[is][ir];
+                elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
+            }
+            else
+            {
+                elf[is][ir] = 0.0;
+            }
         }
     }
 
@@ -147,7 +172,27 @@ void write_elf(
             ef_tmp,
             ucell_,
             precision,
-            out_fermi);   
+            out_fermi);
+    }
+    else if (nspin == 4)
+    {
+        for (int is = 0; is < nspin; ++is)
+        {
+            std::string fn = out_dir + "/elf" + std::to_string(is) + ".cube";
+
+            int ispin = is;
+
+            ModuleIO::write_vdata_palgrid(pgrid,
+                elf[is].data(),
+                ispin,
+                nspin,
+                istep_in,
+                fn,
+                ef_tmp,
+                ucell_,
+                precision,
+                out_fermi);
+        }
     }
 }
 }
