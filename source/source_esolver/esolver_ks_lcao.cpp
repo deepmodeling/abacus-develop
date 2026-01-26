@@ -12,14 +12,15 @@
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
-#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
-#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
-#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
+#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
+#include "source_lcao/module_operator_lcao/overlap_new.h"
 
 namespace ModuleESolver
 {
@@ -557,7 +558,34 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->rdmft_solver, this->deepks, this->exx_nao, 
             this->conv_esolver, this->scf_nmax_flag, istep);
 
-    //! 3) Clean up RA, which is used to serach for adjacent atoms
+    //! 3) Calculate and output asynchronous overlap matrix for Hefei-NAMD
+    if (PARAM.inp.cal_syns && (istep > 0 || PARAM.inp.init_vel))
+    {
+        // Create a new OverlapNew instance specifically for SR_async calculation
+        // This allows SR_async to be initialized with velocity-shifted dtau
+        hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>* overlap_async =
+            new hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>(
+                nullptr,  // hsk_in: not needed for SR_async calculation
+                this->kv.kvec_d,
+                nullptr,  // hR_in: not needed for SR_async calculation
+                nullptr,  // SR_in: not needed for SR_async calculation
+                &ucell,
+                this->orb_.cutoffs(),
+                &this->gd,
+                this->two_center_bundle_.overlap_orb.get());
+
+        // Use same precision as DMR output (default 8 if not specified)
+        const int precision = PARAM.inp.out_dmr[0] > 0 ? PARAM.inp.out_dmr[1] : 8;
+        const Parallel_Orbitals* paraV = hamilt_lcao->getSR()->get_paraV();
+        hamilt::HContainer<TR>* SR_async = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, paraV);
+        overlap_async->output_SR_async_csr(istep, SR_async, precision);
+
+        // Clean up
+        delete SR_async;
+        delete overlap_async;
+    }
+
+    //! 4) Clean up RA, which is used to serach for adjacent atoms
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
     {
         this->RA.delete_grid();
