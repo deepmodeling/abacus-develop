@@ -236,30 +236,14 @@ void Parallel_Reduce::gather_int_all(int& v, int* all)
 void Parallel_Reduce::gather_min_int_all(const int& nproc, int& v)
 {
 #ifdef __MPI
-    std::vector<int> all(nproc, 0);
-    MPI_Allgather(&v, 1, MPI_INT, all.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v > all[i])
-        {
-            v = all[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
 void Parallel_Reduce::gather_max_double_all(const int& nproc, double& v)
 {
 #ifdef __MPI
-    std::vector<double> value(nproc, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 #endif
 }
 
@@ -270,15 +254,7 @@ void Parallel_Reduce::gather_max_double_pool(const int& nproc_in_pool, double& v
     {
         return;
     }
-    std::vector<double> value(nproc_in_pool, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
-    for (int i = 0; i < nproc_in_pool; i++)
-    {
-        if (v < value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MAX, POOL_WORLD);
 #endif
 }
 
@@ -289,29 +265,13 @@ void Parallel_Reduce::gather_min_double_pool(const int& nproc_in_pool, double& v
     {
         return;
     }
-    std::vector<double> value(nproc_in_pool, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, POOL_WORLD);
-    for (int i = 0; i < nproc_in_pool; i++)
-    {
-        if (v > value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MIN, POOL_WORLD);
 #endif
 }
 
 void Parallel_Reduce::gather_min_double_all(const int& nproc, double& v)
 {
 #ifdef __MPI
-    std::vector<double> value(nproc, 0.0);
-    MPI_Allgather(&v, 1, MPI_DOUBLE, value.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
-    for (int i = 0; i < nproc; i++)
-    {
-        if (v > value[i])
-        {
-            v = value[i];
-        }
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
