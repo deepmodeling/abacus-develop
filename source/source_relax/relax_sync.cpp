@@ -594,8 +594,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // =================================================================
 
     // Calculating displacement in Cartesian coordinate (in Angstrom)
-    double move_ion[nat * 3] = {0.0};
-    ModuleBase::zeros(move_ion, nat * 3);
+    std::vector<double> move_ion(nat * 3, 0.0); // mohan fix bug 2026-01-27
 
     for (int iat = 0; iat < nat; iat++)
     {
