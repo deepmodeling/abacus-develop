@@ -20,8 +20,8 @@ void ElecState::cal_bandgap()
 
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double vbm = -1.0e100; // Valence Band Maximum
-    double cbm = 1.0e100; // Conduction Band Minimum
+    double vbm = -std::numeric_limits<double>::infinity(); // Valence Band Maximum
+    double cbm = std::numeric_limits<double>::infinity(); // Conduction Band Minimum
     const double threshold = 1.0e-5; // threshold to avoid E_gap(k) = 0
     for (int ib = 0; ib < nbands; ib++)
     {
@@ -37,7 +37,16 @@ void ElecState::cal_bandgap()
             }
         }
     }
-
+    // Assign fermi level to CBM if it's still infinity
+    if(cbm == std::numeric_limits<double>::infinity())
+    { 
+        cbm =this->eferm.ef;
+    }
+    // Assign fermi level to VBM if it's still negative infinity
+    if(vbm ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm =this->eferm.ef;
+    }
 #ifdef __MPI
     Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm);
     Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm);
@@ -59,10 +68,10 @@ void ElecState::cal_bandgap_updw()
     // int nbands = PARAM.inp.nbands;
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double vbm_up = -1.0e100;
-    double cbm_up = 1.0e100;
-    double vbm_dw = -1.0e100;
-    double cbm_dw = 1.0e100;
+    double vbm_up = -std::numeric_limits<double>::infinity();
+    double cbm_up = std::numeric_limits<double>::infinity();
+    double vbm_dw = -std::numeric_limits<double>::infinity();
+    double cbm_dw = std::numeric_limits<double>::infinity();
     const double threshold = 1.0e-5;
     for (int ib = 0; ib < nbands; ib++)
     {
@@ -91,6 +100,24 @@ void ElecState::cal_bandgap_updw()
                 }
             }
         }
+    }
+        // Assign fermi level to CBM if it's still infinity
+    if (cbm_up == std::numeric_limits<double>::infinity())
+    { 
+        cbm_up =this->eferm.ef_up;
+    }
+    if (cbm_dw == std::numeric_limits<double>::infinity())
+    { 
+        cbm_dw =this->eferm.ef_dw;
+    }
+    // Assign fermi level to VBM if it's still negative infinity
+    if(vbm_up ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm_up =this->eferm.ef_up;
+    }
+    if(vbm_dw ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm_dw =this->eferm.ef_dw;
     }
 
 #ifdef __MPI
@@ -314,10 +341,6 @@ void ElecState::cal_energies(const int type)
     }
 
     this->f_en.e_local_pp = get_local_pp_energy();
-
-#ifdef __MLALGO
-    this->f_en.ml_exx = this->pot->get_ml_exx_energy();
-#endif
 
     if (type == 1) // Harris-Foulkes functional
     {
