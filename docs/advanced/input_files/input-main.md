@@ -2133,12 +2133,12 @@ These variables are used to control the output of properties.
 - **Availability**: Only for Kohn-Sham DFT and Orbital Free DFT.
 - **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
     - nspin = 1:
-      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+      - elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
     - nspin = 2:
-      - ELF_SPIN1.cube, ELF_SPIN2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+      - elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+      - elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
     - nspin = 4 (noncollinear):
-      - ELF0.cube, ELF1.cube, ELF2.cube, ELF3.cube: ELF for each Pauli matrix component. Component 0 represents the total charge density, while components 1-3 represent the magnetization in x, y, and z directions respectively. Each component is calculated as ${\rm{ELF}}_i = \frac{1}{1+\chi_i^2}$, where $\chi_i = \frac{\tau_i - \tau_{vW,i}}{\tau_{TF,i}}$, with $\tau_i$ being the kinetic energy density, $\tau_{vW,i} = \frac{1}{2}|\nabla\sqrt{\rho_i}|^2$ the von Weizsäcker kinetic energy density, and $\tau_{TF,i} = \frac{3}{10}(3\pi^2)^{2/3}\rho_i^{5/3}$ the Thomas-Fermi kinetic energy density.
+      - elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
 
   The second integer controls the precision of the kinetic energy density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
 
