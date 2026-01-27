@@ -318,36 +318,40 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
     //=================
     // call sumkg
     int changetime = 0;
-sumkg:
+    while (true)
+    {
+        const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
+        const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
 
-    const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
-    const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
-
-    if (changetime > 1000)
-    {
-        std::cout << " SOMETHING WRONG: " << std::endl;
-        std::cout << " is = " << is << std::endl;
-        std::cout << " eup = " << eup << std::endl;
-        std::cout << " elw = " << elw << std::endl;
-        std::cout << " nband = " << nband << std::endl;
-        std::cout << " nelec = " << nelec << std::endl;
-        std::cout << " sumkup = " << sumkup << std::endl;
-        std::cout << " sumklw = " << sumklw << std::endl;
-        std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
-        std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
-        ModuleBase::WARNING_QUIT("Occupy::efermig", "ERROS in SMEARING");
-    }
-    else if ((sumkup - nelec) < -eps)
-    {
-        eup += 2 * smearing_sigma;
-        ++changetime;
-        goto sumkg;
-    }
-    else if ((sumklw - nelec) > eps)
-    {
-        elw -= 2 * smearing_sigma;
-        ++changetime;
-        goto sumkg;
+        if (changetime > 1000)
+        {
+            std::cout << " SOMETHING WRONG: " << std::endl;
+            std::cout << " is = " << is << std::endl;
+            std::cout << " eup = " << eup << std::endl;
+            std::cout << " elw = " << elw << std::endl;
+            std::cout << " nband = " << nband << std::endl;
+            std::cout << " nelec = " << nelec << std::endl;
+            std::cout << " sumkup = " << sumkup << std::endl;
+            std::cout << " sumklw = " << sumklw << std::endl;
+            std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
+            std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
+            ModuleBase::WARNING_QUIT("Occupy::efermig", "ERROS in SMEARING");
+            // no need to break; quit directly
+        }
+        else if ((sumkup - nelec) < -eps)
+        {
+            eup += 2 * smearing_sigma;
+            ++changetime;
+        }
+        else if ((sumklw - nelec) > eps)
+        {
+            elw -= 2 * smearing_sigma;
+            ++changetime;
+        }
+        else
+        {
+            break;
+        }
     }
 
     for (int i = 0; i < maxiter; i++)
