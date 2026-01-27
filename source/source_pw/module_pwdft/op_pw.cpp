@@ -1,6 +1,6 @@
 #include "source_base/timer.h"
 #include "source_hamilt/operator.h"
-#include "source_pw/module_pwdft/operator_pw/operator_pw.h"
+#include "op_pw.h"
 
 using namespace hamilt;
 

@@ -443,7 +443,7 @@ void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const 
 }
 
 //Mock function h_psi
-#include "source_pw/module_pwdft/operator_pw/operator_pw.h"
+#include "source_pw/module_pwdft/op_pw.h"
 template<typename T>
 class OperatorMock : public hamilt::Operator<T>
 {

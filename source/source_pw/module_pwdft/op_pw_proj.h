@@ -1,7 +1,7 @@
 #ifndef MODULEHAMILTPW_ONSITE_PROJ_PW_H
 #define MODULEHAMILTPW_ONSITE_PROJ_PW_H
 
-#include "operator_pw.h"
+#include "op_pw.h"
 
 #include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"

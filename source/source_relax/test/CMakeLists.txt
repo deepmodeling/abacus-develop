@@ -31,22 +31,23 @@ list(APPEND cell_source_files
 )
 AddTest(
   TARGET lattice_change_methods_test
-  LIBS parameter ${math_libs} base device 
-  SOURCES lattice_change_methods_test.cpp ../lattice_change_methods.cpp ../lattice_change_basic.cpp
+  LIBS parameter ${math_libs} base device
+  SOURCES lattice_change_methods_test.cpp ../lattice_change_methods.cpp ../lattice_change_basic.cpp mock_remake_cell.cpp
 )
 
 AddTest(
   TARGET lattice_change_basic_test
-  LIBS parameter ${math_libs} base device 
-  SOURCES lattice_change_basic_test.cpp ../lattice_change_basic.cpp
+  LIBS parameter ${math_libs} base device
+  SOURCES lattice_change_basic_test.cpp ../lattice_change_basic.cpp mock_remake_cell.cpp
 )
 
 AddTest(
   TARGET lattice_change_cg_test
-  LIBS parameter ${math_libs} base device 
-  SOURCES lattice_change_cg_test.cpp 
-          ../lattice_change_cg.cpp 
+  LIBS parameter ${math_libs} base device
+  SOURCES lattice_change_cg_test.cpp
+          ../lattice_change_cg.cpp
           ../lattice_change_basic.cpp
+          mock_remake_cell.cpp
           ../../source_io/orb_io.cpp
 )
 

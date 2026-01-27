@@ -9,7 +9,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/elecstate.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"

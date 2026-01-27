@@ -1,7 +1,7 @@
 #ifndef EKINETICPW_H
 #define EKINETICPW_H
 
-#include "operator_pw.h"
+#include "op_pw.h"
 #include "source_pw/module_pwdft/kernels/ekinetic_op.h"
 
 #include <source_base/macros.h>
