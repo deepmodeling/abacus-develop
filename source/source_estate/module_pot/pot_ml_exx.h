@@ -62,7 +62,7 @@ class PotML_EXX : public PotBase
     }
     ~PotML_EXX() {};
 
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
     {
         if (PARAM.inp.of_ml_local_test) this->ml_exx.localTest(chg->rho, this->rho_basis_);
         this->ml_exx.ml_potential(chg->rho, this->rho_basis_, v_eff);

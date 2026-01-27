@@ -1,11 +1,10 @@
 #ifndef SPARSE_FORMAT_U_H 
 #define SPARSE_FORMAT_U_H
 
+#include "source_base/abfs-vector3_order.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
-#include "source_base/abfs-vector3_order.h"
 
 namespace sparse_format
 {

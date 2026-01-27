@@ -17,6 +17,7 @@
 
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"

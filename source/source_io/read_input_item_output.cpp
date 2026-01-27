@@ -564,6 +564,10 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
             }
+            if (para.input.out_elf[0] > 0 && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is not aviailable for nspin = 4");
+            }
         };
         sync_intvec(input.out_elf, 2, 0);
         this->add_item(item);

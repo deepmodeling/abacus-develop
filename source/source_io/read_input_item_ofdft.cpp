@@ -14,7 +14,8 @@ void ReadInput::item_ofdft()
 #ifndef __MLALGO
             if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "ML KEDF is not supported.");
+                ModuleBase::WARNING_QUIT("ReadInput", "Error: ML KEDF requires ENABLE_MLALGO option.\n "
+                                                      "Please enable ENABLE_MLALGO during compilation to use this feature.");
             }
 #endif
             if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt"
