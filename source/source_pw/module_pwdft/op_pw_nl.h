@@ -1,7 +1,7 @@
 #ifndef NONLOCALPW_H
 #define NONLOCALPW_H
 
-#include "operator_pw.h"
+#include "operator_pw/operator_pw.h"
 
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/kernels/nonlocal_op.h"

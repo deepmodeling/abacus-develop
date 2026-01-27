@@ -4,7 +4,7 @@ list(APPEND objects
     hamilt_pw.cpp
     op_pw_ekin.cpp
     operator_pw/veff_pw.cpp
-    operator_pw/nonlocal_pw.cpp
+    op_pw_nl.cpp
     operator_pw/meta_pw.cpp
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp

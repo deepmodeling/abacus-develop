@@ -7,7 +7,7 @@
 #include "operator_pw/veff_pw.h"
 #include "op_pw_ekin.h"
 #include "operator_pw/meta_pw.h"
-#include "operator_pw/nonlocal_pw.h"
+#include "op_pw_nl.h"
 #include "operator_pw/onsite_proj_pw.h"
 #include "operator_pw/op_exx_pw.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
