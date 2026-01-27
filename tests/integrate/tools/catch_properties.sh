@@ -78,6 +78,7 @@ out_pband=$(get_input_key_value "out_proj_band" "INPUT")
 toW90=$(get_input_key_value "towannier90" "INPUT")
 has_mat_r=$(get_input_key_value "out_mat_r" "INPUT")
 has_mat_t=$(get_input_key_value "out_mat_t" "INPUT") 
+has_mat_syns=$(get_input_key_value "cal_syns" "INPUT")
 has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
@@ -414,6 +415,15 @@ fi
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
     python3 $COMPARE_SCRIPT trs1_nao.csr.ref OUT.autotest/trs1_nao.csr 8
     echo "ComparerTR_pass $?" >>$1
+fi
+
+#-----------------------------------
+#  Asynchronous overlap matrix for Hefei-NAMD
+#-----------------------------------
+#echo $has_mat_syns
+if ! test -z "$has_mat_syns"  && [  $has_mat_syns == 1 ]; then
+    python3 $COMPARE_SCRIPT syns_nao.csr.ref OUT.autotest/syns_nao.csr 8
+    echo "CompareSYNS_pass $?" >>$1
 fi
 
 #-----------------------------------

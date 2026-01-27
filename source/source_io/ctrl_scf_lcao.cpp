@@ -31,6 +31,7 @@
 #include "source_io/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
+#include "source_lcao/module_operator_lcao/overlap_new.h" // use hamilt::OverlapNew for NAMD
 
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
@@ -457,6 +458,40 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                        GlobalV::MY_RANK,
                        GlobalV::NPROC);
         tqo.calculate();
+    }
+
+    //------------------------------------------------------------------
+    //! 18) Calculate and output asynchronous overlap matrix for Hefei-NAMD
+    //------------------------------------------------------------------
+    if (inp.cal_syns && (istep > 0 || inp.init_vel))
+    {
+        ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
+        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
+
+        // Create a new OverlapNew instance specifically for SR_async calculation
+        // This allows SR_async to be initialized with velocity-shifted dtau
+        hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>* overlap_async =
+            new hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>(
+                nullptr,  // hsk_in: not needed for SR_async calculation
+                kv.kvec_d,
+                nullptr,  // hR_in: not needed for SR_async calculation
+                nullptr,  // SR_in: not needed for SR_async calculation
+                &ucell,
+                orb.cutoffs(),
+                &gd,
+                two_center_bundle.overlap_orb.get());
+
+        // Use same precision as DMR output (default 8 if not specified)
+        const int precision = inp.out_dmr[0] > 0 ? inp.out_dmr[1] : 8;
+        const Parallel_Orbitals* paraV = p_hamilt->getSR()->get_paraV();
+        hamilt::HContainer<TR>* SR_async = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, paraV);
+        overlap_async->output_SR_async_csr(istep, SR_async, precision);
+
+        // Clean up
+        delete SR_async;
+        delete overlap_async;
+
+        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
     }
 
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
