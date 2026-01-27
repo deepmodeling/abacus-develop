@@ -20,6 +20,10 @@ void write_elf(
 {
     // For nspin = 4, we only calculate the total ELF using the rho_total and tau_total,
     // containing in the first channel of rho and tau.
+    // What's more, we have not introduced the U(1) and SU(2) gauge invariance corrections
+    // proposed by Desmarais J K, Vignale G, Bencheikh K, et al. Physical Review Letters, 2024, 133(13): 136401,
+    // where the current density is also included in the ELF calculation.
+    
     int nspin_eff = (nspin == 4) ? 1 : nspin;
 
     std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
