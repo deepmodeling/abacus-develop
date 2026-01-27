@@ -3,10 +3,10 @@ add_subdirectory(operator_pw)
 list(APPEND objects
     hamilt_pw.cpp
     op_pw_ekin.cpp
-    operator_pw/veff_pw.cpp
+    op_pw_veff.cpp
     op_pw_nl.cpp
-    operator_pw/meta_pw.cpp
-    operator_pw/velocity_pw.cpp
+    op_pw_meta.cpp
+    op_pw_vel.cpp
     operator_pw/operator_pw.cpp
     operator_pw/onsite_proj_pw.cpp
     operator_pw/op_exx_pw.cpp
