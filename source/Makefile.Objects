@@ -50,7 +50,6 @@ VPATH=./src_global:\
 ./source_pw/module_pwdft:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
-
 ./source_pw/module_pwdft/kernels:\
 ./source_pw/module_pwdft/module_exx_helper:\
 ./source_pw/module_stodft/kernels:\
@@ -168,8 +167,8 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
-	cubic_spline.o\
-	spherical_bessel_transformer.o\
+    cubic_spline.o\
+    spherical_bessel_transformer.o\
     mixing_data.o\
     mixing.o\
     plain_mixing.o\
@@ -418,18 +417,18 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
       parallel_orbitals.o\
-	  atomic_radials.o\
+      atomic_radials.o\
       hydrogen_radials.o\
       pswfc_radials.o\
-	  beta_radials.o\
-	  sphbes_radials.o\
-	  numerical_radial.o\
-	  radial_collection.o\
-	  radial_set.o\
-	  real_gaunt_table.o\
-	  two_center_bundle.o\
-	  two_center_integrator.o\
-	  two_center_table.o\
+      beta_radials.o\
+      sphbes_radials.o\
+      numerical_radial.o\
+      radial_collection.o\
+      radial_set.o\
+      real_gaunt_table.o\
+      two_center_bundle.o\
+      two_center_integrator.o\
+      two_center_table.o\
       projgen.o\
 
 OBJS_PSI=psi.o\
@@ -629,8 +628,8 @@ OBJS_LCAO=evolve_elec.o\
       boundary_fix.o\
       upsi.o\
       FORCE_STRESS.o\
-	  FORCE_gamma.o\
-	  FORCE_k.o\
+      FORCE_gamma.o\
+      FORCE_k.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
