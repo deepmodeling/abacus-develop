@@ -629,10 +629,10 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0)
     {
-        ucell.symm.symmetrize_vec3_nat(move_ion);
+        ucell.symm.symmetrize_vec3_nat(move_ion.data());
     }
 
-    unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_taud(ucell.lat,move_ion.data(),ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
