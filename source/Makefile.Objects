@@ -729,17 +729,17 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_func.o\
     sto_forces.o\
     sto_stress_pw.o\
-    stress_func_cc.o\
-    stress_func_ewa.o\
-    stress_func_exx.o\
-    stress_func_gga.o\
-    stress_func_mgga.o\
-    stress_func_har.o\
-    stress_func_kin.o\
-    stress_func_loc.o\
-    stress_func_nl.o\
-    stress_func_us.o\
-    stress_func_onsite.o\
+    stress_cc.o\
+    stress_ewa.o\
+    stress_exx.o\
+    stress_gga.o\
+    stress_mgga.o\
+    stress_har.o\
+    stress_kin.o\
+    stress_loc.o\
+    stress_nl.o\
+    stress_us.o\
+    stress_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\

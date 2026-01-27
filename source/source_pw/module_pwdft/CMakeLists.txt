@@ -21,17 +21,17 @@ list(APPEND objects
     forces.cpp
     forces_us.cpp
     forces_onsite.cpp
-    stress_func_cc.cpp
-    stress_func_ewa.cpp
-    stress_func_gga.cpp
-    stress_func_mgga.cpp
-    stress_func_har.cpp
-    stress_func_kin.cpp
-    stress_func_loc.cpp
-    stress_func_nl.cpp
-    stress_func_us.cpp
-    stress_func_onsite.cpp
-    stress_func_exx.cpp
+    stress_cc.cpp
+    stress_ewa.cpp
+    stress_gga.cpp
+    stress_mgga.cpp
+    stress_har.cpp
+    stress_kin.cpp
+    stress_loc.cpp
+    stress_nl.cpp
+    stress_us.cpp
+    stress_onsite.cpp
+    stress_exx.cpp
     stress_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
