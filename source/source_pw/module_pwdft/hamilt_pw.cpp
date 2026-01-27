@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 
 #include "operator_pw/veff_pw.h"
-#include "operator_pw/ekinetic_pw.h"
+#include "op_pw_ekin.h"
 #include "operator_pw/meta_pw.h"
 #include "operator_pw/nonlocal_pw.h"
 #include "operator_pw/onsite_proj_pw.h"

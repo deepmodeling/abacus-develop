@@ -310,7 +310,7 @@ OBJS_HAMILT=hamilt_pw.o\
     operator.o\
     operator_pw.o\
     op_exx_pw.o\
-    ekinetic_pw.o\
+    op_pw_ekin.o\
     ekinetic_op.o\
     exx_pw_ace.o\
     exx_pw_pot.o\
