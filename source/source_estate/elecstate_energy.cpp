@@ -20,8 +20,8 @@ void ElecState::cal_bandgap()
 
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double vbm = -std::numeric_limits<double>::infinity(); // Valence Band Maximum
-    double cbm = std::numeric_limits<double>::infinity(); // Conduction Band Minimum
+    double vbm = -1.0e100; // Valence Band Maximum
+    double cbm = 1.0e100; // Conduction Band Minimum
     const double threshold = 1.0e-5; // threshold to avoid E_gap(k) = 0
     for (int ib = 0; ib < nbands; ib++)
     {
@@ -59,10 +59,10 @@ void ElecState::cal_bandgap_updw()
     // int nbands = PARAM.inp.nbands;
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double vbm_up = -std::numeric_limits<double>::infinity();
-    double cbm_up = std::numeric_limits<double>::infinity();
-    double vbm_dw = -std::numeric_limits<double>::infinity();
-    double cbm_dw = std::numeric_limits<double>::infinity();
+    double vbm_up = -1.0e100;
+    double cbm_up = 1.0e100;
+    double vbm_dw = -1.0e100;
+    double cbm_dw = 1.0e100;
     const double threshold = 1.0e-5;
     for (int ib = 0; ib < nbands; ib++)
     {
