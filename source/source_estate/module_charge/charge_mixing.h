@@ -153,7 +153,14 @@ class Charge_Mixing
      * @brief charge mixing for real space
      * @param chr pointer of Charge object
      */
-    void mix_rho_real(Charge* chr);
+    template<typename TCharge>
+    void mix_rho_real(TCharge*const chr);
+
+    /**
+     * @brief charge mixing for real space
+     * @param chr pointer of Charge object
+     */
+    void mix_rho_real_tau(Charge*const chr);
 
     /**
      * @brief Kerker screen method for reciprocal space

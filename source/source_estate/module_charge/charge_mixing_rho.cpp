@@ -310,21 +310,19 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     return;
 }
 
-void Charge_Mixing::mix_rho_real(Charge* chr)
+
+template<typename TCharge>
+void Charge_Mixing::mix_rho_real(TCharge*const chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_real");
     ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
-
-    double* rhor_in=nullptr;
-    double* rhor_out=nullptr;
-
     if (nspin == 1)
     {
-        rhor_in = chr->rho_save[0];
-        rhor_out = chr->rho[0];
+        const double*const rhor_in = chr->rho_save[0];
+        double*const rhor_out = chr->rho[0];
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);    
         auto inner_product
@@ -335,12 +333,10 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     else if (nspin == 2)
     {
         // magnetic density
-        double *rho_mag = nullptr;
-        double *rho_mag_save = nullptr; 
-        const int nrxx = this->rhopw->nrxx;
         // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
-        rho_mag = new double[nrxx * nspin];
-        rho_mag_save = new double[nrxx * nspin];
+        const int nrxx = this->rhopw->nrxx;
+        double*const rho_mag = new double[nrxx * nspin];
+        double*const rho_mag_save = new double[nrxx * nspin];
         ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * nspin);
         ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * nspin);
         // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
@@ -355,22 +351,23 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             rho_mag_save[ir + nrxx] = chr->rho_save[0][ir] - chr->rho_save[1][ir];
         }
         //
-        rhor_in = rho_mag_save;
-        rhor_out = rho_mag;
+        const double*const rhor_in = rho_mag_save;
+        double*const rhor_out = rho_mag;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            = [this, nrxx](double*const out, const double*const in, const double*const sres)
+        {
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = 0; i < nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta * sres[i];
             }
             // magnetism
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = nrxx; i < 2 * nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta_mag * sres[i];
@@ -399,23 +396,24 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     else if (nspin == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
-        rhor_in = chr->rho_save[0];
-        rhor_out = chr->rho[0];
+        const double*const rhor_in = chr->rho_save[0];
+        double*const rhor_out = chr->rho[0];
         const int nrxx = this->rhopw->nrxx;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            = [this, nrxx](double*const out, const double*const in, const double*const sres)
+        {
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = 0; i < nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta * sres[i];
             }
             // magnetism, mx, my, mz
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = nrxx; i < 4 * nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta_mag * sres[i];
@@ -433,8 +431,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
         const int nrxx = this->rhopw->nrxx;
         // allocate memory for rho_magabs and rho_magabs_save
-        double* rho_magabs = new double[nrxx * 2];
-        double* rho_magabs_save = new double[nrxx * 2];
+        double*const rho_magabs = new double[nrxx * 2];
+        double*const rho_magabs_save = new double[nrxx * 2];
         ModuleBase::GlobalFunc::ZEROS(rho_magabs, nrxx * 2);
         ModuleBase::GlobalFunc::ZEROS(rho_magabs_save, nrxx * 2);
         // calculate rho_magabs and rho_magabs_save
@@ -451,23 +449,24 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 					+ chr->rho_save[2][ir] * chr->rho_save[2][ir] 
 					+ chr->rho_save[3][ir] * chr->rho_save[3][ir]);
 		}
-        rhor_in = rho_magabs_save;
-        rhor_out = rho_magabs;
+        const double*const rhor_in = rho_magabs_save;
+        double*const rhor_out = rho_magabs;
 
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            = [this, nrxx](double*const out, const double*const in, const double*const sres)
+        {
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = 0; i < nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta * sres[i];
             }
             // magnetism, |m|
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static, 256)
+            #endif
             for (int i = nrxx; i < 2 * nrxx; ++i)
             {
                 out[i] = in[i] + this->mixing_beta_mag * sres[i];
@@ -500,22 +499,28 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_magabs;
         delete[] rho_magabs_save;
     }
-    
-    double *taur_out=nullptr;
-    double *taur_in=nullptr;
-    if ((XC_Functional::get_ked_flag()) && mixing_tau)
+    else
     {
-        taur_in = chr->kin_r_save[0];
-        taur_out = chr->kin_r[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->tau_mdata, taur_in, taur_out, nullptr, false);
-
-        this->mixing->mix_data(this->tau_mdata, taur_out);
+        ModuleBase::WARNING_QUIT("Charge_Mixing::mix_rho_real", std::string(__FILE__)+" line "+std::to_string(__LINE__));
     }
 
     ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real");
-    return;
+}
+
+template void Charge_Mixing::mix_rho_real(Charge*const chr);
+
+
+void Charge_Mixing::mix_rho_real_tau(Charge*const chr)
+{
+    ModuleBase::TITLE("Charge_Mixing", "mix_rho_real_tau");
+    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real_tau");
+    double *taur_out=chr->kin_r[0];
+    double *taur_in=chr->kin_r_save[0];
+    // Note: there is no kerker modification for tau because I'm not sure
+    // if we should have it. If necessary we can try it in the future.
+    this->mixing->push_data(this->tau_mdata, taur_in, taur_out, nullptr, false);
+    this->mixing->mix_data(this->tau_mdata, taur_out);
+    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real_tau");
 }
 
 
@@ -568,6 +573,10 @@ void Charge_Mixing::mix_rho(Charge* chr)
     else if (PARAM.inp.scf_thr_type == 2)
     {
         mix_rho_real(chr);
+        if ((XC_Functional::get_ked_flag()) && mixing_tau)
+        {
+            mix_rho_real_tau(chr);
+        }
     }
     // ---------------------------------------------------
 
