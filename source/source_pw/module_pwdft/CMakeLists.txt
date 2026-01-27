@@ -1,4 +1,4 @@
-add_subdirectory(operator_pw)
+
 
 list(APPEND objects
     hamilt_pw.cpp
@@ -7,11 +7,11 @@ list(APPEND objects
     op_pw_nl.cpp
     op_pw_meta.cpp
     op_pw_vel.cpp
-    operator_pw/operator_pw.cpp
-    operator_pw/onsite_proj_pw.cpp
-    operator_pw/op_exx_pw.cpp
-    operator_pw/exx_pw_ace.cpp
-    operator_pw/exx_pw_pot.cpp
+    op_pw.cpp
+    op_pw_proj.cpp
+    op_pw_exx.cpp
+    op_pw_exx_ace.cpp
+    op_pw_exx_pot.cpp
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp

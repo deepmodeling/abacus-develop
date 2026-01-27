@@ -50,7 +50,7 @@ VPATH=./src_global:\
 ./source_pw/module_pwdft:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
-./source_pw/module_pwdft/operator_pw:\
+
 ./source_pw/module_pwdft/kernels:\
 ./source_pw/module_pwdft/module_exx_helper:\
 ./source_pw/module_stodft/kernels:\
@@ -308,12 +308,12 @@ OBJS_GINT=batch_biggrid.o\
 OBJS_HAMILT=hamilt_pw.o\
     hamilt_sdft_pw.o\
     operator.o\
-    operator_pw.o\
-    op_exx_pw.o\
+    op_pw.o\
+    op_pw_exx.o\
     op_pw_ekin.o\
     ekinetic_op.o\
-    exx_pw_ace.o\
-    exx_pw_pot.o\
+    op_pw_exx_ace.o\
+    op_pw_exx_pot.o\
     hpsi_norm_op.o\
     op_pw_veff.o\
     veff_op.o\
@@ -322,6 +322,7 @@ OBJS_HAMILT=hamilt_pw.o\
     op_pw_meta.o\
     meta_op.o\
     op_pw_vel.o\
+    op_pw_proj.o\
     radial_proj.o\
     exx_helper.o\
     vec_mul_vec_complex_op.o\
