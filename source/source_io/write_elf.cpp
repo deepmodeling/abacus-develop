@@ -23,7 +23,7 @@ void write_elf(
     // What's more, we have not introduced the U(1) and SU(2) gauge invariance corrections
     // proposed by Desmarais J K, Vignale G, Bencheikh K, et al. Physical Review Letters, 2024, 133(13): 136401,
     // where the current density is also included in the ELF calculation.
-    
+
     int nspin_eff = (nspin == 4) ? 1 : nspin;
 
     std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
@@ -87,7 +87,14 @@ void write_elf(
         {
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
+                if (rho[is][ir] > 0.0)
+                {
+                    tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
+                }
+                else
+                {
+                    tau_TF[is][ir] = 0.0;
+                }
             }
         }
     }
