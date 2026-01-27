@@ -1,7 +1,7 @@
 #ifndef VEFFPW_H
 #define VEFFPW_H
 
-#include "operator_pw.h"
+#include "op_pw.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_pw/module_pwdft/kernels/veff_op.h"

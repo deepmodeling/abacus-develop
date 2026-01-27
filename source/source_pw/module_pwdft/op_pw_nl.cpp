@@ -1,4 +1,4 @@
-#include "nonlocal_pw.h"
+#include "op_pw_nl.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"

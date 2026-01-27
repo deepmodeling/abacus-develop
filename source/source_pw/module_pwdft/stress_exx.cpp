@@ -1,5 +1,5 @@
 #include "source_hamilt/module_xc/exx_info.h"
-#include "operator_pw/op_exx_pw.h"
+#include "op_pw_exx.h"
 #include "source_base/parallel_common.h"
 #include "stress_pw.h"
 
