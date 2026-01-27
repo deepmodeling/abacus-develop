@@ -1,13 +1,13 @@
 #ifndef NONLOCALPW_H
 #define NONLOCALPW_H
 
-#include "operator_pw.h"
+#include "op_pw.h"
 
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/kernels/nonlocal_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace hamilt {
 

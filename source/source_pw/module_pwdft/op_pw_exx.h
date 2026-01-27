@@ -1,7 +1,7 @@
 #ifndef OPEXXPW_H
 #define OPEXXPW_H
 
-#include "operator_pw.h"
+#include "op_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/macros.h"
 #include "source_base/matrix.h"

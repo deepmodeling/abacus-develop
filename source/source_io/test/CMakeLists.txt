@@ -278,3 +278,9 @@ AddTest(
   ../../source_basis/module_nao/radial_collection.cpp
 )
 endif()
+
+AddTest(
+  TARGET MODULE_IO_write_elf_logic_test
+  SOURCES write_elf_logic_test.cpp
+)
+

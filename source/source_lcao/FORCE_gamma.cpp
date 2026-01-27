@@ -109,14 +109,6 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr);
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-        ModuleBase::timer::tick("Forces", "allocate");
-        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
-    }
-
     ModuleBase::timer::tick("Forces", "allocate");
     return;
 }

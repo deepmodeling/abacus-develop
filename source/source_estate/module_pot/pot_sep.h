@@ -3,7 +3,7 @@
 
 #include "pot_base.h"
 #include "source_base/matrix.h"
-#include "source_pw/module_pwdft/VSep_in_pw.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 
 namespace elecstate
 {

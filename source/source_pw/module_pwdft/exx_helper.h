@@ -1,9 +1,6 @@
-//
-// For EXX in PW.
-//
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
-#include "source_pw/module_pwdft/operator_pw/op_exx_pw.h"
+#include "source_pw/module_pwdft/op_pw_exx.h"
 
 #ifndef EXX_HELPER_H
 #define EXX_HELPER_H

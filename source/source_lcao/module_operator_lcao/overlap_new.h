@@ -46,6 +46,8 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      const Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor);
 
+    ~OverlapNew();
+
     virtual void contributeHR() override;
 
     virtual void contributeHk(int ik) override;
@@ -130,6 +132,25 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     // if k vector is not changed, then do nothing and return
     // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector
     ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10, -10, -10);
+
+  public:
+    /**
+     * @brief calculate asynchronous overlap matrix for Hefei-NAMD
+     * Calculates <phi(t-1)|phi(t)> by shifting atom positions backward
+     * @param ucell unit cell with current atomic positions and velocities
+     * @param md_dt molecular dynamics time step (in fs)
+     * @param paraV parallel orbitals object for matrix distribution
+     * @return pointer to the created SR_async container (caller must delete)
+     */
+    hamilt::HContainer<TR>* calculate_SR_async(const UnitCell& ucell, const double md_dt, const Parallel_Orbitals* paraV);
+
+    /**
+     * @brief output asynchronous overlap matrix in CSR format
+     * @param istep current ionic step number
+     * @param SR_async pointer to the asynchronous overlap matrix container
+     * @param precision output precision for floating point numbers
+     */
+    void output_SR_async_csr(const int istep, hamilt::HContainer<TR>* SR_async, const int precision = 8);
 };
 
 } // namespace hamilt
