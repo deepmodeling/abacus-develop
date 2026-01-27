@@ -2,7 +2,7 @@
 #define VELOCITY_PW_H
 #include "op_pw.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 namespace hamilt
 {

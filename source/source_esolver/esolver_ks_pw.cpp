@@ -12,7 +12,7 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/VSep_in_pw.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 
 #include "source_pw/module_pwdft/forces.h"

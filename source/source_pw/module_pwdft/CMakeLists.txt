@@ -33,9 +33,9 @@ list(APPEND objects
     stress_onsite.cpp
     stress_exx.cpp
     stress_pw.cpp
-    VL_in_pw.cpp
-    VNL_in_pw.cpp
-    VNL_grad_pw.cpp
+    vl_pw.cpp
+    vnl_pw.cpp
+    vnl_pw_grad.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
@@ -46,7 +46,7 @@ list(APPEND objects
     radial_proj.cpp
     onsite_projector.cpp
     onsite_proj_tools.cpp
-    VSep_in_pw.cpp
+    vsep_pw.cpp
 )
 
 add_library(

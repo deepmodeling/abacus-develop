@@ -686,9 +686,9 @@ OBJS_PARALLEL=parallel_common.o\
 
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\
-    VL_in_pw.o\
-    VNL_in_pw.o\
-    VNL_grad_pw.o\
+    vl_pw.o\
+    vnl_pw.o\
+    vnl_pw_grad.o\
     chgmixing.o\
     charge.o\
     charge_init.o\
@@ -754,7 +754,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_dos.o\
     onsite_projector.o\
     onsite_proj_tools.o\
-    VSep_in_pw.o
+    vsep_pw.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\
