@@ -1530,27 +1530,45 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: Vector of string
-- **Description**: The methods to do geometry optimization.
-  the first element:
-  - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
-  - bfgs : using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
-  - lbfgs: using the Limited-memory Broyden–Fletcher–Goldfarb–Shanno (LBFGS) algorithm.
-  - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
-  - sd: using the steepest descent (SD) algorithm.
-  - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
+- **Description**: The methods to do geometry optimization. The available algorithms depend on the [relax_new](#relax_new) setting.
 
-  the second element:
-  when the first element is bfgs, if the second parameter is 1, it indicates the use of the new BFGS algorithm; if the second parameter is not 1, it indicates the use of the old BFGS algorithm.
-- **Default**: cg 1
-- **Note**:In the 3.10-LTS version, the type of this parameter is std::string. It can be set to "cg","bfgs","cg_bfgs","bfgs_trad","lbfgs","sd","fire".
+  **First element** (algorithm selection):
+  - `cg`: Conjugate gradient (CG) algorithm. Available for both `relax_new = True` (default, simultaneous optimization) and `relax_new = False` (nested optimization). See [relax_new](#relax_new) for implementation details.
+  - `bfgs`: Broyden–Fletcher–Goldfarb–Shanno (BFGS) quasi-Newton algorithm. **Only available when `relax_new = False`**.
+  - `lbfgs`: Limited-memory BFGS algorithm, suitable for large systems. **Only available when `relax_new = False`**.
+  - `cg_bfgs`: Mixed method starting with CG and switching to BFGS when force convergence reaches [relax_cg_thr](#relax_cg_thr). **Only available when `relax_new = False`**.
+  - `sd`: Steepest descent algorithm. **Only available when `relax_new = False`**. Not recommended for production use.
+  - `fire`: Fast Inertial Relaxation Engine method, a molecular-dynamics-based relaxation algorithm. Use by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Ionic velocities must be set in STRU file. See [fire](../md.md#fire) for details.
+
+  **Second element** (BFGS variant, only when first element is `bfgs`):
+  - `1`: Traditional BFGS that updates the Hessian matrix B and then inverts it.
+  - `2` or omitted: Default BFGS that directly updates the inverse Hessian (recommended).
+
+- **Default**: `cg 1`
+- **Note**: In the 3.10-LTS version, the type of this parameter is std::string. It can be set to "cg", "bfgs", "cg_bfgs", "bfgs_trad", "lbfgs", "sd", "fire".
 
 ### relax_new
 
 - **Type**: Boolean
-- **Description**: At around the end of 2022 we made a new implementation of the Conjugate Gradient (CG) method for `relax` and `cell-relax` calculations. But the old implementation was also kept.
-  - True: use the new implementation of CG method for `relax` and `cell-relax` calculations.
-  - False: use the old implementation of CG method for `relax` and `cell-relax` calculations.
+- **Description**: Controls which implementation of geometry relaxation to use. At the end of 2022, a new implementation of the Conjugate Gradient (CG) method was introduced for `relax` and `cell-relax` calculations, while the old implementation was kept for backward compatibility.
+
+  - **True** (default): Use the new CG implementation with the following features:
+    - Simultaneous optimization of ionic positions and cell parameters (for `cell-relax`)
+    - Line search algorithm for step size determination
+    - Only CG algorithm is available (`relax_method` must be `cg`)
+    - Supports advanced cell constraints: `fixed_axes = "shape"`, `"volume"`, `"a"`, `"b"`, `"c"`, etc.
+    - Supports `fixed_ibrav` to maintain lattice type
+    - More efficient for variable-cell relaxation
+    - Step size controlled by [relax_scale_force](#relax_scale_force)
+
+  - **False**: Use the old implementation with the following features:
+    - Nested optimization procedure: ionic positions optimized first, then cell parameters (for `cell-relax`)
+    - Multiple algorithms available: `cg`, `bfgs`, `lbfgs`, `sd`, `cg_bfgs`
+    - Limited cell constraints: only `fixed_axes = "volume"` is supported
+    - Traditional approach with separate ionic and cell optimization steps
+
 - **Default**: True
+- **Recommendation**: Use `relax_new = True` (default) for most cases, especially for `cell-relax` calculations. Use `relax_new = False` only if you need BFGS/LBFGS algorithms or for reproducing old results.
 
 ### relax_scale_force
 
@@ -1568,7 +1586,8 @@ These variables are used to control the geometry relaxation.
 ### relax_cg_thr
 
 - **Type**: Real
-- **Description**: When move-method is set to `cg_bfgs`, a mixed algorithm of conjugate gradient (CG) method and Broyden–Fletcher–Goldfarb–Shanno (BFGS) method is used. The ions first move according to CG method, then switched to BFGS method when the maximum of force on atoms is reduced below the CG force threshold, which is set by this parameter.
+- **Availability**: Only used when `relax_new = False` and `relax_method = cg_bfgs`
+- **Description**: When `relax_method` is set to `cg_bfgs`, a mixed algorithm of conjugate gradient (CG) and Broyden–Fletcher–Goldfarb–Shanno (BFGS) is used. The ions first move according to the CG method, then switch to the BFGS method when the maximum force on atoms is reduced below this threshold.
 - **Default**: 0.5
 - **Unit**: eV/Angstrom
 
@@ -1604,33 +1623,38 @@ These variables are used to control the geometry relaxation.
 ### relax_bfgs_w1
 
 - **Type**: Real
-- **Description**: Controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Availability**: Only used when `relax_new = False` and `relax_method` is `bfgs` or `cg_bfgs`
+- **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the sufficient decrease condition (c1 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.01
 
 ### relax_bfgs_w2
 
 - **Type**: Real
-- **Description**: Controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Availability**: Only used when `relax_new = False` and `relax_method` is `bfgs` or `cg_bfgs`
+- **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.5
 
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: For geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`. 
-- **Unit**: Bohr
+- **Availability**: Only used when `relax_new = False` and `relax_method` is `bfgs` or `cg_bfgs`
+- **Description**: Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.
 - **Default**: 0.8
+- **Unit**: Bohr
 
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Description**: In old bfgs algorithm, it indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down. In the current default bfgs algorithm, this parameter is not used.
+- **Availability**: Only used when `relax_new = False` and `relax_method = bfgs 1` (traditional BFGS)
+- **Description**: Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. **Note**: This parameter is not used in the default BFGS algorithm (`relax_method = bfgs 2` or `bfgs`).
 - **Default**: 1e-5
 - **Unit**: Bohr
 
 ### relax_bfgs_init
 
 - **Type**: Real
-- **Description**: For geometry optimization. It stands for the sum of initial movements of all of the atoms.
+- **Availability**: Only used when `relax_new = False` and `relax_method` is `bfgs` or `cg_bfgs`
+- **Description**: Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.
 - **Default**: 0.5
 - **Unit**: Bohr
 
@@ -1659,31 +1683,38 @@ These variables are used to control the geometry relaxation.
 ### fixed_axes
 
 - **Type**: String
-- **Availability**: Only used when `calculation` set to `cell-relax`
-- **Description**: Axes that are fixed during cell relaxation. Possible choices are:
-  - None**: default; all of the axes can relax
-  - volume**: relaxation with fixed volume
-  - shape**: fix shape but change volume (i.e. only lattice constant changes)
-  - a: fix a axis during relaxation
-  - b: fix b axis during relaxation
-  - c: fix c axis during relaxation
-  - ab: fix both a and b axes during relaxation
-  - ac: fix both a and c axes during relaxation
-  - bc: fix both b and c axes during relaxation
+- **Availability**: Only used when `calculation` is set to `cell-relax`
+- **Description**: Specifies which cell degrees of freedom are fixed during variable-cell relaxation. The available options depend on the [relax_new](#relax_new) setting:
 
-> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = True
+  **When `relax_new = True` (default)**, all options are available:
+  - `None`: Default; all cell parameters can relax freely
+  - `volume`: Relaxation with fixed volume (allows shape changes)
+  - `shape`: Fix shape but allow volume changes (hydrostatic pressure only)
+  - `a`: Fix the a-axis lattice vector during relaxation
+  - `b`: Fix the b-axis lattice vector during relaxation
+  - `c`: Fix the c-axis lattice vector during relaxation
+  - `ab`: Fix both a and b axes during relaxation
+  - `ac`: Fix both a and c axes during relaxation
+  - `bc`: Fix both b and c axes during relaxation
+
+  **When `relax_new = False`**, all options are now available:
+  - `None`: Default; all cell parameters can relax freely
+  - `volume`: Relaxation with fixed volume (allows shape changes). Volume is preserved by rescaling the lattice after each update.
+  - `shape`: Fix shape but allow volume changes (hydrostatic pressure only). Stress tensor is replaced with isotropic pressure.
+  - `a`, `b`, `c`, `ab`, `ac`, `bc`: Fix specific lattice vectors. Gradients for fixed vectors are set to zero.
 
 - **Default**: None
+- **Note**: For VASP users, see the [ISIF correspondence table](../opt.md#fixing-cell-parameters) in the geometry optimization documentation. Both implementations now support all constraint types.
 
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Availability**: Must be used along with [relax_new](#relax_new) set to True, and a specific [latname](#latname) must be provided
+- **Availability**: Can be used with both `relax_new = True` and `relax_new = False`. A specific [latname](#latname) must be provided.
 - **Description**:
-  - True: the lattice type will be preserved during relaxation
+  - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 
-> Note: it is possible to use `fixed_ibrav` with `fixed_axes`, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (`latname` = "sc"), and we use `fixed_ibrav` along with `fixed_axes` = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
+> Note: it is possible to use `fixed_ibrav` with `fixed_axes`, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (`latname` = "sc"), and we use `fixed_ibrav` along with `fixed_axes` = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, `fixed_ibrav` is applied first, then `fixed_axes = "volume"` rescaling is applied.
 
 - **Default**: False
 

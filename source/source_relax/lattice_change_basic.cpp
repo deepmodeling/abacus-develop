@@ -4,6 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/update_cell.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -24,13 +25,27 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
-    if (Lattice_Change_Basic::fixed_axes == "volume")
+    // Apply fixed_axes constraints to stress tensor
+    if (Lattice_Change_Basic::fixed_axes == "shape")
     {
+        // Shape constraint: only volume can change (isotropic expansion/contraction)
+        // Replace stress with pure hydrostatic pressure
+        double pressure = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3.0;
+        stress.zero_out();
+        stress(0, 0) = pressure;
+        stress(1, 1) = pressure;
+        stress(2, 2) = pressure;
+    }
+    else if (Lattice_Change_Basic::fixed_axes == "volume")
+    {
+        // Volume constraint: only shape can change
+        // Remove hydrostatic pressure component from stress
         double stress_aver = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3.0;
         stress(0, 0) = stress(0, 0) - stress_aver;
         stress(1, 1) = stress(1, 1) - stress_aver;
         stress(2, 2) = stress(2, 2) - stress_aver;
     }
+    // Note: Axis constraints ("a", "b", "c", etc.) are handled via ucell.lc[] flags below
 
     lat[0] = ucell.latvec.e11 * ucell.lat0;
     lat[1] = ucell.latvec.e12 * ucell.lat0;
@@ -42,23 +57,47 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     lat[7] = ucell.latvec.e32 * ucell.lat0;
     lat[8] = ucell.latvec.e33 * ucell.lat0;
 
+    // Calculate gradients for each lattice vector, or zero them if fixed
     if (ucell.lc[0] == 1)
     {
         grad[0] = -(lat[0] * stress(0, 0) + lat[1] * stress(1, 0) + lat[2] * stress(2, 0));
         grad[1] = -(lat[0] * stress(0, 1) + lat[1] * stress(1, 1) + lat[2] * stress(2, 1));
         grad[2] = -(lat[0] * stress(0, 2) + lat[1] * stress(1, 2) + lat[2] * stress(2, 2));
     }
+    else
+    {
+        // Zero out gradient for fixed lattice vector a
+        grad[0] = 0.0;
+        grad[1] = 0.0;
+        grad[2] = 0.0;
+    }
+
     if (ucell.lc[1] == 1)
     {
         grad[3] = -(lat[3] * stress(0, 0) + lat[4] * stress(1, 0) + lat[5] * stress(2, 0));
         grad[4] = -(lat[3] * stress(0, 1) + lat[4] * stress(1, 1) + lat[5] * stress(2, 1));
         grad[5] = -(lat[3] * stress(0, 2) + lat[4] * stress(1, 2) + lat[5] * stress(2, 2));
     }
+    else
+    {
+        // Zero out gradient for fixed lattice vector b
+        grad[3] = 0.0;
+        grad[4] = 0.0;
+        grad[5] = 0.0;
+    }
+
     if (ucell.lc[2] == 1)
     {
         grad[6] = -(lat[6] * stress(0, 0) + lat[7] * stress(1, 0) + lat[8] * stress(2, 0));
         grad[7] = -(lat[6] * stress(0, 1) + lat[7] * stress(1, 1) + lat[8] * stress(2, 1));
         grad[8] = -(lat[6] * stress(0, 2) + lat[7] * stress(1, 2) + lat[8] * stress(2, 2));
+    }
+    else
+    {
+        // Zero out gradient for fixed lattice vector c
+        grad[6] = 0.0;
+        grad[7] = 0.0;
+        grad[8] = 0.0;
     }
 
     // grad[0] = -stress(0,0);   grad[1] = -stress(0,1);  grad[2] = -stress(0,2);
@@ -117,17 +156,57 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
         ucell.latvec.e33 = (move[8] + lat[8]) / ucell.lat0;
     }
 
-    ucell.a1.x = ucell.latvec.e11;
-    ucell.a1.y = ucell.latvec.e12;
-    ucell.a1.z = ucell.latvec.e13;
-    ucell.a2.x = ucell.latvec.e21;
-    ucell.a2.y = ucell.latvec.e22;
-    ucell.a2.z = ucell.latvec.e23;
-    ucell.a3.x = ucell.latvec.e31;
-    ucell.a3.y = ucell.latvec.e32;
-    ucell.a3.z = ucell.latvec.e33;
+    // Apply post-update constraints
+    // Order matters: fixed_ibrav first, then volume rescaling
 
-    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    // 1. Enforce Bravais lattice symmetry if fixed_ibrav is set
+    if (PARAM.inp.fixed_ibrav)
+    {
+        unitcell::remake_cell(ucell.lat);
+    }
+
+    // 2. Enforce volume constraint by rescaling lattice
+    if (Lattice_Change_Basic::fixed_axes == "volume")
+    {
+        double omega_old = ucell.omega; // Volume before this update
+        double omega_new = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+
+        // Rescale lattice to maintain constant volume
+        if (omega_new > 1e-10) // Avoid division by zero
+        {
+            double scale = std::pow(omega_old / omega_new, 1.0 / 3.0);
+            ucell.latvec *= scale;
+
+            // Update a1, a2, a3 vectors
+            ucell.a1.x = ucell.latvec.e11;
+            ucell.a1.y = ucell.latvec.e12;
+            ucell.a1.z = ucell.latvec.e13;
+            ucell.a2.x = ucell.latvec.e21;
+            ucell.a2.y = ucell.latvec.e22;
+            ucell.a2.z = ucell.latvec.e23;
+            ucell.a3.x = ucell.latvec.e31;
+            ucell.a3.y = ucell.latvec.e32;
+            ucell.a3.z = ucell.latvec.e33;
+
+            // Recalculate omega (should be equal to omega_old now)
+            ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+        }
+    }
+    else
+    {
+        // Update a1, a2, a3 vectors for non-volume-constrained cases
+        ucell.a1.x = ucell.latvec.e11;
+        ucell.a1.y = ucell.latvec.e12;
+        ucell.a1.z = ucell.latvec.e13;
+        ucell.a2.x = ucell.latvec.e21;
+        ucell.a2.y = ucell.latvec.e22;
+        ucell.a2.z = ucell.latvec.e23;
+        ucell.a3.x = ucell.latvec.e31;
+        ucell.a3.y = ucell.latvec.e32;
+        ucell.a3.z = ucell.latvec.e33;
+
+        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    }
 
     ucell.GT = ucell.latvec.Inverse();
     ucell.G = ucell.GT.Transpose();

@@ -1,4 +1,5 @@
 #include "spar_hsr.h"
+#include "source_lcao/hamilt_lcao.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
