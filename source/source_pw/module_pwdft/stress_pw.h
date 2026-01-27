@@ -2,7 +2,7 @@
 #define STRESS_PW_H
 
 #include "source_estate/elecstate.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "stress_func.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 

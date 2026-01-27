@@ -3,7 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
-#include "source_pw/module_pwdft/operator_pw/veff_pw.h"
+#include "source_pw/module_pwdft/op_pw_veff.h"
 #include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
