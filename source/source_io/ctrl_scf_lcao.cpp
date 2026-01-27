@@ -19,7 +19,7 @@
 #include "source_io/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "source_io/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
-#include "source_lcao/module_operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
@@ -240,7 +240,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
-            = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
+            = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(&hsk,
                                                                     kv.kvec_d,
                                                                     &hR,
                                                                     &ucell,

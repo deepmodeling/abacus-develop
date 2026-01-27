@@ -1,22 +1,22 @@
 #pragma once
-#include "nonlocal_new.h"
-#include "source_base/parallel_reduce.h"
+#include "nonlocal.h"
+#include "operator_force_stress_utils.h"
 #include "source_base/timer.h"
 
 namespace hamilt
 {
 
 template <typename TK, typename TR>
-void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
+void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                   const bool cal_stress,
                                                   const HContainer<TR>* dmR,
                                                   ModuleBase::matrix& force,
                                                   ModuleBase::matrix& stress)
 {
-    ModuleBase::TITLE("NonlocalNew", "cal_force_stress");
+    ModuleBase::TITLE("Nonlocal", "cal_force_stress");
 
     // begin the calculation of force and stress
-    ModuleBase::timer::tick("NonlocalNew", "cal_force_stress");
+    ModuleBase::timer::tick("Nonlocal", "cal_force_stress");
 
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     const int npol = this->ucell->get_npol();
@@ -86,15 +86,10 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
-                int L1 = atom1->iw2l[iw1];
-                int N1 = atom1->iw2n[iw1];
-                int m1 = atom1->iw2m[iw1];
-
-                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+                auto qn1 = OperatorForceStress::get_orbital_qn(*atom1, iw1);
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
+                intor_->snap(T1, qn1.L, qn1.N, qn1.M, T0, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 const int length = nlm[0].size();
                 std::vector<double> nlm_target(length * 4);
@@ -187,43 +182,14 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     }
 
-    if (cal_force)
-    {
-#ifdef __MPI
-        // sum up the occupation matrix
-        Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
-#endif
-        for (int i = 0; i < force.nr * force.nc; i++)
-        {
-            force.c[i] *= 2.0;
-        }
-    }
+    // Finalize with MPI reduction and post-processing
+    OperatorForceStress::finalize_force_stress(cal_force, cal_stress, this->ucell, stress_tmp, force, stress, 2.0, 2.0);
 
-    // stress renormalization
-    if (cal_stress)
-    {
-#ifdef __MPI
-        // sum up the occupation matrix
-        Parallel_Reduce::reduce_all(stress_tmp.data(), 6);
-#endif
-        const double weight = this->ucell->lat0 / this->ucell->omega;
-        for (int i = 0; i < 6; i++)
-        {
-            stress.c[i] = stress_tmp[i] * weight;
-        }
-        stress.c[8] = stress.c[5]; // stress(2,2)
-        stress.c[7] = stress.c[4]; // stress(2,1)
-        stress.c[6] = stress.c[2]; // stress(2,0)
-        stress.c[5] = stress.c[4]; // stress(1,2)
-        stress.c[4] = stress.c[3]; // stress(1,1)
-        stress.c[3] = stress.c[1]; // stress(1,0)
-    }
-
-    ModuleBase::timer::tick("NonlocalNew", "cal_force_stress");
+    ModuleBase::timer::tick("Nonlocal", "cal_force_stress");
 }
 
 template <>
-void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
+void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
                                                const int& T0,
                                                const Parallel_Orbitals* paraV,
@@ -243,12 +209,8 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol * npol, 0);
-    if (npol == 2) {
-        step_trace[1] = 1;
-        step_trace[2] = col_indexes.size();
-        step_trace[3] = col_indexes.size() + 1;
-    }
+    std::vector<int> step_trace;
+    OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
     const std::complex<double>* dm_pointer = dmR_pointer->get_pointer();
@@ -292,7 +254,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
 }
 
 template <>
-void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
+void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
                                                 const int& T0,
                                                 const Parallel_Orbitals* paraV,
@@ -314,12 +276,8 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol2, 0);
-    if (npol == 2) {
-        step_trace[1] = 1;
-        step_trace[2] = col_indexes.size();
-        step_trace[3] = col_indexes.size() + 1;
-    }
+    std::vector<int> step_trace;
+    OperatorForceStress::setup_step_trace(npol, col_indexes.size(), step_trace);
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
     const std::complex<double>* dm_pointer = dmR_pointer->get_pointer();
@@ -364,7 +322,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
 }
 
 template <typename TK, typename TR>
-void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
+void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
                                                const int& T0,
                                                const Parallel_Orbitals* paraV,
@@ -414,7 +372,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
 }
 
 template <typename TK, typename TR>
-void NonlocalNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
+void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
                                                 const int& T0,
                                                 const Parallel_Orbitals* paraV,
