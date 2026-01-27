@@ -186,18 +186,11 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "there are bugs in the old implementation; set relax_new to be "
-                "1 for fixed_volume relaxation");
-        }
+        // Note: fixed_axes="volume" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
     } else if (fixed_axes_in == "shape") {
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "set relax_new to be 1 for fixed_shape relaxation");
-        }
+        // Note: fixed_axes="shape" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
