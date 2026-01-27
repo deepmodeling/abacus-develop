@@ -64,7 +64,7 @@ namespace ModuleSymmetry
         //     };
         auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
             // in [0,1)
-            TCdouble vr = 0.0;
+            TCdouble vr;
             vr.x = fmod(v.x + 100 + symm.epsilon, 1) - symm.epsilon;
             vr.y = fmod(v.y + 100 + symm.epsilon, 1) - symm.epsilon;
             vr.z = fmod(v.z + 100 + symm.epsilon, 1) - symm.epsilon;
