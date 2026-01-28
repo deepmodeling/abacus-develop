@@ -34,11 +34,11 @@ void reduce_double_diag(double* object, const int n);
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object);
 void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
 
-void gather_min_int_all(const int& nproc, int& v);
-void gather_max_double_all(const int& nproc, double& v);
-void gather_min_double_all(const int& nproc, double& v);
-void gather_max_double_pool(const int& nproc_in_pool, double& v);
-void gather_min_double_pool(const int& nproc_in_pool, double& v);
+void reduce_min_int(int& v);
+void reduce_max_double(double& v);
+void reduce_min_double(double& v);
+void reduce_max_double_pool(const int& nproc_in_pool, double& v);
+void reduce_min_double_pool(const int& nproc_in_pool, double& v);
 
 // mohan add 2011-04-21
 void gather_int_all(int& v, int* all);
