@@ -245,7 +245,9 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     if (!ifs) { all_exist = 0; break; }
                 }
 // Add MPI communication to synchronize all_exist across processes
+                #ifdef __MPI
                 Parallel_Reduce::reduce_min_int(all_exist);
+                #endif
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
@@ -262,7 +264,9 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
+                    #ifdef __MPI
                     Parallel_Reduce::reduce_min_int(all_exist_cereal);
+                    #endif
                     if (!all_exist_cereal)
                     {
                         //no HexxR file in CSR or binary format

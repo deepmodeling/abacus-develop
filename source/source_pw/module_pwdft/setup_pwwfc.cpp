@@ -53,13 +53,13 @@ void pw::setup_pwwfc(const Input_para& inp,
 			pw_rho.nz);
 
     pw_wfc->initparameters(false, inp.ecutwfc, kv.get_nks(), kv.kvec_d.data());
-
+#ifdef __MPI
     if (inp.pw_seed > 0)
     {
         Parallel_Reduce::reduce_max_double( pw_wfc->ggecut);
     }
     // qianrui add 2021-8-13 to make different kpar parameters can get the same result
-
+#endif
 
     pw_wfc->fft_bundle.initfftmode(inp.fft_mode);
     pw_wfc->setuptransform();

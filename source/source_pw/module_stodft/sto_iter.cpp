@@ -202,9 +202,9 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     }
     if (ik == nks - 1)
     {
+#ifdef __MPI
         Parallel_Reduce::reduce_max_double(*p_hamilt_sto->emax);
         Parallel_Reduce::reduce_min_double(*p_hamilt_sto->emin);
-#ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
         if (change)
