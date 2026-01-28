@@ -179,7 +179,9 @@ void Occupy::iweights(
             }
         }
     }
+    #ifdef __MPI
     Parallel_Reduce::reduce_max_double(ef);
+    #endif
     return;
 }
 
@@ -304,8 +306,10 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
     eup += 2 * smearing_sigma;
     elw -= 2 * smearing_sigma;
     // find min and max across pools
+    #ifdef __MPI
     Parallel_Reduce::reduce_max_double(eup);
     Parallel_Reduce::reduce_min_double(elw);
+    #endif
     //=================
     // Bisection method
     //=================

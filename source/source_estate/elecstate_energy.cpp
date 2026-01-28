@@ -37,9 +37,10 @@ void ElecState::cal_bandgap()
             }
         }
     }
-
+    #ifdef __MPI
     Parallel_Reduce::reduce_max_double(vbm);
     Parallel_Reduce::reduce_min_double(cbm);
+    #endif
     // Assign fermi level to CBM if it's still infinity
     if(cbm == std::numeric_limits<double>::infinity())
     { 
@@ -117,12 +118,12 @@ void ElecState::cal_bandgap_updw()
     { 
         vbm_dw =this->eferm.ef_dw;
     }
-
+    #ifdef __MPI
     Parallel_Reduce::reduce_max_double(vbm_up);
     Parallel_Reduce::reduce_min_double(cbm_up);
     Parallel_Reduce::reduce_max_double(vbm_dw);
     Parallel_Reduce::reduce_min_double(cbm_dw);
-
+    #endif
     this->bandgap_up = cbm_up - vbm_up;
     this->bandgap_dw = cbm_dw - vbm_dw;
 }
