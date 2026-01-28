@@ -37,7 +37,16 @@ void ElecState::cal_bandgap()
             }
         }
     }
-
+    // Assign fermi level to CBM if it's still infinity
+    if(cbm == std::numeric_limits<double>::infinity())
+    { 
+        cbm =this->eferm.ef;
+    }
+    // Assign fermi level to VBM if it's still negative infinity
+    if(vbm ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm =this->eferm.ef;
+    }
 #ifdef __MPI
     Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm);
     Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm);
@@ -91,6 +100,24 @@ void ElecState::cal_bandgap_updw()
                 }
             }
         }
+    }
+        // Assign fermi level to CBM if it's still infinity
+    if (cbm_up == std::numeric_limits<double>::infinity())
+    { 
+        cbm_up =this->eferm.ef_up;
+    }
+    if (cbm_dw == std::numeric_limits<double>::infinity())
+    { 
+        cbm_dw =this->eferm.ef_dw;
+    }
+    // Assign fermi level to VBM if it's still negative infinity
+    if(vbm_up ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm_up =this->eferm.ef_up;
+    }
+    if(vbm_dw ==-std::numeric_limits<double>::infinity())
+    { 
+        vbm_dw =this->eferm.ef_dw;
     }
 
 #ifdef __MPI

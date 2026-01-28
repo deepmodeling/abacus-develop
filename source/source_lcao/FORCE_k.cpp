@@ -132,33 +132,6 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr); // delete lm.Hloc_fixedR
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-
-        ModuleBase::WARNING_QUIT("cal_syns", "This function has been broken and will be fixed later.");
-
-        LCAO_domain::build_ST_new(fsr,
-                                  'S',
-                                  cal_deri,
-                                  PARAM.inp.cal_stress,
-                                  ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &(gd),
-                                  nullptr, // delete lm.SlocR
-                                  PARAM.inp.cal_syns,
-                                  PARAM.inp.dmax);
-
-        for (int ik = 0; ik < nks; ik++)
-        {
-
-            bool bit = false; // LiuXh, 2017-03-21
-        }
-    }
-
     ModuleBase::timer::tick("Forces", "allocate");
     return;
 }
