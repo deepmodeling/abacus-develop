@@ -248,7 +248,7 @@ void Stochastic_Iter<T, Device>::check_precision(const double ref, const double 
     }
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(error);
 #endif
     double relative_error = std::abs(error / ref);
     GlobalV::ofs_running << info << "Relative Chebyshev Precision: " << relative_error * 1e9 << "E-09" << std::endl;
@@ -472,7 +472,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     {
         MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
-    MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(sto_ne);
 #endif
 
     totne = KS_ne + sto_ne;
@@ -539,7 +539,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     {
         MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
-    MPI_Allreduce(MPI_IN_PLACE, &stodemet, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(stodemet);
 #endif
     pes->f_en.demet += stodemet;
     this->check_precision(pes->f_en.demet, 1e-4, "TS");
@@ -580,7 +580,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
         }
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &sto_eband, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(sto_eband);
 #endif
     pes->f_en.eband += sto_eband;
     ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
@@ -694,7 +694,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     sto_ne *= ucell.omega / wfc_basis->nxyz;
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    Parallel_Reduce::reduce_pool(sto_ne);
 #endif
     double factor = targetne / (KS_ne + sto_ne);
     if (std::abs(factor - 1) > 1e-10)
