@@ -7,7 +7,7 @@
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include <memory>
 #include "source_lcao/hamilt_lcao.h"
-#include "source_io/read_wfc_nao.h"
+#include "source_io/module_wf/read_wfc_nao.h"
 #include "source_io/cube_io.h"
 #include "source_io/module_output/print_info.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"

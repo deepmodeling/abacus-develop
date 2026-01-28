@@ -17,7 +17,7 @@
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
-#include "../write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
 #ifdef __MLALGO

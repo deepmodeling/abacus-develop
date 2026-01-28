@@ -21,11 +21,11 @@ list(APPEND objects
     read_cube.cpp
     module_chgpot/rhog_io.cpp
     read_exit_file.cpp
-    read_wfc_pw.cpp
-    read_wf2rho_pw.cpp
+    module_wf/read_wfc_pw.cpp
+    module_wf/read_wf2rho_pw.cpp
     restart.cpp
     binstream.cpp
-    write_wfc_pw.cpp
+    module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
     write_cube.cpp
     module_chgpot/write_elecstat_pot.cpp
@@ -61,9 +61,9 @@ if(ENABLE_LCAO)
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
-      get_wf_lcao.cpp
-      read_wfc_nao.cpp
-      write_wfc_nao.cpp
+      module_wf/get_wf_lcao.cpp
+      module_wf/read_wfc_nao.cpp
+      module_wf/write_wfc_nao.cpp
       module_dm/write_dmk.cpp
       module_dm/write_dmr.cpp
       sparse_matrix.cpp

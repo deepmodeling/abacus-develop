@@ -2,9 +2,9 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_io/write_wfc_nao.h"
+#include "source_io/module_wf/write_wfc_nao.h"
 
-#include "write_wfc_nao.h"
+#include "source_io/module_wf/write_wfc_nao.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_output/filename.h"
 #include "source_base/tool_title.h" // use title

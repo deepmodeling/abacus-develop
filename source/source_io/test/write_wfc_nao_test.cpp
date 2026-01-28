@@ -1,4 +1,4 @@
-#include "../write_wfc_nao.h"
+#include "../module_wf/write_wfc_nao.h"
 #include "../module_output/filename.h"
 
 #define private public
