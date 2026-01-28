@@ -598,18 +598,18 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_eig_occ.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
-      write_dmk.o\
+      module_dm/write_dmk.o\
       module_unk/unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
       module_hs/write_HS_sparse.o\
       single_R_io.o\
       module_hs/write_HS_R.o\
-      write_dmr.o\
+      module_dm/write_dmr.o\
       sparse_matrix.o\
       output_mulliken.o\
       module_hs/output_sk.o\
-      output_dmk.o\
+      module_dm/output_dmk.o\
       module_ml/io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\

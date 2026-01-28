@@ -68,8 +68,8 @@ if(ENABLE_LCAO)
       get_wf_lcao.cpp
       read_wfc_nao.cpp
       write_wfc_nao.cpp
-      write_dmk.cpp
-      write_dmr.cpp
+      module_dm/write_dmk.cpp
+      module_dm/write_dmr.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
@@ -77,7 +77,7 @@ if(ENABLE_LCAO)
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp
       module_hs/output_sk.cpp
-      output_dmk.cpp
+      module_dm/output_dmk.cpp
       output_mulliken.cpp
       module_ml/io_npz.cpp
       cal_pLpR.cpp

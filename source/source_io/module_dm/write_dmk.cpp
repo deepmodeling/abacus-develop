@@ -1,4 +1,4 @@
-#include "source_io/write_dmk.h"
+#include "source_io/module_dm/write_dmk.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/module_external/scalapack_connector.h"
