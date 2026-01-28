@@ -9,6 +9,7 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
@@ -1511,8 +1512,7 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_pool(deeq.ptr,,
-                                 Parallel_Reduce::ReduceType::SUM);
+    Parallel_Reduce::reduce_pool(deeq.ptr,deeq.getSize());
 #endif
 
     delete[] qnorm;
