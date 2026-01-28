@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_estate/elecstate.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 

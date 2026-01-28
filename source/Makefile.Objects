@@ -50,7 +50,6 @@ VPATH=./src_global:\
 ./source_pw/module_pwdft:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
-./source_pw/module_pwdft/operator_pw:\
 ./source_pw/module_pwdft/kernels:\
 ./source_pw/module_pwdft/module_exx_helper:\
 ./source_pw/module_stodft/kernels:\
@@ -168,8 +167,8 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
-	cubic_spline.o\
-	spherical_bessel_transformer.o\
+    cubic_spline.o\
+    spherical_bessel_transformer.o\
     mixing_data.o\
     mixing.o\
     plain_mixing.o\
@@ -308,20 +307,21 @@ OBJS_GINT=batch_biggrid.o\
 OBJS_HAMILT=hamilt_pw.o\
     hamilt_sdft_pw.o\
     operator.o\
-    operator_pw.o\
-    op_exx_pw.o\
-    ekinetic_pw.o\
+    op_pw.o\
+    op_pw_exx.o\
+    op_pw_ekin.o\
     ekinetic_op.o\
-    exx_pw_ace.o\
-    exx_pw_pot.o\
+    op_pw_exx_ace.o\
+    op_pw_exx_pot.o\
     hpsi_norm_op.o\
-    veff_pw.o\
+    op_pw_veff.o\
     veff_op.o\
-    nonlocal_pw.o\
+    op_pw_nl.o\
     nonlocal_op.o\
-    meta_pw.o\
+    op_pw_meta.o\
     meta_op.o\
-    velocity_pw.o\
+    op_pw_vel.o\
+    op_pw_proj.o\
     radial_proj.o\
     exx_helper.o\
     vec_mul_vec_complex_op.o\
@@ -417,18 +417,18 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_nonlocal_lm.o\
       ORB_read.o\
       parallel_orbitals.o\
-	  atomic_radials.o\
+      atomic_radials.o\
       hydrogen_radials.o\
       pswfc_radials.o\
-	  beta_radials.o\
-	  sphbes_radials.o\
-	  numerical_radial.o\
-	  radial_collection.o\
-	  radial_set.o\
-	  real_gaunt_table.o\
-	  two_center_bundle.o\
-	  two_center_integrator.o\
-	  two_center_table.o\
+      beta_radials.o\
+      sphbes_radials.o\
+      numerical_radial.o\
+      radial_collection.o\
+      radial_set.o\
+      real_gaunt_table.o\
+      two_center_bundle.o\
+      two_center_integrator.o\
+      two_center_table.o\
       projgen.o\
 
 OBJS_PSI=psi.o\
@@ -628,8 +628,8 @@ OBJS_LCAO=evolve_elec.o\
       boundary_fix.o\
       upsi.o\
       FORCE_STRESS.o\
-	  FORCE_gamma.o\
-	  FORCE_k.o\
+      FORCE_gamma.o\
+      FORCE_k.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
@@ -685,9 +685,9 @@ OBJS_PARALLEL=parallel_common.o\
 
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\
-    VL_in_pw.o\
-    VNL_in_pw.o\
-    VNL_grad_pw.o\
+    vl_pw.o\
+    vnl_pw.o\
+    vnl_pw_grad.o\
     chgmixing.o\
     charge.o\
     charge_init.o\
@@ -728,17 +728,17 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_func.o\
     sto_forces.o\
     sto_stress_pw.o\
-    stress_func_cc.o\
-    stress_func_ewa.o\
-    stress_func_exx.o\
-    stress_func_gga.o\
-    stress_func_mgga.o\
-    stress_func_har.o\
-    stress_func_kin.o\
-    stress_func_loc.o\
-    stress_func_nl.o\
-    stress_func_us.o\
-    stress_func_onsite.o\
+    stress_cc.o\
+    stress_ewa.o\
+    stress_exx.o\
+    stress_gga.o\
+    stress_mgga.o\
+    stress_har.o\
+    stress_kin.o\
+    stress_loc.o\
+    stress_nl.o\
+    stress_us.o\
+    stress_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\
@@ -753,7 +753,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_dos.o\
     onsite_projector.o\
     onsite_proj_tools.o\
-    VSep_in_pw.o
+    vsep_pw.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\
