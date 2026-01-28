@@ -14,6 +14,7 @@
 #include "snap_psibeta_kernel.cuh"
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
+#include "source_base/ylm.h"
 
 #include <cstdio>
 #include <vector>
@@ -36,6 +37,9 @@ __constant__ double d_lebedev_w[ANGULAR_GRID_NUM]; ///< Angular integration weig
 // Gauss-Legendre radial quadrature grid (140 points)
 __constant__ double d_gl_x[RADIAL_GRID_NUM]; ///< Quadrature abscissae on [-1, 1]
 __constant__ double d_gl_w[RADIAL_GRID_NUM]; ///< Quadrature weights
+
+// Spherical harmonics coefficients (copied from ModuleBase::Ylm::ylmcoef)
+__constant__ double d_ylmcoef[100]; ///< Ylm coefficients for gradient calculations
 
 //=============================================================================
 // Spherical Harmonics - Helper Functions
@@ -256,45 +260,45 @@ __device__ void compute_ylm_gradient_gpu(double x, double y, double z, const dou
     // rly[1] = c1 * z
     grly_x[1] = 0.0;
     grly_y[1] = 0.0;
-    grly_z[1] = ModuleBase::Ylm::ylmcoef[1];
+    grly_z[1] = d_ylmcoef[1];
 
     // rly[2] = -c1 * x
-    grly_x[2] = -ModuleBase::Ylm::ylmcoef[1];
+    grly_x[2] = -d_ylmcoef[1];
     grly_y[2] = 0.0;
     grly_z[2] = 0.0;
 
     // rly[3] = -c1 * y
     grly_x[3] = 0.0;
-    grly_y[3] = -ModuleBase::Ylm::ylmcoef[1];
+    grly_y[3] = -d_ylmcoef[1];
     grly_z[3] = 0.0;
 
     if (L == 1) return;
 
     // L = 2
     // rly[4] = c2*z*rly[1] - c3*rly[0]*radius2
-    grly_x[4] = ModuleBase::Ylm::ylmcoef[2] * z * grly_x[1] - ModuleBase::Ylm::ylmcoef[3] * (grly_x[0] * radius2 + rly[0] * tx);
-    grly_y[4] = ModuleBase::Ylm::ylmcoef[2] * z * grly_y[1] - ModuleBase::Ylm::ylmcoef[3] * (grly_y[0] * radius2 + rly[0] * ty);
-    grly_z[4] = ModuleBase::Ylm::ylmcoef[2] * (z * grly_z[1] + rly[1]) - ModuleBase::Ylm::ylmcoef[3] * (grly_z[0] * radius2 + rly[0] * tz);
+    grly_x[4] = d_ylmcoef[2] * z * grly_x[1] - d_ylmcoef[3] * (grly_x[0] * radius2 + rly[0] * tx);
+    grly_y[4] = d_ylmcoef[2] * z * grly_y[1] - d_ylmcoef[3] * (grly_y[0] * radius2 + rly[0] * ty);
+    grly_z[4] = d_ylmcoef[2] * (z * grly_z[1] + rly[1]) - d_ylmcoef[3] * (grly_z[0] * radius2 + rly[0] * tz);
 
-    double tmp0 = ModuleBase::Ylm::ylmcoef[4] * z;
+    double tmp0 = d_ylmcoef[4] * z;
     // rly[5] = tmp0 * rly[2]
     grly_x[5] = tmp0 * grly_x[2];
     grly_y[5] = tmp0 * grly_y[2];
-    grly_z[5] = ModuleBase::Ylm::ylmcoef[4] * (rly[2] + z * grly_z[2]);
+    grly_z[5] = d_ylmcoef[4] * (rly[2] + z * grly_z[2]);
 
     // rly[6] = tmp0 * rly[3]
     grly_x[6] = tmp0 * grly_x[3];
     grly_y[6] = tmp0 * grly_y[3];
-    grly_z[6] = ModuleBase::Ylm::ylmcoef[4] * (rly[3] + z * grly_z[3]);
+    grly_z[6] = d_ylmcoef[4] * (rly[3] + z * grly_z[3]);
 
-    double tmp2 = ModuleBase::Ylm::ylmcoef[4] * x;
+    double tmp2 = d_ylmcoef[4] * x;
     // rly[7] = c5*rly[4] - c6*rly[0]*radius2 - tmp2*rly[2]
-    grly_x[7] = ModuleBase::Ylm::ylmcoef[5] * grly_x[4] - ModuleBase::Ylm::ylmcoef[6] * (rly[0] * tx + grly_x[0] * radius2) - ModuleBase::Ylm::ylmcoef[4] * (x * grly_x[2] + rly[2]);
-    grly_y[7] = ModuleBase::Ylm::ylmcoef[5] * grly_y[4] - ModuleBase::Ylm::ylmcoef[6] * (rly[0] * ty + grly_y[0] * radius2) - tmp2 * grly_y[2];
-    grly_z[7] = ModuleBase::Ylm::ylmcoef[5] * grly_z[4] - ModuleBase::Ylm::ylmcoef[6] * (rly[0] * tz + grly_z[0] * radius2) - tmp2 * grly_z[2];
+    grly_x[7] = d_ylmcoef[5] * grly_x[4] - d_ylmcoef[6] * (rly[0] * tx + grly_x[0] * radius2) - d_ylmcoef[4] * (x * grly_x[2] + rly[2]);
+    grly_y[7] = d_ylmcoef[5] * grly_y[4] - d_ylmcoef[6] * (rly[0] * ty + grly_y[0] * radius2) - tmp2 * grly_y[2];
+    grly_z[7] = d_ylmcoef[5] * grly_z[4] - d_ylmcoef[6] * (rly[0] * tz + grly_z[0] * radius2) - tmp2 * grly_z[2];
 
     // rly[8] = -tmp2 * rly[3]
-    grly_x[8] = -ModuleBase::Ylm::ylmcoef[4] * (rly[3] + x * grly_x[3]);
+    grly_x[8] = -d_ylmcoef[4] * (rly[3] + x * grly_x[3]);
     grly_y[8] = -tmp2 * grly_y[3];
     grly_z[8] = -tmp2 * grly_z[3];
 
@@ -302,72 +306,72 @@ __device__ void compute_ylm_gradient_gpu(double x, double y, double z, const dou
 
     // L = 3
     // rly[9] = c7*z*rly[4] - c8*rly[1]*radius2
-    grly_x[9] = ModuleBase::Ylm::ylmcoef[7] * z * grly_x[4] - ModuleBase::Ylm::ylmcoef[8] * (rly[1] * tx + grly_x[1] * radius2);
-    grly_y[9] = ModuleBase::Ylm::ylmcoef[7] * z * grly_y[4] - ModuleBase::Ylm::ylmcoef[8] * (rly[1] * ty + grly_y[1] * radius2);
-    grly_z[9] = ModuleBase::Ylm::ylmcoef[7] * (rly[4] + z * grly_z[4]) - ModuleBase::Ylm::ylmcoef[8] * (rly[1] * tz + grly_z[1] * radius2);
+    grly_x[9] = d_ylmcoef[7] * z * grly_x[4] - d_ylmcoef[8] * (rly[1] * tx + grly_x[1] * radius2);
+    grly_y[9] = d_ylmcoef[7] * z * grly_y[4] - d_ylmcoef[8] * (rly[1] * ty + grly_y[1] * radius2);
+    grly_z[9] = d_ylmcoef[7] * (rly[4] + z * grly_z[4]) - d_ylmcoef[8] * (rly[1] * tz + grly_z[1] * radius2);
 
-    double tmp3 = ModuleBase::Ylm::ylmcoef[9] * z;
+    double tmp3 = d_ylmcoef[9] * z;
     // rly[10] = tmp3*rly[5] - c10*rly[2]*radius2
-    grly_x[10] = tmp3 * grly_x[5] - ModuleBase::Ylm::ylmcoef[10] * (grly_x[2] * radius2 + rly[2] * tx);
-    grly_y[10] = tmp3 * grly_y[5] - ModuleBase::Ylm::ylmcoef[10] * (grly_y[2] * radius2 + rly[2] * ty);
-    grly_z[10] = ModuleBase::Ylm::ylmcoef[9] * (z * grly_z[5] + rly[5]) - ModuleBase::Ylm::ylmcoef[10] * (grly_z[2] * radius2 + rly[2] * tz);
+    grly_x[10] = tmp3 * grly_x[5] - d_ylmcoef[10] * (grly_x[2] * radius2 + rly[2] * tx);
+    grly_y[10] = tmp3 * grly_y[5] - d_ylmcoef[10] * (grly_y[2] * radius2 + rly[2] * ty);
+    grly_z[10] = d_ylmcoef[9] * (z * grly_z[5] + rly[5]) - d_ylmcoef[10] * (grly_z[2] * radius2 + rly[2] * tz);
 
     // rly[11] = tmp3*rly[6] - c10*rly[3]*radius2
-    grly_x[11] = tmp3 * grly_x[6] - ModuleBase::Ylm::ylmcoef[10] * (grly_x[3] * radius2 + rly[3] * tx);
-    grly_y[11] = tmp3 * grly_y[6] - ModuleBase::Ylm::ylmcoef[10] * (grly_y[3] * radius2 + rly[3] * ty);
-    grly_z[11] = ModuleBase::Ylm::ylmcoef[9] * (z * grly_z[6] + rly[6]) - ModuleBase::Ylm::ylmcoef[10] * (grly_z[3] * radius2 + rly[3] * tz);
+    grly_x[11] = tmp3 * grly_x[6] - d_ylmcoef[10] * (grly_x[3] * radius2 + rly[3] * tx);
+    grly_y[11] = tmp3 * grly_y[6] - d_ylmcoef[10] * (grly_y[3] * radius2 + rly[3] * ty);
+    grly_z[11] = d_ylmcoef[9] * (z * grly_z[6] + rly[6]) - d_ylmcoef[10] * (grly_z[3] * radius2 + rly[3] * tz);
 
-    double tmp4 = ModuleBase::Ylm::ylmcoef[11] * z;
+    double tmp4 = d_ylmcoef[11] * z;
     // rly[12] = tmp4*rly[7]
     grly_x[12] = tmp4 * grly_x[7];
     grly_y[12] = tmp4 * grly_y[7];
-    grly_z[12] = ModuleBase::Ylm::ylmcoef[11] * (z * grly_z[7] + rly[7]);
+    grly_z[12] = d_ylmcoef[11] * (z * grly_z[7] + rly[7]);
 
     // rly[13] = tmp4*rly[8]
     grly_x[13] = tmp4 * grly_x[8];
     grly_y[13] = tmp4 * grly_y[8];
-    grly_z[13] = ModuleBase::Ylm::ylmcoef[11] * (z * grly_z[8] + rly[8]);
+    grly_z[13] = d_ylmcoef[11] * (z * grly_z[8] + rly[8]);
 
-    double tmp5 = ModuleBase::Ylm::ylmcoef[14] * x;
+    double tmp5 = d_ylmcoef[14] * x;
     // rly[14] = c12*rly[10] - c13*rly[2]*radius2 - tmp5*rly[7]
-    grly_x[14] = ModuleBase::Ylm::ylmcoef[12] * grly_x[10] - ModuleBase::Ylm::ylmcoef[13] * (rly[2] * tx + grly_x[2] * radius2) - ModuleBase::Ylm::ylmcoef[14] * (rly[7] + x * grly_x[7]);
-    grly_y[14] = ModuleBase::Ylm::ylmcoef[12] * grly_y[10] - ModuleBase::Ylm::ylmcoef[13] * (rly[2] * ty + grly_y[2] * radius2) - tmp5 * grly_y[7];
-    grly_z[14] = ModuleBase::Ylm::ylmcoef[12] * grly_z[10] - ModuleBase::Ylm::ylmcoef[13] * (rly[2] * tz + grly_z[2] * radius2) - tmp5 * grly_z[7];
+    grly_x[14] = d_ylmcoef[12] * grly_x[10] - d_ylmcoef[13] * (rly[2] * tx + grly_x[2] * radius2) - d_ylmcoef[14] * (rly[7] + x * grly_x[7]);
+    grly_y[14] = d_ylmcoef[12] * grly_y[10] - d_ylmcoef[13] * (rly[2] * ty + grly_y[2] * radius2) - tmp5 * grly_y[7];
+    grly_z[14] = d_ylmcoef[12] * grly_z[10] - d_ylmcoef[13] * (rly[2] * tz + grly_z[2] * radius2) - tmp5 * grly_z[7];
 
     // rly[15] = c12*rly[11] - c13*rly[3]*radius2 - tmp5*rly[8]
-    grly_x[15] = ModuleBase::Ylm::ylmcoef[12] * grly_x[11] - ModuleBase::Ylm::ylmcoef[13] * (rly[3] * tx + grly_x[3] * radius2) - ModuleBase::Ylm::ylmcoef[14] * (rly[8] + x * grly_x[8]);
-    grly_y[15] = ModuleBase::Ylm::ylmcoef[12] * grly_y[11] - ModuleBase::Ylm::ylmcoef[13] * (rly[3] * ty + grly_y[3] * radius2) - tmp5 * grly_y[8];
-    grly_z[15] = ModuleBase::Ylm::ylmcoef[12] * grly_z[11] - ModuleBase::Ylm::ylmcoef[13] * (rly[3] * tz + grly_z[3] * radius2) - tmp5 * grly_z[8];
+    grly_x[15] = d_ylmcoef[12] * grly_x[11] - d_ylmcoef[13] * (rly[3] * tx + grly_x[3] * radius2) - d_ylmcoef[14] * (rly[8] + x * grly_x[8]);
+    grly_y[15] = d_ylmcoef[12] * grly_y[11] - d_ylmcoef[13] * (rly[3] * ty + grly_y[3] * radius2) - tmp5 * grly_y[8];
+    grly_z[15] = d_ylmcoef[12] * grly_z[11] - d_ylmcoef[13] * (rly[3] * tz + grly_z[3] * radius2) - tmp5 * grly_z[8];
 
     if (L == 3) return;
 
     // L = 4
     // rly[16] = c15*z*rly[9] - c16*rly[4]*radius2
-    grly_x[16] = ModuleBase::Ylm::ylmcoef[15] * z * grly_x[9] - ModuleBase::Ylm::ylmcoef[16] * (rly[4] * tx + grly_x[4] * radius2);
-    grly_y[16] = ModuleBase::Ylm::ylmcoef[15] * z * grly_y[9] - ModuleBase::Ylm::ylmcoef[16] * (rly[4] * ty + grly_y[4] * radius2);
-    grly_z[16] = ModuleBase::Ylm::ylmcoef[15] * (z * grly_z[9] + rly[9]) - ModuleBase::Ylm::ylmcoef[16] * (rly[4] * tz + grly_z[4] * radius2);
+    grly_x[16] = d_ylmcoef[15] * z * grly_x[9] - d_ylmcoef[16] * (rly[4] * tx + grly_x[4] * radius2);
+    grly_y[16] = d_ylmcoef[15] * z * grly_y[9] - d_ylmcoef[16] * (rly[4] * ty + grly_y[4] * radius2);
+    grly_z[16] = d_ylmcoef[15] * (z * grly_z[9] + rly[9]) - d_ylmcoef[16] * (rly[4] * tz + grly_z[4] * radius2);
 
-    double tmp6 = ModuleBase::Ylm::ylmcoef[17] * z;
+    double tmp6 = d_ylmcoef[17] * z;
     // rly[17] = tmp6*rly[10] - c18*rly[5]*radius2
-    grly_x[17] = tmp6 * grly_x[10] - ModuleBase::Ylm::ylmcoef[18] * (rly[5] * tx + grly_x[5] * radius2);
-    grly_y[17] = tmp6 * grly_y[10] - ModuleBase::Ylm::ylmcoef[18] * (rly[5] * ty + grly_y[5] * radius2);
-    grly_z[17] = ModuleBase::Ylm::ylmcoef[17] * (z * grly_z[10] + rly[10]) - ModuleBase::Ylm::ylmcoef[18] * (rly[5] * tz + grly_z[5] * radius2);
+    grly_x[17] = tmp6 * grly_x[10] - d_ylmcoef[18] * (rly[5] * tx + grly_x[5] * radius2);
+    grly_y[17] = tmp6 * grly_y[10] - d_ylmcoef[18] * (rly[5] * ty + grly_y[5] * radius2);
+    grly_z[17] = d_ylmcoef[17] * (z * grly_z[10] + rly[10]) - d_ylmcoef[18] * (rly[5] * tz + grly_z[5] * radius2);
 
     // rly[18] = tmp6*rly[11] - c18*rly[6]*radius2
-    grly_x[18] = tmp6 * grly_x[11] - ModuleBase::Ylm::ylmcoef[18] * (rly[6] * tx + grly_x[6] * radius2);
-    grly_y[18] = tmp6 * grly_y[11] - ModuleBase::Ylm::ylmcoef[18] * (rly[6] * ty + grly_y[6] * radius2);
-    grly_z[18] = ModuleBase::Ylm::ylmcoef[17] * (z * grly_z[11] + rly[11]) - ModuleBase::Ylm::ylmcoef[18] * (rly[6] * tz + grly_z[6] * radius2);
+    grly_x[18] = tmp6 * grly_x[11] - d_ylmcoef[18] * (rly[6] * tx + grly_x[6] * radius2);
+    grly_y[18] = tmp6 * grly_y[11] - d_ylmcoef[18] * (rly[6] * ty + grly_y[6] * radius2);
+    grly_z[18] = d_ylmcoef[17] * (z * grly_z[11] + rly[11]) - d_ylmcoef[18] * (rly[6] * tz + grly_z[6] * radius2);
 
-    double tmp7 = ModuleBase::Ylm::ylmcoef[19] * z;
+    double tmp7 = d_ylmcoef[19] * z;
     // rly[19] = tmp7*rly[12] - c20*rly[7]*radius2
-    grly_x[19] = tmp7 * grly_x[12] - ModuleBase::Ylm::ylmcoef[20] * (rly[7] * tx + grly_x[7] * radius2);
-    grly_y[19] = tmp7 * grly_y[12] - ModuleBase::Ylm::ylmcoef[20] * (rly[7] * ty + grly_y[7] * radius2);
-    grly_z[19] = ModuleBase::Ylm::ylmcoef[19] * (z * grly_z[12] + rly[12]) - ModuleBase::Ylm::ylmcoef[20] * (rly[7] * tz + grly_z[7] * radius2);
+    grly_x[19] = tmp7 * grly_x[12] - d_ylmcoef[20] * (rly[7] * tx + grly_x[7] * radius2);
+    grly_y[19] = tmp7 * grly_y[12] - d_ylmcoef[20] * (rly[7] * ty + grly_y[7] * radius2);
+    grly_z[19] = d_ylmcoef[19] * (z * grly_z[12] + rly[12]) - d_ylmcoef[20] * (rly[7] * tz + grly_z[7] * radius2);
 
     // rly[20] = tmp7*rly[13] - c20*rly[8]*radius2
-    grly_x[20] = tmp7 * grly_x[13] - ModuleBase::Ylm::ylmcoef[20] * (rly[8] * tx + grly_x[8] * radius2);
-    grly_y[20] = tmp7 * grly_y[13] - ModuleBase::Ylm::ylmcoef[20] * (rly[8] * ty + grly_y[8] * radius2);
-    grly_z[20] = ModuleBase::Ylm::ylmcoef[19] * (z * grly_z[13] + rly[13]) - ModuleBase::Ylm::ylmcoef[20] * (rly[8] * tz + grly_z[8] * radius2);
+    grly_x[20] = tmp7 * grly_x[13] - d_ylmcoef[20] * (rly[8] * tx + grly_x[8] * radius2);
+    grly_y[20] = tmp7 * grly_y[13] - d_ylmcoef[20] * (rly[8] * ty + grly_y[8] * radius2);
+    grly_z[20] = d_ylmcoef[19] * (z * grly_z[13] + rly[13]) - d_ylmcoef[20] * (rly[8] * tz + grly_z[8] * radius2);
 
     double tmp8 = 3.0 * z;
     // rly[21] = tmp8*rly[14]
@@ -380,16 +384,16 @@ __device__ void compute_ylm_gradient_gpu(double x, double y, double z, const dou
     grly_y[22] = tmp8 * grly_y[15];
     grly_z[22] = 3.0 * (z * grly_z[15] + rly[15]);
 
-    double tmp9 = ModuleBase::Ylm::ylmcoef[23] * x;
+    double tmp9 = d_ylmcoef[23] * x;
     // rly[23] = c21*rly[19] - c22*rly[7]*radius2 - tmp9*rly[14]
-    grly_x[23] = ModuleBase::Ylm::ylmcoef[21] * grly_x[19] - ModuleBase::Ylm::ylmcoef[22] * (rly[7] * tx + grly_x[7] * radius2) - ModuleBase::Ylm::ylmcoef[23] * (x * grly_x[14] + rly[14]);
-    grly_y[23] = ModuleBase::Ylm::ylmcoef[21] * grly_y[19] - ModuleBase::Ylm::ylmcoef[22] * (rly[7] * ty + grly_y[7] * radius2) - tmp9 * grly_y[14];
-    grly_z[23] = ModuleBase::Ylm::ylmcoef[21] * grly_z[19] - ModuleBase::Ylm::ylmcoef[22] * (rly[7] * tz + grly_z[7] * radius2) - tmp9 * grly_z[14];
+    grly_x[23] = d_ylmcoef[21] * grly_x[19] - d_ylmcoef[22] * (rly[7] * tx + grly_x[7] * radius2) - d_ylmcoef[23] * (x * grly_x[14] + rly[14]);
+    grly_y[23] = d_ylmcoef[21] * grly_y[19] - d_ylmcoef[22] * (rly[7] * ty + grly_y[7] * radius2) - tmp9 * grly_y[14];
+    grly_z[23] = d_ylmcoef[21] * grly_z[19] - d_ylmcoef[22] * (rly[7] * tz + grly_z[7] * radius2) - tmp9 * grly_z[14];
 
     // rly[24] = c21*rly[20] - c22*rly[8]*radius2 - tmp9*rly[15]
-    grly_x[24] = ModuleBase::Ylm::ylmcoef[21] * grly_x[20] - ModuleBase::Ylm::ylmcoef[22] * (rly[8] * tx + grly_x[8] * radius2) - ModuleBase::Ylm::ylmcoef[23] * (x * grly_x[15] + rly[15]);
-    grly_y[24] = ModuleBase::Ylm::ylmcoef[21] * grly_y[20] - ModuleBase::Ylm::ylmcoef[22] * (rly[8] * ty + grly_y[8] * radius2) - tmp9 * grly_y[15];
-    grly_z[24] = ModuleBase::Ylm::ylmcoef[21] * grly_z[20] - ModuleBase::Ylm::ylmcoef[22] * (rly[8] * tz + grly_z[8] * radius2) - tmp9 * grly_z[15];
+    grly_x[24] = d_ylmcoef[21] * grly_x[20] - d_ylmcoef[22] * (rly[8] * tx + grly_x[8] * radius2) - d_ylmcoef[23] * (x * grly_x[15] + rly[15]);
+    grly_y[24] = d_ylmcoef[21] * grly_y[20] - d_ylmcoef[22] * (rly[8] * ty + grly_y[8] * radius2) - tmp9 * grly_y[15];
+    grly_z[24] = d_ylmcoef[21] * grly_z[20] - d_ylmcoef[22] * (rly[8] * tz + grly_z[8] * radius2) - tmp9 * grly_z[15];
 }
 
 // Explicit template instantiations for gradient functions
@@ -941,6 +945,14 @@ void copy_grids_to_device()
 
     CUDA_CHECK(cudaMemcpyToSymbol(d_gl_x, h_gl_x.data(), RADIAL_GRID_NUM * sizeof(double)));
     CUDA_CHECK(cudaMemcpyToSymbol(d_gl_w, h_gl_w.data(), RADIAL_GRID_NUM * sizeof(double)));
+
+    // Copy spherical harmonics coefficients
+    std::vector<double> h_ylmcoef(100);
+    for (int i = 0; i < 100 && i < static_cast<int>(ModuleBase::Ylm::ylmcoef.size()); i++)
+    {
+        h_ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+    }
+    CUDA_CHECK(cudaMemcpyToSymbol(d_ylmcoef, h_ylmcoef.data(), 100 * sizeof(double)));
 }
 
 } // namespace gpu
