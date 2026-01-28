@@ -121,7 +121,7 @@ template <>
 void Parallel_Reduce::reduce_pool<int>(int* object, const int n)
 {
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
 }
 
