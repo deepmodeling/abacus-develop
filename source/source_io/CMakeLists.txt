@@ -27,7 +27,7 @@ list(APPEND objects
     write_pao.cpp
     write_cube.cpp
     write_elecstat_pot.cpp
-    write_elf.cpp
+    module_elf/write_elf.cpp
     write_dipole.cpp
     write_init.cpp
     module_ml/write_mlkedf_descriptors.cpp
