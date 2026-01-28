@@ -825,7 +825,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                                     aux[ir] = besr[ir] * upf->qfuncl(l, ijv, ir);
                                 }
                                 // then we integrate with all the Q functions
-                                double vqint;
+                                double vqint = 0.0;
                                 ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab.data(), vqint);
                                 qrad(it, l, ijv, iq) = vqint * pref;
                             }
@@ -1234,7 +1234,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
                         aux[ir] = ucell.atoms[it].ncpp.betar(ib, ir) * jl[ir]
                                   * ucell.atoms[it].ncpp.r[ir] * ucell.atoms[it].ncpp.r[ir];
                     }
-                    double vqint;
+                    double vqint = 0.0;
                     ModuleBase::Integral::Simpson_Integral(kkbeta, aux, ucell.atoms[it].ncpp.rab.data(), vqint);
                     this->tab_alpha(it, ib, L, iq) = vqint * pref;
                 }

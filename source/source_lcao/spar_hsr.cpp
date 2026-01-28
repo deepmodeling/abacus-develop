@@ -11,7 +11,7 @@
 #ifdef __MPI
 void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm)
 {
-    int my_rank, nproc;
+    int my_rank = 0, nproc = 0;
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &nproc);
 

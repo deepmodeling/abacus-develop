@@ -85,9 +85,9 @@ void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files
                                  << this->orbital_files_[it] << std::endl;
         }
         std::string elem; // garbage value, will discard
-        double ecut;      // garbage value, will discard
-        int nr;
-        double dr;
+        double ecut = 0.0;      // garbage value, will discard
+        int nr = 0;
+        double dr = 0.0;
         std::vector<int> nzeta;
         std::vector<std::vector<double>> radials;
         ModuleIO::read_abacus_orb(ifs_it, elem, ecut, nr, dr, nzeta, radials, rank);

@@ -474,7 +474,7 @@ void Ylm::rlylm
 				{
 					int twok = 2 * ik;
 
-					double gamma;
+					double gamma = 0.0;
 					double aux0, aux1, aux2, aux3;
 
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);
@@ -1107,7 +1107,7 @@ void Ylm::hes_rl_sph_harm
 	hrly.resize( (Lmax+1)*(Lmax+1), std::vector<double>(6) );
 
 	double radius2 = x*x+y*y+z*z;
-	double coeff;
+	double coeff = 0.0;
 
 	//begin calculation
 	/***************************
@@ -1867,7 +1867,7 @@ void Ylm::rlylm
 				{
 					int twok = 2 * ik;
 
-					double gamma;
+					double gamma = 0.0;
 					double aux0, aux1, aux2, aux3;
 
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);

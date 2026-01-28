@@ -166,7 +166,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     const bool firstrankmore = false;
     const int npwx = this->npwx;
     const int nks = this->nks;
-    int igroup;
+    int igroup = 0;
     // former processor calculate more bands
     if (firstrankmore)
     {
@@ -219,7 +219,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         // give value to orbitals in one parallel group one by one.
         for (int ichi = 0; ichi < nchipk; ++ichi)
         {
-            int ig;
+            int ig = 0;
             if (igroup < re)
             {
                 // It has more nchip.

@@ -61,7 +61,7 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     const double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
     double dt = dt_in;           // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     const double expfactor = 23; // exp(-23) = 1e-10
-    int nt;                      // set nt empirically
+    int nt = 0;                  // set nt empirically
     if (smear_type == 1)
     {
         nt = ceil(sqrt(2 * expfactor) / sigma / dt);
