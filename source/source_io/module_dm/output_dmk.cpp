@@ -1,4 +1,4 @@
-#include "source_io/output_dmk.h"
+#include "source_io/module_dm/output_dmk.h"
 
 namespace ModuleIO
 {
