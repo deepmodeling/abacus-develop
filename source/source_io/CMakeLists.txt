@@ -23,7 +23,7 @@ list(APPEND objects
     read_exit_file.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
-    restart.cpp
+    module_restart/restart.cpp
     binstream.cpp
     module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
