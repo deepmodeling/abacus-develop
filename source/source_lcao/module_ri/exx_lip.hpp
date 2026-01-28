@@ -19,7 +19,7 @@
 #include "source_estate/elecstate.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_psi/psi_init.h"
+#include "source_psi/psi_initializer.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
