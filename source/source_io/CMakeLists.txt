@@ -143,4 +143,4 @@ if(ENABLE_RAPIDJSON)
   if(ENABLE_MPI)
     add_subdirectory(json_output)
   endif()
-endif():
+endif()
