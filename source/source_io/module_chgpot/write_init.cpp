@@ -1,4 +1,4 @@
-#include "source_io/write_init.h"
+#include "source_io/module_chgpot/write_init.h"
 #include "source_io/cube_io.h"
 
 #include <sstream>

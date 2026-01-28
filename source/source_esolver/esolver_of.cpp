@@ -3,7 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/cube_io.h"
 #include "source_io/module_output/output_log.h"
-#include "source_io/write_elecstat_pot.h"
+#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"

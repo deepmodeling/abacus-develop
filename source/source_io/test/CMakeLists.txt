@@ -134,7 +134,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_read_rhog_test
   LIBS parameter  ${math_libs} base device planewave
-  SOURCES read_rhog_test.cpp ../rhog_io.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if(ENABLE_LCAO)

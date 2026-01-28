@@ -6,8 +6,8 @@
 #include "../write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
 #include "../write_eband_terms.hpp"
-#include "../write_vxc.hpp"
-#include "../write_vxc_r.hpp"
+#include "../module_hs/write_vxc.hpp"
+#include "../module_hs/write_vxc_r.hpp"
 
 namespace ModuleIO
 {

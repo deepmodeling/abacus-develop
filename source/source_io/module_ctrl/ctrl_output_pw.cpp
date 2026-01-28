@@ -10,7 +10,7 @@
 #include "../module_unk/berryphase.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_base/formatter.h"
-#include "../get_pchg_pw.h"
+#include "../module_chgpot/get_pchg_pw.h"
 #include "../get_wf_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
 

@@ -28,7 +28,7 @@
 #include "source_io/module_bessel/numerical_basis.h"
 #include "source_io/module_bessel/numerical_descriptor.h"
 #include "source_io/module_wannier/to_wannier90_pw.h"
-#include "source_io/write_elecstat_pot.h"
+#include "source_io/module_chgpot/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -36,7 +36,7 @@
 #include <ATen/kernels/lapack.h>
 #include <sys/time.h>
 #ifdef __LCAO
-#include "source_io/write_vxc_lip.hpp"
+#include "source_io/module_hs/write_vxc_lip.hpp"
 #endif
 
 namespace ModuleESolver

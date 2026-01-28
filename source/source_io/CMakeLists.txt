@@ -19,7 +19,7 @@ list(APPEND objects
     module_output/output.cpp
     module_output/print_info.cpp
     read_cube.cpp
-    rhog_io.cpp
+    module_chgpot/rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
     read_wf2rho_pw.cpp
@@ -28,10 +28,10 @@ list(APPEND objects
     write_wfc_pw.cpp
     module_output/write_pao.cpp
     write_cube.cpp
-    write_elecstat_pot.cpp
+    module_chgpot/write_elecstat_pot.cpp
     module_elf/write_elf.cpp
     write_dipole.cpp
-    write_init.cpp
+    module_chgpot/write_init.cpp
     module_ml/write_mlkedf_descriptors.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
@@ -60,7 +60,7 @@ if(ENABLE_LCAO)
       module_dos/cal_pdos_multik.cpp
       write_orb_info.cpp
       write_proj_band_lcao.cpp
-      get_pchg_lcao.cpp
+      module_chgpot/get_pchg_lcao.cpp
       get_wf_lcao.cpp
       read_wfc_nao.cpp
       write_wfc_nao.cpp
