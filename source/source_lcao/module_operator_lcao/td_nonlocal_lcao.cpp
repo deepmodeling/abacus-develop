@@ -145,7 +145,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #ifdef __CUDA
         // GPU device is already bound by DeviceContext::init() in read_input.cpp
         // Just initialize the GPU resources for this module
-        module_rt::gpu::initialize_gpu_resources();
+        module_rt::gpu::init_snap_psibeta_gpu();
 #endif
     }
 

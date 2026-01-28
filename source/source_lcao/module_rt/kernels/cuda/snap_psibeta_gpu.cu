@@ -31,15 +31,15 @@ namespace gpu
 //=============================================================================
 
 /**
- * @brief Initialize GPU resources for snap_psibeta computation
+ * @brief Initialize module-specific GPU resources for snap_psibeta computation
  *
- * Checks for available CUDA devices and copies integration grids
- * (Lebedev-Laikov angular and Gauss-Legendre radial) to constant memory.
+ * Copies integration grids (Lebedev-Laikov angular and Gauss-Legendre radial) 
+ * to constant memory.
  *
  * @note Call this once at the start of a calculation session before any
  *       snap_psibeta_atom_batch_gpu calls.
  */
-void initialize_gpu_resources()
+void init_snap_psibeta_gpu()
 {
     // GPU device availability is already verified and initialized by DeviceContext::init()
     // at the startup of the application.
