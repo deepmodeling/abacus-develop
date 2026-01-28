@@ -41,13 +41,8 @@ namespace gpu
  */
 void initialize_gpu_resources()
 {
-    // Verify CUDA device availability
-    int device_count = 0;
-    cudaError_t err = cudaGetDeviceCount(&device_count);
-    if (err != cudaSuccess || device_count == 0)
-    {
-        ModuleBase::WARNING_QUIT("snap_psibeta_gpu", "No CUDA devices found or error getting device count!");
-    }
+    // GPU device availability is already verified and initialized by DeviceContext::init()
+    // at the startup of the application.
 
     // Initialize integration grids in constant memory
     copy_grids_to_device();
