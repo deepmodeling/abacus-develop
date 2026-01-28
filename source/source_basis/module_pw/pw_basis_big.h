@@ -349,9 +349,9 @@ public:
                 }
             }
         }
-        #ifdef __MPI
+#ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
-        #endif
+#endif
         this->gridecut_lat -= 1e-6;
 
         delete[] ibox;
