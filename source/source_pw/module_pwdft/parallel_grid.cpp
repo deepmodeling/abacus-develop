@@ -90,7 +90,7 @@ void Parallel_Grid::init(const int& ncx_in,
     assert(GlobalV::KPAR > 0);
 
     this->nproc_in_pool = new int[GlobalV::KPAR];
-    int nprocgroup;
+    int nprocgroup = 0;
     if (PARAM.inp.esolver_type == "sdft")
     {
         nprocgroup = GlobalV::NPROC_IN_BNDGROUP;

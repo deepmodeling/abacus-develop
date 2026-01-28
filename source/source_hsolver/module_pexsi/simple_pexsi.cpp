@@ -27,7 +27,7 @@ namespace pexsi
 {
 inline void strtolower(char* sa, char* sb)
 {
-    char c;
+    char c = '\0';
     int len = strlen(sa);
     for (int i = 0; i < len; i++)
     {
@@ -172,8 +172,8 @@ void splitNProc2NProwNPcol(const int NPROC, int& nprow, int& npcol)
     }
     else
     {
-        int flag;
-        int i;
+        int flag = 0;
+        int i = 0;
         int low = pow(integral_part, 2);
         int high = pow(integral_part + 1, 2);
         if ((NPROC - low) >= (high - NPROC))
@@ -218,7 +218,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
 
     if (comm_2D == MPI_COMM_NULL && comm_PEXSI == MPI_COMM_NULL)
         return 0;
-    int myid;
+    int myid = 0;
     std::ofstream f_log;
     if (comm_PEXSI != MPI_COMM_NULL)
     {
@@ -228,15 +228,15 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     //  set up PEXSI parameter
     PPEXSIOptions options;
     PPEXSISetDefaultOptions(&options);
-    int numProcessPerPole;
-    double ZERO_Limit;
+    int numProcessPerPole = 0;
+    double ZERO_Limit = 0.0;
     loadPEXSIOption(comm_PEXSI, PexsiOptionFile, options, numProcessPerPole, ZERO_Limit);
     options.mu0 = mu0;
 
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "setup_PEXSI_plan");
     PPEXSIPlan plan;
-    int info;
-    int outputFileIndex;
+    int info = 0;
+    int outputFileIndex = 0;
     int pexsi_prow, pexsi_pcol;
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
     splitNProc2NProwNPcol(numProcessPerPole, pexsi_prow, pexsi_pcol);
@@ -292,11 +292,11 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                SnzvalLocal,
                                &info);
 
-        double nelec;
-        double muMinInertia;
-        double muMaxInertia;
-        int numTotalPEXSIIter;
-        int numTotalInertiaIter; // Number of total inertia[out]
+        double nelec = 0.0;
+        double muMinInertia = 0.0;
+        double muMaxInertia = 0.0;
+        int numTotalPEXSIIter = 0;
+        int numTotalInertiaIter = 0; // Number of total inertia[out]
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
         PPEXSIDFTDriver2(plan,                 // PEXSI plan[in]

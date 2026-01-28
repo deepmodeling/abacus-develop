@@ -324,7 +324,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
         step_trace[3] = col_indexes.size() + 1;
     }
 
-    double tmp[3];
+    double tmp[3] = {0.0};
     // calculate the local matrix
     for (int is = 0; is < nspin; is++)
     {

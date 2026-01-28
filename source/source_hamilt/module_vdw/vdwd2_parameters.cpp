@@ -50,7 +50,7 @@ void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
             ModuleBase::WARNING_QUIT("Vdwd2::C6_input",
                                      "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING(file));
         std::string element;
-        double value;
+        double value = 0.0;
         while (ifs >> element >> value)
             C6_[element] = value;
         ifs.close();
@@ -77,7 +77,7 @@ void Vdwd2Parameters::R0_input(const std::string &file, const std::string &unit)
             ModuleBase::WARNING_QUIT("Vdwd2::R0_input",
                                      "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING(file));
         std::string element;
-        double value;
+        double value = 0.0;
         while (ifs >> element >> value)
             R0_[element] = value;
         ifs.close();

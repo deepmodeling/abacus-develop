@@ -326,7 +326,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
         ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nd); // nl_4
         for (int i = 0; i < this->nd; i++)
         {
-            double swap;
+            double swap = 0.0;
             ifs >> nb >> mb >> swap;
             nb--;
             mb--;

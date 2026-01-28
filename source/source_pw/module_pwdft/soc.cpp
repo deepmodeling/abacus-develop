@@ -122,7 +122,7 @@ int Soc::sph_ind(const int l, const double j, const int m, const int spin)
     // in a spinor with orbital angular momentum l, total angular
     // momentum j, projection along z of the total angular momentum m+-1/2.
     // Spin selects the up (spin=1) or down (spin=2) coefficient.
-    int sph_ind0;
+    int sph_ind0 = 0;
     if (spin != 0 && spin != 1)
     {
         ModuleBase::WARNING_QUIT("sph_ind", "spin must be 0 1");

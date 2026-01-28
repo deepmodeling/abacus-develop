@@ -119,8 +119,8 @@ class Stochastic_Iter
     Sto_Func<double> stofunc;
     hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
 
-    double mu0; // chemical potential; unit in Ry
-    bool change;
+    double mu0 = 0.0; // chemical potential; unit in Ry
+    bool change = false;
     double targetne=0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion

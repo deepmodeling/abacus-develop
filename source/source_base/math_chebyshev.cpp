@@ -417,7 +417,7 @@ void Chebyshev<REAL, Device>::calfinalvec_real(
     std::complex<REAL>* arrayn = nullptr;
     std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
-    int ndmxt;
+    int ndmxt = 0;
     if (m == 1)
     {
         ndmxt = N * m;
@@ -486,7 +486,7 @@ void Chebyshev<REAL, Device>::calfinalvec_complex(
     std::complex<REAL>* arrayn = nullptr;
     std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
-    int ndmxt;
+    int ndmxt = 0;
     if (m == 1)
     {
         ndmxt = N * m;
@@ -585,7 +585,7 @@ void Chebyshev<REAL, Device>::tracepolyA(
     std::complex<REAL>* arrayn = nullptr;
     std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
-    int ndmxt;
+    int ndmxt = 0;
     if (m == 1)
     {
         ndmxt = N * m;

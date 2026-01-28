@@ -38,7 +38,7 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
 
             if (mu >= 0 && nu >= 0)
             {
-                int iic;
+                int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
                     iic = mu + nu * pv->nrow;

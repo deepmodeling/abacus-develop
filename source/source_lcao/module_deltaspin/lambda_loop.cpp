@@ -117,9 +117,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
     std::vector<ModuleBase::Vector3<double>> new_spin(nat, 0.0), spin_plus(nat, 0.0);
 
     double alpha_opt, alpha_plus;
-    double beta;
-    double mean_error, mean_error_old, rms_error;
-    double g;
+    double beta = 0.0, g = 0.0, mean_error = 0.0, mean_error_old = 0.0, rms_error = 0.0;
 
     double alpha_trial = this->alpha_trial_;
 
