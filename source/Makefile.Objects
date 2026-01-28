@@ -749,7 +749,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     setup_psi.o\
     psi_prepare.o\
     elecond.o\
-
     sto_tool.o\
     sto_elecond.o\
     sto_dos.o\
