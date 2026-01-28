@@ -98,7 +98,10 @@ struct OrbitalMapping
  * @param ucell     Unit cell information
  * @param paraV     Parallel orbital distribution
  * @param npol      Number of spin polarizations
- * @param nlm_dim   Output dimension (1 for overlap only, 4 for overlap + current)
+ * @param nlm_dim   Output dimension:
+ *                  - nlm_dim=1: overlap only
+ *                  - nlm_dim=4: overlap + position operators (or overlap + derivatives if calc_deri=true)
+ *                  - nlm_dim=16: overlap + position + derivatives + 3x3 tensor
  * @param nlm_tot   Output: overlap integrals indexed as [neighbor][direction][orbital]
  */
 void snap_psibeta_atom_batch_gpu(

@@ -23,7 +23,8 @@ namespace module_rt
 		const ModuleBase::Vector3<double> &R0, // The projector.
 		const int &T0,
 		const ModuleBase::Vector3<double> &A,
-		const bool &calc_r
+		const bool &calc_r,
+		const bool &calc_deri = false
     );
 
 } // namespace module_rt

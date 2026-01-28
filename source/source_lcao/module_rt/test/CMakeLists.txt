@@ -30,7 +30,24 @@ AddTest(
 
 AddTest(
   TARGET tddft_propagator_test
-  LIBS parameter ${math_libs} base device tddft_test_lib  
+  LIBS parameter ${math_libs} base device tddft_test_lib
   SOURCES propagator_test1.cpp propagator_test2.cpp propagator_test3.cpp ../propagator.cpp ../propagator_cn2.cpp ../propagator_taylor.cpp ../propagator_etrs.cpp
+)
+
+AddTest(
+  TARGET tddft_snap_psibeta_test
+  LIBS parameter ${math_libs} base device tddft_test_lib
+  SOURCES snap_psibeta_half_tddft_test.cpp
+          ../snap_psibeta_half_tddft.cpp
+          ../../../source_basis/module_ao/ORB_read.cpp
+          ../../../source_basis/module_ao/ORB_atomic.cpp
+          ../../../source_basis/module_ao/ORB_atomic_lm.cpp
+          ../../../source_basis/module_ao/ORB_nonlocal.cpp
+          ../../../source_basis/module_ao/ORB_nonlocal_lm.cpp
+          ../../../source_cell/setup_nonlocal.cpp
+          ../../../source_pw/module_pwdft/soc.cpp
+          ../../../source_cell/atom_pseudo.cpp
+          ../../../source_cell/pseudo.cpp
+          ../../../source_io/output.cpp
 )
 

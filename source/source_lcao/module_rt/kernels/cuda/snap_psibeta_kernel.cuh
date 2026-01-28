@@ -161,6 +161,38 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
     return x1 * x2 * (psi[iq] * x3 + psi[iq + 3] * x0) / 6.0 + x0 * x3 * (psi[iq + 1] * x2 - psi[iq + 2] * x1) / 2.0;
 }
 
+/**
+ * @brief Compute radial derivative of beta function using finite differences
+ *
+ * Computes ∂beta/∂r using central finite differences with adaptive step size.
+ * This matches the CPU implementation in snap_psibeta_half_tddft.cpp.
+ *
+ * @param beta_r  Beta radial function values on uniform grid
+ * @param mesh    Number of grid points
+ * @param inv_dk  Inverse of grid spacing (1/dk)
+ * @param r       Radial distance at which to compute derivative
+ * @return Radial derivative ∂beta/∂r
+ */
+__device__ __forceinline__ double compute_radial_derivative_gpu(const double* __restrict__ beta_r,
+                                                                int mesh,
+                                                                double inv_dk,
+                                                                double r)
+{
+    if (r < 1e-10)
+    {
+        return 0.0;
+    }
+
+    // Adaptive step size: smaller of 1e-6 or 0.1% of r
+    double dr = fmin(1e-6, r * 1e-3);
+
+    // Central finite difference: (beta(r+dr) - beta(r-dr)) / (2*dr)
+    double beta_plus = interpolate_radial_gpu(beta_r, mesh, inv_dk, r + dr);
+    double beta_minus = interpolate_radial_gpu(beta_r, mesh, inv_dk, r - dr);
+
+    return (beta_plus - beta_minus) / (2.0 * dr);
+}
+
 //=============================================================================
 // Device Helper Functions - Spherical Harmonics
 //=============================================================================
@@ -214,6 +246,62 @@ __device__ void compute_ylm_gpu(double x, double y, double z, double* ylm);
             break;                                                                                                     \
         default:                                                                                                       \
             compute_ylm_gpu<4>(x, y, z, ylm);                                                                          \
+            break;                                                                                                     \
+        }                                                                                                              \
+    } while (0)
+
+/**
+ * @brief Compute gradients of real spherical harmonics Y_lm
+ *
+ * TEMPLATED VERSION: L is a compile-time constant enabling loop unrolling
+ * and register allocation optimizations.
+ *
+ * Computes ∂Y_lm/∂x, ∂Y_lm/∂y, ∂Y_lm/∂z for all (l,m) up to L.
+ * This is the GPU equivalent of ModuleBase::Ylm::grad_rl_sph_harm.
+ *
+ * @tparam L Maximum angular momentum (0 <= L <= MAX_L)
+ * @param x, y, z Direction vector components (Cartesian coordinates)
+ * @param rly Input: Y_lm values (must be precomputed)
+ * @param grly_x Output: ∂Y_lm/∂x for all (l,m)
+ * @param grly_y Output: ∂Y_lm/∂y for all (l,m)
+ * @param grly_z Output: ∂Y_lm/∂z for all (l,m)
+ */
+template <int L>
+__device__ void compute_ylm_gradient_gpu(double x, double y, double z, const double* rly, double* grly_x, double* grly_y, double* grly_z);
+
+/**
+ * @brief Runtime dispatch macro for templated compute_ylm_gradient_gpu
+ *
+ * Converts a runtime L value to the appropriate compile-time template
+ * instantiation for optimal performance.
+ *
+ * @param L_val Runtime angular momentum value
+ * @param x, y, z Direction vector components
+ * @param rly Input Y_lm values
+ * @param gx, gy, gz Output gradient arrays
+ */
+#define DISPATCH_YLM_GRADIENT(L_val, x, y, z, rly, gx, gy, gz)                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        switch (L_val)                                                                                                 \
+        {                                                                                                              \
+        case 0:                                                                                                        \
+            compute_ylm_gradient_gpu<0>(x, y, z, rly, gx, gy, gz);                                                     \
+            break;                                                                                                     \
+        case 1:                                                                                                        \
+            compute_ylm_gradient_gpu<1>(x, y, z, rly, gx, gy, gz);                                                     \
+            break;                                                                                                     \
+        case 2:                                                                                                        \
+            compute_ylm_gradient_gpu<2>(x, y, z, rly, gx, gy, gz);                                                     \
+            break;                                                                                                     \
+        case 3:                                                                                                        \
+            compute_ylm_gradient_gpu<3>(x, y, z, rly, gx, gy, gz);                                                     \
+            break;                                                                                                     \
+        case 4:                                                                                                        \
+            compute_ylm_gradient_gpu<4>(x, y, z, rly, gx, gy, gz);                                                     \
+            break;                                                                                                     \
+        default:                                                                                                       \
+            compute_ylm_gradient_gpu<4>(x, y, z, rly, gx, gy, gz);                                                     \
             break;                                                                                                     \
         }                                                                                                              \
     } while (0)
