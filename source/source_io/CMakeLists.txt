@@ -58,6 +58,7 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
+      write_orb_info.cpp
       write_proj_band_lcao.cpp
       get_pchg_lcao.cpp
       get_wf_lcao.cpp
