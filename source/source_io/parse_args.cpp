@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <string>
 
-#include "source_io/read_input.h"
+#include "module_parameter/read_input.h"
 #include "source_main/version.h"
 
 #if defined(COMMIT_INFO)

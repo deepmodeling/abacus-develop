@@ -94,20 +94,20 @@ endif()
 add_library(
     io_input
     OBJECT
-    read_input_item_system.cpp
-    read_input_item_elec_stru.cpp
-    read_input_item_relax.cpp
-    read_input_item_md.cpp
-    read_input_item_ofdft.cpp
-    read_input_item_sdft.cpp
-    read_input_item_tddft.cpp
-    read_input_item_deepks.cpp
-    read_input_item_model.cpp
-    read_input_item_postprocess.cpp  
-    read_input_item_exx_dftu.cpp
-    read_input_item_other.cpp   
-    read_input_item_output.cpp  
-    read_input.cpp
+    module_parameter/read_input_item_system.cpp
+    module_parameter/read_input_item_elec_stru.cpp
+    module_parameter/read_input_item_relax.cpp
+    module_parameter/read_input_item_md.cpp
+    module_parameter/read_input_item_ofdft.cpp
+    module_parameter/read_input_item_sdft.cpp
+    module_parameter/read_input_item_tddft.cpp
+    module_parameter/read_input_item_deepks.cpp
+    module_parameter/read_input_item_model.cpp
+    module_parameter/read_input_item_postprocess.cpp  
+    module_parameter/read_input_item_exx_dftu.cpp
+    module_parameter/read_input_item_other.cpp   
+    module_parameter/read_input_item_output.cpp  
+    module_parameter/read_input.cpp
     read_set_globalv.cpp
 )
 
