@@ -76,9 +76,9 @@ if(ENABLE_LCAO)
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp
-      module_hs/output_sk.cpp
-      module_dm/output_dmk.cpp
-      output_mulliken.cpp
+      module_mulliken/output_sk.cpp
+      module_mulliken/output_dmk.cpp
+      module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
       cal_pLpR.cpp
   )

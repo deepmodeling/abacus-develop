@@ -607,9 +607,9 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       module_hs/write_HS_R.o\
       module_dm/write_dmr.o\
       sparse_matrix.o\
-      output_mulliken.o\
-      module_hs/output_sk.o\
-      module_dm/output_dmk.o\
+      module_mulliken/output_mulliken.o\
+      module_mulliken/output_sk.o\
+      module_mulliken/output_dmk.o\
       module_ml/io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\
