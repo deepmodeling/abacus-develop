@@ -16,7 +16,7 @@
  *     - read in specific values for some items
  */
 #define private public
-#include "source_io/input_item.h"
+#include "source_io/module_parameter/input_item.h"
 #include "source_io/module_parameter/read_input.h"
 #undef private
 
