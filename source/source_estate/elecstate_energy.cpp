@@ -50,11 +50,6 @@ void ElecState::cal_bandgap()
     { 
         vbm =this->eferm.ef;
     }
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm);
-#endif
-
     this->bandgap = cbm - vbm;
 }
 
