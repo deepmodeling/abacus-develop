@@ -3,7 +3,7 @@ list(APPEND objects
     module_ctrl/ctrl_output_fp.cpp
     module_ctrl/ctrl_output_pw.cpp
     module_ctrl/ctrl_output_td.cpp
-    bessel_basis.cpp
+    module_bessel/bessel_basis.cpp
     cal_test.cpp
     module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
@@ -11,9 +11,9 @@ list(APPEND objects
     write_bands.cpp
     nscf_fermi_surf.cpp
     write_eig_occ.cpp
-    numerical_basis.cpp
-    numerical_basis_jyjy.cpp
-    numerical_descriptor.cpp
+    module_bessel/numerical_basis.cpp
+    module_bessel/numerical_basis_jyjy.cpp
+    module_bessel/numerical_descriptor.cpp
     output.cpp
     print_info.cpp
     read_cube.cpp

@@ -1,4 +1,4 @@
-#include "source_io/numerical_basis_jyjy.h"
+#include "numerical_basis_jyjy.h"
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"

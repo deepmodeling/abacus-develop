@@ -4,12 +4,12 @@
 //==========================================================
 #ifndef NUMERICAL_DESCRIPTOR_H
 #define NUMERICAL_DESCRIPTOR_H
-#include "../source_base/global_function.h"
-#include "../source_base/global_variable.h"
-#include "../source_base/intarray.h"
-#include "../source_base/complexmatrix.h"
+#include "../../source_base/global_function.h"
+#include "../../source_base/global_variable.h"
+#include "../../source_base/intarray.h"
+#include "../../source_base/complexmatrix.h"
 #include "bessel_basis.h"
-#include "source_psi/psi.h"
+#include "../../source_psi/psi.h"
 //==========================================================
 // CLASS :
 // NAME :  Numerical_Descriptor 

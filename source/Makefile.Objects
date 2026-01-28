@@ -515,7 +515,7 @@ OBJS_XC=xc_functional.o\
 
 OBJS_IO=module_parameter/input_conv.o\
     module_unk/berryphase.o\
-    bessel_basis.o\
+    module_bessel/bessel_basis.o\
     cal_test.o\
     module_dos/write_dos_pw.o\
     nscf_fermi_surf.o\
@@ -526,9 +526,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/write_dos_lcao.o\
     module_dos/cal_ldos.o\
     cif_io.o\
-    numerical_descriptor.o\
-    numerical_basis.o\
-    numerical_basis_jyjy.o\
+    module_bessel/numerical_descriptor.o\
+    module_bessel/numerical_basis.o\
+    module_bessel/numerical_basis_jyjy.o\
     output.o\
     print_info.o\
     read_cube.o\
@@ -546,7 +546,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_wannier/to_wannier90_lcao_in_pw.o\
     module_wannier/to_wannier90_lcao.o\
     fR_overlap.o\
-
     module_unk/unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\

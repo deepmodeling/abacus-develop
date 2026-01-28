@@ -4,8 +4,8 @@
 #include "../module_dos/write_dos_pw.h" // use write_dos_pw
 #include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
 #include "source_pw/module_pwdft/onsite_projector.h" // use projector
-#include "../numerical_basis.h"
-#include "../numerical_descriptor.h"
+#include "../module_bessel/numerical_basis.h"
+#include "../module_bessel/numerical_descriptor.h"
 #include "../module_dos/cal_ldos.h"
 #include "../module_unk/berryphase.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
