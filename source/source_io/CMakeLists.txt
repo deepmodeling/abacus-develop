@@ -5,11 +5,11 @@ list(APPEND objects
     ctrl_output_td.cpp
     bessel_basis.cpp
     cal_test.cpp
-    cal_dos.cpp
-    cal_ldos.cpp
+    module_dos/cal_dos.cpp
+    module_dos/cal_ldos.cpp
     cal_mlkedf_descriptors.cpp
     cif_io.cpp
-    write_dos_pw.cpp
+    module_dos/write_dos_pw.cpp
     write_bands.cpp
     nscf_fermi_surf.cpp
     write_eig_occ.cpp
@@ -56,9 +56,9 @@ list(APPEND objects_advanced
 
 if(ENABLE_LCAO)
   list(APPEND objects
-      write_dos_lcao.cpp
-      cal_pdos_gamma.cpp
-      cal_pdos_multik.cpp
+      module_dos/write_dos_lcao.cpp
+      module_dos/cal_pdos_gamma.cpp
+      module_dos/cal_pdos_multik.cpp
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       get_pchg_lcao.cpp

@@ -517,13 +517,14 @@ OBJS_IO=module_parameter/input_conv.o\
     module_unk/berryphase.o\
     bessel_basis.o\
     cal_test.o\
-    write_dos_pw.o\
+    module_dos/write_dos_pw.o\
     nscf_fermi_surf.o\
     write_bands.o\
-    cal_dos.o\
-    cal_pdos_gamma.o\
-    cal_pdos_multik.o\
-    cal_ldos.o\
+    module_dos/cal_dos.o\
+    module_dos/cal_pdos_gamma.o\
+    module_dos/cal_pdos_multik.o\
+    module_dos/write_dos_lcao.o\
+    module_dos/cal_ldos.o\
     cif_io.o\
     numerical_descriptor.o\
     numerical_basis.o\

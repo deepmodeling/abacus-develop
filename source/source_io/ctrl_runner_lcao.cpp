@@ -4,7 +4,7 @@
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 
 #include "source_io/write_proj_band_lcao.h" // projcted band structure
-#include "source_io/cal_ldos.h" // cal LDOS
+#include "module_dos/cal_ldos.h" // cal LDOS
 #include "source_io/write_eband_terms.hpp"
 #include "source_io/write_vxc.hpp"
 #include "source_io/write_vxc_r.hpp"
