@@ -182,8 +182,37 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     }
 
-    // Finalize with MPI reduction and post-processing
-    OperatorForceStress::finalize_force_stress(cal_force, cal_stress, this->ucell, stress_tmp, force, stress, 2.0, 2.0);
+    if (cal_force)
+    {
+#ifdef __MPI
+        // sum up the occupation matrix
+        Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
+#endif
+        for (int i = 0; i < force.nr * force.nc; i++)
+        {
+            force.c[i] *= 2.0;
+        }
+    }
+
+    // stress renormalization
+    if (cal_stress)
+    {
+#ifdef __MPI
+        // sum up the occupation matrix
+        Parallel_Reduce::reduce_all(stress_tmp.data(), 6);
+#endif
+        const double weight = this->ucell->lat0 / this->ucell->omega;
+        for (int i = 0; i < 6; i++)
+        {
+            stress.c[i] = stress_tmp[i] * weight;
+        }
+        stress.c[8] = stress.c[5]; // stress(2,2)
+        stress.c[7] = stress.c[4]; // stress(2,1)
+        stress.c[6] = stress.c[2]; // stress(2,0)
+        stress.c[5] = stress.c[4]; // stress(1,2)
+        stress.c[4] = stress.c[3]; // stress(1,1)
+        stress.c[3] = stress.c[1]; // stress(1,0)
+    }
 
     ModuleBase::timer::tick("Nonlocal", "cal_force_stress");
 }
