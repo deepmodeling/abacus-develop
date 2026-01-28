@@ -3,7 +3,7 @@
 #include "source_base/parallel_global.h"
 #include "source_io/dipole_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/td_current_io.h"
+#include "source_io/module_current/td_current_io.h"
 
 namespace ModuleIO
 {

@@ -5,7 +5,7 @@
 #include "source_io/dipole_io.h"
 #include "source_io/output_log.h"
 #include "source_io/read_wfc_nao.h"
-#include "source_io/td_current_io.h"
+#include "source_io/module_current/td_current_io.h"
 //------LCAO HSolver ElecState-------
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/symmetry_rho.h"

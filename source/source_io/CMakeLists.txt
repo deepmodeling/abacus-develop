@@ -31,8 +31,8 @@ list(APPEND objects
     write_dipole.cpp
     write_init.cpp
     module_ml/write_mlkedf_descriptors.cpp
-    td_current_io.cpp
-    td_current_io_comm.cpp
+    module_current/td_current_io.cpp
+    module_current/td_current_io_comm.cpp
     write_libxc_r.cpp
     output_log.cpp
     para_json.cpp
