@@ -44,8 +44,9 @@ list(APPEND objects
 )
 
 list(APPEND objects_advanced
-    unk_overlap_pw.cpp
-    berryphase.cpp
+    module_unk/unk_overlap_pw.cpp
+    module_unk/berryphase.cpp
+    module_unk/unk_overlap_lcao.cpp
     module_wannier/to_wannier90.cpp
     module_wannier/to_wannier90_pw.cpp
     module_wannier/to_wannier90_lcao_in_pw.cpp
@@ -79,7 +80,7 @@ if(ENABLE_LCAO)
       cal_pLpR.cpp
   )
   list(APPEND objects_advanced
-      unk_overlap_lcao.cpp
+      module_unk/unk_overlap_lcao.cpp
       write_HS_R.cpp
       write_HS_sparse.cpp
       single_R_io.cpp

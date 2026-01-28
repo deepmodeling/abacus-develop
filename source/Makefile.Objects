@@ -514,7 +514,7 @@ OBJS_XC=xc_functional.o\
     exx_info.o\
 
 OBJS_IO=input_conv.o\
-    berryphase.o\
+    module_unk/berryphase.o\
     bessel_basis.o\
     cal_test.o\
     write_dos_pw.o\
@@ -546,7 +546,7 @@ OBJS_IO=input_conv.o\
     module_wannier/to_wannier90_lcao.o\
     fR_overlap.o\
 
-    unk_overlap_pw.o\
+    module_unk/unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\
     write_cube.o\
@@ -599,7 +599,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
       write_dmk.o\
-      unk_overlap_lcao.o\
+      module_unk/unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
       write_HS_sparse.o\

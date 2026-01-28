@@ -1,4 +1,4 @@
-﻿#include "berryphase.h"
+#include "berryphase.h"
 
 #include "source_base/module_external/lapack_connector.h"
 
@@ -215,7 +215,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
     }
 }
 
-#include "../source_base/complexmatrix.h"
+#include "../../source_base/complexmatrix.h"
 double berryphase::stringPhase(const UnitCell& ucell,
                                int index_str,
                                int nbands,
