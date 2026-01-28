@@ -3505,8 +3505,9 @@ These variables are used to control molecular dynamics calculations. For more in
 ### cal_syns
 
 - **Type**: Boolean
-- **Description**: Whether the asynchronous overlap matrix is calculated for Hefei-NAMD.
+- **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates `<phi(t-1)|phi(t)>` by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by `velocity × md_dt`. Output file: `OUT.*/syns_nao.csr` in CSR format.
 - **Default**: False
+- **Note**: Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep > 0).
 
 ### dmax
 

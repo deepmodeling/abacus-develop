@@ -9,7 +9,7 @@
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/setup_exx.h"
