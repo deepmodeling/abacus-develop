@@ -6,7 +6,7 @@
 #include "source_cell/cell_index.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/output_dmk.h"
-#include "source_io/output_sk.h"
+#include "source_io/module_hs/output_sk.h"
 #include "source_base/formatter.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04

@@ -76,7 +76,7 @@ if(ENABLE_LCAO)
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp
-      output_sk.cpp
+      module_hs/output_sk.cpp
       output_dmk.cpp
       output_mulliken.cpp
       module_ml/io_npz.cpp
@@ -84,8 +84,8 @@ if(ENABLE_LCAO)
   )
   list(APPEND objects_advanced
       module_unk/unk_overlap_lcao.cpp
-      write_HS_R.cpp
-      write_HS_sparse.cpp
+      module_hs/write_HS_R.cpp
+      module_hs/write_HS_sparse.cpp
       single_R_io.cpp
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp

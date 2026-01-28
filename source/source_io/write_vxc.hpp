@@ -7,7 +7,7 @@
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_psi/psi.h"
-#include "source_io/write_HS.h"
+#include "source_io/module_hs/write_HS.h"
 #include "source_io/filename.h" // use filename_output function
 
 namespace ModuleIO

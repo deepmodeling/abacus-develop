@@ -14,7 +14,7 @@
 #include "source_io/get_wf_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/read_wfc_nao.h"
-#include "source_io/write_HS_R.h"
+#include "source_io/module_hs/write_HS_R.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
