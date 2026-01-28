@@ -598,7 +598,7 @@ void toQO::read_ovlp(const std::string& dir, const int& nrows, const int& ncols,
     {
         if (is_R)
         {
-            double val;
+            double val = 0.0;
             ifs >> val;
             inum++;
             if (inum <= nchi_ * nphi_) {

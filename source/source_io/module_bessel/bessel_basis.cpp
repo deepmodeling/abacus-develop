@@ -392,10 +392,10 @@ void Bessel_Basis::readin_C4(
 
 					if(ModuleBase::GlobalFunc::SCAN_BEGIN(inc4, "<INPUTS>"))
 					{
-						double tmp_ecut;
-						double tmp_rcut;
-						double tmp_enumber;
-						double tmp_tolerence;
+						double tmp_ecut = 0.0;
+						double tmp_rcut = 0.0;
+						double tmp_enumber = 0.0;
+						double tmp_tolerence = 0.0;
 						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_ecut);
 						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_rcut);
 						ModuleBase::GlobalFunc::READ_VALUE( inc4, tmp_enumber);

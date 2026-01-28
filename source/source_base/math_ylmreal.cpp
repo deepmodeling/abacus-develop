@@ -179,7 +179,7 @@ void YlmReal::rlylm
 				{
 					int twok = 2 * ik;
 				
-					double gamma;
+					double gamma = 0.0;
 					double aux0, aux1, aux2, aux3;
 				
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);

@@ -125,7 +125,7 @@ void Wavefunc_in_pw::make_table_q(
 					}
 					else
 					{
-						 double no_use;
+						 double no_use = 0.0;
 						 for(int ir=0; ir<meshr_read; ir++)
 						 {
 							 in >> no_use;
@@ -327,7 +327,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const UnitCell& ucell,
 								}//if
 								else
 								{//atomic_wfc_so_mag
-									double alpha, gamma;
+									double alpha = 0.0, gamma = 0.0;
 									std::complex<double> fup,fdown;
                               		//int nc;
                               		//This routine creates two functions only in the case j=l+1/2 or exit in the other case
@@ -402,8 +402,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const UnitCell& ucell,
 							} // end if ucell.atoms[it].has_so
 							else
 							{//atomic_wfc_nc
-								double alpha, gamman;
-								std::complex<double> fup, fdown;
+								double alpha = 0.0, gamman = 0.0;
+								std::complex<double> fup = 0.0, fdown = 0.0;
 								//alpha = ucell.magnet.angle1_[it];
 								//gamman = -ucell.magnet.angle2_[it] + 0.5*ModuleBase::PI;
 								alpha = ucell.atoms[it].angle1[ia];

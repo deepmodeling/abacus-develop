@@ -96,7 +96,7 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
     {
         local_term++;
     }
-    int start;
+    int start = 0;
     for (int rank = 0; rank < nproc; rank++)
     {
         if (rank == myrank)

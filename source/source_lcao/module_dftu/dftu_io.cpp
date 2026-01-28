@@ -487,7 +487,7 @@ inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int 
 	if (std::abs(A[p][q]) > 1e-10) 
 	{
 		double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
-        double t;
+        double t = 0.0;
         if (r >= 0) {
             t = 1.0 / (r + sqrt(1.0 + r * r));
         } else {

@@ -197,7 +197,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        double d1, d2, d3;
+        double d1 = 0.0, d2 = 0.0, d3 = 0.0;
         for (int iat = 0; iat < this->nat; iat++)
         {
             ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
@@ -449,7 +449,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             for (int ig = 0; ig < rho_basis->npw; ig++)
             {
                 const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * ucell.atoms[it].tau[ia]);
-                double sinp, cosp;
+                double sinp = 0.0, cosp = 0.0;
                 ModuleBase::libm::sincos(phase, &sinp, &cosp);
                 const double factor
                     = vloc(it, rho_basis->ig2igg[ig]) * (cosp * aux[ig].imag() + sinp * aux[ig].real());
@@ -503,7 +503,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             if (ucell.atoms[it].na != 0)
             {
-                double dzv;
+                double dzv = 0.0;
                 {
                     dzv = ucell.atoms[it].ncpp.zv;
                 }
@@ -526,7 +526,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     }
 
     double alpha = 1.1;
-    double upperbound;
+    double upperbound = 0.0;
     do
     {
         alpha -= 0.10;
@@ -634,7 +634,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                 {
                     const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
                     const double arg = ModuleBase::TWO_PI * (gcar * ucell.atoms[it].tau[ia]);
-                    double sinp, cosp;
+                    double sinp = 0.0, cosp = 0.0;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
                     double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
                     forceion(iat, 0) += gcar[0] * sumnb;
@@ -686,7 +686,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                         {
                             const double rr = sqrt(r2[n]) * ucell.lat0;
 
-                            double factor;
+                            double factor = 0.0;
                             {
                                 factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
                                             * ModuleBase::e2 / (rr * rr)

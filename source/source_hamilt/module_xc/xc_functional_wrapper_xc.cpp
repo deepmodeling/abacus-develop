@@ -17,7 +17,7 @@ void XC_Functional::xc(const double &rho, double &exc, double &vxc)
 
 	double third = 1.0 / 3.0;
 	double pi34 = 0.6203504908994e0 ; // pi34=(3/4pi)^(1/3)
-	double rs;
+	double rs = 0.0;
     double e,v;
     
     exc = vxc = 0.00;

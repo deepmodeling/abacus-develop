@@ -1,6 +1,10 @@
 #ifndef PSI_INIT_FILE_H
 #define PSI_INIT_FILE_H
 
+<<<<<<< HEAD:source/source_psi/psi_init_file.h
+=======
+#include "source_pw/module_pwdft/vnl_pw.h"
+>>>>>>> develop:source/source_psi/psi_initializer_random.h
 #include "psi_initializer.h"
 
 /*

@@ -254,7 +254,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
     const UnitCell& ucell_in
 )
 {
-	int  igl0;
+	int  igl0 = 0;
 	double gx = 0, rhocg1 = 0;
 	//double *aux = new double[mesh];
 	std::vector<double> aux(mesh);
