@@ -3,10 +3,10 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_base/write_orb_info.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_io/write_orb_info.h"
 
 
 void ModuleIO::cal_pdos(
