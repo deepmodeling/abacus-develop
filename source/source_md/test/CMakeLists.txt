@@ -12,6 +12,7 @@ list(APPEND depend_files
   ../../source_cell/read_atom_species.cpp
   ../../source_cell/atom_pseudo.cpp
   ../../source_cell/read_atoms.cpp
+  ../../source_cell/read_atoms_helper.cpp
   ../../source_cell/pseudo.cpp
   ../../source_cell/read_pp.cpp
   ../../source_cell/read_pp_complete.cpp

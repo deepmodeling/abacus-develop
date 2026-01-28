@@ -28,7 +28,7 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
     {
         return true;
     }
-    else if (iter >= PARAM.inp.exx_hybrid_step)
+    else if (exx_iter >= PARAM.inp.exx_hybrid_step)
     {
         GlobalV::ofs_running << " !!EXX IS NOT CONVERGED!!" << std::endl;
         std::cout << " !!EXX IS NOT CONVERGED!!" << std::endl;

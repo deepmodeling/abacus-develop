@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/hamilt.h"

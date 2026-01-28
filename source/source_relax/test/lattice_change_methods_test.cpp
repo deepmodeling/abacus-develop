@@ -1,4 +1,5 @@
 #include "source_relax/lattice_change_methods.h"
+#include "mock_remake_cell.h"
 
 #include "for_test.h"
 #include "gtest/gtest.h"
