@@ -15,7 +15,7 @@
 #include "source_pw/module_pwdft/elecond.h"
 
 #ifdef __MLALGO
-#include "source_io/write_mlkedf_descriptors.h"
+#include "module_ml/write_mlkedf_descriptors.h"
 #endif
 
 void ModuleIO::ctrl_iter_pw(const int istep, 

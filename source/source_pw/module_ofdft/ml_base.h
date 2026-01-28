@@ -9,7 +9,7 @@
 
 #ifdef __MLALGO
 #include "source_pw/module_ofdft/ml_tools/nn_of.h"
-#include "source_io/cal_mlkedf_descriptors.h"
+#include "source_io/module_ml/cal_mlkedf_descriptors.h"
 
 // The ML_Base class encapsulates common functionality for Machine Learning based
 // constructs in OFDFT and EXX.

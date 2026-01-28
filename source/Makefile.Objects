@@ -611,7 +611,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_mulliken.o\
       output_sk.o\
       output_dmk.o\
-      io_npz.o\
+      module_ml/io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\

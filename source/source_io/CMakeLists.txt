@@ -7,7 +7,7 @@ list(APPEND objects
     cal_test.cpp
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
-    cal_mlkedf_descriptors.cpp
+    module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
     module_dos/write_dos_pw.cpp
     write_bands.cpp
@@ -32,7 +32,7 @@ list(APPEND objects
     write_elf.cpp
     write_dipole.cpp
     write_init.cpp
-    write_mlkedf_descriptors.cpp
+    module_ml/write_mlkedf_descriptors.cpp
     td_current_io.cpp
     td_current_io_comm.cpp
     write_libxc_r.cpp
@@ -76,7 +76,7 @@ if(ENABLE_LCAO)
       output_sk.cpp
       output_dmk.cpp
       output_mulliken.cpp
-      io_npz.cpp
+      module_ml/io_npz.cpp
       cal_pLpR.cpp
   )
   list(APPEND objects_advanced
