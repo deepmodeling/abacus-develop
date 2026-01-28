@@ -25,7 +25,7 @@
 
 #include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_estate/setup_estate_pw.h" // mohan add 20251005
-#include "source_io/ctrl_output_pw.h" // mohan add 20250927
+#include "source_io/module_ctrl/ctrl_output_pw.h" // mohan add 20250927
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_estate/update_pot.h" // mohan add 20251016
 

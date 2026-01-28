@@ -1,12 +1,10 @@
 list(APPEND objects
     module_parameter/input_conv.cpp
-    ctrl_output_fp.cpp
-    ctrl_output_pw.cpp
-    ctrl_output_td.cpp
+    module_ctrl/ctrl_output_fp.cpp
+    module_ctrl/ctrl_output_pw.cpp
+    module_ctrl/ctrl_output_td.cpp
     bessel_basis.cpp
     cal_test.cpp
-    module_dos/cal_dos.cpp
-    module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
     module_dos/write_dos_pw.cpp
@@ -41,6 +39,11 @@ list(APPEND objects
     parse_args.cpp
     orb_io.cpp
     filename.cpp
+    module_dos/cal_dos.cpp
+    module_dos/cal_ldos.cpp
+    module_dos/cal_pdos_gamma.cpp
+    module_dos/cal_pdos_multik.cpp
+    module_dos/write_dos_lcao.cpp
 )
 
 list(APPEND objects_advanced
@@ -86,9 +89,9 @@ if(ENABLE_LCAO)
       single_R_io.cpp
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
-      ctrl_scf_lcao.cpp
-      ctrl_runner_lcao.cpp
-      ctrl_iter_lcao.cpp
+      module_ctrl/ctrl_scf_lcao.cpp
+      module_ctrl/ctrl_runner_lcao.cpp
+      module_ctrl/ctrl_iter_lcao.cpp
   )
 endif()
 

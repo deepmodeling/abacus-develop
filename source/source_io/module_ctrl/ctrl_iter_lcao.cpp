@@ -1,4 +1,4 @@
-#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"

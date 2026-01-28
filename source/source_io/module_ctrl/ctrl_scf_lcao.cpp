@@ -1,4 +1,4 @@
-#include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
+#include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
@@ -7,17 +7,17 @@
 #include <complex>
 
 // functions
-#include "module_unk/berryphase.h"                          // use berryphase
-#include "source_io/cal_pLpR.h"                            // use AngularMomentumCalculator()
-#include "source_io/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
-#include "source_io/output_mulliken.h"                     // use cal_mag()
-#include "source_io/module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "source_io/module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
-#include "source_io/write_HS.h"                            // use ModuleIO::write_hsk()
-#include "source_io/write_dmk.h"                           // use ModuleIO::write_dmk()
-#include "source_io/write_dmr.h"                           // use ModuleIO::write_dmr()
-#include "module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
-#include "source_io/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "../module_unk/berryphase.h"                          // use berryphase
+#include "../cal_pLpR.h"                            // use AngularMomentumCalculator()
+#include "../output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "../output_mulliken.h"                     // use cal_mag()
+#include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
+#include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
+#include "../write_HS.h"                            // use ModuleIO::write_hsk()
+#include "../write_dmk.h"                           // use ModuleIO::write_dmk()
+#include "../write_dmr.h"                           // use ModuleIO::write_dmr()
+#include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
+#include "../write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
 #ifdef __MLALGO
@@ -28,7 +28,7 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
 #include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
 #endif
-#include "module_qo/to_qo.h"                // use toQO
+#include "../module_qo/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
 

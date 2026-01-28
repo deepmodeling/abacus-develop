@@ -560,12 +560,12 @@ OBJS_IO=module_parameter/input_conv.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
-    ctrl_scf_lcao.o\
-    ctrl_runner_lcao.o\
-    ctrl_iter_lcao.o\
-    ctrl_output_fp.o\
-    ctrl_output_pw.o\
-    ctrl_output_td.o\
+    module_ctrl/ctrl_scf_lcao.o\
+    module_ctrl/ctrl_runner_lcao.o\
+    module_ctrl/ctrl_iter_lcao.o\
+    module_ctrl/ctrl_output_fp.o\
+    module_ctrl/ctrl_output_pw.o\
+    module_ctrl/ctrl_output_td.o\
     para_json.o\
     abacusjson.o\
     general_info.o\

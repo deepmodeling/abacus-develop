@@ -16,7 +16,7 @@
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
-#include "source_io/ctrl_output_fp.h"
+#include "source_io/module_ctrl/ctrl_output_fp.h"
 #include "source_io/write_init.h" // write_chg_init, write_pot_init
 
 namespace ModuleESolver

@@ -1,21 +1,21 @@
-#include "source_io/ctrl_output_pw.h"
+#include "ctrl_output_pw.h"
 
-#include "source_io/write_wfc_pw.h" // use write_wfc_pw
-#include "module_dos/write_dos_pw.h" // use write_dos_pw
-#include "source_io/module_wannier/to_wannier90_pw.h" // wannier90 interface
+#include "../write_wfc_pw.h" // use write_wfc_pw
+#include "../module_dos/write_dos_pw.h" // use write_dos_pw
+#include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
 #include "source_pw/module_pwdft/onsite_projector.h" // use projector
-#include "source_io/numerical_basis.h"
-#include "source_io/numerical_descriptor.h"
-#include "module_dos/cal_ldos.h"
-#include "module_unk/berryphase.h"
+#include "../numerical_basis.h"
+#include "../numerical_descriptor.h"
+#include "../module_dos/cal_ldos.h"
+#include "../module_unk/berryphase.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_base/formatter.h"
-#include "source_io/get_pchg_pw.h"
-#include "source_io/get_wf_pw.h"
+#include "../get_pchg_pw.h"
+#include "../get_wf_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
 
 #ifdef __MLALGO
-#include "module_ml/write_mlkedf_descriptors.h"
+#include "../module_ml/write_mlkedf_descriptors.h"
 #endif
 
 void ModuleIO::ctrl_iter_pw(const int istep, 

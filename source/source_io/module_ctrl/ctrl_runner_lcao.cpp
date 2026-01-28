@@ -1,13 +1,13 @@
-#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
+#include "ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 
-#include "source_io/write_proj_band_lcao.h" // projcted band structure
-#include "module_dos/cal_ldos.h" // cal LDOS
-#include "source_io/write_eband_terms.hpp"
-#include "source_io/write_vxc.hpp"
-#include "source_io/write_vxc_r.hpp"
+#include "../write_proj_band_lcao.h" // projcted band structure
+#include "../module_dos/cal_ldos.h" // cal LDOS
+#include "../write_eband_terms.hpp"
+#include "../write_vxc.hpp"
+#include "../write_vxc_r.hpp"
 
 namespace ModuleIO
 {
