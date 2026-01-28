@@ -39,8 +39,8 @@ void ElecState::cal_bandgap()
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm);
+    Parallel_Reduce::reduce_max_double(vbm);
+    Parallel_Reduce::reduce_min_double(cbm);
 #endif
 
     this->bandgap = cbm - vbm;
@@ -94,10 +94,10 @@ void ElecState::cal_bandgap_updw()
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm_up);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm_up);
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm_dw);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm_dw);
+    Parallel_Reduce::reduce_max_double(vbm_up);
+    Parallel_Reduce::reduce_min_double(cbm_up);
+    Parallel_Reduce::reduce_max_double(vbm_dw);
+    Parallel_Reduce::reduce_min_double(cbm_dw);
 #endif
 
     this->bandgap_up = cbm_up - vbm_up;

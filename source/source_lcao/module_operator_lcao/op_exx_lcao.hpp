@@ -3,6 +3,7 @@
 #ifdef __EXX
 
 #include "op_exx_lcao.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -244,10 +245,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     if (!ifs) { all_exist = 0; break; }
                 }
 // Add MPI communication to synchronize all_exist across processes
-#ifdef __MPI
-                // don't read in any files if one of the processes doesn't have it
-                MPI_Allreduce(MPI_IN_PLACE, &all_exist, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-#endif                
+                Parallel_Reduce::reduce_min_int(all_exist);
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
@@ -264,9 +262,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
-#ifdef __MPI                    
-                    MPI_Allreduce(MPI_IN_PLACE, &all_exist_cereal, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-#endif                     
+                    Parallel_Reduce::reduce_min_int(all_exist_cereal);
                     if (!all_exist_cereal)
                     {
                         //no HexxR file in CSR or binary format

@@ -2,6 +2,7 @@
 
 #include "source_base/math_chebyshev.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MPI
@@ -102,10 +103,8 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
 
         if (ik == nk - 1)
         {
-#ifdef __MPI
-            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-#endif
+            Parallel_Reduce::reduce_max_double(*p_hamilt_sto->emax);
+            Parallel_Reduce::reduce_min_double(*p_hamilt_sto->emin);
             GlobalV::ofs_running << "New Emax " << *p_hamilt_sto->emax << " Ry; new Emin " << *p_hamilt_sto->emin
                                  << " Ry" << std::endl;
             change = false;
