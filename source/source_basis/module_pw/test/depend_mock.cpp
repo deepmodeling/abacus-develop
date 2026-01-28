@@ -13,11 +13,12 @@ namespace Parallel_Reduce
 {
     template<typename T> void reduce_all(T& object) { return; };
     template<typename T> void reduce_pool(T& object) { return; };
-    template<typename T> void reduce_min_pool(const int& nproc_in_pool, T& v) { return; };
 
-    template void reduce_all<double>(double& object);
-    template void reduce_pool<double>(double& object);
-    template void reduce_pool<float>(float& object);
-    template void reduce_min_pool<double>(const int& nproc_in_pool, double& v);
+    template<>
+    void reduce_all<double>(double& object) { return; };
+    template<>
+    void reduce_pool<double>(double& object) { return; };
+    template<>
+    void reduce_pool<float>(float& object) { return; };
 }
 #endif
