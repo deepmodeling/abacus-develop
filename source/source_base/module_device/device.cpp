@@ -20,32 +20,6 @@
 
 namespace base_device {
 
-// for device
-template <>
-base_device::AbacusDevice_t
-get_device_type<base_device::DEVICE_CPU>(const base_device::DEVICE_CPU *dev) {
-  return base_device::CpuDevice;
-}
-template <>
-base_device::AbacusDevice_t
-get_device_type<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU *dev) {
-  return base_device::GpuDevice;
-}
-
-// for precision
-template <> std::string get_current_precision(const float *var) {
-  return "single";
-}
-template <> std::string get_current_precision(const double *var) {
-  return "double";
-}
-template <> std::string get_current_precision(const std::complex<float> *var) {
-  return "single";
-}
-template <> std::string get_current_precision(const std::complex<double> *var) {
-  return "double";
-}
-
 namespace information {
 
 #if __MPI

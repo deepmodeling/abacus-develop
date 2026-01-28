@@ -2,6 +2,8 @@
 #define MODULE_DEVICE_H_
 
 #include "types.h"
+#include "device_helpers.h"
+#include "kernel_compat.h"
 #include <fstream>
 #include <mutex>
 
@@ -11,12 +13,6 @@
 
 namespace base_device
 {
-
-template <typename Device>
-base_device::AbacusDevice_t get_device_type(const Device* dev);
-
-template <typename T>
-std::string get_current_precision(const T* var);
 
 namespace information
 {
@@ -178,25 +174,5 @@ private:
 };
 
 } // end of namespace base_device
-
-/**
- * @brief for compatibility with __CUDA_ARCH__ 600 and earlier
- *
- */
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600 && !defined(__CUDA_ON_DCU)
-static __inline__ __device__ double atomicAdd(double* address, double val)
-{
-    unsigned long long int* address_as_ull = (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do
-    {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
-        // Note: uses integer comparison to avoid hang in case of NaN (since NaN !=
-        // NaN) } while (assumed != old);
-    } while (assumed != old);
-    return __longlong_as_double(old);
-}
-#endif
 
 #endif // MODULE_DEVICE_H_
