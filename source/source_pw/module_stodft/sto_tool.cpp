@@ -104,8 +104,8 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
         if (ik == nk - 1)
         {
 #ifdef __MPI
-            Parallel_Reduce::reduce_max_double(*p_hamilt_sto->emax);
-            Parallel_Reduce::reduce_min_double(*p_hamilt_sto->emin);
+            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
             GlobalV::ofs_running << "New Emax " << *p_hamilt_sto->emax << " Ry; new Emin " << *p_hamilt_sto->emin
                                  << " Ry" << std::endl;
