@@ -537,14 +537,15 @@ OBJS_IO=input_conv.o\
     read_wf2rho_pw.o\
     restart.o\
     binstream.o\
-    to_wannier90.o\
+    module_wannier/to_wannier90.o\
     to_qo_kernel.o\
     to_qo_mpi.o\
     to_qo_structures.o\
-    to_wannier90_pw.o\
-    to_wannier90_lcao_in_pw.o\
-    to_wannier90_lcao.o\
+    module_wannier/to_wannier90_pw.o\
+    module_wannier/to_wannier90_lcao_in_pw.o\
+    module_wannier/to_wannier90_lcao.o\
     fR_overlap.o\
+
     unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\

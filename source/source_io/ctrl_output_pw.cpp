@@ -2,7 +2,7 @@
 
 #include "source_io/write_wfc_pw.h" // use write_wfc_pw
 #include "source_io/write_dos_pw.h" // use write_dos_pw
-#include "source_io/to_wannier90_pw.h" // wannier90 interface
+#include "source_io/module_wannier/to_wannier90_pw.h" // wannier90 interface
 #include "source_pw/module_pwdft/onsite_projector.h" // use projector
 #include "source_io/numerical_basis.h"
 #include "source_io/numerical_descriptor.h"

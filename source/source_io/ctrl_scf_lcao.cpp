@@ -11,8 +11,8 @@
 #include "source_io/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/output_mulliken.h"                     // use cal_mag()
-#include "source_io/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "source_io/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
+#include "source_io/module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
+#include "source_io/module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
 #include "source_io/write_HS.h"                            // use ModuleIO::write_hsk()
 #include "source_io/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "source_io/write_dmr.h"                           // use ModuleIO::write_dmr()
