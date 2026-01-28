@@ -1,29 +1,27 @@
-#ifndef PSI_INITIALIZER_RANDOM_H
-#define PSI_INITIALIZER_RANDOM_H
-
+#ifndef PSI_INIT_NAO_RANDOM_H
+#define PSI_INIT_NAO_RANDOM_H
+#include "source_cell/parallel_kpoints.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "psi_initializer.h"
+#include "psi_init_nao.h"
 
 /*
-Psi (planewave based wavefunction) initializer: random method
+Psi (planewave based wavefunction) initializer: numerical atomic orbital + random method
 */
 template <typename T>
-class psi_initializer_random : public psi_initializer<T>
+class psi_init_nao_random : public psi_init_nao<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_initializer_random()
+    psi_init_nao_random()
     {
-        this->method_ = "random";
+        this->method_ = "nao+random";
+        this->mixing_coef_ = 0.05;
     };
-    ~psi_initializer_random(){};
-    /// @brief calculate and output planewave wavefunction
-    /// @param ik kpoint index
-    /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-    virtual void init_psig(T* psig, const int& ik) override;
-    /// @brief initialize the psi_initializer with external data and methods
+    ~psi_init_nao_random(){};
+
+    /// @brief initialize the psi_init with external data and methods
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
@@ -31,5 +29,7 @@ class psi_initializer_random : public psi_initializer<T>
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
                             const int& = 0) override;            //< MPI rank
+
+    virtual void init_psig(T* psig, const int& ik) override;
 };
 #endif

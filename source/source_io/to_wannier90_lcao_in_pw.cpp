@@ -8,7 +8,7 @@
 #include "source_base/parallel_reduce.h"
 #include "binstream.h"
 
-#include "source_psi/psi_initializer_nao.h"
+#include "source_psi/psi_init_nao.h"
 #ifdef __LCAO
 toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
     const bool &out_wannier_mmn, 
@@ -44,7 +44,7 @@ void toWannier90_LCAO_IN_PW::calculate(
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
     delete this->psi_initer_;
-    this->psi_initer_ = new psi_initializer_nao<std::complex<double>>();
+    this->psi_initer_ = new psi_init_nao<std::complex<double>>();
     this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, &kv, 1, nullptr, GlobalV::MY_RANK);
     this->psi_initer_->tabulate();
     delete this->psi;

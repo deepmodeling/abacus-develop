@@ -1,5 +1,5 @@
-#ifndef PSI_INITIALIZER_NAO_H
-#define PSI_INITIALIZER_NAO_H
+#ifndef PSI_INIT_NAO_H
+#define PSI_INIT_NAO_H
 #include "source_base/cubic_spline.h"
 #include "source_base/realarray.h"
 #include "psi_initializer.h"
@@ -9,17 +9,17 @@
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
 template <typename T>
-class psi_initializer_nao : public psi_initializer<T>
+class psi_init_nao : public psi_initializer<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_initializer_nao()
+    psi_init_nao()
     {
         this->method_ = "nao";
     };
-    ~psi_initializer_nao(){};
+    ~psi_init_nao(){};
 
     virtual void init_psig(T* psig, const int& ik) override;
 

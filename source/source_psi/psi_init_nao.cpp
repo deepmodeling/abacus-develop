@@ -1,4 +1,4 @@
-#include "psi_initializer_nao.h"
+#include "psi_init_nao.h"
 
 #include <fstream>
 // numerical algorithm support
@@ -29,7 +29,7 @@ I don't know why some variables are distributed while others not... for example 
 We need not only read and import, but also distribute here
 */
 
-// free function, not needed to be a member of psi_initializer_nao
+// free function, not needed to be a member of psi_init_nao
 void normalize(const std::vector<double>& r, std::vector<double>& flz)
 {
     std::vector<double> flz2r2(r.size());
@@ -43,7 +43,7 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
-void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
+void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
 {
     ModuleBase::timer::tick("psi_init_nao", "read_external_orbs");
 
@@ -75,13 +75,13 @@ void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files
 #endif
         if (!is_open)
         {
-            GlobalV::ofs_warning << "psi_initializer_nao<T>::read_orbital_files: cannot open orbital file: "
+            GlobalV::ofs_warning << "psi_init_nao<T>::read_orbital_files: cannot open orbital file: "
                                  << this->orbital_files_[it] << std::endl;
-            ModuleBase::WARNING_QUIT("psi_initializer_nao<T>::read_orbital_files", "cannot open orbital file.");
+            ModuleBase::WARNING_QUIT("psi_init_nao<T>::read_orbital_files", "cannot open orbital file.");
         }
         else
         {
-            GlobalV::ofs_running << "psi_initializer_nao<T>::read_orbital_files: reading orbital file: "
+            GlobalV::ofs_running << "psi_init_nao<T>::read_orbital_files: reading orbital file: "
                                  << this->orbital_files_[it] << std::endl;
         }
         std::string elem; // garbage value, will discard
@@ -120,7 +120,7 @@ void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files
 }
 
 template <typename T>
-void psi_initializer_nao<T>::allocate_ao_table()
+void psi_init_nao<T>::allocate_ao_table()
 {
     // find correct dimension for ovlp_flzjlq
     int ntype = this->p_ucell_->ntype;
@@ -139,7 +139,7 @@ void psi_initializer_nao<T>::allocate_ao_table()
     }
     if (nzeta_max == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_nao<T>::psi_initializer_nao",
+        ModuleBase::WARNING_QUIT("psi_init_nao<T>::psi_init_nao",
                                  "there is not ANY numerical atomic orbital read in present system, quit.");
     }
     // allocate a map (it, l, izeta) -> i, should allocate memory of ntype * lmax * nzeta_max
@@ -147,7 +147,7 @@ void psi_initializer_nao<T>::allocate_ao_table()
 }
 
 template <typename T>
-void psi_initializer_nao<T>::initialize(const Structure_Factor* sf,
+void psi_init_nao<T>::initialize(const Structure_Factor* sf,
                                         const ModulePW::PW_Basis_K* pw_wfc,
                                         const UnitCell* p_ucell,
                                         const K_Vectors* p_kv_in,
@@ -195,7 +195,7 @@ void psi_initializer_nao<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_initializer_nao<T>::tabulate()
+void psi_init_nao<T>::tabulate()
 {
     ModuleBase::timer::tick("psi_init_nao", "tabulate");
 
@@ -250,7 +250,7 @@ void psi_initializer_nao<T>::tabulate()
 }
 
 template <typename T>
-void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
+void psi_init_nao<T>::init_psig(T* psig, const int& ik)
 {
     ModuleBase::timer::tick("psi_init_nao", "init_psig");
     assert(ik >= 0);
@@ -382,8 +382,8 @@ void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
     ModuleBase::timer::tick("psi_init_nao", "init_psig");
 }
 
-template class psi_initializer_nao<std::complex<double>>;
-template class psi_initializer_nao<std::complex<float>>;
+template class psi_init_nao<std::complex<double>>;
+template class psi_init_nao<std::complex<float>>;
 // gamma point calculation
-template class psi_initializer_nao<double>;
-template class psi_initializer_nao<float>;
+template class psi_init_nao<double>;
+template class psi_init_nao<float>;

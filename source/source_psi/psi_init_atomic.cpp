@@ -1,4 +1,4 @@
-#include "psi_initializer_atomic.h"
+#include "psi_init_atomic.h"
 #include "source_pw/module_pwdft/soc.h"
 // numerical algorithm support
 #include "source_base/math_integral.h" // for numerical integration
@@ -27,7 +27,7 @@
 // }
 
 template <typename T>
-void psi_initializer_atomic<T>::allocate_ps_table()
+void psi_init_atomic<T>::allocate_ps_table()
 {
    // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell_->ntype;
@@ -38,7 +38,7 @@ void psi_initializer_atomic<T>::allocate_ps_table()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
@@ -47,7 +47,7 @@ void psi_initializer_atomic<T>::allocate_ps_table()
 }
 
 template <typename T>
-void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
+void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
                                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
                                            const UnitCell* p_ucell,            //< unit cell
                                            const K_Vectors* p_kv_in,
@@ -59,7 +59,7 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
 
     if(p_pspot_nl == nullptr)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::initialize", 
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize", 
                                  "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
     }
     // import
@@ -77,7 +77,7 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
 }
 
 template <typename T>
-void psi_initializer_atomic<T>::tabulate()
+void psi_init_atomic<T>::tabulate()
 {
     ModuleBase::timer::tick("psi_init_atomic", "tabulate");
     
@@ -229,7 +229,7 @@ std::complex<double> phase_factor(double arg, int mode)
 }
 
 template <typename T>
-void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
+void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
 {
     ModuleBase::timer::tick("psi_init_atomic", "init_psig");
     const int npw = this->pw_wfc_->npwk[ik];
@@ -336,17 +336,17 @@ void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
                                 int ipswfc_noncolin_soc=0;
         /* J = L - 1/2 -> continue */
         /* J = L + 1/2 */
-								if(fabs(j - l + 0.5) < 1e-4) 
-								{
-									continue;
-								}
-								chiaux.clear(); 
-								chiaux.resize(npw);
+						if(fabs(j - l + 0.5) < 1e-4) 
+						{
+							continue;
+						}
+						chiaux.clear(); 
+						chiaux.resize(npw);
         /* L == 0 */
-								if(l == 0) 
-								{
-									std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
-								}
+						if(l == 0) 
+						{
+							std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
+						}
                                 else
                                 {
         /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
@@ -382,7 +382,7 @@ void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
                                     if(index+2*l+1 > this->p_ucell_->natomwfc)
                                     {
                                         std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                        //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::init_psig()","error: too many wfcs");
+                                        //ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many wfcs");
                                     }
                                     for(int ig = 0;ig<npw;ig++)
                                     {
@@ -428,7 +428,7 @@ void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
                                 if(index+2*l+1 > this->p_ucell_->natomwfc)
                                 {
                                     std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                    //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::init_psig()","error: too many wfcs");
+                                    //ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many wfcs");
                                 }
                                 for(int ig = 0;ig<npw;ig++)
                                 {
@@ -485,8 +485,8 @@ void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
     ModuleBase::timer::tick("psi_init_atomic", "init_psig");
 }
 
-template class psi_initializer_atomic<std::complex<double>>;
-template class psi_initializer_atomic<std::complex<float>>;
+template class psi_init_atomic<std::complex<double>>;
+template class psi_init_atomic<std::complex<float>>;
 // gamma point calculation
-template class psi_initializer_atomic<double>;
-template class psi_initializer_atomic<float>;
+template class psi_init_atomic<double>;
+template class psi_init_atomic<float>;

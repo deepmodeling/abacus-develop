@@ -17,7 +17,7 @@ void Setup_Psi_pw<T, Device>::before_runner(
 		const Input_para &inp)
 {
     //! Allocate and initialize psi
-    this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
+    this->p_psi_init = new psi::PSIPrepare<T, Device>(inp.init_wfc,
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
       sf, kv, ppcell, pw_wfc);
 

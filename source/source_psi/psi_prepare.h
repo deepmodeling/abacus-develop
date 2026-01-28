@@ -1,17 +1,17 @@
-#ifndef PSI_INIT_H
-#define PSI_INIT_H
+#ifndef PSI_PREPARE_H
+#define PSI_PREPARE_H
 #include "source_hamilt/hamilt.h"
 #include "source_psi/psi_initializer.h"
 
 namespace psi
 {
 
-// This class is used to initialize the wavefunction
+// This class is used to prepare the wavefunction
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class PSIInit
+class PSIPrepare
 {
   public:
-    PSIInit(const std::string& init_wfc_in,
+    PSIPrepare(const std::string& init_wfc_in,
             const std::string& ks_solver_in,
             const std::string& basis_type_in,
             const int& rank,
@@ -20,7 +20,7 @@ class PSIInit
             const K_Vectors& kv_in,
             const pseudopot_cell_vnl& nlpp,
             const ModulePW::PW_Basis_K& pw_wfc);
-    ~PSIInit(){};
+    ~PSIPrepare(){};
 
     ///@brief prepare the wavefunction initialization
     void prepare_init(const int& random_seed);

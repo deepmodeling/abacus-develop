@@ -434,12 +434,12 @@ OBJS_ORBITAL=ORB_atomic.o\
 OBJS_PSI=psi.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
-                     psi_initializer_random.o\
-                     psi_initializer_file.o\
-                     psi_initializer_atomic.o\
-                     psi_initializer_atomic_random.o\
-                     psi_initializer_nao.o\
-                     psi_initializer_nao_random.o\
+                     psi_init_random.o\
+                     psi_init_file.o\
+                     psi_init_atomic.o\
+                     psi_init_atomic_random.o\
+                     psi_init_nao.o\
+                     psi_init_nao_random.o\
 
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
@@ -746,8 +746,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
-    psi_init.o\
+    psi_prepare.o\
     elecond.o\
+
     sto_tool.o\
     sto_elecond.o\
     sto_dos.o\

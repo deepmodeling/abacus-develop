@@ -1,4 +1,4 @@
-#include "psi_init.h"
+#include "psi_prepare.h"
 
 #include "source_base/macros.h"
 #include "source_base/memory.h"
@@ -7,17 +7,17 @@
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_psi/psi_initializer_atomic.h"
-#include "source_psi/psi_initializer_atomic_random.h"
-#include "source_psi/psi_initializer_file.h"
-#include "source_psi/psi_initializer_nao.h"
-#include "source_psi/psi_initializer_nao_random.h"
-#include "source_psi/psi_initializer_random.h"
+#include "source_psi/psi_init_atomic.h"
+#include "source_psi/psi_init_atomic_random.h"
+#include "source_psi/psi_init_file.h"
+#include "source_psi/psi_init_nao.h"
+#include "source_psi/psi_init_nao_random.h"
+#include "source_psi/psi_init_random.h"
 namespace psi
 {
 
 template <typename T, typename Device>
-PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
+PSIPrepare<T, Device>::PSIPrepare(const std::string& init_wfc_in,
                             const std::string& ks_solver_in,
                             const std::string& basis_type_in,
                             const int& rank_in,
@@ -34,21 +34,21 @@ PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
 }
 
 template <typename T, typename Device>
-void PSIInit<T, Device>::prepare_init(const int& random_seed)
+void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
 {
 
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
-    ModuleBase::timer::tick("PSIInit", "prepare_init");
+    ModuleBase::timer::tick("PSIPrepare", "prepare_init");
     this->psi_initer.reset();
     if (this->init_wfc == "random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
         GlobalV::ofs_running << "\n Using RANDOM starting wave functions for all " << PARAM.inp.nbands << " bands\n";
     }
     else if (this->init_wfc == "file")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_file<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_file<T>());
         GlobalV::ofs_running << "\n Using FILE starting wave functions\n";
     }
     else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
@@ -64,7 +64,7 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
             "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
             "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
             << std::endl;
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
 
     }
     else if (this->init_wfc == "atomic"
@@ -82,22 +82,22 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
             GlobalV::ofs_running << "\n Using ATOMIC starting wave functions for all " << this->ucell.natomwfc << " atomic orbitals"
                 << " (covers " << PARAM.inp.nbands << " bands)\n";
         }
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic<T>());
     }
     else if (this->init_wfc == "atomic+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic_random<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic_random<T>());
         GlobalV::ofs_running << "\n Using ATOMIC+RANDOM starting wave functions with "
                              << this->ucell.natomwfc << " atomic orbitals\n";
     }
     else if (this->init_wfc == "nao")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_nao<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao<T>());
         GlobalV::ofs_running << "\n Using NAO starting wave functions\n";
     }
     else if (this->init_wfc == "nao+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_nao_random<T>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao_random<T>());
         GlobalV::ofs_running << "\n Using NAO+RANDOM starting wave functions\n";
     }
     else
@@ -108,11 +108,11 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
     this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank);
     this->psi_initer->tabulate();
 
-    ModuleBase::timer::tick("PSIInit", "prepare_init");
+    ModuleBase::timer::tick("PSIPrepare", "prepare_init");
 }
 
 template <typename T, typename Device>
-void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
+void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         psi::Psi<T, Device>* kspw_psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
                                         std::ofstream& ofs_running)
@@ -125,7 +125,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     {
         return;
     }
-    ModuleBase::timer::tick("PSIInit", "initialize_psi");
+    ModuleBase::timer::tick("PSIPrepare", "initialize_psi");
 
     const int nbands_start = this->psi_initer->nbands_start();
     const int nbands_l = psi->get_nbands();
@@ -257,11 +257,11 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     }
 
-    ModuleBase::timer::tick("PSIInit", "initialize_psi");
+    ModuleBase::timer::tick("PSIPrepare", "initialize_psi");
 }
 
 template <typename T, typename Device>
-void PSIInit<T, Device>::initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running)
+void PSIPrepare<T, Device>::initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running)
 {
     ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
     assert(this->psi_initer->method() == "nao");
@@ -294,10 +294,10 @@ void allocate_psi(Psi<std::complex<double>>*& psi,
     ModuleBase::Memory::record("Psi_PW", memory_cost);
 }
 
-template class PSIInit<std::complex<float>, base_device::DEVICE_CPU>;
-template class PSIInit<std::complex<double>, base_device::DEVICE_CPU>;
+template class PSIPrepare<std::complex<float>, base_device::DEVICE_CPU>;
+template class PSIPrepare<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class PSIInit<std::complex<float>, base_device::DEVICE_GPU>;
-template class PSIInit<std::complex<double>, base_device::DEVICE_GPU>;
+template class PSIPrepare<std::complex<float>, base_device::DEVICE_GPU>;
+template class PSIPrepare<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace psi
