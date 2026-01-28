@@ -17,7 +17,7 @@
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 

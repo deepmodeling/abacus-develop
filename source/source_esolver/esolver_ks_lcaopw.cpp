@@ -2,7 +2,7 @@
 
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_io/module_parameter/input_conv.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 
 #include <iostream>
 
@@ -10,7 +10,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------

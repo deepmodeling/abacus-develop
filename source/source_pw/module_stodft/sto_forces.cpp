@@ -5,7 +5,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 

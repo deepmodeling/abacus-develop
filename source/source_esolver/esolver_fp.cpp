@@ -9,8 +9,8 @@
 #include "source_io/cube_io.h" // use write_vdata_palgrid
 #include "source_io/json_output/init_info.h"
 #include "source_io/json_output/output_info.h"
-#include "source_io/output_log.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_output/print_info.h"
 #include "source_io/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
 

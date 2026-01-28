@@ -14,8 +14,8 @@ list(APPEND objects
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
-    output.cpp
-    print_info.cpp
+    module_output/output.cpp
+    module_output/print_info.cpp
     read_cube.cpp
     rhog_io.cpp
     read_exit_file.cpp
@@ -24,7 +24,7 @@ list(APPEND objects
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
-    write_pao.cpp
+    module_output/write_pao.cpp
     write_cube.cpp
     write_elecstat_pot.cpp
     module_elf/write_elf.cpp
@@ -34,11 +34,11 @@ list(APPEND objects
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
     write_libxc_r.cpp
-    output_log.cpp
+    module_output/output_log.cpp
     para_json.cpp
     parse_args.cpp
     orb_io.cpp
-    filename.cpp
+    module_output/filename.cpp
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
     module_dos/cal_pdos_gamma.cpp
