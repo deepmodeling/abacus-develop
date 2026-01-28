@@ -2,6 +2,7 @@
 #define PW_BASIS_BIG_H
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -350,7 +351,7 @@ public:
             }
         }
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
+        Parallel_Reduce::reduce_min_pool(this->poolnproc, this->gridecut_lat);
 #endif
         this->gridecut_lat -= 1e-6;
 

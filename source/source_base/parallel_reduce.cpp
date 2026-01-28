@@ -233,28 +233,48 @@ void Parallel_Reduce::gather_int_all(int& v, int* all)
     return;
 }
 
-void Parallel_Reduce::reduce_min_int(int& v)
+template <>
+void Parallel_Reduce::reduce_min<int>(int& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_double(double& v)
+template <>
+void Parallel_Reduce::reduce_min<float>(float& v)
 {
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_min_double(double& v)
+template <>
+void Parallel_Reduce::reduce_min<double>(double& v)
 {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
 }
 
-void Parallel_Reduce::reduce_max_double_pool(const int& nproc_in_pool, double& v)
+template <>
+void Parallel_Reduce::reduce_max<float>(float& v)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+}
+
+template <>
+void Parallel_Reduce::reduce_max<double>(double& v)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+#endif
+}
+
+template <>
+void Parallel_Reduce::reduce_max_pool<double>(const int& nproc_in_pool, double& v)
 {
 #ifdef __MPI
     if (nproc_in_pool == 1) 
@@ -264,8 +284,8 @@ void Parallel_Reduce::reduce_max_double_pool(const int& nproc_in_pool, double& v
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_DOUBLE, MPI_MAX, POOL_WORLD);
 #endif
 }
-
-void Parallel_Reduce::reduce_min_double_pool(const int& nproc_in_pool, double& v)
+template <>
+void Parallel_Reduce::reduce_min_pool<double>(const int& nproc_in_pool, double& v)
 {
 #ifdef __MPI
     if (nproc_in_pool == 1) 

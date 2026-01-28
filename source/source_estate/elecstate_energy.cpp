@@ -48,8 +48,8 @@ void ElecState::cal_bandgap()
         vbm =this->eferm.ef;
     }
     #ifdef __MPI
-    Parallel_Reduce::reduce_max_double(vbm);
-    Parallel_Reduce::reduce_min_double(cbm);
+    Parallel_Reduce::reduce_max(vbm);
+    Parallel_Reduce::reduce_min(cbm);
     #endif
     this->bandgap = cbm - vbm;
 }
@@ -119,10 +119,10 @@ void ElecState::cal_bandgap_updw()
         vbm_dw =this->eferm.ef_dw;
     }
     #ifdef __MPI
-    Parallel_Reduce::reduce_max_double(vbm_up);
-    Parallel_Reduce::reduce_min_double(cbm_up);
-    Parallel_Reduce::reduce_max_double(vbm_dw);
-    Parallel_Reduce::reduce_min_double(cbm_dw);
+    Parallel_Reduce::reduce_max(vbm_up);
+    Parallel_Reduce::reduce_min(cbm_up);
+    Parallel_Reduce::reduce_max(vbm_dw);
+    Parallel_Reduce::reduce_min(cbm_dw);
     #endif
     this->bandgap_up = cbm_up - vbm_up;
     this->bandgap_dw = cbm_dw - vbm_dw;

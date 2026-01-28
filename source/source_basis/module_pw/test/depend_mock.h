@@ -7,9 +7,9 @@
 extern MPI_Comm POOL_WORLD;
 namespace Parallel_Reduce
 {
-    void reduce_all(double& object);
-    void reduce_pool(double& object);
-    void reduce_pool(float& object);
+    template<typename T> void reduce_all(T& object);
+    template<typename T> void reduce_pool(T& object);
+    template<typename T> void reduce_min_pool(const int& nproc_in_pool, T& v);
 }
 #endif
 

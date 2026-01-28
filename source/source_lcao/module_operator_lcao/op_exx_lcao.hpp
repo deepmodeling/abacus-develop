@@ -246,7 +246,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 }
 // Add MPI communication to synchronize all_exist across processes
                 #ifdef __MPI
-                Parallel_Reduce::reduce_min_int(all_exist);
+                Parallel_Reduce::reduce_min(all_exist);
                 #endif
                 if (all_exist)
                 {
@@ -265,7 +265,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
                     #ifdef __MPI
-                    Parallel_Reduce::reduce_min_int(all_exist_cereal);
+                    Parallel_Reduce::reduce_min(all_exist_cereal);
                     #endif
                     if (!all_exist_cereal)
                     {

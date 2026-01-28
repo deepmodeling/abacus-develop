@@ -56,7 +56,7 @@ void pw::setup_pwwfc(const Input_para& inp,
 #ifdef __MPI
     if (inp.pw_seed > 0)
     {
-        Parallel_Reduce::reduce_max_double( pw_wfc->ggecut);
+        Parallel_Reduce::reduce_max( pw_wfc->ggecut);
     }
     // qianrui add 2021-8-13 to make different kpar parameters can get the same result
 #endif
