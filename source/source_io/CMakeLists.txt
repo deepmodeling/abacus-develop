@@ -70,9 +70,9 @@ if(ENABLE_LCAO)
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
-      to_qo_kernel.cpp
-      to_qo_mpi.cpp
-      to_qo_structures.cpp
+      module_qo/to_qo_kernel.cpp
+      module_qo/to_qo_mpi.cpp
+      module_qo/to_qo_structures.cpp
       output_sk.cpp
       output_dmk.cpp
       output_mulliken.cpp

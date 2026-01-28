@@ -1,7 +1,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_nao/two_center_integrator.h"
-#include "source_io/to_qo.h"
+#include "to_qo.h"
 #ifdef __MPI
 #include "source_base/parallel_common.h"
 #endif

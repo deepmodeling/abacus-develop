@@ -1,6 +1,6 @@
-#include "source_io/to_qo.h"
+#include "to_qo.h"
 #ifdef __MPI
-#include "../source_base/parallel_common.h"
+#include "../../source_base/parallel_common.h"
 #endif
 
 void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec,

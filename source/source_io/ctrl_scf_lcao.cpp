@@ -28,7 +28,7 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
 #include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
 #endif
-#include "source_io/to_qo.h"                // use toQO
+#include "module_qo/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
 
