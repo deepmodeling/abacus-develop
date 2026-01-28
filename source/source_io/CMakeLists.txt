@@ -5,6 +5,8 @@ list(APPEND objects
     module_ctrl/ctrl_output_td.cpp
     module_bessel/bessel_basis.cpp
     cal_test.cpp
+    module_dos/cal_dos.cpp
+    module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
     module_dos/write_dos_pw.cpp
@@ -39,17 +41,11 @@ list(APPEND objects
     parse_args.cpp
     orb_io.cpp
     module_output/filename.cpp
-    module_dos/cal_dos.cpp
-    module_dos/cal_ldos.cpp
-    module_dos/cal_pdos_gamma.cpp
-    module_dos/cal_pdos_multik.cpp
-    module_dos/write_dos_lcao.cpp
 )
 
 list(APPEND objects_advanced
     module_unk/unk_overlap_pw.cpp
     module_unk/berryphase.cpp
-    module_unk/unk_overlap_lcao.cpp
     module_wannier/to_wannier90.cpp
     module_wannier/to_wannier90_pw.cpp
     module_wannier/to_wannier90_lcao_in_pw.cpp
@@ -62,7 +58,6 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
-      write_orb_info.cpp
       write_proj_band_lcao.cpp
       get_pchg_lcao.cpp
       get_wf_lcao.cpp
@@ -82,7 +77,7 @@ if(ENABLE_LCAO)
       module_ml/io_npz.cpp
       cal_pLpR.cpp
   )
-  list(APPEND objects_advanced
+  list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
       module_hs/write_HS_R.cpp
       module_hs/write_HS_sparse.cpp
@@ -148,4 +143,4 @@ if(ENABLE_RAPIDJSON)
   if(ENABLE_MPI)
     add_subdirectory(json_output)
   endif()
-endif()
+endif():
