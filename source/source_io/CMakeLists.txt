@@ -1,5 +1,5 @@
 list(APPEND objects
-    input_conv.cpp
+    module_parameter/input_conv.cpp
     ctrl_output_fp.cpp
     ctrl_output_pw.cpp
     ctrl_output_td.cpp

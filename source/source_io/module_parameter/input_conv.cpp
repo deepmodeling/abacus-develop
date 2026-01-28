@@ -1,4 +1,4 @@
-#include "source_io/input_conv.h"
+#include "input_conv.h"
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -6,7 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "module_unk/berryphase.h"
+#include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"

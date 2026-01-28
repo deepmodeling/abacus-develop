@@ -1,7 +1,7 @@
 #ifndef READ_INPUT_H
 #define READ_INPUT_H
 
-#include "../input_item.h"
+#include "input_item.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <string>

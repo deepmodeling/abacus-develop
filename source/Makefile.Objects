@@ -513,7 +513,7 @@ OBJS_XC=xc_functional.o\
     xc_funct_hcth.o\
     exx_info.o\
 
-OBJS_IO=input_conv.o\
+OBJS_IO=module_parameter/input_conv.o\
     module_unk/berryphase.o\
     bessel_basis.o\
     cal_test.o\
