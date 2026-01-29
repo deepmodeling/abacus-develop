@@ -37,8 +37,8 @@
 // Peer access
 #define gpuDeviceCanAccessPeer          cudaDeviceCanAccessPeer
 
-// Error check macro (assumes cudaErrcheck is defined elsewhere)
-#define gpuErrcheck                     cudaErrcheck
+// Error check macro
+#define gpuErrcheck                     CHECK_CUDA
 
 #elif defined(__ROCM)
 
@@ -63,8 +63,8 @@
 // Peer access
 #define gpuDeviceCanAccessPeer          hipDeviceCanAccessPeer
 
-// Error check macro (assumes hipErrcheck is defined elsewhere)
-#define gpuErrcheck                     hipErrcheck
+// Error check macro
+#define gpuErrcheck                     CHECK_CUDA
 
 #endif // __CUDA / __ROCM
 

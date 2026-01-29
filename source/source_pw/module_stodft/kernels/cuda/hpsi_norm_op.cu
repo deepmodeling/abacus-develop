@@ -40,7 +40,7 @@ void hamilt::hpsi_norm_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const bas
       npwk_max, npwk, Ebar, DeltaE,
       reinterpret_cast<thrust::complex<FPTYPE>*>(hpsi),
       reinterpret_cast<const thrust::complex<FPTYPE>*>(psi_in));
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct hpsi_norm_op<float, base_device::DEVICE_GPU>;

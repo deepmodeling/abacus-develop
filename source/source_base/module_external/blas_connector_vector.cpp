@@ -22,7 +22,7 @@ void BlasConnector::axpy( const int n, const float alpha, const float *X, const 
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasSaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+		CHECK_CUBLAS(cublasSaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
 	}
 #endif
 	else {
@@ -37,7 +37,7 @@ void BlasConnector::axpy( const int n, const double alpha, const double *X, cons
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasDaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+		CHECK_CUBLAS(cublasDaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
 	}
 #endif
 	else {
@@ -52,7 +52,7 @@ void BlasConnector::axpy( const int n, const std::complex<float> alpha, const st
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
+		CHECK_CUBLAS(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
 	}
 #endif
 	else {
@@ -67,7 +67,7 @@ void BlasConnector::axpy( const int n, const std::complex<double> alpha, const s
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
+		CHECK_CUBLAS(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
 	}
 #endif
 	else {
@@ -84,7 +84,7 @@ void BlasConnector::scal( const int n,  const float alpha, float *X, const int i
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasSscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+		CHECK_CUBLAS(cublasSscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
 	}
 #endif
 	else {
@@ -99,7 +99,7 @@ void BlasConnector::scal( const int n, const double alpha, double *X, const int 
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasDscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+		CHECK_CUBLAS(cublasDscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
 	}
 #endif
 	else {
@@ -114,7 +114,7 @@ void BlasConnector::scal( const int n, const std::complex<float> alpha, std::com
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
+		CHECK_CUBLAS(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
 	}
 #endif
 	else {
@@ -129,7 +129,7 @@ void BlasConnector::scal( const int n, const std::complex<double> alpha, std::co
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
+		CHECK_CUBLAS(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
 	}
 #endif
 	else {
@@ -147,7 +147,7 @@ float BlasConnector::dot( const int n, const float*const X, const int incX, cons
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
-		cublasErrcheck(cublasSdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
+		CHECK_CUBLAS(cublasSdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
 	}
 #endif
@@ -164,7 +164,7 @@ double BlasConnector::dot( const int n, const double*const X, const int incX, co
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
+		CHECK_CUBLAS(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
 	}
 #endif
@@ -276,7 +276,7 @@ float BlasConnector::nrm2( const int n, const float *X, const int incX, base_dev
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
-		cublasErrcheck(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		CHECK_CUBLAS(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
 	}
 #endif
@@ -294,7 +294,7 @@ double BlasConnector::nrm2( const int n, const double *X, const int incX, base_d
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		CHECK_CUBLAS(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
 	}
 #endif
@@ -312,7 +312,7 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
+		CHECK_CUBLAS(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
 		return result;
 	}
 #endif

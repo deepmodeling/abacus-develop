@@ -219,15 +219,6 @@ static const char* _calGetErrorString(calError_t error)
 #define CAL_CHECK(func) CHECK_CAL(func)
 #endif // __CUSOLVERMP
 
-// Compatibility aliases (deprecated - use CHECK_* macros instead)
-#define cudaErrcheck(res)      CHECK_CUDA(res)
-#define cublasErrcheck(res)    CHECK_CUBLAS(res)
-#define cusolverErrcheck(res)  CHECK_CUSOLVER(res)
-#define checkCudaErrors(res)   CHECK_CUDA(res)
-#define CUSOLVER_CHECK(res)    CHECK_CUSOLVER(res)
-#define cudaCheckOnDebug()     CHECK_CUDA_SYNC()
-#define getLastCudaError(msg)  CHECK_LAST_CUDA_ERROR(msg)
-
 #endif // __CUDA
 
 #ifdef __ROCM
@@ -414,15 +405,6 @@ static const char* _hipsolverGetErrorString(hipsolverStatus_t error)
 #else
 #define CHECK_CUDA_SYNC() do {} while (0)
 #endif
-
-// Compatibility aliases (deprecated - use CHECK_* macros instead)
-#define cudaErrcheck(res)      CHECK_CUDA(res)
-#define cublasErrcheck(res)    CHECK_CUBLAS(res)
-#define cusolverErrcheck(res)  CHECK_CUSOLVER(res)
-#define checkCudaErrors(res)   CHECK_CUDA(res)
-#define CUSOLVER_CHECK(res)    CHECK_CUSOLVER(res)
-#define cudaCheckOnDebug()     CHECK_CUDA_SYNC()
-#define getLastCudaError(msg)  CHECK_LAST_CUDA_ERROR(msg)
 
 #endif // __ROCM
 

@@ -41,7 +41,7 @@ int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm) {
 bool probe_gpu_availability() {
 #if defined(__CUDA)
     int device_count = 0;
-    // Directly call cudaGetDeviceCount without cudaErrcheck to prevent program exit
+    // Directly call cudaGetDeviceCount without CHECK_CUDA to prevent program exit
     cudaError_t error_id = cudaGetDeviceCount(&device_count);
     if (error_id == cudaSuccess && device_count > 0) {
         return true;

@@ -52,14 +52,14 @@ inline void check(cudaError_t result, char const *const func, const char *const 
   }
 }
 
-inline void __getLastCudaError(const char *file,
+inline void __CHECK_LAST_CUDA_ERROR(const char *file,
                                const int line) 
 {
   cudaError_t err = cudaGetLastError();
 
   if (cudaSuccess != err) {
     fprintf(stderr,
-            "%s(%i) : getLastCudaError() CUDA error :"
+            "%s(%i) : CHECK_LAST_CUDA_ERROR() CUDA error :"
             " (%d) %s.\n",
             file, line, static_cast<int>(err),
             cudaGetErrorString(err));
@@ -72,4 +72,4 @@ inline void __getLastCudaError(const char *file,
 #define checkCuda(val) check((val), #val, __FILE__, __LINE__)
 
 // This will output the proper error string when calling cudaGetLastError
-#define checkCudaLastError() __getLastCudaError(__FILE__, __LINE__)
+#define checkCudaLastError() __CHECK_LAST_CUDA_ERROR(__FILE__, __LINE__)

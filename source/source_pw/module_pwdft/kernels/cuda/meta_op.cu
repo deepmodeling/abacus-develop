@@ -59,7 +59,7 @@ void meta_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
         reinterpret_cast<thrust::complex<FPTYPE> * >(out),
         add);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct meta_pw_op<float, base_device::DEVICE_GPU>;
