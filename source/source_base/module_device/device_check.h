@@ -215,8 +215,6 @@ static const char* _calGetErrorString(calError_t error)
         }                                                                                                              \
     } while (0)
 
-// Compatibility alias
-#define CAL_CHECK(func) CHECK_CAL(func)
 #endif // __CUSOLVERMP
 
 #endif // __CUDA
