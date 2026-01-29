@@ -35,12 +35,6 @@ int get_device_num(std::string device_flag);
 void output_device_info(std::ostream& output);
 
 /**
- * @brief Get the device kpar object
- * for source_io GlobalV::KPAR
- */
-int get_device_kpar(const int& kpar, const int& bndpar);
-
-/**
  * @brief Safely probes for GPU availability without exiting on error.
  * @return True if at least one GPU is found and usable, false otherwise.
  */

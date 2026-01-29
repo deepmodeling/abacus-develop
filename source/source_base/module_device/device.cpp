@@ -103,25 +103,6 @@ std::string get_device_flag(const std::string &device,
     return result;
 }
 
-int get_device_kpar(const int& kpar, const int& bndpar)
-{
-#if __MPI && (__CUDA || __ROCM)
-    // This function should only be called when device mode is GPU
-    // The device decision has already been made by get_device_flag()
-    // GPU device binding is now handled by DeviceContext::init() in read_input.cpp
-    int temp_nproc = 0;
-    int new_kpar = kpar;
-    MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
-    if (temp_nproc != kpar * bndpar)
-    {
-        new_kpar = temp_nproc / bndpar;
-        ModuleBase::WARNING("Input_conv", "kpar is not compatible with the number of processors, auto set kpar value.");
-    }
-    return new_kpar;
-#endif
-    return kpar;
-}
-
 } // end of namespace information
 
 // ============================================================================
