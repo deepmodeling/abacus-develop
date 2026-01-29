@@ -32,7 +32,7 @@ void folding_HR_td(const UnitCell& ucell,
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
             const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI + arg_td;
-            double sinp, cosp;
+            double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
 
@@ -62,7 +62,7 @@ void folding_partial_HR(const UnitCell& ucell,
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
             const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
-            double sinp, cosp;
+            double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
             const ModuleBase::Vector3<double> dR_car = dR * ucell.latvec * ucell.lat0;
@@ -105,7 +105,7 @@ void folding_partial_HR_td(const UnitCell& ucell,
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
             const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI + arg_td;
-            double sinp, cosp;
+            double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
             const ModuleBase::Vector3<double> dR_car = dR * ucell.latvec * ucell.lat0;

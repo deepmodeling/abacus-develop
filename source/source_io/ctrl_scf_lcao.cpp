@@ -19,7 +19,7 @@
 #include "source_io/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "source_io/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
-#include "source_lcao/module_operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
@@ -31,7 +31,7 @@
 #include "source_io/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
-#include "source_lcao/module_operator_lcao/overlap_new.h" // use hamilt::OverlapNew for NAMD
+#include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
@@ -241,7 +241,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
-            = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
+            = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(&hsk,
                                                                     kv.kvec_d,
                                                                     &hR,
                                                                     &ucell,
@@ -468,10 +468,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
         ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
 
-        // Create a new OverlapNew instance specifically for SR_async calculation
+        // Create a new Overlap instance specifically for SR_async calculation
         // This allows SR_async to be initialized with velocity-shifted dtau
-        hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>* overlap_async =
-            new hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>(
+        hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>* overlap_async =
+            new hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>(
                 nullptr,  // hsk_in: not needed for SR_async calculation
                 kv.kvec_d,
                 nullptr,  // hR_in: not needed for SR_async calculation

@@ -7,7 +7,7 @@ void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& v
                                         const int rank)
 {
     #ifdef __MPI
-    int dim;
+    int dim = 0;
     std::vector<int> vec_1d;
     if(rank == 0)
     {
@@ -37,7 +37,7 @@ void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<doubl
                                            const int rank)
 {
     #ifdef __MPI
-    int dim;
+    int dim = 0;
     std::vector<double> vec_1d;
     if(rank == 0)
     {

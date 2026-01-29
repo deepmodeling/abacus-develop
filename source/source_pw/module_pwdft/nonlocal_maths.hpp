@@ -33,7 +33,7 @@ class Nonlocal_maths
 
   private:
     ModuleBase::matrix nhtol_;
-    int lmax_;
+    int lmax_ = 0;
     const UnitCell* ucell_;
 
     Device* ctx = {};

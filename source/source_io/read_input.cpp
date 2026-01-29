@@ -104,13 +104,13 @@ bool filter_nonascii_and_comment(std::ifstream& ifs,
     ifs.clear();
     ifs.seekg(0, std::ios::beg);
 
-	char c;
+	char c = '\0';
 	while (ifs.get(c)) 
 	{
 		// If comment start, skip until end of line (but keep the newline)
 		if (c == '#') 
 		{
-			char d;
+			char d = '\0';
 			bool newline_found = false;
 			while (ifs.get(d)) 
 			{
@@ -562,7 +562,7 @@ int ReadInput::current_md_step(const std::string& file_dir)
         ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.txt");
     }
 
-    int md_step;
+    int md_step = 0;
     file >> md_step;
     file.close();
 

@@ -83,7 +83,7 @@ void MSST::first_half(std::ofstream& ofs)
 
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
-    double vol;
+    double vol = 0.0;
     energy_ = potential + kinetic;
 
     /// propagate the time derivative of volume 1/2 step

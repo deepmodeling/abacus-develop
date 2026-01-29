@@ -47,7 +47,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 					aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) *
 					          djl[ir] * pow(cell.atoms[it].ncpp.r[ir],2);
 				} 
-				double vqint;
+				double vqint = 0.0;
 				ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
 				this->tab_dq(it, ib, iq) = vqint * pref;
 			} 

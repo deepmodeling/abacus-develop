@@ -29,7 +29,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
 
                 if (mu >= 0 && nu >= 0)
                 {
-                    int iic;
+                    int iic = 0;
                     if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
                         || PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
                     {

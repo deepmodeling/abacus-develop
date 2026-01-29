@@ -203,7 +203,7 @@ namespace ModuleSymmetry
     TCdouble Symmetry_rotation::get_euler_angle(const ModuleBase::Matrix3& gmatc) const
     {
         double threshold = this->eps_;
-        double alpha, beta, gamma;
+        double alpha = 0.0, beta = 0.0, gamma = 0.0;
         if (std::fabs(gmatc.e32) > threshold || std::fabs(gmatc.e31) > threshold) // sin(beta) is not zero
         {
             // use the 2-angle elements to get alpha and gamma

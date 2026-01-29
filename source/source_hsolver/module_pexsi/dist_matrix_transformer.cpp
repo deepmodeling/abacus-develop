@@ -28,8 +28,8 @@ inline int DistMatrixTransformer::MinimumIndexPosition(const bool isFirst,
 {
     // usually the minimum index is continuous, so it will be a good idea to
     // check the one next to the previous index first.
-    static int pre_position; // previous position in index array of minimum index,
-    static int pre_process;  // the process contains previous index
+    static int pre_position = 0; // previous position in index array of minimum index,
+    static int pre_process = 0;  // the process contains previous index
 
     int minimum_index
         = INT_MAX; // the minimum index, initial value is a large number which is larger than any other index;
@@ -110,7 +110,7 @@ inline void DistMatrixTransformer::buildCCSParameter(const int size,
 
     int pre_col = -1;
     int nnz_now = 0;
-    int p_mini;
+    int p_mini = 0;
     p_mini = MinimumIndexPosition(true, nprocs, &size_process[0], &displacement_process[0], position_index);
     while (p_mini >= 0)
     {
@@ -146,7 +146,7 @@ inline void DistMatrixTransformer::countMatrixDistribution(int N, double* A, std
 {
     for (int i = 0; i < N; ++i)
     {
-        int key;
+        int key = 0;
         if (fabs(A[i] < 1e-31))
             key = -100;
         else

@@ -1,12 +1,13 @@
-#include "../ekinetic_new.h"
+#include "../nonlocal.h"
 
 #include "gtest/gtest.h"
+#include <chrono>
 
 //---------------------------------------
-// Unit test of EkineticNew class
-// EkineticNew is a derivative class of Operator, it is used to calculate the kinetic matrix
+// Unit test of Nonlocal class
+// Nonlocal is a derivative class of Operator, it is used to calculate the kinetic matrix
 // It use HContainer to store the real space HR matrix
-// In this test, we test the correctness and time consuming of 3 functions in EkineticNew class
+// In this test, we test the correctness and time consuming of 3 functions in Nonlocal class
 // - initialize_HR() called in constructor
 // - contributeHR()
 // - contributeHk()
@@ -18,7 +19,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
-class EkineticNewTest : public ::testing::Test
+class NonlocalTest : public ::testing::Test
 {
   protected:
     void SetUp() override
@@ -31,6 +32,7 @@ class EkineticNewTest : public ::testing::Test
 
         // set up a unitcell, with one element and test_size atoms, each atom has test_nw orbitals
         ucell.ntype = 1;
+        ucell.infoNL.Beta = new Numerical_Nonlocal[ucell.ntype];
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
@@ -55,6 +57,28 @@ class EkineticNewTest : public ::testing::Test
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
         }
+        ucell.atoms[0].ncpp.d_real.create(5, 5);
+        ucell.atoms[0].ncpp.d_real.zero_out();
+        ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
+        ucell.atoms[0].ncpp.d_so.zero_out();
+        ucell.atoms[0].ncpp.non_zero_count_soc[0] = 5;
+        ucell.atoms[0].ncpp.non_zero_count_soc[1] = 0;
+        ucell.atoms[0].ncpp.non_zero_count_soc[2] = 0;
+        ucell.atoms[0].ncpp.non_zero_count_soc[3] = 5;
+        ucell.atoms[0].ncpp.index1_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index1_soc[3] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[3] = std::vector<int>(5, 0);
+        for (int i = 0; i < 5; ++i)
+        {
+            ucell.atoms[0].ncpp.d_real(i, i) = 1.0;
+            ucell.atoms[0].ncpp.d_so(0, i, i) = std::complex<double>(2.0, 0.0);
+            ucell.atoms[0].ncpp.d_so(3, i, i) = std::complex<double>(2.0, 0.0);
+            ucell.atoms[0].ncpp.index1_soc[0][i] = i;
+            ucell.atoms[0].ncpp.index2_soc[0][i] = i;
+            ucell.atoms[0].ncpp.index1_soc[3][i] = i;
+            ucell.atoms[0].ncpp.index2_soc[3][i] = i;
+        }
         ucell.set_iat2iwt(1);
         init_parav();
         // set up a HContainer with ucell
@@ -66,6 +90,7 @@ class EkineticNewTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
+        delete[] ucell.infoNL.Beta;
     }
 
 #ifdef __MPI
@@ -94,16 +119,26 @@ class EkineticNewTest : public ::testing::Test
     int my_rank = 0;
 };
 
-// using TEST_F to test EkineticNew
-TEST_F(EkineticNewTest, constructHRd2d)
+// using TEST_F to test Nonlocal
+TEST_F(NonlocalTest, constructHRd2d)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
+    // check some input values
+    EXPECT_EQ(ucell.infoNL.Beta[0].get_rcut_max(), 1.0);
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>
         op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();
     op.contributeHR();
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
     {
@@ -115,19 +150,27 @@ TEST_F(EkineticNewTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 5.0 * test_size);
         }
     }
-    // calculate HK
+    // calculate SK
+    start_time = std::chrono::high_resolution_clock::now();
     op.contributeHk(0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time2
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HK
     double* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i], 1.0);
+        EXPECT_EQ(hk[i], 5.0 * test_size);
     }
     // calculate HR again
+    start_time = std::chrono::high_resolution_clock::now();
     op.contributeHR();
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time3
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
     {
@@ -139,19 +182,24 @@ TEST_F(EkineticNewTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 10.0 * test_size);
         }
     }
+    std::cout << "Test terms:   " << std::setw(15) << "initialize_HR" << std::setw(15) << "contributeHR"
+              << std::setw(15) << "contributeHk" << std::setw(15) << "2nd-calHR" << std::endl;
+    std::cout << "Elapsed time: " << std::setw(15) << elapsed_time.count() << std::setw(15) << elapsed_time1.count()
+              << std::setw(15) << elapsed_time2.count() << std::setw(15) << elapsed_time3.count() << " seconds."
+              << std::endl;
 }
 
-TEST_F(EkineticNewTest, constructHRd2cd)
+TEST_F(NonlocalTest, constructHRd2cd)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>
+    hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>
         op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of HR
@@ -165,16 +213,16 @@ TEST_F(EkineticNewTest, constructHRd2cd)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 5.0 * test_size);
         }
     }
     // calculate HK for gamma point
     op.contributeHk(0);
-    auto* hk = hsk.get_hk();
     // check the value of HK of gamma point
+    auto* hk = hsk.get_hk();
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i].real(), 1.0);
+        EXPECT_EQ(hk[i].real(), 5.0 * test_size);
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate HK for k point
@@ -183,8 +231,8 @@ TEST_F(EkineticNewTest, constructHRd2cd)
     // check the value of HK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_NEAR(hk[i].real(), -1.6180339887498945 / 2, 1e-10);
-        EXPECT_NEAR(hk[i].imag(), -1.1755705045849467 / 2, 1e-10);
+        EXPECT_NEAR(hk[i].real(), 5.0 * test_size, 1e-10);
+        EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
     }
 }
 
