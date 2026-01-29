@@ -1,6 +1,7 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/constants.h"
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/kernel_compat.h"
 #include "vnl_tools_cu.hpp"
 #include "source_base/module_device/types.h"
 

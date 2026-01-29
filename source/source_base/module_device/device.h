@@ -3,7 +3,6 @@
 
 #include "types.h"
 #include "device_helpers.h"
-#include "kernel_compat.h"
 #include <fstream>
 #include <mutex>
 

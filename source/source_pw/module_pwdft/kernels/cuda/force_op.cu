@@ -2,6 +2,7 @@
 // #include "source_psi/kernels/device.h"
 #include "source_base/module_device/types.h"
 #include "source_base/constants.h"
+#include "source_base/module_device/kernel_compat.h"
 
 #include <complex>
 
