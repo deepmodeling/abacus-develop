@@ -20,7 +20,7 @@ add_library(
     ../module_parameter/read_input_item_other.cpp   
     ../module_parameter/read_input_item_output.cpp
     ../module_parameter/read_input.cpp
-    ../read_set_globalv.cpp
+    ../module_parameter/read_set_globalv.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

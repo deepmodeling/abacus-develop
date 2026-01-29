@@ -586,7 +586,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_exx_dftu.o\
     module_parameter/read_input_item_other.o\
     module_parameter/read_input_item_output.o\
-    read_set_globalv.o\
+    module_parameter/read_set_globalv.o\
     orb_io.o\
     cal_pLpR.o\
     filename.o\

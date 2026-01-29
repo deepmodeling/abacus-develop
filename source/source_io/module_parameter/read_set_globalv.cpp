@@ -1,5 +1,5 @@
-#include "module_parameter/read_input.h"
-#include "module_parameter/read_input_tool.h"
+#include "read_input.h"
+#include "read_input_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
