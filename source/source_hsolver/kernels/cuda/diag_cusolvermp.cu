@@ -11,7 +11,6 @@ extern "C"
 }
 #include <iostream>
 #include <cstdint>
-#include "helper_cusolver.h"
 #include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
