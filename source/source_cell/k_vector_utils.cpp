@@ -312,7 +312,7 @@ void kvec_mpi_k(K_Vectors& kv)
         {
             int starsize = kv.kstars[ikibz].size();
             Parallel_Common::bcast_int(starsize);
-            GlobalV::ofs_running << "starsize: " << starsize << std::endl;
+            //GlobalV::ofs_running << "starsize: " << starsize << std::endl;
             auto ks = kv.kstars[ikibz].begin();
             for (int ik = 0; ik < starsize; ++ik)
             {
@@ -328,8 +328,8 @@ void kvec_mpi_k(K_Vectors& kv)
                 Parallel_Common::bcast_double(ks_vec.x);
                 Parallel_Common::bcast_double(ks_vec.y);
                 Parallel_Common::bcast_double(ks_vec.z);
-                GlobalV::ofs_running << "isym: " << isym << " ks_vec: " << ks_vec.x << " " << ks_vec.y << " "
-                                     << ks_vec.z << std::endl;
+                //GlobalV::ofs_running << "isym: " << isym << " ks_vec: " << ks_vec.x << " " << ks_vec.y << " "
+                //                     << ks_vec.z << std::endl;
                 if (GlobalV::MY_RANK != 0)
                 {
                     kv.kstars[ikibz].insert(std::make_pair(isym, ks_vec));
