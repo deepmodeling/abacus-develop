@@ -542,8 +542,8 @@ TEST_F(HContainerTest, atompair_funcs)
     }
     HR.unfix_R();
     // check hr_array and hr_array2 are correct
-    std::complex<double> correct1;
-    double correct2;
+    std::complex<double> correct1 = 0.0;
+    double correct2 = 0.0;
     double correct_array[16] = {
         1, 2, 3, 4, 
         5, 6, 7, 8, 

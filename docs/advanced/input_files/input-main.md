@@ -639,7 +639,7 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
-  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. When you do `nspin=1` calculation, you only need the density file `chg.cube`. For `nspin=2 or 4` calculation, you need the density file `chgs1.cube` and `chgs2.cube` (and `chgs3.cube`, `chgs4.cube` if needed). The density file should be output with these names if you set out_chg = 1 in INPUT file.
   - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
   - dm: the density will be calculated by real space density matrix(DMR) of LCAO base. DMR is read in from file `dmrs1_nao.csr` in directory [read_file_dir](#read_file_dir).
   - hr: the real space Hamiltonian matrix(HR) will be read in from file `hrs1_nao.csr` in directory [read_file_dir](#read_file_dir), and DMR and charge density will be calculated from it.

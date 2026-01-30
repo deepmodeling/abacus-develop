@@ -1,5 +1,5 @@
 #pragma once
-#include "overlap_new.h"
+#include "overlap.h"
 #include "operator_force_stress_utils.hpp"
 #include "source_base/timer.h"
 
@@ -7,14 +7,14 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-void OverlapNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
+void Overlap<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                           const bool cal_stress,
                                                           const HContainer<double>* dmR,
                                                           ModuleBase::matrix& force,
                                                           ModuleBase::matrix& stress)
 {
-    ModuleBase::TITLE("OverlapNew", "cal_force_stress");
-    ModuleBase::timer::tick("OverlapNew", "cal_force_stress");
+    ModuleBase::TITLE("Overlap", "cal_force_stress");
+    ModuleBase::timer::tick("Overlap", "cal_force_stress");
 
     // Lambda function to calculate overlap integral and its gradient
     auto integral_calc = [this](int T1, int L1, int N1, int M1,
@@ -30,13 +30,13 @@ void OverlapNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         cal_force, cal_stress, dmR, this->ucell, this->gridD,
         this->orb_cutoff_, dmR->get_paraV(), integral_calc, force, stress);
 
-    ModuleBase::timer::tick("OverlapNew", "cal_force_stress");
+    ModuleBase::timer::tick("Overlap", "cal_force_stress");
 }
 
 // Dummy implementations for cal_force_IJR and cal_stress_IJR
 // These are not used in the simplified approach above
 template <typename TK, typename TR>
-void OverlapNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
+void Overlap<OperatorLCAO<TK, TR>>::cal_force_IJR(
     const int& iat1,
     const int& iat2,
     const Parallel_Orbitals* paraV,
@@ -50,7 +50,7 @@ void OverlapNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
 }
 
 template <typename TK, typename TR>
-void OverlapNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(
+void Overlap<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     const int& iat1,
     const int& iat2,
     const Parallel_Orbitals* paraV,

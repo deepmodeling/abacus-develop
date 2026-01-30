@@ -238,7 +238,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
                   const int rank = 0)   // source rank: from which rank to broadcast
 {
 #ifdef __MPI
-    int myrank;
+    int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     // use Parallel_Common namespace bcast_int and bcast_string to broadcast the size of map and key, value pairs
     int size = map.size();
@@ -328,7 +328,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& cell_formula_units_z)
 {
 #ifdef __MPI // well...very simple...
-    int myrank;
+    int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     if (myrank != rank) // if present rank is not the rank assigned to write the cif file, then return
     {
@@ -402,7 +402,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& cell_formula_units_z)
 {
 #ifdef __MPI
-    int myrank;
+    int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     if (myrank != rank) // if present rank is not the rank assigned to write the cif file, then return
     {
@@ -429,7 +429,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const int rank)
 {
 #ifdef __MPI
-    int myrank;
+    int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     if (myrank != rank)  // if present rank is not the rank assigned to write the cif file, then return
     {
@@ -437,7 +437,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     }
 #endif
     std::vector<double> veca, vecb, vecc;
-    int natom;
+    int natom = 0;
     std::vector<std::string> atom_site_labels;
     std::vector<double> atom_site_fract_coords;
     _unpack_ucell(ucell, veca, vecb, vecc, natom, atom_site_labels, atom_site_fract_coords);
@@ -468,7 +468,7 @@ void ModuleIO::CifParser::read(const std::string& fcif,
     // okey for read, cannot just use if rank != 0 then return, because need to broadcast the map
     out.clear();
 #ifdef __MPI
-    int myrank;
+    int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     if (myrank == rank) // only the rank assigned to read the cif file will read the file
     {

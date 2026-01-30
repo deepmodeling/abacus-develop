@@ -316,7 +316,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
     MPI_Comm_rank(pv.comm(), &rank);
 
     // calculate the maximum number of nlocal over all processes in pv.comm() range
-    long buf_size;
+    long buf_size = 0;
     mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm());
     mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm()); // get and then broadcast
     std::vector<T> wfc_block(buf_size);

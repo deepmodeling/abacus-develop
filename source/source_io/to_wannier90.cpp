@@ -202,7 +202,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             cal_num_kpts = num_kpts / 2;
         }
 
-        int numkpt_nnkp;
+        int numkpt_nnkp = 0;
         ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, numkpt_nnkp);
         if ((PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4) && numkpt_nnkp != num_kpts)
         {
@@ -433,7 +433,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             {
                 for (int ib = 0; ib < nntot; ib++)
                 {
-                    int ik_nnkp;
+                    int ik_nnkp = 0;
                     nnkp_read >> ik_nnkp;
                     if (ik_nnkp != (ik + 1))
                     {

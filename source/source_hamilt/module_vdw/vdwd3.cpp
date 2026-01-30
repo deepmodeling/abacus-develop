@@ -88,7 +88,7 @@ void Vdwd3::cal_energy()
     ModuleBase::timer::tick("Vdwd3", "cal_energy");
     init();
 
-    int ij;
+    int ij = 0;
     double c6 = 0.0, c8 = 0.0, r2 = 0.0, r6 = 0.0, r8 = 0.0, rr = 0.0, damp6 = 0.0, damp8 = 0.0;
     double e6 = 0.0, e8 = 0.0, eabc = 0.0;
     std::vector<double> cc6ab(ucell_.nat * ucell_.nat), cn(ucell_.nat);
@@ -96,7 +96,7 @@ void Vdwd3::cal_energy()
     ModuleBase::Vector3<double> tau;
     if (para_.version() == "d3_0") // DFT-D3(zero-damping)
     {
-        double tmp;
+        double tmp = 0.0;
         for (int iat = 0; iat != ucell_.nat - 1; iat++) {
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
             {
@@ -178,7 +178,7 @@ void Vdwd3::cal_energy()
     } // end d3_0
     else if (para_.version() == "d3_bj") // DFT-D3(BJ-damping)
     {
-        double r42;
+        double r42 = 0.0;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
@@ -860,7 +860,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
     } // end d3_0
     else if (para_.version() == "d3_bj")
     {
-        double r4;
+        double r4 = 0.0;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
             get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],

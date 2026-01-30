@@ -1,24 +1,24 @@
-#include "../ekinetic_new.h"
+#include "../overlap.h"
 
 #include "gtest/gtest.h"
 
 //---------------------------------------
-// Unit test of EkineticNew class
-// EkineticNew is a derivative class of Operator, it is used to calculate the kinetic matrix
-// It use HContainer to store the real space HR matrix
-// In this test, we test the correctness and time consuming of 3 functions in EkineticNew class
-// - initialize_HR() called in constructor
+// Unit test of Overlap class
+// Overlap is a derivative class of Operator, it is used to calculate the overlap matrix
+// It use HContainer to store the real space SR matrix
+// In this test, we test the correctness and time consuming of 3 functions in Overlap class
+// - initialize_SR() called in constructor
 // - contributeHR()
 // - contributeHk()
-// - HR(double) and SK(complex<double>) are tested in constructHRd2cd
-// - HR(double) and SK(double) are tested in constructHRd2d
+// - SR(double) and SK(complex<double>) are tested in constructHRd2cd
+// - SR(double) and SK(double) are tested in constructHRd2d
 //---------------------------------------
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
-class EkineticNewTest : public ::testing::Test
+class OverlapTest : public ::testing::Test
 {
   protected:
     void SetUp() override
@@ -58,12 +58,12 @@ class EkineticNewTest : public ::testing::Test
         ucell.set_iat2iwt(1);
         init_parav();
         // set up a HContainer with ucell
-        HR = new hamilt::HContainer<double>(paraV);
+        SR = new hamilt::HContainer<double>(paraV);
     }
 
     void TearDown() override
     {
-        delete HR;
+        delete SR;
         delete paraV;
         delete[] ucell.atoms;
     }
@@ -86,44 +86,43 @@ class EkineticNewTest : public ::testing::Test
 #endif
 
     UnitCell ucell;
-    hamilt::HContainer<double>* HR;
+    hamilt::HContainer<double>* SR;
     Parallel_Orbitals* paraV;
     TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
 };
-// Test complex<double> to complex<double> template specialization
-TEST_F(EkineticNewTest, constructHRcd2cd)
+TEST_F(OverlapTest, constructHRcd2cd)
 {
-    // Create complex HR container
-    hamilt::HContainer<std::complex<double>>* HR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
+    // Create complex SR container
+    hamilt::HContainer<std::complex<double>>* SR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.1, 0.2, 0.3));
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
+        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
 
-    // Check that HR_complex has been initialized
+    // Check that SR_complex has been initialized
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR_complex->size_atom_pairs() > 0)
+    if (SR_complex->size_atom_pairs() > 0)
     {
-        EXPECT_GT(HR_complex->size_atom_pairs(), 0);
+        EXPECT_GT(SR_complex->size_atom_pairs(), 0);
     }
 
-    // Calculate HK
+    // Calculate SK
     op.contributeHk(0);
-    auto* hk = hsk.get_hk();
+    auto* sk = hsk.get_sk();
 
-    // Verify HK is computed (values should be non-zero for non-gamma k-point)
+    // Verify SK is computed (values should be non-zero for non-gamma k-point)
     bool has_nonzero = false;
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        if (std::abs(hk[i]) > 1e-10)
+        if (std::abs(sk[i]) > 1e-10)
         {
             has_nonzero = true;
             break;
@@ -131,60 +130,68 @@ TEST_F(EkineticNewTest, constructHRcd2cd)
     }
     EXPECT_TRUE(has_nonzero);
 
-    delete HR_complex;
+    delete SR_complex;
 }
 
-// Test set_HR_fixed method
-TEST_F(EkineticNewTest, setHRFixed)
+// Test getSk method
+TEST_F(OverlapTest, getSk)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
-    // First contributeHR - this creates and calculates HR_fixed internally
+    op.contributeHR();
+    op.contributeHk(0);
+
+    // Get SK pointer
+    double* sk_from_method = op.getSk();
+    double* sk_from_hsk = hsk.get_sk();
+
+    // Verify they point to the same data
+    EXPECT_EQ(sk_from_method, sk_from_hsk);
+
+    // Verify values match
+    for (int i = 0; i < hsk.get_size(); ++i)
+    {
+        EXPECT_EQ(sk_from_method[i], sk_from_hsk[i]);
+    }
+}
+
+// Test k-vector caching optimization
+TEST_F(OverlapTest, kVectorCaching)
+{
+    std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.1, 0.2, 0.3));
+    kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3); // Same k-vector
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
+    Grid_Driver gd(0, 0);
+
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+
     op.contributeHR();
 
-    // Check that HR values are 1.0 after first call
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
-        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        auto indexes1 = paraV->get_indexes_row(iat1);
-        auto indexes2 = paraV->get_indexes_col(iat2);
-        int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
-        }
-    }
+    // First call with k-vector index 0
+    op.contributeHk(0);
+    auto* sk = hsk.get_sk();
+    std::complex<double> first_value = sk[0];
 
-    // Second contributeHR should use the already-calculated HR_fixed
-    // Since HR_fixed_done is true, it will just add HR_fixed to HR again
-    op.contributeHR();
+    // Second call with same k-vector (index 1)
+    hsk.set_zero_sk();
+    op.contributeHk(1);
+    std::complex<double> second_value = sk[0];
 
-    // Check that HR values are now 2.0 (accumulated)
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
-        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        auto indexes1 = paraV->get_indexes_row(iat1);
-        auto indexes2 = paraV->get_indexes_col(iat2);
-        int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
-        }
-    }
+    // Values should be identical due to caching
+    EXPECT_NEAR(first_value.real(), second_value.real(), 1e-10);
+    EXPECT_NEAR(first_value.imag(), second_value.imag(), 1e-10);
 }
 
 // Test with single atom system
-TEST_F(EkineticNewTest, singleAtom)
+TEST_F(OverlapTest, singleAtom)
 {
     // Create a single atom unit cell
     UnitCell ucell_single;
@@ -220,36 +227,35 @@ TEST_F(EkineticNewTest, singleAtom)
     paraV_single->set_atomic_trace(ucell_single.get_iat2iwt(), 1, 5);
 #endif
 
-    hamilt::HContainer<double>* HR_single = new hamilt::HContainer<double>(paraV_single);
+    hamilt::HContainer<double>* SR_single = new hamilt::HContainer<double>(paraV_single);
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV_single, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV_single);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR_single, &ucell_single, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR_single, &ucell_single, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Should have only self-interaction (atom 0 with itself)
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    // so we only check if this process has atom pairs
-    if (HR_single->size_atom_pairs() > 0)
+    if (SR_single->size_atom_pairs() > 0)
     {
-        EXPECT_GT(HR_single->size_atom_pairs(), 0);
+        EXPECT_GT(SR_single->size_atom_pairs(), 0);
     }
 
-    // Calculate HK
+    // Calculate SK
     op.contributeHk(0);
 
-    delete HR_single;
+    delete SR_single;
     delete paraV_single;
     delete[] ucell_single.atoms;
 }
 
 // Test with different orbital quantum numbers (L, N, M)
-TEST_F(EkineticNewTest, differentOrbitals)
+TEST_F(OverlapTest, differentOrbitals)
 {
     // Modify orbital quantum numbers to test different L, N, M values
     ucell.atoms[0].iw2l[0] = 0; // s orbital
@@ -271,49 +277,49 @@ TEST_F(EkineticNewTest, differentOrbitals)
     ucell.atoms[0].iw2n[4] = 0;
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
-    // Verify HR is calculated
+    // Verify SR is calculated
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR->size_atom_pairs() > 0)
+    if (SR->size_atom_pairs() > 0)
     {
-        EXPECT_GT(HR->size_atom_pairs(), 0);
+        EXPECT_GT(SR->size_atom_pairs(), 0);
     }
 
     op.contributeHk(0);
 }
 
 // Test force calculation
-TEST_F(EkineticNewTest, forceCalculation)
+TEST_F(OverlapTest, forceCalculation)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create a simple density matrix
     hamilt::HContainer<double> dmR(paraV);
-    // Initialize dmR with same structure as HR
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    // Initialize dmR with same structure as SR
+    for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
     {
-        hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
-        int iat1 = hr_pair.get_atom_i();
-        int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
+        hamilt::AtomPair<double>& sr_pair = SR->get_atom_pair(iap);
+        int iat1 = sr_pair.get_atom_i();
+        int iat2 = sr_pair.get_atom_j();
+        for (int iR = 0; iR < sr_pair.get_R_size(); ++iR)
         {
-            ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
+            ModuleBase::Vector3<int> R_index = sr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
         }
@@ -341,25 +347,12 @@ TEST_F(EkineticNewTest, forceCalculation)
     // Calculate force only
     op.cal_force_stress(true, false, &dmR, force, stress);
 
-    // Verify force has been calculated (should have some non-zero values)
-    bool has_force = false;
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            if (std::abs(force(i, j)) > 1e-10)
-            {
-                has_force = true;
-                break;
-            }
-        }
-    }
-    // Note: For atoms at same position, forces might be zero, so we just check it doesn't crash
-    EXPECT_TRUE(true); // Test passes if no crash occurs
+    // Test passes if no crash occurs
+    EXPECT_TRUE(true);
 }
 
 // Test stress calculation
-TEST_F(EkineticNewTest, stressCalculation)
+TEST_F(OverlapTest, stressCalculation)
 {
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
@@ -369,25 +362,25 @@ TEST_F(EkineticNewTest, stressCalculation)
     ucell.latvec.e33 = 10.0;
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create density matrix
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
     {
-        hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
-        int iat1 = hr_pair.get_atom_i();
-        int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
+        hamilt::AtomPair<double>& sr_pair = SR->get_atom_pair(iap);
+        int iat1 = sr_pair.get_atom_i();
+        int iat2 = sr_pair.get_atom_j();
+        for (int iR = 0; iR < sr_pair.get_R_size(); ++iR)
         {
-            ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
+            ModuleBase::Vector3<int> R_index = sr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
         }
@@ -425,7 +418,7 @@ TEST_F(EkineticNewTest, stressCalculation)
 }
 
 // Test force and stress together
-TEST_F(EkineticNewTest, forceStressTogether)
+TEST_F(OverlapTest, forceStressTogether)
 {
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
@@ -435,25 +428,25 @@ TEST_F(EkineticNewTest, forceStressTogether)
     ucell.latvec.e33 = 10.0;
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create density matrix
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
     {
-        hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
-        int iat1 = hr_pair.get_atom_i();
-        int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
+        hamilt::AtomPair<double>& sr_pair = SR->get_atom_pair(iap);
+        int iat1 = sr_pair.get_atom_i();
+        int iat2 = sr_pair.get_atom_j();
+        for (int iR = 0; iR < sr_pair.get_R_size(); ++iR)
         {
-            ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
+            ModuleBase::Vector3<int> R_index = sr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
         }
@@ -493,77 +486,51 @@ TEST_F(EkineticNewTest, forceStressTogether)
     EXPECT_TRUE(true);
 }
 
-// Test with null density matrix pointer
-TEST_F(EkineticNewTest, nullDensityMatrix)
-{
-    std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
-    Grid_Driver gd(0, 0);
-
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
-
-    op.contributeHR();
-
-    ModuleBase::matrix force(ucell.nat, 3);
-    ModuleBase::matrix stress(3, 3);
-
-    // This should handle null pointer gracefully or assert in debug mode
-    // In release mode, it might crash, so we skip this test in that case
-#ifdef __DEBUG
-    EXPECT_DEATH(op.cal_force_stress(true, false, nullptr, force, stress), ".*");
-#else
-    // In release mode, just verify the test framework works
-    EXPECT_TRUE(true);
-#endif
-}
-
 // Test with zero orbital cutoff
-TEST_F(EkineticNewTest, zeroOrbitalCutoff)
+TEST_F(OverlapTest, zeroOrbitalCutoff)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
     // Use zero cutoff - should result in no atom pairs (except possibly self-interaction)
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {0.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {0.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // With zero cutoff, there should be no or very few atom pairs
     // (implementation dependent - might include self-interaction)
-    EXPECT_GE(HR->size_atom_pairs(), 0);
+    EXPECT_GE(SR->size_atom_pairs(), 0);
 }
 
 // Test with large orbital cutoff
-TEST_F(EkineticNewTest, largeOrbitalCutoff)
+TEST_F(OverlapTest, largeOrbitalCutoff)
 {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
     // Use very large cutoff - should include all atoms
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1000.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1000.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // With large cutoff, should have many atom pairs
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR->size_atom_pairs() > 0)
+    if (SR->size_atom_pairs() > 0)
     {
-        EXPECT_GT(HR->size_atom_pairs(), 0);
+        EXPECT_GT(SR->size_atom_pairs(), 0);
     }
 
     op.contributeHk(0);
 }
 
 // Test with atoms at cutoff boundary
-TEST_F(EkineticNewTest, cutoffBoundary)
+TEST_F(OverlapTest, cutoffBoundary)
 {
     // Set up atoms at specific distances to test cutoff boundary
     ucell.lat0 = 1.0;
@@ -576,88 +543,72 @@ TEST_F(EkineticNewTest, cutoffBoundary)
     ucell.atoms[0].tau[1] = ModuleBase::Vector3<double>(0.5, 0.0, 0.0); // distance = 5.0
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
     // Use cutoff of 5.0 - atoms at exactly this distance should be excluded
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {2.5}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {2.5}, &gd, &intor_);
 
     op.contributeHR();
 
     // Verify initialization completed
-    EXPECT_GE(HR->size_atom_pairs(), 0);
+    EXPECT_GE(SR->size_atom_pairs(), 0);
 }
 
-// Test multiple contributeHR calls for accumulation
-TEST_F(EkineticNewTest, multipleContributeHRAccumulation)
+// Test Hermitian property of SK matrix
+TEST_F(OverlapTest, hermitianProperty)
 {
+    // Use gamma point to test that diagonal elements are real
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<double> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>
+        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
 
-    // First call
     op.contributeHR();
+    op.contributeHk(0);
 
-    // Verify first call results
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    auto* sk = hsk.get_sk();
+    int nrow = paraV->get_row_size();
+    int ncol = paraV->get_col_size();
+
+    // For overlap matrix at gamma point, SK should be real and symmetric
+    // Diagonal elements should be real (imaginary part should be zero)
+    for (int i = 0; i < std::min(nrow, ncol); ++i)
     {
-        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        auto indexes1 = paraV->get_indexes_row(iat1);
-        auto indexes2 = paraV->get_indexes_col(iat2);
-        int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
+        if (i < nrow && i < ncol)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
+            int idx = i * ncol + i;
+            if (idx < nrow * ncol)
+            {
+                EXPECT_NEAR(sk[idx].imag(), 0.0, 1e-8);
+            }
         }
     }
+}
 
-    // Second call - should accumulate
-    op.contributeHR();
+// Test with null SR pointer (should skip initialization)
+TEST_F(OverlapTest, nullSRPointer)
+{
+    std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    hsk.set_zero_sk();
+    Grid_Driver gd(0, 0);
 
-    // Verify accumulation
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
-        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        auto indexes1 = paraV->get_indexes_row(iat1);
-        auto indexes2 = paraV->get_indexes_col(iat2);
-        int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
-        }
-    }
+    // Pass nullptr for SR - should not crash during construction
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
+        op(&hsk, kvec_d_in, nullptr, nullptr, &ucell, {1.0}, &gd, &intor_);
 
-    // Third call
-    op.contributeHR();
-
-    // Verify triple accumulation
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
-        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        auto indexes1 = paraV->get_indexes_row(iat1);
-        auto indexes2 = paraV->get_indexes_col(iat2);
-        int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 3.0);
-        }
-    }
+    // Test passes if no crash occurs during construction
+    EXPECT_TRUE(true);
 }
 
 // Test force calculation with npol=2 (nspin=4, spin-orbit coupling)
-TEST_F(EkineticNewTest, forceCalculationNpol2)
+TEST_F(OverlapTest, forceCalculationNpol2)
 {
     // Set up unit cell with npol=2
     ucell.set_iat2iwt(2);  // npol=2
@@ -675,29 +626,29 @@ TEST_F(EkineticNewTest, forceCalculationNpol2)
 #endif
 
     // Create complex HContainer for npol=2
-    hamilt::HContainer<std::complex<double>>* HR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
+    hamilt::HContainer<std::complex<double>>* SR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
+        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create REAL density matrix (charge density) for force/stress calculation
     // Even with npol=2, the density matrix for force/stress is real-valued
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap)
+    for (int iap = 0; iap < SR_complex->size_atom_pairs(); ++iap)
     {
-        hamilt::AtomPair<std::complex<double>>& hr_pair = HR_complex->get_atom_pair(iap);
-        int iat1 = hr_pair.get_atom_i();
-        int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
+        hamilt::AtomPair<std::complex<double>>& sr_pair = SR_complex->get_atom_pair(iap);
+        int iat1 = sr_pair.get_atom_i();
+        int iat2 = sr_pair.get_atom_j();
+        for (int iR = 0; iR < sr_pair.get_R_size(); ++iR)
         {
-            ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
+            ModuleBase::Vector3<int> R_index = sr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
         }
@@ -736,14 +687,14 @@ TEST_F(EkineticNewTest, forceCalculationNpol2)
     // Verify force calculation completed without crash
     EXPECT_TRUE(true);
 
-    delete HR_complex;
+    delete SR_complex;
 
     // Restore npol=1 for other tests
     ucell.set_iat2iwt(1);
 }
 
 // Test stress calculation with npol=2 (nspin=4, spin-orbit coupling)
-TEST_F(EkineticNewTest, stressCalculationNpol2)
+TEST_F(OverlapTest, stressCalculationNpol2)
 {
     // Set up unit cell with npol=2
     ucell.set_iat2iwt(2);  // npol=2
@@ -768,28 +719,28 @@ TEST_F(EkineticNewTest, stressCalculationNpol2)
 #endif
 
     // Create complex HContainer for npol=2
-    hamilt::HContainer<std::complex<double>>* HR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
+    hamilt::HContainer<std::complex<double>>* SR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
 
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
-    hsk.set_zero_hk();
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
+    hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
-        op(&hsk, kvec_d_in, HR_complex, &ucell, {1.0}, &gd, &intor_);
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
+        op(&hsk, kvec_d_in, nullptr, SR_complex, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create REAL density matrix (charge density) for force/stress calculation
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap)
+    for (int iap = 0; iap < SR_complex->size_atom_pairs(); ++iap)
     {
-        hamilt::AtomPair<std::complex<double>>& hr_pair = HR_complex->get_atom_pair(iap);
-        int iat1 = hr_pair.get_atom_i();
-        int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
+        hamilt::AtomPair<std::complex<double>>& sr_pair = SR_complex->get_atom_pair(iap);
+        int iat1 = sr_pair.get_atom_i();
+        int iat2 = sr_pair.get_atom_j();
+        for (int iR = 0; iR < sr_pair.get_R_size(); ++iR)
         {
-            ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
+            ModuleBase::Vector3<int> R_index = sr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
         }
@@ -831,7 +782,7 @@ TEST_F(EkineticNewTest, stressCalculationNpol2)
         }
     }
 
-    delete HR_complex;
+    delete SR_complex;
 
     // Restore npol=1 for other tests
     ucell.set_iat2iwt(1);

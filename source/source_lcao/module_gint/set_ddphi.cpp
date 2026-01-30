@@ -72,7 +72,7 @@ void GintAtom::set_ddphi(
             const double x12 = x1 * x2 / 6;
             const double x03 = x0 * x3 / 2;
 
-            double tmp, dtmp;
+            double tmp = 0.0, dtmp = 0.0;
 
             for(int iw = 0; iw < atom_->nw; ++iw)
             {

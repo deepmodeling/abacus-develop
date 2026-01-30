@@ -16,7 +16,7 @@ namespace module_rt
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
-    int iblock, gIndex;
+    int iblock = 0, gIndex = 0;
     iblock = localindex / nblk;
     gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;

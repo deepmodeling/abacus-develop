@@ -466,7 +466,7 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
 
 double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim)
 {
-    double coordinate;
+    double coordinate = 0.0;
     if (k_type == 1)
     {
         coordinate = (offset + 2.0 * (double)n - (double)dim - 1.0) / (2.0 * (double)dim);

@@ -108,7 +108,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        double d1, d2, d3;
+        double d1 = 0.0, d2 = 0.0, d3 = 0.0;
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
