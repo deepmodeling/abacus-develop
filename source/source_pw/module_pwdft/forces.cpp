@@ -537,8 +537,21 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ewald", "Can't find optimal alpha.");
         }
+        const double damping_factor = ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha;
+        // damping_factor corresponds to the exponent (G^2 / 4alpha) 
+        // in the Ewald error estimate.
+        // It measures how strongly the terms are damped at the plane-wave cutoff.
+        // Asymptotic behavior: erfc(x) ~ exp(-x^2) for large x. 
+        // Here x^2 = damping_factor.
+        // If damping_factor > 230.0, exp(-230.0) approx 1e-100, 
+        // meaning the error is negligible.
+        if (damping_factor > 230.0)
+        {
+            upperbound = 0.0; 
+            break;
+        }
         upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
-                     * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
+                     * erfc(sqrt(damping_factor));
     } while (upperbound > 1.0e-6);
     const int ig0 = rho_basis->ig_gge0;
 #pragma omp parallel for
@@ -548,7 +561,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             continue; // skip G=0
         }
-        aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
+        aux[ig] *= ModuleBase::libm::truncated_exp(std::complex<double>(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0, 0.0))
                 / (rho_basis->gg[ig] * ucell.tpiba2);
     }
 

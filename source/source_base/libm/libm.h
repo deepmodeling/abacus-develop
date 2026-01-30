@@ -49,6 +49,33 @@ template<> inline double cos(double x) { return __cos(x); }
 template<> inline double sin(double x) { return __sin(x); }
 template<> inline void sincos(double x, double *s, double *c) { __sincos(x, s, c); }
 template<> inline std::complex<double> exp(const std::complex<double> &x) { return __cexp(x); }
+// A safe exponential function that truncates to zero for very small values
+// to avoid underflow and expensive calculations.
+// Threshold: exp(-230) approx 1e-100.
+inline std::complex<double> truncated_exp(const std::complex<double> &x)
+{
+    if (x.real() < -230) return std::complex<double>(0.0, 0.0);
+        return __cexp(x);
+}
+
+inline std::complex<float> truncated_exp(const std::complex<float> &x)
+{
+    if (x.real() < -230) return std::complex<float>(0.0, 0.0);
+        return __cexpf(x);
+}
+
+inline double truncated_exp(const double &x)
+{
+    if (x < -230) return 0.0;
+        return __exp(x);
+}
+
+inline float truncated_exp(const float &x)
+{
+    if (x < -230) return 0.0;
+        return __expf(x);
+}
+
 
 template<> inline float exp(float x) { return __expf(x); }
 template<> inline float cos(float x) { return __cosf(x); }
