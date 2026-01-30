@@ -3,7 +3,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_base/tool_quit.h"
+
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
 	numeric = nullptr;
