@@ -3,7 +3,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-
+#include "source_base/tool_quit.h"
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
 	numeric = nullptr;
@@ -226,8 +226,14 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 			aux [ir] = aux1 [ir] * ModuleBase::libm::sin(gx * r [ir]) / gx;
 		}
 		ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[ig] );
-		//  here we add the analytic fourier transform of the erf function
-		vloc_1d[ig] -= fac * ModuleBase::libm::exp(- gx2 * 0.25)/ gx2;
+		// here we add the analytic fourier transform of the erf function
+		// here exp(-gx2*0.25) < 1e-100, skip it to avoid 
+		// float underflow and abundant calculation
+		if (gx2 > 921)
+		{
+			continue;
+		}
+		vloc_1d[ig] -= fac * std::exp(- gx2 * 0.25)/ gx2;
 	} // enddo
 
 	const double d_fpi_omega = ModuleBase::FOUR_PI/ucell.omega;//mohan add 2008-06-04
