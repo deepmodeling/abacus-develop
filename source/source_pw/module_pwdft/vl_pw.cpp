@@ -233,7 +233,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 		{
 			continue;
 		}
-		vloc_1d[ig] -= fac * std::exp(- gx2 * 0.25)/ gx2;
+		vloc_1d[ig] -= fac *  ModuleBase::libm::exp(- gx2 * 0.25)/ gx2;
 	} // enddo
 
 	const double d_fpi_omega = ModuleBase::FOUR_PI/ucell.omega;//mohan add 2008-06-04
