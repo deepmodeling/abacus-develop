@@ -186,15 +186,11 @@ TEST_F(ParseArgsTest, HelpUnknownParameter) {
     char* argv[] = {arg0, arg1, arg2};
     int argc = 3;
 
-    testing::internal::CaptureStderr();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
-        ""
+        "Unknown parameter.*Did you mean"
     );
-    std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(output.find("Unknown parameter") != std::string::npos);
-    EXPECT_TRUE(output.find("Did you mean") != std::string::npos);
 }
 
 // Test for -s with results
@@ -244,14 +240,11 @@ TEST_F(ParseArgsTest, SearchWithNoResults) {
     char* argv[] = {arg0, arg1, arg2};
     int argc = 3;
 
-    testing::internal::CaptureStderr();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
-        ""
+        "No parameters found matching"
     );
-    std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(output.find("No parameters found matching") != std::string::npos);
 }
 
 // Test for -s without query (error)
@@ -261,14 +254,11 @@ TEST_F(ParseArgsTest, SearchWithoutQuery) {
     char* argv[] = {arg0, arg1};
     int argc = 2;
 
-    testing::internal::CaptureStderr();
     EXPECT_EXIT(
         { ModuleIO::parse_args(argc, argv); },
         ::testing::ExitedWithCode(1),
-        ""
+        "requires a search query"
     );
-    std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(output.find("requires a search query") != std::string::npos);
 }
 
 // Test for -h followed by a flag (should show general help, not treat flag as parameter)

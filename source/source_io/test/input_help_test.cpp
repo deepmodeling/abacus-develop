@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "input_help.h"
+#include "../input_help.h"
 #include <sstream>
 #include <iostream>
 
@@ -21,18 +21,18 @@ TEST_F(ParameterHelpTest, Initialization) {
 // Test: Get metadata for known parameter
 TEST_F(ParameterHelpTest, GetMetadataKnownParameter) {
     auto meta = ModuleIO::ParameterHelp::get_metadata("ecutwfc");
-    ASSERT_NE(meta, nullptr);
-    EXPECT_EQ(meta->name, "ecutwfc");
-    EXPECT_EQ(meta->type, "Real");
-    EXPECT_FALSE(meta->description.empty());
-    EXPECT_FALSE(meta->unit.empty());
-    EXPECT_EQ(meta->unit, "Ry");
+    ASSERT_FALSE(meta.name.empty());
+    EXPECT_EQ(meta.name, "ecutwfc");
+    EXPECT_EQ(meta.type, "Real");
+    EXPECT_FALSE(meta.description.empty());
+    EXPECT_FALSE(meta.unit.empty());
+    EXPECT_EQ(meta.unit, "Ry");
 }
 
 // Test: Get metadata for unknown parameter
 TEST_F(ParameterHelpTest, GetMetadataUnknownParameter) {
     auto meta = ModuleIO::ParameterHelp::get_metadata("nonexistent_parameter_xyz");
-    EXPECT_EQ(meta, nullptr);
+    EXPECT_TRUE(meta.name.empty());
 }
 
 // Test: Show parameter help for known parameter
@@ -125,9 +125,9 @@ TEST_F(ParameterHelpTest, CommonParametersExist) {
 
     for (const auto& param : common_params) {
         auto meta = ModuleIO::ParameterHelp::get_metadata(param);
-        EXPECT_NE(meta, nullptr) << "Parameter " << param << " should exist";
-        if (meta) {
-            EXPECT_EQ(meta->name, param);
+        EXPECT_FALSE(meta.name.empty()) << "Parameter " << param << " should exist";
+        if (!meta.name.empty()) {
+            EXPECT_EQ(meta.name, param);
         }
     }
 }
@@ -135,16 +135,16 @@ TEST_F(ParameterHelpTest, CommonParametersExist) {
 // Test: Verify metadata fields are populated
 TEST_F(ParameterHelpTest, MetadataFieldsPopulated) {
     auto meta = ModuleIO::ParameterHelp::get_metadata("symmetry_prec");
-    ASSERT_NE(meta, nullptr);
+    ASSERT_FALSE(meta.name.empty());
 
-    EXPECT_FALSE(meta->name.empty());
-    EXPECT_FALSE(meta->type.empty());
-    EXPECT_FALSE(meta->description.empty());
-    EXPECT_FALSE(meta->default_value.empty());
-    EXPECT_FALSE(meta->category.empty());
+    EXPECT_FALSE(meta.name.empty());
+    EXPECT_FALSE(meta.type.empty());
+    EXPECT_FALSE(meta.description.empty());
+    EXPECT_FALSE(meta.default_value.empty());
+    EXPECT_FALSE(meta.category.empty());
 
     // Unit should be "Bohr" for symmetry_prec
-    EXPECT_EQ(meta->unit, "Bohr");
+    EXPECT_EQ(meta.unit, "Bohr");
 }
 
 // Test: Case-insensitive parameter lookup
@@ -154,13 +154,13 @@ TEST_F(ParameterHelpTest, CaseInsensitiveLookup) {
     auto meta_upper = ModuleIO::ParameterHelp::get_metadata("ECUTWFC");
     auto meta_mixed = ModuleIO::ParameterHelp::get_metadata("EcUtWfC");
 
-    ASSERT_NE(meta_lower, nullptr);
-    ASSERT_NE(meta_upper, nullptr);
-    ASSERT_NE(meta_mixed, nullptr);
+    ASSERT_FALSE(meta_lower.name.empty());
+    ASSERT_FALSE(meta_upper.name.empty());
+    ASSERT_FALSE(meta_mixed.name.empty());
 
-    EXPECT_EQ(meta_lower->name, "ecutwfc");
-    EXPECT_EQ(meta_upper->name, "ecutwfc");
-    EXPECT_EQ(meta_mixed->name, "ecutwfc");
+    EXPECT_EQ(meta_lower.name, "ecutwfc");
+    EXPECT_EQ(meta_upper.name, "ecutwfc");
+    EXPECT_EQ(meta_mixed.name, "ecutwfc");
 }
 
 // Test: Fuzzy matching - single character typo
