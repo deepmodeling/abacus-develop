@@ -19,6 +19,8 @@
 namespace container {
 namespace cuSolverConnector {
 
+#if CUDA_VERSION >= 11000
+// Generic trtri using cuSOLVER generic API (CUDA 11.0+)
 template <typename T>
 static inline
 void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
@@ -37,7 +39,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     int h_info = 0;
     int* d_info = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
-    // Perform Cholesky decomposition
+    // Perform triangular matrix inversion
     cusolverErrcheck(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info));
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
@@ -47,6 +49,16 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cudaErrcheck(cudaFree(d_work));
     cudaErrcheck(cudaFree(d_info));
 }
+#else
+// For CUDA < 11.0, trtri is not available in cuSOLVER
+// Provide a stub that throws an error if called
+template <typename T>
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
+{
+    throw std::runtime_error("trtri: cusolverDnXtrtri is not available in CUDA < 11.0. Please upgrade CUDA or use an alternative method.");
+}
+#endif
 
 static inline
 void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float * A, const int& lda)
