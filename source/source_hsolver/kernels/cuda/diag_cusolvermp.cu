@@ -1,6 +1,6 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
-#include "helper_cuda.h"
+#include "source_base/module_device/device_check.h"
 #include "source_base/global_variable.h"
 
 #include <assert.h>

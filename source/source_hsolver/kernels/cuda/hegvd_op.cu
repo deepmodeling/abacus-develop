@@ -1,5 +1,5 @@
 #include "source_hsolver/kernels/hegvd_op.h"
-#include "helper_cuda.h"
+#include "source_base/module_device/device_check.h"
 
 #include <base/macros/macros.h>
 
