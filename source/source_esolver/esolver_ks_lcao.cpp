@@ -12,10 +12,10 @@
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
-#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
-#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
-#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
+#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
@@ -554,7 +554,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
             this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
-            this->rdmft_solver, this->deepks, this->exx_nao, 
+            this->rdmft_solver, this->deepks, this->exx_nao,
             this->conv_esolver, this->scf_nmax_flag, istep);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms

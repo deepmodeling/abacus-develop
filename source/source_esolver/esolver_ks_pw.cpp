@@ -12,11 +12,12 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/VSep_in_pw.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"

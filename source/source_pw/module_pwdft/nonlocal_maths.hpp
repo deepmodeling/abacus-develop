@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
@@ -33,7 +33,7 @@ class Nonlocal_maths
 
   private:
     ModuleBase::matrix nhtol_;
-    int lmax_;
+    int lmax_ = 0;
     const UnitCell* ucell_;
 
     Device* ctx = {};

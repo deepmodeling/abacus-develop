@@ -60,7 +60,7 @@ void toQO::read_structures(const UnitCell* p_ucell,
     }
     for(int i = 0; i < nranks; i++)
     {
-        int nks_dim;
+        int nks_dim = 0;
         if(iproc_ == 0) nks_dim = nks_divided[i].size();
         Parallel_Common::bcast_int(nks_dim);
         if(iproc_ != 0) nks_divided[i].resize(nks_dim);
@@ -244,7 +244,7 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
     }
     for(int i = 0; i < nranks; i++)
     {
-        int nR_dim;
+        int nR_dim = 0;
         if(rank == 0) nR_dim = nR_divided[i].size();
         Parallel_Common::bcast_int(nR_dim);
         if(rank != 0) nR_divided[i].resize(nR_dim);

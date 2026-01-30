@@ -6,8 +6,8 @@
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
-#include "source_pw/module_pwdft/operator_pw/velocity_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_pw/module_pwdft/op_pw_vel.h"
 
 template<typename FPTYPE, typename Device>
 class EleCond
