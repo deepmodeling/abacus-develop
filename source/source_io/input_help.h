@@ -1,6 +1,7 @@
 #ifndef INPUT_HELP_H
 #define INPUT_HELP_H
 
+#include <iostream>
 #include <map>
 #include <mutex>
 #include <string>
@@ -42,10 +43,11 @@ public:
     /**
      * @brief Display detailed help for a specific parameter
      *
-     * @param key The parameter name to look up (case-sensitive)
+     * @param key The parameter name to look up (case-insensitive)
+     * @param os Output stream to write to (default: std::cout)
      * @return true if parameter was found and help was displayed, false otherwise
      */
-    static bool show_parameter_help(const std::string& key);
+    static bool show_parameter_help(const std::string& key, std::ostream& os = std::cout);
 
     /**
      * @brief Search for parameters matching a query string
@@ -61,8 +63,10 @@ public:
      * @brief Display general help message
      *
      * Shows usage information and lists commonly used parameters.
+     *
+     * @param os Output stream to write to (default: std::cout)
      */
-    static void show_general_help();
+    static void show_general_help(std::ostream& os = std::cout);
 
     /**
      * @brief Get metadata for a specific parameter
@@ -70,7 +74,7 @@ public:
      * Returns a copy of the parameter metadata. Check if the returned
      * metadata has a non-empty name to verify the parameter was found.
      *
-     * @param key The parameter name to look up (case-sensitive)
+     * @param key The parameter name to look up (case-insensitive)
      * @return ParameterMetadata with empty name if not found, otherwise the parameter metadata
      *
      * Example:
@@ -84,13 +88,18 @@ public:
     /**
      * @brief Find similar parameter names for fuzzy matching
      *
-     * Uses Levenshtein distance to find parameters with similar names.
-     * Useful for suggesting corrections when a parameter is not found.
+     * Uses a multi-tier matching strategy to find relevant parameters:
+     * 1. Prefix matches (e.g., "relax" matches "relax_new") - highest priority
+     * 2. Substring matches (e.g., "cut" matches "ecutwfc") - medium priority
+     * 3. Levenshtein distance for typos - lowest priority
+     *
+     * This ensures semantic relevance: typing "relax" suggests "relax_method"
+     * instead of random 5-letter parameters like "nelec".
      *
      * @param query The parameter name to find similar matches for
      * @param max_suggestions Maximum number of suggestions to return (default: 5)
-     * @param max_distance Maximum edit distance to consider (default: 3)
-     * @return Vector of similar parameter names sorted by similarity
+     * @param max_distance Maximum edit distance for fuzzy matches (default: 3)
+     * @return Vector of similar parameter names sorted by relevance
      */
     static std::vector<std::string> find_similar_parameters(const std::string& query,
                                                              int max_suggestions = 5,

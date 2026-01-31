@@ -7,6 +7,63 @@ a C++ header file with static constexpr data structures for the help system.
 
 Usage:
     python3 generate_help_data.py <input_markdown> <output_header>
+
+Expected Input Format:
+    The markdown file must follow this structure:
+
+    1. Category Headers (optional):
+       ## Category Name
+
+       Defines a category for grouping parameters. All parameters following
+       this header belong to this category until the next ## header.
+
+    2. Parameter Headers (required):
+       ### parameter_name
+
+       Or for multi-parameter groups:
+       ### param1, param2, param3
+
+       Parameter names should be valid identifiers (alphanumeric + underscore).
+       Multi-parameter headers will be split into individual parameter entries.
+
+    3. Parameter Fields (at least Type and Description required):
+       - **Type**: Integer|Real|String|Boolean
+       - **Description**: Detailed description of the parameter...
+         Descriptions can span multiple lines and include sub-bullets.
+       - **Default**: default_value (optional)
+       - **Unit**: unit_string (optional)
+       - **Availability**: availability_conditions (optional)
+       - **Note**: notes (ignored by parser)
+
+    4. Format Assumptions:
+       - Category headers start with '## ' (two hashes + space)
+       - Parameter headers start with '### ' (three hashes + space)
+       - Field markers use format: '- **FieldName**: value'
+       - Descriptions should not contain lines starting with ## or ###
+       - Multi-line descriptions are flattened into single lines
+       - Markdown formatting (bold, italic, links, code) is stripped
+
+    5. Example Structure:
+       ## System Variables
+
+       ### suffix
+
+       - **Type**: String
+       - **Description**: A suffix to the output directory name.
+       - **Default**: ABACUS
+
+       ### nx, ny, nz
+
+       - **Type**: Integer
+       - **Description**: FFT grid dimensions in x, y, z directions.
+       - **Default**: 0
+       - **Unit**: None
+
+Design Philosophy:
+    This parser is intentionally lightweight and assumes a controlled,
+    well-formatted documentation file. It does not use full markdown parsing
+    libraries to keep dependencies minimal. If the documentation format becomes
+    significantly more complex, consider migrating to an AST-based parser.
 """
 
 import re
@@ -38,8 +95,8 @@ def clean_markdown_formatting(text: str) -> str:
     text = re.sub(r'\$[^$]+\$', '', text)
     # Unescape markdown-escaped underscores (\_  -> _)
     text = re.sub(r'\\_', '_', text)
-    # Remove bold/italic markers
-    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    # Remove bold/italic markers (use non-greedy matching for robustness)
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
     text = re.sub(r'\*([^*]+)\*', r'\1', text)
     # Remove inline code markers
     text = re.sub(r'`([^`]+)`', r'\1', text)
@@ -66,6 +123,11 @@ def parse_parameter_section(lines: List[str], start_idx: int, category: str) -> 
     # Split them into individual parameters
     if ',' in param_name:
         param_names = [n.strip() for n in param_name.split(',')]
+        # Validate parameter names to catch markdown formatting issues
+        for name in param_names:
+            if re.search(r'[\s()]', name):
+                print(f"  WARNING: Suspicious parameter name '{name}' contains spaces or parentheses")
+                print(f"  This might indicate a markdown formatting issue in header: {param_name}")
         print(f"  Parsing multi-parameter: {param_name} -> {param_names}")
     else:
         param_names = [param_name]
@@ -89,6 +151,8 @@ def parse_parameter_section(lines: List[str], start_idx: int, category: str) -> 
         line = lines[i].strip()
 
         # Stop at next parameter (### header) or next category (## header)
+        # Note: Assumes descriptions don't contain lines starting with ## or ###
+        # This is a safe assumption for the controlled INPUT documentation format
         if line.startswith('###') or line.startswith('##'):
             break
 
@@ -125,7 +189,9 @@ def parse_parameter_section(lines: List[str], start_idx: int, category: str) -> 
 
         i += 1
 
-    # Join description lines
+    # Join description lines with spaces (intentional flattening)
+    # The C++ side (input_help.cpp) has word-wrapping logic that works on single-line text
+    # Preserving paragraph breaks would require more complex C++ layout handling
     if description_lines:
         param['description'] = ' '.join(description_lines)
 

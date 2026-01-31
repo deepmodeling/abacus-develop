@@ -10,6 +10,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
 - [Comment style for documentation](#comment-style-for-documentation)
+- [Documenting INPUT parameters](#documenting-input-parameters)
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
@@ -155,6 +156,97 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
             &=& 9.82066032\,\mbox{m/s}^2
     \f}
     ```
+
+## Documenting INPUT Parameters
+
+ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). This help system is automatically generated from the parameter documentation in `docs/advanced/input_files/input-main.md` using the script `tools/generate_help_data.py`.
+
+### Parameter Documentation Format
+
+When adding or modifying INPUT parameters, follow this markdown format in `docs/advanced/input_files/input-main.md`:
+
+#### 1. Category Headers (Optional)
+
+Group related parameters under category headers:
+
+```markdown
+## Category Name
+```
+
+Example: `## System Variables`, `## Electronic Structure`
+
+#### 2. Parameter Headers (Required)
+
+Each parameter must have a level-3 header:
+
+```markdown
+### parameter_name
+```
+
+For multiple related parameters that share the same documentation:
+
+```markdown
+### param1, param2, param3
+```
+
+Example: `### nx, ny, nz` (will create three separate parameter entries)
+
+**Note:** Parameter names should be valid identifiers (alphanumeric characters and underscores only).
+
+#### 3. Parameter Fields
+
+Each parameter must include these fields using the bullet point format:
+
+- **Type**: (Required) One of: `Integer`, `Real`, `String`, `Boolean`
+- **Description**: (Required) Detailed description of what the parameter does
+  - Descriptions can span multiple lines
+  - Can include sub-bullets for additional details
+  - Markdown formatting (bold, italic, links, code) is supported and will be stripped in help output
+- **Default**: (Optional but recommended) The default value
+- **Unit**: (Optional) Physical unit if applicable (e.g., "Ry", "Angstrom", "fs")
+- **Availability**: (Optional) Conditions when this parameter is available (e.g., "Only used for LCAO basis")
+- **Note**: (Optional) Additional notes (these are ignored by the help system parser)
+
+#### 4. Example
+
+```markdown
+## Plane Wave Related Variables
+
+### ecutwfc
+
+- **Type**: Real
+- **Description**: Energy cutoff for plane wave functions. Higher values increase accuracy but also computational cost.
+- **Default**: 50 for PW basis, 100 for LCAO basis
+- **Unit**: Ry
+
+### nx, ny, nz
+
+- **Type**: Integer
+- **Description**: FFT grid dimensions in x, y, z directions. If set to 0, values are calculated automatically from ecutrho.
+- **Default**: 0
+```
+
+### Regenerating Help Data
+
+After modifying the parameter documentation, regenerate the C++ help data file:
+
+```bash
+python3 tools/generate_help_data.py \
+    docs/advanced/input_files/input-main.md \
+    source/source_io/input_help_data.h
+```
+
+This will parse the markdown and generate a C++ header file with static parameter data used by the help system.
+
+### Format Validation
+
+The generation script will:
+- Warn about parameters missing required fields (Type, Description)
+- Detect suspicious multi-parameter names (containing spaces or parentheses)
+- Check for duplicate parameter names
+- Report the number of parameters parsed by category
+
+If you see warnings during generation, please fix them before submitting your PR.
 
 ## Code formatting style
 

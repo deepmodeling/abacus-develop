@@ -146,7 +146,8 @@ void parse_args(int argc, char** argv)
                 if (!next_arg.empty() && next_arg[0] != '-') {
                     // Not another flag - treat as parameter key
                     ParameterHelp::initialize();
-                    if (!ParameterHelp::show_parameter_help(next_arg)) {
+                    // When parameter is found, output to stdout; when not found, output to stderr
+                    if (!ParameterHelp::show_parameter_help(next_arg, std::cout)) {
                         std::cerr << "Error: Unknown parameter '" << next_arg << "'" << std::endl;
 
                         // Try to find similar parameters (fuzzy matching)
@@ -211,13 +212,12 @@ void parse_args(int argc, char** argv)
         }
         else
         {
+            // Error message goes to stderr
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
-            std::cerr << "Usage: abacus [options]" << std::endl;
-            std::cerr << "  -v, -V, --version      Display version information." << std::endl;
-            std::cerr << "  -i, -I, --info         Display detailed build information." << std::endl;
-            std::cerr << "  -h, --help [param]     Display help for parameter (or general help)." << std::endl;
-            std::cerr << "  -s, --search <query>   Search for parameters matching query." << std::endl;
-            std::cerr << "  --check-input          Check input file syntax and exit." << std::endl;
+            std::cerr << std::endl;
+
+            // Display help information to stderr
+            ParameterHelp::show_general_help(std::cerr);
             std::exit(1);
         }
     }

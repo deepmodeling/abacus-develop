@@ -1,7 +1,25 @@
 #include "gtest/gtest.h"
-#include "../input_help.h"
+#include "source_io/input_help.h"
 #include <sstream>
 #include <iostream>
+
+// RAII helper class to safely redirect std::cout and restore it even if exceptions occur
+class ScopedCoutRedirect {
+public:
+    explicit ScopedCoutRedirect(std::streambuf* new_buf)
+        : old_buf_(std::cout.rdbuf(new_buf)) {}
+
+    ~ScopedCoutRedirect() {
+        std::cout.rdbuf(old_buf_);
+    }
+
+    // Prevent copying
+    ScopedCoutRedirect(const ScopedCoutRedirect&) = delete;
+    ScopedCoutRedirect& operator=(const ScopedCoutRedirect&) = delete;
+
+private:
+    std::streambuf* old_buf_;
+};
 
 // Test fixture for ParameterHelp tests
 class ParameterHelpTest : public testing::Test {
@@ -37,15 +55,14 @@ TEST_F(ParameterHelpTest, GetMetadataUnknownParameter) {
 
 // Test: Show parameter help for known parameter
 TEST_F(ParameterHelpTest, ShowParameterHelpKnown) {
-    // Redirect stdout to capture output
-    std::streambuf* old_cout = std::cout.rdbuf();
     std::ostringstream captured;
-    std::cout.rdbuf(captured.rdbuf());
+    bool result;
 
-    bool result = ModuleIO::ParameterHelp::show_parameter_help("calculation");
-
-    // Restore stdout
-    std::cout.rdbuf(old_cout);
+    {
+        // RAII ensures cout is restored even if an exception is thrown
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        result = ModuleIO::ParameterHelp::show_parameter_help("calculation");
+    }
 
     EXPECT_TRUE(result);
     std::string output = captured.str();
@@ -98,15 +115,13 @@ TEST_F(ParameterHelpTest, SearchParametersNoMatch) {
 
 // Test: Show general help
 TEST_F(ParameterHelpTest, ShowGeneralHelp) {
-    // Redirect stdout to capture output
-    std::streambuf* old_cout = std::cout.rdbuf();
     std::ostringstream captured;
-    std::cout.rdbuf(captured.rdbuf());
 
-    ModuleIO::ParameterHelp::show_general_help();
-
-    // Restore stdout
-    std::cout.rdbuf(old_cout);
+    {
+        // RAII ensures cout is restored even if an exception is thrown
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        ModuleIO::ParameterHelp::show_general_help();
+    }
 
     std::string output = captured.str();
     EXPECT_NE(output.find("ABACUS"), std::string::npos);
@@ -210,9 +225,10 @@ TEST_F(ParameterHelpTest, FuzzyMatchingCaseInsensitive) {
 TEST_F(ParameterHelpTest, FuzzyMatchingMultipleSuggestions) {
     auto results = ModuleIO::ParameterHelp::find_similar_parameters("relax_met", 5, 3);
     EXPECT_GT(results.size(), 1); // Should find multiple matches
-    // Results should be sorted by distance
-    // relax_method has distance 3 (replace 'hod' with nothing = 3 deletions)
-    // relax_new has distance 3
+    // Results should be sorted by distance (closest first)
+    // "relax_met" to "relax_new": distance 2 (m->n, t->w)
+    // "relax_met" to "relax_method": distance 3 (insert h, o, d)
+    // Note: Actual results depend on which parameters exist in the parameter database
 }
 
 // Test: Fuzzy matching - no close matches

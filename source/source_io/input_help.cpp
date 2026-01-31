@@ -40,7 +40,7 @@ void ParameterHelp::build_registry() {
     }
 }
 
-bool ParameterHelp::show_parameter_help(const std::string& key) {
+bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os) {
     initialize();
 
     // Use optimized case-insensitive lookup
@@ -53,27 +53,27 @@ bool ParameterHelp::show_parameter_help(const std::string& key) {
     const auto& meta = it->second;
 
     // Display formatted help information
-    std::cout << "\n";
-    std::cout << "Parameter: " << meta.name << "\n";
-    std::cout << "Type:      " << meta.type << "\n";
+    os << "\n";
+    os << "Parameter: " << meta.name << "\n";
+    os << "Type:      " << meta.type << "\n";
 
     if (!meta.default_value.empty()) {
-        std::cout << "Default:   " << meta.default_value << "\n";
+        os << "Default:   " << meta.default_value << "\n";
     }
 
     if (!meta.category.empty()) {
-        std::cout << "Category:  " << meta.category << "\n";
+        os << "Category:  " << meta.category << "\n";
     }
 
     if (!meta.unit.empty()) {
-        std::cout << "Unit:      " << meta.unit << "\n";
+        os << "Unit:      " << meta.unit << "\n";
     }
 
     if (!meta.availability.empty()) {
-        std::cout << "Availability: " << meta.availability << "\n";
+        os << "Availability: " << meta.availability << "\n";
     }
 
-    std::cout << "\nDescription:\n";
+    os << "\nDescription:\n";
 
     // Word-wrap description at 70 characters
     std::string desc = meta.description;
@@ -98,14 +98,14 @@ bool ParameterHelp::show_parameter_help(const std::string& key) {
     }
 
     // Indent each line by 2 spaces
-    std::cout << "  ";
+    os << "  ";
     for (char c : desc) {
-        std::cout << c;
+        os << c;
         if (c == '\n') {
-            std::cout << "  ";
+            os << "  ";
         }
     }
-    std::cout << "\n\n";
+    os << "\n\n";
 
     return true;
 }
@@ -130,31 +130,31 @@ std::vector<std::string> ParameterHelp::search_parameters(const std::string& que
     return results;
 }
 
-void ParameterHelp::show_general_help() {
-    std::cout << "\n";
-    std::cout << "ABACUS - Atomic-orbital Based Ab-initio Computation at UStc\n";
-    std::cout << "\n";
-    std::cout << "Usage: abacus [options]\n";
-    std::cout << "  -v, -V, --version      Display version information\n";
-    std::cout << "  -i, -I, --info         Display detailed build information\n";
-    std::cout << "  -h, --help [param]     Display help for parameter (or this message)\n";
-    std::cout << "  -s, --search <query>   Search for parameters matching query\n";
-    std::cout << "  --check-input          Check input file syntax and exit\n";
-    std::cout << "\n";
-    std::cout << "Common INPUT parameters:\n";
-    std::cout << "  calculation    - Calculation type (scf, relax, md, nscf, etc.)\n";
-    std::cout << "  basis_type     - Basis set type (pw, lcao)\n";
-    std::cout << "  ecutwfc        - Energy cutoff for wavefunctions (Ry)\n";
-    std::cout << "  ks_solver      - Kohn-Sham solver (cg, dav, genelpa, etc.)\n";
-    std::cout << "  scf_thr        - SCF convergence threshold\n";
-    std::cout << "  pseudo_dir     - Directory containing pseudopotential files\n";
-    std::cout << "\n";
-    std::cout << "For a complete list of parameters, see documentation at:\n";
-    std::cout << "https://abacus.deepmodeling.com/\n";
-    std::cout << "\n";
-    std::cout << "To search for parameters: abacus -s <keyword>\n";
-    std::cout << "To get help on a parameter: abacus -h <parameter_name>\n";
-    std::cout << "\n";
+void ParameterHelp::show_general_help(std::ostream& os) {
+    os << "\n";
+    os << "ABACUS - Atomic-orbital Based Ab-initio Computation at UStc\n";
+    os << "\n";
+    os << "Usage: abacus [options]\n";
+    os << "  -v, -V, --version      Display version information\n";
+    os << "  -i, -I, --info         Display detailed build information\n";
+    os << "  -h, --help [param]     Display help for parameter (or this message)\n";
+    os << "  -s, --search <query>   Search for parameters matching query\n";
+    os << "  --check-input          Check input file syntax and exit\n";
+    os << "\n";
+    os << "Common INPUT parameters:\n";
+    os << "  calculation    - Calculation type (scf, relax, md, nscf, etc.)\n";
+    os << "  basis_type     - Basis set type (pw, lcao)\n";
+    os << "  ecutwfc        - Energy cutoff for wavefunctions (Ry)\n";
+    os << "  ks_solver      - Kohn-Sham solver (cg, dav, genelpa, etc.)\n";
+    os << "  scf_thr        - SCF convergence threshold\n";
+    os << "  pseudo_dir     - Directory containing pseudopotential files\n";
+    os << "\n";
+    os << "For a complete list of parameters, see documentation at:\n";
+    os << "https://abacus.deepmodeling.com/\n";
+    os << "\n";
+    os << "To search for parameters: abacus -s <keyword>\n";
+    os << "To get help on a parameter: abacus -h <parameter_name>\n";
+    os << "\n";
 }
 
 ParameterMetadata ParameterHelp::get_metadata(const std::string& key) {
@@ -233,7 +233,13 @@ std::vector<std::string> ParameterHelp::find_similar_parameters(const std::strin
                                                                   int max_distance) {
     initialize();
 
-    // Store pairs of (distance, parameter_name)
+    // If max_distance is 0, return nothing (exact matches are excluded by design)
+    if (max_distance == 0) {
+        return std::vector<std::string>();
+    }
+
+    // Store tuples of (effective_distance, parameter_name)
+    // Effective distance prioritizes prefix/substring matches over pure edit distance
     std::vector<std::pair<int, std::string>> candidates;
 
     std::string query_lower = to_lowercase(query);
@@ -241,15 +247,36 @@ std::vector<std::string> ParameterHelp::find_similar_parameters(const std::strin
     // Calculate distance for each parameter using pre-computed lowercase names
     for (const auto& pair : registry_) {
         const auto& meta = pair.second;
-        int distance = levenshtein_distance(query_lower, meta.name_lowercase);
+        const std::string& name_lower = meta.name_lowercase;
 
-        // Only consider parameters within max_distance
-        if (distance <= max_distance && distance > 0) {
-            candidates.push_back({distance, pair.first});
+        int effective_distance;
+
+        // Priority 1: Exact prefix match (e.g., "relax" matches "relax_new")
+        // Give these the lowest effective distance (0)
+        if (name_lower.size() > query_lower.size() &&
+            name_lower.compare(0, query_lower.size(), query_lower) == 0 &&
+            name_lower[query_lower.size()] == '_') {
+            effective_distance = 0;
         }
+        // Priority 2: Substring match (e.g., "cut" matches "ecutwfc")
+        // Give these a low effective distance (1)
+        else if (name_lower.find(query_lower) != std::string::npos) {
+            effective_distance = 1;
+        }
+        // Priority 3: Use Levenshtein distance for fuzzy matching
+        else {
+            int distance = levenshtein_distance(query_lower, name_lower);
+            // Only consider parameters within max_distance
+            if (distance > max_distance || distance == 0) {
+                continue;  // Skip exact matches (distance 0) and too-distant matches
+            }
+            effective_distance = distance + 10;  // Add offset to prioritize after prefix/substring
+        }
+
+        candidates.push_back({effective_distance, pair.first});
     }
 
-    // Sort by distance (closest first)
+    // Sort by effective distance (closest first), then alphabetically
     std::sort(candidates.begin(), candidates.end(),
               [](const std::pair<int, std::string>& a, const std::pair<int, std::string>& b) {
                   if (a.first != b.first) {
