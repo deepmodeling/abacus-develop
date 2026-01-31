@@ -1,4 +1,4 @@
-#include "nonlocal_new.h"
+#include "nonlocal.h"
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -10,7 +10,7 @@
 #endif
 
 template <typename TK, typename TR>
-hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
+hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::Nonlocal(
     HS_Matrix_K<TK>* hsk_in,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
@@ -35,7 +35,7 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
 
 // destructor
 template <typename TK, typename TR>
-hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::~NonlocalNew()
+hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::~Nonlocal()
 {
     if (this->allocated)
     {
@@ -45,10 +45,10 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::~NonlocalNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
-    ModuleBase::TITLE("NonlocalNew", "initialize_HR");
-    ModuleBase::timer::tick("NonlocalNew", "initialize_HR");
+    ModuleBase::TITLE("Nonlocal", "initialize_HR");
+    ModuleBase::timer::tick("Nonlocal", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -111,14 +111,14 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("NonlocalNew", "initialize_HR");
+    ModuleBase::timer::tick("Nonlocal", "initialize_HR");
 }
 
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
-    ModuleBase::TITLE("NonlocalNew", "calculate_HR");
-    ModuleBase::timer::tick("NonlocalNew", "calculate_HR");
+    ModuleBase::TITLE("Nonlocal", "calculate_HR");
+    ModuleBase::timer::tick("Nonlocal", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
@@ -219,12 +219,12 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     }
 #endif
 
-    ModuleBase::timer::tick("NonlocalNew", "calculate_HR");
+    ModuleBase::timer::tick("Nonlocal", "calculate_HR");
 }
 
 // cal_HR_IJR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat1,
     const int& iat2,
     const int& T0,
@@ -284,7 +284,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
 
 // set_HR_fixed()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in)
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in)
 {
     this->HR_fixed = static_cast<hamilt::HContainer<TR>*>(HR_fixed_in);
     this->allocated = false;
@@ -292,10 +292,10 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fi
 
 // contributeHR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
-    ModuleBase::TITLE("NonlocalNew", "contributeHR");
-    ModuleBase::timer::tick("NonlocalNew", "contributeHR");
+    ModuleBase::TITLE("Nonlocal", "contributeHR");
+    ModuleBase::timer::tick("Nonlocal", "contributeHR");
     if (!this->HR_fixed_done)
     {
         // if this Operator is the first node of the sub_chain, then HR_fixed is nullptr
@@ -319,12 +319,12 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         this->hR->add(*(this->HR_fixed));
     }
-    ModuleBase::timer::tick("NonlocalNew", "contributeHR");
+    ModuleBase::timer::tick("Nonlocal", "contributeHR");
     return;
 }
 
 #include "nonlocal_force_stress.hpp"
 
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>>;
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;
+template class hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

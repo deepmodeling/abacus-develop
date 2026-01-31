@@ -1,12 +1,12 @@
-#include "../overlap_new.h"
+#include "../overlap.h"
 
 #include "gtest/gtest.h"
 
 //---------------------------------------
-// Unit test of OverlapNew class
-// OverlapNew is a derivative class of Operator, it is used to calculate the overlap matrix
+// Unit test of Overlap class
+// Overlap is a derivative class of Operator, it is used to calculate the overlap matrix
 // It use HContainer to store the real space SR matrix
-// In this test, we test the correctness and time consuming of 3 functions in OverlapNew class
+// In this test, we test the correctness and time consuming of 3 functions in Overlap class
 // - initialize_SR() called in constructor
 // - contributeHR()
 // - contributeHk()
@@ -17,7 +17,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
-class OverlapNewTest : public ::testing::Test
+class OverlapTest : public ::testing::Test
 {
   protected:
     void SetUp() override
@@ -93,7 +93,7 @@ class OverlapNewTest : public ::testing::Test
     int my_rank = 0;
 };
 
-TEST_F(OverlapNewTest, constructHRcd2cd)
+TEST_F(OverlapTest, constructHRcd2cd)
 {
     int npol = ucell.get_npol();
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -101,7 +101,7 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
-    hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
+    hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>
         op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of SR

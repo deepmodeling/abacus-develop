@@ -2,8 +2,8 @@
 #define WRITE_EBAND_TERMS_HPP
  
 #include "source_io/write_vxc.hpp"
-#include "source_lcao/module_operator_lcao/ekinetic_new.h"
-#include "source_lcao/module_operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/ekinetic.h"
+#include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
 namespace ModuleIO
@@ -75,7 +75,7 @@ void write_eband_terms(const int nspin,
             hamilt::HContainer<TR> kinetic_R_ao(pv);
             if_gamma_fix(kinetic_R_ao);
 
-            hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>> kinetic_op(&kinetic_k_ao, kv.kvec_d,
+            hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>> kinetic_op(&kinetic_k_ao, kv.kvec_d,
                 &kinetic_R_ao, &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
 
             kinetic_op.contributeHR();
@@ -132,7 +132,7 @@ void write_eband_terms(const int nspin,
             hamilt::HContainer<TR> v_pp_nonlocal_R_ao(pv);
             if_gamma_fix(v_pp_nonlocal_R_ao);
             std::vector<std::vector<double>> e_orb_pp_nonlocal;
-            hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>> v_pp_nonlocal_op(&v_pp_nonlocal_k_ao, kv.kvec_d,
+            hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>> v_pp_nonlocal_op(&v_pp_nonlocal_k_ao, kv.kvec_d,
                 &v_pp_nonlocal_R_ao, &ucell, orb_cutoff, &gd, two_center_bundle.overlap_orb_beta.get());
             v_pp_nonlocal_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)
