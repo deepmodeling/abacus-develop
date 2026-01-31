@@ -22,7 +22,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
 #ifdef __EXX
-#include "source_io/restart_exx_csr.h"
+#include "source_io/module_restart/restart_exx_csr.h"
 #endif
 
 // mohan add 2025-03-06
