@@ -44,6 +44,12 @@ class Charge
     double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
     const Parallel_Grid* pgrid = nullptr;
 
+    // DFPT delta-rho storage (complex charge density response)
+    std::complex<double> **delta_rho = nullptr;       // [nspin][nrxx] - delta charge in real space
+    std::complex<double> **delta_rho_save = nullptr;  // [nspin][nrxx] - previous delta charge for mixing
+    std::complex<double> **delta_rhog = nullptr;      // [nspin][ngmc] - delta charge in G-space
+    std::complex<double> **delta_rhog_save = nullptr; // [nspin][ngmc] - previous delta charge in G-space
+
   private:
 
     //temporary
@@ -53,6 +59,13 @@ class Charge
     std::complex<double> *_space_rhog_save = nullptr;
     double *_space_kin_r = nullptr;
     double *_space_kin_r_save = nullptr;
+
+    // Contiguous memory storage for DFPT delta-rho
+    std::complex<double> *_space_delta_rho = nullptr;
+    std::complex<double> *_space_delta_rho_save = nullptr;
+    std::complex<double> *_space_delta_rhog = nullptr;
+    std::complex<double> *_space_delta_rhog_save = nullptr;
+    bool allocate_delta_rho_flag = false;
 
   public:
 
@@ -123,6 +136,22 @@ class Charge
     void check_rho(); // to check whether the charge density is normal
 
     void init_final_scf(); //LiuXh add 20180619
+
+    /**
+     * @brief Allocate memory for DFPT delta-rho arrays
+     * @param nspin_in number of spin components
+     */
+    void allocate_delta_rho(const int& nspin_in);
+
+    /**
+     * @brief Deallocate DFPT delta-rho arrays
+     */
+    void destroy_delta_rho();
+
+    /**
+     * @brief Save current delta_rho to delta_rho_save before mixing
+     */
+    void save_delta_rho_before_mixing();
 
 	public:
     /**

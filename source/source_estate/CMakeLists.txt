@@ -29,6 +29,7 @@ list(APPEND objects
     module_charge/charge_mixing_preconditioner.cpp
     module_charge/charge_mixing_rho.cpp
     module_charge/charge_mixing_uspp.cpp
+    module_charge/charge_mixing_dfpt.cpp
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp

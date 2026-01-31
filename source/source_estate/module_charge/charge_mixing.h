@@ -83,6 +83,27 @@ class Charge_Mixing
     double get_dkin(Charge* chr, const double nelec);
 
     /**
+     * @brief Mix complex delta charge density for DFPT
+     * @param chr pointer of Charge object containing delta_rho arrays
+     * @param nspin number of spin components
+     */
+    void mix_delta_rho(Charge* chr, const int nspin);
+
+    /**
+     * @brief Get residual for complex delta charge density using conj(A)*B inner product
+     * @param chr pointer of Charge object containing delta_rho arrays
+     * @param nspin number of spin components
+     * @return residual value (L2 norm)
+     */
+    double get_delta_drho(Charge* chr, const int nspin);
+
+    /**
+     * @brief Initialize mixing data for DFPT delta-rho
+     * @param length length of mixing data (nspin * ngmc for reciprocal space)
+     */
+    void init_mixing_delta_rho(const int length);
+
+    /**
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function 
      */
     void mix_reset();
@@ -118,6 +139,7 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
     Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
     Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
+    Base_Mixing::Mixing_Data delta_rho_mdata;  ///< Mixing data for DFPT delta charge density
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
     //======================================
@@ -183,6 +205,28 @@ class Charge_Mixing
      *
      */
     double inner_product_real(double* rho1, double* rho2);
+
+    /**
+     * @brief Complex inner product: sum of conj(rho1[i]) * rho2[i]
+     * @param rho1 first complex array
+     * @param rho2 second complex array
+     * @return real part of the inner product
+     */
+    double inner_product_recip_complex(std::complex<double>* rho1, std::complex<double>* rho2);
+
+    /**
+     * @brief Mix delta charge density in reciprocal space
+     * @param chr pointer of Charge object
+     * @param nspin number of spin components
+     */
+    void mix_delta_rho_recip(Charge* chr, const int nspin);
+
+    /**
+     * @brief Kerker screening for complex charge density
+     * @param rhog complex charge density in G-space
+     * @param nspin number of spin components
+     */
+    void Kerker_screen_recip_complex(std::complex<double>* rhog, const int nspin);
 
     /**
      * @brief divide rho/tau to smooth and high frequency parts

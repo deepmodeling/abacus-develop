@@ -87,11 +87,11 @@ AddTest(
 
 AddTest(
   TARGET charge_mixing
-  LIBS parameter   base ${math_libs}  psi  device planewave_serial cell_info 
-  SOURCES charge_mixing_test.cpp  
+  LIBS parameter   base ${math_libs}  psi  device planewave_serial cell_info
+  SOURCES charge_mixing_test.cpp
   ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
   ../module_charge/charge_mixing_preconditioner.cpp ../module_charge/charge_mixing_rho.cpp
-  ../module_charge/charge_mixing_uspp.cpp ../../source_io/output.cpp
+  ../module_charge/charge_mixing_uspp.cpp ../module_charge/charge_mixing_dfpt.cpp ../../source_io/output.cpp
 )
 
 AddTest(
