@@ -18,12 +18,20 @@ void write_elf(
     const UnitCell* ucell_,
     const int& precision)
 {
-    std::vector<std::vector<double>> elf(nspin, std::vector<double>(rho_basis->nrxx, 0.));
+    // For nspin = 4, we only calculate the total ELF using the rho_total and tau_total,
+    // containing in the first channel of rho and tau.
+    // What's more, we have not introduced the U(1) and SU(2) gauge invariance corrections
+    // proposed by Desmarais J K, Vignale G, Bencheikh K, et al. Physical Review Letters, 2024, 133(13): 136401,
+    // where the current density is also included in the ELF calculation.
+
+    int nspin_eff = (nspin == 4) ? 1 : nspin;
+
+    std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
-    std::vector<std::vector<double>> tau_vw(nspin, std::vector<double>(rho_basis->nrxx, 0.));
+    std::vector<std::vector<double>> tau_vw(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
     std::vector<double> phi(rho_basis->nrxx, 0.); // phi = sqrt(rho)
 
-    for (int is = 0; is < nspin; ++is)
+    for (int is = 0; is < nspin_eff; ++is)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
@@ -54,37 +62,34 @@ void write_elf(
     }
 
     // 2) calculate the kinetic energy density of TF KEDF
-    std::vector<std::vector<double>> tau_TF(nspin, std::vector<double>(rho_basis->nrxx, 0.));
+    std::vector<std::vector<double>> tau_TF(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
     const double c_tf
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2.0; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
-    if (nspin == 1)
+    if (nspin == 1 || nspin == 4)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            tau_TF[0][ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
+            if (rho[0][ir] > 0.0)
+            {
+                tau_TF[0][ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
+            }
+            else
+            {
+                tau_TF[0][ir] = 0.0;
+            }
         }
     }
     else if (nspin == 2)
     {
+        // the spin-scaling law: tau_TF[rho_up, rho_dn] = 1/2 * (tau_TF[2*rho_up] + tau_TF[2*rho_dn])
         for (int is = 0; is < nspin; ++is)
         {
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
-            }
-        }
-    }
-    else if (nspin == 4)
-    {
-        for (int is = 0; is < nspin; ++is)
-        {
-            for (int ir = 0; ir < rho_basis->nrxx; ++ir)
-            {
-                // Handle negative densities for numerical stability
                 if (rho[is][ir] > 0.0)
                 {
-                    tau_TF[is][ir] = c_tf * std::pow(rho[is][ir], 5.0 / 3.0);
+                    tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
                 }
                 else
                 {
@@ -96,7 +101,7 @@ void write_elf(
 
     // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
     double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
-    for (int is = 0; is < nspin; ++is)
+    for (int is = 0; is < nspin_eff; ++is)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
@@ -116,7 +121,7 @@ void write_elf(
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
-    if (nspin == 1)
+    if (nspin == 1 || nspin == 4)
     {
         std::string fn = out_dir + "/elf.cube";
 
@@ -173,26 +178,6 @@ void write_elf(
             ucell_,
             precision,
             out_fermi);
-    }
-    else if (nspin == 4)
-    {
-        for (int is = 0; is < nspin; ++is)
-        {
-            std::string fn = out_dir + "/elf" + std::to_string(is) + ".cube";
-
-            int ispin = is;
-
-            ModuleIO::write_vdata_palgrid(pgrid,
-                elf[is].data(),
-                ispin,
-                nspin,
-                istep_in,
-                fn,
-                ef_tmp,
-                ucell_,
-                precision,
-                out_fermi);
-        }
     }
 }
 }

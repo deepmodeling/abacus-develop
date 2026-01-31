@@ -307,10 +307,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                 if (PARAM.inp.exx_thr_type == "energy")
                 {
                     dexx = exx_helper.cal_exx_energy(this->stp.psi_t);
-                }
-                exx_helper.set_psi(this->stp.psi_t);
-                if (PARAM.inp.exx_thr_type == "energy")
-                {
+                    exx_helper.set_psi(this->stp.psi_t);
                     dexx -= exx_helper.cal_exx_energy(this->stp.psi_t);
                     // std::cout << "dexx = " << dexx << std::endl;
                 }
@@ -319,6 +316,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                 conv_esolver = exx_helper.exx_after_converge(iter, conv_ene);
                 if (!conv_esolver)
                 {
+                    if (PARAM.inp.exx_thr_type != "energy")
+                    {
+                        exx_helper.set_psi(this->stp.psi_t);
+                    }
                     auto duration = std::chrono::high_resolution_clock::now() - start;
                     std::cout << " Setting Psi for EXX PW Inner Loop took "
                               << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0 << "s"

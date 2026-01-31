@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_H
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -11,22 +11,22 @@
 namespace hamilt
 {
 
-#ifndef __OVERLAPNEWTEMPLATE
-#define __OVERLAPNEWTEMPLATE
+#ifndef __OVERLAPTEMPLATE
+#define __OVERLAPTEMPLATE
 
-/// The OverlapNew class template inherits from class T
+/// The Overlap class template inherits from class T
 /// it is used to calculate the overlap of wavefunction basis
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
-class OverlapNew : public T
+class Overlap : public T
 {
 };
 
 #endif
 
-/// OverlapNew class template specialization for OperatorLCAO<TK> base class
+/// Overlap class template specialization for OperatorLCAO<TK> base class
 /// It is used to calculate the overlap matrix in real space and fold it to k-space
 /// SR = <psi_{mu, 0}|psi_{nu, R}>
 /// SK = <psi_{mu, k}|psi_{nu, k}> = \sum_{R} e^{ikR} SR
@@ -34,10 +34,10 @@ class OverlapNew : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
+class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OverlapNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+    Overlap<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      hamilt::HContainer<TR>* hR_in,
                                      hamilt::HContainer<TR>* SR_in,
@@ -46,7 +46,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      const Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor);
 
-    ~OverlapNew();
+    ~Overlap();
 
     virtual void contributeHR() override;
 

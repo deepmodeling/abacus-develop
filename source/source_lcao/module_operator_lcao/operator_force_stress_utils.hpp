@@ -140,7 +140,7 @@ void cal_force_stress_2center(
                         integral_calculator(T1, L1, N1, M1, T2, L2, N2, M2, dtau, olm);
 
                         // only charge should be considered
-                        double dm_current = get_real_part(dm_pointer[0]);
+                        const double dm_current = dm_pointer[0];
 
                         // Calculate force contribution with compile-time sign
                         if (cal_force)

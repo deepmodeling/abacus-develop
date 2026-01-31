@@ -235,9 +235,9 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
+    Parallel_Reduce::reduce_all(sto_dos.data(), ndos);
+    Parallel_Reduce::reduce_all(error.data(), ndos);
+    #endif
     if (GlobalV::MY_RANK == 0)
     {
         std::string dosfile = PARAM.globalv.global_out_dir + "dos_sdft.txt";

@@ -19,9 +19,9 @@
 #endif
 #include "source_lcao/module_operator_lcao/dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
-#include "source_lcao/module_operator_lcao/nonlocal_new.h"
-#include "source_lcao/module_operator_lcao/ekinetic_new.h"
-#include "source_lcao/module_operator_lcao/overlap_new.h"
+#include "source_lcao/module_operator_lcao/nonlocal.h"
+#include "source_lcao/module_operator_lcao/ekinetic.h"
+#include "source_lcao/module_operator_lcao/overlap.h"
 #include "source_lcao/pulay_fs.h"
 
 
@@ -187,20 +187,20 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // Calculate kinetic force/stress (uses DM)
         if (PARAM.inp.t_in_h)
         {
-            hamilt::EkineticNew<hamilt::OperatorLCAO<T, double>> tmp_ekinetic(
+            hamilt::EKinetic<hamilt::OperatorLCAO<T, double>> tmp_ekinetic(
                 nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
                 two_center_bundle.kinetic_orb.get());
             tmp_ekinetic.cal_force_stress(isforce, isstress, dmR, ftvnl_dphi, stvnl_dphi);
         }
 
         // Calculate overlap force/stress (uses EDM)
-        hamilt::OverlapNew<hamilt::OperatorLCAO<T, double>> tmp_overlap(
+        hamilt::Overlap<hamilt::OperatorLCAO<T, double>> tmp_overlap(
             nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
         tmp_overlap.cal_force_stress(isforce, isstress, edmR, foverlap, soverlap);
 
         // Calculate nonlocal force/stress (uses DM)
-        hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
+        hamilt::Nonlocal<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
             nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmR, fvnl_dbeta, svnl_dbeta);
@@ -224,14 +224,14 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // Calculate kinetic force/stress (uses DM)
         if (PARAM.inp.t_in_h)
         {
-            hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_ekinetic(
+            hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_ekinetic(
                 nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
                 two_center_bundle.kinetic_orb.get());
             tmp_ekinetic.cal_force_stress(isforce, isstress, dmat.dm->get_DMR_pointer(1), ftvnl_dphi, stvnl_dphi);
         }
 
         // Calculate overlap force/stress (uses EDM)
-        hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_overlap(
+        hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_overlap(
             nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
         tmp_overlap.cal_force_stress(isforce, isstress, edm.get_DMR_pointer(1), foverlap, soverlap);
@@ -244,7 +244,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         tmp_dmr.allocate();
         dmat.dm->cal_DMR_full(&tmp_dmr);
         // Calculate nonlocal force/stress (uses DM)
-        hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
+        hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
             nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.cal_force_stress(isforce, isstress, &tmp_dmr, fvnl_dbeta, svnl_dbeta);
