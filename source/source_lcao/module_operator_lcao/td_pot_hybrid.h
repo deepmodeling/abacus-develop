@@ -18,8 +18,8 @@ namespace hamilt
 #ifndef __TD_POT_HYBRIDTEMPLATE
 #define __TD_POT_HYBRIDTEMPLATE
 
-/// The EkineticNew class template inherits from class T
-/// it is used to calculate the electronic kinetic
+/// The TD_pot_hybrid class template inherits from class T
+/// it is used to calculate the time-dependent hybrid potential
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
@@ -30,10 +30,8 @@ class TD_pot_hybrid : public T
 
 #endif
 
-/// EkineticNew class template specialization for OperatorLCAO<TK> base class
-/// It is used to calculate the electronic kinetic matrix in real space and fold it to k-space
-/// HR = <psi_{mu, 0}|-\Nabla^2|psi_{nu, R}>
-/// HK = <psi_{mu, k}|-\Nabla^2|psi_{nu, k}> = \sum_{R} e^{ikR} HR
+/// TD_pot_hybrid class template specialization for OperatorLCAO<TK> base class
+/// It is used to calculate the time-dependent hybrid potential matrix in real space and fold it to k-space
 /// Template parameters:
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
@@ -42,7 +40,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     /**
-     * @brief Construct a new EkineticNew object
+     * @brief Construct a new TD_pot_hybrid object
      */
     TD_pot_hybrid<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                       const K_Vectors* kv_in,
@@ -55,7 +53,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const TwoCenterIntegrator* intor);
 
     /**
-     * @brief Destroy the EkineticNew object
+     * @brief Destroy the TD_pot_hybrid object
      */
     ~TD_pot_hybrid<OperatorLCAO<TK, TR>>();
 
