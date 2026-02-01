@@ -351,7 +351,24 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = hpsi * vc_ev_vector = hpsi*vcc
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
-    ModuleBase::gemm_op<T, Device>()('N',
+    if (notconv == 1){
+        //Reuse gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('N',
+                                     dim,                 // m: row of A
+                                     nbase,               // n: col of A
+                                     this->one,           // alpha
+                                     hpsi,                // A dim * nbase
+                                     dim,                 // LDA: if(N) max(1,m)
+                                     vc_ev_vector,        // X nbase
+                                     1,                   // incx
+                                     this->zero,          // beta
+                                     basis + dim * nbase, // Y dim
+                                     1                    // incy
+        );
+
+    }else
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -364,7 +381,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                      this->zero,          // belta
                                      basis + dim * nbase, // C dim * notconv
                                      dim                  // LDC: if(N) max(1, m)
-    );
+        );
+    }
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // for (int m = 0; m < notconv; m++)
@@ -411,20 +429,37 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //              = (H - lambda * S) * psi * vcc
     //              = (H - lambda * S) * psi_new
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     dim,                 // m: row of A,C
-                                     notconv,             // n: col of B,C
-                                     nbase,               // k: col of A, row of B
-                                     this->one,           // alpha
-                                     spsi,                // A
-                                     dim,                 // LDA: if(N) max(1,m) if(T) max(1,k)
-                                     vc_ev_vector,        // B
-                                     nbase,               // LDB: if(N) max(1,k) if(T) max(1,n)
-                                     this->one,           // belta
-                                     basis + dim * nbase, // C dim * notconv
-                                     dim                  // LDC: if(N) max(1, m)
-    );
+    if (notconv == 1){
+        //Use gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('N',
+                                        dim,                  // m: row of A
+                                        nbase,                // n: col of A
+                                        this->one,            // alpha
+                                        spsi,                 // A dim * nbase
+                                        dim,                  // LDA: if(N) max(1,m)
+                                        vc_ev_vector,         // X nbase
+                                        1,                    // incx
+                                        this->one,            // beta
+                                        basis + dim * nbase,  // Y dim
+                                        1                     //incy
+        );
+    } else 
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
+                                        'N',
+                                        dim,                 // m: row of A,C
+                                        notconv,             // n: col of B,C
+                                        nbase,               // k: col of A, row of B
+                                        this->one,           // alpha
+                                        spsi,                // A
+                                        dim,                 // LDA: if(N) max(1,m) if(T) max(1,k)
+                                        vc_ev_vector,        // B
+                                        nbase,               // LDB: if(N) max(1,k) if(T) max(1,n)
+                                        this->one,           // beta
+                                        basis + dim * nbase, // C dim * notconv
+                                        dim                  // LDC: if(N) max(1, m)
+        );
+    }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Preconditioning
@@ -478,20 +513,37 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
     // calculate the square matrix for future lagranges
-    ModuleBase::gemm_op<T, Device>()('C',
-                                     'N',
-                                     nbase,              // m: row of A,C
-                                     notconv,            // n: col of B,C
-                                     dim,                // k: col of A, row of B
-                                     this->one,          // alpha
-                                     basis,              // A
-                                     dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
-                                     &spsi[nbase * dim], // B
-                                     dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
-                                     this->zero,         // belta
-                                     lagrange,           // C
-                                     nbase + notconv     // LDC: if(N) max(1, m)
-    );
+    if (notconv == 1){
+        //Use gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('C',
+                                     dim,                 // m: row of A
+                                     nbase,               // n: col of A
+                                     this->one,           // alpha
+                                     basis,               // A dim * nbase
+                                     dim,                 // LDA: if(N) max(1,m)
+                                     &spsi[nbase * dim], // X dim
+                                     1,           // incx
+                                     this->zero,          // beta
+                                     lagrange,           // Y nbase
+                                     1
+        );
+    } else
+    {
+        ModuleBase::gemm_op<T, Device>()('C',
+                                        'N',
+                                        nbase,              // m: row of A,C
+                                        notconv,            // n: col of B,C
+                                        dim,                // k: col of A, row of B
+                                        this->one,          // alpha
+                                        basis,              // A
+                                        dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
+                                        &spsi[nbase * dim], // B
+                                        dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
+                                        this->zero,         // belta
+                                        lagrange,           // C
+                                        nbase + notconv     // LDC: if(N) max(1, m)
+        );
+    }
 
     for (int m = 0; m < notconv; m++)
     {

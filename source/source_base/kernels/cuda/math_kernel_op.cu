@@ -179,6 +179,25 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const char& trans,
 }
 
 template <>
+void gemv_op<float, base_device::DEVICE_GPU>::operator()(const char& trans,
+                                                          const int& m,
+                                                          const int& n,
+                                                          const float* alpha,
+                                                          const float* A,
+                                                          const int& lda,
+                                                          const float* X,
+                                                          const int& incx,
+                                                          const float* beta,
+                                                          float* Y,
+                                                          const int& incy)
+{
+    cublasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
+    cublasErrcheck(cublasSgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
+}
+
+
+
+template <>
 void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                                        const int& m,
                                                                        const int& n,
@@ -215,7 +234,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     cuDoubleComplex beta = make_cuDoubleComplex(beta_in->real(), beta_in->imag());
     // icpc and nvcc have some compatible problems
     // We must use cuDoubleComplex instead of converting std::complex<double>* to cuDoubleComplex*
-    cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, &alpha, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta, (cuDoubleComplex*)Y, incx));
+    cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, &alpha, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta, (cuDoubleComplex*)Y, incy));
 }
 
 template <>
