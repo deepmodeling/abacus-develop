@@ -100,4 +100,5 @@ set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleBase)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleNAO)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleESolver)
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__submodules__ = ["ModuleBase", "ModuleNAO", "hsolver", "Cell", "IntegralCalculator", "io"]
+__submodules__ = ["ModuleBase", "ModuleNAO", "hsolver", "Cell", "IntegralCalculator", "io", "esolver"]
 __all__ = list(__submodules__)
 
 def __getattr__(attr):
@@ -19,5 +19,8 @@ def __getattr__(attr):
     elif attr == "io":
         import pyabacus.io as io
         return io
+    elif attr == "esolver":
+        import pyabacus.esolver as esolver
+        return esolver
     else:
         raise AttributeError(f"module {__name__} has no attribute {attr}")
