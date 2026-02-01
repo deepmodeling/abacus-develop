@@ -11,8 +11,6 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
                                                const int& rank)
 {
     psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
-    this->nbands_start_ = PARAM.inp.nbands;
-    // allocate and initialize ixy2is_ array
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
@@ -23,7 +21,7 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
 template <typename T>
 void psi_init_random<T>::init_psig(T* psig, const int& ik)
 {
-    this->random_t(psig, 0, this->nbands_start_, ik, 0);
+    this->random_t(psig, 0, this->nbands_start_, ik);
 }
 
 template class psi_init_random<std::complex<double>>;

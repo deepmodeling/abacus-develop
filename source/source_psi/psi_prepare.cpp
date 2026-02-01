@@ -65,7 +65,6 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
             "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
             << std::endl;
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
-
     }
     else if (this->init_wfc == "atomic"
              || (this->init_wfc == "atomic+random" && this->ucell.natomwfc < PARAM.inp.nbands))
