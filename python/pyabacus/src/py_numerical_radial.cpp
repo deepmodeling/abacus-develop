@@ -86,7 +86,7 @@ void bind_numerical_radial(py::module& m)
              "ngrid"_a,
              "cutoff"_a,
              "mode"_a = 'i',
-             "enable+fft"_a = false)
+             "enable_fft"_a = false)
         .def(
             "set_value",
             [](NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p) {
@@ -139,30 +139,37 @@ void bind_numerical_radial(py::module& m)
         .def_property_readonly("kcut", &NumericalRadial::kcut)
         .def_property_readonly("rgrid",
                                [](NumericalRadial& self) {
+                                   const int n = self.nr();
                                    const double* rgrid = self.rgrid();
-                                   return py::array_t<double>({self.nr()}, rgrid);
+                                   py::array_t<double> result(n);
+                                   std::memcpy(result.mutable_data(), rgrid, n * sizeof(double));
+                                   return result;
                                })
         .def_property_readonly("kgrid",
                                [](NumericalRadial& self) {
+                                   const int n = self.nk();
                                    const double* kgrid = self.kgrid();
-                                   return py::array_t<double>({self.nk()}, kgrid);
+                                   py::array_t<double> result(n);
+                                   std::memcpy(result.mutable_data(), kgrid, n * sizeof(double));
+                                   return result;
                                })
         .def_property_readonly("rvalue",
                                [](NumericalRadial& self) {
+                                   const int n = self.nr();
                                    const double* rvalue = self.rvalue();
-                                   return py::array_t<double>({self.nr()}, rvalue);
+                                   py::array_t<double> result(n);
+                                   std::memcpy(result.mutable_data(), rvalue, n * sizeof(double));
+                                   return result;
                                })
         .def_property_readonly("kvalue",
                                [](NumericalRadial& self) {
+                                   const int n = self.nk();
                                    const double* kvalue = self.kvalue();
-                                   return py::array_t<double>({self.nk()}, kvalue);
+                                   py::array_t<double> result(n);
+                                   std::memcpy(result.mutable_data(), kvalue, n * sizeof(double));
+                                   return result;
                                })
         .def_property_readonly("pr", &NumericalRadial::pr)
         .def_property_readonly("pk", &NumericalRadial::pk)
-        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_))
-        // leave transformer for future
-        .def_property_readonly("rgrid", overload_cast_<int>()(&NumericalRadial::rgrid, py::const_))
-        .def_property_readonly("kgrid", overload_cast_<int>()(&NumericalRadial::kgrid, py::const_))
-        .def_property_readonly("rvalue", overload_cast_<int>()(&NumericalRadial::rvalue, py::const_))
-        .def_property_readonly("kvalue", overload_cast_<int>()(&NumericalRadial::kvalue, py::const_));
+        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }

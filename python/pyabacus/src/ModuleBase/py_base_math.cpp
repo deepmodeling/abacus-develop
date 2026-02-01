@@ -72,7 +72,7 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("func array must be 1-dimensional");
             }
             py::buffer_info rab_info = rab.request();
-            if (rab.ndim() != 1)
+            if (rab_info.ndim != 1)
             {
                 throw std::runtime_error("rab array must be 1-dimensional");
             }
@@ -105,12 +105,12 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("func array must be 1-dimensional");
             }
             py::buffer_info rab_info = rab.request();
-            if (rab.ndim() != 1)
+            if (rab_info.ndim != 1)
             {
                 throw std::runtime_error("rab array must be 1-dimensional");
             }
             py::buffer_info asum_info = asum.request();
-            if (asum.ndim() != 1)
+            if (asum_info.ndim != 1)
             {
                 throw std::runtime_error("asum array must be 1-dimensional");
             }
@@ -126,33 +126,12 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("func array must be 1-dimensional");
             }
             py::buffer_info rab_info = rab.request();
-            if (rab.ndim() != 1)
+            if (rab_info.ndim != 1)
             {
                 throw std::runtime_error("rab array must be 1-dimensional");
             }
             py::buffer_info asum_info = asum.request();
-            if (asum.ndim() != 1)
-            {
-                throw std::runtime_error("asum array must be 1-dimensional");
-            }
-            ModuleBase::Integral::Simpson_Integral_alltoinf(mesh,
-                                                            static_cast<const double* const>(func_info.ptr),
-                                                            static_cast<const double* const>(rab_info.ptr),
-                                                            static_cast<double* const>(asum_info.ptr));
-        })
-        .def_static("Simpson_Integral_alltoinf", [](const int mesh, py::array_t<double> func, py::array_t<double> rab, py::array_t<double> asum){
-            py::buffer_info func_info = func.request();
-            if (func_info.ndim != 1)
-            {
-                throw std::runtime_error("func array must be 1-dimensional");
-            }
-            py::buffer_info rab_info = rab.request();
-            if (rab.ndim() != 1)
-            {
-                throw std::runtime_error("rab array must be 1-dimensional");
-            }
-            py::buffer_info asum_info = asum.request();
-            if (asum.ndim() != 1)
+            if (asum_info.ndim != 1)
             {
                 throw std::runtime_error("asum array must be 1-dimensional");
             }
@@ -178,7 +157,7 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("f array must be 1-dimensional");
             }
             py::buffer_info h_info = h.request();
-            if (h.ndim() != 1)
+            if (h_info.ndim != 1)
             {
                 throw std::runtime_error("h array must be 1-dimensional");
             }
@@ -193,7 +172,7 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("x array must be 1-dimensional");
             }
             py::buffer_info w_info = w.request();
-            if (w.ndim() != 1)
+            if (w_info.ndim != 1)
             {
                 throw std::runtime_error("w array must be 1-dimensional");
             }
@@ -208,7 +187,7 @@ void bind_base_math(py::module& m)
                 throw std::runtime_error("x array must be 1-dimensional");
             }
             py::buffer_info w_info = w.request();
-            if (w.ndim() != 1)
+            if (w_info.ndim != 1)
             {
                 throw std::runtime_error("w array must be 1-dimensional");
             }
