@@ -9,6 +9,7 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
@@ -684,8 +685,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     }
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, this->qq_nt.ptr, this->qq_nt.getSize(), MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, this->qq_so.ptr, this->qq_so.getSize(), MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+    Parallel_Reduce::reduce_pool(this->qq_nt.ptr, this->qq_nt.getSize());
+    Parallel_Reduce::reduce_pool(this->qq_so.ptr, this->qq_so.getSize());
 #endif
 
     // set the atomic specific qq_at matrices
@@ -1511,7 +1512,7 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     }
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, deeq.ptr, deeq.getSize(), MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    Parallel_Reduce::reduce_pool(deeq.ptr,deeq.getSize());
 #endif
 
     delete[] qnorm;

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/write_dos_pw.h"
+#include "source_io/module_dos/write_dos_pw.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif

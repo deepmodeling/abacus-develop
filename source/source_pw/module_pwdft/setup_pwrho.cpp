@@ -1,5 +1,5 @@
 #include "source_pw/module_pwdft/setup_pwrho.h"
-#include "source_io/print_info.h" // use print_rhofft
+#include "source_io/module_output/print_info.h" // use print_rhofft
 #include "source_base/parallel_comm.h" // use POOL_WORLD
 
 void pw::setup_pwrho(

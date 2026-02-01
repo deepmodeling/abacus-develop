@@ -34,7 +34,7 @@ void pseudo::check_betar()
 	}
 	if (min_flag)
 	{
-		std::cout << "WARNING: some of potential function is set to zero cause of less than 1e-30.\n";
+		std::cout << " WARNING: some of potential function is set to zero cause of less than 1e-30.\n";
 	}
 }
 

@@ -22,7 +22,7 @@ add_executable(
     ../../../source_cell/sep.cpp
     ../../../source_cell/sep_cell.cpp
     ../../../source_pw/module_pwdft/soc.cpp
-    ../../../source_io/output.cpp
+    ../../../source_io/module_output/output.cpp
     ../../../source_io/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
     ../../../source_estate/cal_wfc.cpp
