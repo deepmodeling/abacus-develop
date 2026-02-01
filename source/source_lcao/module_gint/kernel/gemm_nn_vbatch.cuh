@@ -10,6 +10,7 @@
 #include <functional>
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
+#include "source_base/module_device/kernel_compat.h"
 
 #define sA(i, j) sA[(j)*slda + (i)]
 #define sB(i, j) sB[(j)*sldb + (i)]
