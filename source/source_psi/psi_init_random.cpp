@@ -1,4 +1,5 @@
 #include "psi_init_random.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_init_random<T>::initialize(const Structure_Factor* sf,
@@ -10,6 +11,13 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
                                                const int& rank)
 {
     psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
+    this->nbands_start_ = PARAM.inp.nbands;
+    // allocate and initialize ixy2is_ array
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
+    this->nbands_start_ = PARAM.inp.nbands;
+    this->nbands_complem_ = 0;
 }
 
 template <typename T>
