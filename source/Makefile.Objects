@@ -434,12 +434,12 @@ OBJS_ORBITAL=ORB_atomic.o\
 OBJS_PSI=psi.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
-                     psi_initializer_random.o\
-                     psi_initializer_file.o\
-                     psi_initializer_atomic.o\
-                     psi_initializer_atomic_random.o\
-                     psi_initializer_nao.o\
-                     psi_initializer_nao_random.o\
+                     psi_init_random.o\
+                     psi_init_file.o\
+                     psi_init_atomic.o\
+                     psi_init_atomic_random.o\
+                     psi_init_nao.o\
+                     psi_init_nao_random.o\
 
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
@@ -513,21 +513,21 @@ OBJS_XC=xc_functional.o\
     xc_funct_hcth.o\
     exx_info.o\
 
-OBJS_IO=input_conv.o\
-    berryphase.o\
-    bessel_basis.o\
+OBJS_IO=module_parameter/input_conv.o\
+    module_unk/berryphase.o\
+    module_bessel/bessel_basis.o\
     cal_test.o\
-    write_dos_pw.o\
+    module_dos/write_dos_pw.o\
     nscf_fermi_surf.o\
     write_bands.o\
-    cal_dos.o\
-    cal_pdos_gamma.o\
-    cal_pdos_multik.o\
-    cal_ldos.o\
+    module_dos/cal_dos.o\
+    module_dos/cal_pdos_gamma.o\
+    module_dos/cal_pdos_multik.o\
+    module_dos/cal_ldos.o\
     cif_io.o\
-    numerical_descriptor.o\
-    numerical_basis.o\
-    numerical_basis_jyjy.o\
+    module_bessel/numerical_descriptor.o\
+    module_bessel/numerical_basis.o\
+    module_bessel/numerical_basis_jyjy.o\
     output.o\
     print_info.o\
     read_cube.o\
@@ -537,15 +537,15 @@ OBJS_IO=input_conv.o\
     read_wf2rho_pw.o\
     restart.o\
     binstream.o\
-    to_wannier90.o\
-    to_qo_kernel.o\
-    to_qo_mpi.o\
-    to_qo_structures.o\
-    to_wannier90_pw.o\
-    to_wannier90_lcao_in_pw.o\
-    to_wannier90_lcao.o\
+    module_wannier/to_wannier90.o\
+    module_qo/to_qo_kernel.o\
+    module_qo/to_qo_mpi.o\
+    module_qo/to_qo_structures.o\
+    module_wannier/to_wannier90_pw.o\
+    module_wannier/to_wannier90_lcao_in_pw.o\
+    module_wannier/to_wannier90_lcao.o\
     fR_overlap.o\
-    unk_overlap_pw.o\
+    module_unk/unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\
     write_cube.o\
@@ -558,12 +558,12 @@ OBJS_IO=input_conv.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
-    ctrl_scf_lcao.o\
-    ctrl_runner_lcao.o\
-    ctrl_iter_lcao.o\
-    ctrl_output_fp.o\
-    ctrl_output_pw.o\
-    ctrl_output_td.o\
+    module_ctrl/ctrl_scf_lcao.o\
+    module_ctrl/ctrl_runner_lcao.o\
+    module_ctrl/ctrl_iter_lcao.o\
+    module_ctrl/ctrl_output_fp.o\
+    module_ctrl/ctrl_output_pw.o\
+    module_ctrl/ctrl_output_td.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
@@ -571,21 +571,21 @@ OBJS_IO=input_conv.o\
     readin_info.o\
     output_info.o\
     parse_args.o\
-    read_input.o\
-    read_input_item_system.o\
-    read_input_item_elec_stru.o\
-    read_input_item_relax.o\
-    read_input_item_md.o\
-    read_input_item_ofdft.o\
-    read_input_item_sdft.o\
-    read_input_item_tddft.o\
-    read_input_item_deepks.o\
-    read_input_item_model.o\
-    read_input_item_postprocess.o\
-    read_input_item_exx_dftu.o\
-    read_input_item_other.o\
-    read_input_item_output.o\
-    read_set_globalv.o\
+    module_parameter/read_input.o\
+    module_parameter/read_input_item_system.o\
+    module_parameter/read_input_item_elec_stru.o\
+    module_parameter/read_input_item_relax.o\
+    module_parameter/read_input_item_md.o\
+    module_parameter/read_input_item_ofdft.o\
+    module_parameter/read_input_item_sdft.o\
+    module_parameter/read_input_item_tddft.o\
+    module_parameter/read_input_item_deepks.o\
+    module_parameter/read_input_item_model.o\
+    module_parameter/read_input_item_postprocess.o\
+    module_parameter/read_input_item_exx_dftu.o\
+    module_parameter/read_input_item_other.o\
+    module_parameter/read_input_item_output.o\
+    module_parameter/read_set_globalv.o\
     orb_io.o\
     cal_pLpR.o\
     filename.o\
@@ -597,19 +597,19 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_eig_occ.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
-      write_dmk.o\
-      unk_overlap_lcao.o\
+      module_dm/write_dmk.o\
+      module_unk/unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
-      write_HS_sparse.o\
+      module_hs/write_HS_sparse.o\
       single_R_io.o\
-      write_HS_R.o\
-      write_dmr.o\
+      module_hs/write_HS_R.o\
+      module_dm/write_dmr.o\
       sparse_matrix.o\
-      output_mulliken.o\
-      output_sk.o\
-      output_dmk.o\
-      io_npz.o\
+      module_mulliken/output_mulliken.o\
+      module_mulliken/output_sk.o\
+      module_mulliken/output_dmk.o\
+      module_ml/io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
@@ -746,7 +746,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
-    psi_init.o\
+    psi_prepare.o\
     elecond.o\
     sto_tool.o\
     sto_elecond.o\

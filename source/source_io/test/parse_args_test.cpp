@@ -1,6 +1,6 @@
 #include "source_io/parse_args.h"
 #include "gtest/gtest.h"
-#include "source_io/read_input.h"
+#include "source_io/module_parameter/read_input.h"
 #include "source_main/version.h"
 
 // Already deal with Testing.cmake

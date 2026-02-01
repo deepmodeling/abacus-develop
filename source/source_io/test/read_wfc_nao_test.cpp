@@ -3,9 +3,9 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/read_wfc_nao.h"
+#include "source_io/module_wf/read_wfc_nao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_io/write_wfc_nao.h"
+#include "source_io/module_wf/write_wfc_nao.h"
 
 namespace ModuleIO
 {

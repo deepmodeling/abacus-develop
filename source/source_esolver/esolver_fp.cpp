@@ -9,15 +9,15 @@
 #include "source_io/cube_io.h" // use write_vdata_palgrid
 #include "source_io/json_output/init_info.h"
 #include "source_io/json_output/output_info.h"
-#include "source_io/output_log.h"
-#include "source_io/print_info.h"
-#include "source_io/rhog_io.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_chgpot/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
-#include "source_io/ctrl_output_fp.h"
-#include "source_io/write_init.h" // write_chg_init, write_pot_init
+#include "source_io/module_ctrl/ctrl_output_fp.h"
+#include "source_io/module_chgpot/write_init.h" // write_chg_init, write_pot_init
 
 namespace ModuleESolver
 {
