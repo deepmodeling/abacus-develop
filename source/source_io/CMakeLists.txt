@@ -10,9 +10,9 @@ list(APPEND objects
     module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
     module_dos/write_dos_pw.cpp
-    write_bands.cpp
+    module_energy/write_bands.cpp
     nscf_fermi_surf.cpp
-    write_eig_occ.cpp
+    module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
@@ -59,7 +59,7 @@ if(ENABLE_LCAO)
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
       write_orb_info.cpp
-      write_proj_band_lcao.cpp
+      module_energy/write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
       module_wf/get_wf_lcao.cpp
       module_wf/read_wfc_nao.cpp
