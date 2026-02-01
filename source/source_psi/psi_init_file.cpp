@@ -16,6 +16,8 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
                                                const int& rank)
 {
     psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
+    this->nbands_start_ = PARAM.inp.nbands;
+    this->nbands_complem_ = 0;
 }
 
 template <typename T>
