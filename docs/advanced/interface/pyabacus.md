@@ -4,16 +4,10 @@ PyABACUS is the official Python interface for ABACUS, providing a convenient way
 
 ## Installation
 
-### From PyPI (Recommended)
+### From Source (Recommended)
 
 ```bash
-pip install pyabacus
-```
-
-### From Source
-
-```bash
-cd python/pyabacus
+cd /path/to/abacus-develop/python/pyabacus
 pip install -e .
 ```
 
@@ -26,6 +20,8 @@ cmake -B build -DENABLE_PYABACUS=ON -DENABLE_LCAO=ON
 cmake --build build -j8
 pip install -e python/pyabacus
 ```
+
+**Note:** The `pyabacus` package on PyPI is a different project and is NOT related to ABACUS. Please install from source as shown above.
 
 ## Quick Start
 
