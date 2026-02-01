@@ -228,11 +228,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // This replaces scattered cudaSetDevice/hipSetDevice calls throughout the codebase
     if (param.inp.device == "gpu")
     {
-#ifdef __MPI
-        base_device::DeviceContext::instance().init(MPI_COMM_WORLD);
-#else
         base_device::DeviceContext::instance().init();
-#endif
     }
 
     if (this->check_mode)

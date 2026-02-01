@@ -105,19 +105,15 @@ public:
      * @brief Initialize GPU device binding.
      *
      * This function:
-     * 1. Gets the local rank within the node using MPI_COMM_TYPE_SHARED
+     * 1. Gets the local rank within the node using MPI_COMM_TYPE_SHARED (MPI_COMM_WORLD)
      * 2. Queries the number of available GPU devices
      * 3. Binds the current process to a GPU device (local_rank % device_count)
      *
-     * @param comm MPI communicator (default: MPI_COMM_WORLD)
      * @note This function should only be called once. Subsequent calls are no-ops.
      * @note This function should only be called when device=gpu is confirmed.
+     * @note In MPI builds, uses MPI_COMM_WORLD internally.
      */
-#ifdef __MPI
-    void init(MPI_Comm comm = MPI_COMM_WORLD);
-#else
     void init();
-#endif
 
     /**
      * @brief Check if the DeviceContext has been initialized

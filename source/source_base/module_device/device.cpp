@@ -114,11 +114,7 @@ DeviceContext& DeviceContext::instance() {
     return instance;
 }
 
-#ifdef __MPI
-void DeviceContext::init(MPI_Comm comm) {
-#else
 void DeviceContext::init() {
-#endif
     // Thread-safe initialization using mutex
     std::lock_guard<std::mutex> lock(init_mutex_);
 
@@ -132,8 +128,9 @@ void DeviceContext::init() {
 #ifdef __MPI
     // Get local rank within the node using MPI_COMM_TYPE_SHARED
     // This is the modern and recommended way to get node-local rank
+    // Use MPI_COMM_WORLD as the default communicator
     MPI_Comm local_comm;
-    MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_comm);
     MPI_Comm_rank(local_comm, &local_rank_);
     MPI_Comm_free(&local_comm);
 #else
