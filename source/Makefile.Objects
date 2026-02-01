@@ -523,7 +523,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
-    module_dos/write_dos_lcao.o\
     module_dos/cal_ldos.o\
     cif_io.o\
     module_bessel/numerical_descriptor.o\
