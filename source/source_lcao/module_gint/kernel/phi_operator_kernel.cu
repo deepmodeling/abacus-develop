@@ -11,7 +11,6 @@ __global__ void set_phi_kernel(
     const int mgrids_num,
     const int nrmax,
     const double dr_uniform,
-    const double* __restrict__ ylmcoef,
     const int* __restrict__ ucell_atom_nwl,
     const bool* __restrict__ atom_iw2_new,
     const int* __restrict__ atom_iw2_ylm,
@@ -49,7 +48,7 @@ __global__ void set_phi_kernel(
             // since nwl is less or equal than 5, the size of ylma is (5+1)^2
             double ylma[36];
             const int nwl = ucell_atom_nwl[atom_type];
-            sph_harm(nwl, ylmcoef, coord.x/dist, coord.y/dist, coord.z/dist, ylma);
+            sph_harm(nwl, coord.x/dist, coord.y/dist, coord.z/dist, ylma);
 
             const double pos = dist / dr_uniform;
             const int ip = static_cast<int>(pos);
@@ -95,7 +94,6 @@ __global__ void set_phi_dphi_kernel(
     const int mgrids_num,
     const int nrmax,
     const double dr_uniform,
-    const double* __restrict__ ylmcoef,
     const int* __restrict__ ucell_atom_nwl,
     const bool* __restrict__ atom_iw2_new,
     const int* __restrict__ atom_iw2_ylm,
@@ -139,7 +137,7 @@ __global__ void set_phi_dphi_kernel(
             double rly[36];
             double grly[36 * 3];
             const int nwl = ucell_atom_nwl[atom_type];
-            grad_rl_sph_harm(nwl, ylmcoef, coord.x, coord.y, coord.z, rly, grly);
+            grad_rl_sph_harm(nwl, coord.x, coord.y, coord.z, rly, grly);
 
             // interpolation
             const double pos = dist / dr_uniform;
@@ -208,7 +206,6 @@ __global__ void set_ddphi_kernel(
     const int mgrids_num,
     const int nrmax,
     const double dr_uniform,
-    const double* __restrict__ ylmcoef,
     const int* __restrict__ ucell_atom_nwl,
     const bool* __restrict__ atom_iw2_new,
     const int* __restrict__ atom_iw2_ylm,
@@ -260,7 +257,7 @@ __global__ void set_ddphi_kernel(
                 double rly[36];
                 double grly[36 * 3];
                 const int nwl = ucell_atom_nwl[atom_type];
-                grad_rl_sph_harm(nwl, ylmcoef, coord[0], coord[1], coord[2], rly, grly);
+                grad_rl_sph_harm(nwl, coord[0], coord[1], coord[2], rly, grly);
 
                 // interpolation
                 const double pos = dist / dr_uniform;

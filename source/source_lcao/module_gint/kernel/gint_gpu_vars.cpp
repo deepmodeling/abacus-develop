@@ -12,12 +12,6 @@ GintGpuVars::GintGpuVars(std::shared_ptr<const BigGridInfo> biggrid_info,
 #ifdef __MPI
     dev_id_ = base_device::information::set_device_by_rank();
 #endif
-    std::vector<double> ylmcoef_h(100);
-    for (int i = 0; i < 100; i++)
-    {
-        ylmcoef_h[i] = ModuleBase::Ylm::ylmcoef[i];
-    }
-    set_ylmcoe_d(ylmcoef_h.data(), &ylmcoef_d);
 
     const int ntype = ucell.ntype;
     std::vector<int> atom_nw_h(ntype);

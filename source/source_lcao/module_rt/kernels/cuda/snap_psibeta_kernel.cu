@@ -38,183 +38,6 @@ __constant__ double d_gl_x[RADIAL_GRID_NUM]; ///< Quadrature abscissae on [-1, 1
 __constant__ double d_gl_w[RADIAL_GRID_NUM]; ///< Quadrature weights
 
 //=============================================================================
-// Spherical Harmonics - Helper Functions
-//=============================================================================
-
-/**
- * @brief Access element in lower-triangular stored Legendre polynomial array
- *
- * For associated Legendre polynomials P_l^m, we only need 0 <= m <= l.
- * Storage layout: P_0^0, P_1^0, P_1^1, P_2^0, P_2^1, P_2^2, ...
- * Linear index: l*(l+1)/2 + m
- */
-__device__ __forceinline__ double& p_access(double* p, int l, int m)
-{
-    return p[l * (l + 1) / 2 + m];
-}
-
-/**
- * @brief Read-only access to Legendre polynomial array
- */
-__device__ __forceinline__ double p_get(const double* p, int l, int m)
-{
-    return p[l * (l + 1) / 2 + m];
-}
-
-//=============================================================================
-// Spherical Harmonics - Main Implementation
-//=============================================================================
-
-/**
- * @brief Compute real spherical harmonics Y_lm (templated version)
- *
- * Uses the recursive computation of associated Legendre polynomials:
- *   P_l^m = ((2l-1)*cos(theta)*P_{l-1}^m - (l-1+m)*P_{l-2}^m) / (l-m)
- *   P_l^{l-1} = (2l-1)*cos(theta)*P_{l-1}^{l-1}
- *   P_l^l = (-1)^l * (2l-1)!! * sin^l(theta)
- *
- * Real spherical harmonics are defined as:
- *   Y_{lm} = c_l * P_l^0                           for m = 0
- *   Y_{l,2m-1} = c_l * sqrt(2/(l-m)!/(l+m)!) * P_l^m * cos(m*phi)  for m > 0
- *   Y_{l,2m}   = c_l * sqrt(2/(l-m)!/(l+m)!) * P_l^m * sin(m*phi)  for m > 0
- * where c_l = sqrt((2l+1)/(4*pi))
- *
- * @tparam L Maximum angular momentum (compile-time constant)
- * @param x, y, z Direction vector components (need not be normalized)
- * @param ylm Output array storing Y_lm values in order: Y_00, Y_10, Y_11c, Y_11s, ...
- */
-template <int L>
-__device__ void compute_ylm_gpu(double x, double y, double z, double* ylm)
-{
-
-    constexpr int P_SIZE = (L + 1) * (L + 2) / 2; // Lower triangular storage size
-
-    // Y_00 = 1/(2*sqrt(pi))
-    ylm[0] = 0.5 * sqrt(1.0 / ModuleBase::PI);
-
-    if (L == 0)
-    {
-        return;
-    }
-
-    // Compute spherical angles
-    double r2 = x * x + y * y + z * z;
-    double r = sqrt(r2);
-
-    double cost, sint, phi;
-    if (r < 1e-10)
-    {
-        // At origin, default to z-axis direction
-        cost = 1.0;
-        sint = 0.0;
-        phi = 0.0;
-    }
-    else
-    {
-        cost = z / r;
-        sint = sqrt(1.0 - cost * cost);
-        phi = atan2(y, x);
-    }
-
-    // Ensure sint is non-negative (numerical safety)
-    if (sint < 0.0)
-    {
-        sint = 0.0;
-    }
-
-    // Associated Legendre polynomials P_l^m in lower-triangular storage
-    double p[P_SIZE];
-
-    // Base cases
-    p_access(p, 0, 0) = 1.0;
-
-    if (L >= 1)
-    {
-        p_access(p, 1, 0) = cost;  // P_1^0 = cos(theta)
-        p_access(p, 1, 1) = -sint; // P_1^1 = -sin(theta)
-    }
-
-    // Recurrence relations for l >= 2
-#pragma unroll
-    for (int l = 2; l <= L; l++)
-    {
-        // P_l^m for m = 0 to l-2: standard recurrence
-#pragma unroll
-        for (int m = 0; m <= l - 2; m++)
-        {
-            p_access(p, l, m) = ((2 * l - 1) * cost * p_get(p, l - 1, m) - (l - 1 + m) * p_get(p, l - 2, m))
-                                / static_cast<double>(l - m);
-        }
-
-        // P_l^{l-1} = (2l-1) * cos(theta) * P_{l-1}^{l-1}
-        p_access(p, l, l - 1) = (2 * l - 1) * cost * p_get(p, l - 1, l - 1);
-
-        // P_l^l = (-1)^l * (2l-1)!! * sin^l(theta)
-        double double_factorial = 1.0;
-#pragma unroll
-        for (int i = 1; i <= 2 * l - 1; i += 2)
-        {
-            double_factorial *= i;
-        }
-
-        double sint_power = 1.0;
-#pragma unroll
-        for (int i = 0; i < l; i++)
-        {
-            sint_power *= sint;
-        }
-
-        p_access(p, l, l) = double_factorial * sint_power;
-        if (l % 2 == 1)
-        {
-            p_access(p, l, l) = -p_access(p, l, l);
-        }
-    }
-
-    // Transform Legendre polynomials to real spherical harmonics
-    int lm = 0;
-#pragma unroll
-    for (int l = 0; l <= L; l++)
-    {
-        double c = sqrt((2.0 * l + 1.0) / ModuleBase::FOUR_PI);
-
-        // m = 0 component
-        ylm[lm] = c * p_get(p, l, 0);
-        lm++;
-
-        // m > 0 components (cosine and sine parts)
-#pragma unroll
-        for (int m = 1; m <= l; m++)
-        {
-            // Compute normalization factor: sqrt(2 * (l-m)! / (l+m)!)
-            double factorial_ratio = 1.0;
-#pragma unroll
-            for (int i = l - m + 1; i <= l + m; i++)
-            {
-                factorial_ratio *= i;
-            }
-            double norm = c * sqrt(1.0 / factorial_ratio) * ModuleBase::SQRT2;
-
-            double sin_mphi, cos_mphi;
-            sincos(m * phi, &sin_mphi, &cos_mphi);
-
-            ylm[lm] = norm * p_get(p, l, m) * cos_mphi; // Y_{l,m} cosine part
-            lm++;
-
-            ylm[lm] = norm * p_get(p, l, m) * sin_mphi; // Y_{l,m} sine part
-            lm++;
-        }
-    }
-}
-
-// Explicit template instantiations for L = 0, 1, 2, 3, 4
-template __device__ void compute_ylm_gpu<0>(double x, double y, double z, double* ylm);
-template __device__ void compute_ylm_gpu<1>(double x, double y, double z, double* ylm);
-template __device__ void compute_ylm_gpu<2>(double x, double y, double z, double* ylm);
-template __device__ void compute_ylm_gpu<3>(double x, double y, double z, double* ylm);
-template __device__ void compute_ylm_gpu<4>(double x, double y, double z, double* ylm);
-
-//=============================================================================
 // Warp-Level Reduction
 //=============================================================================
 
@@ -359,7 +182,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 
         // Precompute Y_lm for projector (independent of radial distance)
         double ylm0[MAX_YLM_SIZE];
-        DISPATCH_YLM(L0, leb_x, leb_y, leb_z, ylm0);
+        ModuleBase::sph_harm(L0, leb_x, leb_y, leb_z, ylm0);
         const int offset_L0 = L0 * L0;
 
         // Precompute A · direction (for phase factor)
@@ -397,11 +220,11 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 if (tnorm > 1e-10)
                 {
                     const double inv_tnorm = 1.0 / tnorm;
-                    DISPATCH_YLM(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
+                    ModuleBase::sph_harm(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
                 }
                 else
                 {
-                    DISPATCH_YLM(L1, 0.0, 0.0, 1.0, ylm1);
+                    ModuleBase::sph_harm(L1, 0.0, 0.0, 1.0, ylm1);
                 }
 
                 // Interpolate orbital radial function
