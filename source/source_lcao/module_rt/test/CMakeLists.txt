@@ -48,6 +48,6 @@ AddTest(
           ../../../source_pw/module_pwdft/soc.cpp
           ../../../source_cell/atom_pseudo.cpp
           ../../../source_cell/pseudo.cpp
-          ../../../source_io/output.cpp
+          ../../../source_io/module_output/output.cpp
 )
 
