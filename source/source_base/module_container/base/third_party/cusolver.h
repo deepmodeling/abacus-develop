@@ -19,8 +19,8 @@
 namespace container {
 namespace cuSolverConnector {
 
-#if CUDA_VERSION >= 11000
-// Generic trtri using cuSOLVER generic API (CUDA 11.0+)
+#if CUDA_VERSION >= 11040
+// Generic trtri using cuSOLVER generic API (CUDA 11.4+)
 template <typename T>
 static inline
 void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
@@ -50,13 +50,13 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cudaErrcheck(cudaFree(d_info));
 }
 #else
-// For CUDA < 11.0, trtri is not available in cuSOLVER
+// For CUDA < 11.4, trtri is not available in cuSOLVER
 // Provide a stub that throws an error if called
 template <typename T>
 static inline
 void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
 {
-    throw std::runtime_error("trtri: cusolverDnXtrtri is not available in CUDA < 11.0. Please upgrade CUDA or use an alternative method.");
+    throw std::runtime_error("trtri: cusolverDnXtrtri is not available in CUDA < 11.4. Please upgrade CUDA to version 11.4 or later.");
 }
 #endif
 
