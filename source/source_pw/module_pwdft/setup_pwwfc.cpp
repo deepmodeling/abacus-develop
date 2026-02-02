@@ -1,7 +1,7 @@
 #include "source_pw/module_pwdft/setup_pwwfc.h" // pw_wfc
 #include "source_base/parallel_comm.h" // POOL_WORLD
 #include "source_base/parallel_reduce.h" // Parallel_Reduce
-#include "source_io/print_info.h" // print information
+#include "source_io/module_output/print_info.h" // print information
 
 void pw::teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc)
 {

@@ -6,7 +6,7 @@
 
 #include "pot_base.h"
 #include "source_pw/module_ofdft/ml_tools/nn_of.h"
-#include "source_io/cal_mlkedf_descriptors.h"
+#include "source_io/module_ml/cal_mlkedf_descriptors.h"
 #include "source_pw/module_ofdft/ml_base.h"
 
 namespace elecstate

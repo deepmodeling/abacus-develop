@@ -6,7 +6,7 @@
 #include "md_func.h"
 #include "source_base/global_file.h"
 #include "source_base/timer.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "msst.h"
 #include "nhchain.h"
 #include "verlet.h"

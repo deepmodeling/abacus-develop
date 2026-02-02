@@ -3,7 +3,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "source_cell/update_cell.h"
 MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) 
 : mdp(param_in.mdp), ucell(unit_in)

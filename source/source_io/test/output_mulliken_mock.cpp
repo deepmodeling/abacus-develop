@@ -66,8 +66,8 @@ std::vector<double> read_k(std::string filename, int ik)
 
 } // namespace ModuleIO
 
-#include "source_io/output_dmk.h"
-#include "source_io/output_sk.h"
+#include "source_io/module_mulliken/output_dmk.h"
+#include "source_io/module_mulliken/output_sk.h"
 
 namespace ModuleIO
 {

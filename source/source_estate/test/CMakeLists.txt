@@ -83,7 +83,7 @@ AddTest(
   LIBS parameter  ${math_libs} planewave_serial base device cell_info
   SOURCES charge_test.cpp ../module_charge/charge.cpp
     ../module_charge/charge_atomic.cpp ../module_charge/charge_delta.cpp
-    ../../source_io/output.cpp
+    ../../source_io/module_output/output.cpp
 )
 
 AddTest(
@@ -93,14 +93,14 @@ AddTest(
   charge_mixing_test_mix.cpp charge_mixing_test_delta.cpp
   ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
   ../module_charge/charge_mixing_preconditioner.cpp ../module_charge/charge_mixing_rho.cpp
-  ../module_charge/charge_mixing_uspp.cpp ../module_charge/charge_mixing_dfpt.cpp ../../source_io/output.cpp
+  ../module_charge/charge_mixing_uspp.cpp ../module_charge/charge_mixing_dfpt.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET charge_extra
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../source_io/read_cube.cpp ../../source_io/write_cube.cpp
-  ../../source_io/output.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+  ../../source_io/module_output/output.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
 endif()

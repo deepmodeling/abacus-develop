@@ -1,7 +1,7 @@
 #include "source_lcao/LCAO_set.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/setup_psi.h" // use Setup_Psi
-#include "source_io/read_wfc_nao.h" // use read_wfc_nao
+#include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao
 #include "source_estate/elecstate_tools.h" // use fixed_weights
 #include "source_lcao/module_hcontainer/read_hcontainer.h"
 
