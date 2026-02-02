@@ -69,6 +69,6 @@ AddTest(
     ../../../source_io/sparse_matrix.cpp
     ../../../source_io/csr_reader.cpp
     ../../../source_io/file_reader.cpp
-    ../../../source_io/output.cpp
+    ../../../source_io/module_output/output.cpp
 )
 endif() 

@@ -19,7 +19,7 @@ AddTest(
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
     ../../source_base/module_external/blas_connector_base.cpp ../../source_base/module_external/blas_connector_vector.cpp ../../source_base/module_external/blas_connector_matrix.cpp
-    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_io/output.cpp
+    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_io/module_output/output.cpp
     LIBS parameter ${math_libs} 
 )
 
@@ -27,7 +27,7 @@ list(APPEND cell_source_files
     ../../source_cell/update_cell.cpp
     ../../source_cell/bcast_cell.cpp
     ../../source_cell/print_cell.cpp
-    ../../source_io/output.cpp
+    ../../source_io/module_output/output.cpp
 )
 AddTest(
   TARGET lattice_change_methods_test

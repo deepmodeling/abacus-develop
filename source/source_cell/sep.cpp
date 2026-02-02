@@ -3,7 +3,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
-#include "source_io/output.h"
+#include "source_io/module_output/output.h"
 
 #include <fstream>
 #include <sstream>

@@ -1,9 +1,9 @@
 
-#include "../output_mulliken.h"
+#include "../module_mulliken/output_mulliken.h"
 
 #include "source_cell/cell_index.h"
-#include "source_io/output_dmk.h"
-#include "source_io/output_sk.h"
+#include "source_io/module_mulliken/output_dmk.h"
+#include "source_io/module_mulliken/output_sk.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

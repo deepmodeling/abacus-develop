@@ -14,9 +14,9 @@
 #include "source_estate/magnetism.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/cube_io.h"
-#include "source_io/rhog_io.h"
-#include "source_io/read_wf2rho_pw.h"
-#include "source_io/restart.h"
+#include "source_io/module_chgpot/rhog_io.h"
+#include "source_io/module_wf/read_wf2rho_pw.h"
+#include "source_io/module_restart/restart.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_cell/klist.h"
 

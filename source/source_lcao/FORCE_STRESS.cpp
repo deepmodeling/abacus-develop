@@ -1,7 +1,7 @@
 #include "FORCE_STRESS.h"
 
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 // new
 #include "source_base/timer.h"

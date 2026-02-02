@@ -94,7 +94,7 @@ void hamilt::onsite_ps_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const bas
                                      reinterpret_cast<thrust::complex<FPTYPE>*>(ps),          // array of data
                                      reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -124,7 +124,7 @@ void hamilt::onsite_ps_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const bas
                                      reinterpret_cast<thrust::complex<FPTYPE>*>(ps),          // array of data
                                      reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }
 

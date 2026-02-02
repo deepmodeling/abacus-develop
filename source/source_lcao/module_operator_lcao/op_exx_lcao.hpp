@@ -7,9 +7,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/restart_exx_csr.h"
+#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_rt/td_info.h"
-#include "source_io/restart.h"
+#include "source_io/module_restart/restart.h"
 
 namespace hamilt
 {
