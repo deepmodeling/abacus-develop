@@ -188,7 +188,7 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                           const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
-    hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
+    hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incy));
 }
 
 template <>
@@ -205,7 +205,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
                                                                        const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
-    hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx));
+    hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incy));
 }
 
 template <>
@@ -222,7 +222,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
                                                                         const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
-    hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incx));
+    hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incy));
 }
 
 template <>
