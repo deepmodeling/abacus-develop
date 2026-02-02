@@ -20,6 +20,8 @@ list(APPEND objects
     module_pot/pot_sep.cpp
     module_charge/chgmixing.cpp
     module_charge/charge.cpp
+    module_charge/charge_atomic.cpp
+    module_charge/charge_delta.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp
     module_charge/charge_extra.cpp

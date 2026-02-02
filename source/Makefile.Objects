@@ -690,6 +690,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     vnl_pw_grad.o\
     chgmixing.o\
     charge.o\
+    charge_atomic.o\
+    charge_delta.o\
     charge_init.o\
     charge_mpi.o\
     charge_extra.o\
