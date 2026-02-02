@@ -109,8 +109,30 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
 
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
+                                #ifdef __SW
+                                const std::complex<FPTYPE>& dbecp_val = dbecp[ipol * nbands * nkb + ib * nkb + inkb];
+                                uint64_t* parts = reinterpret_cast<uint64_t*>(const_cast<std::complex<FPTYPE>*>(&dbecp_val));
+                                uint64_t exp_real = (parts[0] >> 52) & 0x7FF;
+                                uint64_t exp_imag = (parts[1] >> 52) & 0x7FF;
+                                if ((exp_real <= 923) || (exp_imag <= 923)) {
+                                    continue;
+                                }
+                                const std::complex<FPTYPE>& becp_val = becp[ib * nkb + inkb];
+                                uint64_t* becp_parts = reinterpret_cast<uint64_t*>(const_cast<std::complex<FPTYPE>*>(&becp_val));
+                                uint64_t becp_exp_real = (becp_parts[0] >> 52) & 0x7FF;
+                                uint64_t becp_exp_imag = (becp_parts[1] >> 52) & 0x7FF;
+                                if ((becp_exp_real <= 923) || (becp_exp_imag <= 923)) {
+                                    continue;
+                                }
+                                uint64_t* lf_parts = reinterpret_cast<uint64_t*>(const_cast<FPTYPE*>(&local_force[ipol]));
+                                uint64_t lf_exp = (lf_parts[0] >> 52) & 0x7FF;
+                                if (lf_exp <= 923) {
+                                    continue;
+                                }
+                                #endif
                                 const FPTYPE dbb
-                                    = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) * becp[ib * nkb + inkb])
+                                    = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) 
+                                    * becp[ib * nkb + inkb])
                                           .real();
                                 local_force[ipol] -= ps * fac * dbb;
                                 // cf[iat*3+ipol] += ps * fac * dbb;
