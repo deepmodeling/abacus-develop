@@ -1,7 +1,7 @@
 #ifndef WRITE_EBAND_TERMS_HPP
 #define WRITE_EBAND_TERMS_HPP
  
-#include "source_io/write_vxc.hpp"
+#include "source_io/module_hs/write_vxc.hpp"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_basis/module_nao/two_center_bundle.h"

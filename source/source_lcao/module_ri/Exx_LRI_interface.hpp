@@ -9,10 +9,10 @@
 #include "source_base/formatter.h"
 
 #include "source_io/csr_reader.h"
-#include "source_io/write_HS_sparse.h"
+#include "source_io/module_hs/write_HS_sparse.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
-#include "source_io/restart.h"
+#include "source_io/module_restart/restart.h"
 
 #include <sys/time.h>
 #include <stdexcept>

@@ -1,114 +1,114 @@
 list(APPEND objects
-    input_conv.cpp
-    ctrl_output_fp.cpp
-    ctrl_output_pw.cpp
-    ctrl_output_td.cpp
-    bessel_basis.cpp
+    module_parameter/input_conv.cpp
+    module_ctrl/ctrl_output_fp.cpp
+    module_ctrl/ctrl_output_pw.cpp
+    module_ctrl/ctrl_output_td.cpp
+    module_bessel/bessel_basis.cpp
     cal_test.cpp
-    cal_dos.cpp
-    cal_ldos.cpp
-    cal_mlkedf_descriptors.cpp
+    module_dos/cal_dos.cpp
+    module_dos/cal_ldos.cpp
+    module_ml/cal_mlkedf_descriptors.cpp
     cif_io.cpp
-    write_dos_pw.cpp
+    module_dos/write_dos_pw.cpp
     write_bands.cpp
     nscf_fermi_surf.cpp
     write_eig_occ.cpp
-    numerical_basis.cpp
-    numerical_basis_jyjy.cpp
-    numerical_descriptor.cpp
-    output.cpp
-    print_info.cpp
+    module_bessel/numerical_basis.cpp
+    module_bessel/numerical_basis_jyjy.cpp
+    module_bessel/numerical_descriptor.cpp
+    module_output/output.cpp
+    module_output/print_info.cpp
     read_cube.cpp
-    rhog_io.cpp
+    module_chgpot/rhog_io.cpp
     read_exit_file.cpp
-    read_wfc_pw.cpp
-    read_wf2rho_pw.cpp
-    restart.cpp
+    module_wf/read_wfc_pw.cpp
+    module_wf/read_wf2rho_pw.cpp
+    module_restart/restart.cpp
     binstream.cpp
-    write_wfc_pw.cpp
-    write_pao.cpp
+    module_wf/write_wfc_pw.cpp
+    module_output/write_pao.cpp
     write_cube.cpp
-    write_elecstat_pot.cpp
-    write_elf.cpp
+    module_chgpot/write_elecstat_pot.cpp
+    module_elf/write_elf.cpp
     write_dipole.cpp
-    write_init.cpp
-    write_mlkedf_descriptors.cpp
-    td_current_io.cpp
-    td_current_io_comm.cpp
+    module_chgpot/write_init.cpp
+    module_ml/write_mlkedf_descriptors.cpp
+    module_current/td_current_io.cpp
+    module_current/td_current_io_comm.cpp
     write_libxc_r.cpp
-    output_log.cpp
+    module_output/output_log.cpp
     para_json.cpp
     parse_args.cpp
     orb_io.cpp
-    filename.cpp
+    module_output/filename.cpp
 )
 
 list(APPEND objects_advanced
-    unk_overlap_pw.cpp
-    berryphase.cpp
-    to_wannier90.cpp
-    to_wannier90_pw.cpp
-    to_wannier90_lcao_in_pw.cpp
-    to_wannier90_lcao.cpp
+    module_unk/unk_overlap_pw.cpp
+    module_unk/berryphase.cpp
+    module_wannier/to_wannier90.cpp
+    module_wannier/to_wannier90_pw.cpp
+    module_wannier/to_wannier90_lcao_in_pw.cpp
+    module_wannier/to_wannier90_lcao.cpp
     fR_overlap.cpp
 )
 
 if(ENABLE_LCAO)
   list(APPEND objects
-      write_dos_lcao.cpp
-      cal_pdos_gamma.cpp
-      cal_pdos_multik.cpp
+      module_dos/write_dos_lcao.cpp
+      module_dos/cal_pdos_gamma.cpp
+      module_dos/cal_pdos_multik.cpp
       write_orb_info.cpp
       write_proj_band_lcao.cpp
-      get_pchg_lcao.cpp
-      get_wf_lcao.cpp
-      read_wfc_nao.cpp
-      write_wfc_nao.cpp
-      write_dmk.cpp
-      write_dmr.cpp
+      module_chgpot/get_pchg_lcao.cpp
+      module_wf/get_wf_lcao.cpp
+      module_wf/read_wfc_nao.cpp
+      module_wf/write_wfc_nao.cpp
+      module_dm/write_dmk.cpp
+      module_dm/write_dmr.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
-      to_qo_kernel.cpp
-      to_qo_mpi.cpp
-      to_qo_structures.cpp
-      output_sk.cpp
-      output_dmk.cpp
-      output_mulliken.cpp
-      io_npz.cpp
+      module_qo/to_qo_kernel.cpp
+      module_qo/to_qo_mpi.cpp
+      module_qo/to_qo_structures.cpp
+      module_mulliken/output_sk.cpp
+      module_mulliken/output_dmk.cpp
+      module_mulliken/output_mulliken.cpp
+      module_ml/io_npz.cpp
       cal_pLpR.cpp
   )
-  list(APPEND objects_advanced
-      unk_overlap_lcao.cpp
-      write_HS_R.cpp
-      write_HS_sparse.cpp
+  list(APPEND objects_advanced	   
+      module_unk/unk_overlap_lcao.cpp
+      module_hs/write_HS_R.cpp
+      module_hs/write_HS_sparse.cpp
       single_R_io.cpp
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
-      ctrl_scf_lcao.cpp
-      ctrl_runner_lcao.cpp
-      ctrl_iter_lcao.cpp
+      module_ctrl/ctrl_scf_lcao.cpp
+      module_ctrl/ctrl_runner_lcao.cpp
+      module_ctrl/ctrl_iter_lcao.cpp
   )
 endif()
 
 add_library(
     io_input
     OBJECT
-    read_input_item_system.cpp
-    read_input_item_elec_stru.cpp
-    read_input_item_relax.cpp
-    read_input_item_md.cpp
-    read_input_item_ofdft.cpp
-    read_input_item_sdft.cpp
-    read_input_item_tddft.cpp
-    read_input_item_deepks.cpp
-    read_input_item_model.cpp
-    read_input_item_postprocess.cpp  
-    read_input_item_exx_dftu.cpp
-    read_input_item_other.cpp   
-    read_input_item_output.cpp  
-    read_input.cpp
-    read_set_globalv.cpp
+    module_parameter/read_input_item_system.cpp
+    module_parameter/read_input_item_elec_stru.cpp
+    module_parameter/read_input_item_relax.cpp
+    module_parameter/read_input_item_md.cpp
+    module_parameter/read_input_item_ofdft.cpp
+    module_parameter/read_input_item_sdft.cpp
+    module_parameter/read_input_item_tddft.cpp
+    module_parameter/read_input_item_deepks.cpp
+    module_parameter/read_input_item_model.cpp
+    module_parameter/read_input_item_postprocess.cpp  
+    module_parameter/read_input_item_exx_dftu.cpp
+    module_parameter/read_input_item_other.cpp   
+    module_parameter/read_input_item_output.cpp  
+    module_parameter/read_input.cpp
+    module_parameter/read_set_globalv.cpp
 )
 
 add_library(
