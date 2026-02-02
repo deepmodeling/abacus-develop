@@ -3,6 +3,7 @@
 #include "gint_helper.h"
 #include "batch_biggrid.h"
 #include "kernel/phi_operator_gpu.h"
+#include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
 {
@@ -33,10 +34,10 @@ void Gint_fvl_gpu::transfer_cpu_to_gpu_()
     for (int is = 0; is < nspin_; is++)
     {
         dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is].get_nnr(), 0, false);
-        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
+        CHECK_CUDA(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
                              dm_gint_vec_[is].get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
         vr_eff_d_vec_[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
-        checkCuda(cudaMemcpy(vr_eff_d_vec_[is].get_device_ptr(), vr_eff_[is],
+        CHECK_CUDA(cudaMemcpy(vr_eff_d_vec_[is].get_device_ptr(), vr_eff_[is],
                              gint_info_->get_local_mgrid_num() * sizeof(double), cudaMemcpyHostToDevice));
     }
     if (isforce_)
@@ -81,9 +82,9 @@ void Gint_fvl_gpu::cal_fvl_svl_()
     {
         // 20240620 Note that it must be set again here because 
         // cuda's device is not safe in a multi-threaded environment.
-        checkCuda(cudaSetDevice(gint_info_->get_dev_id()));
+        CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
-        checkCuda(cudaStreamCreate(&stream));
+        CHECK_CUDA(cudaStreamCreate(&stream));
         PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
@@ -126,8 +127,8 @@ void Gint_fvl_gpu::cal_fvl_svl_()
                 }
             }
        }
-       checkCuda(cudaStreamSynchronize(stream));
-       checkCuda(cudaStreamDestroy(stream));
+       CHECK_CUDA(cudaStreamSynchronize(stream));
+       CHECK_CUDA(cudaStreamDestroy(stream));
     }
     transfer_gpu_to_cpu_();
 }

@@ -246,6 +246,19 @@ void ReadInput::item_system()
                 para.input.kpar = 1;
             }
 #endif
+            // GPU + PW: validate kpar against total processors
+            // Moved from base_device::information::get_device_kpar()
+#if defined(__CUDA) || defined(__ROCM)
+            if (para.input.device == "gpu" && para.input.basis_type == "pw")
+            {
+                if (GlobalV::NPROC != para.input.kpar * para.input.bndpar)
+                {
+                    para.input.kpar = GlobalV::NPROC / para.input.bndpar;
+                    ModuleBase::WARNING("ReadInput",
+                        "kpar is not compatible with the number of processors, auto set kpar value.");
+                }
+            }
+#endif
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)

@@ -18,33 +18,12 @@
 #define SNAP_PSIBETA_KERNEL_CUH
 
 #include "source_base/tool_quit.h"
+#include "source_base/module_device/device_check.h"
 
 #include <cstdio>
 #include <cuComplex.h>
 #include <cuda_runtime.h>
 #include <string>
-
-//=============================================================================
-// CUDA Error Checking Macro
-//=============================================================================
-
-/**
- * @brief CUDA error checking macro with file/line information
- *
- * Checks the return value of CUDA API calls and calls WARNING_QUIT
- * with error information if the call fails.
- */
-#define CUDA_CHECK(call)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        cudaError_t err = (call);                                                                                      \
-        if (err != cudaSuccess)                                                                                        \
-        {                                                                                                              \
-            ModuleBase::WARNING_QUIT("CUDA_CHECK",                                                                     \
-                                     std::string("Error at ") + __FILE__ + ":" + std::to_string(__LINE__) + " - "      \
-                                         + cudaGetErrorString(err));                                                   \
-        }                                                                                                              \
-    } while (0)
 
 namespace module_rt
 {

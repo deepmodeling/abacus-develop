@@ -148,7 +148,7 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
         p,
         ylm);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;
