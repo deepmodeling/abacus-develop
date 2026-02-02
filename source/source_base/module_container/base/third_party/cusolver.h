@@ -19,8 +19,95 @@
 namespace container {
 namespace cuSolverConnector {
 
-#if CUDA_VERSION >= 11040
-// Generic trtri using cuSOLVER generic API (CUDA 11.4+)
+// Legacy trtri using cuSOLVER legacy API (CUDA < 11.4)
+// The legacy functions (cusolverDnStrtri, cusolverDnDtrtri, etc.) were removed in CUDA 11.4
+#if CUDA_VERSION < 11040
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float* A, const int& lda)
+{
+    int lwork = 0;
+    int h_info = 0;
+    int* d_info = nullptr;
+    float* d_work = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverErrcheck(cusolverDnStrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
+    cusolverErrcheck(cusolverDnStrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
+
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        throw std::runtime_error("trtri: failed to invert matrix");
+    }
+    cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, double* A, const int& lda)
+{
+    int lwork = 0;
+    int h_info = 0;
+    int* d_info = nullptr;
+    double* d_work = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverErrcheck(cusolverDnDtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
+    cusolverErrcheck(cusolverDnDtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
+
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        throw std::runtime_error("trtri: failed to invert matrix");
+    }
+    cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<float>* A, const int& lda)
+{
+    int lwork = 0;
+    int h_info = 0;
+    int* d_info = nullptr;
+    cuComplex* d_work = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverErrcheck(cusolverDnCtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
+    cusolverErrcheck(cusolverDnCtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, d_work, lwork, d_info));
+
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        throw std::runtime_error("trtri: failed to invert matrix");
+    }
+    cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+
+static inline
+void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<double>* A, const int& lda)
+{
+    int lwork = 0;
+    int h_info = 0;
+    int* d_info = nullptr;
+    cuDoubleComplex* d_work = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverErrcheck(cusolverDnZtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, &lwork));
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+    cusolverErrcheck(cusolverDnZtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, d_work, lwork, d_info));
+
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        throw std::runtime_error("trtri: failed to invert matrix");
+    }
+    cudaErrcheck(cudaFree(d_work));
+    cudaErrcheck(cudaFree(d_info));
+}
+#else
+// Generic trtri using cuSOLVER generic API (CUDA >= 11.4)
+// The generic API (cusolverDnXtrtri) was introduced in CUDA 11.4 to replace the legacy functions
 template <typename T>
 static inline
 void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
@@ -48,15 +135,6 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     free(h_work);
     cudaErrcheck(cudaFree(d_work));
     cudaErrcheck(cudaFree(d_info));
-}
-#else
-// For CUDA < 11.4, trtri is not available in cuSOLVER
-// Provide a stub that throws an error if called
-template <typename T>
-static inline
-void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
-{
-    throw std::runtime_error("trtri: cusolverDnXtrtri is not available in CUDA < 11.4. Please upgrade CUDA to version 11.4 or later.");
 }
 #endif
 
