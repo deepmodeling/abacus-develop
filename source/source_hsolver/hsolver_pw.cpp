@@ -544,8 +544,8 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     // Store k-points and corresponding indices
     struct KPoint {
         ModuleBase::Vector3<double> kvec;
-        int index;
-        double norm;
+        int index = 0;
+        double norm = 0.0;
 
         KPoint(const ModuleBase::Vector3<double>& v, int i) :
             kvec(v), index(i), norm(v.norm()) {}

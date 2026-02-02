@@ -149,7 +149,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                 for (int iq0 = 0; iq0 < nqs; iq0++)
                 {
                     // For nspin=2, iq should be in the same spin channel as ik
-                    int iq;
+                    int iq = 0;
 
                     int nk = wfcpw->nks / 2;
                     iq = iq0 + ispin * nk; // iq in the same spin channel

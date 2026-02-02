@@ -246,7 +246,7 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
 								continue;
 							}
 
-                            int iic;
+                            int iic = 0;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
                                 iic = mu + nu * pv.nrow;

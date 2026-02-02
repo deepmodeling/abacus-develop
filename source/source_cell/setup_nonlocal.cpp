@@ -312,7 +312,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false))
             {
-                int iproj;
+                int iproj = 0;
                 ModuleBase::GlobalFunc::READ_VALUE(ifs, iproj);
                 if (iproj != p1)
                 {

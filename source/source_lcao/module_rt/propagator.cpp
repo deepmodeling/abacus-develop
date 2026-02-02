@@ -24,7 +24,7 @@ void Propagator::compute_propagator(const int nlocal,
                                     std::ofstream& ofs_running,
                                     const int print_matrix) const
 {
-    int tag;
+    int tag = 0;
     switch (ptype)
     {
     case 0:
@@ -56,7 +56,7 @@ void Propagator::compute_propagator_tensor(const int nlocal,
                                            const int print_matrix,
                                            const bool use_lapack) const
 {
-    int tag;
+    int tag = 0;
     switch (ptype)
     {
     case 0:
