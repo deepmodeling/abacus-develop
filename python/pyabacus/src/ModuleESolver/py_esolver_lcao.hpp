@@ -13,6 +13,13 @@
 #include <map>
 #include <tuple>
 
+#include "../utils/pybind_utils.h"
+#include "interfaces/i_scf_controller.hpp"
+#include "interfaces/i_hamiltonian_builder.hpp"
+#include "interfaces/i_charge_mixer.hpp"
+#include "interfaces/i_diagonalizer.hpp"
+#include "components/scf_controller_lcao.hpp"
+
 // Forward declarations for ABACUS types
 class UnitCell;
 class Charge;
@@ -260,7 +267,8 @@ private:
 /**
  * @brief Main wrapper class for ESolver_KS_LCAO
  *
- * Provides Python interface for LCAO calculations with breakpoint support
+ * Provides Python interface for LCAO calculations with breakpoint support.
+ * Now uses the component-based architecture with ISCFController.
  *
  * Template parameters:
  *   TK: Type for k-space quantities (double for gamma-only, complex<double> for multi-k)
@@ -359,6 +367,80 @@ public:
     /// Get number of atoms
     int get_nat() const;
 
+    // ==================== Component Access (New API) ====================
+
+    /// Get SCF controller component
+    pyabacus::esolver::ISCFController* get_scf_controller()
+    {
+        return scf_controller_.get();
+    }
+
+    /// Get Hamiltonian builder component
+    pyabacus::esolver::IHamiltonianBuilder<TK, TR>* get_hamiltonian_builder()
+    {
+        if (scf_controller_)
+        {
+            return static_cast<pyabacus::esolver::IHamiltonianBuilder<TK, TR>*>(
+                scf_controller_->get_hamiltonian_builder());
+        }
+        return nullptr;
+    }
+
+    /// Get charge mixer component
+    pyabacus::esolver::IChargeMixer* get_charge_mixer()
+    {
+        if (scf_controller_)
+        {
+            return scf_controller_->get_charge_mixer();
+        }
+        return nullptr;
+    }
+
+    /// Get diagonalizer component
+    pyabacus::esolver::IDiagonalizer<TK>* get_diagonalizer()
+    {
+        if (scf_controller_)
+        {
+            return static_cast<pyabacus::esolver::IDiagonalizer<TK>*>(
+                scf_controller_->get_diagonalizer());
+        }
+        return nullptr;
+    }
+
+    // ==================== Configuration (New API) ====================
+
+    /// Set SCF convergence criteria
+    void set_convergence_criteria(double drho_threshold, double energy_threshold, int max_iter)
+    {
+        pyabacus::esolver::SCFConvergenceCriteria criteria;
+        criteria.drho_threshold = drho_threshold;
+        criteria.energy_threshold = energy_threshold;
+        criteria.max_iterations = max_iter;
+
+        if (auto* ctrl = dynamic_cast<pyabacus::esolver::SCFControllerLCAO<TK, TR>*>(scf_controller_.get()))
+        {
+            ctrl->set_convergence_criteria(criteria);
+        }
+    }
+
+    /// Set mixing parameters
+    void set_mixing_beta(double beta)
+    {
+        if (auto* mixer = get_charge_mixer())
+        {
+            mixer->set_mixing_beta(beta);
+        }
+    }
+
+    /// Set mixing method
+    void set_mixing_method(const std::string& method)
+    {
+        if (auto* mixer = get_charge_mixer())
+        {
+            mixer->set_mixing_method(pyabacus::esolver::string_to_mixing_method(method));
+        }
+    }
+
 private:
     // Internal state
     bool initialized_ = false;
@@ -376,6 +458,9 @@ private:
 
     // Flag to indicate if we own the esolver (for cleanup)
     bool owns_esolver_ = false;
+
+    // Component-based SCF controller (new architecture)
+    std::unique_ptr<pyabacus::esolver::SCFControllerLCAO<TK, TR>> scf_controller_;
 };
 
 // Type aliases for common use cases
