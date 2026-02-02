@@ -233,7 +233,7 @@ void add<T, Device>::operator()(const int& num_element, const T& alpha, const T*
         num_element, alpha_, reinterpret_cast<const Type*>(x),
         beta_, reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device>
@@ -245,7 +245,7 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
         num_element, alpha_,
         reinterpret_cast<const Type*>(x),  reinterpret_cast<Type*>(y));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device>
@@ -257,7 +257,7 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
         num_element, alpha_,
         reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device>
@@ -268,7 +268,7 @@ void div<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     do_div_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device>
@@ -281,7 +281,7 @@ void fma<T, Device>::operator()(const int& num_element, const T& alpha, const T*
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y),
         beta_, reinterpret_cast<const Type*>(z), reinterpret_cast<Type*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device, bool Conjugate>
@@ -325,7 +325,7 @@ void transpose<T, Device, Conjugate>::operator()(
         ndim, num_elements, p_, t_perm.data<int>(),
         t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template<typename T, typename Device>
@@ -368,7 +368,7 @@ void stride<T, Device>::operator()(
     do_stride_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         ndim, num_elements, p_, t_stride.data<int64_t>(), t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 
@@ -412,7 +412,7 @@ void inflate<T, Device>::operator()(
     do_inflate_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         ndim, num_elements, p_, t_stride.data<int64_t>(), t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 
@@ -432,7 +432,7 @@ void reduce<T, Device>::operator()(
     do_reduce_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, inner_most_dim, p_, q_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct add<int, DEVICE_GPU>;

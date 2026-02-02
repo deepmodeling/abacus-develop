@@ -2,6 +2,7 @@
 #include "gint_helper.cuh"
 #include "sph.cuh"
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/kernel_compat.h"
 
 namespace ModuleGint
 {

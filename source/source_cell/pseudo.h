@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include "source_base/global_function.h"
-#include "source_io/output.h"
+#include "source_io/module_output/output.h"
 
 //-----------------------------------------
 // read in pseudopotentials

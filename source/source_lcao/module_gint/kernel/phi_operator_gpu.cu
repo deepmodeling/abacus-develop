@@ -2,6 +2,7 @@
 #include "phi_operator_kernel.cuh"
 #include "dgemm_vbatch.h"
 #include <cuda_runtime.h>
+#include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
 {
@@ -27,12 +28,12 @@ gemm_B_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true),
 gemm_C_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true),
 gemm_alpha_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true)
 {
-    checkCuda(cudaEventCreateWithFlags(&event_, cudaEventDisableTiming));
+    CHECK_CUDA(cudaEventCreateWithFlags(&event_, cudaEventDisableTiming));
 }
 
 PhiOperatorGpu::~PhiOperatorGpu()
 {
-    checkCuda(cudaEventDestroy(event_));
+    CHECK_CUDA(cudaEventDestroy(event_));
 }
 
 void PhiOperatorGpu::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
@@ -51,7 +52,7 @@ void PhiOperatorGpu::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
     phi_len_ = 0;
     int phi_start = 0;
     std::vector<int> mgrids_local_idx;
-    checkCuda(cudaEventSynchronize(event_));
+    CHECK_CUDA(cudaEventSynchronize(event_));
     for (const auto& bgrid : bgrid_batch->get_bgrids())
     {
         atoms_num_info_h[i] = make_int2(bgrid->get_atoms_num(), atoms_accum);
@@ -83,12 +84,12 @@ void PhiOperatorGpu::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
     atoms_bgrids_rcoords_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
     atoms_phi_start_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
     mgrids_local_idx_batch_.copy_host_to_device_async(bgrid_batch->get_batch_size() * mgrids_num_);
-    checkCuda(cudaEventRecord(event_, stream_));
+    CHECK_CUDA(cudaEventRecord(event_, stream_));
 }
 
 void PhiOperatorGpu::set_phi(double* phi_d) const
 {
-    // checkCuda(cudaMemsetAsync(phi_d, 0, phi_len_ * sizeof(double), stream_));
+    // CHECK_CUDA(cudaMemsetAsync(phi_d, 0, phi_len_ * sizeof(double), stream_));
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
     set_phi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
@@ -112,7 +113,7 @@ void PhiOperatorGpu::set_phi(double* phi_d) const
         atoms_phi_start_.get_device_ptr(),
         bgrids_phi_len_.get_device_ptr(),
         phi_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const
@@ -144,7 +145,7 @@ void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_
         dphi_x_d,
         dphi_y_d,
         dphi_z_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
@@ -152,12 +153,12 @@ void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* d
 {
     // Since the underlying implementation of `set_ddphi` uses `ddphi +=` instead of `ddphi =`,
     // the ddphi array needs to be zeroed out at the beginning of the function.
-    checkCuda(cudaMemsetAsync(ddphi_xx_d, 0, phi_len_ * sizeof(double), stream_));
-    checkCuda(cudaMemsetAsync(ddphi_xy_d, 0, phi_len_ * sizeof(double), stream_));
-    checkCuda(cudaMemsetAsync(ddphi_xz_d, 0, phi_len_ * sizeof(double), stream_));
-    checkCuda(cudaMemsetAsync(ddphi_yy_d, 0, phi_len_ * sizeof(double), stream_));
-    checkCuda(cudaMemsetAsync(ddphi_yz_d, 0, phi_len_ * sizeof(double), stream_));
-    checkCuda(cudaMemsetAsync(ddphi_zz_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_xx_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_xy_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_xz_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_yy_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_yz_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(ddphi_zz_d, 0, phi_len_ * sizeof(double), stream_));
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
     set_ddphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
@@ -187,7 +188,7 @@ void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* d
         ddphi_yy_d,
         ddphi_yz_d,
         ddphi_zz_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::phi_mul_vldr3(
@@ -207,7 +208,7 @@ void PhiOperatorGpu::phi_mul_vldr3(
         bgrids_phi_len_.get_device_ptr(),
         bgrids_phi_start_.get_device_ptr(),
         result_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::phi_mul_phi(
@@ -221,7 +222,7 @@ void PhiOperatorGpu::phi_mul_phi(
     int max_m = 0;
     int max_n = 0;
     int max_k = mgrids_num_;
-    checkCuda(cudaEventSynchronize(event_));
+    CHECK_CUDA(cudaEventSynchronize(event_));
     for (int i = 0; i < bgrid_batch_->get_batch_size(); i++)
     {
         auto bgrid = bgrid_batch_->get_bgrids()[i];
@@ -278,7 +279,7 @@ void PhiOperatorGpu::phi_mul_phi(
     gemm_m_.copy_host_to_device_async(ap_num);
     gemm_n_.copy_host_to_device_async(ap_num);
     gemm_k_.copy_host_to_device_async(ap_num);
-    checkCuda(cudaEventRecord(event_, stream_));
+    CHECK_CUDA(cudaEventRecord(event_, stream_));
     
     dgemm_tn_vbatch(max_m,
                     max_n,
@@ -304,13 +305,13 @@ void PhiOperatorGpu::phi_mul_dm(
     const bool is_symm,
     double* phi_dm_d)
 {
-    checkCuda(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(double), stream_));
+    CHECK_CUDA(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(double), stream_));
     // ap_num means number of atom pairs
     int ap_num = 0;
     int max_m = mgrids_num_;
     int max_n = 0;
     int max_k = 0;
-    checkCuda(cudaEventSynchronize(event_));
+    CHECK_CUDA(cudaEventSynchronize(event_));
     for (int i = 0; i < bgrid_batch_->get_batch_size(); i++)
     {
         auto bgrid = bgrid_batch_->get_bgrids()[i];
@@ -371,7 +372,7 @@ void PhiOperatorGpu::phi_mul_dm(
         // so we don't need to copy it to device
         gemm_alpha_.copy_host_to_device_async(ap_num);
     }
-    checkCuda(cudaEventRecord(event_, stream_));
+    CHECK_CUDA(cudaEventRecord(event_, stream_));
 
     auto alpha_ptr = is_symm ? gemm_alpha_.get_device_ptr() : nullptr;
     dgemm_nn_vbatch(max_m,
@@ -406,7 +407,7 @@ void PhiOperatorGpu::phi_dot_phi(
         bgrids_phi_len_.get_device_ptr(),
         bgrids_phi_start_.get_device_ptr(),
         rho_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::phi_dot_dphi(
@@ -432,7 +433,7 @@ void PhiOperatorGpu::phi_dot_dphi(
         gint_gpu_vars_->iat2it_d,
         gint_gpu_vars_->atom_nw_d,
         fvl_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 void PhiOperatorGpu::phi_dot_dphi_r(
@@ -460,7 +461,7 @@ void PhiOperatorGpu::phi_dot_dphi_r(
         gint_gpu_vars_->iat2it_d,
         gint_gpu_vars_->atom_nw_d,
         svl_d);
-    checkCudaLastError();
+    CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
 }
