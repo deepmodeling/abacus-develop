@@ -77,7 +77,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     if (this->device == base_device::GpuDevice)
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
-        // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
+        syncmem_var_h2d_op()(this->d_precondition, this->precondition.data(), nbasis_in);
         resmem_complex_op()(this->d_scc, this->nbase_x * this->nbase_x);
         resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
@@ -369,7 +369,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
          this->one,
          psi_iter + nbase * this->dim,
          this->dim);
-    } else 
+    } else
     {
 #ifdef __DSP
     ModuleBase::gemv_op_mt<T, Device>()

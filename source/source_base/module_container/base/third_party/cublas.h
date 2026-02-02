@@ -152,7 +152,7 @@ void gemv_batched(cublasHandle_t& handle, const char& trans, const int& m, const
 {
     for (int ii = 0; ii < batch_size; ++ii) {
         // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-        cuBlasConnector::gemv(handle, trans, m, n, alpha, A[ii], lda, x[ii], incy, beta, y[ii], incy);
+        cuBlasConnector::gemv(handle, trans, m, n, alpha, A[ii], lda, x[ii], incx, beta, y[ii], incy);
     }
 }
 
