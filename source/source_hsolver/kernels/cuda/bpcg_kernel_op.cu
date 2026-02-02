@@ -387,7 +387,7 @@ void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad
             A, B, C, D,
             n_basis, n_basis_max);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename T>
@@ -412,7 +412,7 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
             A, B, C, D,
             n_basis, n_basis_max);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename T>
@@ -434,7 +434,7 @@ void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nba
     apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
         vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename T>
@@ -455,7 +455,7 @@ void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
     precondition_kernel<Real><<<grid, threads_per_block>>>(
         psi_complex, precondition, eigenvalues, dim, nbase, notconv);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename T>
@@ -471,7 +471,7 @@ void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
     normalize_kernel<Real><<<notconv, thread_per_block, sharedMemSize, 0>>>(
         psi_complex, psi_norm, dim, nbase, notconv);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -487,7 +487,7 @@ void refresh_hcc_scc_vcc_op<double, base_device::DEVICE_GPU>::operator()(const i
     int block = (n + thread - 1) / thread;
     refresh_hcc_scc_vcc_kernel<double, double> <<<block, thread >>> (n, hcc, scc, vcc, ldh, eigenvalue, one);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -505,7 +505,7 @@ void refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_GPU>::opera
                     reinterpret_cast<thrust::complex<float>*>(scc), reinterpret_cast<thrust::complex<float>*>(vcc), ldh, eigenvalue,
                     thrust::complex<float>(one));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -523,7 +523,7 @@ void refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_GPU>::oper
                     reinterpret_cast<thrust::complex<double>*>(scc), reinterpret_cast<thrust::complex<double>*>(vcc), ldh, eigenvalue,
                     thrust::complex<double>(one));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;

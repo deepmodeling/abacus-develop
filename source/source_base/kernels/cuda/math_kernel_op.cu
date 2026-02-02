@@ -27,22 +27,22 @@ struct GetTypeThrust<std::complex<double>> {
 static cublasHandle_t cublas_handle = nullptr;
 
 void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
-    cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
+    CHECK_CUBLAS(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
 void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
-    cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
+    CHECK_CUBLAS(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
-        cublasErrcheck(cublasCreate(&cublas_handle));
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
     }
 }
 
 void destoryBLAShandle(){
     if (cublas_handle != nullptr) {
-        cublasErrcheck(cublasDestroy(cublas_handle));
+        CHECK_CUBLAS(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
     }
 }
@@ -58,7 +58,7 @@ void scal_op<float, base_device::DEVICE_GPU>::operator()(const int& N,
                                                          std::complex<float>* X,
                                                          const int& incx)
 {
-    cublasErrcheck(cublasCscal(cublas_handle, N, (float2*)alpha, (float2*)X, incx));
+    CHECK_CUBLAS(cublasCscal(cublas_handle, N, (float2*)alpha, (float2*)X, incx));
 }
 
 template <>
@@ -67,7 +67,7 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
                                                           std::complex<double>* X,
                                                           const int& incx)
 {
-    cublasErrcheck(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
+    CHECK_CUBLAS(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
 }
 
 template <>
@@ -78,7 +78,7 @@ void axpy_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
                                                           double* Y,
                                                           const int& incY)
 {
-    cublasErrcheck(cublasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY));
+    CHECK_CUBLAS(cublasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY));
 }
 
 template <>
@@ -89,7 +89,7 @@ void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int
                                                                        std::complex<float>* Y,
                                                                        const int& incY)
 {
-    cublasErrcheck(cublasCaxpy(cublas_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
+    CHECK_CUBLAS(cublasCaxpy(cublas_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
 }
 
 template <>
@@ -100,7 +100,7 @@ void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const in
                                                                         std::complex<double>* Y,
                                                                         const int& incY)
 {
-    cublasErrcheck(cublasZaxpy(cublas_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
+    CHECK_CUBLAS(cublasZaxpy(cublas_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
 }
 
 
@@ -175,7 +175,7 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                           const int& incy)
 {
     cublasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
-    cublasErrcheck(cublasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
+    CHECK_CUBLAS(cublasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
 }
 
 template <>
@@ -194,7 +194,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
     cublasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
     cuFloatComplex alpha = make_cuFloatComplex(alpha_in->real(), alpha_in->imag());
     cuFloatComplex beta = make_cuFloatComplex(beta_in->real(), beta_in->imag());
-    cublasErrcheck(cublasCgemv(cublas_handle, cutrans, m, n, &alpha, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta, (cuFloatComplex*)Y, incx));
+    CHECK_CUBLAS(cublasCgemv(cublas_handle, cutrans, m, n, &alpha, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta, (cuFloatComplex*)Y, incx));
 }
 
 template <>
@@ -215,7 +215,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
     cuDoubleComplex beta = make_cuDoubleComplex(beta_in->real(), beta_in->imag());
     // icpc and nvcc have some compatible problems
     // We must use cuDoubleComplex instead of converting std::complex<double>* to cuDoubleComplex*
-    cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, &alpha, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta, (cuDoubleComplex*)Y, incx));
+    CHECK_CUBLAS(cublasZgemv(cublas_handle, cutrans, m, n, &alpha, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta, (cuDoubleComplex*)Y, incx));
 }
 
 template <>
@@ -235,7 +235,7 @@ void gemm_op<float, base_device::DEVICE_GPU>::operator()(const char& transa,
 {
     cublasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
-    cublasErrcheck(cublasSgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
+    CHECK_CUBLAS(cublasSgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
 
 template <>
@@ -255,7 +255,7 @@ void gemm_op<double, base_device::DEVICE_GPU>::operator()(const char& transa,
 {
     cublasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
-    cublasErrcheck(cublasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
+    CHECK_CUBLAS(cublasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
 template <>
 void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const char& transa,
@@ -274,7 +274,7 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
-    cublasErrcheck(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+    CHECK_CUBLAS(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
 }
 
 template <>
@@ -294,7 +294,7 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
-    cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
 }
 
 template <>
@@ -311,7 +311,7 @@ void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const int& 
         double ONE = 1.0, ZERO = 0.0;
 
         // use 'geam' API todo transpose.
-        cublasErrcheck(cublasDgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, input_matrix, col, &ZERO, input_matrix, col, device_temp, col));
+        CHECK_CUBLAS(cublasDgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, input_matrix, col, &ZERO, input_matrix, col, device_temp, col));
     }
     else
     {
@@ -319,7 +319,7 @@ void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const int& 
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<double> <<<block, thread >>> (row, col, input_matrix, device_temp);
 
-        cudaCheckOnDebug();
+        CHECK_CUDA_SYNC();
     }
 
     base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
@@ -348,7 +348,7 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
         ZERO.x = ZERO.y = 0.0;
 
         // use 'geam' API todo transpose.
-        cublasErrcheck(cublasCgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row,
+        CHECK_CUBLAS(cublasCgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row,
                                    reinterpret_cast<const float2 *>(&ONE), (float2*)input_matrix, col,
                                    reinterpret_cast<const float2 *>(&ZERO), (float2*)input_matrix, col, (float2*)device_temp, col));
     } else
@@ -357,7 +357,7 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<thrust::complex<float>> <<<block, thread >>> (row, col, (thrust::complex<float>*)input_matrix, (thrust::complex<float>*)device_temp);
 
-        cudaCheckOnDebug();
+        CHECK_CUDA_SYNC();
     }
 
     base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
@@ -367,7 +367,7 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
 
     base_device::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(device_temp);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 
 }
 
@@ -389,13 +389,13 @@ void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator
         ZERO.x = ZERO.y = 0.0;
 
         // use 'geam' API todo transpose.
-        cublasErrcheck(cublasZgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
+        CHECK_CUBLAS(cublasZgeam(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N, col, row, &ONE, (double2*)input_matrix, col, &ZERO, (double2*)input_matrix, col, (double2*)device_temp, col));
     } else
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<thrust::complex<double>> <<<block, thread >>> (row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
-        cudaCheckOnDebug();
+        CHECK_CUDA_SYNC();
     }
 
     base_device::memory::synchronize_memory_op<std::complex<double>,
@@ -416,7 +416,7 @@ void matrixCopy<double, base_device::DEVICE_GPU>::operator()(const int& n1,
     const dim3 blockSize(16, 16);
     const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
     matrix_copy_kernel<double> <<<gridSize, blockSize >>> (n1, n2, A, LDA, B, LDB);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 template <>
 void matrixCopy<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& n1,
@@ -429,7 +429,7 @@ void matrixCopy<std::complex<float>, base_device::DEVICE_GPU>::operator()(const 
     const dim3 blockSize(16, 16);
     const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
     matrix_copy_kernel<thrust::complex<float>> <<<gridSize, blockSize >>> (n1, n2, reinterpret_cast<const thrust::complex<float>*>(A), LDA, reinterpret_cast<thrust::complex<float>*>(B), LDB);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 
 }
 template <>
@@ -443,7 +443,7 @@ void matrixCopy<std::complex<double>, base_device::DEVICE_GPU>::operator()(const
     const dim3 blockSize(16, 16);
     const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
     matrix_copy_kernel<thrust::complex<double>> <<<gridSize, blockSize >>> (n1, n2, reinterpret_cast<const thrust::complex<double>*>(A), LDA, reinterpret_cast<thrust::complex<double>*>(B), LDB);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -453,7 +453,7 @@ void matrix_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int
     dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
     matrix_multiply_vector_kernel<double, double> <<<block, thread >>>(m, n, a, lda,
     b, alpha, c, ldc);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -463,7 +463,7 @@ void matrix_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operato
     dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
     matrix_multiply_vector_kernel<thrust::complex<float>, float> <<<block, thread >>>(m, n, reinterpret_cast<thrust::complex<float>*>(a), lda,
     b, alpha, reinterpret_cast<thrust::complex<float>*>(c), ldc);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -474,7 +474,7 @@ void matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operat
     dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
     matrix_multiply_vector_kernel<thrust::complex<double>, double> <<<block, thread >>>(m, n, reinterpret_cast<thrust::complex<double>*>(a), lda,
     b, alpha, reinterpret_cast<thrust::complex<double>*>(c), ldc);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 // Explicitly instantiate functors for the types of functor registered.

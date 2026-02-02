@@ -64,17 +64,6 @@ void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop);
  */
 void printComputeModeInfo(std::ostream& os, const cudaDeviceProp& prop);
 
-/**
- * @brief Provides a cross-CUDA-version string conversion for cuFFT error codes.
- *
- * In CUDA 13.0, several error codes were removed. This function handles
- * these differences gracefully.
- *
- * @param error The cufftResult_t error code.
- * @return const char* A descriptive string for the error.
- */
-const char* cufftGetErrorStringCompat(cufftResult_t error);
-
 } // namespace cuda_compat
 } // namespace ModuleBase
 

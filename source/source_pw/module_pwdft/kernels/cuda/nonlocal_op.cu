@@ -99,7 +99,7 @@ void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
 
-  cudaCheckOnDebug();
+  CHECK_CUDA_SYNC();
   iat += l1;
   sum += l1 * l3;
 }
@@ -129,7 +129,7 @@ void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
 
-  cudaCheckOnDebug();
+  CHECK_CUDA_SYNC();
   iat += l1;
   sum += l1 * l3;
   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

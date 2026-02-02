@@ -8,6 +8,8 @@
 
 #include <cassert>
 
+#include "source_base/module_device/device_check.h"
+
 
 namespace container {
 namespace kernels {
@@ -17,13 +19,13 @@ static cusolverDnHandle_t cusolver_handle = nullptr;
 
 void createGpuSolverHandle() {
     if (cusolver_handle == nullptr) {
-        cusolverErrcheck(cusolverDnCreate(&cusolver_handle));
+        CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
     }
 }
 
 void destroyGpuSolverHandle() {
     if (cusolver_handle != nullptr) {
-        cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
+        CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
         cusolver_handle = nullptr;
     }
 }
@@ -58,7 +60,7 @@ struct set_matrix<T, DEVICE_GPU> {
         set_matrix_kernel<Type><<<dim - 1, THREADS_PER_BLOCK>>>(
             uplo, reinterpret_cast<Type*>(A), dim);
 
-        cudaCheckOnDebug();
+        CHECK_CUDA_SYNC();
     }
 };
 
@@ -133,13 +135,13 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
 
         // Allocate tau on device
         T *d_tau;
-        cudaErrcheck(cudaMalloc(&d_tau, sizeof(T) * k));
+        CHECK_CUDA(cudaMalloc(&d_tau, sizeof(T) * k));
 
         cuSolverConnector::geqrf(cusolver_handle, m, n, d_A, lda, d_tau);
 
         cuSolverConnector::orgqr(cusolver_handle, m, n, k, d_A, lda, d_tau);
 
-        cudaErrcheck(cudaFree(d_tau));
+        CHECK_CUDA(cudaFree(d_tau));
 
         // // geqrf: workspace query
 
@@ -148,7 +150,7 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         // // Let's assume we have a way to get lwork
         // // For now, do a dummy call to get it
         // size_t workspaceInBytes = 0;
-        // cusolverErrcheck(cusolverDnXgeqrf_bufferSize(
+        // CHECK_CUSOLVER(cusolverDnXgeqrf_bufferSize(
         //     cusolverH, m, n,
         //     getCudaDataType<T>::type, d_A, lda,
         //     getCudaDataType<T>::type, // for tau
@@ -159,10 +161,10 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
 
         // // Allocate workspace
         // T *d_work;
-        // cudaErrcheck(cudaMalloc(&d_work, sizeof(T) * lwork));
+        // CHECK_CUDA(cudaMalloc(&d_work, sizeof(T) * lwork));
 
         // // 3. Perform geqrf
-        // cusolverErrcheck(cusolverDnXgeqrf(
+        // CHECK_CUSOLVER(cusolverDnXgeqrf(
         //     cusolverH, m, n,
         //     getCudaDataType<T>::type, d_A, lda,
         //     d_tau,
@@ -171,14 +173,14 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         //     d_info));
 
         // int info;
-        // cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+        // CHECK_CUDA(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
         // if (info != 0) {
         //     throw std::runtime_error("cuSOLVER geqrf failed with info = " + std::to_string(info));
         // }
 
         // // 4. Generate Q using orgqr
         // // Query workspace for orgqr
-        // cusolverErrcheck(cusolverDnXorgqr_bufferSize(
+        // CHECK_CUSOLVER(cusolverDnXorgqr_bufferSize(
         //     cusolverH, m, n, k,
         //     getCudaDataType<T>::type, d_A, lda,
         //     getCudaDataType<T>::type, d_tau,
@@ -186,25 +188,25 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         //     CUSOLVER_WORKSPACE_QUERY_USE_MAX, &workspaceInBytes));
 
         // lwork = static_cast<int>(workspaceInBytes / sizeof(T));
-        // cudaErrcheck(cudaRealloc(&d_work, sizeof(T) * lwork)); // or realloc
+        // CHECK_CUDA(cudaRealloc(&d_work, sizeof(T) * lwork)); // or realloc
 
         // // orgqr: generate Q
-        // cusolverErrcheck(cusolverDnXorgqr(
+        // CHECK_CUSOLVER(cusolverDnXorgqr(
         //     cusolverH, m, n, k,
         //     getCudaDataType<T>::type, d_A, lda,
         //     getCudaDataType<T>::type, d_tau,
         //     d_work, lwork * sizeof(T),
         //     d_info));
 
-        // cudaErrcheck(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+        // CHECK_CUDA(cudaMemcpy(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
         // if (info != 0) {
         //     throw std::runtime_error("cuSOLVER orgqr failed with info = " + std::to_string(info));
         // }
 
         // // Clean up
-        // cudaErrcheck(cudaFree(d_tau));
-        // cudaErrcheck(cudaFree(d_work));
-        // cudaErrcheck(cudaFree(d_info));
+        // CHECK_CUDA(cudaFree(d_tau));
+        // CHECK_CUDA(cudaFree(d_work));
+        // CHECK_CUDA(cudaFree(d_info));
     }
 };
 
@@ -256,7 +258,7 @@ struct lapack_heevx<T, DEVICE_GPU> {
         assert(n <= lda);
         // copy d_Mat to d_eigen_vec, and results will be overwritten into d_eigen_vec
         // by cuSolver
-        cudaErrcheck(cudaMemcpy(d_eigen_vec, d_Mat, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(d_eigen_vec, d_Mat, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
 
         int meig = 0;
 
@@ -290,18 +292,18 @@ struct lapack_hegvd<T, DEVICE_GPU> {
         const int itype = 1;
         const char jobz = 'V';
         const char uplo = 'U';
-        cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
 
         // prevent B from being overwritten by Cholesky
         T *d_B_backup = nullptr;
-        cudaErrcheck(cudaMalloc(&d_B_backup, sizeof(T) * dim * lda));
-        cudaErrcheck(cudaMemcpy(d_B_backup, Mat_B, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMalloc(&d_B_backup, sizeof(T) * dim * lda));
+        CHECK_CUDA(cudaMemcpy(d_B_backup, Mat_B, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
 
         cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim,
                 eigen_vec, lda,
                 d_B_backup, lda,
                 eigen_val);
-        cudaErrcheck(cudaFree(d_B_backup));
+        CHECK_CUDA(cudaFree(d_B_backup));
     }
 };
 

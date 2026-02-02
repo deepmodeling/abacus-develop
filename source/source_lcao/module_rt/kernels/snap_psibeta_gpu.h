@@ -22,16 +22,10 @@ namespace gpu
 {
 
 /**
- * @brief Initialize GPU resources (copy grids to constant memory)
+ * @brief Initialize GPU resources for snap_psibeta module (copy grids to constant memory)
  *        Should be called at the start of each calculate_HR
  */
-void initialize_gpu_resources();
-
-/**
- * @brief Release GPU resources (clear any error states)
- *        Should be called at the end of each calculate_HR
- */
-void finalize_gpu_resources();
+void init_snap_psibeta_gpu();
 
 /**
  * @brief Atom-level GPU batch processing interface

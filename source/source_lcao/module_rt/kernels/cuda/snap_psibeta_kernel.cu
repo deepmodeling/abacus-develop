@@ -541,16 +541,16 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 void copy_grids_to_device()
 {
     // Copy Lebedev-Laikov 110-point angular quadrature grid
-    CUDA_CHECK(cudaMemcpyToSymbol(d_lebedev_x,
+    CHECK_CUDA(cudaMemcpyToSymbol(d_lebedev_x,
                                   ModuleBase::Integral::Lebedev_Laikov_grid110_x,
                                   ANGULAR_GRID_NUM * sizeof(double)));
-    CUDA_CHECK(cudaMemcpyToSymbol(d_lebedev_y,
+    CHECK_CUDA(cudaMemcpyToSymbol(d_lebedev_y,
                                   ModuleBase::Integral::Lebedev_Laikov_grid110_y,
                                   ANGULAR_GRID_NUM * sizeof(double)));
-    CUDA_CHECK(cudaMemcpyToSymbol(d_lebedev_z,
+    CHECK_CUDA(cudaMemcpyToSymbol(d_lebedev_z,
                                   ModuleBase::Integral::Lebedev_Laikov_grid110_z,
                                   ANGULAR_GRID_NUM * sizeof(double)));
-    CUDA_CHECK(cudaMemcpyToSymbol(d_lebedev_w,
+    CHECK_CUDA(cudaMemcpyToSymbol(d_lebedev_w,
                                   ModuleBase::Integral::Lebedev_Laikov_grid110_w,
                                   ANGULAR_GRID_NUM * sizeof(double)));
 
@@ -559,8 +559,8 @@ void copy_grids_to_device()
     std::vector<double> h_gl_w(RADIAL_GRID_NUM);
     ModuleBase::Integral::Gauss_Legendre_grid_and_weight(RADIAL_GRID_NUM, h_gl_x.data(), h_gl_w.data());
 
-    CUDA_CHECK(cudaMemcpyToSymbol(d_gl_x, h_gl_x.data(), RADIAL_GRID_NUM * sizeof(double)));
-    CUDA_CHECK(cudaMemcpyToSymbol(d_gl_w, h_gl_w.data(), RADIAL_GRID_NUM * sizeof(double)));
+    CHECK_CUDA(cudaMemcpyToSymbol(d_gl_x, h_gl_x.data(), RADIAL_GRID_NUM * sizeof(double)));
+    CHECK_CUDA(cudaMemcpyToSymbol(d_gl_w, h_gl_w.data(), RADIAL_GRID_NUM * sizeof(double)));
 }
 
 } // namespace gpu

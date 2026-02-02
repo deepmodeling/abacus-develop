@@ -31,23 +31,18 @@ namespace gpu
 //=============================================================================
 
 /**
- * @brief Initialize GPU resources for snap_psibeta computation
+ * @brief Initialize module-specific GPU resources for snap_psibeta computation
  *
- * Checks for available CUDA devices and copies integration grids
- * (Lebedev-Laikov angular and Gauss-Legendre radial) to constant memory.
+ * Copies integration grids (Lebedev-Laikov angular and Gauss-Legendre radial) 
+ * to constant memory.
  *
  * @note Call this once at the start of a calculation session before any
  *       snap_psibeta_atom_batch_gpu calls.
  */
-void initialize_gpu_resources()
+void init_snap_psibeta_gpu()
 {
-    // Verify CUDA device availability
-    int device_count = 0;
-    cudaError_t err = cudaGetDeviceCount(&device_count);
-    if (err != cudaSuccess || device_count == 0)
-    {
-        ModuleBase::WARNING_QUIT("snap_psibeta_gpu", "No CUDA devices found or error getting device count!");
-    }
+    // GPU device availability is already verified and initialized by DeviceContext::init()
+    // at the startup of the application.
 
     // Initialize integration grids in constant memory
     copy_grids_to_device();
@@ -266,28 +261,28 @@ void snap_psibeta_atom_batch_gpu(
 
     size_t output_size = total_neighbor_orbitals * nlm_dim * natomwfc;
 
-    CUDA_CHECK(cudaMalloc(&neighbor_orbitals_d, total_neighbor_orbitals * sizeof(NeighborOrbitalData)));
-    CUDA_CHECK(cudaMalloc(&projectors_d, nproj * sizeof(ProjectorData)));
-    CUDA_CHECK(cudaMalloc(&psi_radial_d, psi_radial_h.size() * sizeof(double)));
-    CUDA_CHECK(cudaMalloc(&beta_radial_d, beta_radial_h.size() * sizeof(double)));
-    CUDA_CHECK(cudaMalloc(&proj_m0_offset_d, nproj * sizeof(int)));
-    CUDA_CHECK(cudaMalloc(&nlm_out_d, output_size * sizeof(cuDoubleComplex)));
+    CHECK_CUDA(cudaMalloc(&neighbor_orbitals_d, total_neighbor_orbitals * sizeof(NeighborOrbitalData)));
+    CHECK_CUDA(cudaMalloc(&projectors_d, nproj * sizeof(ProjectorData)));
+    CHECK_CUDA(cudaMalloc(&psi_radial_d, psi_radial_h.size() * sizeof(double)));
+    CHECK_CUDA(cudaMalloc(&beta_radial_d, beta_radial_h.size() * sizeof(double)));
+    CHECK_CUDA(cudaMalloc(&proj_m0_offset_d, nproj * sizeof(int)));
+    CHECK_CUDA(cudaMalloc(&nlm_out_d, output_size * sizeof(cuDoubleComplex)));
 
     //=========================================================================
     // Transfer data to GPU
     //=========================================================================
 
-    CUDA_CHECK(cudaMemcpy(neighbor_orbitals_d,
+    CHECK_CUDA(cudaMemcpy(neighbor_orbitals_d,
                           neighbor_orbitals_h.data(),
                           total_neighbor_orbitals * sizeof(NeighborOrbitalData),
                           cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(projectors_d, projectors_h.data(), nproj * sizeof(ProjectorData), cudaMemcpyHostToDevice));
-    CUDA_CHECK(
+    CHECK_CUDA(cudaMemcpy(projectors_d, projectors_h.data(), nproj * sizeof(ProjectorData), cudaMemcpyHostToDevice));
+    CHECK_CUDA(
         cudaMemcpy(psi_radial_d, psi_radial_h.data(), psi_radial_h.size() * sizeof(double), cudaMemcpyHostToDevice));
-    CUDA_CHECK(
+    CHECK_CUDA(
         cudaMemcpy(beta_radial_d, beta_radial_h.data(), beta_radial_h.size() * sizeof(double), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(proj_m0_offset_d, proj_m0_offset_h.data(), nproj * sizeof(int), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemset(nlm_out_d, 0, output_size * sizeof(cuDoubleComplex)));
+    CHECK_CUDA(cudaMemcpy(proj_m0_offset_d, proj_m0_offset_h.data(), nproj * sizeof(int), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemset(nlm_out_d, 0, output_size * sizeof(cuDoubleComplex)));
 
     //=========================================================================
     // Launch kernel
@@ -326,14 +321,14 @@ void snap_psibeta_atom_batch_gpu(
                                  std::string("Atom batch kernel launch error: ") + cudaGetErrorString(err));
     }
 
-    CUDA_CHECK(cudaDeviceSynchronize());
+    CHECK_CUDA(cudaDeviceSynchronize());
 
     //=========================================================================
     // Retrieve results
     //=========================================================================
 
     std::vector<cuDoubleComplex> nlm_out_h(output_size);
-    CUDA_CHECK(cudaMemcpy(nlm_out_h.data(), nlm_out_d, output_size * sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy(nlm_out_h.data(), nlm_out_d, output_size * sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost));
 
     //=========================================================================
     // Reconstruct output structure

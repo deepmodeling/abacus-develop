@@ -71,7 +71,7 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr)
   );
 
-  cudaCheckOnDebug();
+  CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -91,7 +91,7 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr_another_spin)
   );
 
-  cudaCheckOnDebug();
+  CHECK_CUDA_SYNC();
 }
 
 template struct elecstate_pw_op<float, base_device::DEVICE_GPU>;
