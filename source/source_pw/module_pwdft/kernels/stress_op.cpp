@@ -156,11 +156,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 if ((becp_exp_real <= 923) || (becp_exp_imag <= 923)) {
                                     continue;
                                 }
-                                uint64_t* ls_parts = reinterpret_cast<uint64_t*>(const_cast<FPTYPE*>(&local_stress));
-                                uint64_t ls_exp = (ls_parts[0] >> 52) & 0x7FF;
-                                if (ls_exp <= 923) {
-                                    continue;
-                                }
                                 #endif
                                 const FPTYPE dbb = (conj(dbecp[ib * nkb + inkb1]) * becp[ib * nkb + inkb2]).real();
                                 local_stress -= ps * fac * dbb;
