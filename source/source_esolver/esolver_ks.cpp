@@ -2,8 +2,8 @@
 #include "source_base/timer_wrapper.h"
 
 // for jason output information
-#include "source_io/json_output/init_info.h"
-#include "source_io/json_output/output_info.h"
+#include "source_io/module_json/init_info.h"
+#include "source_io/module_json/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
 #include "source_estate/module_charge/chgmixing.h" // mohan add 20251018

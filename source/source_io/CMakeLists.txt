@@ -37,7 +37,7 @@ list(APPEND objects
     module_current/td_current_io_comm.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
-    para_json.cpp
+    module_json/para_json.cpp
     parse_args.cpp
     module_output/orb_io.cpp
     module_output/filename.cpp

@@ -2,7 +2,7 @@
 
 #include "source_base/global_file.h"
 #include "source_io/module_output/cif_io.h"
-#include "source_io/json_output/output_info.h"
+#include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_output/read_exit_file.h"
