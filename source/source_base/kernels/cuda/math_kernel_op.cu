@@ -2,6 +2,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
+#include "source_base/module_container/base/third_party/cublas.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
@@ -192,7 +193,7 @@ void gemv_op<float, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                           const int& incy)
 {
     cublasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
-    cublasErrcheck(cublasSgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incy));
+    CHECK_CUBLAS(cublasSgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incy));
 }
 
 
@@ -213,7 +214,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
     cublasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
     cuFloatComplex alpha = make_cuFloatComplex(alpha_in->real(), alpha_in->imag());
     cuFloatComplex beta = make_cuFloatComplex(beta_in->real(), beta_in->imag());
-    CHECK_CUDBLAS(cublasCgemv(cublas_handle, cutrans, m, n, &alpha, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta, (cuFloatComplex*)Y, incy));
+    CHECK_CUBLAS(cublasCgemv(cublas_handle, cutrans, m, n, &alpha, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta, (cuFloatComplex*)Y, incy));
 }
 
 template <>
