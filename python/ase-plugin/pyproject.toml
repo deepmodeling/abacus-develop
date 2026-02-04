@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abacuslite"
+version = "1.0.0"
+description = "An ABACUS light-weighted plugin implementation of ase calculator"
+readme = "README.md"
+authors = [
+    { name = "Yuyang Ji" },
+    { name = "Zhenxiong Shen" },
+    { name = "Yike Huang" },
+    { name = "Zhaoqing Liu" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "ase>=3.22.0",
+    "seekpath"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["abacuslite*"]
