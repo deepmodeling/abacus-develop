@@ -14,36 +14,7 @@ extern "C"
 #include "helper_cusolver.h"
 #include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
-static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
-{
-    MPI_Request req;
-    intptr_t ptr = reinterpret_cast<intptr_t>(data);
-    int err = MPI_Iallgather(src_buf, size, MPI_BYTE, recv_buf, size, MPI_BYTE, (MPI_Comm)ptr, &req);
-    if (err != MPI_SUCCESS)
-    {
-        return CAL_ERROR;
-    }
-    *request = (void*)(req);
-    return CAL_OK;
-}
-
-static calError_t request_test(void* request)
-{
-    intptr_t ptr = reinterpret_cast<intptr_t>(request);
-    MPI_Request req = (MPI_Request)ptr;
-    int completed;
-    int err = MPI_Test(&req, &completed, MPI_STATUS_IGNORE);
-    if (err != MPI_SUCCESS)
-    {
-        return CAL_ERROR;
-    }
-    return completed ? CAL_OK : CAL_ERROR_INPROGRESS;
-}
-
-static calError_t request_free(void* request)
-{
-    return CAL_OK;
-}
+#include "source_base/module_device/device_check.h"
 
 template <typename inputT>
 Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
@@ -73,17 +44,13 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     int local_device_id = base_device::information::set_device_by_rank(mpi_comm);
     Cblacs_gridinfo(this->cblacs_ctxt, &this->nprows, &this->npcols, &this->myprow, &this->mypcol);
 
-    this->cusolverCalComm = NULL;
-    cal_comm_create_params_t params;
-    params.allgather = allgather;
-    params.req_test = request_test;
-    params.req_free = request_free;
-    params.data = (void*)(mpi_comm);
-    params.rank = this->globalMpiRank;
-    params.nranks = this->globalMpiSize;
-    params.local_device = local_device_id;
-
-    CAL_CHECK(cal_comm_create(params, &this->cusolverCalComm));
+    // Initialize NCCL communicator
+    ncclUniqueId ncclId;
+    if (this->globalMpiRank == 0) {
+        NCCL_CHECK(ncclGetUniqueId(&ncclId));
+    }
+    MPI_Bcast(&ncclId, sizeof(ncclId), MPI_BYTE, 0, mpi_comm);
+    NCCL_CHECK(ncclCommInitRank(&this->ncclComm, this->globalMpiSize, ncclId, this->globalMpiRank));
 
     checkCudaErrors(cudaStreamCreate(&this->localStream));
     CUSOLVER_CHECK(cusolverMpCreate(&cusolverMpHandle, local_device_id, this->localStream));
@@ -116,7 +83,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
     CUSOLVER_CHECK(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
-                                                   this->cusolverCalComm,
+                                                   this->ncclComm,
                                                    this->nprows,
                                                    this->npcols,
                                                    CUSOLVERMP_GRID_MAPPING_ROW_MAJOR));
@@ -140,11 +107,11 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
 template <typename inputT>
 Diag_CusolverMP_gvd<inputT>::~Diag_CusolverMP_gvd()
 {
-    CAL_CHECK(cal_comm_barrier(this->cusolverCalComm, this->localStream));
+    checkCudaErrors(cudaStreamSynchronize(this->localStream));
     CUSOLVER_CHECK(cusolverMpDestroyMatrixDesc(this->desc_for_cusolvermp));
     CUSOLVER_CHECK(cusolverMpDestroyGrid(this->grid));
     CUSOLVER_CHECK(cusolverMpDestroy(this->cusolverMpHandle));
-    CAL_CHECK(cal_comm_destroy(this->cusolverCalComm));
+    NCCL_CHECK(ncclCommDestroy(this->ncclComm));
     checkCudaErrors(cudaStreamDestroy(this->localStream));
 }
 
@@ -166,7 +133,7 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
         cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
     checkCudaErrors(
         cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
-    CAL_CHECK(cal_stream_sync(this->cusolverCalComm, this->localStream));
+    checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
     size_t sygvdWorkspaceInBytesOnDevice = 0;
     size_t sygvdWorkspaceInBytesOnHost = 0;
@@ -203,7 +170,7 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     checkCudaErrors(cudaMemset(d_sygvdInfo, 0, sizeof(int)));
 
     /* sync wait for data to arrive to device */
-    CAL_CHECK(cal_stream_sync(cusolverCalComm, localStream));
+    checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
     CUSOLVER_CHECK(cusolverMpSygvd(cusolverMpHandle,
                     CUSOLVER_EIG_TYPE_1,
@@ -238,7 +205,7 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     {
         ModuleBase::WARNING_QUIT("cusolvermp", "cusolverMpSygvd failed with error");
     }
-    CAL_CHECK(cal_stream_sync(this->cusolverCalComm, this->localStream));
+    checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
     checkCudaErrors(cudaFree(d_sygvdWork));
     checkCudaErrors(cudaFree(d_sygvdInfo));
@@ -254,7 +221,7 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     // I move the free operations from destructor to here.
     // Because I think it is more reasonable to free the memory in the function where it is allocated.
     // Destructor is used to release resources that allocated in the constructor.
-    // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we 
+    // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we
     // will construct the object only once during the whole program life cycle.
     // In that case, allocate and free memory in compute function is more reasonable.
     checkCudaErrors(cudaFree(d_A));

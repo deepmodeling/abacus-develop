@@ -398,20 +398,63 @@ if(USE_CUDA)
     endif()
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
-      find_library(CAL_LIBRARY
-          NAMES cal
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      find_library(CUSOLVERMP_LIBRARY
-          NAMES cusolverMp
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
+
+      # === Find NCCL ===
+      # try NVHPC first
+      find_package(NVHPC QUIET CONFIG)
+      if(TARGET NVHPC::NCCL)
+        message(STATUS "Using NVHPC::NCCL target")
+        if(NOT TARGET NCCL::NCCL)
+          add_library(NCCL::NCCL ALIAS NVHPC::NCCL)
+        endif()
+      else()
+        find_library(NCCL_LIBRARY NAMES nccl
+            HINTS ${NCCL_PATH} ${NVHPC_ROOT_DIR}
+            PATH_SUFFIXES lib lib64 comm_libs/nccl/lib)
+        find_path(NCCL_INCLUDE_DIR NAMES nccl.h
+            HINTS ${NCCL_PATH} ${NVHPC_ROOT_DIR}
+            PATHS ${CUDA_TOOLKIT_ROOT_DIR}
+            PATH_SUFFIXES include comm_libs/nccl/include)
+
+        if(NOT NCCL_LIBRARY OR NOT NCCL_INCLUDE_DIR)
+          message(FATAL_ERROR "NCCL not found. Set NCCL_PATH or CUSOLVERMP_PATH.")
+        endif()
+
+        message(STATUS "Found NCCL: ${NCCL_LIBRARY}")
+        add_library(NCCL::NCCL IMPORTED INTERFACE)
+        set_target_properties(NCCL::NCCL PROPERTIES
+            INTERFACE_LINK_LIBRARIES "${NCCL_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES "${NCCL_INCLUDE_DIR}")
+      endif()
+
+      # === Find cusolverMp ===
+      find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
+          HINTS ${CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+          PATH_SUFFIXES lib lib64 math_libs/lib math_libs/lib64 math_libs/*/lib64)
+
+      find_path(CUSOLVERMP_INCLUDE_DIR NAMES cusolverMp.h
+          HINTS ${CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+          PATH_SUFFIXES include math_libs/include math_libs/*/include)
+
+      if(NOT CUSOLVERMP_LIBRARY OR NOT CUSOLVERMP_INCLUDE_DIR)
+        message(FATAL_ERROR
+          "cusolverMp not found. Set CUSOLVERMP_PATH or NVHPC_ROOT_DIR."
+        )
+      endif()
+
+      message(STATUS "Found cusolverMp: ${CUSOLVERMP_LIBRARY}")
+
+      # Create cusolverMp::cusolverMp imported target
+      add_library(cusolverMp::cusolverMp IMPORTED INTERFACE)
+      set_target_properties(cusolverMp::cusolverMp PROPERTIES
+          INTERFACE_LINK_LIBRARIES "${CUSOLVERMP_LIBRARY}"
+          INTERFACE_INCLUDE_DIRECTORIES "${CUSOLVERMP_INCLUDE_DIR}")
+
+      # === Link libraries ===
       target_link_libraries(${ABACUS_BIN_NAME}
-          ${CAL_LIBRARY}
-          ${CUSOLVERMP_LIBRARY}
-      )
+          NCCL::NCCL
+          cusolverMp::cusolverMp)
+
     endif()
   endif()
 endif()

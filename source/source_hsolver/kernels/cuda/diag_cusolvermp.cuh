@@ -4,7 +4,6 @@
 #include <complex>
 #include <fstream>
 #include <vector>
-#include <cal.h>
 #include <cusolverMp.h>
 #include "source_base/macros.h"
 
@@ -53,7 +52,7 @@ class Diag_CusolverMP_gvd
     int globalMpiSize;
     cudaDataType_t datatype;
 
-    cal_comm_t cusolverCalComm = NULL;
+    ncclComm_t ncclComm = NULL;
     cudaStream_t localStream = NULL;
     cusolverMpHandle_t cusolverMpHandle = NULL;
     cusolverMpGrid_t grid = NULL;

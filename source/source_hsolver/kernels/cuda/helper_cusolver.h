@@ -5,39 +5,16 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HSOLVER_KERNELS_CUDA_HELPER_CUSOLVER_H
 #ifdef __CUSOLVERMP
 #include <cusolverMp.h>
+#include <nccl.h>
 
-const char* calGetErrorString(calError_t status)
-{
-    switch (status)
-    {
-    case CAL_OK:
-        return "CAL_OK";
-    case CAL_ERROR:
-        return "CAL_ERROR";
-    case CAL_ERROR_INVALID_PARAMETER:
-        return "CAL_ERROR_INVALID_PARAMETER";
-    case CAL_ERROR_INTERNAL:
-        return "CAL_ERROR_INTERNAL";
-    case CAL_ERROR_CUDA:
-        return "CAL_ERROR_CUDA";
-    case CAL_ERROR_UCC:
-        return "CAL_ERROR_UCC";
-    case CAL_ERROR_NOT_SUPPORTED:
-        return "CAL_ERROR_NOT_SUPPORTED";
-    case CAL_ERROR_INPROGRESS:
-        return "CAL_ERROR_INPROGRESS";
-    default:
-        return "CAL UNKNOWN ERROR";
-    }
-}
-
-#define CAL_CHECK(cmd)                                                                                                 \
+// NCCL error checking (replaces libcal)
+#define NCCL_CHECK(cmd)                                                                                                \
     do                                                                                                                 \
     {                                                                                                                  \
-        calError_t status = cmd;                                                                                       \
-        if (status != CAL_OK)                                                                                          \
+        ncclResult_t status = cmd;                                                                                     \
+        if (status != ncclSuccess)                                                                                     \
         {                                                                                                              \
-            fprintf(stderr, "ERROR: %s %s %d\n", calGetErrorString(status), __FILE__, __LINE__);                       \
+            fprintf(stderr, "NCCL ERROR: %s %s %d\n", ncclGetErrorString(status), __FILE__, __LINE__);                 \
             abort();                                                                                                   \
         }                                                                                                              \
     } while (0)
