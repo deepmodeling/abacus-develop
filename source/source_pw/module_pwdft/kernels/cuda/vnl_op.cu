@@ -108,7 +108,7 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
             reinterpret_cast<const thrust::complex<FPTYPE>*>(sk),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_in));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct cal_vnl_op<float, base_device::DEVICE_GPU>;

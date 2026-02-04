@@ -1,6 +1,6 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
-#include "helper_cuda.h"
+#include "source_base/module_device/device_check.h"
 #include "source_base/global_variable.h"
 
 #include <assert.h>
@@ -11,7 +11,6 @@ extern "C"
 }
 #include <iostream>
 #include <cstdint>
-#include "helper_cusolver.h"
 #include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
@@ -41,7 +40,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
 
     MPI_Comm_size(mpi_comm, &this->globalMpiSize);
     MPI_Comm_rank(mpi_comm, &(this->globalMpiRank));
-    int local_device_id = base_device::information::set_device_by_rank(mpi_comm);
+    // GPU device is already bound by DeviceContext::init() in read_input.cpp
+    int local_device_id = base_device::DeviceContext::instance().get_device_id();
     Cblacs_gridinfo(this->cblacs_ctxt, &this->nprows, &this->npcols, &this->myprow, &this->mypcol);
 
     // Initialize NCCL communicator
@@ -52,8 +52,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     MPI_Bcast(&ncclId, sizeof(ncclId), MPI_BYTE, 0, mpi_comm);
     NCCL_CHECK(ncclCommInitRank(&this->ncclComm, this->globalMpiSize, ncclId, this->globalMpiRank));
 
-    checkCudaErrors(cudaStreamCreate(&this->localStream));
-    CUSOLVER_CHECK(cusolverMpCreate(&cusolverMpHandle, local_device_id, this->localStream));
+    CHECK_CUDA(cudaStreamCreate(&this->localStream));
+    CHECK_CUSOLVER(cusolverMpCreate(&cusolverMpHandle, local_device_id, this->localStream));
 
     // 20240529 zhanghaochong
     // so far, cusolvermp only support = 1
@@ -81,7 +81,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
-    CUSOLVER_CHECK(cusolverMpCreateDeviceGrid(cusolverMpHandle,
+    CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
                                                    this->ncclComm,
                                                    this->nprows,
@@ -92,7 +92,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // Actually, there should be three matrix descriptors, A matrix, B matrix, and output eigenvector matrix.
     // But in ABACUS the three matrices descriptors are the same.
     // So, I only create one matrix descriptor and use it for the three matrices.
-    CUSOLVER_CHECK(cusolverMpCreateMatrixDesc(&this->desc_for_cusolvermp,
+    CHECK_CUSOLVER(cusolverMpCreateMatrixDesc(&this->desc_for_cusolvermp,
                                this->grid,
                                this->datatype,
                                nFull,
@@ -124,21 +124,21 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     void *d_D = NULL;
     void *d_Z = NULL;
 
-    checkCudaErrors(cudaMalloc((void**)&d_A, this->n_local * this->m_local * sizeof(inputT)));
-    checkCudaErrors(cudaMalloc((void**)&d_B, this->n_local * this->m_local * sizeof(inputT)));
-    checkCudaErrors(cudaMalloc((void**)&d_D, this->nFull * sizeof(outputT)));
-    checkCudaErrors(cudaMalloc((void**)&d_Z, this->n_local * this->m_local * sizeof(inputT)));
+    CHECK_CUDA(cudaMalloc((void**)&d_A, this->n_local * this->m_local * sizeof(inputT)));
+    CHECK_CUDA(cudaMalloc((void**)&d_B, this->n_local * this->m_local * sizeof(inputT)));
+    CHECK_CUDA(cudaMalloc((void**)&d_D, this->nFull * sizeof(outputT)));
+    CHECK_CUDA(cudaMalloc((void**)&d_Z, this->n_local * this->m_local * sizeof(inputT)));
 
-    checkCudaErrors(
+    CHECK_CUDA(
         cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
-    checkCudaErrors(
+    CHECK_CUDA(
         cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
     size_t sygvdWorkspaceInBytesOnDevice = 0;
     size_t sygvdWorkspaceInBytesOnHost = 0;
 
-    CUSOLVER_CHECK(cusolverMpSygvd_bufferSize(cusolverMpHandle,
+    CHECK_CUSOLVER(cusolverMpSygvd_bufferSize(cusolverMpHandle,
                                CUSOLVER_EIG_TYPE_1,
                                CUSOLVER_EIG_MODE_VECTOR,
                                CUBLAS_FILL_MODE_LOWER,
@@ -162,17 +162,17 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
 
     /* Distributed device workspace */
     void* d_sygvdWork = NULL;
-    checkCudaErrors(cudaMalloc((void**)&d_sygvdWork, sygvdWorkspaceInBytesOnDevice));
-    checkCudaErrors(cudaMemset(d_sygvdWork, 0, sygvdWorkspaceInBytesOnDevice));
+    CHECK_CUDA(cudaMalloc((void**)&d_sygvdWork, sygvdWorkspaceInBytesOnDevice));
+    CHECK_CUDA(cudaMemset(d_sygvdWork, 0, sygvdWorkspaceInBytesOnDevice));
 
     int* d_sygvdInfo = NULL;
-    checkCudaErrors(cudaMalloc((void**)&d_sygvdInfo, sizeof(int)));
-    checkCudaErrors(cudaMemset(d_sygvdInfo, 0, sizeof(int)));
+    CHECK_CUDA(cudaMalloc((void**)&d_sygvdInfo, sizeof(int)));
+    CHECK_CUDA(cudaMemset(d_sygvdInfo, 0, sizeof(int)));
 
     /* sync wait for data to arrive to device */
     checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
-    CUSOLVER_CHECK(cusolverMpSygvd(cusolverMpHandle,
+    CHECK_CUSOLVER(cusolverMpSygvd(cusolverMpHandle,
                     CUSOLVER_EIG_TYPE_1,
                     CUSOLVER_EIG_MODE_VECTOR,
                     CUBLAS_FILL_MODE_LOWER,
@@ -198,22 +198,22 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
                     d_sygvdInfo));
 
     int h_sygvdInfo = 0;
-    checkCudaErrors(cudaMemcpyAsync(&h_sygvdInfo, d_sygvdInfo, sizeof(int), cudaMemcpyDeviceToHost, this->localStream));
+    CHECK_CUDA(cudaMemcpyAsync(&h_sygvdInfo, d_sygvdInfo, sizeof(int), cudaMemcpyDeviceToHost, this->localStream));
     /* wait for d_sygvdInfo copy */
-    checkCudaErrors(cudaStreamSynchronize(this->localStream));
+    CHECK_CUDA(cudaStreamSynchronize(this->localStream));
     if (h_sygvdInfo != 0)
     {
         ModuleBase::WARNING_QUIT("cusolvermp", "cusolverMpSygvd failed with error");
     }
     checkCudaErrors(cudaStreamSynchronize(this->localStream));
 
-    checkCudaErrors(cudaFree(d_sygvdWork));
-    checkCudaErrors(cudaFree(d_sygvdInfo));
+    CHECK_CUDA(cudaFree(d_sygvdWork));
+    CHECK_CUDA(cudaFree(d_sygvdInfo));
 
     free(h_sygvdWork);
 
-    checkCudaErrors(cudaMemcpy((void*)EigenValue, d_D, this->nFull * sizeof(outputT), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy((void*)EigenVector,
+    CHECK_CUDA(cudaMemcpy((void*)EigenValue, d_D, this->nFull * sizeof(outputT), cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy((void*)EigenVector,
                                d_Z,
                                this->n_local * this->m_local * sizeof(inputT),
                                cudaMemcpyDeviceToHost));
@@ -224,10 +224,10 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we
     // will construct the object only once during the whole program life cycle.
     // In that case, allocate and free memory in compute function is more reasonable.
-    checkCudaErrors(cudaFree(d_A));
-    checkCudaErrors(cudaFree(d_B));
-    checkCudaErrors(cudaFree(d_D));
-    checkCudaErrors(cudaFree(d_Z));
+    CHECK_CUDA(cudaFree(d_A));
+    CHECK_CUDA(cudaFree(d_B));
+    CHECK_CUDA(cudaFree(d_D));
+    CHECK_CUDA(cudaFree(d_Z));
 
     return 0;
 }
