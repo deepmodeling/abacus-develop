@@ -208,6 +208,8 @@ def write_stru(stru: Atoms,
         The path to the written STRU file.
     '''
     assert isinstance(stru, Atoms)
+    pp_file = pp_file or {} # can be None, for those non-ESolver_KS cases
+
     elem = stru.get_chemical_symbols()    
     # ABACUS requires the atoms ranged species-by-species, therefore
     # we need to sort the atoms by species
@@ -225,8 +227,8 @@ def write_stru(stru: Atoms,
             {
                 'symbol': e,
                 'mass': ATOM_MASS[e],
-                'pp_file': pp_file[e],
-                'pp_type': 'upf201',
+                'pp_file': pp_file.get(e, ''),
+                'pp_type': '',
                 'natom': n,
                 'mag_each': 0.0,
                 'atom': [

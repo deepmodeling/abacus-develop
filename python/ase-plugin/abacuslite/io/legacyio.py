@@ -205,6 +205,42 @@ def read_istate(src: str | Path | List[str]) \
         'k': [tuple(map(float, findk(l).group(1).split())) for l in title]
     }
 
+def read_esolver_type_from_running_log(src: str | Path | List[str]) \
+    -> str:
+    '''
+    read the esolver type from the ABACUS running log file.
+
+    Parameters
+    ----------
+    fn : str
+        The path to the ABACUS running log file.
+    
+    Returns
+    -------
+    str
+        The esolver type used in the ABACUS calculation.
+    '''
+    if isinstance(src, (str, Path)):
+        with open(src) as f:
+            raw = f.readlines()
+    else: # assume the src is the return of the readlines()
+        raw = src
+    # with open(fn) as f:
+    #     raw = f.readlines()
+    raw = [l.strip() for l in raw]
+    raw = [l for l in raw if l] # remove empty lines
+
+    # search for the line with information like:
+    # "The esolver type has been set to : lj_pot"
+    lines = [
+        re.match(r'The esolver type has been set to : (\S+)',
+                 l) for l in raw
+    ]
+    eslvtyp = [m.group(1) for m in lines if m is not None]
+    assert len(set(eslvtyp)) == 1, \
+           f'Inconsistent esolver type: {set(eslvtyp)}'
+    return eslvtyp[0]
+
 def read_band_from_running_log(src: str | Path | List[str]) \
     -> List[Dict[str, np.ndarray]]:
     '''
@@ -787,6 +823,9 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
     else: # from the `with open(fn) as fileobj:` context
         assert isinstance(fileobj, TextIOWrapper)
         abacus_lines = fileobj.readlines()
+    
+    # read the esolver type
+    eslvtyp = read_esolver_type_from_running_log(abacus_lines)
     
     # read the structure, with the cell, elem, etc. (nframe)
     trajectory = read_traj_from_running_log(abacus_lines)
