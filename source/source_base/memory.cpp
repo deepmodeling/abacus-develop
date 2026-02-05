@@ -159,7 +159,7 @@ double Memory::record
 void Memory::record
 (
 	const std::string &name_in,
-	const size_t &n_in,
+	const long &n_in,
 	const bool accumulate
 )
 {
