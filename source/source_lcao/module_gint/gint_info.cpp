@@ -4,6 +4,7 @@
 #include "source_base/timer.h"
 #include "gint_info.h"
 #include "gint_type.h"
+#include "source_base/memory.h"
 
 namespace ModuleGint
 {
@@ -60,6 +61,12 @@ GintInfo::GintInfo(
         gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);
     }
     #endif
+}
+
+GintInfo::~GintInfo()
+{
+    ModuleBase::Memory::record("GintInfo::trace_lo_", -(long long)(sizeof(int) * trace_lo_.size()), true);
+    ModuleBase::Memory::record("GintInfo::ijr_info_", -(long long)(sizeof(int) * ijr_info_.size()), true);
 }
 
 template <typename T>
@@ -194,6 +201,7 @@ void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
             ++iat;
         }
     }
+    ModuleBase::Memory::record("GintInfo::trace_lo_", (long long)(sizeof(int) * trace_lo_.size()), true);
 }
 
 void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
@@ -260,6 +268,7 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
             }
     }
     this->ijr_info_ = hr_gint_local.get_ijr_info();
+    ModuleBase::Memory::record("GintInfo::ijr_info_", (long long)(sizeof(int) * ijr_info_.size()), true);
     return;
 }
 
