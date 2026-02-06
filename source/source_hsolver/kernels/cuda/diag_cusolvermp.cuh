@@ -73,5 +73,3 @@ class Diag_CusolverMP_gvd
     int64_t matrix_i;
     int64_t matrix_j;
 };
-
-// 实现模板类的成员函数
