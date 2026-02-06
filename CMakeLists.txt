@@ -52,6 +52,12 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 
+if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
+  set(NVHPC_ROOT_DIR
+      "$ENV{NVHPC_ROOT}"
+      CACHE PATH "Path to NVIDIA HPC SDK root directory.")
+endif()
+
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON)
@@ -399,15 +405,34 @@ if(USE_CUDA)
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
 
-      # === Find NCCL ===
-      # try NVHPC first
-      find_package(NVHPC QUIET CONFIG)
-      if(TARGET NVHPC::NCCL)
-        message(STATUS "Using NVHPC::NCCL target")
-        if(NOT TARGET NCCL::NCCL)
-          add_library(NCCL::NCCL ALIAS NVHPC::NCCL)
+      option(USE_LIBCAL
+             "Use libcal for cusolvermp communication (compatible with NVHPC SDK < 25.9 or cuSolverMp < 0.7.0)"
+             OFF)
+
+      if(USE_LIBCAL)
+        add_compile_definitions(__USE_LIBCAL)
+        message(STATUS "cusolverMp: Using libcal backend")
+
+        find_library(CAL_LIBRARY NAMES cal
+            HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+            PATH_SUFFIXES lib lib64 math_libs/lib64)
+        find_path(CAL_INCLUDE_DIR NAMES cal.h
+            HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+            PATH_SUFFIXES include math_libs/include)
+
+        if(NOT CAL_LIBRARY OR NOT CAL_INCLUDE_DIR)
+          message(FATAL_ERROR "libcal not found. Set CAL_PATH or NVHPC_ROOT_DIR.")
         endif()
+
+        message(STATUS "Found libcal: ${CAL_LIBRARY}")
+        add_library(CAL::CAL IMPORTED INTERFACE)
+        set_target_properties(CAL::CAL PROPERTIES
+            INTERFACE_LINK_LIBRARIES "${CAL_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES "${CAL_INCLUDE_DIR}")
       else()
+        message(STATUS "cusolverMp: Using NCCL backend")
+
+        # === Find NCCL ===
         find_library(NCCL_LIBRARY NAMES nccl
             HINTS ${NCCL_PATH} ${NVHPC_ROOT_DIR}
             PATH_SUFFIXES lib lib64 comm_libs/nccl/lib)
@@ -417,7 +442,7 @@ if(USE_CUDA)
             PATH_SUFFIXES include comm_libs/nccl/include)
 
         if(NOT NCCL_LIBRARY OR NOT NCCL_INCLUDE_DIR)
-          message(FATAL_ERROR "NCCL not found. Set NCCL_PATH or CUSOLVERMP_PATH.")
+          message(FATAL_ERROR "NCCL not found. Set NCCL_PATH or NVHPC_ROOT_DIR.")
         endif()
 
         message(STATUS "Found NCCL: ${NCCL_LIBRARY}")
@@ -429,12 +454,12 @@ if(USE_CUDA)
 
       # === Find cusolverMp ===
       find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
-          HINTS ${CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
-          PATH_SUFFIXES lib lib64 math_libs/lib math_libs/lib64 math_libs/*/lib64)
+          HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+          PATH_SUFFIXES lib lib64 math_libs/lib math_libs/lib64)
 
       find_path(CUSOLVERMP_INCLUDE_DIR NAMES cusolverMp.h
-          HINTS ${CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
-          PATH_SUFFIXES include math_libs/include math_libs/*/include)
+          HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
+          PATH_SUFFIXES include math_libs/include)
 
       if(NOT CUSOLVERMP_LIBRARY OR NOT CUSOLVERMP_INCLUDE_DIR)
         message(FATAL_ERROR
@@ -444,6 +469,54 @@ if(USE_CUDA)
 
       message(STATUS "Found cusolverMp: ${CUSOLVERMP_LIBRARY}")
 
+      set(NVHPC_SDK_VERSION "")
+      if(DEFINED NVHPC_ROOT_DIR)
+        get_filename_component(NVHPC_ROOT_DIR_BASENAME "${NVHPC_ROOT_DIR}" NAME)
+        if(NVHPC_ROOT_DIR_BASENAME MATCHES "^[0-9]+\\.[0-9]+$")
+          set(NVHPC_SDK_VERSION "${NVHPC_ROOT_DIR_BASENAME}")
+        endif()
+      endif()
+
+      set(CUSOLVERMP_VERSION_STR "")
+      set(CUSOLVERMP_VERSION_HEADER "${CUSOLVERMP_INCLUDE_DIR}/cusolverMp.h")
+      if(EXISTS "${CUSOLVERMP_VERSION_HEADER}")
+        file(STRINGS "${CUSOLVERMP_VERSION_HEADER}" CUSOLVERMP_MAJOR_LINE
+             REGEX "^#define[ \t]+CUSOLVERMP_VER_MAJOR[ \t]+[0-9]+")
+        file(STRINGS "${CUSOLVERMP_VERSION_HEADER}" CUSOLVERMP_MINOR_LINE
+             REGEX "^#define[ \t]+CUSOLVERMP_VER_MINOR[ \t]+[0-9]+")
+        file(STRINGS "${CUSOLVERMP_VERSION_HEADER}" CUSOLVERMP_PATCH_LINE
+             REGEX "^#define[ \t]+CUSOLVERMP_VER_PATCH[ \t]+[0-9]+")
+        string(REGEX MATCH "([0-9]+)" CUSOLVERMP_VER_MAJOR "${CUSOLVERMP_MAJOR_LINE}")
+        string(REGEX MATCH "([0-9]+)" CUSOLVERMP_VER_MINOR "${CUSOLVERMP_MINOR_LINE}")
+        string(REGEX MATCH "([0-9]+)" CUSOLVERMP_VER_PATCH "${CUSOLVERMP_PATCH_LINE}")
+        if(CUSOLVERMP_VER_MAJOR AND CUSOLVERMP_VER_MINOR AND CUSOLVERMP_VER_PATCH)
+          set(CUSOLVERMP_VERSION_STR
+              "${CUSOLVERMP_VER_MAJOR}.${CUSOLVERMP_VER_MINOR}.${CUSOLVERMP_VER_PATCH}")
+        endif()
+      endif()
+
+      set(_recommend_use_libcal OFF)
+      if(NVHPC_SDK_VERSION AND NVHPC_SDK_VERSION VERSION_LESS "25.9")
+        set(_recommend_use_libcal ON)
+      endif()
+      if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.7.0")
+        set(_recommend_use_libcal ON)
+      endif()
+
+      if(_recommend_use_libcal AND NOT USE_LIBCAL)
+        set(_nvhpc_version_for_msg "${NVHPC_SDK_VERSION}")
+        if(NOT _nvhpc_version_for_msg)
+          set(_nvhpc_version_for_msg "unknown")
+        endif()
+        set(_cusolvermp_version_for_msg "${CUSOLVERMP_VERSION_STR}")
+        if(NOT _cusolvermp_version_for_msg)
+          set(_cusolvermp_version_for_msg "unknown")
+        endif()
+        message(WARNING
+          "Detected NVHPC SDK ${_nvhpc_version_for_msg} and cuSolverMp ${_cusolvermp_version_for_msg}. "
+          "If NVHPC SDK < 25.9 or cuSolverMp < 0.7.0, please set -DUSE_LIBCAL=ON.")
+      endif()
+
       # Create cusolverMp::cusolverMp imported target
       add_library(cusolverMp::cusolverMp IMPORTED INTERFACE)
       set_target_properties(cusolverMp::cusolverMp PROPERTIES
@@ -451,9 +524,15 @@ if(USE_CUDA)
           INTERFACE_INCLUDE_DIRECTORIES "${CUSOLVERMP_INCLUDE_DIR}")
 
       # === Link libraries ===
-      target_link_libraries(${ABACUS_BIN_NAME}
-          NCCL::NCCL
-          cusolverMp::cusolverMp)
+      if(USE_LIBCAL)
+        target_link_libraries(${ABACUS_BIN_NAME}
+            CAL::CAL
+            cusolverMp::cusolverMp)
+      else()
+        target_link_libraries(${ABACUS_BIN_NAME}
+            NCCL::NCCL
+            cusolverMp::cusolverMp)
+      endif()
 
     endif()
   endif()

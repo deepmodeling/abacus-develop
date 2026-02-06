@@ -7,6 +7,12 @@
 #include <cusolverMp.h>
 #include "source_base/macros.h"
 
+#ifdef __USE_LIBCAL
+#include <cal.h>
+#else
+#include <nccl.h>
+#endif
+
 template<typename inputT>
 class Diag_CusolverMP_gvd
 {
@@ -52,7 +58,11 @@ class Diag_CusolverMP_gvd
     int globalMpiSize;
     cudaDataType_t datatype;
 
+#ifdef __USE_LIBCAL
+    cal_comm_t cusolverCalComm = NULL;
+#else
     ncclComm_t ncclComm = NULL;
+#endif
     cudaStream_t localStream = NULL;
     cusolverMpHandle_t cusolverMpHandle = NULL;
     cusolverMpGrid_t grid = NULL;
@@ -65,4 +75,3 @@ class Diag_CusolverMP_gvd
 };
 
 // 实现模板类的成员函数
-
