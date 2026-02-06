@@ -5,9 +5,6 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cusolvermp target_name)
-  # Reads hint variables from parent/cache scope (for example:
-  # NVHPC_ROOT_DIR, CAL_CUSOLVERMP_PATH, NCCL_PATH).
-  # In CMake, function bodies can read outer-scope variables unless shadowed.
   add_compile_definitions(__CUSOLVERMP)
 
   # Find cuSolverMp first, then decide communicator backend.
