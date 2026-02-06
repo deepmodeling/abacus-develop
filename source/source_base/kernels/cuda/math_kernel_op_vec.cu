@@ -105,7 +105,7 @@ void vector_mul_real_op<double, base_device::DEVICE_GPU>::operator()(const int d
     int block = (dim + thread - 1) / thread;
     vector_mul_real_kernel<double><<<block, thread>>>(dim, result, vector, constant);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -121,7 +121,7 @@ inline void vector_mul_real_wrapper(const int dim,
     int block = (dim + thread - 1) / thread;
     vector_mul_real_kernel<thrust::complex<FPTYPE>><<<block, thread>>>(dim, result_tmp, vector_tmp, constant);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 template <>
 void vector_mul_real_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int dim,
@@ -152,7 +152,7 @@ void vector_div_constant_op<double, base_device::DEVICE_GPU>::operator()(const i
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<double><<<block, thread>>>(dim, result, vector, constant);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -168,7 +168,7 @@ inline void vector_div_constant_wrapper(const int& dim,
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<thrust::complex<FPTYPE>><<<block, thread>>>(dim, result_tmp, vector_tmp, constant);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>
@@ -201,7 +201,7 @@ void vector_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<double><<<block, thread>>>(dim, result, vector1, vector2, add);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
 template <typename FPTYPE>
@@ -217,7 +217,7 @@ inline void vector_mul_vector_complex_wrapper(const int& dim,
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<thrust::complex<FPTYPE>><<<block, thread>>>(dim, result_tmp, vector1_tmp, vector2, add);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 template <>
 void vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
@@ -250,7 +250,7 @@ void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const int
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<double><<<block, thread>>>(dim, result, vector1, vector2);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename FPTYPE>
@@ -265,7 +265,7 @@ inline void vector_div_vector_complex_wrapper(const int& dim,
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<thrust::complex<FPTYPE>><<<block, thread>>>(dim, result_tmp, vector1_tmp, vector2);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 template <>
 void vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
@@ -306,7 +306,7 @@ void vector_add_vector_op<T, base_device::DEVICE_GPU>::operator()(const int& dim
     constantvector_addORsub_constantVector_kernel<Type, Real>
         <<<block, thread>>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <>

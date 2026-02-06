@@ -18,33 +18,13 @@
 #define SNAP_PSIBETA_KERNEL_CUH
 
 #include "source_base/tool_quit.h"
+#include "source_base/kernels/cuda/sph_harm_gpu.cuh"
+#include "source_base/module_device/device_check.h"
 
 #include <cstdio>
 #include <cuComplex.h>
 #include <cuda_runtime.h>
 #include <string>
-
-//=============================================================================
-// CUDA Error Checking Macro
-//=============================================================================
-
-/**
- * @brief CUDA error checking macro with file/line information
- *
- * Checks the return value of CUDA API calls and calls WARNING_QUIT
- * with error information if the call fails.
- */
-#define CUDA_CHECK(call)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        cudaError_t err = (call);                                                                                      \
-        if (err != cudaSuccess)                                                                                        \
-        {                                                                                                              \
-            ModuleBase::WARNING_QUIT("CUDA_CHECK",                                                                     \
-                                     std::string("Error at ") + __FILE__ + ":" + std::to_string(__LINE__) + " - "      \
-                                         + cudaGetErrorString(err));                                                   \
-        }                                                                                                              \
-    } while (0)
 
 namespace module_rt
 {
@@ -165,58 +145,6 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
 // Device Helper Functions - Spherical Harmonics
 //=============================================================================
 
-/**
- * @brief Compute real spherical harmonics Y_lm at a given direction
- *
- * TEMPLATED VERSION: L is a compile-time constant enabling loop unrolling
- * and register allocation optimizations by the compiler.
- *
- * Uses the recursive computation of associated Legendre polynomials
- * followed by transformation to real spherical harmonics with proper
- * normalization (same as ModuleBase::Ylm).
- *
- * @tparam L Maximum angular momentum (0 <= L <= MAX_L)
- * @param x, y, z Direction vector components (need not be normalized, normalization is done internally)
- * @param ylm Output array of size (L+1)^2, indexed as ylm[l*l + l + m]
- */
-template <int L>
-__device__ void compute_ylm_gpu(double x, double y, double z, double* ylm);
-
-/**
- * @brief Runtime dispatch macro for templated compute_ylm_gpu
- *
- * Converts a runtime L value to the appropriate compile-time template
- * instantiation for optimal performance.
- *
- * @param L_val Runtime angular momentum value
- * @param x, y, z Direction vector components
- * @param ylm Output array for spherical harmonics
- */
-#define DISPATCH_YLM(L_val, x, y, z, ylm)                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        switch (L_val)                                                                                                 \
-        {                                                                                                              \
-        case 0:                                                                                                        \
-            compute_ylm_gpu<0>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        case 1:                                                                                                        \
-            compute_ylm_gpu<1>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        case 2:                                                                                                        \
-            compute_ylm_gpu<2>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        case 3:                                                                                                        \
-            compute_ylm_gpu<3>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        case 4:                                                                                                        \
-            compute_ylm_gpu<4>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        default:                                                                                                       \
-            compute_ylm_gpu<4>(x, y, z, ylm);                                                                          \
-            break;                                                                                                     \
-        }                                                                                                              \
-    } while (0)
 
 //=============================================================================
 // Data Structures for Kernel Input

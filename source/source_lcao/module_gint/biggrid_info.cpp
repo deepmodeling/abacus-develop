@@ -1,6 +1,7 @@
 #include "biggrid_info.h"
 #include "gint_helper.h"
 #include "gint_type.h"
+#include "source_base/memory.h"
 
 namespace ModuleGint
 {
@@ -44,6 +45,12 @@ BigGridInfo::BigGridInfo(
             meshgrid_coords_[index_1d] = 
                 meshgrid_info_->get_cartesian_coord(mgrid_idx_1Dto3D(index_1d));
         }
+        ModuleBase::Memory::record("BigGridInfo::meshgrid_coords", (long long)nmxyz_ * sizeof(Vec3d), true);
+    }
+
+    BigGridInfo::~BigGridInfo()
+    {
+        ModuleBase::Memory::record("BigGridInfo::meshgrid_coords", -(long long)nmxyz_ * sizeof(Vec3d), true);
     }
 
     Vec3i BigGridInfo::max_ext_bgrid_num(double r) const

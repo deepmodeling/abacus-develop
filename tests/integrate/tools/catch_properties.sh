@@ -4,7 +4,7 @@
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
-SUM_CUBE_EXE="../../integrate/tools/sum_cube"
+SUM_CUBE_EXE="python3 ../../integrate/tools/sum_cube.py"
 
 
 sum_file(){

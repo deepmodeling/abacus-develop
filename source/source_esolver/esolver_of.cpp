@@ -2,13 +2,13 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/cube_io.h"
-#include "source_io/output_log.h"
-#include "source_io/write_elecstat_pot.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"

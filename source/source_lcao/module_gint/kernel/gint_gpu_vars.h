@@ -22,8 +22,6 @@ class GintGpuVars
     int nwmax;
     double dr_uniform;
     double nr_max;
-    // ylmcoef_d is __constant__ memory, no need to cudaFree
-    double* ylmcoef_d = nullptr;
     double* rcut_d = nullptr;
     int* atom_nw_d = nullptr;
     int* ucell_atom_nwl_d = nullptr;
