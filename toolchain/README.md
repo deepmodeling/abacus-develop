@@ -292,8 +292,6 @@ cmake -B $BUILD_DIR \
 
 #### Multi-GPU with cuSolverMP
 
-**Requirements**: cuSolverMP >= 0.7.0 (corresponds to NVIDIA HPC SDK >= 25.7)
-
 **Option 1: Using NVIDIA HPC SDK (Recommended)**
 
 1. Load the NVHPC module:
@@ -309,7 +307,7 @@ cmake -B $BUILD_DIR \
     # ... other options
 ```
 
-The module file will set `NVHPC_ROOT_DIR` automatically, and CMake will find cuSolverMP and NCCL from it.
+The module file will set `NVHPC_ROOT` automatically, and CMake will find cuSolverMP and NCCL(or libcal) from it.
 
 **Option 2: Manual Installation**
 
