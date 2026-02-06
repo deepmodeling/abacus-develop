@@ -633,8 +633,12 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
             {
                 rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
                 FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
+                if (-g2a < -230.0)
+                {
+                    continue;
+                }
                 rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * 
-                           ModuleBase::libm::truncated_exp(-g2a) * (g2a + 1)
+                           ModuleBase::libm::exp(-g2a) * (g2a + 1)
                           / pow(gx_arr[igl] * gx_arr[igl], 2);
                 drhocg [igl] = rhocg1;
             }

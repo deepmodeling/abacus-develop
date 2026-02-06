@@ -561,7 +561,12 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             continue; // skip G=0
         }
-        aux[ig] *= ModuleBase::libm::truncated_exp(std::complex<double>(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0, 0.0))
+        const double damping_factor = -1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0;
+        if (damping_factor < -230.0)
+        {
+            continue;// if the damping factor is too small, the contribution is negligible
+        }
+        aux[ig] *= ModuleBase::libm::exp(std::complex<double>(damping_factor, 0.0))
                 / (rho_basis->gg[ig] * ucell.tpiba2);
     }
 
