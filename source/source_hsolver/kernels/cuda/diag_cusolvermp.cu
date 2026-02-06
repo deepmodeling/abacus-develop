@@ -20,31 +20,34 @@ extern "C"
 // libcal callback functions for MPI communication
 // ============================================================================
 
-static calError_t allgather(void* src_buf,
-                            void* recv_buf,
-                            size_t size,
-                            void* data,
-                            void** request)
+static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
 {
-    MPI_Comm comm = *(MPI_Comm*)data;
-    MPI_Request* req = new MPI_Request;
-    MPI_Iallgather(src_buf, size, MPI_BYTE, recv_buf, size, MPI_BYTE, comm, req);
-    *request = req;
+    MPI_Request req;
+    intptr_t ptr = reinterpret_cast<intptr_t>(data);
+    int err = MPI_Iallgather(src_buf, size, MPI_BYTE, recv_buf, size, MPI_BYTE, (MPI_Comm)ptr, &req);
+    if (err != MPI_SUCCESS)
+    {
+        return CAL_ERROR;
+    }
+    *request = (void*)(req);
     return CAL_OK;
 }
 
 static calError_t request_test(void* request)
 {
-    MPI_Request* req = (MPI_Request*)request;
-    int flag;
-    MPI_Test(req, &flag, MPI_STATUS_IGNORE);
-    return flag ? CAL_OK : CAL_ERROR;
+    intptr_t ptr = reinterpret_cast<intptr_t>(request);
+    MPI_Request req = (MPI_Request)ptr;
+    int completed;
+    int err = MPI_Test(&req, &completed, MPI_STATUS_IGNORE);
+    if (err != MPI_SUCCESS)
+    {
+        return CAL_ERROR;
+    }
+    return completed ? CAL_OK : CAL_ERROR_INPROGRESS;
 }
 
 static calError_t request_free(void* request)
 {
-    MPI_Request* req = (MPI_Request*)request;
-    delete req;
     return CAL_OK;
 }
 #endif // __USE_LIBCAL
