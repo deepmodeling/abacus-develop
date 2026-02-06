@@ -223,7 +223,7 @@ static const char* _cufftGetErrorString(cufftResult_t error)
 #ifdef __CUSOLVERMP
 #include <cusolverMp.h>
 
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
 #include <cal.h>
 
 static const char* _calGetErrorString(calError_t error)
@@ -262,7 +262,7 @@ static const char* _calGetErrorString(calError_t error)
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
-#else // !__USE_LIBCAL (use NCCL)
+#else // !__USE_CAL (use NCCL)
 #include <nccl.h>
 
 #define CHECK_NCCL(func)                                                                                               \
@@ -276,7 +276,7 @@ static const char* _calGetErrorString(calError_t error)
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
-#endif // __USE_LIBCAL
+#endif // __USE_CAL
 
 #endif // __CUSOLVERMP
 

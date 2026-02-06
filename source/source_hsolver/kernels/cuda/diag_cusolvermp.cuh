@@ -7,7 +7,7 @@
 #include <cusolverMp.h>
 #include "source_base/macros.h"
 
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
 #include <cal.h>
 #else
 #include <nccl.h>
@@ -58,7 +58,7 @@ class Diag_CusolverMP_gvd
     int globalMpiSize;
     cudaDataType_t datatype;
 
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
     cal_comm_t cusolverCalComm = NULL;
 #else
     ncclComm_t ncclComm = NULL;

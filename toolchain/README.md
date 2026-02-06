@@ -307,7 +307,7 @@ cmake -B $BUILD_DIR \
     # ... other options
 ```
 
-The module file will set `NVHPC_ROOT` automatically, and CMake will find cuSolverMP and NCCL(or libcal) from it.
+The module file will set `NVHPC_ROOT` automatically, and CMake will find cuSolverMP and NCCL(or CAL) from it.
 
 **Option 2: Manual Installation**
 

@@ -45,12 +45,12 @@ function(abacus_setup_cusolvermp target_name)
   endif()
 
   # Auto-select communicator backend by cuSolverMp version.
-  # cuSolverMp < 0.7.0 -> libcal, otherwise -> NCCL.
-  set(_use_libcal OFF)
+  # cuSolverMp < 0.7.0 -> CAL, otherwise -> NCCL.
+  set(_use_cal OFF)
   if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.7.0")
-    set(_use_libcal ON)
+    set(_use_cal ON)
     message(STATUS
-      "Detected cuSolverMp ${CUSOLVERMP_VERSION_STR} (< 0.7.0). Using libcal backend.")
+      "Detected cuSolverMp ${CUSOLVERMP_VERSION_STR} (< 0.7.0). Using CAL backend.")
   elseif(CUSOLVERMP_VERSION_STR)
     message(STATUS
       "Detected cuSolverMp ${CUSOLVERMP_VERSION_STR} (>= 0.7.0). Using NCCL backend.")
@@ -60,10 +60,10 @@ function(abacus_setup_cusolvermp target_name)
   endif()
 
   # Backend selection:
-  # - _use_libcal=ON  -> libcal communicator backend
-  # - _use_libcal=OFF -> NCCL communicator backend
-  if(_use_libcal)
-    add_compile_definitions(__USE_LIBCAL)
+  # - _use_cal=ON  -> cal communicator backend
+  # - _use_cal=OFF -> NCCL communicator backend
+  if(_use_cal)
+    add_compile_definitions(__USE_CAL)
 
     find_library(CAL_LIBRARY NAMES cal
         HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
@@ -73,10 +73,10 @@ function(abacus_setup_cusolvermp target_name)
         PATH_SUFFIXES include math_libs/include)
 
     if(NOT CAL_LIBRARY OR NOT CAL_INCLUDE_DIR)
-      message(FATAL_ERROR "libcal not found. Set CAL_PATH or NVHPC_ROOT_DIR.")
+      message(FATAL_ERROR "CAL not found. Set CAL_PATH or NVHPC_ROOT_DIR.")
     endif()
 
-    message(STATUS "Found libcal: ${CAL_LIBRARY}")
+    message(STATUS "Found CAL: ${CAL_LIBRARY}")
     if(NOT TARGET CAL::CAL)
       add_library(CAL::CAL IMPORTED INTERFACE)
       set_target_properties(CAL::CAL PROPERTIES
@@ -115,7 +115,7 @@ function(abacus_setup_cusolvermp target_name)
   endif()
 
   # === Link libraries ===
-  if(_use_libcal)
+  if(_use_cal)
     target_link_libraries(${target_name}
         CAL::CAL
         cusolverMp::cusolverMp)

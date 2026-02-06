@@ -15,9 +15,9 @@ extern "C"
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
 
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
 // ============================================================================
-// libcal callback functions for MPI communication
+// CAL callback functions for MPI communication
 // ============================================================================
 
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
@@ -50,7 +50,7 @@ static calError_t request_free(void* request)
 {
     return CAL_OK;
 }
-#endif // __USE_LIBCAL
+#endif // __USE_CAL
 
 template <typename inputT>
 Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
@@ -81,8 +81,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     int local_device_id = base_device::DeviceContext::instance().get_device_id();
     Cblacs_gridinfo(this->cblacs_ctxt, &this->nprows, &this->npcols, &this->myprow, &this->mypcol);
 
-#ifdef __USE_LIBCAL
-    // Initialize libcal communicator
+#ifdef __USE_CAL
+    // Initialize CAL communicator
     cal_comm_create_params_t params;
     params.allgather = allgather;
     params.req_test = request_test;
@@ -133,7 +133,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
     CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
                                                    this->cusolverCalComm,
 #else
                                                    this->ncclComm,
@@ -161,7 +161,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
 template <typename inputT>
 Diag_CusolverMP_gvd<inputT>::~Diag_CusolverMP_gvd()
 {
-#ifdef __USE_LIBCAL
+#ifdef __USE_CAL
     CHECK_CAL(cal_comm_barrier(this->cusolverCalComm, this->localStream));
     CHECK_CAL(cal_stream_sync(this->cusolverCalComm, this->localStream));
     CHECK_CUSOLVER(cusolverMpDestroyMatrixDesc(this->desc_for_cusolvermp));
