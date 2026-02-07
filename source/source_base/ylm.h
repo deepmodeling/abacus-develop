@@ -146,9 +146,8 @@ class Ylm
 			const double z,
 			std::vector<std::vector<double>>& hrly);
 
-	//calculate the coefficient of Ylm, ylmcoef.		
+	//calculate the coefficient of Ylm, ylmcoef.
 	static void set_coefficients ();
-	static std::vector<double> ylmcoef;
 	
 	//static void test();
 	//static void test1();

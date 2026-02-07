@@ -475,6 +475,9 @@ class HContainer
     // sparse table for (atom_i, atom_j)->index of atom_pairs
     std::vector<std::vector<int>> sparse_ap;
     std::vector<std::vector<int>> sparse_ap_index;
+    
+    // record allocated memory size
+    size_t allocated_size = 0;
 
     /**
      * @brief temporary atom-pair lists to loop selected R index
