@@ -112,7 +112,7 @@ void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int np
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -130,7 +130,7 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -148,7 +148,7 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<FPTYPE*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -170,7 +170,7 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -192,7 +192,7 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<FPTYPE*>(out));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct set_3d_fft_box_op<float, base_device::DEVICE_GPU>;

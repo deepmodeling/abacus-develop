@@ -52,6 +52,12 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 
+if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
+  set(NVHPC_ROOT_DIR
+      "$ENV{NVHPC_ROOT}"
+      CACHE PATH "Path to NVIDIA HPC SDK root directory.")
+endif()
+
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON)
@@ -397,21 +403,9 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_CUSOLVERMP)
-      add_compile_definitions(__CUSOLVERMP)
-      find_library(CAL_LIBRARY
-          NAMES cal
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      find_library(CUSOLVERMP_LIBRARY
-          NAMES cusolverMp
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      target_link_libraries(${ABACUS_BIN_NAME}
-          ${CAL_LIBRARY}
-          ${CUSOLVERMP_LIBRARY}
-      )
+      # Keep cuSolverMp discovery/linking logic in a dedicated module.
+      include(cmake/SetupCuSolverMp.cmake)
+      abacus_setup_cusolvermp(${ABACUS_BIN_NAME})
     endif()
   endif()
 endif()

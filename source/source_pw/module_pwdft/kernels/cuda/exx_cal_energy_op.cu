@@ -3,6 +3,7 @@
 
 #include <thrust/complex.h>
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/kernel_compat.h"
 
 namespace hamilt
 {
