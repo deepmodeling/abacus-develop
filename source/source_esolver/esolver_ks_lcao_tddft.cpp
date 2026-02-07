@@ -1,11 +1,11 @@
 #include "esolver_ks_lcao_tddft.h"
 
 //----------------IO-----------------
-#include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/dipole_io.h"
+#include "source_io/module_ctrl/ctrl_output_td.h"
+#include "source_io/module_current/td_current_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_wf/read_wfc_nao.h"
-#include "source_io/module_current/td_current_io.h"
 //------LCAO HSolver ElecState-------
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/symmetry_rho.h"
@@ -203,7 +203,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    if(PARAM.inp.td_stype != 1 && TD_info::out_current == 1)
+    if (PARAM.inp.td_stype != 1 && TD_info::out_current == 1)
     {
         delete velocity_mat;
     }
@@ -336,7 +336,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // Store wave function, Hamiltonian and Overlap matrix, to be used in next time step
-    this->store_h_s_psi(ucell, istep, iter, conv_esolver);
+    // Store when converged or reach max iteration
+    bool force_save = conv_esolver || (iter == this->maxniter);
+    this->store_h_s_psi(ucell, istep, iter, force_save);
 
     // Calculate energy-density matrix for RT-TDDFT
     if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
@@ -496,8 +498,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  hamilt_lcao,
                                  this->RA,
                                  this->td_p,
-                                 this->exx_nao
-                                );
+                                 this->exx_nao);
 
     ModuleBase::timer::tick(this->classname, "after_scf");
 }
