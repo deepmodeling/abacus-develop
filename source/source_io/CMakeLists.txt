@@ -142,6 +142,6 @@ endif()
 
 if(ENABLE_RAPIDJSON)
   if(ENABLE_MPI)
-    add_subdirectory(json_output)
+    add_subdirectory(module_json)
   endif()
 endif()
