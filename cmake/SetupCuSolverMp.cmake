@@ -44,6 +44,15 @@ function(abacus_setup_cusolvermp target_name)
     endif()
   endif()
 
+  # Check minimum version requirement (>= 0.4.0)
+  if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.4.0")
+    message(FATAL_ERROR
+      "cuSolverMp version ${CUSOLVERMP_VERSION_STR} is too old. "
+      "ABACUS requires cuSolverMp >= 0.4.0 (NVIDIA HPC SDK >= 23.5). "
+      "Please upgrade your NVIDIA HPC SDK installation."
+    )
+  endif()
+
   # Auto-select communicator backend by cuSolverMp version.
   # cuSolverMp < 0.7.0 -> CAL, otherwise -> NCCL.
   set(_use_cal OFF)
