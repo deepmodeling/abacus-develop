@@ -16,7 +16,7 @@ AddTest(
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
-    ../../../source_io/orb_io.cpp
+    ../../../source_io/module_output/orb_io.cpp
   LIBS parameter ${math_libs} device base 
 )
 

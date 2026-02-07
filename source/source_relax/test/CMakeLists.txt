@@ -48,7 +48,7 @@ AddTest(
           ../lattice_change_cg.cpp
           ../lattice_change_basic.cpp
           mock_remake_cell.cpp
-          ../../source_io/orb_io.cpp
+          ../../source_io/module_output/orb_io.cpp
 )
 
 AddTest(
