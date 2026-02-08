@@ -5,10 +5,10 @@
 #include <sstream>
 #include <string>
 #ifdef __RAPIDJSON
-#include "json_output/abacusjson.h"
-#include "json_output/general_info.h"
-#include "json_output/init_info.h"
-#include "json_output/readin_info.h"
+#include "abacusjson.h"
+#include "general_info.h"
+#include "init_info.h"
+#include "readin_info.h"
 #endif // __RAPIDJSON
 
 namespace Json
