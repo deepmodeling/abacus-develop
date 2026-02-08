@@ -102,8 +102,8 @@ namespace ModuleSymmetry
 }
 
         // analyze bravis and generate optimized lattice for minimal BvK lattice
-        double cel_const[6];
-        double pre_const[6];
+        double cel_const[6] = {0.0};
+        double pre_const[6] = {0.0};
         int bvk_brav = 0;
         std::string bvk_latname="";
         // bvk_brav = symm.standard_lat(s1, s2, s3, cel_const); //not enough, optimal lattice may change after cell-extension
@@ -126,10 +126,10 @@ namespace ModuleSymmetry
 
         // generate symmetry operation of the BvK lattice using the original optlat-direct coordinates
         std::vector<ModuleBase::Matrix3> bvk_op(48);
-        int bvk_nop;
+        int bvk_nop = 0;
         symm.setgroup(bvk_op.data(), bvk_nop, bvk_brav);
         bvk_op.resize(bvk_nop);
-        int bvk_npg, bvk_nsg, bvk_pgnum, bvk_sgnum;
+        int bvk_npg = 0, bvk_nsg = 0, bvk_pgnum = 0, bvk_sgnum = 0;
         std::string bvk_pgname, bvk_sgname;
         std::vector<ModuleBase::Matrix3> bvk_gmatrix(48);
         std::vector<ModuleBase::Vector3<double>> bvk_gtrans(48);

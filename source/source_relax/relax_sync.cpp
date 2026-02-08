@@ -383,7 +383,7 @@ void Relax::perform_line_search()
     // perform line search
     bool restart_brent = false;
     double x = dmovel, y = etot;
-    double xnew, yd;
+    double xnew = 0.0, yd = 0.0;
 
     brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva);
     dmove = xnew;
@@ -497,7 +497,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // or a line search step, the treatment is slightly different
     // and the input variable is_new_dir is used to make the distinction
 
-    double fac; // fac1 for force, fac2 for stress
+    double fac = 0.0; // fac1 for force, fac2 for stress
     if (is_new_dir)
     {
         fac = 1.0;
@@ -594,8 +594,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // =================================================================
 
     // Calculating displacement in Cartesian coordinate (in Angstrom)
-    double move_ion[nat * 3];
-    ModuleBase::zeros(move_ion, nat * 3);
+    std::vector<double> move_ion(nat * 3, 0.0);
 
     for (int iat = 0; iat < nat; iat++)
     {
@@ -630,10 +629,10 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0)
     {
-        ucell.symm.symmetrize_vec3_nat(move_ion);
+        ucell.symm.symmetrize_vec3_nat(move_ion.data());
     }
 
-    unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_taud(ucell.lat,move_ion.data(),ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);

@@ -1,7 +1,7 @@
 #include "output_mat_sparse.h"
 
 #include "source_io/cal_r_overlap_R.h"
-#include "source_io/write_HS_R.h"
+#include "source_io/module_hs/write_HS_R.h"
 
 namespace ModuleIO
 {

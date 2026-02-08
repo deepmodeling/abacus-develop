@@ -21,6 +21,8 @@ class BigGridInfo
             Vec3d biggrid_vec2,
             Vec3d biggrid_vec3,
             int nmx, int nmy, int nmz);
+
+        ~BigGridInfo();
         
         Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; }
         Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; }

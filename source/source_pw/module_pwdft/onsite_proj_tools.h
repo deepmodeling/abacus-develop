@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
@@ -104,8 +104,8 @@ class Onsite_Proj_tools
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
-    int nkb;
-    int nbands;
+    int nkb = 0;
+    int nbands = 0;
     int deeq_dims[4] = {0, 0, 0, 0};    // deeq can be something other than that in pseudopotentials
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
@@ -113,8 +113,8 @@ class Onsite_Proj_tools
 
     int max_nh = 0;
     int max_npw = 0;
-    int ntype;
-    bool nondiagonal;
+    int ntype = 0;
+    bool nondiagonal = false;
     int pre_ik_s = -1;
     int pre_ik_f = -1;
 

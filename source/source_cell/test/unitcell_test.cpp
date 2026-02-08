@@ -263,39 +263,9 @@ TEST_F(UcellTest, Setup)
     }
 }
 
-TEST_F(UcellDeathTest, SetupWarningQuit1)
-{
-    std::string latname_in = "bcc";
-    int ntype_in = 1;
-    int lmaxmax_in = 2;
-    bool init_vel_in = false;
-    PARAM.input.relax_new = false;
-    std::string fixed_axes_in = "volume";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(1),
-                "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,
-                testing::HasSubstr(
-                    "there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation"));
-}
-
-TEST_F(UcellDeathTest, SetupWarningQuit2)
-{
-    std::string latname_in = "bcc";
-    int ntype_in = 1;
-    int lmaxmax_in = 2;
-    bool init_vel_in = false;
-    PARAM.input.relax_new = false;
-    std::string fixed_axes_in = "shape";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(1),
-                "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("set relax_new to be 1 for fixed_shape relaxation"));
-}
+// These tests are removed because fixed_axes="volume" and fixed_axes="shape"
+// are now supported with relax_new=false (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
+// The old implementation now properly handles these constraints via post-update enforcement
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {

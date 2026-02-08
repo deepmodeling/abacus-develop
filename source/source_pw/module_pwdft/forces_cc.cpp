@@ -1,7 +1,7 @@
 #include "forces.h"
 #include "stress_func.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 // new
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"
@@ -254,7 +254,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
     const UnitCell& ucell_in
 )
 {
-	int  igl0;
+	int  igl0 = 0;
 	double gx = 0, rhocg1 = 0;
 	//double *aux = new double[mesh];
 	std::vector<double> aux(mesh);

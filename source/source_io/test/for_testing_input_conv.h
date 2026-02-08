@@ -14,11 +14,11 @@
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_velocity.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/berryphase.h"
-#include "source_io/restart.h"
+#include "source_io/module_restart/restart.h"
 #include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_basic.h"
@@ -186,18 +186,11 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "there are bugs in the old implementation; set relax_new to be "
-                "1 for fixed_volume relaxation");
-        }
+        // Note: fixed_axes="volume" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
     } else if (fixed_axes_in == "shape") {
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "set relax_new to be 1 for fixed_shape relaxation");
-        }
+        // Note: fixed_axes="shape" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;

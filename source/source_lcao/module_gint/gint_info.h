@@ -33,6 +33,8 @@ class GintInfo
         const Numerical_Orbital* Phi,
         const UnitCell& ucell, Grid_Driver& gd);
 
+    ~GintInfo();
+
     // getter functions
     const std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; }
     int get_bgrids_num() const { return static_cast<int>(biggrids_.size()); }

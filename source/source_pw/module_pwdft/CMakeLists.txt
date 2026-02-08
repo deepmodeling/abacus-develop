@@ -1,17 +1,17 @@
-add_subdirectory(operator_pw)
+
 
 list(APPEND objects
     hamilt_pw.cpp
-    operator_pw/ekinetic_pw.cpp
-    operator_pw/veff_pw.cpp
-    operator_pw/nonlocal_pw.cpp
-    operator_pw/meta_pw.cpp
-    operator_pw/velocity_pw.cpp
-    operator_pw/operator_pw.cpp
-    operator_pw/onsite_proj_pw.cpp
-    operator_pw/op_exx_pw.cpp
-    operator_pw/exx_pw_ace.cpp
-    operator_pw/exx_pw_pot.cpp
+    op_pw_ekin.cpp
+    op_pw_veff.cpp
+    op_pw_nl.cpp
+    op_pw_meta.cpp
+    op_pw_vel.cpp
+    op_pw.cpp
+    op_pw_proj.cpp
+    op_pw_exx.cpp
+    op_pw_exx_ace.cpp
+    op_pw_exx_pot.cpp
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp
@@ -21,21 +21,21 @@ list(APPEND objects
     forces.cpp
     forces_us.cpp
     forces_onsite.cpp
-    stress_func_cc.cpp
-    stress_func_ewa.cpp
-    stress_func_gga.cpp
-    stress_func_mgga.cpp
-    stress_func_har.cpp
-    stress_func_kin.cpp
-    stress_func_loc.cpp
-    stress_func_nl.cpp
-    stress_func_us.cpp
-    stress_func_onsite.cpp
-    stress_func_exx.cpp
+    stress_cc.cpp
+    stress_ewa.cpp
+    stress_gga.cpp
+    stress_mgga.cpp
+    stress_har.cpp
+    stress_kin.cpp
+    stress_loc.cpp
+    stress_nl.cpp
+    stress_us.cpp
+    stress_onsite.cpp
+    stress_exx.cpp
     stress_pw.cpp
-    VL_in_pw.cpp
-    VNL_in_pw.cpp
-    VNL_grad_pw.cpp
+    vl_pw.cpp
+    vnl_pw.cpp
+    vnl_pw_grad.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
@@ -46,7 +46,7 @@ list(APPEND objects
     radial_proj.cpp
     onsite_projector.cpp
     onsite_proj_tools.cpp
-    VSep_in_pw.cpp
+    vsep_pw.cpp
 )
 
 add_library(

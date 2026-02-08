@@ -53,7 +53,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                 {
                     for (int m2 = 0; m2 < nm; m2++)
                     {
-                        double c;
+                        double c = 0.0;
                         ifs >> c;
                         accessor[m1][m2] = c;
                     }
@@ -74,7 +74,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                 auto accessor = pdm[iat].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
-                    double c;
+                    double c = 0.0;
                     ifs >> c;
                     accessor[ind] = c;
                 }

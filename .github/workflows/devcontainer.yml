@@ -17,6 +17,12 @@ jobs:
       matrix:
         dockerfile: ["gnu","intel","cuda"]
     steps:
+      - name: Force Clean Workspace
+        run: |
+          sudo chattr -i -R ${{ github.workspace }} 2>/dev/null || true
+          sudo chown -R $USER:$USER ${{ github.workspace }}
+          sudo find ${{ github.workspace }} -mindepth 1 -delete
+        
       - name: Checkout
         uses: actions/checkout@v6
 

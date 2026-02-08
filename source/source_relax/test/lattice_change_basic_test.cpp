@@ -1,10 +1,13 @@
 #include "source_relax/lattice_change_basic.h"
+#include "mock_remake_cell.h"
 
 #include "for_test.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
+
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
  ***********************************************/
@@ -30,11 +33,17 @@ class LatticeChangeBasicTest : public ::testing::Test
     {
         // Initialize variables before each test
         stress.create(3, 3);
+        // Reset mock state before each test
+        unitcell::reset_remake_cell_mock();
+        // Reset fixed_ibrav to default
+        PARAM.input.fixed_ibrav = false;
     }
 
     virtual void TearDown()
     {
         // Clean up after each test
+        unitcell::reset_remake_cell_mock();
+        PARAM.input.fixed_ibrav = false;
     }
 };
 
@@ -524,4 +533,585 @@ TEST_F(LatticeChangeBasicTest, SetupEtotJudgementFalse)
     EXPECT_DOUBLE_EQ(100.0, Lattice_Change_Basic::etot_p);
     EXPECT_DOUBLE_EQ(80.0, Lattice_Change_Basic::etot);
     EXPECT_DOUBLE_EQ(-20.0, Lattice_Change_Basic::ediff);
+}
+
+// ============================================================================
+// NEW TESTS FOR SHAPE CONSTRAINT, VOLUME RESCALING, AND FIXED_IBRAV
+// ============================================================================
+
+// Test the setup_gradient function with fixed_axes = "shape"
+TEST_F(LatticeChangeBasicTest, SetupGradientShape)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+
+    // Non-isotropic stress tensor
+    stress(0, 0) = 1.0;
+    stress(0, 1) = 2.0;
+    stress(0, 2) = 3.0;
+    stress(1, 0) = 4.0;
+    stress(1, 1) = 5.0;
+    stress(1, 2) = 6.0;
+    stress(2, 0) = 7.0;
+    stress(2, 1) = 8.0;
+    stress(2, 2) = 9.0;
+
+    Lattice_Change_Basic::fixed_axes = "shape";
+
+    // Call setup_gradient method
+    Lattice_Change_Basic::setup_gradient(ucell, lat, grad, stress);
+
+    // Check that stress becomes isotropic (only diagonal, all equal)
+    // Average pressure = (1 + 5 + 9) / 3 = 5
+    EXPECT_DOUBLE_EQ(stress(0, 0), 5.0);
+    EXPECT_DOUBLE_EQ(stress(1, 1), 5.0);
+    EXPECT_DOUBLE_EQ(stress(2, 2), 5.0);
+
+    // Off-diagonal elements should be zero
+    EXPECT_DOUBLE_EQ(stress(0, 1), 0.0);
+    EXPECT_DOUBLE_EQ(stress(0, 2), 0.0);
+    EXPECT_DOUBLE_EQ(stress(1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(stress(1, 2), 0.0);
+    EXPECT_DOUBLE_EQ(stress(2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(stress(2, 1), 0.0);
+}
+
+// Test volume constraint rescaling in change_lattice
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+
+    // Set initial lattice (cubic, volume = 1000)
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.0;
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    ucell.omega = 1000.0; // Initial volume
+
+    lat[0] = 10.0;
+    lat[1] = 0.0;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move that would change volume (expand by 10%)
+    move[0] = 1.0;
+    move[1] = 0.0;
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = 1.0;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 1.0;
+
+    Lattice_Change_Basic::fixed_axes = "volume";
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Check that volume is preserved (should still be 1000)
+    EXPECT_NEAR(ucell.omega, 1000.0, 1e-8);
+
+    // Check that lattice vectors were rescaled uniformly
+    double expected_scale = std::pow(1000.0 / 1331.0, 1.0/3.0); // (old_vol / new_vol)^(1/3)
+    EXPECT_NEAR(ucell.latvec.e11, 1.1 * expected_scale, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e22, 1.1 * expected_scale, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e33, 1.1 * expected_scale, 1e-10);
+}
+
+// Test volume constraint with non-cubic cell
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+
+    // Set initial lattice (non-cubic, volume = 1200)
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.0;
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.2;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    ucell.omega = 1200.0; // Initial volume
+
+    lat[0] = 10.0;
+    lat[1] = 0.0;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 12.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move that would change volume
+    move[0] = 0.5;
+    move[1] = 0.0;
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = -0.5;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 0.3;
+
+    Lattice_Change_Basic::fixed_axes = "volume";
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Check that volume is preserved
+    EXPECT_NEAR(ucell.omega, 1200.0, 1e-8);
+}
+
+// Test change_lattice without volume constraint (should change volume)
+TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+
+    // Set initial lattice
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.0;
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    ucell.omega = 1000.0; // Initial volume
+
+    lat[0] = 10.0;
+    lat[1] = 0.0;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move that changes volume
+    move[0] = 1.0;
+    move[1] = 0.0;
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = 1.0;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 1.0;
+
+    Lattice_Change_Basic::fixed_axes = "None";
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Check that volume DID change (should be 1331)
+    EXPECT_NEAR(ucell.omega, 1331.0, 1e-8);
+
+    // Check lattice vectors
+    EXPECT_DOUBLE_EQ(ucell.latvec.e11, 1.1);
+    EXPECT_DOUBLE_EQ(ucell.latvec.e22, 1.1);
+    EXPECT_DOUBLE_EQ(ucell.latvec.e33, 1.1);
+}
+
+// Test fixed_ibrav with simple cubic lattice
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+    ucell.latName = "sc";
+
+    // Set initial lattice (slightly distorted cubic)
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.01; // Small distortion
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    lat[0] = 10.0;
+    lat[1] = 0.1;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move
+    move[0] = 0.1;
+    move[1] = 0.0;
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = 0.1;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 0.1;
+
+    PARAM.input.fixed_ibrav = true;
+    Lattice_Change_Basic::fixed_axes = "None";
+
+    // Verify remake_cell was not called yet
+    EXPECT_FALSE(unitcell::was_remake_cell_called());
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Verify remake_cell was called
+    EXPECT_TRUE(unitcell::was_remake_cell_called());
+
+    // Check that lattice is now perfect cubic (all diagonal, equal)
+    // This is enforced by the mock remake_cell function
+    EXPECT_NEAR(ucell.latvec.e11, ucell.latvec.e22, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e22, ucell.latvec.e33, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e12, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e13, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e21, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e23, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e31, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
+
+    // Reset for other tests
+    PARAM.input.fixed_ibrav = false;
+}
+
+// Test fixed_ibrav with FCC lattice
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+    ucell.latName = "fcc";
+
+    // Set initial lattice (slightly distorted FCC)
+    double celldm = 1.0;
+    ucell.latvec.e11 = -celldm + 0.01; // Small distortion
+    ucell.latvec.e12 = 0.0;
+    ucell.latvec.e13 = celldm;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = celldm;
+    ucell.latvec.e23 = celldm;
+    ucell.latvec.e31 = -celldm;
+    ucell.latvec.e32 = celldm;
+    ucell.latvec.e33 = 0.0;
+
+    lat[0] = (-celldm + 0.01) * ucell.lat0;
+    lat[1] = 0.0;
+    lat[2] = celldm * ucell.lat0;
+    lat[3] = 0.0;
+    lat[4] = celldm * ucell.lat0;
+    lat[5] = celldm * ucell.lat0;
+    lat[6] = -celldm * ucell.lat0;
+    lat[7] = celldm * ucell.lat0;
+    lat[8] = 0.0;
+
+    // Apply a small move
+    for (int i = 0; i < 9; i++) move[i] = 0.01 * ucell.lat0;
+
+    PARAM.input.fixed_ibrav = true;
+    Lattice_Change_Basic::fixed_axes = "None";
+
+    // Verify remake_cell was not called yet
+    EXPECT_FALSE(unitcell::was_remake_cell_called());
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Verify remake_cell was called
+    EXPECT_TRUE(unitcell::was_remake_cell_called());
+
+    // Check that lattice maintains FCC structure
+    // For FCC: a1 = (-a, 0, a), a2 = (0, a, a), a3 = (-a, a, 0)
+    // All should have same magnitude
+    double mag1 = std::sqrt(ucell.latvec.e11*ucell.latvec.e11 +
+                           ucell.latvec.e12*ucell.latvec.e12 +
+                           ucell.latvec.e13*ucell.latvec.e13);
+    double mag2 = std::sqrt(ucell.latvec.e21*ucell.latvec.e21 +
+                           ucell.latvec.e22*ucell.latvec.e22 +
+                           ucell.latvec.e23*ucell.latvec.e23);
+    double mag3 = std::sqrt(ucell.latvec.e31*ucell.latvec.e31 +
+                           ucell.latvec.e32*ucell.latvec.e32 +
+                           ucell.latvec.e33*ucell.latvec.e33);
+
+    EXPECT_NEAR(mag1, mag2, 1e-10);
+    EXPECT_NEAR(mag2, mag3, 1e-10);
+
+    // Check FCC structure: e11 should be negative, e13 positive, e12 = 0
+    EXPECT_LT(ucell.latvec.e11, 0.0);
+    EXPECT_GT(ucell.latvec.e13, 0.0);
+    EXPECT_NEAR(ucell.latvec.e12, 0.0, 1e-10);
+
+    // Reset for other tests
+    PARAM.input.fixed_ibrav = false;
+}
+
+// Test combination of fixed_axes = "volume" and fixed_ibrav
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+    ucell.latName = "sc";
+
+    // Set initial lattice (cubic)
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.0;
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    ucell.omega = 1000.0; // Initial volume
+
+    lat[0] = 10.0;
+    lat[1] = 0.0;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move that would change volume and break symmetry
+    move[0] = 1.0;
+    move[1] = 0.1; // Try to break symmetry
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = 0.8;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 1.2;
+
+    PARAM.input.fixed_ibrav = true;
+    Lattice_Change_Basic::fixed_axes = "volume";
+
+    // Verify remake_cell was not called yet
+    EXPECT_FALSE(unitcell::was_remake_cell_called());
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Verify remake_cell was called (should be called before volume rescaling)
+    EXPECT_TRUE(unitcell::was_remake_cell_called());
+
+    // Check that volume is preserved
+    EXPECT_NEAR(ucell.omega, 1000.0, 1e-8);
+
+    // Check that lattice is cubic (all diagonal, equal)
+    EXPECT_NEAR(ucell.latvec.e11, ucell.latvec.e22, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e22, ucell.latvec.e33, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e12, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e13, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e21, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e23, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e31, 0.0, 1e-10);
+    EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
+
+    // Reset for other tests
+    PARAM.input.fixed_ibrav = false;
+}
+
+// Test axis constraint with fixed_axes = "a"
+TEST_F(LatticeChangeBasicTest, SetupGradientAxisA)
+{
+    // Initialize variables
+    ucell.lc[0] = 0; // First axis fixed
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+
+    stress(0, 0) = 1.0;
+    stress(0, 1) = 2.0;
+    stress(0, 2) = 3.0;
+    stress(1, 0) = 4.0;
+    stress(1, 1) = 5.0;
+    stress(1, 2) = 6.0;
+    stress(2, 0) = 7.0;
+    stress(2, 1) = 8.0;
+    stress(2, 2) = 9.0;
+
+    Lattice_Change_Basic::fixed_axes = "a";
+
+    // Call setup_gradient method
+    Lattice_Change_Basic::setup_gradient(ucell, lat, grad, stress);
+
+    // Check that gradient for first lattice vector is zero
+    EXPECT_DOUBLE_EQ(grad[0], 0.0);
+    EXPECT_DOUBLE_EQ(grad[1], 0.0);
+    EXPECT_DOUBLE_EQ(grad[2], 0.0);
+
+    // Check that gradients for other vectors are non-zero
+    EXPECT_NE(grad[3], 0.0);
+    EXPECT_NE(grad[4], 0.0);
+    EXPECT_NE(grad[5], 0.0);
+    EXPECT_NE(grad[6], 0.0);
+    EXPECT_NE(grad[7], 0.0);
+    EXPECT_NE(grad[8], 0.0);
+}
+
+// Test that fixed axis doesn't move in change_lattice
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
+{
+    // Initialize variables
+    ucell.lc[0] = 0; // First axis fixed
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+
+    // Set initial lattice
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.1;
+    ucell.latvec.e13 = 0.2;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    // Save initial first lattice vector
+    double initial_e11 = ucell.latvec.e11;
+    double initial_e12 = ucell.latvec.e12;
+    double initial_e13 = ucell.latvec.e13;
+
+    lat[0] = 10.0;
+    lat[1] = 1.0;
+    lat[2] = 2.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Try to move all lattice vectors
+    move[0] = 1.0;
+    move[1] = 0.5;
+    move[2] = 0.3;
+    move[3] = 0.5;
+    move[4] = 1.0;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 1.0;
+
+    Lattice_Change_Basic::fixed_axes = "a";
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Check that first lattice vector didn't change
+    EXPECT_DOUBLE_EQ(ucell.latvec.e11, initial_e11);
+    EXPECT_DOUBLE_EQ(ucell.latvec.e12, initial_e12);
+    EXPECT_DOUBLE_EQ(ucell.latvec.e13, initial_e13);
+
+    // Check that other lattice vectors did change
+    EXPECT_NE(ucell.latvec.e21, 0.0);
+    EXPECT_NE(ucell.latvec.e22, 1.0);
+    EXPECT_NE(ucell.latvec.e33, 1.0);
+}
+
+// Test that remake_cell is NOT called when fixed_ibrav = false
+TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav)
+{
+    // Initialize variables
+    ucell.lc[0] = 1;
+    ucell.lc[1] = 1;
+    ucell.lc[2] = 1;
+    ucell.lat0 = 10.0;
+    ucell.latName = "sc";
+
+    // Set initial lattice
+    ucell.latvec.e11 = 1.0;
+    ucell.latvec.e12 = 0.01; // Small distortion
+    ucell.latvec.e13 = 0.0;
+    ucell.latvec.e21 = 0.0;
+    ucell.latvec.e22 = 1.0;
+    ucell.latvec.e23 = 0.0;
+    ucell.latvec.e31 = 0.0;
+    ucell.latvec.e32 = 0.0;
+    ucell.latvec.e33 = 1.0;
+
+    lat[0] = 10.0;
+    lat[1] = 0.1;
+    lat[2] = 0.0;
+    lat[3] = 0.0;
+    lat[4] = 10.0;
+    lat[5] = 0.0;
+    lat[6] = 0.0;
+    lat[7] = 0.0;
+    lat[8] = 10.0;
+
+    // Apply a move
+    move[0] = 0.1;
+    move[1] = 0.0;
+    move[2] = 0.0;
+    move[3] = 0.0;
+    move[4] = 0.1;
+    move[5] = 0.0;
+    move[6] = 0.0;
+    move[7] = 0.0;
+    move[8] = 0.1;
+
+    PARAM.input.fixed_ibrav = false; // Explicitly set to false
+    Lattice_Change_Basic::fixed_axes = "None";
+
+    // Verify remake_cell was not called yet
+    EXPECT_FALSE(unitcell::was_remake_cell_called());
+
+    // Call change_lattice method
+    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+
+    // Verify remake_cell was NOT called
+    EXPECT_FALSE(unitcell::was_remake_cell_called());
+
+    // Check that distortion remains (e12 should still be non-zero)
+    EXPECT_NE(ucell.latvec.e12, 0.0);
 }

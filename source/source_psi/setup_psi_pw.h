@@ -1,12 +1,12 @@
 #ifndef SETUP_PSI_PW_H
 #define SETUP_PSI_PW_H
 
-#include "source_psi/psi_init.h"
+#include "source_psi/psi_prepare.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/hamilt.h"
@@ -38,7 +38,7 @@ class Setup_Psi_pw
     psi::Psi<std::complex<double>, Device>* psi_d = nullptr;
 
     // psi_initializer controller
-    psi::PSIInit<T, Device>* p_psi_init = nullptr;
+    psi::PSIPrepare<T, Device>* p_psi_init = nullptr;
 
     bool already_initpsi = false;
 

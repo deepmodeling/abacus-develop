@@ -12,7 +12,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/pulay_fs.h"
-#include "source_io/write_HS.h"
+#include "source_io/module_hs/write_HS.h"
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
@@ -108,14 +108,6 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               two_center_bundle,
                               &gd,
                               nullptr);
-
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-        ModuleBase::timer::tick("Forces", "allocate");
-        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
-    }
 
     ModuleBase::timer::tick("Forces", "allocate");
     return;

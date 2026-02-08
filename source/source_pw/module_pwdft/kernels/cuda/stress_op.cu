@@ -1,12 +1,13 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/constants.h"
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/kernel_compat.h"
 #include "vnl_tools_cu.hpp"
 #include "source_base/module_device/types.h"
 
 #include <complex>
 #include <thrust/complex.h>
-#include <base/macros/macros.h>
+#include "source_base/module_device/device_check.h"
 
 #include <cuda_runtime.h>
 
@@ -242,7 +243,7 @@ void cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const ba
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb2),
             reinterpret_cast<thrust::complex<FPTYPE>*>(dbecp_noevc));
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -289,7 +290,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -412,7 +413,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -433,7 +434,7 @@ FPTYPE cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int& 
     cudaMemcpy(&sum, d_sum, sizeof(FPTYPE) * 1, cudaMemcpyDeviceToHost);
     cudaFree(d_sum);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
     return sum;
 }
 
@@ -450,7 +451,7 @@ void cal_stress_mgga_op<T, Device>::operator()(
     cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
         spin, nrxx, w1, gradwfc_, crosstaus);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 
@@ -912,7 +913,7 @@ void pointer_array_malloc<base_device::DEVICE_GPU>::operator()(
     const int n
 )
 {
-    cudaErrcheck(cudaMalloc(ptr, n * sizeof(void*)));
+    CHECK_CUDA(cudaMalloc(ptr, n * sizeof(void*)));
 }
 
 template struct pointer_array_malloc<base_device::DEVICE_GPU>;
@@ -1073,7 +1074,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 // kernel for DeltaSpin stress
 template <typename FPTYPE>
@@ -1104,7 +1105,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct synchronize_ptrs<base_device::DEVICE_GPU>;

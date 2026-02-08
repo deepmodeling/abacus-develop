@@ -7,9 +7,9 @@
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include <memory>
 #include "source_lcao/hamilt_lcao.h"
-#include "source_io/read_wfc_nao.h"
+#include "source_io/module_wf/read_wfc_nao.h"
 #include "source_io/cube_io.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -692,7 +692,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         std::stringstream ssc;
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
-        double ef;
+        double ef = 0.0;
         if (ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,
             GlobalV::ofs_running,

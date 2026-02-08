@@ -29,12 +29,12 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "module_operator_lcao/dftu_lcao.h"
 #include "module_operator_lcao/dspin_lcao.h"
-#include "module_operator_lcao/ekinetic_new.h"
+#include "module_operator_lcao/ekinetic.h"
 #include "module_operator_lcao/meta_lcao.h"
-#include "module_operator_lcao/nonlocal_new.h"
+#include "module_operator_lcao/nonlocal.h"
 #include "module_operator_lcao/op_dftu_lcao.h"
 #include "module_operator_lcao/op_exx_lcao.h"
-#include "module_operator_lcao/overlap_new.h"
+#include "module_operator_lcao/overlap.h"
 #include "module_operator_lcao/td_ekinetic_lcao.h"
 #include "module_operator_lcao/td_nonlocal_lcao.h"
 #include "module_operator_lcao/td_pot_hybrid.h"
@@ -59,7 +59,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     // initialize the overlap matrix
     this->sR = new HContainer<TR>(paraV);
 
-    this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
+    this->getOperator() = new Overlap<OperatorLCAO<TK, TR>>(this->hsk,
                                                                this->kv->kvec_d,
                                                                this->hR,
                                                                this->sR,
@@ -137,7 +137,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // initial operator for Gamma_only case
         // overlap term (<psi|psi>) is indispensable
         // in Gamma_only case, target SK is this->hsk->get_sk(), the target SR is this->sR
-        this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
+        this->getOperator() = new Overlap<OperatorLCAO<TK, TR>>(this->hsk,
                                                                    this->kv->kvec_d,
                                                                    this->hR,
                                                                    this->sR,
@@ -149,7 +149,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // kinetic term (<psi|T|psi>)
         if (PARAM.inp.t_in_h)
         {
-            Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* ekinetic = new EKinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
                                                                            this->hR,
                                                                            &ucell,
@@ -163,7 +163,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
         if (PARAM.inp.vnl_in_h)
         {
-            Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* nonlocal = new Nonlocal<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
                                                                            this->hR,
                                                                            &ucell,
@@ -266,7 +266,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 
         // initial operator for multi-k case
         // overlap term is indispensable
-        Operator<TK>* overlap = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
+        Operator<TK>* overlap = new Overlap<OperatorLCAO<TK, TR>>(this->hsk,
                                                                      this->kv->kvec_d,
                                                                      this->hR,
                                                                      this->sR,
@@ -287,7 +287,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
         if (PARAM.inp.t_in_h)
         {
-            Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* ekinetic = new EKinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
                                                                            this->hR,
                                                                            &ucell,
@@ -301,7 +301,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // in general case, target HR is this->hR, while target HK is this->hsk->get_hk()
         if (PARAM.inp.vnl_in_h)
         {
-            Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* nonlocal = new Nonlocal<OperatorLCAO<TK, TR>>(this->hsk,
                                                                            this->kv->kvec_d,
                                                                            this->hR,
                                                                            &ucell,

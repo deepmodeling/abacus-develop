@@ -11,13 +11,13 @@ static cublasHandle_t cublas_handle = nullptr;
 
 void createGpuBlasHandle() {
     if (cublas_handle == nullptr) {
-        cublasErrcheck(cublasCreate(&cublas_handle));
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
     }
 }
 
 void destroyGpuBlasHandle() {
     if (cublas_handle != nullptr) {
-        cublasErrcheck(cublasDestroy(cublas_handle));
+        CHECK_CUBLAS(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
     }
 }

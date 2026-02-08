@@ -14,7 +14,7 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/write_HS.h" // use ModuleIO::write_hsk()
+#include "source_io/module_hs/write_HS.h" // use ModuleIO::write_hsk()
 #include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
 namespace ModuleESolver
