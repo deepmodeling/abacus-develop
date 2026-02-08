@@ -1,12 +1,239 @@
 #include "input_help.h"
-#include "input_help_data.h" // Generated header
+#include "read_input.h" // For accessing Input_Item documentation
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace ModuleIO {
+
+namespace {
+// Constants for display formatting
+constexpr size_t MAX_WIDTH = 70;
+constexpr size_t INDENT_SIZE = 2;
+constexpr size_t LIST_INDENT = 4;
+constexpr size_t NESTED_LIST_INDENT = 6;
+
+/**
+ * Word-wrap text at specified width with given indentation.
+ * @param text Text to wrap
+ * @param width Maximum line width
+ * @param indent Number of spaces to indent each line
+ * @param first_indent Number of spaces for the first line (if different)
+ * @return Word-wrapped text
+ */
+std::string word_wrap(const std::string& text, size_t width, size_t indent, size_t first_indent) {
+    if (text.empty()) {
+        return "";
+    }
+
+    std::string result;
+    std::string indent_str(indent, ' ');
+    std::string first_indent_str(first_indent, ' ');
+    size_t col = first_indent;
+
+    std::istringstream iss(text);
+    std::string word;
+    bool first = true;
+
+    while (iss >> word) {
+        if (first) {
+            result = first_indent_str + word;
+            col = first_indent + word.length();
+            first = false;
+        } else if (col + 1 + word.length() > width) {
+            result += "\n" + indent_str + word;
+            col = indent + word.length();
+        } else {
+            result += " " + word;
+            col += 1 + word.length();
+        }
+    }
+    return result;
+}
+
+/**
+ * Word-wrap with same indent for all lines.
+ */
+std::string word_wrap(const std::string& text, size_t width, size_t indent) {
+    return word_wrap(text, width, indent, indent);
+}
+
+/**
+ * Format a structured description that may contain markers for lists and paragraphs.
+ *
+ * Markers:
+ *   \n\n     - paragraph break (blank line)
+ *   \n*      - top-level list item
+ *   \n  *    - nested list item
+ *   [NOTE]   - note/blockquote
+ *
+ * @param desc The description string with embedded markers
+ * @return Formatted string for terminal display
+ */
+std::string format_structured_description(const std::string& desc) {
+    // Check if description contains any structure markers
+    bool has_structure = (desc.find("\n\n") != std::string::npos ||
+                         desc.find("\n*") != std::string::npos ||
+                         desc.find("[NOTE]") != std::string::npos);
+
+    if (!has_structure) {
+        // Simple case: just word-wrap with basic indent
+        return word_wrap(desc, MAX_WIDTH, INDENT_SIZE);
+    }
+
+    std::string result;
+    size_t pos = 0;
+    std::string current_text;
+    bool at_line_start = true;  // Track if we're at the start of a logical line
+
+    while (pos < desc.length()) {
+        // Check for paragraph break (\n\n)
+        if (pos + 1 < desc.length() && desc[pos] == '\n' && desc[pos + 1] == '\n') {
+            // Flush current text
+            if (!current_text.empty()) {
+                if (!result.empty() && result.back() != '\n') {
+                    result += "\n";
+                }
+                result += word_wrap(current_text, MAX_WIDTH, INDENT_SIZE);
+                current_text.clear();
+            }
+            result += "\n\n";  // Two newlines: one to end current line, one for blank line
+            pos += 2;
+            at_line_start = true;
+            continue;
+        }
+
+        // Check for nested list item (\n  * or at line start with leading spaces and *)
+        if ((pos + 3 < desc.length() && desc[pos] == '\n' &&
+            desc[pos + 1] == ' ' && desc[pos + 2] == ' ' && desc[pos + 3] == '*') ||
+            (at_line_start && pos + 2 < desc.length() &&
+             desc[pos] == ' ' && desc[pos + 1] == ' ' && desc[pos + 2] == '*')) {
+            // Flush current text
+            if (!current_text.empty()) {
+                if (!result.empty() && result.back() != '\n') {
+                    result += "\n";
+                }
+                result += word_wrap(current_text, MAX_WIDTH, INDENT_SIZE);
+                current_text.clear();
+            }
+            // Skip the marker
+            if (desc[pos] == '\n') {
+                pos += 4;  // Skip "\n  *"
+            } else {
+                pos += 3;  // Skip "  *"
+            }
+            // Skip any whitespace after *
+            while (pos < desc.length() && desc[pos] == ' ') {
+                pos++;
+            }
+            // Collect list item text until next marker or end
+            std::string item_text;
+            while (pos < desc.length()) {
+                if (desc[pos] == '\n') {
+                    break;  // Stop at any newline marker
+                }
+                item_text += desc[pos++];
+            }
+            // Format nested list item with deeper indentation (indent=6 for continuation, first_indent=4)
+            if (!result.empty() && result.back() != '\n') {
+                result += "\n";
+            }
+            std::string prefix = "- ";
+            result += word_wrap(prefix + item_text, MAX_WIDTH, NESTED_LIST_INDENT, LIST_INDENT);
+            at_line_start = false;
+            continue;
+        }
+
+        // Check for top-level list item (\n* or * at line start)
+        if ((pos + 1 < desc.length() && desc[pos] == '\n' && desc[pos + 1] == '*') ||
+            (at_line_start && desc[pos] == '*')) {
+            // Flush current text
+            if (!current_text.empty()) {
+                if (!result.empty() && result.back() != '\n') {
+                    result += "\n";
+                }
+                result += word_wrap(current_text, MAX_WIDTH, INDENT_SIZE);
+                current_text.clear();
+            }
+            // Skip the marker
+            if (desc[pos] == '\n') {
+                pos += 2;  // Skip "\n*"
+            } else {
+                pos += 1;  // Skip "*"
+            }
+            // Skip any whitespace after *
+            while (pos < desc.length() && desc[pos] == ' ') {
+                pos++;
+            }
+            // Collect list item text until next marker or end
+            std::string item_text;
+            while (pos < desc.length()) {
+                if (desc[pos] == '\n') {
+                    break;  // Stop at any newline marker
+                }
+                item_text += desc[pos++];
+            }
+            // Format list item with "  - " prefix (indent=4 for continuation, first_indent=2)
+            if (!result.empty() && result.back() != '\n') {
+                result += "\n";
+            }
+            std::string prefix = "- ";
+            result += word_wrap(prefix + item_text, MAX_WIDTH, LIST_INDENT, INDENT_SIZE);
+            at_line_start = false;
+            continue;
+        }
+
+        // Check for [NOTE] marker
+        if (pos + 6 <= desc.length() && desc.substr(pos, 6) == "[NOTE]") {
+            // Flush current text
+            if (!current_text.empty()) {
+                if (!result.empty() && result.back() != '\n') {
+                    result += "\n";
+                }
+                result += word_wrap(current_text, MAX_WIDTH, INDENT_SIZE);
+                current_text.clear();
+            }
+            pos += 6;  // Skip "[NOTE]"
+            // Skip any whitespace after [NOTE]
+            while (pos < desc.length() && desc[pos] == ' ') {
+                pos++;
+            }
+            // Collect note text until next marker or end
+            std::string note_text;
+            while (pos < desc.length()) {
+                if (desc[pos] == '\n') {
+                    break;  // Stop at any newline marker
+                }
+                note_text += desc[pos++];
+            }
+            // Format note with "Note: " prefix
+            if (!result.empty() && result.back() != '\n') {
+                result += "\n";
+            }
+            result += word_wrap("Note: " + note_text, MAX_WIDTH, INDENT_SIZE + 6, INDENT_SIZE);
+            at_line_start = false;
+            continue;
+        }
+
+        // Regular character - accumulate
+        at_line_start = false;
+        current_text += desc[pos++];
+    }
+
+    // Flush any remaining text
+    if (!current_text.empty()) {
+        if (!result.empty() && result.back() != '\n') {
+            result += "\n";
+        }
+        result += word_wrap(current_text, MAX_WIDTH, INDENT_SIZE);
+    }
+
+    return result;
+}
+}  // anonymous namespace
 
 // Static member definitions
 std::map<std::string, ParameterMetadata> ParameterHelp::registry_;
@@ -18,20 +245,26 @@ void ParameterHelp::initialize() {
 }
 
 void ParameterHelp::build_registry() {
-    // Copy data from generated constexpr array to map for fast lookup
-    for (size_t i = 0; i < PARAMETER_COUNT; ++i) {
-        const auto& info = PARAMETER_DATA[i];
+    // Create a ReadInput instance to access Input_Item documentation
+    // Use rank -1 to indicate help-system mode (no MPI operations)
+    ReadInput reader(-1);
+
+    // Build registry from Input_Item objects
+    const auto& input_lists = reader.get_input_lists();
+
+    for (const auto& pair : input_lists) {
+        const auto& item = pair.second;
         ParameterMetadata meta;
-        meta.name = info.name;
-        meta.category = info.category;
-        meta.type = info.type;
-        meta.description = info.description;
-        meta.default_value = info.default_value;
-        meta.unit = info.unit ? info.unit : "";
-        meta.availability = info.availability ? info.availability : "";
+        meta.name = item.label;
+        meta.category = item.category;
+        meta.type = item.type;
+        meta.description = item.description;
+        meta.default_value = item.default_value;
+        meta.unit = item.unit;
+        meta.availability = item.availability;
 
         // Pre-compute lowercase name for fast fuzzy matching
-        meta.name_lowercase = to_lowercase(info.name);
+        meta.name_lowercase = to_lowercase(item.label);
 
         registry_[meta.name] = meta;
 
@@ -75,37 +308,8 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
 
     os << "\nDescription:\n";
 
-    // Word-wrap description at 70 characters
-    std::string desc = meta.description;
-    size_t pos = 0;
-    size_t line_start = 0;
-    const size_t max_width = 70;
-
-    while (pos < desc.length()) {
-        // Find next space after max_width characters
-        if (pos - line_start >= max_width) {
-            size_t space_pos = desc.rfind(' ', pos);
-            if (space_pos != std::string::npos && space_pos > line_start) {
-                desc[space_pos] = '\n';
-                line_start = space_pos + 1;
-                pos = space_pos + 1;
-            } else {
-                pos++;
-            }
-        } else {
-            pos++;
-        }
-    }
-
-    // Indent each line by 2 spaces
-    os << "  ";
-    for (char c : desc) {
-        os << c;
-        if (c == '\n') {
-            os << "  ";
-        }
-    }
-    os << "\n\n";
+    // Use structured formatting for description
+    os << format_structured_description(meta.description) << "\n\n";
 
     return true;
 }

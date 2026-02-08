@@ -1,22 +1,5 @@
-# Find Python3 for generating help data
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
-
-# Generate input parameter help data from documentation
-set(GENERATED_HELP_HEADER "${CMAKE_CURRENT_BINARY_DIR}/input_help_data.h")
-add_custom_command(
-    OUTPUT ${GENERATED_HELP_HEADER}
-    COMMAND ${Python3_EXECUTABLE}
-            ${CMAKE_SOURCE_DIR}/tools/generate_help_data.py
-            ${CMAKE_SOURCE_DIR}/docs/advanced/input_files/input-main.md
-            ${GENERATED_HELP_HEADER}
-    DEPENDS ${CMAKE_SOURCE_DIR}/docs/advanced/input_files/input-main.md
-            ${CMAKE_SOURCE_DIR}/tools/generate_help_data.py
-    COMMENT "Generating INPUT parameter help data from documentation..."
-    VERBATIM
-)
-
-# Create custom target for help data generation
-add_custom_target(generate_help_data DEPENDS ${GENERATED_HELP_HEADER})
+# Note: Help data is now embedded in Input_Item objects in read_input_item_*.cpp
+# The old input_help_data.h generation has been removed.
 
 list(APPEND objects
     input_conv.cpp
@@ -138,9 +121,7 @@ add_library(
     ${objects}
 )
 
-# Make sure help data is generated before compiling io_basic
-add_dependencies(io_basic generate_help_data)
-
+# Include directory for build_info.h (generated at build time)
 target_include_directories(
     io_basic
     PUBLIC

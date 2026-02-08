@@ -68,6 +68,12 @@ exclude_patterns = []
 html_theme = 'sphinx_book_theme'
 html_logo = 'abacus-logo.svg'
 
+# Theme options for sphinx-book-theme
+html_theme_options = {
+    "show_toc_level": 2,  # Only show h2 (categories) in right sidebar, not h3 (parameters)
+    "toc_title": "On this page",
+}
+
 
 # Changes for compatibility with Read the Docs
 import os
@@ -93,3 +99,23 @@ mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml
 latex_elements = {
     'extraclassoptions':'openany,oneside'
 }
+
+
+# -- Auto-generate INPUT keyword documentation from C++ source ----------------
+
+from pathlib import Path
+
+def generate_input_docs(app):
+    """Auto-generate input-main.md from C++ source before building."""
+    docs_dir = Path(__file__).resolve().parent
+    repo_root = docs_dir.parent
+    import sys
+    sys.path.insert(0, str(docs_dir))
+    from generate_docs_from_source import generate
+    generate(
+        source_dir=repo_root / 'source' / 'source_io',
+        output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
+    )
+
+def setup(app):
+    app.connect('builder-inited', generate_input_docs)

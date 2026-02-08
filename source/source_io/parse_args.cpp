@@ -17,6 +17,63 @@
 namespace ModuleIO
 {
 
+/**
+ * @brief Format description for brief display in search results.
+ *
+ * Converts multi-line descriptions with list markers to single-line format:
+ * - Replaces newlines with spaces
+ * - Converts * list markers to -
+ * - Collapses multiple spaces
+ * - Truncates to max_length characters
+ */
+static std::string format_brief_description(const std::string& desc, size_t max_length = 60) {
+    std::string result;
+    result.reserve(desc.length());
+
+    bool prev_space = false;
+    bool at_line_start = true;
+
+    for (size_t i = 0; i < desc.length(); ++i) {
+        char c = desc[i];
+
+        if (c == '\n') {
+            // Replace newline with space (collapse multiple)
+            if (!prev_space && !result.empty()) {
+                result += ' ';
+                prev_space = true;
+            }
+            at_line_start = true;
+        } else if (c == '*' && at_line_start) {
+            // Convert * list marker to -
+            result += '-';
+            prev_space = false;
+            at_line_start = false;
+        } else if (c == ' ' || c == '\t') {
+            if (!prev_space && !result.empty()) {
+                result += ' ';
+                prev_space = true;
+            }
+            // Don't clear at_line_start for leading spaces
+        } else {
+            result += c;
+            prev_space = false;
+            at_line_start = false;
+        }
+    }
+
+    // Trim trailing spaces
+    while (!result.empty() && result.back() == ' ') {
+        result.pop_back();
+    }
+
+    // Truncate if needed
+    if (result.length() > max_length) {
+        result = result.substr(0, max_length) + "...";
+    }
+
+    return result;
+}
+
 void print_build_info()
 {
     const int label_width = 30;
@@ -194,11 +251,8 @@ void parse_args(int argc, char** argv)
                 auto metadata = ParameterHelp::get_metadata(param);
                 std::cout << "  " << std::left << std::setw(30) << param;
                 if (!metadata.name.empty() && !metadata.description.empty()) {
-                    // Show first 60 characters of description
-                    std::string desc = metadata.description;
-                    if (desc.length() > 60) {
-                        desc = desc.substr(0, 60) + "...";
-                    }
+                    // Format description for brief display
+                    std::string desc = format_brief_description(metadata.description, 60);
                     std::cout << " - " << desc;
                 }
                 std::cout << std::endl;

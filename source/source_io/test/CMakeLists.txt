@@ -103,7 +103,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_input_help_test
-  LIBS parameter  ${math_libs} base device
+  LIBS parameter  ${math_libs} base device io_input
   SOURCES input_help_test.cpp ../input_help.cpp
 )
 

@@ -254,3 +254,98 @@ TEST_F(ParameterHelpTest, FuzzyMatchingMaxDistance) {
     auto results_zero = ModuleIO::ParameterHelp::find_similar_parameters("ecutwfc", 5, 0);
     EXPECT_EQ(results_zero.size(), 0);
 }
+
+// Test: Parameter with list items displays with bullets
+TEST_F(ParameterHelpTest, ListFormattingDisplayed) {
+    std::ostringstream captured;
+    bool result;
+
+    {
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        result = ModuleIO::ParameterHelp::show_parameter_help("calculation");
+    }
+
+    EXPECT_TRUE(result);
+    std::string output = captured.str();
+
+    // Check that the output contains list item markers
+    // The calculation parameter has items like "scf:", "nscf:", etc.
+    EXPECT_NE(output.find("- scf:"), std::string::npos)
+        << "Expected list item '- scf:' in output:\n" << output;
+    EXPECT_NE(output.find("- relax:"), std::string::npos)
+        << "Expected list item '- relax:' in output:\n" << output;
+}
+
+// Test: Lines do not exceed maximum width
+TEST_F(ParameterHelpTest, WordWrapMaxWidth) {
+    std::ostringstream captured;
+
+    {
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        ModuleIO::ParameterHelp::show_parameter_help("calculation");
+    }
+
+    std::string output = captured.str();
+    std::istringstream iss(output);
+    std::string line;
+
+    // Check each line is within reasonable width (allowing some margin for list markers)
+    const size_t max_line_width = 80;  // Allow some margin beyond 70
+    while (std::getline(iss, line)) {
+        EXPECT_LE(line.length(), max_line_width)
+            << "Line exceeds max width: \"" << line << "\"";
+    }
+}
+
+// Test: esolver_type has list items properly formatted
+TEST_F(ParameterHelpTest, EsolverTypeListFormatting) {
+    std::ostringstream captured;
+    bool result;
+
+    {
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        result = ModuleIO::ParameterHelp::show_parameter_help("esolver_type");
+    }
+
+    EXPECT_TRUE(result);
+    std::string output = captured.str();
+
+    // esolver_type has items like "ksdft:", "ofdft:", etc.
+    EXPECT_NE(output.find("ksdft:"), std::string::npos)
+        << "Expected 'ksdft:' in output:\n" << output;
+    EXPECT_NE(output.find("tddft:"), std::string::npos)
+        << "Expected 'tddft:' in output:\n" << output;
+}
+
+// Test: symmetry parameter displays with list items
+TEST_F(ParameterHelpTest, SymmetryListFormatting) {
+    std::ostringstream captured;
+    bool result;
+
+    {
+        ScopedCoutRedirect redirect(captured.rdbuf());
+        result = ModuleIO::ParameterHelp::show_parameter_help("symmetry");
+    }
+
+    EXPECT_TRUE(result);
+    std::string output = captured.str();
+
+    // symmetry has items like "-1:", "0:", "1:"
+    // These should be preserved in some form
+    EXPECT_NE(output.find("-1:"), std::string::npos)
+        << "Expected '-1:' in output:\n" << output;
+}
+
+// Test: Description content is preserved (not truncated)
+TEST_F(ParameterHelpTest, DescriptionContentPreserved) {
+    auto meta = ModuleIO::ParameterHelp::get_metadata("calculation");
+    ASSERT_FALSE(meta.name.empty());
+
+    // The calculation parameter should mention scf, relax, md, etc.
+    EXPECT_NE(meta.description.find("scf"), std::string::npos)
+        << "Expected 'scf' in description: " << meta.description;
+    EXPECT_NE(meta.description.find("relax"), std::string::npos)
+        << "Expected 'relax' in description: " << meta.description;
+    EXPECT_NE(meta.description.find("md"), std::string::npos)
+        << "Expected 'md' in description: " << meta.description;
+}
