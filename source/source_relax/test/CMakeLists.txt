@@ -77,7 +77,7 @@ AddTest(
           ../ions_move_bfgs.cpp 
           ../ions_move_basic.cpp 
           ../bfgs_basic.cpp
-          ../../source_io/orb_io.cpp
+          ../../source_io/module_output/orb_io.cpp
           ${cell_source_files}
 )
 
@@ -87,7 +87,7 @@ AddTest(
   SOURCES ions_move_cg_test.cpp 
           ../ions_move_cg.cpp 
           ../ions_move_basic.cpp
-          ../../source_io/orb_io.cpp
+          ../../source_io/module_output/orb_io.cpp
           ${cell_source_files}
 )
 
