@@ -1,8 +1,5 @@
-
 #include "para_json.h"
-
 #include "source_base/global_variable.h"
-
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -12,7 +9,6 @@
 #include "json_output/general_info.h"
 #include "json_output/init_info.h"
 #include "json_output/readin_info.h"
-
 #endif // __RAPIDJSON
 
 namespace Json

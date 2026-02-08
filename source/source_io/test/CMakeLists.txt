@@ -79,7 +79,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  ${math_libs} base psi device
-  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../binstream.cpp
+  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../module_output/binstream.cpp
 )
 
 install(FILES write_wfc_nao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -157,7 +157,7 @@ endif()
 AddTest(
   TARGET MODULE_IO_read_wfc_pw_test
   LIBS parameter  base ${math_libs} device planewave
-  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
@@ -168,7 +168,7 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base ${math_libs} device planewave psi
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
+  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
