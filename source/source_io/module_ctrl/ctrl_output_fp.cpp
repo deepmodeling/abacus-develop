@@ -7,7 +7,7 @@
 #include "source_io/module_elf/write_elf.h"
 
 #ifdef USE_LIBXC
-#include "source_io/write_libxc_r.h"
+#include "source_io/module_chgpot/write_libxc_r.h"
 #endif
 
 namespace ModuleIO
