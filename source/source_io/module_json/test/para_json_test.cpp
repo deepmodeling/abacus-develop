@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+
 #define private public
 #define __RAPIDJSON 1
 #include "source_io/module_json/abacusjson.h"
