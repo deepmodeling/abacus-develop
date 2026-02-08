@@ -1,8 +1,8 @@
 #include "esolver_ks_lcaopw.h"
 
 #include "source_pw/module_pwdft/elecond.h"
-#include "source_io/input_conv.h"
-#include "source_io/output_log.h"
+#include "source_io/module_parameter/input_conv.h"
+#include "source_io/module_output/output_log.h"
 
 #include <iostream>
 
@@ -10,7 +10,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------
@@ -24,11 +24,11 @@
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_io/berryphase.h"
-#include "source_io/numerical_basis.h"
-#include "source_io/numerical_descriptor.h"
-#include "source_io/to_wannier90_pw.h"
-#include "source_io/write_elecstat_pot.h"
+#include "source_io/module_unk/berryphase.h"
+#include "source_io/module_bessel/numerical_basis.h"
+#include "source_io/module_bessel/numerical_descriptor.h"
+#include "source_io/module_wannier/to_wannier90_pw.h"
+#include "source_io/module_chgpot/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -36,7 +36,7 @@
 #include <ATen/kernels/lapack.h>
 #include <sys/time.h>
 #ifdef __LCAO
-#include "source_io/write_vxc_lip.hpp"
+#include "source_io/module_hs/write_vxc_lip.hpp"
 #endif
 
 namespace ModuleESolver

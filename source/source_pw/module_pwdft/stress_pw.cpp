@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_base/global_variable.h" // use GlobalC
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 

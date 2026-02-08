@@ -2,6 +2,7 @@
 // #include "source_psi/kernels/device.h"
 #include "source_base/module_device/types.h"
 #include "source_base/constants.h"
+#include "source_base/module_device/kernel_compat.h"
 
 #include <complex>
 
@@ -157,7 +158,7 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
             gcar,// array of data
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1)); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -196,7 +197,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -314,7 +315,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -480,7 +481,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                     reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                                                     force); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 // kernel for DeltaSpin force
 template <typename FPTYPE>
@@ -517,7 +518,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                     reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                                                     force); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -564,7 +565,7 @@ void saveVkbValues(
         npw, 
         ipol,
         npwx);
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -614,7 +615,7 @@ void revertVkbValues(
         ipol,
         npwx,
         static_cast<const thrust::complex<FPTYPE>>(coeff));
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>

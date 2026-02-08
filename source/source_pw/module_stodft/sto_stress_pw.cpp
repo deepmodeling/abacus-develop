@@ -4,7 +4,7 @@
 #include "source_pw/module_pwdft/fs_kin_tools.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 #include "source_pw/module_pwdft/structure_factor.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
 template <typename FPTYPE, typename Device>

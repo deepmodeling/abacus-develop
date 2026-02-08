@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
-#include "source_io/output.h"
+#include "source_io/module_output/output.h"
 #include "module_symmetry/symmetry.h"
 
 #ifdef __LCAO

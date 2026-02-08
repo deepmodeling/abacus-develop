@@ -2,7 +2,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/cif_io.h"
 
 

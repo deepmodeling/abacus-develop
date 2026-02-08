@@ -113,7 +113,7 @@ def generate_input_docs(app):
     sys.path.insert(0, str(docs_dir))
     from generate_docs_from_source import generate
     generate(
-        source_dir=repo_root / 'source' / 'source_io',
+        source_dir=repo_root / 'source' / 'source_io' / 'module_parameter',
         output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
     )
 

@@ -1,7 +1,7 @@
 #ifndef SETUP_PSI_H
 #define SETUP_PSI_H
 
-#include "source_psi/psi_init.h"
+#include "source_psi/psi_prepare.h"
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_basis/module_ao/parallel_orbitals.h" // use para_orb

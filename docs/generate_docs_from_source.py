@@ -359,7 +359,7 @@ def main():
     parser.add_argument(
         '--source-dir',
         type=Path,
-        default=Path('source/source_io'),
+        default=Path('source/source_io/module_parameter'),
         help='Directory containing read_input_item_*.cpp files'
     )
     parser.add_argument(
