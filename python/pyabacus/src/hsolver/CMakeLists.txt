@@ -16,8 +16,9 @@ list(APPEND _diago
     ${BASE_PATH}/kernels/math_kernel_op_vec.cpp
     ${BASE_PATH}/kernels/math_ylm_op.cpp
     ${BASE_PATH}/module_device/device.cpp
+    ${BASE_PATH}/module_device/device_helpers.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
-    
+
     ${PSI_PATH}/psi.cpp
   )
 add_library(diagopack SHARED 

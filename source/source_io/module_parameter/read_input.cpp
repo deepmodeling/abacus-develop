@@ -224,12 +224,12 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
         }
     }
 
-    // 6. check and reset kpar. 
-    // It must be after bcastfunc, and kpar and bndpar are synchronized
-    // It must be before wirte_txt_input, because kpar is used in write_txt_input
-    if (param.inp.device  == "gpu" && param.inp.basis_type == "pw")
+    // 6. Initialize GPU device context (unified entry point)
+    // This must be after bcastfunc to ensure param.inp.device is synchronized across all ranks
+    // This replaces scattered cudaSetDevice/hipSetDevice calls throughout the codebase
+    if (param.inp.device == "gpu")
     {
-        param.input.kpar = base_device::information::get_device_kpar(param.inp.kpar, param.inp.bndpar);
+        base_device::DeviceContext::instance().init();
     }
 
     if (this->check_mode)

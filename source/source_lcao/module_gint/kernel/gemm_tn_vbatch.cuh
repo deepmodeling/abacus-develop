@@ -9,6 +9,8 @@
 #include "gint_helper.cuh"
 #include <functional>
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/device_check.h"
+#include "source_base/module_device/kernel_compat.h"
 
 #define sA(i, j) sA[(j)*slda + (i)]
 #define sB(i, j) sB[(j)*sldb + (i)]
@@ -445,7 +447,7 @@ void vbatched_gemm_tn_impl(int max_m,
                 global_A_array + i, global_lda + i,
                 global_C_array + i, global_ldc + i,
                 alpha_tmp);
-        checkCudaLastError();
+        CHECK_LAST_CUDA_ERROR("kernel launch");
     }
 }
 

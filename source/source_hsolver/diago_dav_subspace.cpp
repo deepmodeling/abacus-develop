@@ -77,7 +77,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     if (this->device == base_device::GpuDevice)
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
-        // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
+        syncmem_var_h2d_op()(this->d_precondition, this->precondition.data(), nbasis_in);
         resmem_complex_op()(this->d_scc, this->nbase_x * this->nbase_x);
         resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
@@ -295,6 +295,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
     }
 
+    if (notconv > 1){
+
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
 #else
@@ -313,6 +315,28 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->zero,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
+    } else
+    {
+
+#ifdef __DSP
+    ModuleBase::gemv_op_mt<T, Device>()
+#else
+    ModuleBase::gemv_op<T, Device>()
+#endif
+                        ('N',
+                         this->dim,     // m: row of A
+                         nbase,         // n: col of A
+                         this->one,     // alpha
+                         hpsi,          // A dim * nbase
+                         this->dim,     // LDA: if(N) max(1,m)
+                         vcc,           // X nbase
+                         1,             // incx
+                         this->zero,    // beta
+                         psi_iter + (nbase) * this->dim,  // Y dim
+                         1              // incy
+                        );
+    }
+
 
     // Eigenvalues operation section
     Real* e_temp_hd = eigenvalue_iter->data();
@@ -324,6 +348,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     // vcc = - vcc * eigenvalue
     ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, e_temp_hd, -1.0, vcc, this->nbase_x);
+
+    if (notconv > 1){
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -343,6 +369,26 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
          this->one,
          psi_iter + nbase * this->dim,
          this->dim);
+    } else
+    {
+#ifdef __DSP
+    ModuleBase::gemv_op_mt<T, Device>()
+#else
+    ModuleBase::gemv_op<T, Device>()
+#endif
+        ('N',
+         this->dim,     // m: row of A
+         nbase,         // n: col of A
+         this->one,     // alpha
+         spsi,          // A dim * nbase
+         this->dim,     // LDA: if(N) max(1,m)
+         vcc,           // X nbase
+         1,             // incx
+         this->one,    // beta
+         psi_iter + nbase * this->dim,  // Y dim
+         1              // incy
+        );
+    }
 
     // Precondition section
 #if defined(__CUDA) || defined(__ROCM)
@@ -413,6 +459,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
 
+    if (notconv > 1){
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
 #else
@@ -450,6 +497,46 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          this->zero,
          &scc[nbase * this->nbase_x],
          this->nbase_x);
+
+        } else {
+
+#ifdef __DSP
+    ModuleBase::gemv_op_mt<T, Device>()
+#else
+    ModuleBase::gemv_op<T, Device>()
+#endif
+        ('C',
+         this->dim,                 // m: row of A
+         nbase + notconv,          // n: col of A
+         this->one,                // alpha
+         psi_iter,                 // A dim * nbase
+         this->dim,                // LDA: if(N) max(1,m)
+         &hpsi[nbase * this->dim], // X nbase
+         1,                        // incx
+         this->zero,               // beta
+         &hcc[nbase * this->nbase_x], // Y dim
+         1                         // incy
+        );
+#ifdef __DSP
+    ModuleBase::gemv_op_mt<T, Device>()
+#else
+    ModuleBase::gemv_op<T, Device>()
+#endif
+        ('C',
+         this->dim,                 // m: row of A
+         nbase + notconv,          // n: col of A
+         this->one,                // alpha
+         psi_iter,                 // A dim * nbase
+         this->dim,                // LDA: if(N) max(1,m)
+         spsi + nbase * this->dim, // X nbase
+         1,                        // incx
+         this->zero,               // beta
+         &scc[nbase * this->nbase_x], // Y dim
+         1                         // incy
+        );
+
+        }
+
 
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)

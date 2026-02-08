@@ -113,11 +113,12 @@ if (ENABLE_MPI)
   if (USE_CUDA)
   AddTest(
     TARGET MODULE_HSOLVER_LCAO_cusolver
-    LIBS parameter  ${math_libs}  base psi device 
-    SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp 
+    LIBS parameter  ${math_libs}  base psi device
+    SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp
     ../kernels/hegvd_op.cpp
     ../kernels/cuda/diag_cusolver.cu
   )
+  target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

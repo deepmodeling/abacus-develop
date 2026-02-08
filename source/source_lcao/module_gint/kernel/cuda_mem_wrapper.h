@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime.h>
 #include "source_base/tool_quit.h"
-#include "gint_helper.cuh"
+#include "source_base/module_device/device_check.h"
 
 template <typename T>
 class CudaMemWrapper
@@ -55,14 +55,14 @@ class CudaMemWrapper
 
       if (malloc_host)
       { 
-        checkCuda(cudaMallocHost((void**)&host_ptr_, size_* sizeof(T)));
+        CHECK_CUDA(cudaMallocHost((void**)&host_ptr_, size_* sizeof(T)));
         memset(host_ptr_, 0, size_ * sizeof(T));
       }
       else
       { host_ptr_ = nullptr; }
 
-      checkCuda(cudaMalloc((void**)&device_ptr_, size_ * sizeof(T)));
-      checkCuda(cudaMemset(device_ptr_, 0, size_ * sizeof(T)));
+      CHECK_CUDA(cudaMalloc((void**)&device_ptr_, size_ * sizeof(T)));
+      CHECK_CUDA(cudaMemset(device_ptr_, 0, size_ * sizeof(T)));
     }
     
     ~CudaMemWrapper()
@@ -74,7 +74,7 @@ class CudaMemWrapper
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to device."); } 
-      checkCuda(cudaMemcpy(device_ptr_, host_ptr_, size * sizeof(T), cudaMemcpyHostToDevice));
+      CHECK_CUDA(cudaMemcpy(device_ptr_, host_ptr_, size * sizeof(T), cudaMemcpyHostToDevice));
     }
 
     void copy_host_to_device_sync()
@@ -86,7 +86,7 @@ class CudaMemWrapper
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to device."); } 
-      checkCuda(cudaMemcpyAsync(device_ptr_, host_ptr_, size * sizeof(T), cudaMemcpyHostToDevice, stream_));
+      CHECK_CUDA(cudaMemcpyAsync(device_ptr_, host_ptr_, size * sizeof(T), cudaMemcpyHostToDevice, stream_));
     }
 
     void copy_host_to_device_async()
@@ -98,7 +98,7 @@ class CudaMemWrapper
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to host."); } 
-      checkCuda(cudaMemcpy(host_ptr_, device_ptr_, size * sizeof(T), cudaMemcpyDeviceToHost));
+      CHECK_CUDA(cudaMemcpy(host_ptr_, device_ptr_, size * sizeof(T), cudaMemcpyDeviceToHost));
     }
 
     void copy_device_to_host_sync()
@@ -110,7 +110,7 @@ class CudaMemWrapper
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to host."); } 
-      checkCuda(cudaMemcpyAsync(host_ptr_, device_ptr_, size * sizeof(T), cudaMemcpyDeviceToHost, stream_));
+      CHECK_CUDA(cudaMemcpyAsync(host_ptr_, device_ptr_, size * sizeof(T), cudaMemcpyDeviceToHost, stream_));
     }
 
     void copy_device_to_host_async()
@@ -120,7 +120,7 @@ class CudaMemWrapper
     
     void memset_device_sync(const size_t size, const int value = 0)
     {
-      checkCuda(cudaMemset(device_ptr_, value, size * sizeof(T)));
+      CHECK_CUDA(cudaMemset(device_ptr_, value, size * sizeof(T)));
     }
 
     void memset_device_sync(const int value = 0)
@@ -130,7 +130,7 @@ class CudaMemWrapper
 
     void memset_device_async(const size_t size, const int value = 0)
     {
-      checkCuda(cudaMemsetAsync(device_ptr_, value, size * sizeof(T), stream_));
+      CHECK_CUDA(cudaMemsetAsync(device_ptr_, value, size * sizeof(T), stream_));
     }
 
     void memset_device_async(const int value = 0)
@@ -142,7 +142,7 @@ class CudaMemWrapper
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot memset host."); } 
-      checkCuda(cudaMemset(host_ptr_, value, size * sizeof(T)));
+      CHECK_CUDA(cudaMemset(host_ptr_, value, size * sizeof(T)));
     }
 
     void memset_host(const int value = 0)
@@ -152,8 +152,8 @@ class CudaMemWrapper
 
     void free()
     {
-      checkCuda(cudaFree(device_ptr_));
-      checkCuda(cudaFreeHost(host_ptr_));
+      CHECK_CUDA(cudaFree(device_ptr_));
+      CHECK_CUDA(cudaFreeHost(host_ptr_));
     }
 
     T* get_device_ptr() { return device_ptr_; }
