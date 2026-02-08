@@ -12,7 +12,8 @@ constexpr int YLMCOEF_SIZE = 36;
 // GPU version: must use numeric constants (CUDA doesn't support runtime init for __device__)
 __device__ static const double ylmcoef[YLMCOEF_SIZE] = {
 #else
-inline constexpr double ylmcoef[YLMCOEF_SIZE] = {
+// Use static constexpr for C++11 compatibility (inline variables require C++17)
+static constexpr double ylmcoef[YLMCOEF_SIZE] = {
 #endif
 0.28209479177387813964,     // 1.0 / sqrt(ModuleBase::FOUR_PI)
 0.48860251190291992263,		// sqrt (3.0 / ModuleBase::FOUR_PI)
