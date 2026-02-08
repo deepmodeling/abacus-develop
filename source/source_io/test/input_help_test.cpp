@@ -349,3 +349,58 @@ TEST_F(ParameterHelpTest, DescriptionContentPreserved) {
     EXPECT_NE(meta.description.find("md"), std::string::npos)
         << "Expected 'md' in description: " << meta.description;
 }
+
+// Test: generate_yaml() produces valid YAML header
+TEST_F(ParameterHelpTest, GenerateYamlHeader) {
+    std::ostringstream captured;
+    ModuleIO::ParameterHelp::generate_yaml(captured);
+    std::string output = captured.str();
+
+    // Must contain the top-level "parameters:" key
+    EXPECT_NE(output.find("parameters:"), std::string::npos)
+        << "YAML output must contain 'parameters:' header";
+}
+
+// Test: generate_yaml() contains known parameters
+TEST_F(ParameterHelpTest, GenerateYamlContainsKnownParams) {
+    std::ostringstream captured;
+    ModuleIO::ParameterHelp::generate_yaml(captured);
+    std::string output = captured.str();
+
+    EXPECT_NE(output.find("name: ecutwfc"), std::string::npos)
+        << "YAML output must contain parameter 'ecutwfc'";
+    EXPECT_NE(output.find("name: calculation"), std::string::npos)
+        << "YAML output must contain parameter 'calculation'";
+    EXPECT_NE(output.find("name: basis_type"), std::string::npos)
+        << "YAML output must contain parameter 'basis_type'";
+}
+
+// Test: generate_yaml() has sufficient parameter count
+TEST_F(ParameterHelpTest, GenerateYamlParameterCount) {
+    std::ostringstream captured;
+    ModuleIO::ParameterHelp::generate_yaml(captured);
+    std::string output = captured.str();
+
+    // Count occurrences of "  - name: " which marks each parameter entry
+    size_t count = 0;
+    size_t pos = 0;
+    std::string marker = "  - name: ";
+    while ((pos = output.find(marker, pos)) != std::string::npos) {
+        ++count;
+        pos += marker.size();
+    }
+
+    EXPECT_GT(count, 400u)
+        << "YAML output should contain > 400 parameters, found " << count;
+}
+
+// Test: generate_yaml() uses block scalar syntax for descriptions
+TEST_F(ParameterHelpTest, GenerateYamlBlockScalar) {
+    std::ostringstream captured;
+    ModuleIO::ParameterHelp::generate_yaml(captured);
+    std::string output = captured.str();
+
+    // Block scalar markers "description: |" should be present
+    EXPECT_NE(output.find("description: |"), std::string::npos)
+        << "YAML output must use block scalar syntax (|) for descriptions";
+}

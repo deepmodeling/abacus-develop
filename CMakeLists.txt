@@ -764,6 +764,15 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# Generate docs/parameters.yaml from built-in parameter metadata.
+# Runs after every build so the checked-in YAML stays in sync with the source.
+add_custom_command(
+    TARGET ${ABACUS_BIN_NAME} POST_BUILD
+    COMMAND ${ABACUS_BIN_PATH} --generate-parameters-yaml
+            > ${CMAKE_SOURCE_DIR}/docs/parameters.yaml
+    COMMENT "Generating docs/parameters.yaml"
+)
+
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()

@@ -69,6 +69,17 @@ public:
     static void show_general_help(std::ostream& os = std::cout);
 
     /**
+     * @brief Generate YAML dump of all parameter metadata
+     *
+     * Outputs a YAML document suitable for documentation generation.
+     * Each parameter includes name, category, type, description,
+     * default_value, unit, and availability fields.
+     *
+     * @param os Output stream to write YAML to (default: std::cout)
+     */
+    static void generate_yaml(std::ostream& os = std::cout);
+
+    /**
      * @brief Get metadata for a specific parameter
      *
      * Returns a copy of the parameter metadata. Check if the returned

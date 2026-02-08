@@ -260,6 +260,11 @@ void parse_args(int argc, char** argv)
             std::cout << "\nUse 'abacus -h <parameter>' for detailed help." << std::endl;
             std::exit(0);
         }
+        else if (arg == "--generate-parameters-yaml")
+        {
+            ParameterHelp::generate_yaml(std::cout);
+            std::exit(0);
+        }
         else if (arg == "--check-input")
         {
             ModuleIO::ReadInput::check_mode = true;

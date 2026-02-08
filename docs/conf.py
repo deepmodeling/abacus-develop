@@ -101,19 +101,28 @@ latex_elements = {
 }
 
 
-# -- Auto-generate INPUT keyword documentation from C++ source ----------------
+# -- Auto-generate INPUT keyword documentation from YAML parameter dump ------
 
 from pathlib import Path
 
 def generate_input_docs(app):
-    """Auto-generate input-main.md from C++ source before building."""
+    """Auto-generate input-main.md from parameters.yaml before building.
+
+    Workflow:
+        abacus --generate-parameters-yaml > docs/parameters.yaml
+        # Then Sphinx calls this hook, which runs generate_input_main.py
+    """
     docs_dir = Path(__file__).resolve().parent
-    repo_root = docs_dir.parent
+    yaml_path = docs_dir / 'parameters.yaml'
+    if not yaml_path.exists():
+        print(f"Warning: {yaml_path} not found. "
+              "Run: abacus --generate-parameters-yaml > docs/parameters.yaml")
+        return
     import sys
     sys.path.insert(0, str(docs_dir))
-    from generate_docs_from_source import generate
+    from generate_input_main import generate
     generate(
-        source_dir=repo_root / 'source' / 'source_io' / 'module_parameter',
+        yaml_path=yaml_path,
         output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
     )
 
