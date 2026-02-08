@@ -292,31 +292,29 @@ cmake -B $BUILD_DIR \
 
 #### Multi-GPU with cuSolverMP
 
-1. **Check or install cuSolverMP manually:**
-One may use NVIDIA HPC_SDK as an easy way to install cuSolverMP.
+cuSolverMP requires NVIDIA HPC SDK. Follow these steps to build with cuSolverMP:
 
-2. **Install dependencies normally:**
-```bash
-./toolchain_gnu.sh
-```
+1. Load the NVHPC module:
 
-3. **Build with cuSolverMP:**
+   - **For NVIDIA HPC SDK version < 25.9**: cuSolverMP relies on HPC-X for communication, so you need to load the `nvhpc-hpcx-cudaxx/xx.x` module. For example, with HPC SDK 25.3:
+     ```bash
+     module use /opt/nvidia/hpc_sdk/modulefiles
+     module load nvhpc-hpcx-cuda12/25.3
+     ```
+
+   - **For NVIDIA HPC SDK version >= 25.9**: cuSolverMP uses NCCL for communication instead of HPC-X, so only the base `nvhpc/xx.x` module is needed. For example, with HPC SDK 26.1:
+     ```bash
+     module use /opt/nvidia/hpc_sdk/modulefiles
+     module load nvhpc/26.1
+     ```
+
+2. Build with cuSolverMP enabled:
 ```bash
 cmake -B $BUILD_DIR \
     -DUSE_CUDA=ON \
     -DENABLE_CUSOLVERMP=ON \
-    -DCAL_CUSOLVERMP_PATH=/path/to/math_libs/lib \
     # ... other options
 ```
-
-3. **Set environment variables:**
-```bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/hpcx/ucc/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/hpcx/ucx/lib  
-export CPATH=$CPATH:/path/to/math_libs/include
-```
-
-**Note**: cuSolverMP requires NVIDIA HPC SDK or system installation via package manager.
 
 ## Troubleshooting
 
