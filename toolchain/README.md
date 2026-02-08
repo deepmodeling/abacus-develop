@@ -292,33 +292,27 @@ cmake -B $BUILD_DIR \
 
 #### Multi-GPU with cuSolverMP
 
-**Option 1: Using NVIDIA HPC SDK (Recommended)**
+cuSolverMP requires NVIDIA HPC SDK. Follow these steps to build with cuSolverMP:
 
 1. Load the NVHPC module:
-```bash
-module load nvhpc
-```
+
+   - **For NVIDIA HPC SDK version < 25.9**: cuSolverMP relies on HPC-X for communication, so you need to load the `nvhpc-hpcx-cudaxx/xx.x` module. For example, with HPC SDK 25.3:
+     ```bash
+     module use /opt/nvidia/hpc_sdk/modulefiles
+     module load nvhpc-hpcx-cuda12/25.3
+     ```
+
+   - **For NVIDIA HPC SDK version >= 25.9**: cuSolverMP uses NCCL for communication instead of HPC-X, so only the base `nvhpc/xx.x` module is needed. For example, with HPC SDK 26.1:
+     ```bash
+     module use /opt/nvidia/hpc_sdk/modulefiles
+     module load nvhpc/26.1
+     ```
 
 2. Build with cuSolverMP enabled:
 ```bash
 cmake -B $BUILD_DIR \
     -DUSE_CUDA=ON \
     -DENABLE_CUSOLVERMP=ON \
-    # ... other options
-```
-
-The module file will set `NVHPC_ROOT` automatically, and CMake will find cuSolverMP and NCCL(or CAL) from it.
-
-**Option 2: Manual Installation**
-
-If you installed cuSolverMP and NCCL separately and not in system default paths, specify the paths explicitly:
-
-```bash
-cmake -B $BUILD_DIR \
-    -DUSE_CUDA=ON \
-    -DENABLE_CUSOLVERMP=ON \
-    -DCUSOLVERMP_PATH=/path/to/cusolvermp/ \
-    -DNCCL_PATH=/path/to/nccl/ \
     # ... other options
 ```
 
