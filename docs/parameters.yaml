@@ -14,7 +14,7 @@ parameters:
     type: Integer
     description: |
       Number of different atom species in the calculation.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: calculation
@@ -75,7 +75,7 @@ parameters:
     description: |
       The accuracy for symmetry analysis. Typically, the default value is good enough, but if the lattice parameters or atom positions in STRU file are not accurate enough, this value should be enlarged.
       [NOTE] Note: if calculation==cell_relax, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation.
-    default_value: 1.0e-6
+    default_value: "1.0e-6"
     unit: Bohr
     availability: ""
   - name: symmetry_autoclose
@@ -109,7 +109,7 @@ parameters:
     type: Integer
     description: |
       Divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: bndpar
@@ -117,7 +117,7 @@ parameters:
     type: Integer
     description: |
       Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: latname
@@ -169,7 +169,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points in x direction. If set to 0, the number will be calculated from ecutrho.
 
       [NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ny
@@ -179,7 +179,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points in y direction. If set to 0, the number will be calculated from ecutrho.
 
       [NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: nz
@@ -189,7 +189,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points in z direction. If set to 0, the number will be calculated from ecutrho.
 
       [NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ndx
@@ -199,7 +199,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points for the dense part of charge density in x direction. If set to 0, the number will be calculated from ecutwfc.
 
       [NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. These parameters must be used combined with nx, ny, nz. If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ndy
@@ -209,7 +209,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points for the dense part of charge density in y direction. If set to 0, the number will be calculated from ecutwfc.
 
       [NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. These parameters must be used combined with nx, ny, nz. If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ndz
@@ -219,7 +219,7 @@ parameters:
       If set to a positive number, specifies the number of FFT grid points for the dense part of charge density in z direction. If set to 0, the number will be calculated from ecutwfc.
 
       [NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. These parameters must be used combined with nx, ny, nz. If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: cell_factor
@@ -227,7 +227,7 @@ parameters:
     type: Real
     description: |
       Used in the construction of the pseudopotential tables. For cell-relax calculations, this is automatically set to 2.0.
-    default_value: 1.2
+    default_value: "1.2"
     unit: ""
     availability: ""
   - name: erf_ecut
@@ -235,7 +235,7 @@ parameters:
     type: Real
     description: |
       Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: ""
   - name: erf_height
@@ -243,7 +243,7 @@ parameters:
     type: Real
     description: |
       Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: ""
   - name: erf_sigma
@@ -251,7 +251,7 @@ parameters:
     type: Real
     description: |
       In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional is modified, which is used in variable-cell molecular dynamics (or in stress calculation).
-    default_value: 0.1
+    default_value: "0.1"
     unit: Ry
     availability: ""
   - name: fft_mode
@@ -263,7 +263,7 @@ parameters:
       * 1: FFTW_MEASURE
       * 2: FFTW_PATIENT
       * 3: FFTW_EXHAUSTIVE
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: diag_subspace
@@ -274,7 +274,7 @@ parameters:
       * 0: by LAPACK
       * 1: by GenELPA
       * 2: by ScaLAPACK
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: init_wfc
@@ -300,7 +300,7 @@ parameters:
     type: Integer
     description: |
       Specify the random seed to initialize wave functions. Only positive integers are available.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Only used for plane wave basis.
   - name: init_chg
@@ -398,7 +398,7 @@ parameters:
       Save memory when performing nscf calculations.
       * 0: no memory saving techniques are used.
       * 1: a memory saving technique will be used for many k point calculations.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Used only for nscf calculations with plane wave basis set.
   - name: diago_proc
@@ -407,7 +407,7 @@ parameters:
     description: |
       * 0: it will be set to the number of MPI processes.
       * >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Used only for plane wave basis set.
   - name: nbspline
@@ -425,7 +425,7 @@ parameters:
       Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
 
       [NOTE] If gamma_only is set to be true, kspacing is invalid.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: min_dist_coef
@@ -433,7 +433,7 @@ parameters:
     type: Real
     description: |
       A factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.
-    default_value: 0.2
+    default_value: "0.2"
     unit: ""
     availability: ""
   - name: device
@@ -526,7 +526,7 @@ parameters:
     description: |
       * 0.0: The total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
       * >0.0: this denotes the total number of electrons in the system. Must be less than 2*nbands.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: nelec_delta
@@ -534,7 +534,7 @@ parameters:
     type: Real
     description: |
       The total number of electrons will be calculated by nelec+nelec_delta.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: nupdown
@@ -543,7 +543,7 @@ parameters:
     description: |
       * 0.0: no constrain apply to system.
       * >0.0: The different number of electrons between spin-up and spin-down channels. The range of value must be in [-nelec ~ nelec]. It is one type of constrainted DFT method, two Fermi energies will be calculated.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: dft_functional
@@ -572,7 +572,7 @@ parameters:
     type: Real
     description: |
       Specifies temperature when using temperature-dependent XC functionals (KSDT and so on).
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: ""
   - name: xc_exch_ext
@@ -600,7 +600,7 @@ parameters:
     type: Real
     description: |
       Cut-off of radial integration for pseudopotentials.
-    default_value: 15
+    default_value: "15"
     unit: Bohr
     availability: ""
   - name: pseudo_mesh
@@ -609,7 +609,7 @@ parameters:
     description: |
       * 0: Use a mesh for radial integration of pseudopotentials.
       * 1: Use the mesh that is consistent with quantum espresso
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: nspin
@@ -620,7 +620,7 @@ parameters:
       * 1: Spin degeneracy
       * 2: Collinear spin polarized.
       * 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: pw_diag_nmax
@@ -628,7 +628,7 @@ parameters:
     type: Integer
     description: |
       Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-    default_value: 40
+    default_value: "40"
     unit: ""
     availability: ""
   - name: pw_diag_thr
@@ -636,7 +636,7 @@ parameters:
     type: Real
     description: |
       Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
-    default_value: 0.01
+    default_value: "0.01"
     unit: ""
     availability: ""
   - name: diago_smooth_ethr
@@ -660,7 +660,7 @@ parameters:
     type: Integer
     description: |
       Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-    default_value: 4
+    default_value: "4"
     unit: ""
     availability: ""
   - name: diago_cg_prec
@@ -668,7 +668,7 @@ parameters:
     type: Integer
     description: |
       Preconditioner type for conjugate gradient diagonalization method.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: smearing_method
@@ -690,7 +690,7 @@ parameters:
     type: Real
     description: |
       Energy range for smearing.
-    default_value: 0.015
+    default_value: "0.015"
     unit: Ry
     availability: ""
   - name: smearing_sigma_temp
@@ -735,7 +735,7 @@ parameters:
       It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
 
       For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
-    default_value: 8
+    default_value: "8"
     unit: ""
     availability: ""
   - name: mixing_restart
@@ -743,7 +743,7 @@ parameters:
     type: Real
     description: |
       If the density difference between input and output drho is smaller than mixing_restart, SCF will restart at next step which means SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. Notice that mixing_restart will only take effect once in one SCF.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: mixing_gg0
@@ -755,7 +755,7 @@ parameters:
       * 0: No Kerker scaling is performed.
 
       For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: ""
   - name: mixing_beta_mag
@@ -771,7 +771,7 @@ parameters:
     type: Real
     description: |
       Whether to perfom Kerker preconditioner of magnetic density. Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: mixing_gg0_min
@@ -779,7 +779,7 @@ parameters:
     type: Real
     description: |
       The minimum kerker coefficient.
-    default_value: 0.1
+    default_value: "0.1"
     unit: ""
     availability: ""
   - name: mixing_angle
@@ -829,7 +829,7 @@ parameters:
       * 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
 
       Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Only used in localized orbitals set
   - name: scf_nmax
@@ -837,7 +837,7 @@ parameters:
     type: Integer
     description: |
       This variable indicates the maximal iteration number for electronic iterations.
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: ""
   - name: scf_thr
@@ -888,7 +888,7 @@ parameters:
     type: Integer
     description: |
       To determine the number of old iterations to judge oscillation, it occured, more accurate lambda with DeltaSpin method would be calculated, only for PW base.
-    default_value: 5
+    default_value: "5"
     unit: ""
     availability: ""
   - name: scf_thr_type
@@ -946,7 +946,7 @@ parameters:
       * Intermediate values: Partial-relativistic SOC (interpolation between scalar and full)
 
       Use case: When experimental or high-level theoretical results suggest that the SOC effect is weaker or stronger than what full-relativistic pseudopotentials predict, you can adjust this parameter to match the target behavior.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: Only works when lspinorb=true
   - name: nb2d
@@ -954,7 +954,7 @@ parameters:
     type: Integer
     description: |
       In LCAO calculations, the Hamiltonian and overlap matrices are distributed across 2D processor grid. This parameter controls the 2D block size for distribution.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: lmaxmax
@@ -962,7 +962,7 @@ parameters:
     type: Integer
     description: |
       If not equals to 2, then the maximum l channels on LCAO is set to lmaxmax. If 2, then the number of l channels will be read from the LCAO data sets. Normally no input should be supplied for this variable so that it is kept as its default.
-    default_value: 2.
+    default_value: "2."
     unit: ""
     availability: ""
   - name: lcao_ecut
@@ -978,7 +978,7 @@ parameters:
     type: Real
     description: |
       the interval of k points for two-center integrals. The two-center integration table are obtained via a k space integral on a uniform grid with spacing lcao_dk.
-    default_value: 0.01
+    default_value: "0.01"
     unit: Bohr
     availability: ""
   - name: lcao_dr
@@ -986,7 +986,7 @@ parameters:
     type: Real
     description: |
       r spacing of the integration table of two-center integrals.
-    default_value: 0.01
+    default_value: "0.01"
     unit: Bohr
     availability: ""
   - name: lcao_rmax
@@ -994,7 +994,7 @@ parameters:
     type: Real
     description: |
       Maximum distance for the two-center integration table.
-    default_value: 30
+    default_value: "30"
     unit: Bohr
     availability: ""
   - name: search_radius
@@ -1005,12 +1005,12 @@ parameters:
     default_value: "-1"
     unit: Bohr
     availability: ""
-  - name: bx
+  - name: "bx"
     category: Numerical atomic orbitals related variables
     type: Integer
     description: |
       In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: by
@@ -1018,7 +1018,7 @@ parameters:
     type: Integer
     description: |
       In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: bz
@@ -1026,7 +1026,7 @@ parameters:
     type: Integer
     description: |
       In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: elpa_num_thread
@@ -1044,7 +1044,7 @@ parameters:
     type: Integer
     description: |
       The number of CUDA streams used in LCAO calculations with GPU acceleration.
-    default_value: 4
+    default_value: "4"
     unit: ""
     availability: ""
   - name: bessel_nao_ecut
@@ -1060,7 +1060,7 @@ parameters:
     type: Real
     description: |
       Tolerance when searching for the zeros of spherical Bessel functions.
-    default_value: 1.0e-12
+    default_value: "1.0e-12"
     unit: ""
     availability: ""
   - name: bessel_nao_rcut
@@ -1068,7 +1068,7 @@ parameters:
     type: Real
     description: |
       Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
-    default_value: 6.0
+    default_value: "6.0"
     unit: ""
     availability: ""
   - name: bessel_nao_smooth
@@ -1084,7 +1084,7 @@ parameters:
     type: Real
     description: |
       Smoothing range (in Bohr). See also bessel_nao_smooth.
-    default_value: 0.1
+    default_value: "0.1"
     unit: ""
     availability: ""
   - name: dfthalf_type
@@ -1094,7 +1094,7 @@ parameters:
       DFT-1/2 type:
       * 0: DFT-1/2 is off.
       * 1: Shell DFT-1/2 method is used.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: relax_method
@@ -1148,7 +1148,7 @@ parameters:
     type: Real
     description: |
       The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
-    default_value: 0.5
+    default_value: "0.5"
     unit: ""
     availability: Only used when relax_new set to True
   - name: relax_nmax
@@ -1164,7 +1164,7 @@ parameters:
     type: Real
     description: |
       When relax_method is set to cg_bfgs, a mixed algorithm of conjugate gradient (CG) and Broyden–Fletcher–Goldfarb–Shanno (BFGS) is used. The ions first move according to the CG method, then switch to the BFGS method when the maximum force on atoms is reduced below this threshold.
-    default_value: 0.5
+    default_value: "0.5"
     unit: eV/Angstrom
     availability: Only used when relax_new = False and relax_method = cg_bfgs
   - name: force_thr
@@ -1172,7 +1172,7 @@ parameters:
     type: Real
     description: |
       Threshold of the force convergence. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to force_thr_ev except for the unit, you can choose either you like.
-    default_value: 0.001
+    default_value: "0.001"
     unit: Ry/Bohr (25.7112 eV/Angstrom)
     availability: ""
   - name: force_thr_ev
@@ -1180,7 +1180,7 @@ parameters:
     type: Real
     description: |
       Threshold of the force convergence. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to force_thr except for the unit. You may choose either you like.
-    default_value: 0.0257112
+    default_value: "0.0257112"
     unit: eV/Angstrom (0.03889 Ry/Bohr)
     availability: ""
   - name: force_zero_out
@@ -1188,7 +1188,7 @@ parameters:
     type: Real
     description: |
       The atomic forces that are smaller than force_zero_out will be treated as zero.
-    default_value: 0.0
+    default_value: "0.0"
     unit: eV/Angstrom
     availability: ""
   - name: stress_thr
@@ -1196,7 +1196,7 @@ parameters:
     type: Real
     description: |
       The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
-    default_value: 0.5
+    default_value: "0.5"
     unit: kbar
     availability: ""
   - name: press1
@@ -1204,7 +1204,7 @@ parameters:
     type: Real
     description: |
       The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: 0
+    default_value: "0"
     unit: kbar
     availability: ""
   - name: press2
@@ -1212,7 +1212,7 @@ parameters:
     type: Real
     description: |
       The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: 0
+    default_value: "0"
     unit: kbar
     availability: ""
   - name: press3
@@ -1220,7 +1220,7 @@ parameters:
     type: Real
     description: |
       The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: 0
+    default_value: "0"
     unit: kbar
     availability: ""
   - name: relax_bfgs_w1
@@ -1228,7 +1228,7 @@ parameters:
     type: Real
     description: |
       Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the sufficient decrease condition (c1 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
-    default_value: 0.01
+    default_value: "0.01"
     unit: ""
     availability: Only used when relax_new = False and relax_method is bfgs or cg_bfgs
   - name: relax_bfgs_w2
@@ -1236,7 +1236,7 @@ parameters:
     type: Real
     description: |
       Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
-    default_value: 0.5
+    default_value: "0.5"
     unit: ""
     availability: Only used when relax_new = False and relax_method is bfgs or cg_bfgs
   - name: relax_bfgs_rmax
@@ -1244,7 +1244,7 @@ parameters:
     type: Real
     description: |
       Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.
-    default_value: 0.8
+    default_value: "0.8"
     unit: Bohr
     availability: Only used when relax_new = False and relax_method is bfgs or cg_bfgs
   - name: relax_bfgs_rmin
@@ -1252,7 +1252,7 @@ parameters:
     type: Real
     description: |
       Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).
-    default_value: 1e-5
+    default_value: "1e-5"
     unit: Bohr
     availability: Only used when relax_new = False and relax_method = bfgs 1 (traditional BFGS)
   - name: relax_bfgs_init
@@ -1260,7 +1260,7 @@ parameters:
     type: Real
     description: |
       Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.
-    default_value: 0.5
+    default_value: "0.5"
     unit: Bohr
     availability: Only used when relax_new = False and relax_method is bfgs or cg_bfgs
   - name: fixed_axes
@@ -1344,7 +1344,7 @@ parameters:
     type: Integer
     description: |
       The total number of molecular dynamics steps.
-    default_value: 10
+    default_value: "10"
     unit: ""
     availability: ""
   - name: md_dt
@@ -1352,7 +1352,7 @@ parameters:
     type: Real
     description: |
       The time step used in molecular dynamics calculations.
-    default_value: 1.0
+    default_value: "1.0"
     unit: fs
     availability: ""
   - name: md_tchain
@@ -1360,7 +1360,7 @@ parameters:
     type: Integer
     description: |
       Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: md_tfirst
@@ -1396,7 +1396,7 @@ parameters:
     type: Integer
     description: |
       The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: md_restartfreq
@@ -1404,7 +1404,7 @@ parameters:
     type: Integer
     description: |
       The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
-    default_value: 5
+    default_value: "5"
     unit: ""
     availability: ""
   - name: md_seed
@@ -1424,7 +1424,7 @@ parameters:
       Determine the precision level of variable-cell molecular dynamics calculations.
       * 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
       * 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ref_cell_factor
@@ -1432,7 +1432,7 @@ parameters:
     type: Real
     description: |
       Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with erf_ecut, erf_height, and erf_sigma.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: ""
   - name: md_restart
@@ -1450,7 +1450,7 @@ parameters:
     type: Integer
     description: |
       The Lennard-Jones potential between two atoms equals: $\sigma_k\sigma(i,j)$
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: ""
   - name: lj_eshift
@@ -1498,7 +1498,7 @@ parameters:
     type: Real
     description: |
       Rescaling factor to use a temperature-dependent DP. Energy, stress and force calculated by DP will be multiplied by this factor.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: esolver_type = dp.
   - name: dp_fparam
@@ -1525,7 +1525,7 @@ parameters:
       * 0: x direction
       * 1: y direction
       * 2: z direction
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: ""
   - name: msst_vel
@@ -1533,7 +1533,7 @@ parameters:
     type: Real
     description: |
       The velocity of the shock wave in the MSST method.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Angstrom/fs
     availability: ""
   - name: msst_vis
@@ -1541,7 +1541,7 @@ parameters:
     type: Real
     description: |
       Artificial viscosity in the MSST method.
-    default_value: 0.0
+    default_value: "0.0"
     unit: "g/(mol*Angstrom*fs)"
     availability: ""
   - name: msst_tscale
@@ -1549,7 +1549,7 @@ parameters:
     type: Real
     description: |
       The reduction percentage of the initial temperature used to compress volume in the MSST method.
-    default_value: 0.01
+    default_value: "0.01"
     unit: ""
     availability: ""
   - name: msst_qmass
@@ -1575,7 +1575,7 @@ parameters:
     type: Real
     description: |
       The damping parameter used to add fictitious force in the Langevin method.
-    default_value: 1.0
+    default_value: "1.0"
     unit: fs
     availability: ""
   - name: md_nraise
@@ -1585,7 +1585,7 @@ parameters:
       * Anderson: The "collision frequency" parameter is given as 1/md_nraise.
       * Berendsen: The "rise time" parameter is given in units of the time step: tau = md_nraise*md_dt, so md_dt/tau = 1/md_nraise.
       * Rescale_v: Every md_nraise steps the current temperature is rescaled to the target temperature.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: cal_syns
@@ -1603,7 +1603,7 @@ parameters:
     type: Real
     description: |
       The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.
-    default_value: 0.01
+    default_value: "0.01"
     unit: bohr
     availability: ""
   - name: md_tolerance
@@ -1611,7 +1611,7 @@ parameters:
     type: Real
     description: |
       The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.
-    default_value: 100.0
+    default_value: "100.0"
     unit: K
     availability: ""
   - name: md_pmode
@@ -1642,7 +1642,7 @@ parameters:
     type: Integer
     description: |
       The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: md_pfirst
@@ -1739,7 +1739,7 @@ parameters:
     type: Real
     description: |
       Tolerance of the energy change for determining the convergence.
-    default_value: 2e-6
+    default_value: "2e-6"
     unit: Ry
     availability: OFDFT
   - name: of_tolp
@@ -1747,7 +1747,7 @@ parameters:
     type: Real
     description: |
       Tolerance of potential for determining the convergence.
-    default_value: 1e-5
+    default_value: "1e-5"
     unit: Ry
     availability: OFDFT
   - name: of_tf_weight
@@ -1755,7 +1755,7 @@ parameters:
     type: Real
     description: |
       Weight of TF KEDF (kinetic energy density functional).
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: "OFDFT with of_kinetic=tf, tf+, wt, xwm"
   - name: of_vw_weight
@@ -1763,7 +1763,7 @@ parameters:
     type: Real
     description: |
       Weight of vW KEDF (kinetic energy density functional).
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: "OFDFT with of_kinetic=vw, tf+, wt, lkt, xwm"
   - name: of_wt_alpha
@@ -1787,7 +1787,7 @@ parameters:
     type: Real
     description: |
       The average density of system.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Bohr^-3
     availability: OFDFT with of_kinetic=wt
   - name: of_hold_rho0
@@ -1805,7 +1805,7 @@ parameters:
     type: Real
     description: |
       Parameter a of LKT KEDF (kinetic energy density functional).
-    default_value: 1.3
+    default_value: "1.3"
     unit: ""
     availability: OFDFT with of_kinetic=lkt
   - name: of_full_pw
@@ -1828,7 +1828,7 @@ parameters:
       * 2: even only.
 
       Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set of_full_pw_dim = 1 if nbspline != -1.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT with of_full_pw = True
   - name: of_read_kernel
@@ -1854,7 +1854,7 @@ parameters:
     type: Real
     description: |
       Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: OFDFT with of_kinetic=xwm
   - name: of_xwm_rho_ref
@@ -1862,7 +1862,7 @@ parameters:
     type: Real
     description: |
       Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: OFDFT with of_kinetic=xwm
   - name: of_ml_gene_data
@@ -1891,7 +1891,7 @@ parameters:
       * 0: Do not incorporate the FEG limit.
       * 1: Incorporate the FEG limit by translation.
       * 3: Incorporate the FEG limit by nonlinear transformation using softplus function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_nkernel
@@ -1899,7 +1899,7 @@ parameters:
     type: Integer
     description: |
       Number of kernel functions.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: OFDFT
   - name: of_ml_kernel
@@ -1910,7 +1910,7 @@ parameters:
       * 1: Wang-Teter kernel function.
       * 2: Modified Yukawa function, and alpha is specified by of_ml_yukawa_alpha.
       * 3: Truncated kinetic kernel (TKK), the file containing TKK is specified by of_ml_kernel_file.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: OFDFT
   - name: of_ml_kernel_scaling
@@ -1918,7 +1918,7 @@ parameters:
     type: Vector of Real
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the RECIPROCAL of scaling parameter of the i-th kernel function.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_yukawa_alpha
@@ -1926,7 +1926,7 @@ parameters:
     type: Vector of Real
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the parameter alpha of i-th kernel function. ONLY used for Yukawa kernel function.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_kernel_file
@@ -1982,7 +1982,7 @@ parameters:
     type: Real
     description: |
       Hyperparameter chi_p: tanhp = tanh(chi_p * p).
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_chi_q
@@ -1990,7 +1990,7 @@ parameters:
     type: Real
     description: |
       Hyperparameter chi_q: tanhq = tanh(chi_q * q).
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_gammanl
@@ -1998,7 +1998,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor gammanl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_pnl
@@ -2006,7 +2006,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor pnl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_qnl
@@ -2014,7 +2014,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor qnl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_xi
@@ -2022,7 +2022,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor xi defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanhxi
@@ -2030,7 +2030,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanhxi_nl
@@ -2038,7 +2038,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi_nl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanh_pnl
@@ -2046,7 +2046,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_pnl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanh_qnl
@@ -2054,7 +2054,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_qnl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanhp_nl
@@ -2062,7 +2062,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhp_nl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_tanhq_nl
@@ -2070,7 +2070,7 @@ parameters:
     type: Vector of Integer
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhq_nl defined by the i-th kernel function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: OFDFT
   - name: of_ml_chi_xi
@@ -2078,7 +2078,7 @@ parameters:
     type: Vector of Real
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_xi of non-local descriptor tanhxi defined by the i-th kernel function.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_chi_pnl
@@ -2086,7 +2086,7 @@ parameters:
     type: Vector of Real
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_pnl of non-local descriptor tanh_pnl defined by the i-th kernel function.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_chi_qnl
@@ -2094,7 +2094,7 @@ parameters:
     type: Vector of Real
     description: |
       Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_qnl of non-local descriptor tanh_qnl defined by the i-th kernel function.
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: OFDFT
   - name: of_ml_local_test
@@ -2121,7 +2121,7 @@ parameters:
       * 1: Calculate twice, this method cost less memory but is slower.
       * 2: Calculate once but needs much more memory. This method is much faster. Besides, it calculates with a smaller nche_sto. However, when the memory is not enough, only method 1 can be used.
       * other: use 2
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: esolver_type = sdft
   - name: npart_sto
@@ -2129,7 +2129,7 @@ parameters:
     type: Integer
     description: |
       Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: method_sto = 2 and out_dos = 1 or cal_cond = True
   - name: nbands_sto
@@ -2140,7 +2140,7 @@ parameters:
       * > 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
       * 0: Perform Kohn-Sham DFT.
       * all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
-    default_value: 256
+    default_value: "256"
     unit: ""
     availability: esolver_type = sdft
   - name: nche_sto
@@ -2148,7 +2148,7 @@ parameters:
     type: Integer
     description: |
       Chebyshev expansion orders for stochastic DFT.
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: esolver_type = sdft
   - name: emin_sto
@@ -2156,7 +2156,7 @@ parameters:
     type: Real
     description: |
       Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: esolver_type = sdft
   - name: emax_sto
@@ -2164,7 +2164,7 @@ parameters:
     type: Real
     description: |
       Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: esolver_type = sdft
   - name: seed_sto
@@ -2176,7 +2176,7 @@ parameters:
       * 0: the seed is decided by time(NULL).
       * <= -1: Stochastic orbitals have the form of +1 or -1 with equal probability.
       * -1: the seed is decided by time(NULL).
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: esolver_type = sdft
   - name: initsto_ecut
@@ -2184,7 +2184,7 @@ parameters:
     type: Real
     description: |
       Stochastic wave functions are initialized in a large box generated by "4*initsto_ecut". initsto_ecut should be larger than ecutwfc. In this method, SDFT results are the same when using different cores. Besides, coefficients of the same G are the same when ecutwfc is rising to initsto_ecut. If it is smaller than ecutwfc, it will be turned off.
-    default_value: 0.0
+    default_value: "0.0"
     unit: Ry
     availability: esolver_type = sdft
   - name: initsto_freq
@@ -2194,7 +2194,7 @@ parameters:
       Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
       * positive integer: Update stochastic orbitals
       * 0: Never change stochastic orbitals.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: esolver_type = sdft
   - name: deepks_out_labels
@@ -2207,7 +2207,7 @@ parameters:
       * 2 : Output target labels for label preperation. The label files are named as deepks_<property>.npy or deepks_<property>.csr, where the units and formats are the same as label files <property>.npy or <property>.csr required for training, except that the first dimension (nframes) is excluded. System structrue files are also given in deepks_atom.npy and deepks_box.npy in the unit of Bohr, which means lattice_constant should be set to 1 when training.
 
       [NOTE] When deepks_out_labels equals 1, the path of a numerical descriptor (an orb file) is needed to be specified under the NUMERICAL_DESCRIPTOR tag in the STRU file. This is not needed when deepks_out_labels equals 2.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Numerical atomic orbital basis
   - name: deepks_out_freq_elec
@@ -2215,7 +2215,7 @@ parameters:
     type: Integer
     description: |
       When deepks_out_freq_elec is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per deepks_out_freq_elec electronic iterations, with suffix _e* to distinguish different steps. Often used with deepks_out_labels equals 1.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Numerical atomic orbital basis
   - name: deepks_out_base
@@ -2255,7 +2255,7 @@ parameters:
       * 1: Include target bandgap label (see deepks_band_range for more details)
       * 2: Include multiple bandgap label (see deepks_band_range for more details)
       * 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Numerical atomic orbital basis and deepks_scf is true
   - name: deepks_band_range
@@ -2277,7 +2277,7 @@ parameters:
       * deepks_v_delta = 2: deepks_phialpha.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdpre.npy. A recommanded method for memory saving.
       * deepks_v_delta = -1: deepks_vdrpre.npy, which is used to calculate V_delta_R during DeePKS training.
       * deepks_v_delta = -2: deepks_phialpha_r.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdrpre.npy. A recommanded method for memory saving.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Numerical atomic orbital basis
   - name: deepks_out_unittest
@@ -2303,7 +2303,7 @@ parameters:
     type: Integer
     description: |
       the maximum angular momentum of the Bessel functions generated as the projectors in DeePKS - NOte: To generate such projectors, set calculation type to gen_bessel in ABACUS. See also calculation.
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: gen_bessel calculation
   - name: bessel_descriptor_ecut
@@ -2319,7 +2319,7 @@ parameters:
     type: Real
     description: |
       tolerance for searching the zeros of Bessel functions
-    default_value: 1.0e-12
+    default_value: "1.0e-12"
     unit: ""
     availability: gen_bessel calculation
   - name: bessel_descriptor_rcut
@@ -2327,7 +2327,7 @@ parameters:
     type: Real
     description: |
       cutoff radius of Bessel functions
-    default_value: 6.0
+    default_value: "6.0"
     unit: Bohr
     availability: gen_bessel calculation
   - name: bessel_descriptor_smooth
@@ -2343,7 +2343,7 @@ parameters:
     type: Real
     description: |
       smooth parameter at the cutoff radius of projectors
-    default_value: 0.1
+    default_value: "0.1"
     unit: Bohr
     availability: gen_bessel calculation
   - name: td_dt
@@ -2359,7 +2359,7 @@ parameters:
     type: Integer
     description: |
       The number of electronic propagation steps between two ionic steps.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: td_vext
@@ -2379,7 +2379,7 @@ parameters:
       * 1: The external field direction is along the x-axis.
       * 2: The external field direction is along the y-axis.
       * 3: The external field direction is along the z-axis.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: init_vecpot_file
@@ -2409,7 +2409,7 @@ parameters:
       Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
       * 0: Using the original formula.
       * 1: Using the formula for ground state (deprecated). Note that this usually does not hold if wave function is not the eigenstate of the Hamiltonian.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: td_propagator
@@ -2421,7 +2421,7 @@ parameters:
       * 1: 4th-order Taylor expansion of exponential.
       * 2: Enforced time-reversal symmetry (ETRS).
       * 3: Crank-Nicolson, based on solving linear equation.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: td_stype
@@ -2432,7 +2432,7 @@ parameters:
       * 0: Length gauge.
       * 1: Velocity gauge.
       * 2: Hybrid gauge. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: td_ttype
@@ -2444,7 +2444,7 @@ parameters:
       * 1: Trapezoid type function.
       * 2: Trigonometric type function.
       * 3: Heaviside type function.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: td_tstart
@@ -2452,7 +2452,7 @@ parameters:
     type: Integer
     description: |
       The initial time step when the time-dependent electric field is activated.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: td_tend
@@ -2460,7 +2460,7 @@ parameters:
     type: Integer
     description: |
       The final time step when the time-dependent electric field is deactivated. The field remains active between td_tstart and td_tend.
-    default_value: 1000
+    default_value: "1000"
     unit: ""
     availability: ""
   - name: td_lcut1
@@ -2468,7 +2468,7 @@ parameters:
     type: Real
     description: |
       The lower bound of the interval in the length gauge RT-TDDFT, where the coordinate is the fractional coordinate.
-    default_value: 0.05
+    default_value: "0.05"
     unit: ""
     availability: ""
   - name: td_lcut2
@@ -2476,7 +2476,7 @@ parameters:
     type: Real
     description: |
       The upper bound of the interval in the length gauge RT-TDDFT, where the coordinate is the fractional coordinate.
-    default_value: 0.95
+    default_value: "0.95"
     unit: ""
     availability: ""
   - name: td_gauss_freq
@@ -2484,7 +2484,7 @@ parameters:
     type: String
     description: |
       Frequency of the Gaussian type electric field.
-    default_value: 22.13
+    default_value: "22.13"
     unit: 1/fs
     availability: ""
   - name: td_gauss_phase
@@ -2492,7 +2492,7 @@ parameters:
     type: String
     description: |
       Phase of the Gaussian type electric field.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: td_gauss_sigma
@@ -2500,7 +2500,7 @@ parameters:
     type: String
     description: |
       Pulse width (standard deviation) of the Gaussian type electric field.
-    default_value: 30.0
+    default_value: "30.0"
     unit: fs
     availability: ""
   - name: td_gauss_t0
@@ -2508,7 +2508,7 @@ parameters:
     type: String
     description: |
       Step number of the time center of the Gaussian type electric field.
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: ""
   - name: td_gauss_amp
@@ -2516,7 +2516,7 @@ parameters:
     type: String
     description: |
       Amplitude of the Gaussian type electric field.
-    default_value: 0.25
+    default_value: "0.25"
     unit: V/Angstrom
     availability: ""
   - name: td_trape_freq
@@ -2524,7 +2524,7 @@ parameters:
     type: String
     description: |
       Frequency of the trapezoid type electric field.
-    default_value: 1.60
+    default_value: "1.60"
     unit: 1/fs
     availability: ""
   - name: td_trape_phase
@@ -2532,7 +2532,7 @@ parameters:
     type: String
     description: |
       Phase of the trapezoid type electric field.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: td_trape_t1
@@ -2540,7 +2540,7 @@ parameters:
     type: String
     description: |
       Step number of the time interval t1 of the trapezoid type electric field.
-    default_value: 1875
+    default_value: "1875"
     unit: ""
     availability: ""
   - name: td_trape_t2
@@ -2548,7 +2548,7 @@ parameters:
     type: String
     description: |
       Step number of the time interval t2 of the trapezoid type electric field.
-    default_value: 5625
+    default_value: "5625"
     unit: ""
     availability: ""
   - name: td_trape_t3
@@ -2556,7 +2556,7 @@ parameters:
     type: String
     description: |
       Step number of the time interval t3 of the trapezoid type electric field.
-    default_value: 7500
+    default_value: "7500"
     unit: ""
     availability: ""
   - name: td_trape_amp
@@ -2564,7 +2564,7 @@ parameters:
     type: String
     description: |
       Amplitude of the trapezoid type electric field.
-    default_value: 2.74
+    default_value: "2.74"
     unit: V/Angstrom
     availability: ""
   - name: td_trigo_freq1
@@ -2572,7 +2572,7 @@ parameters:
     type: String
     description: |
       Frequency 1 of the trigonometric type electric field.
-    default_value: 1.164656
+    default_value: "1.164656"
     unit: 1/fs
     availability: ""
   - name: td_trigo_freq2
@@ -2580,7 +2580,7 @@ parameters:
     type: String
     description: |
       Frequency 2 of the trigonometric type electric field.
-    default_value: 0.029116
+    default_value: "0.029116"
     unit: 1/fs
     availability: ""
   - name: td_trigo_phase1
@@ -2588,7 +2588,7 @@ parameters:
     type: String
     description: |
       Phase 1 of the trigonometric type electric field.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: td_trigo_phase2
@@ -2596,7 +2596,7 @@ parameters:
     type: String
     description: |
       Phase 2 of the trigonometric type electric field.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: td_trigo_amp
@@ -2604,7 +2604,7 @@ parameters:
     type: String
     description: |
       Amplitude of the trigonometric type electric field.
-    default_value: 2.74
+    default_value: "2.74"
     unit: V/Angstrom
     availability: ""
   - name: td_heavi_t0
@@ -2612,7 +2612,7 @@ parameters:
     type: String
     description: |
       Step number of the switch time of the Heaviside type electric field.
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: ""
   - name: td_heavi_amp
@@ -2620,7 +2620,7 @@ parameters:
     type: String
     description: |
       Amplitude of the Heaviside type electric field.
-    default_value: 1.0
+    default_value: "1.0"
     unit: V/Angstrom
     availability: ""
   - name: ocp
@@ -2659,7 +2659,7 @@ parameters:
     type: Real
     description: |
       The value of the parameter alpha in modified CD potential method. mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: TDOFDFT
   - name: lr_nstates
@@ -2667,7 +2667,7 @@ parameters:
     type: Integer
     description: |
       The number of 2-particle states to be solved.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: nocc
@@ -2684,7 +2684,7 @@ parameters:
     type: Integer
     description: |
       The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: xc_kernel
@@ -2722,7 +2722,7 @@ parameters:
     type: Real
     description: |
       The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
-    default_value: 1e-2
+    default_value: "1e-2"
     unit: ""
     availability: ""
   - name: out_wfc_lr
@@ -2764,7 +2764,7 @@ parameters:
     type: Real
     description: |
       The broadening factor for the absorption spectrum calculation.
-    default_value: 0.01
+    default_value: "0.01"
     unit: ""
     availability: ""
   - name: out_stru
@@ -2809,7 +2809,7 @@ parameters:
       In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
 
       [NOTE] In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_wfc_pw
@@ -2828,7 +2828,7 @@ parameters:
        * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
 
       [NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)"
   - name: out_band
@@ -2853,7 +2853,7 @@ parameters:
        * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
       * 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
       * 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_ldos
@@ -2865,7 +2865,7 @@ parameters:
       * 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
       * 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
       * 3: output both two LDOS modes above.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_mul
@@ -3024,7 +3024,7 @@ parameters:
       Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps.
 
       [NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_freq_td
@@ -3034,7 +3034,7 @@ parameters:
       Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
 
       [NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_app_flag
@@ -3050,7 +3050,7 @@ parameters:
     type: Integer
     description: |
       Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
-    default_value: 8
+    default_value: "8"
     unit: ""
     availability: out_mat_hs 1 case presently.
   - name: out_mat_t
@@ -3128,7 +3128,7 @@ parameters:
       * 0: Do not output current.
       * 1: Output current using the two-center integral, faster.
       * 2: Output current using the matrix commutation, more precise.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_current_k
@@ -3252,7 +3252,7 @@ parameters:
     type: Integer
     description: |
       This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as OVERLAP_Q), and between TSBFs (named as OVERLAP_Sq), also their first order derivatives. The output files are named starting with orb_matrix. A value of 2 would enable the output.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: Only for Kohn-Sham DFT with plane-wave basis.
   - name: spillage_outdir
@@ -3286,7 +3286,7 @@ parameters:
     type: Real
     description: |
       The step size in writing Density of States (DOS)
-    default_value: 0.01
+    default_value: "0.01"
     unit: eV
     availability: ""
   - name: dos_scale
@@ -3294,7 +3294,7 @@ parameters:
     type: Real
     description: |
       Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
-    default_value: 0.01
+    default_value: "0.01"
     unit: eV
     availability: ""
   - name: dos_sigma
@@ -3302,7 +3302,7 @@ parameters:
     type: Real
     description: |
       The width of the Gaussian factor when obtaining smeared Density of States (DOS)
-    default_value: 0.07
+    default_value: "0.07"
     unit: eV
     availability: ""
   - name: dos_nche
@@ -3310,7 +3310,7 @@ parameters:
     type: Integer
     description: |
       The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: ""
   - name: stm_bias
@@ -3322,7 +3322,7 @@ parameters:
       * The first parameter specifies the initial bias voltage value.
       * The second parameter defines the voltage increment (step size between consecutive bias values).
       * The third parameter determines the total number of voltage points
-    default_value: 1.0
+    default_value: "1.0"
     unit: V
     availability: ""
   - name: ldos_line
@@ -3346,7 +3346,7 @@ parameters:
     type: Real
     description: |
       Control the error of Chebyshev expansions for conductivities.
-    default_value: 1e-8
+    default_value: "1e-8"
     unit: ""
     availability: esolver_type = sdft
   - name: cond_dw
@@ -3354,7 +3354,7 @@ parameters:
     type: Real
     description: |
       Frequency interval () for frequency-dependent conductivities.
-    default_value: 0.1
+    default_value: "0.1"
     unit: eV
     availability: basis_type = pw
   - name: cond_wcut
@@ -3362,7 +3362,7 @@ parameters:
     type: Real
     description: |
       Cutoff frequency for frequency-dependent conductivities.
-    default_value: 10.0
+    default_value: "10.0"
     unit: eV
     availability: basis_type = pw
   - name: cond_dt
@@ -3370,7 +3370,7 @@ parameters:
     type: Real
     description: |
       Time interval () to integrate Onsager coefficients.
-    default_value: 0.02
+    default_value: "0.02"
     unit: a.u.
     availability: basis_type = pw
   - name: cond_dtbatch
@@ -3379,7 +3379,7 @@ parameters:
     description: |
       exp(iH\dt\cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
       * If cond_dtbatch = 0: Autoset this parameter to make expansion orders larger than 100.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: esolver_type = sdft
   - name: cond_smear
@@ -3389,7 +3389,7 @@ parameters:
       Smearing method for conductivities
       * 1: Gaussian smearing
       * 2: Lorentzian smearing
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: cond_fwhm
@@ -3397,7 +3397,7 @@ parameters:
     type: Real
     description: |
       FWHM for conductivities. For Gaussian smearing, ; for Lorentzian smearing, .
-    default_value: 0.4
+    default_value: "0.4"
     unit: eV
     availability: basis_type = pw
   - name: cond_nonlocal
@@ -3428,7 +3428,7 @@ parameters:
       * 1: Calculate the polarization in the direction of the lattice vector a_1 defined in the STRU file.
       * 2: Calculate the polarization in the direction of the lattice vector a_2 defined in the STRU file.
       * 3: Calculate the polarization in the direction of the lattice vector a_3 defined in the STRU file.
-    default_value: 3
+    default_value: "3"
     unit: ""
     availability: ""
   - name: towannier90
@@ -3438,7 +3438,7 @@ parameters:
       Controls the generation of files for the Wannier90 code.
       * 1: Generate files for the Wannier90 code.
       * 0: Do not generate files for the Wannier90 code.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: nnkpfile
@@ -3466,7 +3466,7 @@ parameters:
       Only available on LCAO basis, using different methods to generate "\.mmn" file and "\.amn" file.
       * 1: Calculated using the lcao_in_pw method, the calculation accuracy can be improved by increasing ecutwfc to maintain consistency with the pw basis set results.
       * 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: out_wannier_mmn
@@ -3476,7 +3476,7 @@ parameters:
       Write the "*.mmn" file or not.
       * 0: don't write the "*.mmn" file.
       * 1: write the "*.mmn" file.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: out_wannier_amn
@@ -3486,7 +3486,7 @@ parameters:
       Write the "*.amn" file or not.
       * 0: don't write the "*.amn" file.
       * 1: write the "*.amn" file.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: out_wannier_unk
@@ -3496,7 +3496,7 @@ parameters:
       Write the "UNK.*" file or not.
       * 0: don't write the "UNK.*" file.
       * 1: write the "UNK.*" file.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_wannier_eig
@@ -3506,7 +3506,7 @@ parameters:
       Write the "*.eig" file or not.
       * 0: don't write the "*.eig" file.
       * 1: write the "*.eig" file.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: out_wannier_wvfn_formatted
@@ -3516,7 +3516,7 @@ parameters:
       Write the "UNK.*" file in ASCII format or binary format.
       * 0: write the "UNK.*" file in binary format.
       * 1: write the "UNK.*" file in ASCII format (text file format).
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: efield_flag
@@ -3549,7 +3549,7 @@ parameters:
       * 0: parallel to the first reciprocal lattice vector
       * 1: parallel to the second reciprocal lattice vector
       * 2: parallel to the third reciprocal lattice vector
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: with efield_flag = True.
   - name: efield_pos_max
@@ -3575,7 +3575,7 @@ parameters:
       Amplitude of the electric field. The saw-like potential increases with slope efield_amp in the region from efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir.
 
       [NOTE] Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
-    default_value: 0.0
+    default_value: "0.0"
     unit: "a.u., 1 a.u. = 51.4220632*10^10 V/m."
     availability: with efield_flag = True.
   - name: gate_flag
@@ -3593,7 +3593,7 @@ parameters:
     type: Real
     description: |
       Position of the charged plate in the unit cell
-    default_value: 0.5
+    default_value: "0.5"
     unit: Unit cell size
     availability: ""
   - name: block
@@ -3611,7 +3611,7 @@ parameters:
     type: Real
     description: |
       Lower beginning of the potential barrier
-    default_value: 0.45
+    default_value: "0.45"
     unit: Unit cell size
     availability: ""
   - name: block_up
@@ -3619,7 +3619,7 @@ parameters:
     type: Real
     description: |
       Upper beginning of the potential barrier
-    default_value: 0.55
+    default_value: "0.55"
     unit: Unit cell size
     availability: ""
   - name: block_height
@@ -3627,7 +3627,7 @@ parameters:
     type: Real
     description: |
       Height of the potential barrier
-    default_value: 0.1
+    default_value: "0.1"
     unit: Rydberg
     availability: ""
   - name: imp_sol
@@ -3643,7 +3643,7 @@ parameters:
     type: Real
     description: |
       The relative permittivity of the bulk solvent, 80 for water
-    default_value: 80
+    default_value: "80"
     unit: ""
     availability: imp_sol is true.
   - name: tau
@@ -3651,7 +3651,7 @@ parameters:
     type: Real
     description: |
       The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
-    default_value: 1.0798e-05
+    default_value: "1.0798e-05"
     unit: ""
     availability: ""
   - name: sigma_k
@@ -3659,7 +3659,7 @@ parameters:
     type: Real
     description: |
       The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
-    default_value: 0.6
+    default_value: "0.6"
     unit: ""
     availability: ""
   - name: nc_k
@@ -3667,7 +3667,7 @@ parameters:
     type: Real
     description: |
       The value of the electron density at which the dielectric cavity forms
-    default_value: 0.00037
+    default_value: "0.00037"
     unit: ""
     availability: ""
   - name: vdw_method
@@ -3721,7 +3721,7 @@ parameters:
     type: Real
     description: |
       Controls the damping rate of the damping function in the DFT-D2 method.
-    default_value: 20
+    default_value: "20"
     unit: ""
     availability: vdw_method is set to d2
   - name: vdw_abc
@@ -3775,7 +3775,7 @@ parameters:
       Specifies the unit for the parameters in the D2 method when manually set by the user. Available options are:
       * A (Angstrom)
       * Bohr
-    default_value: A
+    default_value: "A"
     unit: ""
     availability: vdw_R0_file is not default
   - name: vdw_cutoff_type
@@ -3811,7 +3811,7 @@ parameters:
     type: Real
     description: |
       The cutoff radius when calculating coordination numbers.
-    default_value: 40
+    default_value: "40"
     unit: "defined by vdw_cn_thr_unit (default: Bohr)"
     availability: vdw_method is set to d3_0 or d3_bj
   - name: vdw_cn_thr_unit
@@ -3861,7 +3861,7 @@ parameters:
     type: "Real \\Real...\\"
     description: |
       It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
-    default_value: 0.3
+    default_value: "0.3"
     unit: ""
     availability: basis_type==lcao_in_pw
   - name: exx_separate_loop
@@ -3879,7 +3879,7 @@ parameters:
     type: Integer
     description: |
       The maximal iteration number of the outer-loop, where the Fock exchange is calculated
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: exx_separate_loop==1
   - name: exx_mixing_beta
@@ -3887,7 +3887,7 @@ parameters:
     type: Real
     description: |
       Mixing parameter for densty matrix in each iteration of the outer-loop
-    default_value: 1.0
+    default_value: "1.0"
     unit: ""
     availability: exx_separate_loop==1
   - name: exx_real_number
@@ -3913,7 +3913,7 @@ parameters:
     type: Real
     description: |
       To accelerate the evaluation of four-center integrals (), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): . The size of the ABF (i.e. number of ) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: 1E-4
+    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_cs_inv_thr
@@ -3929,7 +3929,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. Smaller components (less than exx_c_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: 1E-4
+    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_v_threshold
@@ -3937,7 +3937,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
-    default_value: 1E-1
+    default_value: "1E-1"
     unit: ""
     availability: ""
   - name: exx_dm_threshold
@@ -3945,7 +3945,7 @@ parameters:
     type: Real
     description: |
       The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: 1E-4
+    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_c_grad_threshold
@@ -3953,7 +3953,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. is used in force. Smaller components (less than exx_c_grad_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: 1E-4
+    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_v_grad_threshold
@@ -3961,7 +3961,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. is used in force. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
-    default_value: 1E-1
+    default_value: "1E-1"
     unit: ""
     availability: ""
   - name: exx_c_grad_r_threshold
@@ -3969,7 +3969,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. is used in stress. Smaller components (less than exx_c_grad_r_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: 1E-4
+    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_v_grad_r_threshold
@@ -3977,7 +3977,7 @@ parameters:
     type: Real
     description: |
       See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. is used in force and stress. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
-    default_value: 1E-1
+    default_value: "1E-1"
     unit: ""
     availability: ""
   - name: exx_ccp_rmesh_times
@@ -3993,7 +3993,7 @@ parameters:
     type: Integer
     description: |
       The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: calculation==gen_opt_abfs
   - name: exx_opt_orb_ecut
@@ -4001,7 +4001,7 @@ parameters:
     type: Real
     description: |
       The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
-    default_value: 0
+    default_value: "0"
     unit: Ry
     availability: calculation==gen_opt_abfs
   - name: exx_opt_orb_tolerence
@@ -4009,7 +4009,7 @@ parameters:
     type: Real
     description: |
       The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
-    default_value: 1E-12
+    default_value: "1E-12"
     unit: ""
     availability: calculation==gen_opt_abfs
   - name: exx_symmetry_realspace
@@ -4026,7 +4026,7 @@ parameters:
     type: Real
     description: |
       How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.
-    default_value: 10
+    default_value: "10"
     unit: ""
     availability: ""
   - name: out_ri_cv
@@ -4045,7 +4045,7 @@ parameters:
       * 1: Calculate plus U correction with radius-adjustable localized projections (with parameter onsite_radius).
       * 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
       * 0: Do not calculate plus U correction.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: dft_plus_dmft
@@ -4092,7 +4092,7 @@ parameters:
       * 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
 
       [NOTE] Note : The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: onsite_radius
@@ -4101,7 +4101,7 @@ parameters:
     description: |
       * The Onsite-radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U.
       * The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization. Consider the function: $\sigmar_c\sigmaf'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
-    default_value: 3.0
+    default_value: "3.0"
     unit: Bohr
     availability: dft_plus_u is set to 1
   - name: hubbard_u
@@ -4111,7 +4111,7 @@ parameters:
       Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
       [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
-    default_value: 0.0
+    default_value: "0.0"
     unit: ""
     availability: ""
   - name: orbital_corr
@@ -4147,7 +4147,7 @@ parameters:
     type: Real
     description: |
       Convergence criterion of spin-constrained iteration (RMS) in uB
-    default_value: 1.0e-6
+    default_value: "1.0e-6"
     unit: uB
     availability: sc_mag_switch is true
   - name: nsc
@@ -4155,7 +4155,7 @@ parameters:
     type: Integer
     description: |
       Maximal number of spin-constrained iteration
-    default_value: 100
+    default_value: "100"
     unit: ""
     availability: sc_mag_switch is true
   - name: nsc_min
@@ -4163,7 +4163,7 @@ parameters:
     type: Integer
     description: |
       Minimum number of spin-constrained iteration
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: sc_mag_switch is true
   - name: sc_scf_nmin
@@ -4171,7 +4171,7 @@ parameters:
     type: Integer
     description: |
       Minimum number of outer scf loop before initializing lambda loop
-    default_value: 2
+    default_value: "2"
     unit: ""
     availability: sc_mag_switch is true
   - name: alpha_trial
@@ -4179,7 +4179,7 @@ parameters:
     type: Real
     description: |
       Initial trial step size for lambda in eV/uB^2
-    default_value: 0.01
+    default_value: "0.01"
     unit: eV/uB^2
     availability: sc_mag_switch is true
   - name: sccut
@@ -4187,7 +4187,7 @@ parameters:
     type: Real
     description: |
       Maximal step size for lambda in eV/uB
-    default_value: 3.0
+    default_value: "3.0"
     unit: eV/uB
     availability: sc_mag_switch is true
   - name: sc_drop_thr
@@ -4195,7 +4195,7 @@ parameters:
     type: Real
     description: |
       Convergence criterion ratio of lambda iteration in Spin-constrained DFT
-    default_value: 1.0e-2
+    default_value: "1.0e-2"
     unit: ""
     availability: sc_mag_switch is true
   - name: sc_scf_thr
@@ -4203,7 +4203,7 @@ parameters:
     type: Real
     description: |
       Density error threshold for inner loop of spin-constrained SCF
-    default_value: 1.0e-4
+    default_value: "1.0e-4"
     unit: ""
     availability: sc_mag_switch is true
   - name: qo_switch
@@ -4230,7 +4230,7 @@ parameters:
     type: Real
     description: |
       The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
-    default_value: 1.0e-6
+    default_value: "1.0e-6"
     unit: ""
     availability: ""
   - name: qo_strategy
@@ -4246,7 +4246,7 @@ parameters:
     type: Real
     description: |
       The screening coefficient for each atom type to rescale the shape of radial orbitals
-    default_value: 0.1
+    default_value: "0.1"
     unit: Bohr^-1
     availability: ""
   - name: pexsi_npole
@@ -4254,7 +4254,7 @@ parameters:
     type: Integer
     description: |
       The number of poles used in the pole expansion method, should be a even number.
-    default_value: 40
+    default_value: "40"
     unit: ""
     availability: ""
   - name: pexsi_inertia
@@ -4270,7 +4270,7 @@ parameters:
     type: Integer
     description: |
       Maximum number of PEXSI iterations after each inertia counting procedure.
-    default_value: 80
+    default_value: "80"
     unit: ""
     availability: ""
   - name: pexsi_comm
@@ -4294,7 +4294,7 @@ parameters:
     type: Integer
     description: |
       Ordering strategy for factorization and selected inversion. 0: Parallel ordering using ParMETIS, 1: Sequential ordering using METIS, 2: Multiple minimum degree ordering
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: pexsi_row_ordering
@@ -4302,7 +4302,7 @@ parameters:
     type: Integer
     description: |
       Row permutation strategy for factorization and selected inversion, 0: No row permutation, 1: Make the diagonal entry of the matrix larger than the off-diagonal entries.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: pexsi_nproc
@@ -4310,7 +4310,7 @@ parameters:
     type: Integer
     description: |
       Number of processors for PARMETIS. Only used if pexsi_ordering == 0.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: pexsi_symm
@@ -4334,7 +4334,7 @@ parameters:
     type: Integer
     description: |
       The pole expansion method to be used. 1 for Cauchy Contour Integral method, 2 for Moussa optimized method.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: pexsi_nproc_pole
@@ -4342,7 +4342,7 @@ parameters:
     type: Integer
     description: |
       The point parallelizaion of PEXSI. Recommend two points parallelization.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: pexsi_temp
@@ -4350,7 +4350,7 @@ parameters:
     type: Real
     description: |
       Temperature in Fermi-Dirac distribution, in Ry, should have the same effect as the smearing sigma when smearing method is set to Fermi-Dirac.
-    default_value: 0.015
+    default_value: "0.015"
     unit: ""
     availability: ""
   - name: pexsi_gap
@@ -4358,7 +4358,7 @@ parameters:
     type: Real
     description: |
       Spectral gap, this can be set to be 0 in most cases.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: pexsi_delta_e
@@ -4366,7 +4366,7 @@ parameters:
     type: Real
     description: |
       Upper bound for the spectral radius of S^{-1}H.
-    default_value: 20
+    default_value: "20"
     unit: ""
     availability: ""
   - name: pexsi_mu_lower
@@ -4382,7 +4382,7 @@ parameters:
     type: Real
     description: |
       Initial guess of upper bound for mu.
-    default_value: 10
+    default_value: "10"
     unit: ""
     availability: ""
   - name: pexsi_mu
@@ -4390,7 +4390,7 @@ parameters:
     type: Real
     description: |
       Initial guess for mu (for the solver).
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: pexsi_mu_thr
@@ -4398,7 +4398,7 @@ parameters:
     type: Real
     description: |
       Stopping criterion in terms of the chemical potential for the inertia counting procedure.
-    default_value: 0.05
+    default_value: "0.05"
     unit: ""
     availability: ""
   - name: pexsi_mu_expand
@@ -4406,7 +4406,7 @@ parameters:
     type: Real
     description: |
       If the chemical potential is not in the initial interval, the interval is expanded by this value.
-    default_value: 0.3
+    default_value: "0.3"
     unit: ""
     availability: ""
   - name: pexsi_mu_guard
@@ -4414,7 +4414,7 @@ parameters:
     type: Real
     description: |
       Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure.
-    default_value: 0.2
+    default_value: "0.2"
     unit: ""
     availability: ""
   - name: pexsi_elec_thr
@@ -4422,7 +4422,7 @@ parameters:
     type: Real
     description: |
       Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact.
-    default_value: 0.001
+    default_value: "0.001"
     unit: ""
     availability: ""
   - name: pexsi_zero_thr
@@ -4430,7 +4430,7 @@ parameters:
     type: Real
     description: |
       if the absolute value of CCS matrix element is less than this value, it will be considered as zero.
-    default_value: 1e-10
+    default_value: "1e-10"
     unit: ""
     availability: ""
   - name: out_alllog
@@ -4447,7 +4447,7 @@ parameters:
     type: Integer
     description: |
       Debugging flag for developers
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: t_in_h
@@ -4457,7 +4457,7 @@ parameters:
       Specify whether to include kinetic term in obtaining the Hamiltonian matrix.
       * 0: No.
       * 1: Yes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: vl_in_h
@@ -4467,7 +4467,7 @@ parameters:
       Specify whether to include local pseudopotential term in obtaining the Hamiltonian matrix.
       * 0: No.
       * 1: Yes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: vnl_in_h
@@ -4477,7 +4477,7 @@ parameters:
       Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
       * 0: No.
       * 1: Yes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: vh_in_h
@@ -4487,7 +4487,7 @@ parameters:
       Specify whether to include Hartree potential term in obtaining the Hamiltonian matrix.
       * 0: No.
       * 1: Yes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: vion_in_h
@@ -4497,7 +4497,7 @@ parameters:
       Specify whether to include local ionic potential term in obtaining the Hamiltonian matrix.
       * 0: No.
       * 1: Yes.
-    default_value: 1
+    default_value: "1"
     unit: ""
     availability: ""
   - name: test_force
@@ -4507,7 +4507,7 @@ parameters:
       Specify whether to output the detailed components in forces.
       * 0: No.
       * 1: Yes.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: test_stress
@@ -4517,7 +4517,7 @@ parameters:
       Specify whether to output the detailed components in stress.
       * 0: No.
       * 1: Yes.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: test_skip_ewald
@@ -4527,7 +4527,7 @@ parameters:
       Specify whether to skip the calculation of the ewald energy.
       * 0: No.
       * 1: Yes.
-    default_value: 0
+    default_value: "0"
     unit: ""
     availability: ""
   - name: ri_hartree_benchmark
@@ -4559,10 +4559,10 @@ parameters:
     type: Real
     description: |
       The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
-    default_value: 0.656
+    default_value: "0.656"
     unit: ""
     availability: ""
-  - name: exxace
+  - name: "exxace"
     category: Exact Exchange (PW)
     type: Boolean
     description: |
@@ -4595,7 +4595,7 @@ parameters:
     type: Real
     description: |
       The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.
-    default_value: 1e-5
+    default_value: "1e-5"
     unit: Ry
     availability: exx_thr_type==energy
   - name: ecutexx

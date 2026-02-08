@@ -113,16 +113,16 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
     lines = [f"### {param['name']}", ""]
 
     # Type
-    if param.get('type'):
+    if param.get('type', '') != '':
         lines.append(f"- **Type**: {param['type']}")
 
     # Availability (before description, as in original format)
-    if param.get('availability'):
+    if param.get('availability', '') != '':
         lines.append(f"- **Availability**: *{param['availability']}*")
 
     # Description
-    if param.get('description'):
-        desc = format_description(param['description'])
+    if param.get('description', '') != '':
+        desc = format_description(str(param['description']))
         # If description has multiple lines/lists, format properly
         if '\n' in desc:
             lines.append(f"- **Description**: {desc.split(chr(10))[0]}")
@@ -135,11 +135,11 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
             lines.append(f"- **Description**: {desc}")
 
     # Default
-    if param.get('default_value'):
+    if param.get('default_value', '') != '':
         lines.append(f"- **Default**: {param['default_value']}")
 
     # Unit
-    if param.get('unit'):
+    if param.get('unit', '') != '':
         lines.append(f"- **Unit**: {param['unit']}")
 
     lines.append("")
@@ -197,8 +197,7 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
     output = Path(output)
 
     if not yaml_path.exists():
-        print(f"Error: YAML file not found: {yaml_path}", file=sys.stderr)
-        sys.exit(1)
+        raise FileNotFoundError(f"YAML file not found: {yaml_path}")
 
     with open(yaml_path, 'r') as f:
         data = yaml.safe_load(f)

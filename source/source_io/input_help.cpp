@@ -271,8 +271,28 @@ std::string yaml_quote_if_needed(const std::string& value) {
     std::transform(lower.begin(), lower.end(), lower.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     if (lower == "true" || lower == "false" || lower == "yes" || lower == "no"
-        || lower == "on" || lower == "off" || lower == "null" || lower == "~") {
+        || lower == "on" || lower == "off" || lower == "null" || lower == "~"
+        || lower == ".inf" || lower == "-.inf" || lower == ".nan") {
         return "\"" + value + "\"";
+    }
+
+    // Quote numeric-looking values so YAML parsers keep them as strings.
+    // Matches integers (0, -1, 0x1a, 0o17), floats (1.0, -3.14, 1.0e-6), etc.
+    {
+        bool all_numeric_chars = true;
+        for (char c : value) {
+            if (!std::isdigit(static_cast<unsigned char>(c))
+                && c != '.' && c != '-' && c != '+' && c != 'e' && c != 'E'
+                && c != 'x' && c != 'X' && c != 'o' && c != 'O'
+                && c != 'a' && c != 'b' && c != 'c' && c != 'd' && c != 'f'
+                && c != 'A' && c != 'B' && c != 'C' && c != 'D' && c != 'F') {
+                all_numeric_chars = false;
+                break;
+            }
+        }
+        if (all_numeric_chars) {
+            return "\"" + value + "\"";
+        }
     }
 
     // Check for characters that need quoting

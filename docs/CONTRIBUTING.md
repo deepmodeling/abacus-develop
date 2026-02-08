@@ -159,94 +159,69 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ## Documenting INPUT Parameters
 
-ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). This help system is automatically generated from the parameter documentation in `docs/advanced/input_files/input-main.md` using the script `tools/generate_help_data.py`.
+ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files (`source/source_io/module_parameter/read_input_item_*.cpp`) using `Input_Item` registrations.
+
+A checked-in file `docs/parameters.yaml` contains a YAML dump of all parameter metadata, generated from the binary itself. This file is used by Sphinx to produce the online documentation page `input-main.md`.
+
+### When to Update `docs/parameters.yaml`
+
+You **must** regenerate `docs/parameters.yaml` whenever you:
+
+- Add a new INPUT parameter
+- Remove an existing INPUT parameter
+- Change a parameter's description, type, default value, unit, category, or availability
+
+### How to Regenerate
+
+After building ABACUS, run:
+
+```bash
+./build/abacus --generate-parameters-yaml > docs/parameters.yaml
+```
+
+Then verify the YAML is valid:
+
+```bash
+python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
+```
+
+You can also regenerate the markdown documentation locally:
+
+```bash
+python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
+```
+
+**Important:** Include the updated `docs/parameters.yaml` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes.
 
 ### Parameter Documentation Format
 
-When adding or modifying INPUT parameters, follow this markdown format in `docs/advanced/input_files/input-main.md`:
+When adding or modifying INPUT parameters in C++ source, set the following fields on the `Input_Item`:
 
-#### 1. Category Headers (Optional)
-
-Group related parameters under category headers:
-
-```markdown
-## Category Name
+```cpp
+{
+    Input_Item item("my_parameter");
+    item.category = "System variables";
+    item.type = "Integer";
+    item.description = "Description of what this parameter does.";
+    item.default_value = "0";
+    item.unit = "Ry";          // Optional, empty string if no unit
+    item.availability = "";    // Optional, empty string if always available
+    // ... read_value, reset_value, check_value functions ...
+    this->add_item(item);
+}
 ```
 
-Example: `## System Variables`, `## Electronic Structure`
-
-#### 2. Parameter Headers (Required)
-
-Each parameter must have a level-3 header:
-
-```markdown
-### parameter_name
-```
-
-For multiple related parameters that share the same documentation:
-
-```markdown
-### param1, param2, param3
-```
-
-Example: `### nx, ny, nz` (will create three separate parameter entries)
-
-**Note:** Parameter names should be valid identifiers (alphanumeric characters and underscores only).
-
-#### 3. Parameter Fields
-
-Each parameter must include these fields using the bullet point format:
-
-- **Type**: (Required) One of: `Integer`, `Real`, `String`, `Boolean`
-- **Description**: (Required) Detailed description of what the parameter does
-  - Descriptions can span multiple lines
-  - Can include sub-bullets for additional details
-  - Markdown formatting (bold, italic, links, code) is supported and will be stripped in help output
-- **Default**: (Optional but recommended) The default value
-- **Unit**: (Optional) Physical unit if applicable (e.g., "Ry", "Angstrom", "fs")
-- **Availability**: (Optional) Conditions when this parameter is available (e.g., "Only used for LCAO basis")
-- **Note**: (Optional) Additional notes (these are ignored by the help system parser)
-
-#### 4. Example
-
-```markdown
-## Plane Wave Related Variables
-
-### ecutwfc
-
-- **Type**: Real
-- **Description**: Energy cutoff for plane wave functions. Higher values increase accuracy but also computational cost.
-- **Default**: 50 for PW basis, 100 for LCAO basis
-- **Unit**: Ry
-
-### nx, ny, nz
-
-- **Type**: Integer
-- **Description**: FFT grid dimensions in x, y, z directions. If set to 0, values are calculated automatically from ecutrho.
-- **Default**: 0
-```
-
-### Regenerating Help Data
-
-After modifying the parameter documentation, regenerate the C++ help data file:
-
-```bash
-python3 tools/generate_help_data.py \
-    docs/advanced/input_files/input-main.md \
-    source/source_io/input_help_data.h
-```
-
-This will parse the markdown and generate a C++ header file with static parameter data used by the help system.
+Supported types: `Integer`, `Real`, `String`, `Boolean`
 
 ### Format Validation
 
-The generation script will:
-- Warn about parameters missing required fields (Type, Description)
-- Detect suspicious multi-parameter names (containing spaces or parentheses)
-- Check for duplicate parameter names
-- Report the number of parameters parsed by category
+After regenerating the YAML, you can spot-check a specific parameter:
 
-If you see warnings during generation, please fix them before submitting your PR.
+```bash
+./build/abacus -h my_parameter
+```
+
+This uses the same runtime registry that generates the YAML, so if the help output looks correct, the YAML will be correct too.
 
 ## Code formatting style
 
