@@ -5,6 +5,7 @@
 // new
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"
+#include "source_base/truncated_func.h"
 #include "source_base/math_integral.h"
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
@@ -537,21 +538,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ewald", "Can't find optimal alpha.");
         }
-        const double damping_factor = ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha;
-        // damping_factor corresponds to the exponent (G^2 / 4alpha) 
-        // in the Ewald error estimate.
-        // It measures how strongly the terms are damped at the plane-wave cutoff.
-        // Asymptotic behavior: erfc(x) ~ exp(-x^2) for large x. 
-        // Here x^2 = damping_factor.
-        // If damping_factor > 230.0, exp(-230.0) approx 1e-100, 
-        // meaning the error is negligible.
-        if (damping_factor > 230.0)
-        {
-            upperbound = 0.0; 
-            break;
-        }
-        upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
-                     * erfc(sqrt(damping_factor));
+        upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)* ModuleBase::truncated_erfc(sqrt( ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
     const int ig0 = rho_basis->ig_gge0;
 #pragma omp parallel for
@@ -561,12 +548,8 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             continue; // skip G=0
         }
-        const double damping_factor = -1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0;
-        if (damping_factor < -230.0)
-        {
-            continue;// if the damping factor is too small, the contribution is negligible
-        }
-        aux[ig] *= ModuleBase::libm::exp(std::complex<double>(damping_factor, 0.0))
+        aux[ig] *= ModuleBase::truncated_exp
+                (-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
                 / (rho_basis->gg[ig] * ucell.tpiba2);
     }
 

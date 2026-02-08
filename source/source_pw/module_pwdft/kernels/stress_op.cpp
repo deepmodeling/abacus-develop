@@ -1,5 +1,6 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 
+#include "source_base/truncated_func.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_polyint.h"
@@ -140,23 +141,10 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 const int inkb1 = sum + ia * nproj + ip1;
                                 const int inkb2 = sum + ia * nproj + ip2;
-
-                                #ifdef __SW
-                                const std::complex<FPTYPE>& dbecp_val = dbecp[ib * nkb + inkb1];
-                                uint64_t* parts = reinterpret_cast<uint64_t*>(const_cast<std::complex<FPTYPE>*>(&dbecp_val));
-                                uint64_t exp_real = (parts[0] >> 52) & 0x7FF;
-                                uint64_t exp_imag = (parts[1] >> 52) & 0x7FF;
-                                if ((exp_real <= 923) || (exp_imag <= 923)) {
-                                    continue;
-                                }
-                                const std::complex<FPTYPE>& becp_val = becp[ib * nkb + inkb2];
-                                uint64_t* becp_parts = reinterpret_cast<uint64_t*>(const_cast<std::complex<FPTYPE>*>(&becp_val));
-                                uint64_t becp_exp_real = (becp_parts[0] >> 52) & 0x7FF;
-                                uint64_t becp_exp_imag = (becp_parts[1] >> 52) & 0x7FF;
-                                if ((becp_exp_real <= 923) || (becp_exp_imag <= 923)) {
-                                    continue;
-                                }
-                                #endif
+#ifdef __SW
+                                ModuleBase::truncated_underflow(dbecp[ib * nkb + inkb1]);
+                                ModuleBase::truncated_underflow(becp[ib * nkb + inkb2]);
+#endif
                                 const FPTYPE dbb = (conj(dbecp[ib * nkb + inkb1]) * becp[ib * nkb + inkb2]).real();
                                 local_stress -= ps * fac * dbb;
                             }
@@ -633,12 +621,8 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
             {
                 rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
                 FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
-                if (-g2a < -230.0)
-                {
-                    continue;
-                }
                 rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * 
-                           ModuleBase::libm::exp(-g2a) * (g2a + 1)
+                           ModuleBase::truncated_exp(-g2a) * (g2a + 1)
                           / pow(gx_arr[igl] * gx_arr[igl], 2);
                 drhocg [igl] = rhocg1;
             }
@@ -664,13 +648,9 @@ struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
 #endif
         for (int i = 0; i < npw; i++)
         {
-            #ifdef __SW
-            const std::complex<FPTYPE>& psi_i = psi[i];
-            uint64_t* parts = reinterpret_cast<uint64_t*>(const_cast<std::complex<FPTYPE>*>(&psi_i));
-            uint64_t exp_real = (parts[0] >> 52) & 0x7FF;
-            uint64_t exp_imag = (parts[1] >> 52) & 0x7FF;
-            if ((exp_real <= 923) || (exp_imag <= 923)) {continue;}
-            #endif
+#ifdef __SW
+            ModuleBase::truncated_underflow(psi[i]);
+#endif
             sum += fac * gk1[i] * gk2[i] * d_kfac[i] * std::norm(psi[i]);
         }
         return sum;
