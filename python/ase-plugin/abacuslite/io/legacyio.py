@@ -938,17 +938,17 @@ class TestLegacyIO(unittest.TestCase):
             self.assertEqual(d['coords'].shape, (2, 3))
 
     def test_read_traj_from_md_dump(self):
-        fn = self.testfiles / 'MD_dump'
+        fn = self.testfiles / 'nspin4-gamma-mddump'
         data = read_traj_from_md_dump(fn)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 11)
+        self.assertEqual(len(data), 2)
         self.assertTrue(all('coordinate' in d and 'cell' in d and 
                             'alat_in_angstrom' in d and 'elem' in d and 
                             'coords' in d for d in data))
         for d in data:
             self.assertEqual(d['coordinate'], 'Cartesian')
             self.assertEqual(d['cell'].shape, (3, 3))
-            self.assertEqual(d['alat_in_angstrom'], 0.999615353000)
+            self.assertEqual(d['alat_in_angstrom'], 0.529177000000)
             self.assertIsInstance(d['elem'], list)
             self.assertEqual(len(d['elem']), 2)
             self.assertEqual(d['coords'].shape, (2, 3))        
