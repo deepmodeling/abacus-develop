@@ -2,9 +2,8 @@
 import re
 import shutil
 import unittest
-from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 from ase.atoms import Atoms
@@ -12,7 +11,7 @@ from ase.calculators.singlepoint import (
     SinglePointKPoint,
     SinglePointDFTCalculator
 )
-from ase.units import Ry, eV, GPa, bar
+from ase.units import GPa
 from ase.constraints import full_3x3_to_voigt_6_stress
 
 # some output formats are not updated,
@@ -494,6 +493,29 @@ class TestLatestIO(unittest.TestCase):
     here = Path(__file__).parent
     testfiles = here / 'testfiles'
 
+    def test_read_esolver_type_from_running_log(self):
+        self.assertEqual(
+            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax'),
+            'ksdft_lcao'
+        )
+        self.assertEqual(
+            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax'),
+            'ksdft_lcao'
+        )
+        self.assertEqual(
+            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm1-nspin1-multik-scf'),
+            'ksdft_lcao'
+        )
+        self.assertEqual(
+            read_esolver_type_from_running_log(self.testfiles / 'pw-symm0-nspin4-gamma-md'),
+            'ksdft_pw'
+        )
+
+    def test_read_band_from_running_log(self):
+        self.assertIsNone(
+            read_band_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
+        )
+    
     def test_read_band_from_eig_occ(self):
         fn = self.testfiles / 'nspin4-gamma-eigocc'
         elecstate = read_band_from_eig_occ(fn)
@@ -506,6 +528,46 @@ class TestLatestIO(unittest.TestCase):
             self.assertEqual(es['e'].shape, (1, 1, 35)) # ispin, ik, nbnd
             self.assertIn('occ', es)
             self.assertEqual(es['occ'].shape, (1, 1, 35)) # ispin, ik, nbnd
+
+    def read_traj_from_running_log(self):
+        traj = read_traj_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
+        self.assertEqual(len(traj), 3)
+        for t in traj:
+            print(t)
+
+    def read_forces_from_running_log(self):
+        forces = read_forces_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax')
+        self.assertEqual(len(forces), 2) # two frames
+        reference = [
+            np.array([
+                [-1.2994798821, -0.7502719805, 0.0000000000],
+                [ 1.2994798821,  0.7502719805, 0.0000000000],
+            ]),
+            np.array([
+                [-1.6814741322, -0.9708025265, 0.0000000000],
+                [ 1.6814741322,  0.9708025265, 0.0000000000],
+            ]),
+        ]
+        for f, ref in zip(forces, reference):
+            self.assertTrue(np.allclose(f, ref))
+
+    def read_stress_from_running_log(self):
+        stresses = read_stress_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax')
+        self.assertEqual(len(stresses), 2) # two frames
+        reference = [
+            np.array([
+               [ 28.0257165781, -25.0814687477, -25.0814687477],
+               [-25.0814687477, -57.2309475134,  52.8147857580],
+               [-25.0814687477,  52.8147857580, -57.2309475134],
+            ]),
+            np.array([
+                [ 10.5133147463,-28.8166870580, -28.8166870559],
+                [-28.8166870580,  0.1640200010,   7.6016822662],
+                [-28.8166870559,  7.6016822662,   0.1640199977],
+            ]),
+        ]
+        for s, ref in zip(stresses, reference):
+            self.assertTrue(np.allclose(s, ref))
 
     def test_read_abacus_out_string(self):
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md'
