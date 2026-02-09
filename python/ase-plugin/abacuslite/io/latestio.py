@@ -528,7 +528,7 @@ class TestLatestIO(unittest.TestCase):
 
         # remove the files
         (self.testfiles / 'running_md.log').unlink()
-        (self.testfiles / 'eig_occ.txt').unlink()
+        # (self.testfiles / 'eig_occ.txt').unlink()
         (self.testfiles / 'MD_dump').unlink()
 
 if __name__ == '__main__':
