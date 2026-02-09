@@ -1,0 +1,44 @@
+name: ASE Plugin Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: 'latest'
+          activate-environment: abacuslite
+          python-version: 3.10
+
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
+          conda install -y pip
+          pip install numpy scipy matplotlib
+
+      - name: Install abacuslite
+        shell: bash -l {0}
+        run: |
+          cd python/ase-plugin
+          pip install .
+
+      - name: Run unit tests
+        shell: bash -l {0}
+        run: |
+          cd python/ase-plugin/abacuslite
+          chmod +x xtest.sh
+          ./xtest.sh
+
+      - name: Run integration tests
+        shell: bash -l {0}
+        run: |
+          cd python/ase-plugin/tests
+          chmod +x xtest.sh
+          ./xtest.sh

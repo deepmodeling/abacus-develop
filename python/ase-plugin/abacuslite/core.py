@@ -351,7 +351,6 @@ class Abacus(GenericFileIOCalculator):
         if re.match(r'v3\.9\.0\.\d+', version):
             global __LEGACYIO__
             __LEGACYIO__ = False
-            raise NotImplementedError('ABACUS version series v3.9.0.x is not supported')
 
         # because ABACUS run job in folders, based on the assumption that
         # there is only one job in the folder. Therefore once there are already
@@ -484,7 +483,6 @@ class TestAbacusCalculator(unittest.TestCase):
     here = Path(__file__).parent
     testfiles = here.parent.parent / 'testfiles'
 
-    @unittest.skip('This is an example to perform single-point calculation')
     def test_get_potential_energy(self):
         from ase.build.bulk import bulk
         silicon = bulk('Si', crystalstructure='diamond', a=5.43)
@@ -678,18 +676,6 @@ class TestAbacusCalculator(unittest.TestCase):
         # ase band-structure bs.json -r -20 20
         # ```
         # to plot the band structure
-
-    @unittest.skip('Not completed yet')
-    def test_restart(self):
-        aprof = AbacusProfile(
-            command='mpirun -np 8 abacus',
-            pseudo_dir=self.testfiles / 'pporb',
-            orbital_dir=self.testfiles / 'pporb',
-            omp_num_threads=1
-        )
-        calc = Abacus.restart(aprof,
-                              directory=self.testfiles / 'sih-1d')
-        bscalc = calc.fixed_density()
 
 if __name__ == '__main__':
     unittest.main()

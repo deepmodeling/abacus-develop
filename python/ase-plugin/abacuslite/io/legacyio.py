@@ -15,7 +15,7 @@ from ase.units import Ry, eV, GPa, bar
 from ase.constraints import full_3x3_to_voigt_6_stress
 # from ase.utils import reader
 
-__all__ = ['read_kpoints_from_running_log', 'read_istate',
+__all__ = ['read_kpoints_from_running_log', 
            'read_band_from_running_log', 'read_traj_from_running_log',
            'read_traj_from_md_dump', 'read_forces_from_running_log',
            'read_stress_from_running_log', 'read_energies_from_running_log',
@@ -149,62 +149,6 @@ def read_kpoints_from_running_log(src: str | Path | List[str]) \
                for i, t in enumerate(tables) if i % 3 == 2]
     return kibz, kspnls, kd1traj, kctraj, kd2traj
 
-def read_istate(src: str | Path | List[str]) \
-    -> Dict[str, np.ndarray]:
-    '''
-    read the energy levels and occupations from istate.info file
-
-    Parameters
-    ----------
-    fn : str
-        The path to the istate.info file.
-    
-    Returns
-    -------
-    dict
-        A dictionary containing the band energies, occupations, and k-points.
-        The keys are 'ekb', 'occ', and 'k'. The values are numpy arrays with the
-        following shapes:
-        - 'ekb': (nspin, nk, nband)
-        - 'occ': (nspin, nk, nband)
-        - 'k': List of tuples containing the coordinates of k-points.
-    '''
-    if isinstance(src, (str, Path)):
-        with open(src) as f:
-            raw = f.readlines()
-    else: # assume the src is the return of the readlines()
-        raw = src
-    # with open(fn) as f:
-    #     raw = f.readlines()
-    raw = [l.strip() for l in raw]
-    raw = [l for l in raw if l]
-
-    data  = [l for l in raw if l]
-    ititl = [i for i, l in enumerate(data) if 
-            re.match(r'BAND\s+Energy\(ev\)\s+Occupation\s+Kpoint\s+=', l)]
-    idata = set(range(len(data))) - set(ititl)
-    title = [data[i] for i in ititl]
-    data =  [data[i] for i in idata]
-
-    nk = len(title)
-    nband = len(data) // nk
-    ekb_raw = np.array([list(map(float, l.split())) for l in data])
-    ekb = ekb_raw[:, 1::2].T.reshape(-1, nk, nband)
-    nspin, _, _ = ekb.shape
-    assert nspin in [1, 2], f'Unexpected number of spins: {nspin}'
-
-    occ = ekb_raw[:, 2::2]
-    occ = occ.T.reshape(-1, nk, nband)
-    assert occ.shape == ekb.shape, \
-           f'Unexpected shape of occupation numbers: {occ.shape}, expected {ekb.shape}'
-    
-    findk = lambda l: re.search(r'\((-?\d(\.\d+)?\s+-?\d(\.\d+)?\s+-?\d(\.\d+)?)\)', l)
-    return {
-        'ekb': ekb, 
-        'occ': occ,
-        'k': [tuple(map(float, findk(l).group(1).split())) for l in title]
-    }
-
 def read_esolver_type_from_running_log(src: str | Path | List[str]) \
     -> str:
     '''
@@ -245,12 +189,12 @@ def read_band_from_running_log(src: str | Path | List[str]) \
     -> List[Dict[str, np.ndarray]]:
     '''
     read the band structure from the ABACUS running log file. This would be
-    helpful for MD case that dftio does not support yet.
+    helpful for MD case.
 
     Parameters
     ----------
-    fn : str
-        The path to the ABACUS running log file.
+    src : str or Path or list of str
+        The path to the ABACUS running log file or the return of the readlines() method.
     
     Returns
     -------
@@ -334,13 +278,14 @@ def read_band_from_running_log(src: str | Path | List[str]) \
     # reshape the k-points to (nframe, nspin, nk, 3)
     k = k.reshape(nframe, nspin, nk, 3)
 
-    return [{'k': ki, 'e': eki, 'occ': occi} for ki, eki, occi in zip(k, ekb, occ)]
+    return [{'k': ki, 'e': eki, 'occ': occi} 
+            for ki, eki, occi in zip(k, ekb, occ)]
 
 def read_traj_from_running_log(src: str | Path | List[str]) \
     -> List[Dict[str, np.ndarray|str]]:
     '''
     read the trajectory from the ABACUS running log file. This would be
-    helpful for MD case that dftio does not support yet.
+    helpful for MD case.
 
     Parameters
     ----------
@@ -899,23 +844,10 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
 
     return images[index]
 
-class TestCalculatorAbacusLegacyIO(unittest.TestCase):
+class TestLegacyIO(unittest.TestCase):
 
-    def setUp(self):
-        here = Path(__file__).parent
-        self.testfiles = here.parent.parent / 'testfiles'
-
-    def test_read_istate(self):
-        fn = self.testfiles / 'istate_nspin1.info'
-        data = read_istate(fn)
-        self.assertIn('ekb', data)
-        self.assertIn('occ', data)
-        self.assertIn('k', data)
-        ekb, occ, k = data.values()
-        self.assertEqual(len(k), 29)
-        self.assertTrue(all(isinstance(ki, tuple) and len(ki) == 3 for ki in k))
-        self.assertEqual(ekb.shape, (1, 29, 20))
-        self.assertEqual(occ.shape, (1, 29, 20))
+    here = Path(__file__).parent
+    testfiles = here / 'testfiles'
 
     def test_read_band_from_running_log(self):
         # nspin1
@@ -1173,23 +1105,6 @@ class TestCalculatorAbacusLegacyIO(unittest.TestCase):
                               0.0000440891,
                               0.0000371775])
         self.assertTrue(np.allclose(magmom_norm, reference))
-
-    @unittest.skip('This functionality to test now works smoothly. Because it is only a container'
-                   ', no need to test in CI/CD')
-    def test_read_abacus_out(self):
-        fn = self.testfiles / 'running_scf_log_nspin1'
-        with open(fn) as f:
-            for atom in read_abacus_out(f):
-                for ik, k in enumerate(atom.calc.kpts):
-                    print(f'KPOINT-{ik}th')
-                    print(k.weight)
-                    print(k.s)
-                    print(k.k)
-                    print(k.eps_n)
-                    print(k.f_n)
-                    print('----')
-
-
 
 if __name__ == '__main__':
     unittest.main()
