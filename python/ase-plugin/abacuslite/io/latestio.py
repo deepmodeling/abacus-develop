@@ -495,19 +495,23 @@ class TestLatestIO(unittest.TestCase):
 
     def test_read_esolver_type_from_running_log(self):
         self.assertEqual(
-            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax'),
+            read_esolver_type_from_running_log(
+                self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax'),
             'ksdft_lcao'
         )
         self.assertEqual(
-            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax'),
+            read_esolver_type_from_running_log(
+                self.testfiles / 'lcao-symm0-nspin2-multik-relax'),
             'ksdft_lcao'
         )
         self.assertEqual(
-            read_esolver_type_from_running_log(self.testfiles / 'lcao-symm1-nspin1-multik-scf'),
+            read_esolver_type_from_running_log(
+                self.testfiles / 'lcao-symm1-nspin1-multik-scf'),
             'ksdft_lcao'
         )
         self.assertEqual(
-            read_esolver_type_from_running_log(self.testfiles / 'pw-symm0-nspin4-gamma-md'),
+            read_esolver_type_from_running_log(
+                self.testfiles / 'pw-symm0-nspin4-gamma-md'),
             'ksdft_pw'
         )
 
@@ -529,13 +533,35 @@ class TestLatestIO(unittest.TestCase):
             self.assertIn('occ', es)
             self.assertEqual(es['occ'].shape, (1, 1, 35)) # ispin, ik, nbnd
 
-    def read_traj_from_running_log(self):
+    def test_read_traj_from_running_log(self):
         traj = read_traj_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
         self.assertEqual(len(traj), 3)
-        for t in traj:
-            print(t)
 
-    def read_forces_from_running_log(self):
+        reference = [
+            np.array([[4.17203 , 2.086015, 2.086015],
+                      [2.086015, 4.17203 , 2.086015],
+                      [2.086015, 2.086015, 4.17203 ]]),
+            np.array([[4.17550947, 2.05376104, 2.05376104],
+                      [2.05811246, 4.12078078, 2.09979522],
+                      [2.05811246, 2.09979522, 4.12078078]]),
+            np.array([[4.17667347, 2.04296382, 2.04296382],
+                      [2.04876712, 4.10361705, 2.10440948],
+                      [2.04876712, 2.10440948, 4.10361705]])
+        ]
+
+        taud = np.array([[0.  , 1.  , 1.  ],
+                         [0.5 , 0.5 , 0.5 ],
+                         [0.25, 0.25, 0.25],
+                         [0.75, 0.75, 0.75]])
+        for t, c in zip(traj, reference):
+            self.assertEqual(t['coordinate'], 'Direct')
+            self.assertEqual(t['cell_unit'], 'Angstrom'),
+            self.assertEqual(t['alat_in_angstrom'], 4.17203)
+            self.assertTrue(all(e1 == e2 for e1, e2 in zip(t['elem'], np.array(['Ni1', 'Ni2', 'O', 'O']))))
+            self.assertTrue(np.allclose(t['cell'], c))
+            self.assertTrue(np.allclose(t['coords'] % 1, taud % 1))
+
+    def test_read_forces_from_running_log(self):
         forces = read_forces_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax')
         self.assertEqual(len(forces), 2) # two frames
         reference = [
@@ -551,8 +577,9 @@ class TestLatestIO(unittest.TestCase):
         for f, ref in zip(forces, reference):
             self.assertTrue(np.allclose(f, ref))
 
-    def read_stress_from_running_log(self):
-        stresses = read_stress_from_running_log(self.testfiles / 'lcao-symm0-nspin2-multik-relax')
+    def test_read_stress_from_running_log(self):
+        stresses = read_stress_from_running_log(
+            self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
         self.assertEqual(len(stresses), 2) # two frames
         reference = [
             np.array([
@@ -567,7 +594,7 @@ class TestLatestIO(unittest.TestCase):
             ]),
         ]
         for s, ref in zip(stresses, reference):
-            self.assertTrue(np.allclose(s, ref))
+            self.assertTrue(np.allclose(s, -0.1 * GPa * ref))
 
     def test_read_abacus_out_string(self):
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md'
