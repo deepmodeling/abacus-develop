@@ -1,4 +1,4 @@
-name: ASE Plugin Test
+name: Atomic Simulation Environment (ASE) Plugin Test
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ jobs:
         with:
           miniconda-version: 'latest'
           activate-environment: abacuslite
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Install dependencies
         shell: bash -l {0}
