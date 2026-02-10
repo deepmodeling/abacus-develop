@@ -615,6 +615,14 @@ class TestLatestIO(unittest.TestCase):
         self.assertIsNotNone(res)
         self.assertEqual(len(res), 2) # two frames
 
+        for atoms in res:
+            self.assertIsInstance(atoms, Atoms)
+            self.assertIsInstance(atoms.calc, SinglePointDFTCalculator)
+            self.assertGreater(len(atoms.calc.kpts), 0)
+            # Gamma point calculation
+            for k in atoms.calc.kpts:
+                self.assertIsInstance(k, SinglePointKPoint)
+
         # remove the files
         (self.testfiles / 'running_md.log').unlink()
         # (self.testfiles / 'eig_occ.txt').unlink()
