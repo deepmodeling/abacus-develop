@@ -5,7 +5,11 @@ on:
 
 jobs:
   test:
+    name: abacuslite
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
