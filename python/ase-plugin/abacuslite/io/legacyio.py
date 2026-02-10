@@ -203,6 +203,8 @@ def read_band_from_running_log(src: str | Path | List[str]) \
         Each dictionary has keys 'k' and 'e', where 'k' is a list of k-point
         coordinates and 'e' is a numpy array of band energies.
     '''
+    masknspin = lambda n: 1 if n in [1, 4] else n
+
     if isinstance(src, (str, Path)):
         with open(src) as f:
             raw = f.readlines()
@@ -248,14 +250,14 @@ def read_band_from_running_log(src: str | Path | List[str]) \
                     + r'\(\d+\s+pws\)'
     iekb = [i for i, l in enumerate(raw) if re.match(ekb_leading_pat, l)]
     assert len(iekb) > 0, f'No k-point found'
-    assert len(iekb) % (nspin*nk) == 0, \
+    assert len(iekb) % (masknspin(nspin)*nk) == 0, \
            f'Inconsistent number of k-points: {len(iekb)} vs {nk}'
     k_raw = [re.match(ekb_leading_pat, raw[i]).groups() for i in iekb]
     k = np.array([list(map(float, ki[::3])) for ki in k_raw])
     assert k.shape == (len(iekb), 3), \
            f'Unexpected shape of k-points: {k.shape}, expected ({len(iekb)}, 3)'
 
-    nframe = len(iekb) // (nspin*nk) # number of frames, for MD or relax tasks
+    nframe = len(iekb) // (masknspin(nspin)*nk) # number of frames, for MD or relax tasks
     ekb_raw = [l for i in iekb for l in raw[i+1:i+1+nbnd]]
     # each line should in the format of
     # r'\d+\s+(-?\d(\.\d+)?)\s+(\d(\.\d+)?)
@@ -269,14 +271,14 @@ def read_band_from_running_log(src: str | Path | List[str]) \
            'Unexpected format of band energies: \n' + '\n'.join(ekb_raw)
     # ekb in the second column, occ in the third column
     ekb_raw = np.array([list(map(float, l.split())) for l in ekb_raw])
-    assert ekb_raw.shape == (nframe * nspin * nk * nbnd, 3), \
+    assert ekb_raw.shape == (nframe * masknspin(nspin) * nk * nbnd, 3), \
            f'Unexpected shape of band energies: {ekb_raw.shape}. ' \
-           f'Expected ({nframe * nspin * nk * nbnd}, 3), in which ' \
+           f'Expected ({nframe * masknspin(nspin) * nk * nbnd}, 3), in which ' \
            f'nframe={nframe}, nspin={nspin}, nk={nk}, nbnd={nbnd}'
-    ekb = ekb_raw[:, 1].reshape(nframe, nspin, nk, nbnd)
-    occ = ekb_raw[:, 2].reshape(nframe, nspin, nk, nbnd)
+    ekb = ekb_raw[:, 1].reshape(nframe, masknspin(nspin), nk, nbnd)
+    occ = ekb_raw[:, 2].reshape(nframe, masknspin(nspin), nk, nbnd)
     # reshape the k-points to (nframe, nspin, nk, 3)
-    k = k.reshape(nframe, nspin, nk, 3)
+    k = k.reshape(nframe, masknspin(nspin), nk, 3)
 
     return [{'k': ki, 'e': eki, 'occ': occi} 
             for ki, eki, occi in zip(k, ekb, occ)]
@@ -625,11 +627,9 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
     -> List[np.ndarray]:
     '''
     Read the magnetic momentum from ABACUS running log. Note:
-    this function is for reading the output from nspin=4 case,
-    and returns the list of np.ndarray which has dimension of
+    this function returns the list of np.ndarray which has dimension of
     (nat, 3), where nat is the number of atoms, and 3 stands for
-    the x, y and z components. For nspin=1/2, the magnetic moment 
-    is not printed in the log.
+    the x, y and z components.
     There will be problem if the output directly imported to the
     ASE SinglePointDFTCalculator, because the magmom required by
     ASE-side is the (N,) array, so another operation `np.linalg.norm
@@ -662,7 +662,7 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
     while istart < len(raw):
         ith = None # index of the table header
         for i, l in enumerate(raw[istart:]):
-            if re.match(r'\s*Total\sMagnetism\s\(uB\)\s+x\s+y\s+z\s*', l, 
+            if re.match(r'\s*Total\sMagnetism\s\(uB\)(\s+x\s+y\s+z)?\s*', l, 
                         re.IGNORECASE):
                 ith = i
                 break
@@ -672,8 +672,7 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
         # search for the first line that matches the pattern
         MAGMOMPAT_  = r'\s*([A-Z][a-z]?\d+)'
         MAGMOMPAT_ += r'\s+([-+]?\d+\.\d+)'
-        MAGMOMPAT_ += r'\s+([-+]?\d+\.\d+)'
-        MAGMOMPAT_ += r'\s+([-+]?\d+\.\d+)\s*'
+        MAGMOMPAT_ += r'(\s+([-+]?\d+\.\d+)\s+([-+]?\d+\.\d+))?\s*'
         itb = None # index of the first line of the table body
         for i, l in enumerate(raw[istart+ith+1:]):
             if re.match(MAGMOMPAT_, l):
@@ -694,7 +693,11 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
         tb_raw = raw[istart+ith+1+itb:istart+ith+1+itb+jtb]
         # first item is the name of the magmom component
         # the second to fourth items are the x, y, z components
-        _, mx, my, mz = zip(*[l.split() for l in tb_raw])
+        res = list(zip(*[l.split() for l in tb_raw]))[1:]
+        assert len(res) in [1, 3] # colinear or non-colinear case
+        mx, my, mz = (0,) * len(res[-1]), (0,) * len(res[-1]), res[-1]
+        if len(res) == 3:
+            mx, my = res[0], res[1]
         magmom.append(np.array([list(map(float, (mx, my, mz))) 
                                 for mx, my, mz in zip(mx, my, mz)]))
         
@@ -851,70 +854,70 @@ class TestLegacyIO(unittest.TestCase):
 
     def test_read_band_from_running_log(self):
         # nspin1
-        fn = self.testfiles / 'running_scf_log_nspin1'
+        fn = self.testfiles / 'lcao-symm1-nspin1-multik-scf_'
         data = read_band_from_running_log(fn)
         self.assertIsInstance(data, list)
         self.assertGreater(len(data), 0)
         self.assertTrue(all('k' in d and 'e' in d and 'occ' in d for d in data))
         nspin, nk, nband = data[0]['e'].shape
         self.assertEqual(nspin, 1)
-        self.assertEqual(nband, 20)
-        self.assertEqual(nk, 29)
+        self.assertEqual(nband, 24)
+        self.assertEqual(nk, 2)
         for d in data: # for each frame
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
 
         # nspin2
-        fn = self.testfiles / 'running_scf_log_nspin2'
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-relax_'
         data = read_band_from_running_log(fn)
         self.assertIsInstance(data, list)
         self.assertGreater(len(data), 0)
         self.assertTrue(all('k' in d and 'e' in d and 'occ' in d for d in data))
         nspin, nk, nband = data[0]['e'].shape
         self.assertEqual(nspin, 2)
-        self.assertEqual(nband, 20)
-        self.assertEqual(nk, 29)
+        self.assertEqual(nband, 24)
+        self.assertEqual(nk, 2)
         for d in data: # for each frame
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
         
         # nspin 2, cell-relax (multi-frames)
-        fn = self.testfiles / 'running_cell_relax_log_nspin2'
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
         data = read_band_from_running_log(fn)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data), 2) # two frames
         self.assertTrue(all('k' in d and 'e' in d and 'occ' in d for d in data))
         nspin, nk, nband = data[0]['e'].shape
         self.assertEqual(nspin, 2)
-        self.assertEqual(nband, 20)
-        self.assertEqual(nk, 29)
+        self.assertEqual(nband, 40)
+        self.assertEqual(nk, 2)
         for d in data: # for each frame
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
 
         # nspin 2, MD (multi-frames)
-        fn = self.testfiles / 'running_md_log_nspin2'
+        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
         data = read_band_from_running_log(fn)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 11) # from 0 to 10
+        self.assertEqual(len(data), 3)
         self.assertTrue(all('k' in d and 'e' in d and 'occ' in d for d in data))
         nspin, nk, nband = data[0]['e'].shape
-        self.assertEqual(nspin, 2)
-        self.assertEqual(nband, 20)
-        self.assertEqual(nk, 260) # due to nosym = .true.
+        self.assertEqual(nspin, 1)
+        self.assertEqual(nband, 35)
+        self.assertEqual(nk, 1)
         for d in data: # for each frame
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
 
     def test_read_traj_from_running_log(self):
-        fn = self.testfiles / 'running_scf_log_nspin1'
+        fn = self.testfiles / 'lcao-symm1-nspin1-multik-scf_'
         data = read_traj_from_running_log(fn)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data), 1) # it is scf run, only one frame
         self.assertTrue(all('coordinate' in d and 'cell' in d and 
                             'elem' in d and 'coords' in d for d in data))
         for d in data:
@@ -923,11 +926,13 @@ class TestLegacyIO(unittest.TestCase):
             self.assertIsInstance(d['elem'], list)
             self.assertEqual(len(d['elem']), 2)
 
-        # cell-relax
-        fn = self.testfiles / 'running_cell_relax_log_nspin2'
+        # relax
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-relax_'
         data = read_traj_from_running_log(fn)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data), 1) 
+        # relax task will only print the coordinate at the first run
+        # but band structure will be printed for multiple times...
         self.assertTrue(all('coordinate' in d and 'cell' in d and 
                             'elem' in d and 'coords' in d for d in data))
         for d in data:
@@ -936,6 +941,20 @@ class TestLegacyIO(unittest.TestCase):
             self.assertIsInstance(d['elem'], list)
             self.assertEqual(len(d['elem']), 2)
             self.assertEqual(d['coords'].shape, (2, 3))
+
+        # cell-relax
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
+        data = read_traj_from_running_log(fn)
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 3) # print each time
+        self.assertTrue(all('coordinate' in d and 'cell' in d and 
+                            'elem' in d and 'coords' in d for d in data))
+        for d in data:
+            self.assertIn(d['coordinate'], ['Cartesian', 'Direct'])
+            self.assertEqual(d['cell'].shape, (3, 3))
+            self.assertIsInstance(d['elem'], list)
+            self.assertEqual(len(d['elem']), 4)
+            self.assertEqual(d['coords'].shape, (4, 3))
 
     def test_read_traj_from_md_dump(self):
         fn = self.testfiles / 'nspin4-gamma-mddump'
@@ -954,38 +973,35 @@ class TestLegacyIO(unittest.TestCase):
             self.assertEqual(d['coords'].shape, (2, 3))        
 
     def test_read_forces_from_running_log(self):
-        fn = self.testfiles / 'running_md_log_nspin2'
+        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
         forces = read_forces_from_running_log(fn)
-        self.assertEqual(len(forces), 11) # 11 frames
+        self.assertEqual(len(forces), 3) # 3 frames
         self.assertTrue(all(f.shape == (2, 3) for f in forces)) # 2 atoms, 3 components
 
     def test_read_stress_from_running_log(self):
-        fn = self.testfiles / 'running_cell_relax_log_nspin2'
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
         stress = read_stress_from_running_log(fn)
-        self.assertEqual(len(stress), 3) # 3 cell-relax steps
+        self.assertEqual(len(stress), 2)
         self.assertTrue(all(s.shape == (3, 3) for s in stress)) # 3x3 matrix
 
-        reference = [
-            np.array([[ 3.6005261437, -0.0000000000,  0.0000000000], 
-                      [ 0.0000000000,  3.6005261437,  0.0000000000],
-                      [-0.0000000000,  0.0000000000,  3.6005261437]]),
-            np.array([[-2.6583368803,  0.0000000000,  0.0000000000],
-                      [ 0.0000000000, -2.6583368803,  0.0000000000],
-                      [ 0.0000000000,  0.0000000000, -2.6583368803]]),
-            np.array([[-0.0138062589,  0.0000000000,  0.0000000000],
-                      [-0.0000000000, -0.0138062589, -0.0000000000],
-                      [ 0.0000000000,  0.0000000000, -0.0138062589]])
-        ]
+        reference = np.array([
+            [ 28.0257165780, -25.0814687477, -25.0814687478],
+            [-25.0814687477, -57.2309475134,  52.8147857580],
+            [-25.0814687478,  52.8147857580, -57.2309475133],
+            [  7.3061116295, -27.6053387696, -27.6053387674],
+            [-27.6053387696,   0.8540980637,   7.6367729837],
+            [-27.6053387674,   7.6367729837,   0.8540980603],
+        ]).reshape(-1, 3, 3)
         for s, sref in zip(stress, reference):
-            self.assertTrue(np.allclose(s, sref))
+            self.assertTrue(np.allclose(s, -0.1 * GPa * sref))
 
     def test_read_energies_from_running_log(self):
-        fn = self.testfiles / 'running_scf_log_nspin2'
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
         energies_ry, energies_ev = read_energies_from_running_log(fn)
         self.assertIsInstance(energies_ry, list)
         self.assertIsInstance(energies_ev, list)
-        self.assertEqual(len(energies_ry), 13) # 19 SCF steps
-        self.assertEqual(len(energies_ev), 13)
+        self.assertEqual(len(energies_ry), 3)
+        self.assertEqual(len(energies_ev), 3)
         self.assertTrue(all(isinstance(e, dict) for e in energies_ry)) # dict of energies
         self.assertTrue(all(isinstance(e, dict) for e in energies_ev))
         for e_ev, e_ry in zip(energies_ev, energies_ry):
@@ -993,10 +1009,10 @@ class TestLegacyIO(unittest.TestCase):
             self.assertEqual(len(e_ev), len(e_ry))
             for k, ei_ev in e_ev.items():
                 self.assertIn(k, e_ry)
-                self.assertAlmostEqual(ei_ev, e_ry[k] * Ry / eV, delta=1e-3)
+                self.assertAlmostEqual(ei_ev, e_ry[k] * Ry / eV, delta=1e-2)
 
     def test_read_kpoints_from_running_log(self):
-        fn = self.testfiles / 'running_cell_relax_log_nspin2'
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
         kpoints = read_kpoints_from_running_log(fn)
         self.assertIsInstance(kpoints, tuple)
         self.assertEqual(len(kpoints), 5)
@@ -1009,12 +1025,12 @@ class TestLegacyIO(unittest.TestCase):
         # thus we unpack
         kibz, wk, ibz2bz = kibz
         self.assertIsInstance(kibz, np.ndarray)
-        self.assertEqual(kibz.shape, (29, 3))
+        self.assertEqual(kibz.shape, (2, 3))
         self.assertIsInstance(wk, np.ndarray)
-        self.assertEqual(wk.shape, (29,))
+        self.assertEqual(wk.shape, (2,))
         self.assertAlmostEqual(wk.sum(), 1.0, delta=1e-3)
         self.assertIsInstance(ibz2bz, list)
-        self.assertEqual(len(ibz2bz), 29)
+        self.assertEqual(len(ibz2bz), 2)
 
         # kdspnls
         self.assertIsInstance(kdspnls, tuple)
@@ -1022,18 +1038,18 @@ class TestLegacyIO(unittest.TestCase):
         # thus we unpack
         kdspnls, wk = kdspnls
         self.assertIsInstance(kdspnls, np.ndarray)
-        self.assertEqual(kdspnls.shape, (29, 3))
+        self.assertEqual(kdspnls.shape, (2, 3))
         self.assertIsInstance(wk, np.ndarray)
-        self.assertEqual(wk.shape, (29,))
+        self.assertEqual(wk.shape, (2,))
         self.assertAlmostEqual(wk.sum(), 1.0, delta=1e-3)
 
         # kd1traj
         self.assertIsInstance(kd1traj, list)
-        self.assertEqual(len(kd1traj), 3) # 3 cell-relax steps
+        self.assertEqual(len(kd1traj), 2) # 2 cell-relax steps
         for i, kd1 in enumerate(kd1traj):
             # because the i=0 corresponds to the spinless case,
             # it has 29 instead of 58 kpoints like the others
-            nk = 29
+            nk = 2
             nspin = 1 if i == 0 else 2
             wktot = 1 if i == 0 else 2
             self.assertIsInstance(kd1, tuple)
@@ -1049,62 +1065,27 @@ class TestLegacyIO(unittest.TestCase):
         # kctraj and kd2traj
         for ktraj in [kctraj, kd2traj]:
             self.assertIsInstance(ktraj, list)
-            self.assertEqual(len(ktraj), 3) # 3 cell-relax steps
+            self.assertEqual(len(ktraj), 2) # 2 cell-relax steps
             for i, k in enumerate(ktraj):
                 self.assertIsInstance(k, tuple)
                 self.assertEqual(len(k), 2)
                 # thus we unpack
                 k, wk = k
                 self.assertIsInstance(k, np.ndarray)
-                self.assertEqual(k.shape, (2, 29, 3))
+                self.assertEqual(k.shape, (2, 2, 3))
                 self.assertIsInstance(wk, np.ndarray)
-                self.assertEqual(wk.shape, (2, 29))
+                self.assertEqual(wk.shape, (2, 2))
                 self.assertAlmostEqual(wk.sum(), 2.0, delta=1e-3)
 
     def test_read_magmom_from_running_log(self):
-        fn = self.testfiles / 'running_relax_log_nspin4'
-        magmom = read_magmom_from_running_log(fn)
-        self.assertIsInstance(magmom, list)
-        self.assertEqual(len(magmom), 5) # 5 relax steps
-
-        reference = np.array([[ 1.8225516369,  3.1480265966,  0.0000000000], 
-                              [ 1.8147074392, -3.1525791944,  0.0000000000], 
-                              [-3.6376745424,  0.0045350365,  0.0000000000], 
-                              [ 1.8225516457,  3.1480266013,  0.0000000000], 
-                              [-3.6376745306,  0.0045350385,  0.0000000000], 
-                              [ 1.8147074473, -3.1525791936,  0.0000000000], 
-                              [ 0.0000244792, -0.0000033218,  0.0000000000], 
-                              [ 0.0000244819, -0.0000033210,  0.0000000000]])
-        self.assertTrue(np.allclose(magmom[0], reference))
-        magmom_norm = np.linalg.norm(magmom[0], axis=1)
-        reference = np.array([3.6375494392,
-                              3.6375704346,
-                              3.6376773692,
-                              3.6375494476,
-                              3.6376773575,
-                              3.6375704379,
-                              0.0000247036,
-                              0.0000247061])
-        self.assertTrue(np.allclose(magmom_norm, reference))
-        reference = np.array([[ 1.8404923963,  3.1109885127,  0.0000000000], 
-                              [ 1.7740335195, -3.1492677583,  0.0000000000], 
-                              [-3.6144130623,  0.0376416164,  0.0000000000], 
-                              [ 1.8405035635,  3.1110434653,  0.0000000000], 
-                              [-3.6143459346,  0.0376369850,  0.0000000000], 
-                              [ 1.7740167753, -3.1492941455,  0.0000000000], 
-                              [-0.0000086899,  0.0000432242,  0.0000000000], 
-                              [-0.0000028719,  0.0000370664,  0.0000000000]])
-        self.assertTrue(np.allclose(magmom[-1], reference))
-        magmom_norm = np.linalg.norm(magmom[-1], axis=1)
-        reference = np.array([3.6146454580,
-                              3.6145653047,
-                              3.6146090627,
-                              3.6146984397,
-                              3.6145418904,
-                              3.6145800771,
-                              0.0000440891,
-                              0.0000371775])
-        self.assertTrue(np.allclose(magmom_norm, reference))
+        fn = self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax_'
+        magmoms = read_magmom_from_running_log(fn)
+        self.assertIsInstance(magmoms, list)
+        self.assertEqual(len(magmoms), 2) # 2 cell-relax steps
+        for i, magmom in enumerate(magmoms):
+            self.assertIsInstance(magmom, np.ndarray)
+            self.assertEqual(magmom.shape, (4, 3))
+            self.assertAlmostEqual(magmom.sum(), 0.0, delta=1e-3) # AFM
 
 if __name__ == '__main__':
     unittest.main()
