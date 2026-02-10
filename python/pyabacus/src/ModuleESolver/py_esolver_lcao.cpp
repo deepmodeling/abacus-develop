@@ -448,15 +448,20 @@ PyESolverLCAO<TK, TR>::~PyESolverLCAO()
 }
 
 template <typename TK, typename TR>
-void PyESolverLCAO<TK, TR>::initialize(const std::string& input_dir)
+void PyESolverLCAO<TK, TR>::initialize(const std::string& input_dir, int mpi_comm_handle)
 {
     // Placeholder: will be implemented in Phase 3
     // This will:
-    // 1. Read INPUT file from input_dir
-    // 2. Initialize UnitCell
-    // 3. Create ESolver_KS_LCAO instance
+    // 1. Convert mpi_comm_handle to MPI_Comm via MPI_Comm_f2c()
+    //    (if mpi_comm_handle >= 0, otherwise use MPI_COMM_WORLD)
+    // 2. Use the resulting communicator for MPI_Comm_size/rank
+    // 3. Pass base_comm to Parallel_Global::init_pools(), split_diag_world(), split_grid_world()
+    // 4. Read INPUT file from input_dir
+    // 5. Initialize UnitCell
+    // 6. Create ESolver_KS_LCAO instance
     initialized_ = true;
-    std::cout << "[PyESolverLCAO] Initialized with input directory: " << input_dir << std::endl;
+    std::cout << "[PyESolverLCAO] Initialized with input directory: " << input_dir
+              << ", mpi_comm_handle: " << mpi_comm_handle << std::endl;
 }
 
 template <typename TK, typename TR>
@@ -861,7 +866,10 @@ void bind_esolver_lcao(py::module& m, const std::string& suffix)
             ----------
             input_dir : str
                 Directory containing INPUT, STRU, and other input files
-            )pbdoc", "input_dir"_a)
+            mpi_comm_handle : int, optional
+                Fortran MPI communicator handle from mpi4py comm.py2f().
+                Use -1 (default) to use MPI_COMM_WORLD.
+            )pbdoc", "input_dir"_a, "mpi_comm_handle"_a = -1)
         .def("before_all_runners", &ESolver::before_all_runners,
             "Initialize calculation environment")
 

@@ -49,7 +49,11 @@ void Parallel_Global::split_diag_world(const int& diag_np,
                                        const int& my_rank,
                                        int& drank,
                                        int& dsize,
-                                       int& dcolor)
+                                       int& dcolor
+#ifdef __MPI
+                                       , MPI_Comm base_comm
+#endif
+                                       )
 {
 #ifdef __MPI
     assert(diag_np > 0);
@@ -57,7 +61,7 @@ void Parallel_Global::split_diag_world(const int& diag_np,
     int color = -1;
     int key = -1;
     divide_mpi_groups(nproc, diag_np, my_rank, group_grid_np, key, color);
-    MPI_Comm_split(MPI_COMM_WORLD, color, key, &DIAG_WORLD);
+    MPI_Comm_split(base_comm, color, key, &DIAG_WORLD);
     MPI_Comm_rank(DIAG_WORLD, &drank);
     MPI_Comm_size(DIAG_WORLD, &dsize);
     dcolor = color;
@@ -69,7 +73,11 @@ void Parallel_Global::split_diag_world(const int& diag_np,
     return;
 }
 
-void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, const int& my_rank, int& grank, int& gsize)
+void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, const int& my_rank, int& grank, int& gsize
+#ifdef __MPI
+    , MPI_Comm base_comm
+#endif
+    )
 {
 #ifdef __MPI
     assert(diag_np > 0);
@@ -77,7 +85,7 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
     int color = -1;
     int key = -1;
     divide_mpi_groups(nproc, diag_np, my_rank, group_grid_np, color, key);
-    MPI_Comm_split(MPI_COMM_WORLD, color, key, &GRID_WORLD);
+    MPI_Comm_split(base_comm, color, key, &GRID_WORLD);
     MPI_Comm_rank(GRID_WORLD, &grank);
     MPI_Comm_size(GRID_WORLD, &gsize);
 #else
@@ -258,7 +266,11 @@ void Parallel_Global::init_pools(const int& NPROC,
                                  int& MY_BNDGROUP,
                                  int& NPROC_IN_POOL,
                                  int& RANK_IN_POOL,
-                                 int& MY_POOL)
+                                 int& MY_POOL
+#ifdef __MPI
+                                 , MPI_Comm base_comm
+#endif
+                                 )
 {
 #ifdef __MPI
     //----------------------------------------------------------
@@ -273,7 +285,8 @@ void Parallel_Global::init_pools(const int& NPROC,
                                   MY_BNDGROUP,
                                   NPROC_IN_POOL,
                                   RANK_IN_POOL,
-                                  MY_POOL);
+                                  MY_POOL,
+                                  base_comm);
 
     // for test
     // turn on when you want to check the index of pools.
@@ -321,7 +334,8 @@ void Parallel_Global::divide_pools(const int& NPROC,
                                    int& MY_BNDGROUP,
                                    int& NPROC_IN_POOL,
                                    int& RANK_IN_POOL,
-                                   int& MY_POOL)
+                                   int& MY_POOL,
+                                   MPI_Comm base_comm)
 {
     // note: the order of k-point parallelization and band parallelization is important
     //       The order will not change the behavior of KP_WORLD or BP_WORLD, and MY_POOL
@@ -334,7 +348,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
             "When BNDPAR > 1, number of processes NPROC must be divisible by the number of groups BNDPAR * KPAR.");
     }
     // k-point parallelization
-    MPICommGroup kpar_group(MPI_COMM_WORLD);
+    MPICommGroup kpar_group(base_comm);
     kpar_group.divide_group_comm(KPAR, false);
 
     // band parallelization
@@ -362,7 +376,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
         NPROC_IN_BNDGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
         RANK_IN_BPGROUP = kpar_group.my_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
         MY_BNDGROUP = bndpar_group.my_group;
-        MPI_Comm_split(MPI_COMM_WORLD, MY_BNDGROUP, RANK_IN_BPGROUP, &INT_BGROUP);
+        MPI_Comm_split(base_comm, MY_BNDGROUP, RANK_IN_BPGROUP, &INT_BGROUP);
         MPI_Comm_dup(bndpar_group.inter_comm, &BP_WORLD);
     }
     else
@@ -370,8 +384,8 @@ void Parallel_Global::divide_pools(const int& NPROC,
         NPROC_IN_BNDGROUP = NPROC;
         RANK_IN_BPGROUP = MY_RANK;
         MY_BNDGROUP = 0;
-        MPI_Comm_dup(MPI_COMM_WORLD, &INT_BGROUP);
-        MPI_Comm_split(MPI_COMM_WORLD, MY_RANK, 0, &BP_WORLD);
+        MPI_Comm_dup(base_comm, &INT_BGROUP);
+        MPI_Comm_split(base_comm, MY_RANK, 0, &BP_WORLD);
     }
     return;
 }

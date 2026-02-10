@@ -12,19 +12,35 @@
 
 namespace Parallel_Reduce
 {
-/// reduce in all process
+/// reduce in all process, optionally specifying a communicator
 template <typename T>
-void reduce_all(T& object);
+void reduce_all(T& object
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 template <typename T>
-void reduce_all(T* object, const int n);
+void reduce_all(T* object, const int n
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 template <typename T>
 void reduce_pool(T& object);
 template <typename T>
 void reduce_pool(T* object, const int n);
 template <typename T>
-void reduce_min(T& v);
+void reduce_min(T& v
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 template <typename T>
-void reduce_max(T& v);
+void reduce_max(T& v
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 template <typename T>
 void reduce_min_pool(const int& nproc_in_pool, T& v);
 template <typename T>
@@ -39,10 +55,22 @@ void reduce_int_grid(int* object, const int n); // mohan add 2012-01-12
 void reduce_double_grid(double* object, const int n);
 void reduce_double_diag(double* object, const int n);
 
-void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object);
-void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
+void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
+void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 
-void gather_int_all(int& v, int* all);
+void gather_int_all(int& v, int* all
+#ifdef __MPI
+    , MPI_Comm comm = MPI_COMM_WORLD
+#endif
+    );
 
 bool check_if_equal(double& v); // mohan add 2009-11-11
 

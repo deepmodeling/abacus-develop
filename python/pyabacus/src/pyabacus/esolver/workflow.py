@@ -54,7 +54,7 @@ class LCAOWorkflow:
         'after_scf',         # Called after after_scf()
     ]
 
-    def __init__(self, input_dir: str, gamma_only: bool = True):
+    def __init__(self, input_dir: str, gamma_only: bool = True, mpi_comm=None):
         """
         Initialize LCAOWorkflow.
 
@@ -64,9 +64,13 @@ class LCAOWorkflow:
             Directory containing input files
         gamma_only : bool
             Use gamma-only calculation if True, multi-k if False
+        mpi_comm : mpi4py.MPI.Comm, optional
+            MPI communicator to use. If None, uses MPI_COMM_WORLD.
+            Pass a sub-communicator to run this ESolver on a subset of MPI ranks.
         """
         self._input_dir = input_dir
         self._gamma_only = gamma_only
+        self._mpi_comm = mpi_comm
         self._esolver = None
         self._initialized = False
         self._scf_running = False
@@ -96,9 +100,16 @@ class LCAOWorkflow:
                 "Make sure pyabacus is properly installed with ESolver support."
             ) from e
 
-        self._esolver.initialize(self._input_dir)
+        self._esolver.initialize(self._input_dir, mpi_comm_handle=self._mpi_comm_handle)
         self._esolver.before_all_runners()
         self._initialized = True
+
+    @property
+    def _mpi_comm_handle(self) -> int:
+        """Convert mpi4py communicator to Fortran handle, or -1 for default."""
+        if self._mpi_comm is None:
+            return -1
+        return self._mpi_comm.py2f()
 
     def register_callback(self, event: str, callback: Callable[['LCAOWorkflow'], None]) -> None:
         """

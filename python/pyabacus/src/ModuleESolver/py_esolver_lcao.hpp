@@ -284,7 +284,10 @@ public:
     // ==================== Initialization ====================
 
     /// Initialize from INPUT file directory
-    void initialize(const std::string& input_dir);
+    /// @param input_dir Directory containing INPUT, STRU, and other input files
+    /// @param mpi_comm_handle Fortran MPI communicator handle from mpi4py comm.py2f().
+    ///        Use -1 (default) to use MPI_COMM_WORLD.
+    void initialize(const std::string& input_dir, int mpi_comm_handle = -1);
 
     /// Call before_all_runners
     void before_all_runners();
