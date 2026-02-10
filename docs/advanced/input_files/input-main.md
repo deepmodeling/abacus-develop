@@ -875,8 +875,8 @@ These variables are used to control the plane wave related parameters.
 ### pw_diag_nmax
 
 - **Type**: Integer
-- **Description**: Only useful when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-- **Default**: 40
+- **Description**: Only useful when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the maximal iteration number for `cg/david/dav_subspace/bpcg` method.
+- **Default**: 50
 
 ### pw_diag_ndim
 
