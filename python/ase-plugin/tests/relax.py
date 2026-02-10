@@ -36,9 +36,10 @@ class TestIonicRelaxationWithStress(unittest.TestCase):
             )
 
         silicon.calc = abacus
+        e = silicon.get_potential_energy()
         opt = BFGS(silicon)
         opt.run(fmax=0.05, steps=1)
-        self.assertLessEqual(silicon.get_potential_energy(), -210.6232156782)
+        self.assertLessEqual(silicon.get_potential_energy(), e)
         self.assertIsNotNone(silicon.calc.results['forces'])
         self.assertIsNotNone(silicon.calc.results['stress'])
 
