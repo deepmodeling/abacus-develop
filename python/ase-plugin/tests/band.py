@@ -41,16 +41,18 @@ class TestSCFFollowedNSCF(unittest.TestCase):
                 }
             )
 
-        silicon.calc = abacus
-        # self.assertAlmostEqual(silicon.get_potential_energy(), -228.283248537)
+            silicon.calc = abacus
+            _ = silicon.get_potential_energy()
 
-        kpath, kspecial = kpathgen(silicon)
-        bandpath = silicon.cell.bandpath(path=kpath,
-                                         npoints=5,
-                                         special_points=kspecial)
-        bscalc = silicon.calc.fixed_density(bandpath)
-        silicon.calc = bscalc
-        _ = silicon.get_potential_energy()
+            # ============================================================= #
+
+            kpath, kspecial = kpathgen(silicon)
+            bandpath = silicon.cell.bandpath(path=kpath,
+                                            npoints=5,
+                                            special_points=kspecial)
+            bscalc = silicon.calc.fixed_density(bandpath)
+            silicon.calc = bscalc
+            _ = silicon.get_potential_energy()
 
         bscalc.band_structure().write(Path(tmpdir) / 'bandstructure.json')
         self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
