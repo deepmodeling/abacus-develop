@@ -32,8 +32,8 @@ class TestSCF(unittest.TestCase):
                 }
             )
 
-        silicon.calc = abacus
-        # self.assertAlmostEqual(silicon.get_potential_energy(), -210.6232156782)
+            silicon.calc = abacus
+            print('Silicon :', silicon.get_potential_energy())
 
 if __name__ == '__main__':
     unittest.main()
