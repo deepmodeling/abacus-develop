@@ -54,8 +54,8 @@ class TestSCFFollowedNSCF(unittest.TestCase):
             silicon.calc = bscalc
             _ = silicon.get_potential_energy()
 
-        bscalc.band_structure().write(Path(tmpdir) / 'bandstructure.json')
-        self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
+            bscalc.band_structure().write(Path(tmpdir) / 'bandstructure.json')
+            self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
 
 if __name__ == '__main__':
     unittest.main()
