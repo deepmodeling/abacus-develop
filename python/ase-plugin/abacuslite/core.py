@@ -274,6 +274,19 @@ class AbacusTemplate(CalculatorTemplate):
         _ = file_safe_backup(dst)
         # remove possible key-value pairs whose value is None
         parameters = {k: v for k, v in parameters.items() if v is not None}
+
+        # FIXME: only support the ksdft esolver_type presently
+        if parameters.get('esolver_type', 'ksdft') != 'ksdft':
+            raise NotImplementedError(
+                'ABACUS Lite only supports the ksdft esolver_type presently, '
+                'which means the ABACUS should always be used as a DFT '
+                'calculator. For other forcefields that ABACUS supports '
+                'such as the LJ, DP, etc., please either use the ABACUS '
+                'directly, or the implementation of interfaces to ASE '
+                'directly.'
+            )
+
+        # write the INPUT file to the target directory
         _ = write_input(parameters, dst)
 
     def execute(self, 
