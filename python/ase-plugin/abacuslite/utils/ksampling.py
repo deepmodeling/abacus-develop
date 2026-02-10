@@ -1,9 +1,10 @@
 '''this module provides some useful tools for k-sampling'''
+import seekpath
 import unittest
 from typing import Optional, Tuple, List, Dict
 
-from ase.atoms import Atoms
 import numpy as np
+from ase.atoms import Atoms
 
 def convert_kspacing_to_kpts(cell: np.ndarray,
                              kspacing: float | Tuple[float, float, float])\
@@ -196,6 +197,28 @@ def make_klines(kpts,
     
     return [fspawnk(c, 1 if is_brkpt[i] else n_interpl, klbl) 
             for i, (c, klbl) in enumerate(zip(kpts, klabels))]
+
+def kpathgen(atoms: Atoms) -> Tuple[str, Dict[str, List[float]]]:
+    '''
+    Generate the k-path by default SeeK-Path flavor in the format
+    compatible with ase bandpath module
+    '''
+    kpathseen = seekpath.get_path(
+        structure=(np.array(atoms.get_cell()), 
+                atoms.get_scaled_positions(), 
+                atoms.get_atomic_numbers()),
+        with_time_reversal=True
+    )
+
+    # convert the kpoint path to the format that is acceptable by ASE
+    kpathstr, is_brkpt = merge_ksgm(kpathseen['path'])
+    fklblfilter = lambda lbl: lbl if lbl != 'GAMMA' else 'G'
+    kpathstr = make_kstring([fklblfilter(lbl) for lbl in kpathstr], is_brkpt)
+    kpathstr = ''.join([k if k != 'GAMMA' else 'G' for k in kpathstr])
+    # seekpath use 'GAMMA' as the gamma point symbol, while the ASE use 'G'
+    kspecial = {k: v for k, v in kpathseen['point_coords'].items() if k != 'GAMMA'}
+    kspecial['G'] = [0.0, 0.0, 0.0]
+    return kpathstr, kspecial
 
 # the following are for quick test on the silicon case
 SILICON_KNODES = np.array([[0.0000000000,  0.0000000000,   0.0000000000],

@@ -1,6 +1,13 @@
 '''
 This example shows how to run a SCF calculation with ABACUS 
 of Si diamond structure.
+
+To run this example, please install the SeeK-path package:
+```
+pip install seekpath
+```
+. The SeeK-path package recommands you cite by the way posted here:
+https://seekpath.materialscloud.io/
 '''
 import shutil
 from pathlib import Path # a more Pythonic alternative to the os.path
@@ -9,12 +16,9 @@ here = Path(__file__).parent
 # In your case you change to the appropriate one
 pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
 
-import seekpath # for generating the kpoint path
-import numpy as np
 from ase.build import bulk
-from ase.dft.kpoints import BandPath
 from abacuslite import Abacus, AbacusProfile
-from abacuslite.utils.ksampling import merge_ksgm, make_kstring
+from abacuslite.utils.ksampling import kpathgen
 
 # AbacusProfile: the interface connecting the Abacus calculator instance
 # with the file system and the enviroment
@@ -56,23 +60,7 @@ atoms.calc = abacus
 # perform the SCF calculation to get the converged wavefunction
 print('SCF calculation get energy:', atoms.get_potential_energy())
 
-# then the band structure non-self-consistent calculation
-kpathseen = seekpath.get_path(
-    structure=(np.array(atoms.get_cell()), 
-               atoms.get_scaled_positions(), 
-               atoms.get_atomic_numbers()),
-    with_time_reversal=True
-)
-
-# convert the kpoint path to the format that is acceptable by ASE
-kpathstr, is_brkpt = merge_ksgm(kpathseen['path'])
-fklblfilter = lambda lbl: lbl if lbl != 'GAMMA' else 'G'
-kpathstr = make_kstring([fklblfilter(lbl) for lbl in kpathstr], is_brkpt)
-kpathstr = ''.join([k if k != 'GAMMA' else 'G' for k in kpathstr])
-# seekpath use 'GAMMA' as the gamma point symbol, while the ASE use 'G'
-kspecial = {k: v for k, v in kpathseen['point_coords'].items() if k != 'GAMMA'}
-kspecial['G'] = [0.0, 0.0, 0.0]
-
+kpathstr, kspecial = kpathgen(atoms)
 # instantiate the bandpath
 bandpath = atoms.cell.bandpath(path=kpathstr,
                                npoints=50,
