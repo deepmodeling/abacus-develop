@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/write_bands.h"
+#include "source_io/module_energy/write_bands.h"
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/klist.h"
 
