@@ -22,7 +22,7 @@ class TestSCFFollowedNSCF(unittest.TestCase):
 
         silicon = bulk('Si', 'diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 4 abacus',
+            command='mpirun -np 2 abacus',
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,

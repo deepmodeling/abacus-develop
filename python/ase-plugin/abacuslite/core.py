@@ -488,7 +488,7 @@ class TestAbacusCalculator(unittest.TestCase):
         from ase.build.bulk import bulk
         silicon = bulk('Si', crystalstructure='diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 8 abacus',
+            command='mpirun -np 2 abacus',
             pseudo_dir=self.pporb,
             orbital_dir=self.pporb,
             omp_num_threads=1
@@ -555,7 +555,7 @@ class TestAbacusCalculator(unittest.TestCase):
         from ase.build.bulk import bulk
         silicon = bulk('Si', crystalstructure='diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 8 abacus',
+            command='mpirun -np 2 abacus',
             pseudo_dir=self.pporb,
             orbital_dir=self.pporb,
             omp_num_threads=1

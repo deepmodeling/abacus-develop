@@ -33,7 +33,7 @@ jobs:
           cd python/ase-plugin
           pip install .
 
-      - name: Configure, Build and Install ABACUS
+      - name: Configure & Build ABACUS (GNU)
         run: |
           git config --global --add safe.directory `pwd`
           export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH}
@@ -43,7 +43,13 @@ jobs:
           rm -rf build
           cmake -B build
           cmake --build build -j2
+      
+      - name: Install and Soft Link ABACUS
+        run: |
           cmake --install build
+          if [ -f /usr/local/bin/abacus_2p ]; then
+            ln -sf /usr/local/bin/abacus_2p /usr/local/bin/abacus
+          fi
 
       - name: Run unit tests
         shell: bash -l {0}
