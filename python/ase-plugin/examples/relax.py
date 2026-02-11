@@ -16,14 +16,14 @@ from abacuslite import Abacus, AbacusProfile
 # AbacusProfile: the interface connecting the Abacus calculator instance
 # with the file system and the enviroment
 aprof = AbacusProfile(
-    command='mpirun -np 4 abacus',
+    command='mpirun -np 8 abacus',
     pseudo_dir=pporb,
     orbital_dir=pporb,
     omp_num_threads=1,
 )
 
 # Abacus: the calculator instance
-jobdir = here / 'scf'
+jobdir = here / 'relax'
 abacus = Abacus(
     profile=aprof,
     directory=str(jobdir),

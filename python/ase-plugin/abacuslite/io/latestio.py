@@ -3,7 +3,7 @@ import re
 import shutil
 import unittest
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from ase.atoms import Atoms
@@ -359,8 +359,10 @@ def read_stress_from_running_log(src: str | Path | List[str]) \
 
     return stresses
 
-def read_abacus_out(fileobj, index=slice(None), results_required=True) \
-    -> Atoms | List[Atoms]:
+def read_abacus_out(fileobj, 
+                    index=slice(None), 
+                    results_required=True,
+                    sort_atoms_with: Optional[List[int]] = None) -> Atoms | List[Atoms]:
     '''Reads the ABACUS output files. This function would be called by
     the AbacusTemplate.read_results() function. The detailed call stack
     is as follows:
@@ -385,6 +387,9 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
         Whether the results are required. If True, the results will be
         returned. If False, the results will not be returned. This parameter
         is not used.
+    sort_atoms_with: Optional[List[int]]
+        The sort order of the atoms. If not None, the atoms will be sorted
+        according to the order in the list.
 
     Returns
     -------
@@ -401,7 +406,9 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
     
     # read the esolver type
     eslvtyp = read_esolver_type_from_running_log(abacus_lines)
-    
+    # FIXME: implement read_ksdft_esolver_out instead of read_abacus_out to
+    # make flexible esolver support
+
     # read the structure, with the cell, elem, etc. (nframe)
     # if it is MD run, the trajectories will be in the file MD_dump, instead
     # of the running log
@@ -456,15 +463,18 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
         magmom = [np.zeros(shape=(len(trajectory[0]['elem'])))] * len(trajectory)
 
     # loop over the frame...
-    images = []
+    images, ind = [], sort_atoms_with
     for frame, estat, mag, frs, strs, ener in zip(
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
-        atoms = Atoms(symbols=frame['elem'], positions=frame['coords'], cell=frame['cell'])
+        ind = ind or list(range(len(frame['elem'])))
+        atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
+                      positions=frame['coords'][ind], 
+                      cell=frame['cell'])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
-        frs  = None if is_invalid_arr(frs)  else frs
+        frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],

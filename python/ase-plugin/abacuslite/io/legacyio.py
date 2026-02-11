@@ -3,7 +3,7 @@ import shutil
 import unittest
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 from ase.atoms import Atoms
@@ -733,8 +733,10 @@ def is_invalid_arr(arr) -> bool:
     return False
 
 # @reader
-def read_abacus_out(fileobj, index=slice(None), results_required=True) \
-    -> Atoms | List[Atoms]:
+def read_abacus_out(fileobj, 
+                    index=slice(None), 
+                    results_required=True,
+                    sort_atoms_with: Optional[List[int]] = None) -> Atoms | List[Atoms]:
     '''Reads the ABACUS output files. This function would be called by
     the AbacusTemplate.read_results() function. The detailed call stack
     is as follows:
@@ -759,6 +761,8 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
         Whether the results are required. If True, the results will be
         returned. If False, the results will not be returned. This parameter
         is not used.
+    sort_atoms_with : Optional[List[int]]
+        The index of the atoms to sort. If None, the atoms will not be sorted.
 
     Returns
     -------
@@ -817,15 +821,18 @@ def read_abacus_out(fileobj, index=slice(None), results_required=True) \
         magmom = [np.zeros(shape=(len(trajectory[0]['elem'])))] * len(trajectory)
 
     # loop over the frame...
-    images = []
+    images, ind = [], sort_atoms_with
     for frame, estat, mag, frs, strs, ener in zip(
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
-        atoms = Atoms(symbols=frame['elem'], positions=frame['coords'], cell=frame['cell'])
+        ind = ind or list(range(len(frame['elem'])))
+        atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
+                      positions=frame['coords'][ind], 
+                      cell=frame['cell'])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
-        frs  = None if is_invalid_arr(frs)  else frs
+        frs  = None if is_invalid_arr(frs)  else frs[ind]
         strs = None if is_invalid_arr(strs) else full_3x3_to_voigt_6_stress(strs)
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],

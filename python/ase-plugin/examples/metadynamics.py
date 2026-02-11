@@ -78,11 +78,11 @@ abacus = Abacus(
 ch4f = ''' 6
 ABACUS ASE Plugin Metadynamics example structure
  C                 -0.00000000   -0.00000000   -1.50074532
+ F                  0.00000000   -0.00000000    0.88279136
  H                  0.00000000   -1.01539888   -1.16330635
  H                 -0.87936122    0.50769944   -1.16330635
  H                  0.87936122    0.50769944   -1.16330635
  H                 -0.00000000   -0.00000000   -2.57055225
- F                  0.00000000   -0.00000000    0.88279136
 '''
 with tempfile.NamedTemporaryFile(mode='w', suffix='.xyz') as f:
     f.write(ch4f)

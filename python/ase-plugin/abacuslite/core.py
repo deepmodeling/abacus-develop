@@ -137,6 +137,10 @@ class AbacusTemplate(CalculatorTemplate):
         self.outputname = f'{self._label}.out'
         self.errorname  = f'{self._label}.err'
 
+        # fix: inconsistent atoms order may induce bugs, here a list
+        # is kept to swap the order of atoms
+        self.atomorder  = None
+
     '''because it may be not one-to-one mapping between the property
     desired to calculate and the keywords used in the calculation,
     in the following a series of functions for mapping the property
@@ -207,7 +211,7 @@ class AbacusTemplate(CalculatorTemplate):
     def write_input(self, 
                     profile: AbacusProfile, 
                     directory: Path | str,
-                    atoms, 
+                    atoms: Atoms, 
                     parameters: Dict[str, str],
                     properties: List[str]) -> None:
         '''Write the input files for the calculation. This function connects
@@ -236,7 +240,12 @@ class AbacusTemplate(CalculatorTemplate):
 
         # STRU
         _ = file_safe_backup(directory / parameters.get('stru_file', 'STRU'))
-        _ = write_stru(atoms, 
+        # reorder the atoms according to the alphabet. Keep the reverse map
+        # so that we will recover the order in function read_results()
+        ind = sorted(range(len(atoms)), key=lambda i: atoms[i].symbol)
+        self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
+        # then we write
+        _ = write_stru(atoms[ind], 
                        outdir=directory, 
                        pp_file=parameters.get('pseudopotentials'),
                        orb_file=parameters.get('basissets'),
@@ -292,10 +301,33 @@ class AbacusTemplate(CalculatorTemplate):
     def execute(self, 
                 directory: Path | str, 
                 profile: AbacusProfile):
-        profile.run(directory=directory, 
-                    inputfile=None, 
-                    outputfile=self.outputname, 
-                    errorfile=self.errorname)
+        '''Execute the ABACUS Lite calculation.
+
+        Parameters
+        ----------
+        directory : Path or str
+            The working directory to store the input files.
+        profile : AbacusProfile
+            The profile used to perform the calculation.
+
+        Raises
+        ------
+        SubprocessError
+            If the ABACUS Lite calculation fails.
+        '''
+        from subprocess import SubprocessError
+        try:
+            profile.run(directory=directory, 
+                        inputfile=None, 
+                        outputfile=self.outputname, 
+                        errorfile=self.errorname)
+        except SubprocessError:
+            message = ['ABACUS Lite calculation failed']
+            with open(directory / self.outputname, 'r') as f:
+                message.append(f.read())
+            with open(directory / self.errorname, 'r') as f:
+                message.append(f.read())
+            raise SubprocessError('\n'.join(message))
 
     def read_results(self, directory) -> Dict:
         '''the function that returns the desired properties in dict'''
@@ -305,9 +337,14 @@ class AbacusTemplate(CalculatorTemplate):
             from abacuslite.io.legacyio import read_abacus_out
         else:
             from abacuslite.io.latestio import read_abacus_out
+
         outdir = directory / f'OUT.{self.suffix}'
-        atoms = read_abacus_out(outdir / f'running_{self.calculation}.log')[-1]
+        # only the last frame
+        atoms: Optional[Atoms] = read_abacus_out(
+            outdir / f'running_{self.calculation}.log',
+            sort_atoms_with=self.atomorder)[-1]
         assert atoms is not None
+
         return dict(atoms.calc.properties())
 
     def load_profile(self, cfg, **kwargs):
