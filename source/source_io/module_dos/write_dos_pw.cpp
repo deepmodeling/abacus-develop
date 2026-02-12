@@ -1,6 +1,6 @@
 #include "write_dos_pw.h"
 #include "cal_dos.h"
-#include "../nscf_fermi_surf.h"
+#include "../module_energy/nscf_fermi_surf.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 

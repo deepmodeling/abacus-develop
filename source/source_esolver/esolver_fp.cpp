@@ -5,10 +5,10 @@
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_io/cif_io.h"
-#include "source_io/cube_io.h" // use write_vdata_palgrid
-#include "source_io/json_output/init_info.h"
-#include "source_io/json_output/output_info.h"
+#include "source_io/module_output/cif_io.h"
+#include "source_io/module_output/cube_io.h" // use write_vdata_palgrid
+#include "source_io/module_json/init_info.h"
+#include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_chgpot/rhog_io.h"

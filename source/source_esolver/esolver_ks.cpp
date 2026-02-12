@@ -2,15 +2,15 @@
 #include "source_base/timer_wrapper.h"
 
 // for jason output information
-#include "source_io/json_output/init_info.h"
-#include "source_io/json_output/output_info.h"
+#include "source_io/module_json/init_info.h"
+#include "source_io/module_json/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
 #include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
 #include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 #include "source_hsolver/hsolver.h"
-#include "source_io/write_eig_occ.h"
-#include "source_io/write_bands.h"
+#include "source_io/module_energy/write_eig_occ.h"
+#include "source_io/module_energy/write_bands.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot

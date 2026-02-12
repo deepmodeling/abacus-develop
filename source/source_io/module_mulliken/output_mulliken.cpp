@@ -1,5 +1,4 @@
 #include "source_io/module_mulliken/output_mulliken.h"
-
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
 #include "source_base/name_angular.h"
