@@ -6,7 +6,7 @@
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
 #include <set>
 #include <chrono>
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 #ifdef USE_LIBXC
 #include <xc.h>
 #include "source_hamilt/module_xc/xc_functional_libxc.h"

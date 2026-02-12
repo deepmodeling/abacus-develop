@@ -4,42 +4,42 @@ list(APPEND objects
     module_ctrl/ctrl_output_pw.cpp
     module_ctrl/ctrl_output_td.cpp
     module_bessel/bessel_basis.cpp
-    cal_test.cpp
+    module_output/cal_test.cpp
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_descriptors.cpp
-    cif_io.cpp
+    module_output/cif_io.cpp
     module_dos/write_dos_pw.cpp
-    write_bands.cpp
-    nscf_fermi_surf.cpp
-    write_eig_occ.cpp
+    module_energy/write_bands.cpp
+    module_energy/nscf_fermi_surf.cpp
+    module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
     module_output/output.cpp
     module_output/print_info.cpp
-    read_cube.cpp
+    module_output/read_cube.cpp
     module_chgpot/rhog_io.cpp
-    read_exit_file.cpp
+    module_output/read_exit_file.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
-    binstream.cpp
+    module_output/binstream.cpp
     module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
-    write_cube.cpp
+    module_output/write_cube.cpp
     module_chgpot/write_elecstat_pot.cpp
     module_elf/write_elf.cpp
-    write_dipole.cpp
+    module_dipole/write_dipole.cpp
     module_chgpot/write_init.cpp
     module_ml/write_mlkedf_descriptors.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
-    write_libxc_r.cpp
+    module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
-    para_json.cpp
+    module_json/para_json.cpp
     parse_args.cpp
-    orb_io.cpp
+    module_output/orb_io.cpp
     module_output/filename.cpp
 )
 
@@ -50,7 +50,7 @@ list(APPEND objects_advanced
     module_wannier/to_wannier90_pw.cpp
     module_wannier/to_wannier90_lcao_in_pw.cpp
     module_wannier/to_wannier90_lcao.cpp
-    fR_overlap.cpp
+    module_wannier/fR_overlap.cpp
 )
 
 if(ENABLE_LCAO)
@@ -58,17 +58,17 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
-      write_orb_info.cpp
-      write_proj_band_lcao.cpp
+      module_output/write_orb_info.cpp
+      module_energy/write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
       module_wf/get_wf_lcao.cpp
       module_wf/read_wfc_nao.cpp
       module_wf/write_wfc_nao.cpp
       module_dm/write_dmk.cpp
       module_dm/write_dmr.cpp
-      sparse_matrix.cpp
-      file_reader.cpp
-      csr_reader.cpp
+      module_output/sparse_matrix.cpp
+      module_output/file_reader.cpp
+      module_output/csr_reader.cpp
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp
@@ -76,15 +76,15 @@ if(ENABLE_LCAO)
       module_mulliken/output_dmk.cpp
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
-      cal_pLpR.cpp
+      module_hs/cal_pLpR.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
       module_hs/write_HS_R.cpp
       module_hs/write_HS_sparse.cpp
-      single_R_io.cpp
-      cal_r_overlap_R.cpp
-      output_mat_sparse.cpp
+      module_hs/single_R_io.cpp
+      module_hs/cal_r_overlap_R.cpp
+      module_hs/output_mat_sparse.cpp
       module_ctrl/ctrl_scf_lcao.cpp
       module_ctrl/ctrl_runner_lcao.cpp
       module_ctrl/ctrl_iter_lcao.cpp
@@ -142,6 +142,6 @@ endif()
 
 if(ENABLE_RAPIDJSON)
   if(ENABLE_MPI)
-    add_subdirectory(json_output)
+    add_subdirectory(module_json)
   endif()
 endif()

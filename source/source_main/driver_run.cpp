@@ -3,7 +3,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_relax/relax_driver.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/para_json.h"
+#include "source_io/module_json/para_json.h"
 #include "source_io/module_output/print_info.h"
 #include "source_md/run_md.h"
 #include "source_base/global_variable.h"

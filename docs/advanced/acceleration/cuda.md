@@ -37,7 +37,8 @@ The ABACUS program will automatically determine whether the current ELPA support
 
 In `INPUT` file we need to set the input parameter [device](../input_files/input-main.md#device) to `gpu`. If this parameter is not set, ABACUS will try to determine if there are available GPUs.
 - Set `ks_solver`: For the PW basis, CG, BPCG and Davidson methods are supported on GPU; set the input parameter [ks_solver](../input_files/input-main.md#ks_solver) to `cg`, `bpcg` or `dav`. For the LCAO basis, `cusolver`, `cusolvermp` and `elpa` is supported on GPU.
-- **multi-card**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU. 
+- **single-card**: ABACUS allows for single-GPU acceleration. You can run ABACUS without any MPI process by command `abacus`, and `ks_solver cusolver` is recommended for the LCAO basis. *note: avoid using `mpirun -n 1 abacus`*.
+- **multi-cards**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU. *note: the number of MPI processes SHOULD be equal to the number of GPU cards, unless you are using MPS in your computer.*
 
 ## Examples
 We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.

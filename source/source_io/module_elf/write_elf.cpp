@@ -1,5 +1,5 @@
 #include "write_elf.h"
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 
 namespace ModuleIO
 {

@@ -1,4 +1,4 @@
-#include "../binstream.h"
+#include "source_io/module_output/binstream.h"
 #include "source_base/global_function.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_variable.h"

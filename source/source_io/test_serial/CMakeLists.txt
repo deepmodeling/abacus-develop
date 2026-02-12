@@ -47,13 +47,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_rho_io
   LIBS parameter ${math_libs} base device cell_info 
-  SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../module_output/output.cpp
+  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp ../module_output/write_cube.cpp ../module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_write_bands
   LIBS parameter ${math_libs} base device
-  SOURCES write_bands_test.cpp ../write_bands.cpp
+  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
 )
 
 AddTest(

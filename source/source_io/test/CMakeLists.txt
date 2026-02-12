@@ -20,7 +20,7 @@ add_test(NAME MODULE_IO_input_test_para_4
 AddTest(
   TARGET MODULE_IO_read_exit_file_test
   LIBS parameter  ${math_libs} base device
-  SOURCES read_exit_file_test.cpp ../read_exit_file.cpp
+  SOURCES read_exit_file_test.cpp ../module_output/read_exit_file.cpp
 )
 
 add_test(NAME MODULE_IO_read_exit_file_test_para_4
@@ -36,14 +36,14 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_binstream_test
-  SOURCES binstream_test.cpp ../binstream.cpp
+  SOURCES binstream_test.cpp ../module_output/binstream.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES write_eig_occ_test.cpp ../write_eig_occ.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
-		../cif_io.cpp
+  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
+		../module_output/cif_io.cpp
 )
 
 AddTest(
@@ -55,7 +55,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
 )
 
 AddTest(
@@ -67,8 +67,8 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_single_R_test
   LIBS parameter  ${math_libs}
-  SOURCES single_R_io_test.cpp ../single_R_io.cpp
-  	../../source_base/global_variable.cpp
+  SOURCES single_R_io_test.cpp ../module_hs/single_R_io.cpp
+	../../source_base/global_variable.cpp
 	../../source_base/parallel_reduce.cpp
 	../../source_base/parallel_common.cpp
 	../../source_base/parallel_global.cpp
@@ -79,7 +79,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  ${math_libs} base psi device
-  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../binstream.cpp
+  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../module_output/binstream.cpp
 )
 
 install(FILES write_wfc_nao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -92,7 +92,7 @@ add_test(NAME MODULE_IO_write_wfc_nao_para
 AddTest(
   TARGET MODULE_IO_write_orb_info
   LIBS parameter  ${math_libs} base device cell_info
-  SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../module_output/output.cpp
+  SOURCES write_orb_info_test.cpp ../module_output/write_orb_info.cpp ../module_output/output.cpp
 )
 
 AddTest(
@@ -116,25 +116,25 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_sparse_matrix_test
   LIBS parameter  base ${math_libs} device
-  SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
+  SOURCES sparse_matrix_test.cpp ../module_output/sparse_matrix.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_file_reader_test
   LIBS parameter  base ${math_libs} device
-  SOURCES file_reader_test.cpp ../file_reader.cpp
+  SOURCES file_reader_test.cpp ../module_output/file_reader.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_csr_reader_test
   LIBS parameter  base ${math_libs} device
-  SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
+  SOURCES csr_reader_test.cpp ../module_output/csr_reader.cpp ../module_output/file_reader.cpp ../module_output/sparse_matrix.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_read_rhog_test
   LIBS parameter  ${math_libs} base device planewave
-  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if(ENABLE_LCAO)
@@ -150,14 +150,14 @@ AddTest(
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
   ../../source_lcao/center2_orb.cpp
-  ../orb_io.cpp
+  ../module_output/orb_io.cpp
 )
 endif()
 
 AddTest(
   TARGET MODULE_IO_read_wfc_pw_test
   LIBS parameter  base ${math_libs} device planewave
-  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
@@ -168,7 +168,7 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base ${math_libs} device planewave psi
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
+  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
@@ -183,7 +183,7 @@ AddTest(
   SOURCES numerical_basis_test.cpp
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2_orb.cpp
-          ../orb_io.cpp
+          ../module_output/orb_io.cpp
 )
 
 
@@ -193,7 +193,7 @@ AddTest(
   SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../module_mulliken/output_mulliken.cpp
   ../../source_cell/cell_index.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
-  ../orb_io.cpp
+  ../module_output/orb_io.cpp
 )
 
 #if(ENABLE_LCAO)
@@ -213,7 +213,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_cif_io_test
   LIBS parameter base ${math_libs} device
-  SOURCES cif_io_test.cpp ../cif_io.cpp
+  SOURCES cif_io_test.cpp ../module_output/cif_io.cpp
 )
 
 add_test(NAME MODULE_IO_cif_io_test_parallel
@@ -224,7 +224,7 @@ add_test(NAME MODULE_IO_cif_io_test_parallel
 AddTest(
   TARGET MODULE_IO_orb_io_test
   LIBS parameter base ${math_libs} device
-  SOURCES orb_io_test.cpp ../orb_io.cpp
+  SOURCES orb_io_test.cpp ../module_output/orb_io.cpp
 )
 
 add_test(NAME MODULE_IO_orb_io_test_parallel
@@ -262,7 +262,7 @@ AddTest(
   LIBS parameter base ${math_libs} device neighbor
   SOURCES
   cal_pLpR_test.cpp
-  ../cal_pLpR.cpp
+  ../module_hs/cal_pLpR.cpp
   ../../source_basis/module_ao/ORB_atomic_lm.cpp
   ../../source_basis/module_ao/ORB_atomic.cpp
   ../../source_basis/module_nao/radial_set.cpp

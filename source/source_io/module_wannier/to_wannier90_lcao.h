@@ -23,7 +23,7 @@
 #include "source_lcao/center2_orb.h"
 #include "source_lcao/wavefunc_in_pw.h"
 #include "source_psi/psi.h"
-#include "../single_R_io.h"
+#include "../module_hs/single_R_io.h"
 #include "to_wannier90.h"
 
 #include <algorithm>
@@ -35,7 +35,7 @@
 #include <vector>
 
 #ifdef __LCAO
-#include "../fR_overlap.h"
+#include "fR_overlap.h"
 #include "source_base/abfs-vector3_order.h"
 #include "source_base/math_lebedev_laikov.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
