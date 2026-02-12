@@ -30,13 +30,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ccache
 
-      - name: Build
+      - name: Configure, Build & Soft link
         run: |
           nvidia-smi
           rm -rf build
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
+          ln -s build/abacus_2g /usr/local/bin/abacus
 
       - name: Test 11_PW_GPU
         run: |
