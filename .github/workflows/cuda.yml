@@ -38,6 +38,7 @@ jobs:
           cmake --build build -j4
           cmake --install build
           ln -s build/abacus_2g /usr/local/bin/abacus
+          echo "soft link created: abacus -> build/abacus_2g"
 
       - name: Test 11_PW_GPU
         run: |
