@@ -20,7 +20,7 @@
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_io/module_output/output_log.h"
-#include "source_io/cif_io.h"
+#include "source_io/module_output/cif_io.h"
 
 #include <numeric>
 #include <unordered_map>

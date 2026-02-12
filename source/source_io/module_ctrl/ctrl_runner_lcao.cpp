@@ -3,9 +3,9 @@
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 
-#include "../write_proj_band_lcao.h" // projcted band structure
+#include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
-#include "../write_eband_terms.hpp"
+#include "../module_energy/write_eband_terms.hpp"
 #include "../module_hs/write_vxc.hpp"
 #include "../module_hs/write_vxc_r.hpp"
 

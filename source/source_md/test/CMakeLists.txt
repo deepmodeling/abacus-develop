@@ -48,7 +48,7 @@ list(APPEND depend_files
   ../../source_io/module_output/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
-  ../../source_io/cif_io.cpp
+  ../../source_io/module_output/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp

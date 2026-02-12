@@ -4,7 +4,7 @@
 #include "mpi.h"
 #endif
 
-#include "../binstream.h"
+#include "source_io/module_output/binstream.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_base/tool_title.h"

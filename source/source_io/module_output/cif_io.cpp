@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include "source_base/formatter.h"
-#include "source_io/cif_io.h"
+#include "cif_io.h"
 #include <regex>
 #include <cassert>
 #include "source_base/tool_quit.h"

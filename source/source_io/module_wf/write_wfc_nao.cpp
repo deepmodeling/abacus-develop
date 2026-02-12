@@ -8,7 +8,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"
-#include "../binstream.h"
+#include "source_io/module_output/binstream.h"
 #include "source_io/module_output/filename.h"
 
 namespace ModuleIO

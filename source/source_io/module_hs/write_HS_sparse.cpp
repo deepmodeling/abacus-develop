@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_rt/td_info.h"
-#include "../single_R_io.h"
+#include "single_R_io.h"
 
 void ModuleIO::save_HSR_sparse(const int& istep,
                                const Parallel_Orbitals& pv,

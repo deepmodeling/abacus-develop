@@ -1,7 +1,7 @@
 #include "cal_ldos.h"
 
 #include "cal_dos.h"
-#include "../cube_io.h"
+#include "../module_output/cube_io.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_gint/gint_interface.h"
 

@@ -1,7 +1,7 @@
 #include "to_wannier90_lcao.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "../fR_overlap.h"
+#include "fR_overlap.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"

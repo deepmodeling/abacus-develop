@@ -5,6 +5,7 @@
 // new
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"
+#include "source_base/truncated_func.h"
 #include "source_base/math_integral.h"
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
@@ -537,8 +538,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ewald", "Can't find optimal alpha.");
         }
-        upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
-                     * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
+        upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)* ModuleBase::truncated_erfc(sqrt( ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
     const int ig0 = rho_basis->ig_gge0;
 #pragma omp parallel for
@@ -548,7 +548,8 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             continue; // skip G=0
         }
-        aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
+        aux[ig] *= ModuleBase::truncated_exp
+                (-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
                 / (rho_basis->gg[ig] * ucell.tpiba2);
     }
 
