@@ -805,6 +805,9 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# Create a symbolic link 'abacus' pointing to the actual executable
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()
