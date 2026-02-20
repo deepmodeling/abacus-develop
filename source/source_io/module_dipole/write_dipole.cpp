@@ -1,6 +1,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_io/dipole_io.h"
+#include "source_io/module_dipole/dipole_io.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 
 // fuxiang add 2017-03-15

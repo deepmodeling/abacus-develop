@@ -1,7 +1,7 @@
 #include "init_info.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "../para_json.h"
+#include "para_json.h"
 #include "abacusjson.h"
 
 // Add json objects to init

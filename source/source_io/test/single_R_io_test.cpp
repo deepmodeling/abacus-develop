@@ -3,7 +3,7 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/single_R_io.h"
+#include "source_io/module_hs/single_R_io.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 /************************************************

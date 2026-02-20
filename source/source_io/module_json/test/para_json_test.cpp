@@ -1,12 +1,13 @@
 #include "gtest/gtest.h"
+
 #define private public
 #define __RAPIDJSON 1
-#include "../abacusjson.h"
-#include "../general_info.h"
-#include "../init_info.h"
-#include "../readin_info.h"
+#include "source_io/module_json/abacusjson.h"
+#include "source_io/module_json/general_info.h"
+#include "source_io/module_json/init_info.h"
+#include "source_io/module_json/readin_info.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/para_json.h"
+#include "source_io/module_json/para_json.h"
 #include "source_main/version.h"
 #undef private
 /************************************************
