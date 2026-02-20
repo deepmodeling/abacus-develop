@@ -70,21 +70,27 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " Ionic Step " << istep+1 << std::endl;
-    os << " Mulliken Analysis for Each Atom" << std::endl;
-    os << " Total Charge\t" << tot_chg[0] << std::endl;
+    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
-    FmtCore fmt_of_chg("%20.4f");
-    FmtCore fmt_of_label("%-20s");
-    FmtCore fmt_of_Z("%10d");
-    os << " Decomposed Mulliken Populations" << std::endl;
+    FmtCore fmt_of_chg("%10.4f");
+    FmtCore fmt_of_label("%6s");
+    FmtCore fmt_of_Z("%2d");
+    FmtCore fmt_of_sum("%8s");
+    os << " Decomposed Mulliken population analysis for each atom" << std::endl;
+    os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
+    os << std::endl;
+
     for (int iat = 0; iat < this->cell_index_->get_nat(); ++iat)
     {
         /// header of the table
         std::string atom_label = this->cell_index_->get_atom_label(iat);
-        os << " Atom " << FmtCore::format("%-20d", (iat+1)) 
-	   << FmtCore::format("%10s", std::string("Zeta of ") + atom_label)
-           << FmtCore::format("%20s", std::string("Spin 1")) << std::endl;
+	os << " ------------------" << std::endl;
+	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
+	os << " ------------------" << std::endl;
+        os << FmtCore::format("%8s", std::string("zeta"))
+           << FmtCore::format("%10s", std::string("spin1")) << std::endl;
+
         /// loop of L
         for (int L = 0; L <= this->cell_index_->get_maxL(iat); L++)
         {
@@ -93,8 +99,8 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
             {
                 for (int M = 0; M < (2 * L + 1); M++)
                 {
-                    os << "      " 
-		       << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) << fmt_of_Z.format(Z)
+                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) 
+		       << fmt_of_Z.format(Z+1)
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 0, L, Z, M}]) << std::endl;
                 }
                 // sum over m
@@ -109,27 +115,20 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
                 }
                 if (L > 0)
                 {
-                    os << "      " 
-			<< fmt_of_label.format(std::string("SUM OVER M")) 
-			<< std::setw(10) << ""
-			<< fmt_of_chg.format(sum_over_m[0]) << std::endl;
+                    os << fmt_of_sum.format(std::string(" sum m"))
+                       << fmt_of_chg.format(sum_over_m[0]) << std::endl;
                 }
             }
-            os << "      " 
-	       << fmt_of_label.format(std::string("SUM OVER M+Zeta")) 
-	       << std::setw(10) << ""
+            os << fmt_of_sum.format(std::string(" sum mz"))
                << fmt_of_chg.format(sum_over_m_and_z[0]) << std::endl;
             os << std::endl;
         }
-        os << "      " 
-	   << fmt_of_label.format(std::string("SUM OVER M+Zeta+L")) 
-	   << std::setw(10) << ""
+        os << fmt_of_sum.format(std::string(" sum lmz"))
            << fmt_of_chg.format(atom_chg[iat][0]) << std::endl;
         os << std::endl;
-        os << std::left << std::setw(30) << " Total Charge on atom " 
-	   << std::right << std::setw(6) << atom_label
+        os << std::left << " total charge    on atom " << iat+1 << " "
            << fmt_of_chg.format(atom_chg[iat][0]) << std::endl;
-        os << std::endl << std::endl;
+        os << std::endl;
     }
 }
 
