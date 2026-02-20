@@ -70,7 +70,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << " STEP " << istep+1 << std::endl;
+    os << " Ionic Step " << istep+1 << std::endl;
     os << " Mulliken Analysis for Each Atom" << std::endl;
     os << " Total Charge\t" << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
