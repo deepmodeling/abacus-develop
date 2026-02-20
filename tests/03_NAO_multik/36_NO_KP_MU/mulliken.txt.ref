@@ -1,36 +1,41 @@
-STEP: 0
-CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM
- Total charge:	2
-Decomposed Mulliken populations
-0                              Zeta of H              Spin 1
-s                                      0              0.9980
-s                                      1             -0.0051
-SUM OVER M+Zeta                                       0.9929
+ --- Ionic Step 1 ---
+ Total charge 2
+ Decomposed Mulliken population analysis for each atom
+ l and m from Ylm, z stands for zeta orbital
 
-pz                                     0              0.0071
-px                                     0              0.0000
-py                                     0              0.0000
-SUM OVER M                                            0.0071
-SUM OVER M+Zeta                                       0.0071
+ ------------------
+ Atom 1 is H
+ ------------------
+          zeta     spin1
+           s 1    0.9980
+           s 2   -0.0051
+        sum mz    0.9929
 
-SUM OVER M+Zeta+L                                     1.0000
+          pz 1    0.0071
+          px 1    0.0000
+          py 1    0.0000
+         sum m    0.0071
+        sum mz    0.0071
 
-Total Charge on atom:                  H              1.0000
+       sum lmz    1.0000
 
+ total charge    on atom 1     1.0000
 
-1                              Zeta of H              Spin 1
-s                                      0              0.9980
-s                                      1             -0.0051
-SUM OVER M+Zeta                                       0.9929
+ ------------------
+ Atom 2 is H
+ ------------------
+          zeta     spin1
+           s 1    0.9980
+           s 2   -0.0051
+        sum mz    0.9929
 
-pz                                     0              0.0071
-px                                     0              0.0000
-py                                     0              0.0000
-SUM OVER M                                            0.0071
-SUM OVER M+Zeta                                       0.0071
+          pz 1    0.0071
+          px 1    0.0000
+          py 1    0.0000
+         sum m    0.0071
+        sum mz    0.0071
 
-SUM OVER M+Zeta+L                                     1.0000
+       sum lmz    1.0000
 
-Total Charge on atom:                  H              1.0000
-
+ total charge    on atom 2     1.0000
 

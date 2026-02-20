@@ -74,9 +74,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
-    FmtCore fmt_of_label("%6s");
+    FmtCore fmt_of_label("%12s");
     FmtCore fmt_of_Z("%2d");
-    FmtCore fmt_of_sum("%8s");
+    FmtCore fmt_of_sum("%14s");
     os << " Decomposed Mulliken population analysis for each atom" << std::endl;
     os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
     os << std::endl;
@@ -88,7 +88,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 	os << " ------------------" << std::endl;
 	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
 	os << " ------------------" << std::endl;
-        os << FmtCore::format("%8s", std::string("zeta"))
+        os << FmtCore::format("%14s", std::string("zeta"))
            << FmtCore::format("%10s", std::string("spin1")) << std::endl;
 
         /// loop of L
@@ -147,9 +147,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
     os << " Total charge of spin2 " << tot_chg[1] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
-    FmtCore fmt_of_label("%6s");
+    FmtCore fmt_of_label("%12s");
     FmtCore fmt_of_Z("%2d");
-    FmtCore fmt_of_sum("%8s");
+    FmtCore fmt_of_sum("%14s");
     os << " Decomposed Mulliken population analysis for each atom" << std::endl;
     os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
     os << std::endl;
@@ -161,7 +161,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 	os << " ------------------" << std::endl;
 	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
 	os << " ------------------" << std::endl;
-        os << FmtCore::format("%8s", std::string("zeta"))
+        os << FmtCore::format("%14s", std::string("zeta"))
            << FmtCore::format("%10s", std::string("spin1")) 
 	   << FmtCore::format("%10s", std::string("spin2"))
            << FmtCore::format("%10s", std::string("sum")) 
@@ -238,9 +238,9 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
     os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
     FmtCore fmt_of_chg("%10.4f");
-    FmtCore fmt_of_label("%6s");
+    FmtCore fmt_of_label("%12s");
     FmtCore fmt_of_Z("%2d");
-    FmtCore fmt_of_sum("%8s");
+    FmtCore fmt_of_sum("%14s");
     os << " Decomposed Mulliken population analysis for each atom" << std::endl;
     os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
     os << std::endl;
@@ -252,7 +252,7 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 	os << " ------------------" << std::endl;
 	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
 	os << " ------------------" << std::endl;
-        os << FmtCore::format("%8s", std::string("zeta"))
+        os << FmtCore::format("%14s", std::string("zeta"))
            << FmtCore::format("%10s", std::string("spin1")) 
            << FmtCore::format("%10s", std::string("spin2"))
            << FmtCore::format("%10s", std::string("spin3")) 
