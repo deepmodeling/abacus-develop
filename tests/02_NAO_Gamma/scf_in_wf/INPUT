@@ -17,6 +17,6 @@ basis_type		lcao
 scf_thr			1e-10
 
 calculation     scf
-gamma_only		1
+gamma_only	1
 read_file_dir 	.
-init_wfc		file
+init_wfc        file
