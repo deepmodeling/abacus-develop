@@ -281,7 +281,6 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 		ofs << " " << nspin << " # number of spin directions" << std::endl;
                 ofs << " " << ispin << " # this spin index" << std::endl; 
                 ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
-		ofs << " " << nlocal << " # number of localized basis " << std::endl;
 		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
 		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
                 ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
@@ -289,6 +288,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
 			<< " # k point coordinate (direct) " << std::endl;
 		ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+		ofs << " " << nlocal << " # number of localized basis " << std::endl;
+		ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl; 
 
                 ofs << std::fixed;
                 ofs << std::scientific;
