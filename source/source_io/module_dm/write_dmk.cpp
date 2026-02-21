@@ -4,6 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_output/ucell_io.h"
 
 /*
 The format of the DMK file is as follows:
@@ -272,18 +273,22 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                     //std::cout << " Write the density matrix to file " << fn << std::endl;
                 }
 
+		// write ucell
+		ModuleIO::UcellIO::write_ucell(ofs, ucell);
+
 		// information about density matrix at this k-point
-                ofs << ispin << " # spin index" << std::endl; 
-		ofs << nspin << " # number of spin directions" << std::endl;
-                ofs << efs[ispin] << " # Fermi energy in Ry " << std::endl;
-		ofs << nlocal << " # number of localized basis " << std::endl;
-		ofs << kv.get_nkstot_full() << " # total k points " << std::endl;
-		ofs << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
-                ofs << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
+		ofs << std::endl;
+		ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " " << ispin << " # this spin index" << std::endl; 
+                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+		ofs << " " << nlocal << " # number of localized basis " << std::endl;
+		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
+		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
 			<< " # k point coordinate (Cartesian) " << std::endl;
-                ofs << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
 			<< " # k point coordinate (direct) " << std::endl;
-		ofs << kv.wk[ik] << " # weights of this k point" << std::endl;
+		ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
 
                 ofs << std::fixed;
                 ofs << std::scientific;
