@@ -260,8 +260,12 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
             if (my_rank == 0)
             {
-                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+                std::string fn = PARAM.globalv.global_out_dir 
+			+ dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+
                 std::ofstream ofs(fn.c_str());
+
+                ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
 
                 if (!ofs)
                 {
@@ -273,23 +277,25 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                     //std::cout << " Write the density matrix to file " << fn << std::endl;
                 }
 
-		// write ucell
-		ModuleIO::UcellIO::write_ucell(ofs, ucell);
 
 		// information about density matrix at this k-point
-		ofs << std::endl;
 		ofs << " " << nspin << " # number of spin directions" << std::endl;
-                ofs << " " << ispin << " # this spin index" << std::endl; 
-                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+                ofs << " " << ispin+1 << " # spin index" << std::endl; 
 		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
 		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+		ofs << " " << ik+1 << " # k-point index " << std::endl;
                 ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
 			<< " # k point coordinate (Cartesian) " << std::endl;
                 ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
 			<< " # k point coordinate (direct) " << std::endl;
 		ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
 		ofs << " " << nlocal << " # number of localized basis " << std::endl;
 		ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl; 
+		ofs << std::endl;
+
+		// write ucell
+		ModuleIO::UcellIO::write_ucell(ofs, ucell);
 
                 ofs << std::fixed;
                 ofs << std::scientific;
