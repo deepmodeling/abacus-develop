@@ -8,5 +8,5 @@ cal_force           1
 stru_file           STRU
 basis_type          lcao
 dft_functional      pbe
-ecutwfc			    10
+ecutwfc             10
 scf_nmax            10
