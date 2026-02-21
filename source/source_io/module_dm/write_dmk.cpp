@@ -6,30 +6,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/ucell_io.h"
 
-/*
-The format of the DMK file is as follows:
-'''
-<ispin>
-<Efermi> (fermi energy)
-<nlocal> <nlocal>
-
-<dmk data>
-...
-'''
-
-
-Example:
-'''
-1
--0.0883978533958687 (fermi energy)
-10 10
-
-5.773e-01 3.902e-02 1.661e-02 4.797e-17 -2.255e-17 5.773e-01 3.902e-02
--1.661e-02 -1.461e-17 -4.414e-17
-...
-'''
-*/
-
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
     // set istep = -1 if you don't want the 'g' index appears in the file name

@@ -128,7 +128,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         const int precision = inp.out_dmr[1];
 
-        ModuleIO::write_dmr(dm->get_DMR_vector(), precision, pv, out_app_flag, 
+        ModuleIO::write_dmr(dm->get_DMR_vector(), &ucell, precision, pv, out_app_flag, 
 			ucell.get_iat2iwt(), ucell.nat, istep);
     }
 
