@@ -1,4 +1,4 @@
-scf_out_dmr_dmk
+scf_out_dmr_dmk_pot
 02_NO_KP_15
 03_NO_KP_15_kpar
 04_NO_KP_GTH

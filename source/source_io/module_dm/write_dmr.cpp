@@ -41,17 +41,17 @@ void write_dmr_csr(std::string& fname,
 {
     // write the head: ION step number, basis number and R loop number
 
-	std::ofstream ofs;
+    std::ofstream ofs;
 
     // mohan update 2025-05-26
-	if(istep<=0)
-	{
-		ofs.open(fname);
-	}
-	else if(istep>0)
-	{
-		ofs.open(fname, std::ios::app);
-	}
+    if(istep<=0)
+    {
+        ofs.open(fname);
+    }
+    else if(istep>0)
+    {
+        ofs.open(fname, std::ios::app);
+    }
 
     ofs << "IONIC_STEP: " << istep+1 << std::endl;
     ofs << "Matrix Dimension of DM(R): " << dm_serial->get_nbasis() << std::endl;
@@ -75,29 +75,29 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
     const int nspin = dmr.size();
     assert(nspin > 0);
     for (int ispin = 0; ispin < nspin; ispin++)
-	{
-		const int nbasis = dmr[ispin]->get_nbasis();
+    {
+        const int nbasis = dmr[ispin]->get_nbasis();
 
-		// gather the parallel matrix to serial matrix
+        // gather the parallel matrix to serial matrix
 #ifdef __MPI
-		Parallel_Orbitals serialV;
-		serialV.init(nbasis, nbasis, nbasis, paraV.comm());
-		serialV.set_serial(nbasis, nbasis);
-		serialV.set_atomic_trace(iat2iwt, nat, nbasis);
-		hamilt::HContainer<double> dm_serial(&serialV);
-		hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
+        Parallel_Orbitals serialV;
+        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+        serialV.set_serial(nbasis, nbasis);
+        serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+        hamilt::HContainer<double> dm_serial(&serialV);
+        hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
 #else
-		hamilt::HContainer<double> dm_serial(*dmr[ispin]);
+        hamilt::HContainer<double> dm_serial(*dmr[ispin]);
 #endif
-		if (GlobalV::MY_RANK == 0)
-		{
+        if (GlobalV::MY_RANK == 0)
+        {
             // out_type = 1, csr format;
             // out_type = 2, npz format (currently not support)
             const int out_type = 1;
-			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
-			write_dmr_csr(fname, &dm_serial, precision, istep);
-		}
-	}
+            std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
+            write_dmr_csr(fname, &dm_serial, precision, istep);
+        }
+    }
 }
 
 } // namespace ModuleIO
