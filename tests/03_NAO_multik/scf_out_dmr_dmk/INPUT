@@ -26,4 +26,5 @@ mixing_beta		0.7
 mixing_gg0      0.0
 
 out_pot 2
-out_dmr 1
+out_dmr 1 5
+out_dmk 1 3

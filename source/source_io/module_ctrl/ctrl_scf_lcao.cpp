@@ -143,7 +143,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_DMK_vector(), precision, efermis, &(ucell), pv, istep);
+        ModuleIO::write_dmk(dm->get_DMK_vector(), kv, precision, efermis, &(ucell), pv, istep);
     }
 
     //------------------------------------------------------------------
