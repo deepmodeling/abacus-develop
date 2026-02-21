@@ -6,6 +6,45 @@ namespace ModuleIO
 {
 void ReadInput::item_postprocess()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
+    {
+        Input_Item item("dos_edelta_ev");
+        item.annotation = "delta energy for dos";
+        item.category = "Density of states";
+        item.type = "Real";
+        item.description = "The step size in writing Density of States (DOS)";
+        item.default_value = "0.01";
+        item.unit = "eV";
+        item.availability = "";
+        read_sync_double(input.dos_edelta_ev);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dos_sigma");
+        item.annotation = "gauss b coefficeinet(default=0.07)";
+        item.category = "Density of states";
+        item.type = "Real";
+        item.description = "The width of the Gaussian factor when obtaining smeared Density of States (DOS)";
+        item.default_value = "0.07";
+        item.unit = "eV";
+        item.availability = "";
+        read_sync_double(input.dos_sigma);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dos_scale");
+        item.annotation = "scale dos range by";
+        item.category = "Density of states";
+        item.type = "Real";
+        item.description = "Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.";
+        item.default_value = "0.01";
+        item.unit = "eV";
+        item.availability = "";
+        read_sync_double(input.dos_scale);
+        this->add_item(item);
+    }
     // DOS
     {
         Input_Item item("dos_emin_ev");
@@ -41,42 +80,6 @@ void ReadInput::item_postprocess()
         };
         sync_double(input.dos_emax_ev);
         add_bool_bcast(sys.dos_setemax);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dos_edelta_ev");
-        item.annotation = "delta energy for dos";
-        item.category = "Density of states";
-        item.type = "Real";
-        item.description = "The step size in writing Density of States (DOS)";
-        item.default_value = "0.01";
-        item.unit = "eV";
-        item.availability = "";
-        read_sync_double(input.dos_edelta_ev);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dos_scale");
-        item.annotation = "scale dos range by";
-        item.category = "Density of states";
-        item.type = "Real";
-        item.description = "Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.";
-        item.default_value = "0.01";
-        item.unit = "eV";
-        item.availability = "";
-        read_sync_double(input.dos_scale);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dos_sigma");
-        item.annotation = "gauss b coefficeinet(default=0.07)";
-        item.category = "Density of states";
-        item.type = "Real";
-        item.description = "The width of the Gaussian factor when obtaining smeared Density of States (DOS)";
-        item.default_value = "0.07";
-        item.unit = "eV";
-        item.availability = "";
-        read_sync_double(input.dos_sigma);
         this->add_item(item);
     }
     {
@@ -372,20 +375,6 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
-        Input_Item item("wannier_spin");
-        item.annotation = "calculate spin in wannier90 code interface";
-        item.category = "Berry phase and wannier90 interface";
-        item.type = "String";
-        item.description = R"(The spin direction for the Wannier function calculation when nspin is set to 2
-* up: Calculate spin up for the Wannier function.
-* down: Calculate spin down for the Wannier function.)";
-        item.default_value = "up";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.wannier_spin);
-        this->add_item(item);
-    }
-    {
         Input_Item item("wannier_method");
         item.annotation = "different implementation methods under Lcao basis set";
         item.category = "Berry phase and wannier90 interface";
@@ -420,6 +409,20 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
+        Input_Item item("wannier_spin");
+        item.annotation = "calculate spin in wannier90 code interface";
+        item.category = "Berry phase and wannier90 interface";
+        item.type = "String";
+        item.description = R"(The spin direction for the Wannier function calculation when nspin is set to 2
+* up: Calculate spin up for the Wannier function.
+* down: Calculate spin down for the Wannier function.)";
+        item.default_value = "up";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.wannier_spin);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_wannier_mmn");
         item.annotation = "output .mmn file or not";
         item.category = "Berry phase and wannier90 interface";
@@ -448,20 +451,6 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
-        Input_Item item("out_wannier_unk");
-        item.annotation = "output UNK. file or not";
-        item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
-        item.description = R"(Write the "UNK.*" file or not.
-* 0: don't write the "UNK.*" file.
-* 1: write the "UNK.*" file.)";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_wannier_unk);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_wannier_eig");
         item.annotation = "output .eig file or not";
         item.category = "Berry phase and wannier90 interface";
@@ -473,6 +462,20 @@ void ReadInput::item_postprocess()
         item.unit = "";
         item.availability = "";
         read_sync_bool(input.out_wannier_eig);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wannier_unk");
+        item.annotation = "output UNK. file or not";
+        item.category = "Berry phase and wannier90 interface";
+        item.type = "Bool";
+        item.description = R"(Write the "UNK.*" file or not.
+* 0: don't write the "UNK.*" file.
+* 1: write the "UNK.*" file.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_wannier_unk);
         this->add_item(item);
     }
     {

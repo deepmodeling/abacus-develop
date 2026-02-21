@@ -47,6 +47,9 @@ namespace ModuleIO
 //  }
 void ReadInput::item_system()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("suffix");
         item.annotation = "the name of main output directory";
@@ -256,30 +259,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("cal_stress");
-        item.annotation = "calculate the stress or not";
-        item.category = "System variables";
-        item.type = "Boolean";
-        item.description = "If set to True, calculate the stress at the end of the electronic iteration.";
-        item.default_value = "False";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "md")
-            {
-                if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp"
-                    || para.input.mdp.md_type == "msst" || para.input.mdp.md_type == "npt")
-                {
-                    para.input.cal_stress = true;
-                }
-            }
-            else if (para.input.calculation == "cell-relax")
-            {
-                para.input.cal_stress = true;
-            }
-        };
-        read_sync_bool(input.cal_stress);
-        this->add_item(item);
-    }
-    {
         Input_Item item("cal_force");
         item.annotation = "if calculate the force at the end of the electronic iteration";
         item.category = "System variables";
@@ -403,6 +382,397 @@ Available options are:
 * triclinic: triclinic)";
         item.default_value = "none";
         read_sync_string(input.latname);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("init_wfc");
+        item.annotation = "start wave functions are from 'atomic', "
+                          "'atomic+random', 'random' or";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(The type of the starting wave functions.
+
+Available options are:
+* atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
+* atomic+random: add small random numbers on atomic pseudo-wavefunctions
+* file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
+* random: random numbers
+* nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
+* nao+random: add small random numbers on numerical atomic orbitals
+
+[NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.)";
+        item.default_value = "atomic";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+            {
+                para.input.init_wfc = "file";
+            }
+            if (para.input.basis_type == "lcao_in_pw")
+            {
+                if (para.input.init_wfc != "nao")
+                {
+                    para.input.init_wfc = "nao";
+                    GlobalV::ofs_warning << "init_wfc is set to nao when "
+                                            "basis_type is lcao_in_pw"
+                                         << std::endl;
+                }
+            }
+        };
+        read_sync_string(input.init_wfc);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("init_chg");
+        item.annotation = "start charge is from 'atomic' or file";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
+
+* atomic: the density is starting from the summation of the atomic density of single atoms.
+* file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
+* wfc: the density will be calculated by wavefunctions and occupations.
+* dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+* hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
+* auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.)";
+        item.default_value = "atomic";
+        read_sync_string(input.init_chg);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+            {
+                para.input.init_chg = "atomic";
+            }
+            if (para.input.calculation == "nscf" || para.input.calculation == "get_s")
+            {
+                if (para.input.init_chg != "file")
+                {
+                    ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
+                }
+                para.input.init_chg = "file";
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "hr"};
+            if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
+            {
+                const std::string warningstr = nofound_str(init_chgs, "init_chg");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("init_vel");
+        item.annotation = "read velocity from STRU or not";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = R"(* True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
+* False: assign value to atom velocity using Gaussian distributed random numbers.)";
+        item.default_value = "False";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "md")
+            {
+                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart)
+                {
+                    para.input.init_vel = true;
+                }
+            }
+        };
+        read_sync_bool(input.init_vel);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("mem_saver");
+        item.annotation = "Only for nscf calculations. if set to 1, then a "
+                          "memory saving technique will be used for "
+                          "many k point calculations.";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = R"(Save memory when performing nscf calculations.
+* 0: no memory saving techniques are used.
+* 1: a memory saving technique will be used for many k point calculations.)";
+        item.default_value = "0";
+        item.availability = "Used only for nscf calculations with plane wave basis set.";
+        read_sync_int(input.mem_saver);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mem_saver == 1)
+            {
+                if (para.input.calculation == "scf" || para.input.calculation == "relax")
+                {
+                    para.input.mem_saver = 0;
+                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cal_stress");
+        item.annotation = "calculate the stress or not";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = "If set to True, calculate the stress at the end of the electronic iteration.";
+        item.default_value = "False";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "md")
+            {
+                if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp"
+                    || para.input.mdp.md_type == "msst" || para.input.mdp.md_type == "npt")
+                {
+                    para.input.cal_stress = true;
+                }
+            }
+            else if (para.input.calculation == "cell-relax")
+            {
+                para.input.cal_stress = true;
+            }
+        };
+        read_sync_bool(input.cal_stress);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("diago_proc");
+        item.annotation = "the number of procs used to do diagonalization";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = R"(* 0: it will be set to the number of MPI processes.
+* >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.)";
+        item.default_value = "0";
+        item.availability = "Used only for plane wave basis set.";
+        read_sync_int(input.diago_proc);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
+            {
+                para.input.diago_proc = GlobalV::NPROC;
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("nbspline");
+        item.annotation = "the order of B-spline basis";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = "If set to a natural number, a Cardinal B-spline interpolation will be used to calculate "
+                          "Structure Factor. nbspline represents the order of B-spline basis and a larger one can get "
+                          "more accurate results but cost more. It is turned off by default.";
+        item.default_value = "-1";
+        read_sync_int(input.nbspline);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("kspacing");
+        item.annotation = "unit in 1/bohr, should be > 0, default is 0 which "
+                          "means read KPT file";
+        item.category = "System variables";
+        item.type = "Real";
+        item.description = "Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, "
+                          "and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. "
+                          "The default value 0.0 means that ABACUS will read the applied KPT file."
+                          "\n\n[NOTE] If gamma_only is set to be true, kspacing is invalid.";
+        item.default_value = "0.0";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            if (count == 1)
+            {
+                para.input.kspacing[0] = para.input.kspacing[1] = para.input.kspacing[2] = doublevalue;
+            }
+            else if (count == 3)
+            {
+                para.input.kspacing[0] = std::stod(item.str_values[0]);
+                para.input.kspacing[1] = std::stod(item.str_values[1]);
+                para.input.kspacing[2] = std::stod(item.str_values[2]);
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
+            }
+        };
+        sync_doublevec(input.kspacing, 3, 0.0);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            int kspacing_zero_num = 0;
+            const std::vector<double>& kspacing = para.input.kspacing;
+            for (int i = 0; i < 3; i++)
+            {
+                if (kspacing[i] < 0.0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
+                }
+                else if (kspacing[i] == 0.0)
+                {
+                    kspacing_zero_num++;
+                }
+            }
+            if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
+            {
+                std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
+                ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("min_dist_coef");
+        item.annotation = "factor related to the allowed minimum distance "
+                          "between two atoms";
+        item.category = "System variables";
+        item.type = "Real";
+        item.description = "A factor related to the allowed minimum distance between two atoms. At the beginning, "
+                          "ABACUS will check the structure, and if the distance of two atoms is shorter than "
+                          "min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.";
+        item.default_value = "0.2";
+        read_sync_double(input.min_dist_coef);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("device");
+        item.annotation = "the computing device for ABACUS";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(Specifies the computing device for ABACUS.
+
+Available options are:
+* cpu: for CPUs via Intel, AMD, or Other supported CPU devices
+* gpu: for GPUs via CUDA or ROCm.
+
+[NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.)";
+        item.default_value = "cpu";
+        read_sync_string(input.device);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            para.input.device=base_device::information::get_device_flag(
+                                para.inp.device, para.inp.basis_type);
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"cpu", "gpu"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "device");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("precision");
+        item.annotation = "the computing precision for ABACUS";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(Specifies the precision when performing scf calculation.
+* single: single precision
+* double: double precision)";
+        item.default_value = "double";
+        item.availability = "Used only for plane wave basis set.";
+        read_sync_string(input.precision);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"single", "double"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "precision");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
+            }
+            // cpu single precision is not supported while float_fftw lib is not available
+            if (para.inp.device == "cpu" && para.inp.precision == "single")
+            {
+#ifndef __ENABLE_FLOAT_FFTW
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("timer_enable_nvtx");
+        item.annotation = "enable NVTX labeling for profiling or not";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = R"(Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+
+* True: Enable NVTX profiling labels in the timer.
+* False: Disable NVTX profiling labels in the timer.)";
+        item.default_value = "False";
+        read_sync_bool(input.timer_enable_nvtx);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("cell_factor");
+        item.annotation = "used in the construction of the pseudopotential tables";
+        item.category = "System variables";
+        item.type = "Real";
+        item.description = "Used in the construction of the pseudopotential tables. "
+                          "For cell-relax calculations, this is automatically set to 2.0.";
+        item.default_value = "1.2";
+        read_sync_double(input.cell_factor);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "cell-relax" && para.input.cell_factor < 2.0)
+            {
+                para.input.cell_factor = 2.0; // follows QE
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dm_to_rho");
+        item.annotation = "reads dmr in npz format and calculates electron density";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = "Reads density matrix in npz format and calculates electron density.";
+        item.default_value = "False";
+        read_sync_bool(input.dm_to_rho);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dm_to_rho && GlobalV::NPROC > 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
+            }
+            if (para.input.dm_to_rho && para.inp.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for gamma_only calculations");
+            }
+            if (para.input.dm_to_rho)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("chg_extrap");
+        item.annotation = "atomic; first-order; second-order; dm:coefficients of SIA";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = "Charge extrapolation method for MD and relaxation calculations.";
+        item.default_value = "default";
+        read_sync_string(input.chg_extrap);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.chg_extrap == "default" && para.input.calculation == "md")
+            {
+                para.input.chg_extrap = "second-order";
+            }
+            else if (para.input.chg_extrap == "default"
+                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax"))
+            {
+                para.input.chg_extrap = "first-order";
+            }
+            else if (para.input.chg_extrap == "default")
+            {
+                para.input.chg_extrap = "atomic";
+            }
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            {
+                para.input.chg_extrap = "atomic";
+            }
+        };
         this->add_item(item);
     }
     {
@@ -641,20 +1011,27 @@ Available options are:
         this->add_item(item);
     }
     {
-        Input_Item item("cell_factor");
-        item.annotation = "used in the construction of the pseudopotential tables";
-        item.category = "System variables";
-        item.type = "Real";
-        item.description = "Used in the construction of the pseudopotential tables. "
-                          "For cell-relax calculations, this is automatically set to 2.0.";
-        item.default_value = "1.2";
-        read_sync_double(input.cell_factor);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "cell-relax" && para.input.cell_factor < 2.0)
-            {
-                para.input.cell_factor = 2.0; // follows QE
-            }
-        };
+        Input_Item item("pw_seed");
+        item.annotation = "random seed for initializing wave functions";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Specify the random seed to initialize wave functions. Only positive integers are available.";
+        item.default_value = "0";
+        item.availability = "Only used for plane wave basis.";
+        read_sync_int(input.pw_seed);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("diag_subspace");
+        item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = R"(The method to diagonalize subspace in dav_subspace method.
+* 0: by LAPACK
+* 1: by GenELPA
+* 2: by ScaLAPACK)";
+        item.default_value = "0";
+        read_sync_int(input.diag_subspace);
         this->add_item(item);
     }
     {
@@ -666,6 +1043,20 @@ Available options are:
         item.default_value = "0.0";
         item.unit = "Ry";
         read_sync_double(input.erf_ecut);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("fft_mode");
+        item.annotation = "mode of FFTW";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = R"(Set the mode of FFTW.
+* 0: FFTW_ESTIMATE
+* 1: FFTW_MEASURE
+* 2: FFTW_PATIENT
+* 3: FFTW_EXHAUSTIVE)";
+        item.default_value = "0";
+        read_sync_int(input.fft_mode);
         this->add_item(item);
     }
     {
@@ -689,197 +1080,6 @@ Available options are:
         item.default_value = "0.1";
         item.unit = "Ry";
         read_sync_double(input.erf_sigma);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("fft_mode");
-        item.annotation = "mode of FFTW";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = R"(Set the mode of FFTW.
-* 0: FFTW_ESTIMATE
-* 1: FFTW_MEASURE
-* 2: FFTW_PATIENT
-* 3: FFTW_EXHAUSTIVE)";
-        item.default_value = "0";
-        read_sync_int(input.fft_mode);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("diag_subspace");
-        item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = R"(The method to diagonalize subspace in dav_subspace method.
-* 0: by LAPACK
-* 1: by GenELPA
-* 2: by ScaLAPACK)";
-        item.default_value = "0";
-        read_sync_int(input.diag_subspace);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("init_wfc");
-        item.annotation = "start wave functions are from 'atomic', "
-                          "'atomic+random', 'random' or";
-        item.category = "System variables";
-        item.type = "String";
-        item.description = R"(The type of the starting wave functions.
-
-Available options are:
-* atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-* atomic+random: add small random numbers on atomic pseudo-wavefunctions
-* file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
-* random: random numbers
-* nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
-* nao+random: add small random numbers on numerical atomic orbitals
-
-[NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.)";
-        item.default_value = "atomic";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
-                para.input.init_wfc = "file";
-            }
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                if (para.input.init_wfc != "nao")
-                {
-                    para.input.init_wfc = "nao";
-                    GlobalV::ofs_warning << "init_wfc is set to nao when "
-                                            "basis_type is lcao_in_pw"
-                                         << std::endl;
-                }
-            }
-        };
-        read_sync_string(input.init_wfc);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("pw_seed");
-        item.annotation = "random seed for initializing wave functions";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = "Specify the random seed to initialize wave functions. Only positive integers are available.";
-        item.default_value = "0";
-        item.availability = "Only used for plane wave basis.";
-        read_sync_int(input.pw_seed);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("init_chg");
-        item.annotation = "start charge is from 'atomic' or file";
-        item.category = "System variables";
-        item.type = "String";
-        item.description = R"(This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
-
-* atomic: the density is starting from the summation of the atomic density of single atoms.
-* file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
-* wfc: the density will be calculated by wavefunctions and occupations.
-* dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
-* hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
-* auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.)";
-        item.default_value = "atomic";
-        read_sync_string(input.init_chg);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
-                para.input.init_chg = "atomic";
-            }
-            if (para.input.calculation == "nscf" || para.input.calculation == "get_s")
-            {
-                if (para.input.init_chg != "file")
-                {
-                    ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
-                }
-                para.input.init_chg = "file";
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "hr"};
-            if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
-            {
-                const std::string warningstr = nofound_str(init_chgs, "init_chg");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dm_to_rho");
-        item.annotation = "reads dmr in npz format and calculates electron density";
-        item.category = "System variables";
-        item.type = "Boolean";
-        item.description = "Reads density matrix in npz format and calculates electron density.";
-        item.default_value = "False";
-        read_sync_bool(input.dm_to_rho);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dm_to_rho && GlobalV::NPROC > 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
-            }
-            if (para.input.dm_to_rho && para.inp.gamma_only)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for gamma_only calculations");
-            }
-            if (para.input.dm_to_rho)
-            {
-#ifndef __USECNPY
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "to write in npz format, please "
-                                         "recompile with -DENABLE_CNPY=1");
-#endif
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("chg_extrap");
-        item.annotation = "atomic; first-order; second-order; dm:coefficients of SIA";
-        item.category = "System variables";
-        item.type = "String";
-        item.description = "Charge extrapolation method for MD and relaxation calculations.";
-        item.default_value = "default";
-        read_sync_string(input.chg_extrap);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.chg_extrap == "default" && para.input.calculation == "md")
-            {
-                para.input.chg_extrap = "second-order";
-            }
-            else if (para.input.chg_extrap == "default"
-                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax"))
-            {
-                para.input.chg_extrap = "first-order";
-            }
-            else if (para.input.chg_extrap == "default")
-            {
-                para.input.chg_extrap = "atomic";
-            }
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.chg_extrap = "atomic";
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("init_vel");
-        item.annotation = "read velocity from STRU or not";
-        item.category = "System variables";
-        item.type = "Boolean";
-        item.description = R"(* True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
-* False: assign value to atom velocity using Gaussian distributed random numbers.)";
-        item.default_value = "False";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "md")
-            {
-                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart)
-                {
-                    para.input.init_vel = true;
-                }
-            }
-        };
-        read_sync_bool(input.init_vel);
         this->add_item(item);
     }
     {
@@ -980,203 +1180,6 @@ Available options are:
         item.default_value = "False";
         item.availability = "Used only when numerical atomic orbitals are employed as basis set.";
         read_sync_bool(input.restart_load);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mem_saver");
-        item.annotation = "Only for nscf calculations. if set to 1, then a "
-                          "memory saving technique will be used for "
-                          "many k point calculations.";
-        item.category = "System variables";
-        item.type = "Boolean";
-        item.description = R"(Save memory when performing nscf calculations.
-* 0: no memory saving techniques are used.
-* 1: a memory saving technique will be used for many k point calculations.)";
-        item.default_value = "0";
-        item.availability = "Used only for nscf calculations with plane wave basis set.";
-        read_sync_int(input.mem_saver);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
-            {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("diago_proc");
-        item.annotation = "the number of procs used to do diagonalization";
-        item.category = "System variables";
-        item.type = "Integer";
-        item.description = R"(* 0: it will be set to the number of MPI processes.
-* >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.)";
-        item.default_value = "0";
-        item.availability = "Used only for plane wave basis set.";
-        read_sync_int(input.diago_proc);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
-            {
-                para.input.diago_proc = GlobalV::NPROC;
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("nbspline");
-        item.annotation = "the order of B-spline basis";
-        item.category = "System variables";
-        item.type = "Integer";
-        item.description = "If set to a natural number, a Cardinal B-spline interpolation will be used to calculate "
-                          "Structure Factor. nbspline represents the order of B-spline basis and a larger one can get "
-                          "more accurate results but cost more. It is turned off by default.";
-        item.default_value = "-1";
-        read_sync_int(input.nbspline);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("kspacing");
-        item.annotation = "unit in 1/bohr, should be > 0, default is 0 which "
-                          "means read KPT file";
-        item.category = "System variables";
-        item.type = "Real";
-        item.description = "Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, "
-                          "and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. "
-                          "The default value 0.0 means that ABACUS will read the applied KPT file."
-                          "\n\n[NOTE] If gamma_only is set to be true, kspacing is invalid.";
-        item.default_value = "0.0";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.kspacing[0] = para.input.kspacing[1] = para.input.kspacing[2] = doublevalue;
-            }
-            else if (count == 3)
-            {
-                para.input.kspacing[0] = std::stod(item.str_values[0]);
-                para.input.kspacing[1] = std::stod(item.str_values[1]);
-                para.input.kspacing[2] = std::stod(item.str_values[2]);
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
-            }
-        };
-        sync_doublevec(input.kspacing, 3, 0.0);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            int kspacing_zero_num = 0;
-            const std::vector<double>& kspacing = para.input.kspacing;
-            for (int i = 0; i < 3; i++)
-            {
-                if (kspacing[i] < 0.0)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
-                }
-                else if (kspacing[i] == 0.0)
-                {
-                    kspacing_zero_num++;
-                }
-            }
-            if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
-            {
-                std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
-                ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("min_dist_coef");
-        item.annotation = "factor related to the allowed minimum distance "
-                          "between two atoms";
-        item.category = "System variables";
-        item.type = "Real";
-        item.description = "A factor related to the allowed minimum distance between two atoms. At the beginning, "
-                          "ABACUS will check the structure, and if the distance of two atoms is shorter than "
-                          "min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.";
-        item.default_value = "0.2";
-        read_sync_double(input.min_dist_coef);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("device");
-        item.annotation = "the computing device for ABACUS";
-        item.category = "System variables";
-        item.type = "String";
-        item.description = R"(Specifies the computing device for ABACUS.
-
-Available options are:
-* cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-* gpu: for GPUs via CUDA or ROCm.
-
-[NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.)";
-        item.default_value = "cpu";
-        read_sync_string(input.device);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.device=base_device::information::get_device_flag(
-                                para.inp.device, para.inp.basis_type);
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"cpu", "gpu"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "device");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("precision");
-        item.annotation = "the computing precision for ABACUS";
-        item.category = "System variables";
-        item.type = "String";
-        item.description = R"(Specifies the precision when performing scf calculation.
-* single: single precision
-* double: double precision)";
-        item.default_value = "double";
-        item.availability = "Used only for plane wave basis set.";
-        read_sync_string(input.precision);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
-            }
-            // cpu single precision is not supported while float_fftw lib is not available
-            if (para.inp.device == "cpu" && para.inp.precision == "single")
-            {
-#ifndef __ENABLE_FLOAT_FFTW
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "Single precision with cpu is not supported while float_fftw lib is not available; \
-            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
-#endif
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("timer_enable_nvtx");
-        item.annotation = "enable NVTX labeling for profiling or not";
-        item.category = "System variables";
-        item.type = "Boolean";
-        item.description = R"(Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
-
-* True: Enable NVTX profiling labels in the timer.
-* False: Disable NVTX profiling labels in the timer.)";
-        item.default_value = "False";
-        read_sync_bool(input.timer_enable_nvtx);
         this->add_item(item);
     }
 }

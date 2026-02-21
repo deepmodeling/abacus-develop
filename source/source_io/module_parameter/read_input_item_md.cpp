@@ -6,6 +6,9 @@ namespace ModuleIO
 {
 void ReadInput::item_md()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     // 9. Molecular dynamics
     {
         Input_Item item("md_type");
@@ -24,24 +27,6 @@ void ReadInput::item_md()
         item.unit = "";
         item.availability = "";
         read_sync_string(input.mdp.md_type);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_thermostat");
-        item.annotation = "choose thermostat";
-        item.category = "Molecular dynamics";
-        item.type = "String";
-        item.description = R"(Specify the temperature control method used in NVT ensemble.
-
-* nhc: Nose-Hoover chain, see md_tfreq and md_tchain in detail.
-* anderson: Anderson thermostat, see md_nraise in detail.
-* berendsen: Berendsen thermostat, see md_nraise in detail.
-* rescaling: velocity Rescaling method 1, see md_tolerance in detail.
-* rescale_v: velocity Rescaling method 2, see md_nraise in detail.)";
-        item.default_value = "nhc";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.mdp.md_thermostat);
         this->add_item(item);
     }
     {
@@ -88,15 +73,21 @@ void ReadInput::item_md()
         this->add_item(item);
     }
     {
-        Input_Item item("md_tchain");
-        item.annotation = "number of Nose-Hoover chains";
+        Input_Item item("md_thermostat");
+        item.annotation = "choose thermostat";
         item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
-        item.default_value = "1";
+        item.type = "String";
+        item.description = R"(Specify the temperature control method used in NVT ensemble.
+
+* nhc: Nose-Hoover chain, see md_tfreq and md_tchain in detail.
+* anderson: Anderson thermostat, see md_nraise in detail.
+* berendsen: Berendsen thermostat, see md_nraise in detail.
+* rescaling: velocity Rescaling method 1, see md_tolerance in detail.
+* rescale_v: velocity Rescaling method 2, see md_nraise in detail.)";
+        item.default_value = "nhc";
         item.unit = "";
         item.availability = "";
-        read_sync_int(input.mdp.md_tchain);
+        read_sync_string(input.mdp.md_thermostat);
         this->add_item(item);
     }
     {
@@ -142,44 +133,6 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
-        Input_Item item("md_dumpfreq");
-        item.annotation = "The period to dump MD information";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.mdp.md_dumpfreq);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_restartfreq");
-        item.annotation = "The period to output MD restart information";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.";
-        item.default_value = "5";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.mdp.md_restartfreq);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_seed");
-        item.annotation = "random seed for MD";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = R"(The random seed to initialize random numbers used in molecular dynamics calculations.
-* < 0: No srand() function is called.
-* >= 0: The function srand(md_seed) is called.)";
-        item.default_value = "-1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.mdp.md_seed);
-        this->add_item(item);
-    }
-    {
         Input_Item item("md_prec_level");
         item.annotation = "precision level for vc-md";
         item.category = "Molecular dynamics";
@@ -205,6 +158,140 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
+        Input_Item item("md_restart");
+        item.annotation = "whether restart";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
+* True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+* False: ABACUS will start molecular dynamics calculations normally from the first step.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.mdp.md_restart);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_restartfreq");
+        item.annotation = "The period to output MD restart information";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.";
+        item.default_value = "5";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.mdp.md_restartfreq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_dumpfreq");
+        item.annotation = "The period to dump MD information";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.mdp.md_dumpfreq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dump_force");
+        item.annotation = "output atomic forces into the file MD_dump or not";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to output atomic forces into the file OUT.${suffix}/MD_dump.";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.mdp.dump_force);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dump_vel");
+        item.annotation = "output atomic velocities into the file MD_dump or not";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.mdp.dump_vel);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dump_virial");
+        item.annotation = "output lattice virial into the file MD_dump or not";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to output lattice virials into the file OUT.${suffix}/MD_dump.";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.mdp.dump_virial);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_seed");
+        item.annotation = "random seed for MD";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = R"(The random seed to initialize random numbers used in molecular dynamics calculations.
+* < 0: No srand() function is called.
+* >= 0: The function srand(md_seed) is called.)";
+        item.default_value = "-1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.mdp.md_seed);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_tfreq");
+        item.annotation = "oscillation frequency, used to determine qmass of NHC";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = R"(Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+
+Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to 1/(100*md_dt). An improper choice might lead to the failure of jobs.)";
+        item.default_value = "1/40/md_dt";
+        item.unit = "";
+        item.availability = "";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md")
+            {
+                para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
+            }
+        };
+        read_sync_double(input.mdp.md_tfreq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_tchain");
+        item.annotation = "number of Nose-Hoover chains";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.mdp.md_tchain);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_pmode");
+        item.annotation = "NPT ensemble mode: iso, aniso, tri";
+        item.category = "Molecular dynamics";
+        item.type = "String";
+        item.description = R"(Determine the precision level of variable-cell molecular dynamics calculations.
+* 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+* 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.)";
+        item.default_value = "iso";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.mdp.md_pmode);
+        this->add_item(item);
+    }
+    {
         Input_Item item("ref_cell_factor");
         item.annotation = "construct a reference cell bigger than the initial cell";
         item.category = "Molecular dynamics";
@@ -217,17 +304,88 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
-        Input_Item item("md_restart");
-        item.annotation = "whether restart";
+        Input_Item item("md_pcouple");
+        item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
         item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-* True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
-* False: ABACUS will start molecular dynamics calculations normally from the first step.)";
-        item.default_value = "False";
+        item.type = "String";
+        item.description = R"(The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+* none: Three lattice vectors scale independently.
+* xyz: Lattice vectors x, y, and z scale proportionally.
+* xy: Lattice vectors x and y scale proportionally.
+* xz: Lattice vectors x and z scale proportionally.
+* yz: Lattice vectors y and z scale proportionally.)";
+        item.default_value = "none";
         item.unit = "";
         item.availability = "";
-        read_sync_bool(input.mdp.md_restart);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.mdp.md_pmode == "iso")
+            {
+                para.input.mdp.md_pcouple = "xyz";
+            }
+        };
+        read_sync_string(input.mdp.md_pcouple);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_pfirst");
+        item.annotation = "initial target pressure";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
+        item.default_value = "-1.0";
+        item.unit = "kbar";
+        item.availability = "";
+        read_sync_double(input.mdp.md_pfirst);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_plast");
+        item.annotation = "final target pressure";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
+        item.default_value = "-1.0";
+        item.unit = "kbar";
+        item.availability = "";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (!item.is_read()) { // no md_plast in INPUT
+                para.input.mdp.md_plast = para.input.mdp.md_pfirst;
+}
+        };
+        read_sync_double(input.mdp.md_plast);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_pfreq");
+        item.annotation = "oscillation frequency, used to determine qmass of "
+                          "thermostats coupled with barostat";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = R"(The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+
+Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.)";
+        item.default_value = "1/400/md_dt";
+        item.unit = "";
+        item.availability = "";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md")
+            {
+                para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
+            }
+        };
+        read_sync_double(input.mdp.md_pfreq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_pchain");
+        item.annotation = "num of thermostats coupled with barostat";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.mdp.md_pchain);
         this->add_item(item);
     }
     {
@@ -491,26 +649,6 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
-        Input_Item item("md_tfreq");
-        item.annotation = "oscillation frequency, used to determine qmass of NHC";
-        item.category = "Molecular dynamics";
-        item.type = "Real";
-        item.description = R"(Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-
-Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to 1/(100*md_dt). An improper choice might lead to the failure of jobs.)";
-        item.default_value = "1/40/md_dt";
-        item.unit = "";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md")
-            {
-                para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
-            }
-        };
-        read_sync_double(input.mdp.md_tfreq);
-        this->add_item(item);
-    }
-    {
         Input_Item item("md_damp");
         item.annotation = "damping parameter (time units) used to add force in "
                           "Langevin method";
@@ -521,6 +659,18 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.unit = "fs";
         item.availability = "";
         read_sync_double(input.mdp.md_damp);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_tolerance");
+        item.annotation = "tolerance for velocity rescaling (K)";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = "The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.";
+        item.default_value = "100.0";
+        item.unit = "K";
+        item.availability = "";
+        read_sync_double(input.mdp.md_tolerance);
         this->add_item(item);
     }
     {
@@ -561,153 +711,6 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.unit = "bohr";
         item.availability = "";
         read_sync_double(input.dmax);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_tolerance");
-        item.annotation = "tolerance for velocity rescaling (K)";
-        item.category = "Molecular dynamics";
-        item.type = "Real";
-        item.description = "The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.";
-        item.default_value = "100.0";
-        item.unit = "K";
-        item.availability = "";
-        read_sync_double(input.mdp.md_tolerance);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_pmode");
-        item.annotation = "NPT ensemble mode: iso, aniso, tri";
-        item.category = "Molecular dynamics";
-        item.type = "String";
-        item.description = R"(Determine the precision level of variable-cell molecular dynamics calculations.
-* 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-* 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.)";
-        item.default_value = "iso";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.mdp.md_pmode);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_pcouple");
-        item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
-        item.category = "Molecular dynamics";
-        item.type = "String";
-        item.description = R"(The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-* none: Three lattice vectors scale independently.
-* xyz: Lattice vectors x, y, and z scale proportionally.
-* xy: Lattice vectors x and y scale proportionally.
-* xz: Lattice vectors x and z scale proportionally.
-* yz: Lattice vectors y and z scale proportionally.)";
-        item.default_value = "none";
-        item.unit = "";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.mdp.md_pmode == "iso")
-            {
-                para.input.mdp.md_pcouple = "xyz";
-            }
-        };
-        read_sync_string(input.mdp.md_pcouple);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_pchain");
-        item.annotation = "num of thermostats coupled with barostat";
-        item.category = "Molecular dynamics";
-        item.type = "Integer";
-        item.description = "The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.mdp.md_pchain);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_pfirst");
-        item.annotation = "initial target pressure";
-        item.category = "Molecular dynamics";
-        item.type = "Real";
-        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
-        item.default_value = "-1.0";
-        item.unit = "kbar";
-        item.availability = "";
-        read_sync_double(input.mdp.md_pfirst);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_plast");
-        item.annotation = "final target pressure";
-        item.category = "Molecular dynamics";
-        item.type = "Real";
-        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
-        item.default_value = "-1.0";
-        item.unit = "kbar";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read()) { // no md_plast in INPUT
-                para.input.mdp.md_plast = para.input.mdp.md_pfirst;
-}
-        };
-        read_sync_double(input.mdp.md_plast);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("md_pfreq");
-        item.annotation = "oscillation frequency, used to determine qmass of "
-                          "thermostats coupled with barostat";
-        item.category = "Molecular dynamics";
-        item.type = "Real";
-        item.description = R"(The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
-
-Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.)";
-        item.default_value = "1/400/md_dt";
-        item.unit = "";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md")
-            {
-                para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
-            }
-        };
-        read_sync_double(input.mdp.md_pfreq);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_force");
-        item.annotation = "output atomic forces into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic forces into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.mdp.dump_force);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_vel");
-        item.annotation = "output atomic velocities into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.mdp.dump_vel);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dump_virial");
-        item.annotation = "output lattice virial into the file MD_dump or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output lattice virials into the file OUT.${suffix}/MD_dump.";
-        item.default_value = "True";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.mdp.dump_virial);
         this->add_item(item);
     }
 }

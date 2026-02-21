@@ -7,6 +7,41 @@ namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
+    {
+        Input_Item item("basis_type");
+        item.annotation = "PW; LCAO in pw; LCAO";
+        item.category = "Electronic structure";
+        item.type = "String";
+        item.description = R"(Choose the basis set.
+* pw: Using plane-wave basis set only.
+* lcao: Using localized atomic orbital sets.
+* lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.)";
+        item.default_value = "pw";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.basis_type);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.towannier90)
+            {
+                if (para.input.basis_type == "lcao_in_pw")
+                {
+                    para.input.basis_type = "lcao";
+                }
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
+            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
+            {
+                const std::string warningstr = nofound_str(basis_types, "basis_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
+        this->add_item(item);
+    }
     // Electronic Structure
     {
         Input_Item item("ks_solver");
@@ -186,38 +221,6 @@ Then the user has to correct the input file and restart the calculation.)";
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "LCAO in plane wave can only done with lapack.");
                 }
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("basis_type");
-        item.annotation = "PW; LCAO in pw; LCAO";
-        item.category = "Electronic structure";
-        item.type = "String";
-        item.description = R"(Choose the basis set.
-* pw: Using plane-wave basis set only.
-* lcao: Using localized atomic orbital sets.
-* lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.)";
-        item.default_value = "pw";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.basis_type);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.towannier90)
-            {
-                if (para.input.basis_type == "lcao_in_pw")
-                {
-                    para.input.basis_type = "lcao";
-                }
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
-            {
-                const std::string warningstr = nofound_str(basis_types, "basis_type");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);
@@ -483,101 +486,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
-        Input_Item item("pw_diag_nmax");
-        item.annotation = "max iteration number for cg";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
-        item.default_value = "40";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.pw_diag_nmax);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("pw_diag_thr");
-        item.annotation = "threshold for eigenvalues is cg electron iterations";
-        item.category = "Plane wave related variables";
-        item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
-        item.default_value = "0.01";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.pw_diag_thr);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
-            {
-                if (para.input.pw_diag_thr > 1.0e-3)
-                {
-                    para.input.pw_diag_thr = 1.0e-5;
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("diago_smooth_ethr");
-        item.annotation = "smooth ethr for iter methods";
-        item.category = "Plane wave related variables";
-        item.type = "Boolean";
-        item.description = "If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.";
-        item.default_value = "false";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.diago_smooth_ethr);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("use_k_continuity");
-        item.annotation = "whether to use k-point continuity for initializing wave functions";
-        item.category = "Plane wave related variables";
-        item.type = "Boolean";
-        item.description = "If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.";
-        item.default_value = "false";
-        item.unit = "";
-        item.availability = "Used only for plane wave basis set.";
-        read_sync_bool(input.use_k_continuity);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
-            }
-            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
-            }
-            if (para.input.use_k_continuity && para.input.nspin == 2) {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
-            }
-            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
-        item.default_value = "4";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.pw_diag_ndim);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("diago_cg_prec");
-        item.annotation = "diago_cg_prec";
-        item.category = "Plane wave related variables";
-        item.type = "Integer";
-        item.description = "Preconditioner type for conjugate gradient diagonalization method.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.diago_cg_prec);
-        this->add_item(item);
-    }
-    {
         Input_Item item("smearing_method");
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         item.category = "Electronic structure";
@@ -693,6 +601,34 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
         this->add_item(item);
     }
     {
+        Input_Item item("mixing_beta_mag");
+        item.annotation = "mixing parameter for magnetic density";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description = "Mixing parameter of magnetic density.";
+        item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.mixing_beta_mag);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.mixing_beta_mag < 0.0)
+            {
+                if (para.input.nspin == 2 || para.input.nspin == 4)
+                {
+                    if (para.input.mixing_beta <= 0.4)
+                    {
+                        para.input.mixing_beta_mag = 4 * para.input.mixing_beta;
+                    }
+                    else
+                    {
+                        para.input.mixing_beta_mag = 1.6; // 1.6 can be discussed
+                    }
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("mixing_ndim");
         item.annotation = "mixing dimension in pulay or broyden";
         item.category = "Electronic structure";
@@ -732,6 +668,18 @@ For systems that are difficult to converge, one could try increasing the value o
         this->add_item(item);
     }
     {
+        Input_Item item("mixing_dmr");
+        item.annotation = "whether to mix real-space density matrix";
+        item.category = "Electronic structure";
+        item.type = "Boolean";
+        item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "Only for mixing_restart>=0.0";
+        read_sync_bool(input.mixing_dmr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("mixing_gg0");
         item.annotation = "mixing parameter in kerker";
         item.category = "Electronic structure";
@@ -745,34 +693,6 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.unit = "";
         item.availability = "";
         read_sync_double(input.mixing_gg0);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_beta_mag");
-        item.annotation = "mixing parameter for magnetic density";
-        item.category = "Electronic structure";
-        item.type = "Real";
-        item.description = "Mixing parameter of magnetic density.";
-        item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.mixing_beta_mag);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mixing_beta_mag < 0.0)
-            {
-                if (para.input.nspin == 2 || para.input.nspin == 4)
-                {
-                    if (para.input.mixing_beta <= 0.4)
-                    {
-                        para.input.mixing_beta_mag = 4 * para.input.mixing_beta;
-                    }
-                    else
-                    {
-                        para.input.mixing_beta_mag = 1.6; // 1.6 can be discussed
-                    }
-                }
-            }
-        };
         this->add_item(item);
     }
     {
@@ -839,18 +759,6 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.unit = "";
         item.availability = "Only relevant for DFT+U calculations.";
         read_sync_bool(input.mixing_dftu);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("mixing_dmr");
-        item.annotation = "whether to mix real-space density matrix";
-        item.category = "Electronic structure";
-        item.type = "Boolean";
-        item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
-        item.default_value = "false";
-        item.unit = "";
-        item.availability = "Only for mixing_restart>=0.0";
-        read_sync_bool(input.mixing_dmr);
         this->add_item(item);
     }
     {
@@ -959,6 +867,34 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         this->add_item(item);
     }
     {
+        Input_Item item("scf_thr_type");
+        item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
+                          "pw, 2: real drho for lcao";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = R"(Choose the calculation method of convergence criterion.
+* 1: the criterion is defined in reciprocal space, which is used in SCF of PW basis with unit Ry.
+* 2: the criterion is defined in real space, where is the number of electron, which is used in SCF of LCAO with unit dimensionless.)";
+        item.default_value = "1 (plane-wave basis), or 2 (localized atomic orbital basis).";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.scf_thr_type);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.scf_thr_type == -1)
+            {
+                if (para.input.basis_type == "lcao" || para.input.basis_type == "lcao_in_pw")
+                {
+                    para.input.scf_thr_type = 2;
+                }
+                else if (para.input.basis_type == "pw")
+                {
+                    para.input.scf_thr_type = 1;
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_os_stop");
         item.annotation = "whether to stop scf when oscillation is detected";
         item.category = "Electronic structure";
@@ -1022,34 +958,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         this->add_item(item);
     }
     {
-        Input_Item item("scf_thr_type");
-        item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
-                          "pw, 2: real drho for lcao";
-        item.category = "Electronic structure";
-        item.type = "Integer";
-        item.description = R"(Choose the calculation method of convergence criterion.
-* 1: the criterion is defined in reciprocal space, which is used in SCF of PW basis with unit Ry.
-* 2: the criterion is defined in real space, where is the number of electron, which is used in SCF of LCAO with unit dimensionless.)";
-        item.default_value = "1 (plane-wave basis), or 2 (localized atomic orbital basis).";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.scf_thr_type);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.scf_thr_type == -1)
-            {
-                if (para.input.basis_type == "lcao" || para.input.basis_type == "lcao_in_pw")
-                {
-                    para.input.scf_thr_type = 2;
-                }
-                else if (para.input.basis_type == "pw")
-                {
-                    para.input.scf_thr_type = 1;
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("lspinorb");
         item.annotation = "consider the spin-orbit interaction";
         item.category = "Electronic structure";
@@ -1107,6 +1015,113 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.unit = "";
         item.availability = "Only works when lspinorb=true";
         read_sync_double(input.soc_lambda);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfthalf_type");
+        item.annotation = "DFT-1/2 type, 0:off; 1:shell DFT-1/2";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = "DFT-1/2 type:\n* 0: DFT-1/2 is off.\n* 1: Shell DFT-1/2 method is used.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.dfthalf_type);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_thr");
+        item.annotation = "threshold for eigenvalues is cg electron iterations";
+        item.category = "Plane wave related variables";
+        item.type = "Real";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.default_value = "0.01";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.pw_diag_thr);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
+            {
+                if (para.input.pw_diag_thr > 1.0e-3)
+                {
+                    para.input.pw_diag_thr = 1.0e-5;
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("diago_smooth_ethr");
+        item.annotation = "smooth ethr for iter methods";
+        item.category = "Plane wave related variables";
+        item.type = "Boolean";
+        item.description = "If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.diago_smooth_ethr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use k-point continuity for initializing wave functions";
+        item.category = "Plane wave related variables";
+        item.type = "Boolean";
+        item.description = "If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "Used only for plane wave basis set.";
+        read_sync_bool(input.use_k_continuity);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
+            }
+            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
+            }
+            if (para.input.use_k_continuity && para.input.nspin == 2) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
+            }
+            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_nmax");
+        item.annotation = "max iteration number for cg";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.default_value = "40";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.pw_diag_nmax);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_ndim");
+        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.default_value = "4";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("diago_cg_prec");
+        item.annotation = "diago_cg_prec";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Preconditioner type for conjugate gradient diagonalization method.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.diago_cg_prec);
         this->add_item(item);
     }
 
@@ -1381,18 +1396,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.unit = "";
         item.availability = "";
         read_sync_double(input.bessel_nao_sigma);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("dfthalf_type");
-        item.annotation = "DFT-1/2 type, 0:off; 1:shell DFT-1/2";
-        item.category = "Electronic structure";
-        item.type = "Integer";
-        item.description = "DFT-1/2 type:\n* 0: DFT-1/2 is off.\n* 1: Shell DFT-1/2 method is used.";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.dfthalf_type);
         this->add_item(item);
     }
 }

@@ -6,23 +6,45 @@ namespace ModuleIO
 {
 void ReadInput::item_output()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     {
-        Input_Item item("out_stru");
-        item.annotation = "output the structure files after each ion step";
+        Input_Item item("out_freq_ion");
+        item.annotation = "print information every few ionic steps";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.";
-        item.default_value = "False";
+        item.type = "Integer";
+        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps."
+                          "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
+        item.default_value = "0";
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
-            if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
+            if (para.input.out_freq_ion <= 0)
             {
-                para.input.out_stru = false;
+                para.input.out_freq_ion = 0; // 0 means no output of info
             }
         };
-        read_sync_bool(input.out_stru);
+        read_sync_int(input.out_freq_ion);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_freq_td");
+        item.annotation = "print information every few completed electronic iterations in RT-TDDFT";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps."
+                          "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.out_freq_td <= 0)
+            {
+                para.input.out_freq_td = 0; // 0 means no output of info
+            }
+        };
+        read_sync_int(input.out_freq_td);
         this->add_item(item);
     }
     {
@@ -103,196 +125,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
-        Input_Item item("out_wfc_pw");
-        item.annotation = "output wave functions";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
-* 0: no output
-* 1: (txt format)
- * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
-* 2: (binary format)
- * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
-
-[NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.)";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)";
-        read_sync_int(input.out_wfc_pw);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_band");
-        item.annotation = "output energy and band structure (with precision 8)";
-        item.category = "Output information";
-        item.type = "Boolean Integer";
-        item.description = R"(Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
- * nspin = 1 or 4: eig.txt;
- * nspin = 2: eigs1.txt and eigs2.txt;
- * For more information, refer to the band.md)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
-            }
-            para.input.out_band[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_band[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.out_band[0] = 0;
-            }
-        };
-        sync_intvec(input.out_band, 2, 0);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_dos");
-        item.annotation = "output energy and dos";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = R"(Whether to output the density of states (DOS). For more information, refer to the dos.md.
-* 0: no output
-* 1: output the density of states (DOS)
- * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
- * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-* 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-* 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.out_dos);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.out_dos = 0;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos == 3 && para.input.symmetry == "1")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "symmetry can't be used for out_dos==3(Fermi Surface "
-                                         "Plotting) by now.");
-            }
-            if (para.input.basis_type == "pw" && para.input.out_dos == 3)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "Fermi Surface Plotting not "
-                                         "implemented for plane wave now.");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_ldos");
-        item.annotation = "output mode of local density of states, second parameter controls the precision";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = R"(Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
-* 0: no output
-* 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
-* 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
-* 3: output both two LDOS modes above.)";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
-            }
-            para.input.out_ldos[0] = std::stoi(item.str_values[0]);
-            para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_ldos[0] < 0 || para.input.out_ldos[0] > 3)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should be 0, 1, 2 or 3");
-            }
-        };
-        sync_intvec(input.out_ldos, 2, 0);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_mul");
-        item.annotation = "mulliken charge or not";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
-        read_sync_bool(input.out_mul);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "pw" && para.input.out_mul)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mul is only for lcao");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_proj_band");
-        item.annotation = "output projected band structure";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output the projected band structure. For more information, refer to the band.md";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_proj_band);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.out_proj_band = false;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "pw" && para.input.out_proj_band)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_proj_band is only for lcao");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_level");
-        item.annotation = "ie(for electrons); i(for ions);";
-        item.category = "Output information";
-        item.type = "String";
-        item.description = R"(Control the output level of information in OUT.{calculation}.log.
-* ie: electronic iteration level, which prints useful information for electronic iterations;
-* i: geometry relaxation level, which prints some information for geometry relaxations additionally;
-* m: molecular dynamics level, which does not print some information for simplicity.)";
-        item.default_value = "ie";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.out_level = strvalue;
-            para.sys.out_md_control = true;
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!para.sys.out_md_control && para.input.calculation == "md")
-            {
-                para.input.out_level = "m"; // zhengdy add 2019-04-07
-            }
-        };
-        sync_string(input.out_level);
-        add_bool_bcast(sys.out_md_control);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_dmk");
         item.annotation = ">0 output density matrix DM(k) for each k-point";
         item.category = "Output information";
@@ -366,6 +198,238 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
+        Input_Item item("out_wfc_pw");
+        item.annotation = "output wave functions";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
+* 0: no output
+* 1: (txt format)
+ * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
+ * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
+ * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
+* 2: (binary format)
+ * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
+ * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
+ * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
+
+[NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)";
+        read_sync_int(input.out_wfc_pw);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_lcao");
+        item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
+* 0: no output
+* 1: (txt format)
+ * gamma-only: wfs1_nao.txt or wfs2_nao.txt, ...;
+ * non-gamma-only: wfs1k1_nao.txt or wfs1k2_nao.txt, ...;
+* 2: (binary format)
+ * gamma-only: wfs1_nao.dat or wfs2_nao.dat, ...;
+ * non-gamma-only: wfs1k1_nao.dat or wfs1k2_nao.dat, ....
+
+The corresponding sequence of the orbitals can be seen in Basis Set.
+
+Also controled by out_freq_ion and out_app_flag.
+
+[NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "Numerical atomic orbital basis";
+        read_sync_int(input.out_wfc_lcao);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.qo_switch)
+            {
+                para.input.out_wfc_lcao = 1;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
+            }
+            if (para.input.basis_type != "lcao" && para.input.out_wfc_lcao != 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_dos");
+        item.annotation = "output energy and dos";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = R"(Whether to output the density of states (DOS). For more information, refer to the dos.md.
+* 0: no output
+* 1: output the density of states (DOS)
+ * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+ * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
+* 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
+* 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.out_dos);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            {
+                para.input.out_dos = 0;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dos == 3 && para.input.symmetry == "1")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "symmetry can't be used for out_dos==3(Fermi Surface "
+                                         "Plotting) by now.");
+            }
+            if (para.input.basis_type == "pw" && para.input.out_dos == 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "Fermi Surface Plotting not "
+                                         "implemented for plane wave now.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_ldos");
+        item.annotation = "output mode of local density of states, second parameter controls the precision";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = R"(Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
+* 0: no output
+* 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
+* 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
+* 3: output both two LDOS modes above.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
+            }
+            para.input.out_ldos[0] = std::stoi(item.str_values[0]);
+            para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_ldos[0] < 0 || para.input.out_ldos[0] > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should be 0, 1, 2 or 3");
+            }
+        };
+        sync_intvec(input.out_ldos, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_band");
+        item.annotation = "output energy and band structure (with precision 8)";
+        item.category = "Output information";
+        item.type = "Boolean Integer";
+        item.description = R"(Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
+ * nspin = 1 or 4: eig.txt;
+ * nspin = 2: eigs1.txt and eigs2.txt;
+ * For more information, refer to the band.md)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
+            }
+            para.input.out_band[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_band[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            {
+                para.input.out_band[0] = 0;
+            }
+        };
+        sync_intvec(input.out_band, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_proj_band");
+        item.annotation = "output projected band structure";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to output the projected band structure. For more information, refer to the band.md";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_proj_band);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            {
+                para.input.out_proj_band = false;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.out_proj_band)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_proj_band is only for lcao");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_stru");
+        item.annotation = "output the structure files after each ion step";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
+            if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
+            {
+                para.input.out_stru = false;
+            }
+        };
+        read_sync_bool(input.out_stru);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_level");
+        item.annotation = "ie(for electrons); i(for ions);";
+        item.category = "Output information";
+        item.type = "String";
+        item.description = R"(Control the output level of information in OUT.{calculation}.log.
+* ie: electronic iteration level, which prints useful information for electronic iterations;
+* i: geometry relaxation level, which prints some information for geometry relaxations additionally;
+* m: molecular dynamics level, which does not print some information for simplicity.)";
+        item.default_value = "ie";
+        item.unit = "";
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.out_level = strvalue;
+            para.sys.out_md_control = true;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (!para.sys.out_md_control && para.input.calculation == "md")
+            {
+                para.input.out_level = "m"; // zhengdy add 2019-04-07
+            }
+        };
+        sync_string(input.out_level);
+        add_bool_bcast(sys.out_md_control);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
         item.category = "Output information";
@@ -404,6 +468,25 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_hs2");
+        item.annotation = "output H(R) and S(R) matrix";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md."
+                          "\n\n[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_mat_hs2);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_r && para.sys.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r is not available for gamma only calculations");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_tk");
         item.annotation = "output kinetic matrix of electrons T(k)";
         item.category = "Output information";
@@ -426,43 +509,39 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_hs2");
-        item.annotation = "output H(R) and S(R) matrix";
+        Input_Item item("out_mat_r");
+        item.annotation = "output r(R) matrix";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md."
-                          "\n\n[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.";
+        item.description = "Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
+                          "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False";
-        item.unit = "Ry";
+        item.unit = "Bohr";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_bool(input.out_mat_hs2);
+        read_sync_bool(input.out_mat_r);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_r && para.sys.gamma_only_local)
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t || para.inp.out_mat_dh
+                 || para.inp.dm_to_rho)
+                && para.sys.gamma_only_local)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r is not available for gamma only calculations");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                         "available for gamma only calculations");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_l");
-        item.annotation = "output the expectation values of angular momentum operators";
+        Input_Item item("out_mat_t");
+        item.annotation = "output T(R) matrix";
         item.category = "Output information";
-        item.type = "Boolean Integer";
-        item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.";
-        item.default_value = "False 8";
-        item.unit = "";
-        item.availability = "Numerical atomic orbital (NAO) basis";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
-			para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_mat_l[1] = 8;
-			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-        };
-        sync_intvec(input.out_mat_l, 2, 0);
+        item.type = "Boolean";
+        item.description = "Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+                          "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_mat_t);
         this->add_item(item);
     }
     {
@@ -530,6 +609,66 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_l");
+        item.annotation = "output the expectation values of angular momentum operators";
+        item.category = "Output information";
+        item.type = "Boolean Integer";
+        item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.";
+        item.default_value = "False 8";
+        item.unit = "";
+        item.availability = "Numerical atomic orbital (NAO) basis";
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
+			para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_l[1] = 8;
+			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+        };
+        sync_intvec(input.out_mat_l, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_xc_r");
+        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
+        item.category = "Output information";
+        item.type = "Integer Integer";
+        item.description = R"(The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
+* 0: rho, amag, sigma, exc
+* 1: vrho, vsigma
+* 2: v2rho2, v2rhosigma, v2sigma2
+* 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
+* 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
+
+The second integer controls the precision of the charge density output, if not given, will use 3 as default.
+
+The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).)";
+        item.default_value = "-1 3";
+        item.unit = "";
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_xc_r(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), 
+                           item.str_values.end(), 
+                           out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
+            // assign non-negative values to para.input.out_xc_r
+            std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
+        };
+        // check value
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_xc_r[0] >= 0)
+            {
+#ifndef USE_LIBXC
+                ModuleBase::WARNING_QUIT("ReadInput", "INPUT out_xc_r is only aviailable with Libxc");
+#endif
+            }
+        };
+        sync_intvec(input.out_xc_r, 2, -1);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_eband_terms");
         item.annotation = "output the band energy terms separately";
         item.category = "Output information";
@@ -542,41 +681,21 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
-        Input_Item item("out_freq_ion");
-        item.annotation = "print information every few ionic steps";
+        Input_Item item("out_mul");
+        item.annotation = "mulliken charge or not";
         item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps."
-                          "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
-        item.default_value = "0";
+        item.type = "Boolean";
+        item.description = "Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.";
+        item.default_value = "False";
         item.unit = "";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.out_freq_ion <= 0)
+        item.availability = "Numerical atomic orbital basis";
+        read_sync_bool(input.out_mul);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.out_mul)
             {
-                para.input.out_freq_ion = 0; // 0 means no output of info
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mul is only for lcao");
             }
         };
-        read_sync_int(input.out_freq_ion);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_freq_td");
-        item.annotation = "print information every few completed electronic iterations in RT-TDDFT";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps."
-                          "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.out_freq_td <= 0)
-            {
-                para.input.out_freq_td = 0; // 0 means no output of info
-            }
-        };
-        read_sync_int(input.out_freq_td);
         this->add_item(item);
     }
     {
@@ -605,19 +724,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_t");
-        item.annotation = "output T(R) matrix";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
-                          "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
-        item.default_value = "False";
-        item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_bool(input.out_mat_t);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_element_info");
         item.annotation = "output (projected) wavefunction of each element";
         item.category = "Output information";
@@ -627,138 +733,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.unit = "";
         item.availability = "";
         read_sync_bool(input.out_element_info);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_mat_r");
-        item.annotation = "output r(R) matrix";
-        item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
-                          "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
-        item.default_value = "False";
-        item.unit = "Bohr";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_bool(input.out_mat_r);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t || para.inp.out_mat_dh
-                 || para.inp.dm_to_rho)
-                && para.sys.gamma_only_local)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
-                                         "available for gamma only calculations");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_wfc_lcao");
-        item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
-* 0: no output
-* 1: (txt format)
- * gamma-only: wfs1_nao.txt or wfs2_nao.txt, ...;
- * non-gamma-only: wfs1k1_nao.txt or wfs1k2_nao.txt, ...;
-* 2: (binary format)
- * gamma-only: wfs1_nao.dat or wfs2_nao.dat, ...;
- * non-gamma-only: wfs1k1_nao.dat or wfs1k2_nao.dat, ....
-
-The corresponding sequence of the orbitals can be seen in Basis Set.
-
-Also controled by out_freq_ion and out_app_flag.
-
-[NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
-        read_sync_int(input.out_wfc_lcao);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.qo_switch)
-            {
-                para.input.out_wfc_lcao = 1;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
-            }
-            if (para.input.basis_type != "lcao" && para.input.out_wfc_lcao != 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_dipole");
-        item.annotation = "output dipole or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Boolean";
-        item.description = R"(* True: Output electric dipole moment.
-* False: Do not output electric dipole moment.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_dipole);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_efield");
-        item.annotation = "output dipole or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Boolean";
-        item.description = R"(Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
-* True: Output electric field.
-* False: Do not output electric field.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_efield);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_current");
-        item.annotation = "output current or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Integer";
-        item.description = R"(* 0: Do not output current.
-* 1: Output current using the two-center integral, faster.
-* 2: Output current using the matrix commutation, more precise.)";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_int(input.out_current);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_current_k");
-        item.annotation = "output current for each k";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Boolean";
-        item.description = R"(* True: Output current for each k-points separately.
-* False: Output current in total.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_current_k);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_vecpot");
-        item.annotation = "output TDDFT vector potential or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Boolean";
-        item.description = R"(Output vector potential or not (unit: a.u.).
-* True: Output vector potential into file At.dat.
-* False: Do not output vector potential.)";
-        item.default_value = "False";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.out_vecpot);
         this->add_item(item);
     }
     {
@@ -855,45 +829,6 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         this->add_item(item);
     }
     {
-        Input_Item item("out_xc_r");
-        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
-        item.category = "Output information";
-        item.type = "Integer Integer";
-        item.description = R"(The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
-* 0: rho, amag, sigma, exc
-* 1: vrho, vsigma
-* 2: v2rho2, v2rhosigma, v2sigma2
-* 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
-* 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
-
-The second integer controls the precision of the charge density output, if not given, will use 3 as default.
-
-The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).)";
-        item.default_value = "-1 3";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_xc_r(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), 
-                           item.str_values.end(), 
-                           out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
-            // assign non-negative values to para.input.out_xc_r
-            std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
-        };
-        // check value
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_xc_r[0] >= 0)
-            {
-#ifndef USE_LIBXC
-                ModuleBase::WARNING_QUIT("ReadInput", "INPUT out_xc_r is only aviailable with Libxc");
-#endif
-            }
-        };
-        sync_intvec(input.out_xc_r, 2, -1);
-        this->add_item(item);
-    }
-    {
         Input_Item item("if_separate_k");
         item.annotation = "specify whether to write the partial charge densities for all k-points to individual files "
                           "or merge them";
@@ -946,6 +881,87 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
+        // refactored from the removal of wannier input file, ISSUE 6469
+        Input_Item item("out_spillage");
+        item.annotation = "output spillage of wavefunctions. This parameter only accepts 0 or 2.";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as OVERLAP_Q), and between TSBFs (named as OVERLAP_Sq), also their first order derivatives. The output files are named starting with orb_matrix. A value of 2 would enable the output.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "Only for Kohn-Sham DFT with plane-wave basis.";
+        read_sync_int(input.out_spillage);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_dipole");
+        item.annotation = "output dipole or not";
+        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.type = "Boolean";
+        item.description = R"(* True: Output electric dipole moment.
+* False: Do not output electric dipole moment.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_dipole);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_current");
+        item.annotation = "output current or not";
+        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.type = "Integer";
+        item.description = R"(* 0: Do not output current.
+* 1: Output current using the two-center integral, faster.
+* 2: Output current using the matrix commutation, more precise.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_int(input.out_current);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_current_k");
+        item.annotation = "output current for each k";
+        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.type = "Boolean";
+        item.description = R"(* True: Output current for each k-points separately.
+* False: Output current in total.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_current_k);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_efield");
+        item.annotation = "output dipole or not";
+        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.type = "Boolean";
+        item.description = R"(Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
+* True: Output electric field.
+* False: Do not output electric field.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_efield);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_vecpot");
+        item.annotation = "output TDDFT vector potential or not";
+        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.type = "Boolean";
+        item.description = R"(Output vector potential or not (unit: a.u.).
+* True: Output vector potential into file At.dat.
+* False: Do not output vector potential.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.out_vecpot);
+        this->add_item(item);
+    }
+    {
         // recover the functionality of test_symmetry by introducing a new keyword "out_symm_mat"
         // the "out_symm_mat" keyword will be a
         Input_Item item("cal_symm_repr");
@@ -975,19 +991,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
             }
         };
         sync_intvec(input.cal_symm_repr, 2, 0);
-        this->add_item(item);
-    }
-    {
-        // refactored from the removal of wannier input file, ISSUE 6469
-        Input_Item item("out_spillage");
-        item.annotation = "output spillage of wavefunctions. This parameter only accepts 0 or 2.";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as OVERLAP_Q), and between TSBFs (named as OVERLAP_Sq), also their first order derivatives. The output files are named starting with orb_matrix. A value of 2 would enable the output.";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "Only for Kohn-Sham DFT with plane-wave basis.";
-        read_sync_int(input.out_spillage);
         this->add_item(item);
     }
     {

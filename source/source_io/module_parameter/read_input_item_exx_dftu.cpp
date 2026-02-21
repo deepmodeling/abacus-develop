@@ -6,6 +6,9 @@ namespace ModuleIO
 {
 void ReadInput::item_exx()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     // EXX
     {
         Input_Item item("exx_fock_alpha");
@@ -160,31 +163,6 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_fock_lambda");
-        item.annotation = "used to compensate for divergence points at G=0 in "
-                          "the evaluation of Fock exchange using "
-                          "lcao_in_pw method";
-        item.category = "Exact Exchange (LCAO in PW)";
-        item.type = "Real \\Real...\\";
-        item.description = "It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.";
-        item.default_value = "0.3";
-        item.unit = "";
-        item.availability = "basis_type==lcao_in_pw";
-        item.read_value = [](const Input_Item& item, Parameter& para)
-        {
-            para.input.exx_fock_lambda = item.str_values;
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) 
-        {
-            if (para.input.exx_fock_lambda.size()==1 &&  para.input.exx_fock_lambda[0]=="default")
-            {
-                para.input.exx_fock_lambda = std::vector<std::string>(para.input.exx_fock_alpha.size(), "0.3");
-            }
-        };
-        sync_stringvec(input.exx_fock_lambda, para.input.exx_fock_lambda.size(), "");
-        this->add_item(item);
-    }
-    {
         Input_Item item("exx_separate_loop");
         item.annotation = "if 1, a two-step method is employed, else it will "
                           "start with a GGA-Loop, and then Hybrid-Loop";
@@ -239,67 +217,28 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_real_number");
-        item.annotation = "exx calculated in real or complex";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Boolean";
-        item.description = R"(* True: Enforce LibRI to use double data type.
-* False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.)";
-        item.default_value = "depends on the gamma_only option";
+        Input_Item item("exx_fock_lambda");
+        item.annotation = "used to compensate for divergence points at G=0 in "
+                          "the evaluation of Fock exchange using "
+                          "lcao_in_pw method";
+        item.category = "Exact Exchange (LCAO in PW)";
+        item.type = "Real \\Real...\\";
+        item.description = "It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.";
+        item.default_value = "0.3";
         item.unit = "";
-        item.availability = "";
-        read_sync_string(input.exx_real_number);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.exx_real_number == "default")
-            {  // to run through here, the default value of para.input.exx_real_number should be "default"
-                if (para.input.gamma_only)
-                {
-                    para.input.exx_real_number = "1";
-                }
-                else
-                {
-                    para.input.exx_real_number = "0";
-                }
+        item.availability = "basis_type==lcao_in_pw";
+        item.read_value = [](const Input_Item& item, Parameter& para)
+        {
+            para.input.exx_fock_lambda = item.str_values;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_fock_lambda.size()==1 &&  para.input.exx_fock_lambda[0]=="default")
+            {
+                para.input.exx_fock_lambda = std::vector<std::string>(para.input.exx_fock_alpha.size(), "0.3");
             }
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_singularity_correction");
-        item.annotation = "set the scheme of Coulomb singularity correction";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "String";
-        item.description = R"(* spencer: see Phys. Rev. B 77, 193110 (2008).
-* revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.)";
-        item.default_value = "default";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.exx_singularity_correction);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.exx_singularity_correction == "default")
-            {  
-                std::string& dft_functional = para.input.dft_functional;
-                std::string dft_functional_lower = dft_functional;
-                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-                if (dft_functional_lower == "hf"
-                    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
-                    || dft_functional_lower == "scan0"
-                    || dft_functional_lower == "muller" || dft_functional_lower == "power"
-                    || dft_functional_lower == "wp22" 
-                    || dft_functional_lower == "lc_pbe"
-                    || dft_functional_lower == "lc_wpbe" 
-                    || dft_functional_lower == "lrc_wpbe"
-                    || dft_functional_lower == "lrc_wpbeh"
-                    || dft_functional_lower == "cam_pbeh")
-                {
-                    para.input.exx_singularity_correction = "spencer";
-                }
-                else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
-                {
-                    para.input.exx_singularity_correction = "limits";
-                }
-            }
-        };
+        sync_stringvec(input.exx_fock_lambda, para.input.exx_fock_lambda.size(), "");
         this->add_item(item);
     }
     {
@@ -315,18 +254,6 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_cs_inv_thr");
-        item.annotation = "threshold to inverse Vq in abfs for generating Cs";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
-        item.default_value = "-1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.exx_cs_inv_thr);
-        this->add_item(item);
-    }
-    {
         Input_Item item("exx_c_threshold");
         item.annotation = "threshold to screen C matrix in exx";
         item.category = "Exact Exchange (LCAO)";
@@ -336,6 +263,18 @@ void ReadInput::item_exx()
         item.unit = "";
         item.availability = "";
         read_sync_double(input.exx_c_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_cs_inv_thr");
+        item.annotation = "threshold to inverse Vq in abfs for generating Cs";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
+        item.default_value = "-1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.exx_cs_inv_thr);
         this->add_item(item);
     }
     {
@@ -514,19 +453,67 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_symmetry_realspace");
-        item.annotation = "whether to reduce real-space sector in Hexx calculation";
+        Input_Item item("exx_real_number");
+        item.annotation = "exx calculated in real or complex";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
-        item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
-* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
-        item.default_value = "True";
+        item.description = R"(* True: Enforce LibRI to use double data type.
+* False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.)";
+        item.default_value = "depends on the gamma_only option";
         item.unit = "";
-        item.availability = "symmetry==1 and exx calculation (dft_fuctional==hse/hf/pbe0/scan0 or rpa==True)";
-        read_sync_bool(input.exx_symmetry_realspace);
+        item.availability = "";
+        read_sync_string(input.exx_real_number);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
-            };
+            if (para.input.exx_real_number == "default")
+            {  // to run through here, the default value of para.input.exx_real_number should be "default"
+                if (para.input.gamma_only)
+                {
+                    para.input.exx_real_number = "1";
+                }
+                else
+                {
+                    para.input.exx_real_number = "0";
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_singularity_correction");
+        item.annotation = "set the scheme of Coulomb singularity correction";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = R"(* spencer: see Phys. Rev. B 77, 193110 (2008).
+* revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.)";
+        item.default_value = "default";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.exx_singularity_correction);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.exx_singularity_correction == "default")
+            {  
+                std::string& dft_functional = para.input.dft_functional;
+                std::string dft_functional_lower = dft_functional;
+                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+                if (dft_functional_lower == "hf"
+                    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+                    || dft_functional_lower == "scan0"
+                    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+                    || dft_functional_lower == "wp22" 
+                    || dft_functional_lower == "lc_pbe"
+                    || dft_functional_lower == "lc_wpbe" 
+                    || dft_functional_lower == "lrc_wpbe"
+                    || dft_functional_lower == "lrc_wpbeh"
+                    || dft_functional_lower == "cam_pbeh")
+                {
+                    para.input.exx_singularity_correction = "spencer";
+                }
+                else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_singularity_correction = "limits";
+                }
+            }
+        };
         this->add_item(item);
     }
     {
@@ -550,6 +537,22 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_symmetry_realspace");
+        item.annotation = "whether to reduce real-space sector in Hexx calculation";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Boolean";
+        item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
+* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "symmetry==1 and exx calculation (dft_fuctional==hse/hf/pbe0/scan0 or rpa==True)";
+        read_sync_bool(input.exx_symmetry_realspace);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
+            };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_ri_cv");
         item.annotation = "Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V";
         item.category = "Exact Exchange (LCAO)";
@@ -564,6 +567,9 @@ void ReadInput::item_exx()
 }
 void ReadInput::item_dftu()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     // dft+u
     {
         Input_Item item("dft_plus_u");
@@ -628,15 +634,89 @@ void ReadInput::item_dftu()
         this->add_item(item);
     }
     {
-        Input_Item item("yukawa_lambda");
-        item.annotation = "default:0.0";
+        Input_Item item("orbital_corr");
+        item.annotation = "which correlated orbitals need corrected ; d:2 "
+                          ",f:3, do not need correction:-1";
+        item.category = "DFT+U correction";
+        item.type = "Integer";
+        item.description = R"(Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
+* -1: The plus U correction will not be calculated for this atom.
+* 1: For p-electron orbits, the plus U correction is needed.
+* 2: For d-electron orbits, the plus U correction is needed.
+* 3: For f-electron orbits, the plus U correction is needed.)";
+        item.default_value = "-1";
+        item.unit = "";
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
+            }
+        };
+
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read())
+            {
+                return;
+            }
+            if (para.input.orbital_corr.size() != para.input.ntype)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "orbital_corr should have the same "
+                                         "number of elements as ntype");
+            }
+            for (auto& val: para.input.orbital_corr)
+            {
+                if (val < -1 || val > 3)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF orbital_corr");
+                }
+            }
+        };
+        sync_intvec(input.orbital_corr, para.input.ntype, -1);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("hubbard_u");
+        item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = "The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.";
-        item.default_value = "Calculated on the fly.";
+        item.description = R"(Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
+
+[NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.)";
+        item.default_value = "0.0";
         item.unit = "";
-        item.availability = "DFT+U with yukawa_potential = True.";
-        read_sync_double(input.yukawa_lambda);
+        item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.hubbard_u_eV.push_back(std::stod(item.str_values[i]));
+                para.sys.hubbard_u.push_back(para.input.hubbard_u_eV[i] / ModuleBase::Ry_to_eV);
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read())
+            {
+                return;
+            }
+            if (para.sys.hubbard_u.size() != para.input.ntype)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "hubbard_u should have the same "
+                                         "number of elements as ntype");
+            }
+            for (auto& value: para.sys.hubbard_u)
+            {
+                if (value < -1.0e-3)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF hubbard_u");
+                }
+            }
+        };
+        sync_doublevec(input.hubbard_u_eV, para.input.ntype, 0.0);
+        add_doublevec_bcast(sys.hubbard_u, para.input.ntype, 0.0);
         this->add_item(item);
     }
     {
@@ -651,6 +731,18 @@ void ReadInput::item_dftu()
         item.unit = "";
         item.availability = "";
         read_sync_bool(input.yukawa_potential);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("yukawa_lambda");
+        item.annotation = "default:0.0";
+        item.category = "DFT+U correction";
+        item.type = "Real";
+        item.description = "The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.";
+        item.default_value = "Calculated on the fly.";
+        item.unit = "";
+        item.availability = "DFT+U with yukawa_potential = True.";
+        read_sync_double(input.yukawa_lambda);
         this->add_item(item);
     }
     {
@@ -724,92 +816,6 @@ void ReadInput::item_dftu()
                 para.input.onsite_radius = 3.0;
             }
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("hubbard_u");
-        item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
-        item.category = "DFT+U correction";
-        item.type = "Real";
-        item.description = R"(Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
-
-[NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.)";
-        item.default_value = "0.0";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
-                para.input.hubbard_u_eV.push_back(std::stod(item.str_values[i]));
-                para.sys.hubbard_u.push_back(para.input.hubbard_u_eV[i] / ModuleBase::Ry_to_eV);
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
-            {
-                return;
-            }
-            if (para.sys.hubbard_u.size() != para.input.ntype)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "hubbard_u should have the same "
-                                         "number of elements as ntype");
-            }
-            for (auto& value: para.sys.hubbard_u)
-            {
-                if (value < -1.0e-3)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF hubbard_u");
-                }
-            }
-        };
-        sync_doublevec(input.hubbard_u_eV, para.input.ntype, 0.0);
-        add_doublevec_bcast(sys.hubbard_u, para.input.ntype, 0.0);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("orbital_corr");
-        item.annotation = "which correlated orbitals need corrected ; d:2 "
-                          ",f:3, do not need correction:-1";
-        item.category = "DFT+U correction";
-        item.type = "Integer";
-        item.description = R"(Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
-* -1: The plus U correction will not be calculated for this atom.
-* 1: For p-electron orbits, the plus U correction is needed.
-* 2: For d-electron orbits, the plus U correction is needed.
-* 3: For f-electron orbits, the plus U correction is needed.)";
-        item.default_value = "-1";
-        item.unit = "";
-        item.availability = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
-                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
-            }
-        };
-
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
-            {
-                return;
-            }
-            if (para.input.orbital_corr.size() != para.input.ntype)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "orbital_corr should have the same "
-                                         "number of elements as ntype");
-            }
-            for (auto& val: para.input.orbital_corr)
-            {
-                if (val < -1 || val > 3)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF orbital_corr");
-                }
-            }
-        };
-        sync_intvec(input.orbital_corr, para.input.ntype, -1);
         this->add_item(item);
     }
 }

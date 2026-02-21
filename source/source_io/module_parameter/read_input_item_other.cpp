@@ -11,6 +11,9 @@ namespace ModuleIO
 {
 void ReadInput::item_others()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     // non-collinear spin-constrained
     {
         Input_Item item("sc_mag_switch");
@@ -230,26 +233,6 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("qo_thr");
-        item.annotation = "accuracy for evaluating cutoff radius of QO basis function";
-        item.category = "Quasiatomic Orbital (QO) analysis";
-        item.type = "Real";
-        item.description = "The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.";
-        item.default_value = "1.0e-6";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.qo_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.qo_thr > 1e-6)
-            {
-                ModuleBase::WARNING("ReadInput",
-                                    "too high the convergence threshold might "
-                                    "yield unacceptable result");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("qo_strategy");
         item.annotation = "strategy to generate generate radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
@@ -352,6 +335,26 @@ void ReadInput::item_others()
             }
         };
         sync_doublevec(input.qo_screening_coeff, para.input.ntype, 0.1);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("qo_thr");
+        item.annotation = "accuracy for evaluating cutoff radius of QO basis function";
+        item.category = "Quasiatomic Orbital (QO) analysis";
+        item.type = "Real";
+        item.description = "The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.";
+        item.default_value = "1.0e-6";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.qo_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.qo_thr > 1e-6)
+            {
+                ModuleBase::WARNING("ReadInput",
+                                    "too high the convergence threshold might "
+                                    "yield unacceptable result");
+            }
+        };
         this->add_item(item);
     }
 
@@ -891,6 +894,25 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
+        Input_Item item("ecutexx");
+        item.annotation = "energy cutoff for exx calculation, Ry";
+        item.category = "Exact Exchange (PW)";
+        item.type = "Real";
+        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
+        item.default_value = "same as ecutrho";
+        item.unit = "Ry";
+        item.availability = "";
+        read_sync_double(input.ecutexx);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ecutexx < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
+            }
+        };
+        this->add_item(item);
+    }
+
+    {
         Input_Item item("exx_thr_type");
         item.annotation = "threshold type for exx outer loop, energy or density";
         item.category = "Exact Exchange (PW)";
@@ -930,24 +952,5 @@ void ReadInput::item_others()
         };
         this->add_item(item);
     }
-    {
-        Input_Item item("ecutexx");
-        item.annotation = "energy cutoff for exx calculation, Ry";
-        item.category = "Exact Exchange (PW)";
-        item.type = "Real";
-        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
-        item.default_value = "same as ecutrho";
-        item.unit = "Ry";
-        item.availability = "";
-        read_sync_double(input.ecutexx);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutexx < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
-            }
-        };
-        this->add_item(item);
-    }
-
 }
 } // namespace ModuleIO

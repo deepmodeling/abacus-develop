@@ -9,6 +9,9 @@ namespace ModuleIO
 
 void ReadInput::item_relax()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("relax_method");
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
@@ -100,12 +103,6 @@ Second element (BFGS variant, only when first element is bfgs):
                 para.input.relax_new = false;
             }
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("relax");
-        item.annotation = "allow relaxation along the specific direction";
-        read_sync_bool(input.relax);
         this->add_item(item);
     }
     {
@@ -220,54 +217,6 @@ Second element (BFGS variant, only when first element is bfgs):
         this->add_item(item);
     }
     {
-        Input_Item item("stress_thr");
-        item.annotation = "stress threshold";
-        item.category = "Geometry relaxation";
-        item.type = "Real";
-        item.description = "The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.";
-        item.default_value = "0.5";
-        item.unit = "kbar";
-        item.availability = "";
-        read_sync_double(input.stress_thr);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("press1");
-        item.annotation = "target pressure, unit: KBar";
-        item.category = "Geometry relaxation";
-        item.type = "Real";
-        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
-        item.default_value = "0";
-        item.unit = "kbar";
-        item.availability = "";
-        read_sync_double(input.press1);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("press2");
-        item.annotation = "target pressure, unit: KBar";
-        item.category = "Geometry relaxation";
-        item.type = "Real";
-        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
-        item.default_value = "0";
-        item.unit = "kbar";
-        item.availability = "";
-        read_sync_double(input.press2);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("press3");
-        item.annotation = "target pressure, unit: KBar";
-        item.category = "Geometry relaxation";
-        item.type = "Real";
-        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
-        item.default_value = "0";
-        item.unit = "kbar";
-        item.availability = "";
-        read_sync_double(input.press3);
-        this->add_item(item);
-    }
-    {
         Input_Item item("relax_bfgs_w1");
         item.annotation = "wolfe condition 1 for bfgs";
         item.category = "Geometry relaxation";
@@ -325,6 +274,54 @@ Second element (BFGS variant, only when first element is bfgs):
         item.unit = "Bohr";
         item.availability = "Only used when relax_new = False and relax_method is bfgs or cg_bfgs";
         read_sync_double(input.relax_bfgs_init);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("stress_thr");
+        item.annotation = "stress threshold";
+        item.category = "Geometry relaxation";
+        item.type = "Real";
+        item.description = "The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.";
+        item.default_value = "0.5";
+        item.unit = "kbar";
+        item.availability = "";
+        read_sync_double(input.stress_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("press1");
+        item.annotation = "target pressure, unit: KBar";
+        item.category = "Geometry relaxation";
+        item.type = "Real";
+        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
+        item.default_value = "0";
+        item.unit = "kbar";
+        item.availability = "";
+        read_sync_double(input.press1);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("press2");
+        item.annotation = "target pressure, unit: KBar";
+        item.category = "Geometry relaxation";
+        item.type = "Real";
+        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
+        item.default_value = "0";
+        item.unit = "kbar";
+        item.availability = "";
+        read_sync_double(input.press2);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("press3");
+        item.annotation = "target pressure, unit: KBar";
+        item.category = "Geometry relaxation";
+        item.type = "Real";
+        item.description = "The external pressures along three axes. Positive input value is taken as compressive stress.";
+        item.default_value = "0";
+        item.unit = "kbar";
+        item.availability = "";
+        read_sync_double(input.press3);
         this->add_item(item);
     }
     {
@@ -407,6 +404,12 @@ When relax_new = False, all options are now available:
                 ModuleBase::WARNING_QUIT("ReadInput", "fixed_atoms is not meant to be used for calculation = relax");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("relax");
+        item.annotation = "allow relaxation along the specific direction";
+        read_sync_bool(input.relax);
         this->add_item(item);
     }
 }

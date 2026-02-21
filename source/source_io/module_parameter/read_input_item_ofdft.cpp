@@ -7,6 +7,9 @@ namespace ModuleIO
 {
 void ReadInput::item_ofdft()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("of_kinetic");
         item.annotation = "kinetic energy functional, such as tf, vw, wt";
@@ -259,43 +262,27 @@ void ReadInput::item_ofdft()
         this->add_item(item);
     }
     {
-        Input_Item item("of_full_pw");
-        item.annotation = "If set to 1, ecut will be ignored when collect "
-                          "planewaves, so that all planewaves will be used";
+        Input_Item item("of_xwm_rho_ref");
+        item.annotation = "The reference density of XWM KEDF";
         item.category = "OFDFT: orbital free density functional theory";
-        item.type = "Boolean";
-        item.description = R"(Whether to use full planewaves.
-* True: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
-* False: Only use the planewaves inside ecut, the same as KSDFT.)";
-        item.default_value = "True";
+        item.type = "Real";
+        item.description = "Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.";
+        item.default_value = "0.0";
         item.unit = "";
-        item.availability = "OFDFT";
-        read_sync_bool(input.of_full_pw);
+        item.availability = "OFDFT with of_kinetic=xwm";
+        read_sync_double(input.of_xwm_rho_ref);
         this->add_item(item);
     }
     {
-        Input_Item item("of_full_pw_dim");
-        item.annotation = "If of_full_pw = true, dimention of FFT is "
-                          "testricted to be (0) either odd or even; (1) odd "
-                          "only; (2) even only";
+        Input_Item item("of_xwm_kappa");
+        item.annotation = "The parameter kappa of XWM KEDF";
         item.category = "OFDFT: orbital free density functional theory";
-        item.type = "Integer";
-        item.description = R"(Specify the parity of FFT dimensions.
-* 0: either odd or even.
-* 1: odd only.
-* 2: even only.
-
-Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set of_full_pw_dim = 1 if nbspline != -1.)";
-        item.default_value = "0";
+        item.type = "Real";
+        item.description = "Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.";
+        item.default_value = "0.0";
         item.unit = "";
-        item.availability = "OFDFT with of_full_pw = True";
-        read_sync_int(input.of_full_pw_dim);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!para.input.of_full_pw)
-            {
-                para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
-            }
-        };
+        item.availability = "OFDFT with of_kinetic=xwm";
+        read_sync_double(input.of_xwm_kappa);
         this->add_item(item);
     }
     {
@@ -333,27 +320,43 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         this->add_item(item);
     }
     {
-        Input_Item item("of_xwm_kappa");
-        item.annotation = "The parameter kappa of XWM KEDF";
+        Input_Item item("of_full_pw");
+        item.annotation = "If set to 1, ecut will be ignored when collect "
+                          "planewaves, so that all planewaves will be used";
         item.category = "OFDFT: orbital free density functional theory";
-        item.type = "Real";
-        item.description = "Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.";
-        item.default_value = "0.0";
+        item.type = "Boolean";
+        item.description = R"(Whether to use full planewaves.
+* True: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+* False: Only use the planewaves inside ecut, the same as KSDFT.)";
+        item.default_value = "True";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=xwm";
-        read_sync_double(input.of_xwm_kappa);
+        item.availability = "OFDFT";
+        read_sync_bool(input.of_full_pw);
         this->add_item(item);
     }
     {
-        Input_Item item("of_xwm_rho_ref");
-        item.annotation = "The reference density of XWM KEDF";
+        Input_Item item("of_full_pw_dim");
+        item.annotation = "If of_full_pw = true, dimention of FFT is "
+                          "testricted to be (0) either odd or even; (1) odd "
+                          "only; (2) even only";
         item.category = "OFDFT: orbital free density functional theory";
-        item.type = "Real";
-        item.description = "Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.";
-        item.default_value = "0.0";
+        item.type = "Integer";
+        item.description = R"(Specify the parity of FFT dimensions.
+* 0: either odd or even.
+* 1: odd only.
+* 2: even only.
+
+Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set of_full_pw_dim = 1 if nbspline != -1.)";
+        item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=xwm";
-        read_sync_double(input.of_xwm_rho_ref);
+        item.availability = "OFDFT with of_full_pw = True";
+        read_sync_int(input.of_full_pw_dim);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (!para.input.of_full_pw)
+            {
+                para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
+            }
+        };
         this->add_item(item);
     }
     {

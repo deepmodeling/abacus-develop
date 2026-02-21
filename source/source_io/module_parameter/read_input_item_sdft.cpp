@@ -7,6 +7,9 @@ namespace ModuleIO
 {
 void ReadInput::item_sdft()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("method_sto");
         item.annotation = "1: slow and save memory, 2: fast and waste memory";
@@ -26,18 +29,6 @@ void ReadInput::item_sdft()
                 ModuleBase::WARNING_QUIT("ReadInput", "method_sto should be 1 or 2");
             }
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("npart_sto");
-        item.annotation = "Reduce memory when calculating Stochastic DOS";
-        item.category = "Electronic structure (SDFT)";
-        item.type = "Integer";
-        item.description = "Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "method_sto = 2 and out_dos = 1 or cal_cond = True";
-        read_sync_int(input.npart_sto);
         this->add_item(item);
     }
     {
@@ -171,6 +162,18 @@ void ReadInput::item_sdft()
         item.unit = "";
         item.availability = "esolver_type = sdft";
         read_sync_int(input.initsto_freq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("npart_sto");
+        item.annotation = "Reduce memory when calculating Stochastic DOS";
+        item.category = "Electronic structure (SDFT)";
+        item.type = "Integer";
+        item.description = "Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "method_sto = 2 and out_dos = 1 or cal_cond = True";
+        read_sync_int(input.npart_sto);
         this->add_item(item);
     }
 }

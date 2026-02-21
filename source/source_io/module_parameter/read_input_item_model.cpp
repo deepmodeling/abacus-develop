@@ -6,6 +6,9 @@ namespace ModuleIO
 {
 void ReadInput::item_model()
 {
+    // NOTE: The order of add_item() calls below determines the parameter order
+    // in the generated documentation (docs/advanced/input_files/input-main.md).
+    // Please preserve this ordering when adding new parameters.
     // Electric field and dipole correction
     {
         Input_Item item("efield_flag");
@@ -540,44 +543,6 @@ Namely, each line contains the element name and the corresponding parameter.)";
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_cn_thr");
-        item.annotation = "radius cutoff for cn";
-        item.category = "vdW correction";
-        item.type = "Real";
-        item.description = "The cutoff radius when calculating coordination numbers.";
-        item.default_value = "40";
-        item.unit = "defined by vdw_cn_thr_unit (default: Bohr)";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
-        read_sync_double(input.vdw_cn_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cn_thr <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr <= 0 is not allowd");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("vdw_cn_thr_unit");
-        item.annotation = "unit of cn_thr, Bohr or Angstrom";
-        item.category = "vdW correction";
-        item.type = "String";
-        item.description = R"(Unit of the coordination number cutoff (vdw_cn_thr). Available options are:
-* A(Angstrom)
-* Bohr)";
-        item.default_value = "Bohr";
-        item.unit = "";
-        item.availability = "";
-        read_sync_string(input.vdw_cn_thr_unit);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr"))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr_unit must be A or Bohr");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("vdw_cutoff_period");
         item.annotation = "periods of periodic structure";
         item.category = "vdW correction";
@@ -614,6 +579,44 @@ Namely, each line contains the element name and the corresponding parameter.)";
         bcastfuncs.push_back(
             [](Parameter& para) { Parallel_Common::bcast_int((int*)&para.input.vdw_cutoff_period, 3); });
 #endif
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_cn_thr");
+        item.annotation = "radius cutoff for cn";
+        item.category = "vdW correction";
+        item.type = "Real";
+        item.description = "The cutoff radius when calculating coordination numbers.";
+        item.default_value = "40";
+        item.unit = "defined by vdw_cn_thr_unit (default: Bohr)";
+        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        read_sync_double(input.vdw_cn_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cn_thr <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr <= 0 is not allowd");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_cn_thr_unit");
+        item.annotation = "unit of cn_thr, Bohr or Angstrom";
+        item.category = "vdW correction";
+        item.type = "String";
+        item.description = R"(Unit of the coordination number cutoff (vdw_cn_thr). Available options are:
+* A(Angstrom)
+* Bohr)";
+        item.default_value = "Bohr";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.vdw_cn_thr_unit);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr"))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr_unit must be A or Bohr");
+            }
+        };
         this->add_item(item);
     }
 }
