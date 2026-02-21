@@ -148,8 +148,15 @@ TEST(DMKTest,WriteDMK) {
     PARAM.sys.global_out_dir = "./";
 
     const int istep = -1;
-    ModuleIO::write_dmk(dmk, 3, efs, ucell, pv, istep);
-    ModuleIO::write_dmk(dmk_multik, 3, efs, ucell, pv, istep);
+    K_Vectors kv;
+    kv.set_nkstot(1);
+    kv.set_nks(1);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, istep);
+    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, istep);
     std::ifstream ifs;
 
     int pass = 0;
@@ -305,9 +312,16 @@ TEST(DMKTest, ReadDMK) {
 
     GlobalV::ofs_warning.open("warning.log");
 
-    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk, ofs_running));
-    ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running);
-    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running));
+    K_Vectors kv;
+    kv.set_nkstot(1);
+    kv.set_nks(1);
+    kv.kvec_c.resize(1);
+    kv.kvec_c[0].x = 0.0;
+    kv.kvec_c[0].y = 0.0;
+    kv.kvec_c[0].z = 0.0;
+    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk, ofs_running));
+    ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk_multik, ofs_running);
+    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk_multik, ofs_running));
     EXPECT_EQ(dmk.size(), 1);
     EXPECT_EQ(dmk_multik.size(), 1);
     EXPECT_EQ(dmk[0].size(), pv.get_local_size());
