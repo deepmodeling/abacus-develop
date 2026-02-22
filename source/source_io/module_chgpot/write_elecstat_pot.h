@@ -19,6 +19,8 @@ namespace ModuleIO
 /// @param chr
 /// @param ucell_
 /// @param v_eff_fixed
+/// @param solvent: for solvation model
+/// #param precision: output precision
 void write_elecstat_pot(
 #ifdef __MPI
     const int& bz,
@@ -30,7 +32,8 @@ void write_elecstat_pot(
     const Charge* const chr,
     const UnitCell* ucell_,
     const double* v_eff_fixed,
-    const surchem& solvent);
+    const surchem& solvent,
+    const int precision);
 
 } // namespace ModuleIO
 

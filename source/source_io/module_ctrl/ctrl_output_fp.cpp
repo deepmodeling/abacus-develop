@@ -154,7 +154,8 @@ void ctrl_output_fp(UnitCell& ucell,
             &chr,
             &(ucell),
             pelec->pot->get_fixed_v(),
-            solvent);
+            solvent,
+	    PARAM.inp.out_pot[1]);
     }
 
     // 6) write ELF
