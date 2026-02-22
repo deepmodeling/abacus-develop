@@ -88,14 +88,6 @@ parameters:
     default_value: "True"
     unit: ""
     availability: symmetry==1
-  - name: cal_stress
-    category: System variables
-    type: Boolean
-    description: |
-      If set to True, calculate the stress at the end of the electronic iteration.
-    default_value: "False"
-    unit: ""
-    availability: ""
   - name: cal_force
     category: System variables
     type: Boolean
@@ -143,6 +135,160 @@ parameters:
       * bacm: base-centered monoclinic
       * triclinic: triclinic
     default_value: none
+    unit: ""
+    availability: ""
+  - name: init_wfc
+    category: System variables
+    type: String
+    description: |
+      The type of the starting wave functions.
+
+      Available options are:
+      * atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
+      * atomic+random: add small random numbers on atomic pseudo-wavefunctions
+      * file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
+      * random: random numbers
+      * nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
+      * nao+random: add small random numbers on numerical atomic orbitals
+
+      [NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.
+    default_value: atomic
+    unit: ""
+    availability: ""
+  - name: init_chg
+    category: System variables
+    type: String
+    description: |
+      This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
+
+      * atomic: the density is starting from the summation of the atomic density of single atoms.
+      * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
+      * wfc: the density will be calculated by wavefunctions and occupations.
+      * dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+      * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
+      * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
+    default_value: atomic
+    unit: ""
+    availability: ""
+  - name: init_vel
+    category: System variables
+    type: Boolean
+    description: |
+      * True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
+      * False: assign value to atom velocity using Gaussian distributed random numbers.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: mem_saver
+    category: System variables
+    type: Boolean
+    description: |
+      Save memory when performing nscf calculations.
+      * 0: no memory saving techniques are used.
+      * 1: a memory saving technique will be used for many k point calculations.
+    default_value: "0"
+    unit: ""
+    availability: Used only for nscf calculations with plane wave basis set.
+  - name: cal_stress
+    category: System variables
+    type: Boolean
+    description: |
+      If set to True, calculate the stress at the end of the electronic iteration.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: diago_proc
+    category: System variables
+    type: Integer
+    description: |
+      * 0: it will be set to the number of MPI processes.
+      * >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
+    default_value: "0"
+    unit: ""
+    availability: Used only for plane wave basis set.
+  - name: nbspline
+    category: System variables
+    type: Integer
+    description: |
+      If set to a natural number, a Cardinal B-spline interpolation will be used to calculate Structure Factor. nbspline represents the order of B-spline basis and a larger one can get more accurate results but cost more. It is turned off by default.
+    default_value: "-1"
+    unit: ""
+    availability: ""
+  - name: kspacing
+    category: System variables
+    type: Real
+    description: |
+      Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
+
+      [NOTE] If gamma_only is set to be true, kspacing is invalid.
+    default_value: "0.0"
+    unit: ""
+    availability: ""
+  - name: min_dist_coef
+    category: System variables
+    type: Real
+    description: |
+      A factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.
+    default_value: "0.2"
+    unit: ""
+    availability: ""
+  - name: device
+    category: System variables
+    type: String
+    description: |
+      Specifies the computing device for ABACUS.
+
+      Available options are:
+      * cpu: for CPUs via Intel, AMD, or Other supported CPU devices
+      * gpu: for GPUs via CUDA or ROCm.
+
+      [NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.
+    default_value: cpu
+    unit: ""
+    availability: ""
+  - name: precision
+    category: System variables
+    type: String
+    description: |
+      Specifies the precision when performing scf calculation.
+      * single: single precision
+      * double: double precision
+    default_value: double
+    unit: ""
+    availability: Used only for plane wave basis set.
+  - name: timer_enable_nvtx
+    category: System variables
+    type: Boolean
+    description: |
+      Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+
+      * True: Enable NVTX profiling labels in the timer.
+      * False: Disable NVTX profiling labels in the timer.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: cell_factor
+    category: System variables
+    type: Real
+    description: |
+      Used in the construction of the pseudopotential tables. For cell-relax calculations, this is automatically set to 2.0.
+    default_value: "1.2"
+    unit: ""
+    availability: ""
+  - name: dm_to_rho
+    category: System variables
+    type: Boolean
+    description: |
+      Reads density matrix in npz format and calculates electron density.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: chg_extrap
+    category: System variables
+    type: String
+    description: |
+      Charge extrapolation method for MD and relaxation calculations.
+    default_value: default
     unit: ""
     availability: ""
   - name: ecutwfc
@@ -222,12 +368,23 @@ parameters:
     default_value: "0"
     unit: ""
     availability: ""
-  - name: cell_factor
-    category: System variables
-    type: Real
+  - name: pw_seed
+    category: Plane wave related variables
+    type: Integer
     description: |
-      Used in the construction of the pseudopotential tables. For cell-relax calculations, this is automatically set to 2.0.
-    default_value: "1.2"
+      Specify the random seed to initialize wave functions. Only positive integers are available.
+    default_value: "0"
+    unit: ""
+    availability: Only used for plane wave basis.
+  - name: diag_subspace
+    category: Plane wave related variables
+    type: Integer
+    description: |
+      The method to diagonalize subspace in dav_subspace method.
+      * 0: by LAPACK
+      * 1: by GenELPA
+      * 2: by ScaLAPACK
+    default_value: "0"
     unit: ""
     availability: ""
   - name: erf_ecut
@@ -237,6 +394,18 @@ parameters:
       Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.
     default_value: "0.0"
     unit: Ry
+    availability: ""
+  - name: fft_mode
+    category: Plane wave related variables
+    type: Integer
+    description: |
+      Set the mode of FFTW.
+      * 0: FFTW_ESTIMATE
+      * 1: FFTW_MEASURE
+      * 2: FFTW_PATIENT
+      * 3: FFTW_EXHAUSTIVE
+    default_value: "0"
+    unit: ""
     availability: ""
   - name: erf_height
     category: Plane wave related variables
@@ -253,95 +422,6 @@ parameters:
       In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional is modified, which is used in variable-cell molecular dynamics (or in stress calculation).
     default_value: "0.1"
     unit: Ry
-    availability: ""
-  - name: fft_mode
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      Set the mode of FFTW.
-      * 0: FFTW_ESTIMATE
-      * 1: FFTW_MEASURE
-      * 2: FFTW_PATIENT
-      * 3: FFTW_EXHAUSTIVE
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: diag_subspace
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      The method to diagonalize subspace in dav_subspace method.
-      * 0: by LAPACK
-      * 1: by GenELPA
-      * 2: by ScaLAPACK
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: init_wfc
-    category: System variables
-    type: String
-    description: |
-      The type of the starting wave functions.
-
-      Available options are:
-      * atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-      * atomic+random: add small random numbers on atomic pseudo-wavefunctions
-      * file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
-      * random: random numbers
-      * nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
-      * nao+random: add small random numbers on numerical atomic orbitals
-
-      [NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.
-    default_value: atomic
-    unit: ""
-    availability: ""
-  - name: pw_seed
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      Specify the random seed to initialize wave functions. Only positive integers are available.
-    default_value: "0"
-    unit: ""
-    availability: Only used for plane wave basis.
-  - name: init_chg
-    category: System variables
-    type: String
-    description: |
-      This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
-
-      * atomic: the density is starting from the summation of the atomic density of single atoms.
-      * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
-      * wfc: the density will be calculated by wavefunctions and occupations.
-      * dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
-      * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
-      * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
-    default_value: atomic
-    unit: ""
-    availability: ""
-  - name: dm_to_rho
-    category: System variables
-    type: Boolean
-    description: |
-      Reads density matrix in npz format and calculates electron density.
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: chg_extrap
-    category: System variables
-    type: String
-    description: |
-      Charge extrapolation method for MD and relaxation calculations.
-    default_value: default
-    unit: ""
-    availability: ""
-  - name: init_vel
-    category: System variables
-    type: Boolean
-    description: |
-      * True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
-      * False: assign value to atom velocity using Gaussian distributed random numbers.
-    default_value: "False"
-    unit: ""
     availability: ""
   - name: stru_file
     category: Input files
@@ -391,84 +471,15 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Used only when numerical atomic orbitals are employed as basis set.
-  - name: mem_saver
-    category: System variables
-    type: Boolean
-    description: |
-      Save memory when performing nscf calculations.
-      * 0: no memory saving techniques are used.
-      * 1: a memory saving technique will be used for many k point calculations.
-    default_value: "0"
-    unit: ""
-    availability: Used only for nscf calculations with plane wave basis set.
-  - name: diago_proc
-    category: System variables
-    type: Integer
-    description: |
-      * 0: it will be set to the number of MPI processes.
-      * >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
-    default_value: "0"
-    unit: ""
-    availability: Used only for plane wave basis set.
-  - name: nbspline
-    category: System variables
-    type: Integer
-    description: |
-      If set to a natural number, a Cardinal B-spline interpolation will be used to calculate Structure Factor. nbspline represents the order of B-spline basis and a larger one can get more accurate results but cost more. It is turned off by default.
-    default_value: "-1"
-    unit: ""
-    availability: ""
-  - name: kspacing
-    category: System variables
-    type: Real
-    description: |
-      Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
-
-      [NOTE] If gamma_only is set to be true, kspacing is invalid.
-    default_value: "0.0"
-    unit: ""
-    availability: ""
-  - name: min_dist_coef
-    category: System variables
-    type: Real
-    description: |
-      A factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.
-    default_value: "0.2"
-    unit: ""
-    availability: ""
-  - name: device
-    category: System variables
+  - name: basis_type
+    category: Electronic structure
     type: String
     description: |
-      Specifies the computing device for ABACUS.
-
-      Available options are:
-      * cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-      * gpu: for GPUs via CUDA or ROCm.
-
-      [NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.
-    default_value: cpu
-    unit: ""
-    availability: ""
-  - name: precision
-    category: System variables
-    type: String
-    description: |
-      Specifies the precision when performing scf calculation.
-      * single: single precision
-      * double: double precision
-    default_value: double
-    unit: ""
-    availability: Used only for plane wave basis set.
-  - name: timer_enable_nvtx
-    category: System variables
-    type: Boolean
-    description: |
-      Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
-
-      * True: Enable NVTX profiling labels in the timer.
-      * False: Disable NVTX profiling labels in the timer.
-    default_value: "False"
+      Choose the basis set.
+      * pw: Using plane-wave basis set only.
+      * lcao: Using localized atomic orbital sets.
+      * lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
+    default_value: pw
     unit: ""
     availability: ""
   - name: ks_solver
@@ -499,17 +510,6 @@ parameters:
 
       Then the user has to correct the input file and restart the calculation.
     default_value: ""
-    unit: ""
-    availability: ""
-  - name: basis_type
-    category: Electronic structure
-    type: String
-    description: |
-      Choose the basis set.
-      * pw: Using plane-wave basis set only.
-      * lcao: Using localized atomic orbital sets.
-      * lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
-    default_value: pw
     unit: ""
     availability: ""
   - name: nbands
@@ -623,54 +623,6 @@ parameters:
     default_value: "1"
     unit: ""
     availability: ""
-  - name: pw_diag_nmax
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-    default_value: "40"
-    unit: ""
-    availability: ""
-  - name: pw_diag_thr
-    category: Plane wave related variables
-    type: Real
-    description: |
-      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
-    default_value: "0.01"
-    unit: ""
-    availability: ""
-  - name: diago_smooth_ethr
-    category: Plane wave related variables
-    type: Boolean
-    description: |
-      If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.
-    default_value: "false"
-    unit: ""
-    availability: ""
-  - name: use_k_continuity
-    category: Plane wave related variables
-    type: Boolean
-    description: |
-      If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.
-    default_value: "false"
-    unit: ""
-    availability: Used only for plane wave basis set.
-  - name: pw_diag_ndim
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-    default_value: "4"
-    unit: ""
-    availability: ""
-  - name: diago_cg_prec
-    category: Plane wave related variables
-    type: Integer
-    description: |
-      Preconditioner type for conjugate gradient diagonalization method.
-    default_value: "1"
-    unit: ""
-    availability: ""
   - name: smearing_method
     category: Electronic structure
     type: String
@@ -728,6 +680,14 @@ parameters:
     default_value: "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4."
     unit: ""
     availability: ""
+  - name: mixing_beta_mag
+    category: Electronic structure
+    type: Real
+    description: |
+      Mixing parameter of magnetic density.
+    default_value: "4*mixing_beta, but the maximum value is 1.6."
+    unit: ""
+    availability: ""
   - name: mixing_ndim
     category: Electronic structure
     type: Integer
@@ -746,6 +706,14 @@ parameters:
     default_value: "0"
     unit: ""
     availability: ""
+  - name: mixing_dmr
+    category: Electronic structure
+    type: Boolean
+    description: |
+      At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+    default_value: "false"
+    unit: ""
+    availability: "Only for mixing_restart>=0.0"
   - name: mixing_gg0
     category: Electronic structure
     type: Real
@@ -756,14 +724,6 @@ parameters:
 
       For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
     default_value: "1.0"
-    unit: ""
-    availability: ""
-  - name: mixing_beta_mag
-    category: Electronic structure
-    type: Real
-    description: |
-      Mixing parameter of magnetic density.
-    default_value: "4*mixing_beta, but the maximum value is 1.6."
     unit: ""
     availability: ""
   - name: mixing_gg0_mag
@@ -812,14 +772,6 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Only relevant for DFT+U calculations.
-  - name: mixing_dmr
-    category: Electronic structure
-    type: Boolean
-    description: |
-      At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
-    default_value: "false"
-    unit: ""
-    availability: "Only for mixing_restart>=0.0"
   - name: gamma_only
     category: Electronic structure
     type: Integer
@@ -856,6 +808,16 @@ parameters:
     default_value: "-1.0. If the user does not set this parameter, it will not take effect."
     unit: eV
     availability: ""
+  - name: scf_thr_type
+    category: Electronic structure
+    type: Integer
+    description: |
+      Choose the calculation method of convergence criterion.
+      * 1: the criterion is defined in reciprocal space, which is used in SCF of PW basis with unit Ry.
+      * 2: the criterion is defined in real space, where is the number of electron, which is used in SCF of LCAO with unit dimensionless.
+    default_value: "1 (plane-wave basis), or 2 (localized atomic orbital basis)."
+    unit: ""
+    availability: ""
   - name: scf_os_stop
     category: Electronic structure
     type: Boolean
@@ -889,16 +851,6 @@ parameters:
     description: |
       To determine the number of old iterations to judge oscillation, it occured, more accurate lambda with DeltaSpin method would be calculated, only for PW base.
     default_value: "5"
-    unit: ""
-    availability: ""
-  - name: scf_thr_type
-    category: Electronic structure
-    type: Integer
-    description: |
-      Choose the calculation method of convergence criterion.
-      * 1: the criterion is defined in reciprocal space, which is used in SCF of PW basis with unit Ry.
-      * 2: the criterion is defined in real space, where is the number of electron, which is used in SCF of LCAO with unit dimensionless.
-    default_value: "1 (plane-wave basis), or 2 (localized atomic orbital basis)."
     unit: ""
     availability: ""
   - name: lspinorb
@@ -949,6 +901,64 @@ parameters:
     default_value: "1.0"
     unit: ""
     availability: Only works when lspinorb=true
+  - name: dfthalf_type
+    category: Electronic structure
+    type: Integer
+    description: |
+      DFT-1/2 type:
+      * 0: DFT-1/2 is off.
+      * 1: Shell DFT-1/2 method is used.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: pw_diag_thr
+    category: Plane wave related variables
+    type: Real
+    description: |
+      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
+    default_value: "0.01"
+    unit: ""
+    availability: ""
+  - name: diago_smooth_ethr
+    category: Plane wave related variables
+    type: Boolean
+    description: |
+      If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: use_k_continuity
+    category: Plane wave related variables
+    type: Boolean
+    description: |
+      If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.
+    default_value: "false"
+    unit: ""
+    availability: Used only for plane wave basis set.
+  - name: pw_diag_nmax
+    category: Plane wave related variables
+    type: Integer
+    description: |
+      Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
+    default_value: "40"
+    unit: ""
+    availability: ""
+  - name: pw_diag_ndim
+    category: Plane wave related variables
+    type: Integer
+    description: |
+      Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
+    default_value: "4"
+    unit: ""
+    availability: ""
+  - name: diago_cg_prec
+    category: Plane wave related variables
+    type: Integer
+    description: |
+      Preconditioner type for conjugate gradient diagonalization method.
+    default_value: "1"
+    unit: ""
+    availability: ""
   - name: nb2d
     category: System variables
     type: Integer
@@ -1087,16 +1097,6 @@ parameters:
     default_value: "0.1"
     unit: ""
     availability: ""
-  - name: dfthalf_type
-    category: Electronic structure
-    type: Integer
-    description: |
-      DFT-1/2 type:
-      * 0: DFT-1/2 is off.
-      * 1: Shell DFT-1/2 method is used.
-    default_value: "0"
-    unit: ""
-    availability: ""
   - name: relax_method
     category: Geometry relaxation
     type: Vector of string
@@ -1191,38 +1191,6 @@ parameters:
     default_value: "0.0"
     unit: eV/Angstrom
     availability: ""
-  - name: stress_thr
-    category: Geometry relaxation
-    type: Real
-    description: |
-      The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
-    default_value: "0.5"
-    unit: kbar
-    availability: ""
-  - name: press1
-    category: Geometry relaxation
-    type: Real
-    description: |
-      The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: "0"
-    unit: kbar
-    availability: ""
-  - name: press2
-    category: Geometry relaxation
-    type: Real
-    description: |
-      The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: "0"
-    unit: kbar
-    availability: ""
-  - name: press3
-    category: Geometry relaxation
-    type: Real
-    description: |
-      The external pressures along three axes. Positive input value is taken as compressive stress.
-    default_value: "0"
-    unit: kbar
-    availability: ""
   - name: relax_bfgs_w1
     category: Geometry relaxation
     type: Real
@@ -1263,6 +1231,38 @@ parameters:
     default_value: "0.5"
     unit: Bohr
     availability: Only used when relax_new = False and relax_method is bfgs or cg_bfgs
+  - name: stress_thr
+    category: Geometry relaxation
+    type: Real
+    description: |
+      The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
+    default_value: "0.5"
+    unit: kbar
+    availability: ""
+  - name: press1
+    category: Geometry relaxation
+    type: Real
+    description: |
+      The external pressures along three axes. Positive input value is taken as compressive stress.
+    default_value: "0"
+    unit: kbar
+    availability: ""
+  - name: press2
+    category: Geometry relaxation
+    type: Real
+    description: |
+      The external pressures along three axes. Positive input value is taken as compressive stress.
+    default_value: "0"
+    unit: kbar
+    availability: ""
+  - name: press3
+    category: Geometry relaxation
+    type: Real
+    description: |
+      The external pressures along three axes. Positive input value is taken as compressive stress.
+    default_value: "0"
+    unit: kbar
+    availability: ""
   - name: fixed_axes
     category: Geometry relaxation
     type: String
@@ -1325,20 +1325,6 @@ parameters:
     default_value: nvt
     unit: ""
     availability: ""
-  - name: md_thermostat
-    category: Molecular dynamics
-    type: String
-    description: |
-      Specify the temperature control method used in NVT ensemble.
-
-      * nhc: Nose-Hoover chain, see md_tfreq and md_tchain in detail.
-      * anderson: Anderson thermostat, see md_nraise in detail.
-      * berendsen: Berendsen thermostat, see md_nraise in detail.
-      * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
-      * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
-    default_value: nhc
-    unit: ""
-    availability: ""
   - name: md_nstep
     category: Molecular dynamics
     type: Integer
@@ -1355,12 +1341,18 @@ parameters:
     default_value: "1.0"
     unit: fs
     availability: ""
-  - name: md_tchain
+  - name: md_thermostat
     category: Molecular dynamics
-    type: Integer
+    type: String
     description: |
-      Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-    default_value: "1"
+      Specify the temperature control method used in NVT ensemble.
+
+      * nhc: Nose-Hoover chain, see md_tfreq and md_tchain in detail.
+      * anderson: Anderson thermostat, see md_nraise in detail.
+      * berendsen: Berendsen thermostat, see md_nraise in detail.
+      * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
+      * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+    default_value: nhc
     unit: ""
     availability: ""
   - name: md_tfirst
@@ -1391,12 +1383,24 @@ parameters:
     default_value: No default
     unit: K
     availability: ""
-  - name: md_dumpfreq
+  - name: md_prec_level
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
-    default_value: "1"
+      Determine the precision level of variable-cell molecular dynamics calculations.
+      * 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+      * 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: md_restart
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
+      * True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+      * False: ABACUS will start molecular dynamics calculations normally from the first step.
+    default_value: "False"
     unit: ""
     availability: ""
   - name: md_restartfreq
@@ -1405,6 +1409,38 @@ parameters:
     description: |
       The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
     default_value: "5"
+    unit: ""
+    availability: ""
+  - name: md_dumpfreq
+    category: Molecular dynamics
+    type: Integer
+    description: |
+      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
+    default_value: "1"
+    unit: ""
+    availability: ""
+  - name: dump_force
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to output atomic forces into the file OUT.${suffix}/MD_dump.
+    default_value: "True"
+    unit: ""
+    availability: ""
+  - name: dump_vel
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.
+    default_value: "True"
+    unit: ""
+    availability: ""
+  - name: dump_virial
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to output lattice virials into the file OUT.${suffix}/MD_dump.
+    default_value: "True"
     unit: ""
     availability: ""
   - name: md_seed
@@ -1417,14 +1453,32 @@ parameters:
     default_value: "-1"
     unit: ""
     availability: ""
-  - name: md_prec_level
+  - name: md_tfreq
+    category: Molecular dynamics
+    type: Real
+    description: |
+      Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+
+      Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to 1/(100*md_dt). An improper choice might lead to the failure of jobs.
+    default_value: 1/40/md_dt
+    unit: ""
+    availability: ""
+  - name: md_tchain
     category: Molecular dynamics
     type: Integer
+    description: |
+      Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+    default_value: "1"
+    unit: ""
+    availability: ""
+  - name: md_pmode
+    category: Molecular dynamics
+    type: String
     description: |
       Determine the precision level of variable-cell molecular dynamics calculations.
       * 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
       * 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-    default_value: "0"
+    default_value: iso
     unit: ""
     availability: ""
   - name: ref_cell_factor
@@ -1435,14 +1489,51 @@ parameters:
     default_value: "1.0"
     unit: ""
     availability: ""
-  - name: md_restart
+  - name: md_pcouple
     category: Molecular dynamics
-    type: Boolean
+    type: String
     description: |
-      Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-      * True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
-      * False: ABACUS will start molecular dynamics calculations normally from the first step.
-    default_value: "False"
+      The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+      * none: Three lattice vectors scale independently.
+      * xyz: Lattice vectors x, y, and z scale proportionally.
+      * xy: Lattice vectors x and y scale proportionally.
+      * xz: Lattice vectors x and z scale proportionally.
+      * yz: Lattice vectors y and z scale proportionally.
+    default_value: none
+    unit: ""
+    availability: ""
+  - name: md_pfirst
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.
+    default_value: "-1.0"
+    unit: kbar
+    availability: ""
+  - name: md_plast
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.
+    default_value: "-1.0"
+    unit: kbar
+    availability: ""
+  - name: md_pfreq
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+
+      Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.
+    default_value: 1/400/md_dt
+    unit: ""
+    availability: ""
+  - name: md_pchain
+    category: Molecular dynamics
+    type: Integer
+    description: |
+      The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+    default_value: "1"
     unit: ""
     availability: ""
   - name: lj_rule
@@ -1560,16 +1651,6 @@ parameters:
     default_value: No default
     unit: ""
     availability: ""
-  - name: md_tfreq
-    category: Molecular dynamics
-    type: Real
-    description: |
-      Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-
-      Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to 1/(100*md_dt). An improper choice might lead to the failure of jobs.
-    default_value: 1/40/md_dt
-    unit: ""
-    availability: ""
   - name: md_damp
     category: Molecular dynamics
     type: Real
@@ -1577,6 +1658,14 @@ parameters:
       The damping parameter used to add fictitious force in the Langevin method.
     default_value: "1.0"
     unit: fs
+    availability: ""
+  - name: md_tolerance
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.
+    default_value: "100.0"
+    unit: K
     availability: ""
   - name: md_nraise
     category: Molecular dynamics
@@ -1605,95 +1694,6 @@ parameters:
       The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.
     default_value: "0.01"
     unit: bohr
-    availability: ""
-  - name: md_tolerance
-    category: Molecular dynamics
-    type: Real
-    description: |
-      The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.
-    default_value: "100.0"
-    unit: K
-    availability: ""
-  - name: md_pmode
-    category: Molecular dynamics
-    type: String
-    description: |
-      Determine the precision level of variable-cell molecular dynamics calculations.
-      * 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-      * 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-    default_value: iso
-    unit: ""
-    availability: ""
-  - name: md_pcouple
-    category: Molecular dynamics
-    type: String
-    description: |
-      The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-      * none: Three lattice vectors scale independently.
-      * xyz: Lattice vectors x, y, and z scale proportionally.
-      * xy: Lattice vectors x and y scale proportionally.
-      * xz: Lattice vectors x and z scale proportionally.
-      * yz: Lattice vectors y and z scale proportionally.
-    default_value: none
-    unit: ""
-    availability: ""
-  - name: md_pchain
-    category: Molecular dynamics
-    type: Integer
-    description: |
-      The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-    default_value: "1"
-    unit: ""
-    availability: ""
-  - name: md_pfirst
-    category: Molecular dynamics
-    type: Real
-    description: |
-      The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.
-    default_value: "-1.0"
-    unit: kbar
-    availability: ""
-  - name: md_plast
-    category: Molecular dynamics
-    type: Real
-    description: |
-      The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.
-    default_value: "-1.0"
-    unit: kbar
-    availability: ""
-  - name: md_pfreq
-    category: Molecular dynamics
-    type: Real
-    description: |
-      The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
-
-      Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.
-    default_value: 1/400/md_dt
-    unit: ""
-    availability: ""
-  - name: dump_force
-    category: Molecular dynamics
-    type: Boolean
-    description: |
-      Whether to output atomic forces into the file OUT.${suffix}/MD_dump.
-    default_value: "True"
-    unit: ""
-    availability: ""
-  - name: dump_vel
-    category: Molecular dynamics
-    type: Boolean
-    description: |
-      Whether to output atomic velocities into the file OUT.${suffix}/MD_dump.
-    default_value: "True"
-    unit: ""
-    availability: ""
-  - name: dump_virial
-    category: Molecular dynamics
-    type: Boolean
-    description: |
-      Whether to output lattice virials into the file OUT.${suffix}/MD_dump.
-    default_value: "True"
-    unit: ""
     availability: ""
   - name: of_kinetic
     category: "OFDFT: orbital free density functional theory"
@@ -1808,6 +1808,40 @@ parameters:
     default_value: "1.3"
     unit: ""
     availability: OFDFT with of_kinetic=lkt
+  - name: of_xwm_rho_ref
+    category: "OFDFT: orbital free density functional theory"
+    type: Real
+    description: |
+      Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
+    default_value: "0.0"
+    unit: ""
+    availability: OFDFT with of_kinetic=xwm
+  - name: of_xwm_kappa
+    category: "OFDFT: orbital free density functional theory"
+    type: Real
+    description: |
+      Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
+    default_value: "0.0"
+    unit: ""
+    availability: OFDFT with of_kinetic=xwm
+  - name: of_read_kernel
+    category: "OFDFT: orbital free density functional theory"
+    type: Boolean
+    description: |
+      Whether to read in the kernel file.
+      * True: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by of_kernel_file.
+      * False: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
+    default_value: "False"
+    unit: ""
+    availability: OFDFT with of_kinetic=wt
+  - name: of_kernel_file
+    category: "OFDFT: orbital free density functional theory"
+    type: String
+    description: |
+      The name of WT kernel file.
+    default_value: WTkernel.txt
+    unit: ""
+    availability: OFDFT with of_read_kernel=True
   - name: of_full_pw
     category: "OFDFT: orbital free density functional theory"
     type: Boolean
@@ -1831,40 +1865,6 @@ parameters:
     default_value: "0"
     unit: ""
     availability: OFDFT with of_full_pw = True
-  - name: of_read_kernel
-    category: "OFDFT: orbital free density functional theory"
-    type: Boolean
-    description: |
-      Whether to read in the kernel file.
-      * True: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by of_kernel_file.
-      * False: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
-    default_value: "False"
-    unit: ""
-    availability: OFDFT with of_kinetic=wt
-  - name: of_kernel_file
-    category: "OFDFT: orbital free density functional theory"
-    type: String
-    description: |
-      The name of WT kernel file.
-    default_value: WTkernel.txt
-    unit: ""
-    availability: OFDFT with of_read_kernel=True
-  - name: of_xwm_kappa
-    category: "OFDFT: orbital free density functional theory"
-    type: Real
-    description: |
-      Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
-    default_value: "0.0"
-    unit: ""
-    availability: OFDFT with of_kinetic=xwm
-  - name: of_xwm_rho_ref
-    category: "OFDFT: orbital free density functional theory"
-    type: Real
-    description: |
-      Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
-    default_value: "0.0"
-    unit: ""
-    availability: OFDFT with of_kinetic=xwm
   - name: of_ml_gene_data
     category: "ML-KEDF: machine learning based kinetic energy density functional for OFDFT"
     type: Boolean
@@ -2124,14 +2124,6 @@ parameters:
     default_value: "2"
     unit: ""
     availability: esolver_type = sdft
-  - name: npart_sto
-    category: Electronic structure (SDFT)
-    type: Integer
-    description: |
-      Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
-    default_value: "1"
-    unit: ""
-    availability: method_sto = 2 and out_dos = 1 or cal_cond = True
   - name: nbands_sto
     category: Electronic structure (SDFT)
     type: Integer or string
@@ -2197,6 +2189,14 @@ parameters:
     default_value: "0"
     unit: ""
     availability: esolver_type = sdft
+  - name: npart_sto
+    category: Electronic structure (SDFT)
+    type: Integer
+    description: |
+      Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
+    default_value: "1"
+    unit: ""
+    availability: method_sto = 2 and out_dos = 1 or cal_cond = True
   - name: deepks_out_labels
     category: DeePKS
     type: Integer
@@ -2246,50 +2246,6 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis
-  - name: deepks_bandgap
-    category: DeePKS
-    type: Integer
-    description: |
-      include bandgap label for DeePKS training
-      * 0: Don't include bandgap label
-      * 1: Include target bandgap label (see deepks_band_range for more details)
-      * 2: Include multiple bandgap label (see deepks_band_range for more details)
-      * 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
-    default_value: "0"
-    unit: ""
-    availability: Numerical atomic orbital basis and deepks_scf is true
-  - name: deepks_band_range
-    category: DeePKS
-    type: "Int*2"
-    description: |
-      The first value should not be larger than the second one and the meaning differs in different cases below
-      * deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
-      * deepks_bandgap is 2: Bandgap labels are energies between HOMO and all states in range [LUMO + deepks_band_range[0], LUMO + deepks_band_range[1]] (Thus there are deepks_band_range[1] - deepks_band_range[0] + 1 bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (deepks_band_range[1] - deepks_band_range[0] bandgaps in this case). NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.
-    default_value: "-1 0"
-    unit: ""
-    availability: "Numerical atomic orbital basis, deepks_scf is true, and deepks_bandgap is 1 or 2"
-  - name: deepks_v_delta
-    category: DeePKS
-    type: Integer
-    description: |
-      Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When deepks_out_labels is true and deepks_v_delta > 0 (k space), ABACUS will output deepks_hbase.npy, deepks_vdelta.npy and deepks_htot.npy(htot=hbase+vdelta). When deepks_out_labels is true and deepks_v_delta < 0 (real space), ABACUS will output deepks_hrtot.csr, deepks_hrdelta.csr. Some more files output for different settings. NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.
-      * deepks_v_delta = 1: deepks_vdpre.npy, which is used to calculate V_delta during DeePKS training.
-      * deepks_v_delta = 2: deepks_phialpha.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdpre.npy. A recommanded method for memory saving.
-      * deepks_v_delta = -1: deepks_vdrpre.npy, which is used to calculate V_delta_R during DeePKS training.
-      * deepks_v_delta = -2: deepks_phialpha_r.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdrpre.npy. A recommanded method for memory saving.
-    default_value: "0"
-    unit: ""
-    availability: Numerical atomic orbital basis
-  - name: deepks_out_unittest
-    category: DeePKS
-    type: Boolean
-    description: |
-      generate files for constructing DeePKS unit test
-
-      [NOTE] Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
-    default_value: "False"
-    unit: ""
-    availability: ""
   - name: deepks_model
     category: DeePKS
     type: String
@@ -2346,6 +2302,58 @@ parameters:
     default_value: "0.1"
     unit: Bohr
     availability: gen_bessel calculation
+  - name: deepks_bandgap
+    category: DeePKS
+    type: Integer
+    description: |
+      include bandgap label for DeePKS training
+      * 0: Don't include bandgap label
+      * 1: Include target bandgap label (see deepks_band_range for more details)
+      * 2: Include multiple bandgap label (see deepks_band_range for more details)
+      * 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
+    default_value: "0"
+    unit: ""
+    availability: Numerical atomic orbital basis and deepks_scf is true
+  - name: deepks_band_range
+    category: DeePKS
+    type: "Int*2"
+    description: |
+      The first value should not be larger than the second one and the meaning differs in different cases below
+      * deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
+      * deepks_bandgap is 2: Bandgap labels are energies between HOMO and all states in range [LUMO + deepks_band_range[0], LUMO + deepks_band_range[1]] (Thus there are deepks_band_range[1] - deepks_band_range[0] + 1 bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (deepks_band_range[1] - deepks_band_range[0] bandgaps in this case). NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.
+    default_value: "-1 0"
+    unit: ""
+    availability: "Numerical atomic orbital basis, deepks_scf is true, and deepks_bandgap is 1 or 2"
+  - name: deepks_v_delta
+    category: DeePKS
+    type: Integer
+    description: |
+      Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When deepks_out_labels is true and deepks_v_delta > 0 (k space), ABACUS will output deepks_hbase.npy, deepks_vdelta.npy and deepks_htot.npy(htot=hbase+vdelta). When deepks_out_labels is true and deepks_v_delta < 0 (real space), ABACUS will output deepks_hrtot.csr, deepks_hrdelta.csr. Some more files output for different settings. NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.
+      * deepks_v_delta = 1: deepks_vdpre.npy, which is used to calculate V_delta during DeePKS training.
+      * deepks_v_delta = 2: deepks_phialpha.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdpre.npy. A recommanded method for memory saving.
+      * deepks_v_delta = -1: deepks_vdrpre.npy, which is used to calculate V_delta_R during DeePKS training.
+      * deepks_v_delta = -2: deepks_phialpha_r.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdrpre.npy. A recommanded method for memory saving.
+    default_value: "0"
+    unit: ""
+    availability: Numerical atomic orbital basis
+  - name: deepks_out_unittest
+    category: DeePKS
+    type: Boolean
+    description: |
+      generate files for constructing DeePKS unit test
+
+      [NOTE] Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: estep_per_md
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Integer
+    description: |
+      The number of electronic propagation steps between two ionic steps.
+    default_value: "1"
+    unit: ""
+    availability: ""
   - name: td_dt
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Real
@@ -2354,12 +2362,36 @@ parameters:
     default_value: md_dt / estep_per_md
     unit: fs
     availability: ""
-  - name: estep_per_md
+  - name: td_edm
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Integer
     description: |
-      The number of electronic propagation steps between two ionic steps.
-    default_value: "1"
+      Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
+      * 0: Using the original formula.
+      * 1: Using the formula for ground state (deprecated). Note that this usually does not hold if wave function is not the eigenstate of the Hamiltonian.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: td_print_eij
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Real
+    description: |
+      Controls the printing of Hamiltonian matrix elements.
+      * < 0: Suppress all output.
+      * >= 0: Print only elements with either i or j exceeding td_print_eij.
+    default_value: "-1"
+    unit: Ry
+    availability: ""
+  - name: td_propagator
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Integer
+    description: |
+      Methods of electronic propagation.
+      * 0: Crank-Nicolson, based on matrix inversion.
+      * 1: 4th-order Taylor expansion of exponential.
+      * 2: Enforced time-reversal symmetry (ETRS).
+      * 3: Crank-Nicolson, based on solving linear equation.
+    default_value: "0"
     unit: ""
     availability: ""
   - name: td_vext
@@ -2380,48 +2412,6 @@ parameters:
       * 2: The external field direction is along the y-axis.
       * 3: The external field direction is along the z-axis.
     default_value: "1"
-    unit: ""
-    availability: ""
-  - name: init_vecpot_file
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Boolean
-    description: |
-      Initialize vector potential through file or not.
-      * True: Initialize vector potential from file At.dat (unit: a.u.). It consists of four columns, representing the step number and vector potential on each direction.
-      * False: Calculate vector potential by integrating the electric field.
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: td_print_eij
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Real
-    description: |
-      Controls the printing of Hamiltonian matrix elements.
-      * < 0: Suppress all output.
-      * >= 0: Print only elements with either i or j exceeding td_print_eij.
-    default_value: "-1"
-    unit: Ry
-    availability: ""
-  - name: td_edm
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Integer
-    description: |
-      Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
-      * 0: Using the original formula.
-      * 1: Using the formula for ground state (deprecated). Note that this usually does not hold if wave function is not the eigenstate of the Hamiltonian.
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: td_propagator
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Integer
-    description: |
-      Methods of electronic propagation.
-      * 0: Crank-Nicolson, based on matrix inversion.
-      * 1: 4th-order Taylor expansion of exponential.
-      * 2: Enforced time-reversal symmetry (ETRS).
-      * 3: Crank-Nicolson, based on solving linear equation.
-    default_value: "0"
     unit: ""
     availability: ""
   - name: td_stype
@@ -2623,6 +2613,16 @@ parameters:
     default_value: "1.0"
     unit: V/Angstrom
     availability: ""
+  - name: init_vecpot_file
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Boolean
+    description: |
+      Initialize vector potential through file or not.
+      * True: Initialize vector potential from file At.dat (unit: a.u.). It consists of four columns, representing the step number and vector potential on each direction.
+      * False: Calculate vector potential by integrating the electric field.
+    default_value: "False"
+    unit: ""
+    availability: ""
   - name: ocp
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Boolean
@@ -2662,31 +2662,6 @@ parameters:
     default_value: "1.0"
     unit: ""
     availability: TDOFDFT
-  - name: lr_nstates
-    category: Linear Response TDDFT (Under Development Feature)
-    type: Integer
-    description: |
-      The number of 2-particle states to be solved.
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: nocc
-    category: Linear Response TDDFT (Under Development Feature)
-    type: Integer
-    description: |
-      The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
-      * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.
-    default_value: nband
-    unit: ""
-    availability: ""
-  - name: nvirt
-    category: Linear Response TDDFT (Under Development Feature)
-    type: Integer
-    description: |
-      The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
-    default_value: "1"
-    unit: ""
-    availability: ""
   - name: xc_kernel
     category: Linear Response TDDFT (Under Development Feature)
     type: String
@@ -2725,12 +2700,29 @@ parameters:
     default_value: "1e-2"
     unit: ""
     availability: ""
-  - name: out_wfc_lr
+  - name: nocc
     category: Linear Response TDDFT (Under Development Feature)
-    type: Boolean
+    type: Integer
     description: |
-      Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.
-    default_value: "False"
+      The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
+      * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.
+    default_value: nband
+    unit: ""
+    availability: ""
+  - name: nvirt
+    category: Linear Response TDDFT (Under Development Feature)
+    type: Integer
+    description: |
+      The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
+    default_value: "1"
+    unit: ""
+    availability: ""
+  - name: lr_nstates
+    category: Linear Response TDDFT (Under Development Feature)
+    type: Integer
+    description: |
+      The number of 2-particle states to be solved.
+    default_value: "0"
     unit: ""
     availability: ""
   - name: lr_unrestricted
@@ -2751,6 +2743,14 @@ parameters:
     default_value: 0.0 0.0
     unit: nm
     availability: ""
+  - name: out_wfc_lr
+    category: Linear Response TDDFT (Under Development Feature)
+    type: Boolean
+    description: |
+      Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.
+    default_value: "False"
+    unit: ""
+    availability: ""
   - name: abs_gauge
     category: Linear Response TDDFT (Under Development Feature)
     type: String
@@ -2767,12 +2767,24 @@ parameters:
     default_value: "0.01"
     unit: ""
     availability: ""
-  - name: out_stru
+  - name: out_freq_ion
     category: Output information
-    type: Boolean
+    type: Integer
     description: |
-      Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.
-    default_value: "False"
+      Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps.
+
+      [NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: out_freq_td
+    category: Output information
+    type: Integer
+    description: |
+      Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
+
+      [NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_freq_elec
@@ -2812,89 +2824,6 @@ parameters:
     default_value: "0"
     unit: ""
     availability: ""
-  - name: out_wfc_pw
-    category: Output information
-    type: Integer
-    description: |
-      Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
-      * 0: no output
-      * 1: (txt format)
-       * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
-       * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
-       * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
-      * 2: (binary format)
-       * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
-       * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
-       * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
-
-      [NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.
-    default_value: "0"
-    unit: ""
-    availability: "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)"
-  - name: out_band
-    category: Output information
-    type: Boolean Integer
-    description: |
-      Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
-       * nspin = 1 or 4: eig.txt;
-       * nspin = 2: eigs1.txt and eigs2.txt;
-       * For more information, refer to the band.md
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_dos
-    category: Output information
-    type: Integer
-    description: |
-      Whether to output the density of states (DOS). For more information, refer to the dos.md.
-      * 0: no output
-      * 1: output the density of states (DOS)
-       * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
-       * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-      * 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-      * 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: out_ldos
-    category: Output information
-    type: Integer
-    description: |
-      Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
-      * 0: no output
-      * 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
-      * 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
-      * 3: output both two LDOS modes above.
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: out_mul
-    category: Output information
-    type: Boolean
-    description: |
-      Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
-    default_value: "False"
-    unit: ""
-    availability: Numerical atomic orbital basis
-  - name: out_proj_band
-    category: Output information
-    type: Boolean
-    description: |
-      Whether to output the projected band structure. For more information, refer to the band.md
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_level
-    category: Output information
-    type: String
-    description: |
-      Control the output level of information in OUT.{calculation}.log.
-      * ie: electronic iteration level, which prints useful information for electronic iterations;
-      * i: geometry relaxation level, which prints some information for geometry relaxations additionally;
-      * m: molecular dynamics level, which does not print some information for simplicity.
-    default_value: ie
-    unit: ""
-    availability: ""
   - name: out_dmk
     category: Output information
     type: Boolean Integer
@@ -2923,6 +2852,110 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis (multi-k points)
+  - name: out_wfc_pw
+    category: Output information
+    type: Integer
+    description: |
+      Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
+      * 0: no output
+      * 1: (txt format)
+       * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
+       * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
+       * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
+      * 2: (binary format)
+       * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
+       * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
+       * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
+
+      [NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.
+    default_value: "0"
+    unit: ""
+    availability: "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)"
+  - name: out_wfc_lcao
+    category: Output information
+    type: Integer
+    description: |
+      Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
+      * 0: no output
+      * 1: (txt format)
+       * gamma-only: wfs1_nao.txt or wfs2_nao.txt, ...;
+       * non-gamma-only: wfs1k1_nao.txt or wfs1k2_nao.txt, ...;
+      * 2: (binary format)
+       * gamma-only: wfs1_nao.dat or wfs2_nao.dat, ...;
+       * non-gamma-only: wfs1k1_nao.dat or wfs1k2_nao.dat, ....
+
+      The corresponding sequence of the orbitals can be seen in Basis Set.
+
+      Also controled by out_freq_ion and out_app_flag.
+
+      [NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
+    default_value: "False"
+    unit: ""
+    availability: Numerical atomic orbital basis
+  - name: out_dos
+    category: Output information
+    type: Integer
+    description: |
+      Whether to output the density of states (DOS). For more information, refer to the dos.md.
+      * 0: no output
+      * 1: output the density of states (DOS)
+       * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+       * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
+      * 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
+      * 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: out_ldos
+    category: Output information
+    type: Integer
+    description: |
+      Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
+      * 0: no output
+      * 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
+      * 2: output LDOS along a line in real space (controlled by ldos_line). Parameters used to control DOS output are also valid for LDOS.
+      * 3: output both two LDOS modes above.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: out_band
+    category: Output information
+    type: Boolean Integer
+    description: |
+      Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
+       * nspin = 1 or 4: eig.txt;
+       * nspin = 2: eigs1.txt and eigs2.txt;
+       * For more information, refer to the band.md
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_proj_band
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to output the projected band structure. For more information, refer to the band.md
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_stru
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_level
+    category: Output information
+    type: String
+    description: |
+      Control the output level of information in OUT.{calculation}.log.
+      * ie: electronic iteration level, which prints useful information for electronic iterations;
+      * i: geometry relaxation level, which prints some information for geometry relaxations additionally;
+      * m: molecular dynamics level, which does not print some information for simplicity.
+    default_value: ie
+    unit: ""
+    availability: ""
   - name: out_mat_hs
     category: Output information
     type: Boolean Integer
@@ -2941,16 +2974,6 @@ parameters:
     default_value: False 8
     unit: Ry
     availability: Numerical atomic orbital basis
-  - name: out_mat_tk
-    category: Output information
-    type: Boolean Integer
-    description: |
-      Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision.
-
-      [NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.
-    default_value: "False [8]"
-    unit: Ry
-    availability: Numerical atomic orbital basis
   - name: out_mat_hs2
     category: Output information
     type: Boolean
@@ -2961,14 +2984,36 @@ parameters:
     default_value: "False"
     unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
-  - name: out_mat_l
+  - name: out_mat_tk
     category: Output information
     type: Boolean Integer
     description: |
-      Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.
-    default_value: False 8
-    unit: ""
-    availability: Numerical atomic orbital (NAO) basis
+      Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision.
+
+      [NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.
+    default_value: "False [8]"
+    unit: Ry
+    availability: Numerical atomic orbital basis
+  - name: out_mat_r
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
+
+      [NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.
+    default_value: "False"
+    unit: Bohr
+    availability: Numerical atomic orbital basis (not gamma-only algorithm)
+  - name: out_mat_t
+    category: Output information
+    type: Boolean
+    description: |
+      Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+
+      [NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
+    default_value: "False"
+    unit: Ry
+    availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_mat_dh
     category: Output information
     type: Boolean
@@ -3009,6 +3054,31 @@ parameters:
     default_value: "False"
     unit: Ry
     availability: Numerical atomic orbital (NAO) basis
+  - name: out_mat_l
+    category: Output information
+    type: Boolean Integer
+    description: |
+      Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.
+    default_value: False 8
+    unit: ""
+    availability: Numerical atomic orbital (NAO) basis
+  - name: out_xc_r
+    category: Output information
+    type: Integer Integer
+    description: |
+      The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
+      * 0: rho, amag, sigma, exc
+      * 1: vrho, vsigma
+      * 2: v2rho2, v2rhosigma, v2sigma2
+      * 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
+      * 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
+
+      The second integer controls the precision of the charge density output, if not given, will use 3 as default.
+
+      The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+    default_value: "-1 3"
+    unit: ""
+    availability: ""
   - name: out_eband_terms
     category: Output information
     type: Boolean
@@ -3017,26 +3087,14 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis
-  - name: out_freq_ion
+  - name: out_mul
     category: Output information
-    type: Integer
+    type: Boolean
     description: |
-      Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps.
-
-      [NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
-    default_value: "0"
+      Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
+    default_value: "False"
     unit: ""
-    availability: ""
-  - name: out_freq_td
-    category: Output information
-    type: Integer
-    description: |
-      Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
-
-      [NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
-    default_value: "0"
-    unit: ""
-    availability: ""
+    availability: Numerical atomic orbital basis
   - name: out_app_flag
     category: Output information
     type: Boolean
@@ -3053,100 +3111,11 @@ parameters:
     default_value: "8"
     unit: ""
     availability: out_mat_hs 1 case presently.
-  - name: out_mat_t
-    category: Output information
-    type: Boolean
-    description: |
-      Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
-
-      [NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
-    default_value: "False"
-    unit: Ry
-    availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_element_info
     category: Output information
     type: Boolean
     description: |
       Whether to print element information into files in the directory OUT.{element_label}, including pseudopotential and orbital information of the element (in atomic Ryberg units).
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_mat_r
-    category: Output information
-    type: Boolean
-    description: |
-      Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
-
-      [NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.
-    default_value: "False"
-    unit: Bohr
-    availability: Numerical atomic orbital basis (not gamma-only algorithm)
-  - name: out_wfc_lcao
-    category: Output information
-    type: Integer
-    description: |
-      Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
-      * 0: no output
-      * 1: (txt format)
-       * gamma-only: wfs1_nao.txt or wfs2_nao.txt, ...;
-       * non-gamma-only: wfs1k1_nao.txt or wfs1k2_nao.txt, ...;
-      * 2: (binary format)
-       * gamma-only: wfs1_nao.dat or wfs2_nao.dat, ...;
-       * non-gamma-only: wfs1k1_nao.dat or wfs1k2_nao.dat, ....
-
-      The corresponding sequence of the orbitals can be seen in Basis Set.
-
-      Also controled by out_freq_ion and out_app_flag.
-
-      [NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
-    default_value: "False"
-    unit: ""
-    availability: Numerical atomic orbital basis
-  - name: out_dipole
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Boolean
-    description: |
-      * True: Output electric dipole moment.
-      * False: Do not output electric dipole moment.
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_efield
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Boolean
-    description: |
-      Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
-      * True: Output electric field.
-      * False: Do not output electric field.
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_current
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Integer
-    description: |
-      * 0: Do not output current.
-      * 1: Output current using the two-center integral, faster.
-      * 2: Output current using the matrix commutation, more precise.
-    default_value: "0"
-    unit: ""
-    availability: ""
-  - name: out_current_k
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Boolean
-    description: |
-      * True: Output current for each k-points separately.
-      * False: Output current in total.
-    default_value: "False"
-    unit: ""
-    availability: ""
-  - name: out_vecpot
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
-    type: Boolean
-    description: |
-      Output vector potential or not (unit: a.u.).
-      * True: Output vector potential into file At.dat.
-      * False: Do not output vector potential.
     default_value: "False"
     unit: ""
     availability: ""
@@ -3195,23 +3164,6 @@ parameters:
     default_value: none
     unit: ""
     availability: "For both PW and LCAO. When basis_type = lcao, used when calculation = get_wf."
-  - name: out_xc_r
-    category: Output information
-    type: Integer Integer
-    description: |
-      The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
-      * 0: rho, amag, sigma, exc
-      * 1: vrho, vsigma
-      * 2: v2rho2, v2rhosigma, v2sigma2
-      * 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
-      * 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4 The meaning of the files is presented in Libxc
-
-      The second integer controls the precision of the charge density output, if not given, will use 3 as default.
-
-      The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
-    default_value: "-1 3"
-    unit: ""
-    availability: ""
   - name: if_separate_k
     category: Output information
     type: Boolean
@@ -3239,14 +3191,6 @@ parameters:
     default_value: 0 3
     unit: ""
     availability: Only for Kohn-Sham DFT and Orbital Free DFT.
-  - name: cal_symm_repr
-    category: System variables
-    type: Integer Integer
-    description: |
-      Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.
-    default_value: 1 3
-    unit: ""
-    availability: ""
   - name: out_spillage
     category: Output information
     type: Integer
@@ -3255,6 +3199,62 @@ parameters:
     default_value: "0"
     unit: ""
     availability: Only for Kohn-Sham DFT with plane-wave basis.
+  - name: out_dipole
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Boolean
+    description: |
+      * True: Output electric dipole moment.
+      * False: Do not output electric dipole moment.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_current
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Integer
+    description: |
+      * 0: Do not output current.
+      * 1: Output current using the two-center integral, faster.
+      * 2: Output current using the matrix commutation, more precise.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: out_current_k
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Boolean
+    description: |
+      * True: Output current for each k-points separately.
+      * False: Output current in total.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_efield
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Boolean
+    description: |
+      Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
+      * True: Output electric field.
+      * False: Do not output electric field.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: out_vecpot
+    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    type: Boolean
+    description: |
+      Output vector potential or not (unit: a.u.).
+      * True: Output vector potential into file At.dat.
+      * False: Do not output vector potential.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: cal_symm_repr
+    category: System variables
+    type: Integer Integer
+    description: |
+      Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.
+    default_value: 1 3
+    unit: ""
+    availability: ""
   - name: spillage_outdir
     category: Input files
     type: String
@@ -3263,6 +3263,30 @@ parameters:
     default_value: "\"./\""
     unit: ""
     availability: Used only for plane wave basis set.
+  - name: dos_edelta_ev
+    category: Density of states
+    type: Real
+    description: |
+      The step size in writing Density of States (DOS)
+    default_value: "0.01"
+    unit: eV
+    availability: ""
+  - name: dos_sigma
+    category: Density of states
+    type: Real
+    description: |
+      The width of the Gaussian factor when obtaining smeared Density of States (DOS)
+    default_value: "0.07"
+    unit: eV
+    availability: ""
+  - name: dos_scale
+    category: Density of states
+    type: Real
+    description: |
+      Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
+    default_value: "0.01"
+    unit: eV
+    availability: ""
   - name: dos_emin_ev
     category: Density of states
     type: Real
@@ -3279,30 +3303,6 @@ parameters:
       The maximal range for Density of States (DOS)
       * If set, "dos_scale" will be ignored.
     default_value: Maximal eigenenergy of
-    unit: eV
-    availability: ""
-  - name: dos_edelta_ev
-    category: Density of states
-    type: Real
-    description: |
-      The step size in writing Density of States (DOS)
-    default_value: "0.01"
-    unit: eV
-    availability: ""
-  - name: dos_scale
-    category: Density of states
-    type: Real
-    description: |
-      Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
-    default_value: "0.01"
-    unit: eV
-    availability: ""
-  - name: dos_sigma
-    category: Density of states
-    type: Real
-    description: |
-      The width of the Gaussian factor when obtaining smeared Density of States (DOS)
-    default_value: "0.07"
     unit: eV
     availability: ""
   - name: dos_nche
@@ -3449,16 +3449,6 @@ parameters:
     default_value: seedname.nnkp
     unit: ""
     availability: ""
-  - name: wannier_spin
-    category: Berry phase and wannier90 interface
-    type: String
-    description: |
-      The spin direction for the Wannier function calculation when nspin is set to 2
-      * up: Calculate spin up for the Wannier function.
-      * down: Calculate spin down for the Wannier function.
-    default_value: up
-    unit: ""
-    availability: ""
   - name: wannier_method
     category: Berry phase and wannier90 interface
     type: Integer
@@ -3467,6 +3457,16 @@ parameters:
       * 1: Calculated using the lcao_in_pw method, the calculation accuracy can be improved by increasing ecutwfc to maintain consistency with the pw basis set results.
       * 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
     default_value: "1"
+    unit: ""
+    availability: ""
+  - name: wannier_spin
+    category: Berry phase and wannier90 interface
+    type: String
+    description: |
+      The spin direction for the Wannier function calculation when nspin is set to 2
+      * up: Calculate spin up for the Wannier function.
+      * down: Calculate spin down for the Wannier function.
+    default_value: up
     unit: ""
     availability: ""
   - name: out_wannier_mmn
@@ -3489,16 +3489,6 @@ parameters:
     default_value: "1"
     unit: ""
     availability: ""
-  - name: out_wannier_unk
-    category: Berry phase and wannier90 interface
-    type: Bool
-    description: |
-      Write the "UNK.*" file or not.
-      * 0: don't write the "UNK.*" file.
-      * 1: write the "UNK.*" file.
-    default_value: "0"
-    unit: ""
-    availability: ""
   - name: out_wannier_eig
     category: Berry phase and wannier90 interface
     type: Bool
@@ -3507,6 +3497,16 @@ parameters:
       * 0: don't write the "*.eig" file.
       * 1: write the "*.eig" file.
     default_value: "1"
+    unit: ""
+    availability: ""
+  - name: out_wannier_unk
+    category: Berry phase and wannier90 interface
+    type: Bool
+    description: |
+      Write the "UNK.*" file or not.
+      * 0: don't write the "UNK.*" file.
+      * 1: write the "UNK.*" file.
+    default_value: "0"
     unit: ""
     availability: ""
   - name: out_wannier_wvfn_formatted
@@ -3806,6 +3806,14 @@ parameters:
     default_value: Bohr
     unit: ""
     availability: vdw_cutoff_type is set to radius
+  - name: vdw_cutoff_period
+    category: vdW correction
+    type: Integer Integer Integer
+    description: |
+      The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
+    default_value: 3 3 3
+    unit: ""
+    availability: vdw_cutoff_type is set to period
   - name: vdw_cn_thr
     category: vdW correction
     type: Real
@@ -3824,14 +3832,6 @@ parameters:
     default_value: Bohr
     unit: ""
     availability: ""
-  - name: vdw_cutoff_period
-    category: vdW correction
-    type: Integer Integer Integer
-    description: |
-      The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
-    default_value: 3 3 3
-    unit: ""
-    availability: vdw_cutoff_type is set to period
   - name: exx_fock_alpha
     category: Exact Exchange (Common)
     type: "Real \\Real...\\"
@@ -3856,14 +3856,6 @@ parameters:
     default_value: see hybrid_func_params
     unit: ""
     availability: ""
-  - name: exx_fock_lambda
-    category: Exact Exchange (LCAO in PW)
-    type: "Real \\Real...\\"
-    description: |
-      It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
-    default_value: "0.3"
-    unit: ""
-    availability: basis_type==lcao_in_pw
   - name: exx_separate_loop
     category: Exact Exchange (Common)
     type: Boolean
@@ -3890,29 +3882,27 @@ parameters:
     default_value: "1.0"
     unit: ""
     availability: exx_separate_loop==1
-  - name: exx_real_number
-    category: Exact Exchange (LCAO)
-    type: Boolean
+  - name: exx_fock_lambda
+    category: Exact Exchange (LCAO in PW)
+    type: "Real \\Real...\\"
     description: |
-      * True: Enforce LibRI to use double data type.
-      * False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
-    default_value: depends on the gamma_only option
+      It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
+    default_value: "0.3"
     unit: ""
-    availability: ""
-  - name: exx_singularity_correction
-    category: Exact Exchange (LCAO)
-    type: String
-    description: |
-      * spencer: see Phys. Rev. B 77, 193110 (2008).
-      * revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.
-    default_value: default
-    unit: ""
-    availability: ""
+    availability: basis_type==lcao_in_pw
   - name: exx_pca_threshold
     category: Exact Exchange (LCAO)
     type: Real
     description: |
       To accelerate the evaluation of four-center integrals (), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): . The size of the ABF (i.e. number of ) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.
+    default_value: "1E-4"
+    unit: ""
+    availability: ""
+  - name: exx_c_threshold
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      See also the entry exx_pca_threshold. Smaller components (less than exx_c_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
     default_value: "1E-4"
     unit: ""
     availability: ""
@@ -3922,14 +3912,6 @@ parameters:
     description: |
       By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
     default_value: "-1"
-    unit: ""
-    availability: ""
-  - name: exx_c_threshold
-    category: Exact Exchange (LCAO)
-    type: Real
-    description: |
-      See also the entry exx_pca_threshold. Smaller components (less than exx_c_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
-    default_value: "1E-4"
     unit: ""
     availability: ""
   - name: exx_v_threshold
@@ -4012,6 +3994,32 @@ parameters:
     default_value: "1E-12"
     unit: ""
     availability: calculation==gen_opt_abfs
+  - name: exx_real_number
+    category: Exact Exchange (LCAO)
+    type: Boolean
+    description: |
+      * True: Enforce LibRI to use double data type.
+      * False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
+    default_value: depends on the gamma_only option
+    unit: ""
+    availability: ""
+  - name: exx_singularity_correction
+    category: Exact Exchange (LCAO)
+    type: String
+    description: |
+      * spencer: see Phys. Rev. B 77, 193110 (2008).
+      * revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.
+    default_value: default
+    unit: ""
+    availability: ""
+  - name: rpa_ccp_rmesh_times
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.
+    default_value: "10"
+    unit: ""
+    availability: ""
   - name: exx_symmetry_realspace
     category: Exact Exchange (LCAO)
     type: Boolean
@@ -4021,14 +4029,6 @@ parameters:
     default_value: "True"
     unit: ""
     availability: symmetry==1 and exx calculation (dft_fuctional==hse/hf/pbe0/scan0 or rpa==True)
-  - name: rpa_ccp_rmesh_times
-    category: Exact Exchange (LCAO)
-    type: Real
-    description: |
-      How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.
-    default_value: "10"
-    unit: ""
-    availability: ""
   - name: out_ri_cv
     category: Exact Exchange (LCAO)
     type: Boolean
@@ -4056,14 +4056,28 @@ parameters:
     default_value: "False"
     unit: ""
     availability: basis_type==lcao
-  - name: yukawa_lambda
+  - name: orbital_corr
+    category: DFT+U correction
+    type: Integer
+    description: |
+      Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
+      * -1: The plus U correction will not be calculated for this atom.
+      * 1: For p-electron orbits, the plus U correction is needed.
+      * 2: For d-electron orbits, the plus U correction is needed.
+      * 3: For f-electron orbits, the plus U correction is needed.
+    default_value: "-1"
+    unit: ""
+    availability: ""
+  - name: hubbard_u
     category: DFT+U correction
     type: Real
     description: |
-      The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
-    default_value: Calculated on the fly.
+      Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
+
+      [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
+    default_value: "0.0"
     unit: ""
-    availability: DFT+U with yukawa_potential = True.
+    availability: ""
   - name: yukawa_potential
     category: DFT+U correction
     type: Boolean
@@ -4074,6 +4088,14 @@ parameters:
     default_value: "False"
     unit: ""
     availability: ""
+  - name: yukawa_lambda
+    category: DFT+U correction
+    type: Real
+    description: |
+      The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
+    default_value: Calculated on the fly.
+    unit: ""
+    availability: DFT+U with yukawa_potential = True.
   - name: uramping
     category: DFT+U correction
     type: Real
@@ -4104,28 +4126,6 @@ parameters:
     default_value: "3.0"
     unit: Bohr
     availability: dft_plus_u is set to 1
-  - name: hubbard_u
-    category: DFT+U correction
-    type: Real
-    description: |
-      Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
-
-      [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
-    default_value: "0.0"
-    unit: ""
-    availability: ""
-  - name: orbital_corr
-    category: DFT+U correction
-    type: Integer
-    description: |
-      Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
-      * -1: The plus U correction will not be calculated for this atom.
-      * 1: For p-electron orbits, the plus U correction is needed.
-      * 2: For d-electron orbits, the plus U correction is needed.
-      * 3: For f-electron orbits, the plus U correction is needed.
-    default_value: "-1"
-    unit: ""
-    availability: ""
   - name: sc_mag_switch
     category: Spin-Constrained DFT
     type: Boolean
@@ -4225,14 +4225,6 @@ parameters:
     default_value: szv
     unit: ""
     availability: ""
-  - name: qo_thr
-    category: Quasiatomic Orbital (QO) analysis
-    type: Real
-    description: |
-      The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
-    default_value: "1.0e-6"
-    unit: ""
-    availability: ""
   - name: qo_strategy
     category: Quasiatomic Orbital (QO) analysis
     type: String
@@ -4248,6 +4240,14 @@ parameters:
       The screening coefficient for each atom type to rescale the shape of radial orbitals
     default_value: "0.1"
     unit: Bohr^-1
+    availability: ""
+  - name: qo_thr
+    category: Quasiatomic Orbital (QO) analysis
+    type: Real
+    description: |
+      The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
+    default_value: "1.0e-6"
+    unit: ""
     availability: ""
   - name: pexsi_npole
     category: PEXSI
@@ -4580,6 +4580,14 @@ parameters:
     default_value: "True"
     unit: ""
     availability: ""
+  - name: ecutexx
+    category: Exact Exchange (PW)
+    type: Real
+    description: |
+      The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+    default_value: same as ecutrho
+    unit: Ry
+    availability: ""
   - name: exx_thr_type
     category: Exact Exchange (PW)
     type: String
@@ -4598,11 +4606,3 @@ parameters:
     default_value: "1e-5"
     unit: Ry
     availability: exx_thr_type==energy
-  - name: ecutexx
-    category: Exact Exchange (PW)
-    type: Real
-    description: |
-      The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
-    default_value: same as ecutrho
-    unit: Ry
-    availability: ""
