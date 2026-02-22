@@ -178,6 +178,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             //! 13.1.1) init density matrix from file
             std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
             LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+	    GlobalV::ofs_running << " Read density matrix (real space) from file: " 
+		    << dmfile << std::endl;
         }
         if(PARAM.inp.init_chg == "hr")
         {

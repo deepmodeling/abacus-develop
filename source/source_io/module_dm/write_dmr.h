@@ -37,7 +37,9 @@ void write_dmr_csr(std::string& fname,
         const UnitCell *ucell,
 	const int precision, 
 	hamilt::HContainer<double>* dm_serial, 
-	const int istep);
+	const int istep,
+	const int ispin,
+	const int nspin);
 
 /**
  * Writes DMR to a file.

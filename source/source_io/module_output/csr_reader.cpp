@@ -27,18 +27,23 @@ void csrFileReader<T>::parseFile()
     readLine();
     ss >> tmp_string >> tmp_string >> tmp_string >> step;
 
-    std::cout << " step is " << step << std::endl; 
+    //std::cout << " step is " << step << std::endl; 
+    // Read the title
+    readLine();
+    // Read the total spin
+    readLine();
+    // Read the spin index
+    readLine();
 
     // Read the matrix dimension
     readLine();
-    readLine();
     ss >> matrixDimension;
-    std::cout << " mat dim is " << matrixDimension << std::endl; 
+    //std::cout << " mat dim is " << matrixDimension << std::endl; 
 
     // Read the number of R
     readLine();
     ss >> numberOfR;
-    std::cout << " number of R is " << numberOfR << std::endl;
+    // std::cout << " number of R is " << numberOfR << std::endl;
     readLine();
 
     // Read cell
@@ -58,7 +63,7 @@ void csrFileReader<T>::parseFile()
     // Read the matrices
     for (int i = 0; i < numberOfR; i++)
     {
-        std::cout << " read R " << i+1 << std::endl;
+        // std::cout << " read R " << i+1 << std::endl;
 
         std::vector<int> RCoord(3);
         int nonZero = 0;
@@ -89,7 +94,7 @@ void csrFileReader<T>::parseFile()
                 count1++;
             }
 	}
-        std::cout << "count1=" << count1 << std::endl;
+        // std::cout << "count1=" << count1 << std::endl;
 
         // read CSR column indices
         readLine();
@@ -107,7 +112,7 @@ void csrFileReader<T>::parseFile()
                 count2++;
             }
 	}
-        std::cout << "count2=" << count2 << std::endl;
+        // std::cout << "count2=" << count2 << std::endl;
 
         // read row pointers
         readLine();
@@ -125,7 +130,7 @@ void csrFileReader<T>::parseFile()
                 count3++;
             }
 	}
-        std::cout << "count3=" << count3 << std::endl;
+        // std::cout << "count3=" << count3 << std::endl;
 
         // create sparse matrix
         SparseMatrix<T> matrix(matrixDimension, matrixDimension);
