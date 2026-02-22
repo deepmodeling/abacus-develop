@@ -59,7 +59,7 @@ void ReadInput::item_output()
             item.read_value = [](const Input_Item& item, Parameter& para) {
                     const size_t count = item.get_size();
                     if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_pot needs at least 1 value");
-                    para.input.out_pot[0] = assume_as_boolean(item.str_values[0]);
+                    para.input.out_pot[0] = std::stoi(item.str_values[0]);
                     para.input.out_pot[1] = 8;
                     if (count >= 2) try { para.input.out_pot[1] = std::stoi(item.str_values[1]); }
                     catch (const std::invalid_argument&) { /* do nothing */ }
