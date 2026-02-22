@@ -35,22 +35,22 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     csr_row_ptr.assign(_rows + 1, 0);
 
     // print the CSR values
-    ofs << " # CSR values" << std::endl;
+    ofs << " # CSR values";
     size_t count1 = 0;
     for (const auto &element : elements)
     {
+	if(count1%6==0) ofs << std::endl;
 	count1++;
-	if(count1%8==0) ofs << std::endl;
         ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << element.second;
     }
     ofs << std::endl;
     // print the CSR column indices
-    ofs << " # CSR column indices" << std::endl;
+    ofs << " # CSR column indices";
     size_t count2 = 0;
     for (const auto &element : elements)
     {
-	count2++;
 	if(count2%16==0) ofs << std::endl;
+	count2++;
         ofs << " " << element.first.second;
         int row = element.first.first;
         csr_row_ptr[row + 1]++;

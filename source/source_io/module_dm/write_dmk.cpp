@@ -279,6 +279,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 ofs << std::right;
                 for (int i = 0; i < nlocal; ++i)
                 {
+		    const size_t ii = i * nlocal;
                     for (int j = 0; j < nlocal; ++j)
                     {
                         if (std::is_same<double, T>::value)
@@ -287,7 +288,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                             {
                                 ofs << "\n";
                             }
-                            ofs << " " << dmk_global[i * nlocal + j];
+                            ofs << " " << dmk_global[ii + j];
                         }
                         else if (std::is_same<std::complex<double>, T>::value)
                         {
@@ -296,12 +297,12 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                                 ofs << "\n";
                             }
 
-                            double real_v = std::real(dmk_global[i * nlocal + j]);
+                            double real_v = std::real(dmk_global[ii + j]);
                             if(std::abs(real_v) < dm_thr)
                             {
                                 real_v = 0.0;
                             }
-                            double imag_v = std::imag(dmk_global[i * nlocal + j]);
+                            double imag_v = std::imag(dmk_global[ii + j]);
                             if(std::abs(imag_v) < dm_thr)
                             {
                                 imag_v = 0.0;
