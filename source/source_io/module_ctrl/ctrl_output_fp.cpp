@@ -82,7 +82,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                           chr.rho_save[is],
                                           is,
                                           nspin,
-                                          istep_in,
+                                          istep, // change istep_in to istep, mohan 20260222
                                           fn,
                                           pelec->eferm.get_efval(is),
                                           &(ucell),

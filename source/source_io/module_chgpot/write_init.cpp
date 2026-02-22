@@ -56,7 +56,8 @@ void ModuleIO::write_chg_init(
                                           istep,
                                           ss.str(),
                                           fermi_energy,
-                                          &(ucell));
+                                          &(ucell),
+					  inp.out_chg[1]);
         }
     }
     return;
