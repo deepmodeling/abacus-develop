@@ -1,8 +1,8 @@
 ATOMIC_SPECIES
-Si 14 Si_ONCV_PBE-1.0.upf upf201
+Si 14 Si_dojo_soc.upf 
 
 NUMERICAL_ORBITAL
-Si_gga_8au_60Ry_2s2p1d.orb
+Si_dojo_6au_sz.orb
 
 LATTICE_CONSTANT
 20  // add lattice constant
@@ -18,5 +18,5 @@ Direct
 Si	// Element type	
 0.0	// magnetism
 2	
-0.00 0.00 0.00 1 1 1
-0.25 0.25 0.26 1 1 1
+0.000000000000000 0.020000000000000 0.000000000000000 1 1 1
+0.250000000000000 0.260000000000000 0.270000000000000 1 1 1
