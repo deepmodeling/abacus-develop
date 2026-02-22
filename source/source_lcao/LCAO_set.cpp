@@ -4,6 +4,7 @@
 #include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao
 #include "source_estate/elecstate_tools.h" // use fixed_weights
 #include "source_lcao/module_hcontainer/read_hcontainer.h"
+#include "source_lcao/rho_tau_lcao.h" // use dm2rho
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -94,20 +95,46 @@ void LCAO_domain::set_pot(
 
 template <typename TK>
 void LCAO_domain::init_dm_from_file(
-    const std::string dmfile,
+    const std::string& readin_dir,
+    const int nspin,
     LCAO_domain::Setup_DM<TK>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv)
 {
     ModuleBase::TITLE("LCAO_domain", "init_dm_from_file");
-    hamilt::HContainer<double>* dm_container = dmat.dm->get_DMR_vector()[0];
-    hamilt::Read_HContainer<double> reader_dm(
-        dm_container,
-        dmfile,
-        PARAM.globalv.nlocal,
-        &ucell
-    );
-    reader_dm.read();
+    const int nspin_dm = (nspin == 2) ? 2 : 1;
+    for (int is = 0; is < nspin_dm; ++is)
+    {
+        const std::string dmfile = readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
+        hamilt::HContainer<double>* dm_container = dmat.dm->get_DMR_vector()[is];
+        hamilt::Read_HContainer<double> reader_dm(
+            dm_container,
+            dmfile,
+            PARAM.globalv.nlocal,
+            &ucell
+        );
+        reader_dm.read();
+    }
+    return;
+}
+
+template <typename TK>
+void LCAO_domain::init_chg_dm(
+    const std::string& readin_dir,
+    const int nspin,
+    LCAO_domain::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_chg_dm");
+
+    // Step 1: Read density matrix from file
+    LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
+
+    // Step 2: Convert density matrix to charge density
+    LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), nspin, chr, true);
+
     return;
 }
 
@@ -183,15 +210,32 @@ template void LCAO_domain::set_pot<std::complex<double>>(
         const Input_para &inp);
 
 template void LCAO_domain::init_dm_from_file<double>(
-    const std::string dmfile,
+    const std::string& readin_dir,
+    const int nspin,
     LCAO_domain::Setup_DM<double>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);
 template void LCAO_domain::init_dm_from_file<std::complex<double>>(
-    const std::string dmfile,
+    const std::string& readin_dir,
+    const int nspin,
     LCAO_domain::Setup_DM<std::complex<double>>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);
+
+template void LCAO_domain::init_chg_dm<double>(
+    const std::string& readin_dir,
+    const int nspin,
+    LCAO_domain::Setup_DM<double>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr);
+template void LCAO_domain::init_chg_dm<std::complex<double>>(
+    const std::string& readin_dir,
+    const int nspin,
+    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr);
 
 template void LCAO_domain::init_hr_from_file<double>(
     const std::string hrfile,

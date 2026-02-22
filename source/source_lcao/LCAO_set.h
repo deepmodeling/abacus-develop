@@ -55,13 +55,35 @@ void set_pot(
 
 /**
  * @brief read in DMR from file, and save it into dmat
+ * @param readin_dir directory containing dmrs*_nao.csr files
+ * @param nspin number of spin components (1 or 2)
  */
 template <typename TK>
 void init_dm_from_file(
-	const std::string dmfile,
+	const std::string& readin_dir,
+	const int nspin,
 	LCAO_domain::Setup_DM<TK>& dmat,
 	const UnitCell& ucell,
 	const Parallel_Orbitals* pv);
+
+/**
+ * @brief initialize charge density from density matrix file (init_chg=dm)
+ * This function reads DMR from file and converts it to charge density
+ * @param readin_dir directory containing dmrs*_nao.csr files
+ * @param nspin number of spin components (1 or 2)
+ * @param dmat density matrix object
+ * @param ucell unit cell
+ * @param pv parallel orbitals
+ * @param chr charge density object
+ */
+template <typename TK>
+void init_chg_dm(
+	const std::string& readin_dir,
+	const int nspin,
+	LCAO_domain::Setup_DM<TK>& dmat,
+	const UnitCell& ucell,
+	const Parallel_Orbitals* pv,
+	Charge* chr);
 
 /**
  * @brief read in HR from file, and save it into hmat
