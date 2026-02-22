@@ -366,9 +366,9 @@ TEST_F(InputTest, Item_test)
     { // out_pot
         auto it = find_label("out_pot", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_pot = 1;
+        param.input.out_pot[0] = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_pot, 0);
+        EXPECT_EQ(param.input.out_pot[0], 0);
     }
     { // out_dos
         auto it = find_label("out_dos", readinput.input_lists);
