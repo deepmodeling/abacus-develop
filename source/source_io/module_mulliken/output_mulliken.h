@@ -102,11 +102,13 @@ void cal_mag(Parallel_Orbitals* pv,
     if (PARAM.inp.out_mul)
     {
         auto cell_index
-            = CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
+            = CellIndex(ucell.get_atomLabels(), 
+			ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
         auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
         auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
 
-        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), &(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
+        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), 
+			&(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
         auto atom_chg = mulp.get_atom_chg();
         /// used in updating mag info in STRU file
         ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
@@ -131,31 +133,28 @@ void cal_mag(Parallel_Orbitals* pv,
         std::vector<double> mag_y(ucell.nat, 0.0);
         std::vector<double> mag_z(ucell.nat, 0.0);
         auto atomLabels = ucell.get_atomLabels();
+
         if(PARAM.inp.nspin == 2)
         {
-            auto sc_lambda
-				= new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
-						kv.kvec_d,
-						dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
-						ucell,
-						&gd,
-						two_center_bundle.overlap_orb_onsite.get(),
-						orb.cutoffs());
-			dm->switch_dmr(2);
-			moments = sc_lambda->cal_moment(dmr, constrain);
-			dm->switch_dmr(0);
-			delete sc_lambda;
-			//const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
-            //const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-            //FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
+		kv.kvec_d,
+		dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
+		ucell,
+		&gd,
+		two_center_bundle.overlap_orb_onsite.get(),
+		orb.cutoffs());
+
+	    dm->switch_dmr(2);
+	    moments = sc_lambda->cal_moment(dmr, constrain);
+	    dm->switch_dmr(0);
+
+	    delete sc_lambda;
+
             for(int iat=0;iat<ucell.nat;iat++)
             {
                 atom_mag[iat][0] = 0.0;
                 atom_mag[iat][1] = moments[iat];
-            //    mag_z[iat] = moments[iat];
             }
-            //table << atomLabels << mag_z;
-            //GlobalV::ofs_running << table.str() << std::endl;
         }
         else if(PARAM.inp.nspin == 4)
         {
@@ -169,21 +168,14 @@ void cal_mag(Parallel_Orbitals* pv,
                 orb.cutoffs());
             moments = sc_lambda->cal_moment(dmr, constrain);
             delete sc_lambda;
-            //const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
-            //const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-            //FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+
             for(int iat=0;iat<ucell.nat;iat++)
             {
                 atom_mag[iat][0] = 0.0;
                 atom_mag[iat][1] = moments[iat*3];
                 atom_mag[iat][2] = moments[iat*3+1];
                 atom_mag[iat][3] = moments[iat*3+2];
-                //mag_x[iat] = moments[iat*3];
-                //mag_y[iat] = moments[iat*3+1];
-                //mag_z[iat] = moments[iat*3+2];
             }
-            //table << atomLabels << mag_x << mag_y << mag_z;
-            //GlobalV::ofs_running << table.str() << std::endl;
         }
         ucell.atom_mulliken = atom_mag;
     }

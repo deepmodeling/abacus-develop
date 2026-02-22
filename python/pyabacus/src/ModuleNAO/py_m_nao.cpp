@@ -6,8 +6,12 @@
 #include "source_basis/module_nao/radial_collection.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 
+#include "../utils/pybind_utils.h"
+
 namespace py = pybind11;
 using namespace pybind11::literals;
+using namespace pyabacus::utils;
+
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
@@ -16,10 +20,10 @@ void bind_m_nao(py::module& m)
     // Bind the RadialCollection class
     py::class_<RadialCollection>(m, "RadialCollection")
         .def(py::init<>(), R"pbdoc(
-            A class that holds all numerical radial functions of the same kind. 
-            
-            An instance of this class could be the collection of all radial functions 
-            of numerical atomic orbitals, or all Kleinman-Bylander beta functions from 
+            A class that holds all numerical radial functions of the same kind.
+
+            An instance of this class could be the collection of all radial functions
+            of numerical atomic orbitals, or all Kleinman-Bylander beta functions from
             all elements involved in a calculation.
             )pbdoc")
         .def(
@@ -57,12 +61,8 @@ void bind_m_nao(py::module& m)
                const int ngrid,
                py::array_t<double> grid,
                const char mode = 'i') {
-                py::buffer_info grid_info = grid.request();
-                if (grid_info.size != ngrid)
-                {
-                    throw std::runtime_error("grid array must be of size ngrid");
-                }
-                self.set_grid(for_r_space, ngrid, static_cast<double*>(grid_info.ptr), mode);
+                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
+                self.set_grid(for_r_space, ngrid, get_array_ptr(grid), mode);
             },
             "Sets a common grid for all RadialSet objects.",
             "for_r_space"_a,
@@ -97,11 +97,11 @@ void bind_m_nao(py::module& m)
 
     This class computes two-center integrals of the form:
 
-                        /    
+                        /
                  I(R) = | dr phi1(r) (op) phi2(r - R)
-                        /               
+                        /
 
-    as well as their gradients, where op is 1 (overlap) or minus Laplacian (kinetic), and phi1, 
+    as well as their gradients, where op is 1 (overlap) or minus Laplacian (kinetic), and phi1,
     phi2 are "atomic-orbital-like" functions of the form:
 
                  phi(r) = chi(|r|) * Ylm(r/|r|)
@@ -144,12 +144,8 @@ void bind_m_nao(py::module& m)
                const int m2,
                py::array_t<double> pvR,
                bool cal_grad = false) {
-                py::buffer_info pvR_info = pvR.request();
-                if (pvR_info.size != 3)
-                {
-                    throw std::runtime_error("Radial part must have 3 elements");
-                }
-                double* cvR = static_cast<double*>(pvR_info.ptr);
+                check_array_size(pvR, 3, "pvR");
+                double* cvR = get_array_ptr(pvR);
                 ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
                 double out[1] = {0.0};
                 double grad_out[3] = {0.0, 0.0, 0.0};
@@ -172,9 +168,9 @@ void bind_m_nao(py::module& m)
 
     This function calculates the two-center integral
 
-                        /    
+                        /
                  I(R) = | dr phi1(r) (op_) phi2(r - R)
-                        /               
+                        /
 
     or its gradient by using the tabulated radial part and real Gaunt coefficients.
 
@@ -200,7 +196,7 @@ void bind_m_nao(py::module& m)
         R2 - R1, the displacement vector between the two centers.
     cal_grad : bool, optional
         The gradient will not be computed if cal_grad is false.
-    
+
     Returns
     -------
     out_array : array_like
@@ -228,12 +224,8 @@ void bind_m_nao(py::module& m)
                const int itype2,
                py::array_t<double> pvR,
                const bool deriv) {
-                py::buffer_info pvR_info = pvR.request();
-                if (pvR_info.size != 3)
-                {
-                    throw std::runtime_error("Radial part must have 3 elements");
-                }
-                double* cvR = static_cast<double*>(pvR_info.ptr);
+                check_array_size(pvR, 3, "pvR");
+                double* cvR = get_array_ptr(pvR);
                 ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
                 // TODO: check deriv & out memory allocation
                 std::vector<std::vector<double>> out;
@@ -276,17 +268,12 @@ void bind_m_nao(py::module& m)
                const std::string symbol = "",
                const int itype = 0,
                const bool init_sbt = true) {
-                py::buffer_info grid_info = grid.request();
-                py::buffer_info value_info = value.request();
-                if (grid_info.size != ngrid)
-                {
-                    throw std::runtime_error("grid array must be of size ngrid");
-                }
+                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
                 self.build(l,
                            for_r_space,
                            ngrid,
-                           static_cast<double*>(grid_info.ptr),
-                           static_cast<double*>(value_info.ptr),
+                           get_array_ptr(grid),
+                           get_array_ptr(value),
                            p,
                            izeta,
                            symbol,
@@ -360,12 +347,8 @@ void bind_m_nao(py::module& m)
                const int ngrid,
                py::array_t<double> grid,
                const char mode = 'i') {
-                py::buffer_info grid_info = grid.request();
-                if (grid_info.size != ngrid)
-                {
-                    throw std::runtime_error("grid array must be of size ngrid");
-                }
-                self.set_grid(for_r_space, ngrid, static_cast<double*>(grid_info.ptr), mode);
+                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
+                self.set_grid(for_r_space, ngrid, get_array_ptr(grid), mode);
             },
             R"pbdoc(
     Sets up a grid.
@@ -423,8 +406,7 @@ void bind_m_nao(py::module& m)
         .def(
             "set_value",
             [](NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p) {
-                py::buffer_info value_info = value.request();
-                self.set_value(for_r_space, static_cast<double*>(value_info.ptr), p);
+                self.set_value(for_r_space, get_array_ptr(value), p);
             },
             R"pbdoc(
     Updates values on an existing grid.
@@ -467,23 +449,19 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("sbt", &NumericalRadial::sbt)
         .def_property_readonly("rgrid",
                                [](NumericalRadial& self) {
-                                   const double* rgrid = self.rgrid();
-                                   return py::array_t<double>(self.nr(), rgrid);
+                                   return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr()));
                                })
         .def_property_readonly("kgrid",
                                [](NumericalRadial& self) {
-                                   const double* kgrid = self.kgrid();
-                                   return py::array_t<double>(self.nk(), kgrid);
+                                   return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk()));
                                })
         .def_property_readonly("rvalue",
                                [](NumericalRadial& self) {
-                                   const double* rvalue = self.rvalue();
-                                   return py::array_t<double>(self.nr(), rvalue);
+                                   return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr()));
                                })
         .def_property_readonly("kvalue",
                                [](NumericalRadial& self) {
-                                   const double* kvalue = self.kvalue();
-                                   return py::array_t<double>(self.nk(), kvalue);
+                                   return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk()));
                                })
         .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }

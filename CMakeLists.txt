@@ -52,6 +52,12 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 
+if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
+  set(NVHPC_ROOT_DIR
+      "$ENV{NVHPC_ROOT}"
+      CACHE PATH "Path to NVIDIA HPC SDK root directory.")
+endif()
+
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON)
@@ -123,15 +129,62 @@ if(NOT ENABLE_MPI)
 endif()
 
 # Different exe files of ABACUS
-if(ENABLE_LCAO AND ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus)
-elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_pw)
-elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_pw_serial)
-elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_serial)
+unset(ABACUS_BIN_NAME CACHE)
+
+# Case : LCAO or PW
+if(ENABLE_LCAO)
+  # Case: CUDA is enabled (suffix with 'g' for GPU)
+  if(USE_CUDA)
+    if(ENABLE_MPI)
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2g)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3g)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4g)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5g)
+      endif()
+    endif()
+  # Case: CPU is enabled (suffix with 'p' for parallel) 
+  else()
+    if(ENABLE_MPI)
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2p)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3p)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4p)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5p)
+      endif()
+    else()
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2s)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3s)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4s)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5s)
+      endif()
+    endif()
+  endif()
+# Case : PW only
+else()
+  if(USE_CUDA)
+    if(ENABLE_MPI)
+      set(ABACUS_BIN_NAME abacus_1g)
+    endif()
+  else()
+    if(ENABLE_MPI)
+      set(ABACUS_BIN_NAME abacus_1p)
+    else()
+      set(ABACUS_BIN_NAME abacus_1s)
+    endif()
+  endif()
 endif()
+
 
 # Use DSP hardware
 if (USE_DSP)
@@ -397,21 +450,9 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_CUSOLVERMP)
-      add_compile_definitions(__CUSOLVERMP)
-      find_library(CAL_LIBRARY
-          NAMES cal
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      find_library(CUSOLVERMP_LIBRARY
-          NAMES cusolverMp
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      target_link_libraries(${ABACUS_BIN_NAME}
-          ${CAL_LIBRARY}
-          ${CUSOLVERMP_LIBRARY}
-      )
+      # Keep cuSolverMp discovery/linking logic in a dedicated module.
+      include(cmake/SetupCuSolverMp.cmake)
+      abacus_setup_cusolvermp(${ABACUS_BIN_NAME})
     endif()
   endif()
 endif()
@@ -494,12 +535,12 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-if(USE_DSP)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
-else()
-  find_package(ScaLAPACK REQUIRED)
-  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-endif()
+  if(USE_DSP)
+    target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
+  else()
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -741,7 +782,7 @@ if(ENABLE_LCAO)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()
   if(USE_CUDA)
-    target_link_libraries(diag_cusolver)
+    target_link_libraries(${ABACUS_BIN_NAME} diag_cusolver)
   endif()
 endif()
 if(ENABLE_RAPIDJSON)
@@ -763,6 +804,9 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Create a symbolic link 'abacus' pointing to the actual executable
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()

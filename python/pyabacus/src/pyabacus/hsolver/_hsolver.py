@@ -9,7 +9,15 @@ from numpy.typing import NDArray
 from typing import Tuple, List, Union, Callable
 
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
-from ._hsolver_pack import diago_dav_subspace, diago_david, diago_cg
+from ._hsolver_pack import diago_dav_subspace, diago_david
+
+# diago_cg requires ATen support, which may not be available
+try:
+    from ._hsolver_pack import diago_cg
+    _HAS_DIAGO_CG = True
+except ImportError:
+    _HAS_DIAGO_CG = False
+    diago_cg = None
 
 class diag_comm_info(_diag_comm_info):
     def __init__(self, rank: int, nproc: int):
@@ -196,6 +204,10 @@ def davidson(
     
     return e, v
     
+def cg_available() -> bool:
+    """Check if the CG diagonalizer is available (requires ATen support)."""
+    return _HAS_DIAGO_CG
+
 def cg(
     mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
@@ -248,7 +260,10 @@ def cg(
     """
     if not callable(mvv_op):
         raise TypeError("mvv_op must be a callable object.")
-    
+
+    if not _HAS_DIAGO_CG:
+        raise RuntimeError("CG diagonalizer is not available. It requires ATen support.")
+
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         # the shape of init_v is (num_eigs, dim) = (dim, num_eigs).T
         if init_v.ndim == 2:

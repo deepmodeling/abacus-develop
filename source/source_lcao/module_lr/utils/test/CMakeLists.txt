@@ -3,7 +3,7 @@ AddTest(
   TARGET lr_util_phys_test
   LIBS parameter base ${math_libs} device container planewave #for FFT
   SOURCES lr_util_physics_test.cpp  ../lr_util.cpp
-  ../../../../source_io/orb_io.cpp
+  ../../../../source_io/module_output/orb_io.cpp
 )
 
 AddTest(

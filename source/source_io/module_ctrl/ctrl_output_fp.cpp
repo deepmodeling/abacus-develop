@@ -1,13 +1,13 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
 
-#include "../cube_io.h"                                  // use write_vdata_palgrid
+#include "../module_output/cube_io.h"                                  // use write_vdata_palgrid
 #include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
 #include "source_io/module_chgpot/write_elecstat_pot.h"             // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
 
 #ifdef USE_LIBXC
-#include "source_io/write_libxc_r.h"
+#include "source_io/module_chgpot/write_libxc_r.h"
 #endif
 
 namespace ModuleIO

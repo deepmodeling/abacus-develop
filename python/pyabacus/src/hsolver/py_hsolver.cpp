@@ -1,3 +1,11 @@
+/**
+ * @file py_hsolver.cpp
+ * @brief Python bindings for HSolver diagonalization methods
+ *
+ * This file provides pybind11 bindings for the diagonalization solvers
+ * using the unified adapter template approach.
+ */
+
 #include <complex>
 #include <functional>
 #include <pybind11/pybind11.h>
@@ -9,37 +17,39 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/types.h"
 
-#include "./py_diago_dav_subspace.hpp"
-#include "./py_diago_david.hpp"
-#include "./py_diago_cg.hpp"
+#include "diago_adapter.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
 
+using namespace pyabacus::hsolver;
+
 void bind_hsolver(py::module& m)
 {
+    // Bind diag_comm_info struct
     py::class_<hsolver::diag_comm_info>(m, "diag_comm_info")
         .def(py::init<const int, const int>(), "rank"_a, "nproc"_a)
         .def_readonly("rank", &hsolver::diag_comm_info::rank)
         .def_readonly("nproc", &hsolver::diag_comm_info::nproc);
 
-    py::class_<py_hsolver::PyDiagoDavSubspace>(m, "diago_dav_subspace")
+    // Bind PyDiagoDavSubspace using adapter
+    py::class_<PyDiagoDavSubspaceAdapter>(m, "diago_dav_subspace")
         .def(py::init<int, int>(), R"pbdoc(
-            Constructor of diago_dav_subspace, a class for diagonalizing 
+            Constructor of diago_dav_subspace, a class for diagonalizing
             a linear operator using the Davidson-Subspace Method.
 
-            This class serves as a backend computation class. The interface 
-            for invoking this class is a function defined in _hsolver.py, 
+            This class serves as a backend computation class. The interface
+            for invoking this class is a function defined in _hsolver.py,
             which uses this class to perform the calculations.
 
             Parameters
             ----------
-            nbasis : int 
+            nbasis : int
                 The number of basis functions.
-            nband : int 
+            nband : int
                 The number of bands to be calculated.
         )pbdoc", "nbasis"_a, "nband"_a)
-        .def("diag", &py_hsolver::PyDiagoDavSubspace::diag, R"pbdoc(
+        .def("diag", &PyDiagoDavSubspaceAdapter::diag, R"pbdoc(
             Diagonalize the linear operator using the Davidson-Subspace Method.
 
             Parameters
@@ -50,7 +60,7 @@ void bind_hsolver(py::module& m)
             precond_vec : np.ndarray
                 The preconditioner vector.
             dav_ndim : int
-                The number of vectors, which is a multiple of the number of 
+                The number of vectors, which is a multiple of the number of
                 eigenvectors to be calculated.
             tol : double
                 The tolerance for the convergence.
@@ -74,48 +84,49 @@ void bind_hsolver(py::module& m)
                 0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
             nb2d : int
                 The block size in 2d block cyclic distribution if use elpa or scalapack.
-        )pbdoc", 
-        "mm_op"_a, 
-        "precond_vec"_a, 
-        "dav_ndim"_a, 
-        "tol"_a, 
-        "max_iter"_a, 
-        "need_subspace"_a, 
-        "diag_ethr"_a, 
-        "scf_type"_a, 
+        )pbdoc",
+        "mm_op"_a,
+        "precond_vec"_a,
+        "dav_ndim"_a,
+        "tol"_a,
+        "max_iter"_a,
+        "need_subspace"_a,
+        "diag_ethr"_a,
+        "scf_type"_a,
         "comm_info"_a,
         "diago_subspace"_a,
         "nb2d"_a)
-        .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi, R"pbdoc(
+        .def("set_psi", &PyDiagoDavSubspaceAdapter::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
         )pbdoc", "psi_in"_a)
-        .def("get_psi", &py_hsolver::PyDiagoDavSubspace::get_psi, R"pbdoc(
+        .def("get_psi", &PyDiagoDavSubspaceAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
-        .def("init_eigenvalue", &py_hsolver::PyDiagoDavSubspace::init_eigenvalue, R"pbdoc(
+        .def("init_eigenvalue", &PyDiagoDavSubspaceAdapter::init_eigenvalue, R"pbdoc(
             Initialize the eigenvalues as zero.
         )pbdoc")
-        .def("get_eigenvalue", &py_hsolver::PyDiagoDavSubspace::get_eigenvalue, R"pbdoc(
-            Get the eigenvalues.        
+        .def("get_eigenvalue", &PyDiagoDavSubspaceAdapter::get_eigenvalue, R"pbdoc(
+            Get the eigenvalues.
         )pbdoc");
 
-    py::class_<py_hsolver::PyDiagoDavid>(m, "diago_david")
+    // Bind PyDiagoDavid using adapter
+    py::class_<PyDiagoDavidAdapter>(m, "diago_david")
         .def(py::init<int, int>(), R"pbdoc(
-            Constructor of diago_david, a class for diagonalizing 
+            Constructor of diago_david, a class for diagonalizing
             a linear operator using the Davidson Method.
 
-            This class serves as a backend computation class. The interface 
-            for invoking this class is a function defined in _hsolver.py, 
+            This class serves as a backend computation class. The interface
+            for invoking this class is a function defined in _hsolver.py,
             which uses this class to perform the calculations.
 
             Parameters
             ----------
-            nbasis : int 
+            nbasis : int
                 The number of basis functions.
-            nband : int 
+            nband : int
                 The number of bands to be calculated.
         )pbdoc", "nbasis"_a, "nband"_a)
-        .def("diag", &py_hsolver::PyDiagoDavid::diag, R"pbdoc(
+        .def("diag", &PyDiagoDavidAdapter::diag, R"pbdoc(
             Diagonalize the linear operator using the Davidson Method.
 
             Parameters
@@ -126,7 +137,7 @@ void bind_hsolver(py::module& m)
             precond_vec : np.ndarray
                 The preconditioner vector.
             dav_ndim : int
-                The number of vectors, which is a multiple of the number of 
+                The number of vectors, which is a multiple of the number of
                 eigenvectors to be calculated.
             tol : double
                 The tolerance for the convergence.
@@ -136,39 +147,41 @@ void bind_hsolver(py::module& m)
                 The maximum number of iterations.
             use_paw : bool
                 Whether to use the projector augmented wave method.
-        )pbdoc", 
-        "mm_op"_a, 
-        "precond_vec"_a, 
-        "dav_ndim"_a, 
-        "tol"_a, 
+        )pbdoc",
+        "mm_op"_a,
+        "precond_vec"_a,
+        "dav_ndim"_a,
+        "tol"_a,
         "diag_ethr"_a,
-        "max_iter"_a, 
-        "use_paw"_a, 
+        "max_iter"_a,
+        "use_paw"_a,
         "comm_info"_a)
-        .def("set_psi", &py_hsolver::PyDiagoDavid::set_psi, R"pbdoc(
+        .def("set_psi", &PyDiagoDavidAdapter::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
         )pbdoc", "psi_in"_a)
-        .def("get_psi", &py_hsolver::PyDiagoDavid::get_psi, R"pbdoc(
+        .def("get_psi", &PyDiagoDavidAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
-        .def("init_eigenvalue", &py_hsolver::PyDiagoDavid::init_eigenvalue, R"pbdoc(
+        .def("init_eigenvalue", &PyDiagoDavidAdapter::init_eigenvalue, R"pbdoc(
             Initialize the eigenvalues as zero.
         )pbdoc")
-        .def("get_eigenvalue", &py_hsolver::PyDiagoDavid::get_eigenvalue, R"pbdoc(
-            Get the eigenvalues.        
+        .def("get_eigenvalue", &PyDiagoDavidAdapter::get_eigenvalue, R"pbdoc(
+            Get the eigenvalues.
         )pbdoc");
 
-    py::class_<py_hsolver::PyDiagoCG>(m, "diago_cg")
+#ifdef __ENABLE_ATEN
+    // Bind PyDiagoCG using adapter (only when ATen is available)
+    py::class_<PyDiagoCGAdapter>(m, "diago_cg")
         .def(py::init<int, int>(), R"pbdoc(
-            Constructor of diago_cg, a class for diagonalizing 
+            Constructor of diago_cg, a class for diagonalizing
             a linear operator using the Conjugate Gradient Method.
 
-            This class serves as a backend computation class. The interface 
-            for invoking this class is a function defined in _hsolver.py, 
+            This class serves as a backend computation class. The interface
+            for invoking this class is a function defined in _hsolver.py,
             which uses this class to perform the calculations.
         )pbdoc")
         .def("diag",
-             &py_hsolver::PyDiagoCG::diag,
+             &PyDiagoCGAdapter::diag,
              R"pbdoc(
             Diagonalize the linear operator using the Conjugate Gradient Method.
 
@@ -190,25 +203,31 @@ void bind_hsolver(py::module& m)
         "mm_op"_a,
         "max_iter"_a,
         "tol"_a,
-        "diag_ethr"_a,  
+        "diag_ethr"_a,
         "need_subspace"_a,
         "scf_type"_a,
         "nproc_in_pool"_a)
-        .def("init_eig", &py_hsolver::PyDiagoCG::init_eig, R"pbdoc(
+        .def("init_eig", &PyDiagoCGAdapter::init_eig, R"pbdoc(
             Initialize the eigenvalues.
         )pbdoc")
-        .def("get_eig", &py_hsolver::PyDiagoCG::get_eig, R"pbdoc(
+        .def("get_eig", &PyDiagoCGAdapter::get_eig, R"pbdoc(
             Get the eigenvalues.
         )pbdoc")
-        .def("set_psi", &py_hsolver::PyDiagoCG::set_psi, R"pbdoc(
+        .def("set_psi", &PyDiagoCGAdapter::set_psi, R"pbdoc(
             Set the eigenvectors.
         )pbdoc", "psi_in"_a)
-        .def("get_psi", &py_hsolver::PyDiagoCG::get_psi, R"pbdoc(
+        .def("get_psi", &PyDiagoCGAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
-        .def("set_prec", &py_hsolver::PyDiagoCG::set_prec, R"pbdoc(
+        .def("set_prec", &PyDiagoCGAdapter::set_prec, R"pbdoc(
             Set the preconditioner.
         )pbdoc", "prec_in"_a);
+#else
+    // Provide stub binding when ATen is not available
+    // This allows the module to load but will raise an error if used
+    m.def("diago_cg_available", []() { return false; },
+          "Check if diago_cg is available (requires ATen)");
+#endif
 }
 
 PYBIND11_MODULE(_hsolver_pack, m)

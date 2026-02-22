@@ -1,6 +1,6 @@
 #include "output_hcontainer.h"
 
-#include "source_io/sparse_matrix.h"
+#include "source_io/module_output/sparse_matrix.h"
 
 #include <fstream>
 
