@@ -33,7 +33,7 @@ struct Input_para
     bool cal_stress = false;        ///< calculate the stress
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
-    std::string latname = "none";   ///< lattice name
+    std::string latname = "user_defined_lattice";   ///< lattice name
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
