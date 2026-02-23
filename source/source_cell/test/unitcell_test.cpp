@@ -172,7 +172,7 @@ using UcellDeathTest = UcellTest;
 TEST_F(UcellTest, Constructor)
 {
     EXPECT_EQ(ucell->Coordinate, "Direct");
-    EXPECT_EQ(ucell->latName, "none");
+    EXPECT_EQ(ucell->latName, "user_defined_lattice");
     EXPECT_DOUBLE_EQ(ucell->lat0, 0.0);
     EXPECT_DOUBLE_EQ(ucell->lat0_angstrom, 0.0);
     EXPECT_EQ(ucell->ntype, 0);
@@ -547,7 +547,7 @@ TEST_F(UcellTest, RemakeCell)
 
 TEST_F(UcellDeathTest, RemakeCellWarnings)
 {
-    std::vector<std::string> latname_in = {"none", "trigonal", "bacm", "triclinic", "arbitrary"};
+    std::vector<std::string> latname_in = {"user_defined_lattice", "trigonal", "bacm", "triclinic", "arbitrary"};
     for (int i = 0; i < latname_in.size(); ++i)
     {
         ucell->latvec.e11 = 10.0;
@@ -563,7 +563,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         testing::internal::CaptureStdout();
         EXPECT_EXIT(unitcell::remake_cell(ucell->lat), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
-        if (latname_in[i] == "none")
+        if (latname_in[i] == "user_defined_lattice")
         {
             EXPECT_THAT(output, testing::HasSubstr("to use fixed_ibrav, latname must be provided"));
         }

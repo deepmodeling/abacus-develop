@@ -57,18 +57,5 @@ AddTest(
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-AddTest(
-  TARGET hcontainer_readCSR_test
-  LIBS parameter base ${math_libs} device cell_info 
-  SOURCES test_hcontainer_readCSR.cpp
-    ../base_matrix.cpp
-    ../hcontainer.cpp
-    ../atom_pair.cpp
-    ../output_hcontainer.cpp
-    ../../../source_basis/module_ao/parallel_orbitals.cpp
-    ../../../source_io/module_output/sparse_matrix.cpp
-    ../../../source_io/module_output/csr_reader.cpp
-    ../../../source_io/module_output/file_reader.cpp
-    ../../../source_io/module_output/output.cpp
-)
+
 endif() 

@@ -47,4 +47,32 @@ void FileReader::readLine()
     }
 }
 
+void FileReader::read_ucell()
+{
+    if (ifs.eof())
+    {
+        ModuleBase::WARNING_QUIT("FileReader::read_ucell", "End of file");
+    }
+
+    std::string tmp;
+    for (int i = 0; i < 6; i++)
+    {
+        std::getline(ifs, tmp); // latName + lat0 + latvec + atom label
+    }
+    std::getline(ifs, tmp); // atom number of each type
+
+    std::istringstream iss(tmp);
+    int natom = 0;
+    int total_natom = 0;
+    while (iss >> natom)
+    {
+        total_natom += natom;
+    }
+    for (int i = 0; i < total_natom + 1; i++)
+    {
+        std::getline(ifs, tmp); // Direct + atom coordinates
+    }
+}
+
+
 } // namespace ModuleIO

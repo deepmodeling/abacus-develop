@@ -56,7 +56,8 @@ void ModuleIO::write_chg_init(
                                           istep,
                                           ss.str(),
                                           fermi_energy,
-                                          &(ucell));
+                                          &(ucell),
+					  inp.out_chg[1]);
         }
     }
     return;
@@ -74,7 +75,7 @@ void ModuleIO::write_pot_init(
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin ==2 || nspin == 4);
 
-    if (inp.out_pot == 3)
+    if (inp.out_pot[0] == 3)
     {
         for (int is = 0; is < nspin; is++)
         {

@@ -3,8 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
-
-#include <iostream>
+#include "source_io/module_output/ucell_io.h"
 
 namespace ModuleIO
 {
@@ -35,27 +34,41 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
 }
 
 void write_dmr_csr(std::string& fname, 
-                   hamilt::HContainer<double>* dm_serial, 
+                   const UnitCell *ucell,
                    const int precision,
-                   const int istep)
+                   hamilt::HContainer<double>* dm_serial,
+                   const int istep,
+		   const int ispin,
+		   const int nspin)
 {
     // write the head: ION step number, basis number and R loop number
 
-	std::ofstream ofs;
+    std::ofstream ofs;
 
     // mohan update 2025-05-26
-	if(istep<=0)
-	{
-		ofs.open(fname);
-	}
-	else if(istep>0)
-	{
-		ofs.open(fname, std::ios::app);
-	}
+    if(istep<=0)
+    {
+        ofs.open(fname);
+    }
+    else if(istep>0)
+    {
+        ofs.open(fname, std::ios::app);
+    }
 
-    ofs << "IONIC_STEP: " << istep+1 << std::endl;
-    ofs << "Matrix Dimension of DM(R): " << dm_serial->get_nbasis() << std::endl;
-    ofs << "Matrix number of DM(R): " << dm_serial->size_R_loop() << std::endl;
+
+    ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    ofs << " # print density matrix in real space DM(R)" << std::endl;
+    ofs << " " << nspin << " # number of spin directions" << std::endl;
+    ofs << " " << ispin+1 << " # spin index" << std::endl;
+    ofs << " " << dm_serial->get_nbasis() 
+	    << " # number of localized basis" << std::endl;
+    ofs << " " << dm_serial->size_R_loop() 
+	    << " # number of Bravais lattice vector R" << std::endl;
+    ofs << std::endl;
+
+    // write ucell
+    ModuleIO::UcellIO::write_ucell(ofs, ucell);
+    ofs << std::endl;
 
     // write HR_serial to ofs
     const double sparse_threshold = 1e-10;
@@ -65,6 +78,7 @@ void write_dmr_csr(std::string& fname,
 }
 
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
+               const UnitCell* ucell,
                const int precision,
                const Parallel_2D& paraV,
                const bool append,
@@ -75,29 +89,30 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
     const int nspin = dmr.size();
     assert(nspin > 0);
     for (int ispin = 0; ispin < nspin; ispin++)
-	{
-		const int nbasis = dmr[ispin]->get_nbasis();
+    {
+        const int nbasis = dmr[ispin]->get_nbasis();
 
-		// gather the parallel matrix to serial matrix
+        // gather the parallel matrix to serial matrix
 #ifdef __MPI
-		Parallel_Orbitals serialV;
-		serialV.init(nbasis, nbasis, nbasis, paraV.comm());
-		serialV.set_serial(nbasis, nbasis);
-		serialV.set_atomic_trace(iat2iwt, nat, nbasis);
-		hamilt::HContainer<double> dm_serial(&serialV);
-		hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
+        Parallel_Orbitals serialV;
+        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+        serialV.set_serial(nbasis, nbasis);
+        serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+        hamilt::HContainer<double> dm_serial(&serialV);
+        hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
 #else
-		hamilt::HContainer<double> dm_serial(*dmr[ispin]);
+        hamilt::HContainer<double> dm_serial(*dmr[ispin]);
 #endif
-		if (GlobalV::MY_RANK == 0)
-		{
+
+        if (GlobalV::MY_RANK == 0)
+        {
             // out_type = 1, csr format;
             // out_type = 2, npz format (currently not support)
             const int out_type = 1;
-			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
-			write_dmr_csr(fname, &dm_serial, precision, istep);
-		}
-	}
+            std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
+            write_dmr_csr(fname, ucell, precision, &dm_serial, istep, ispin, nspin);
+        }
+    }
 }
 
 } // namespace ModuleIO
