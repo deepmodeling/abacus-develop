@@ -38,7 +38,7 @@ void csrFileReader<T>::parseFile()
     // Read the matrix dimension
     readLine();
     ss >> matrixDimension;
-    //std::cout << " mat dim is " << matrixDimension << std::endl; 
+    // std::cout << " mat dim is " << matrixDimension << std::endl; 
 
     // Read the number of R
     readLine();
