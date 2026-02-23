@@ -15,7 +15,8 @@ scf_nmax            100
 #Parameters (LCAO)
 basis_type          lcao
 ks_solver           scalapack_gvx
-out_chg             2  3 // 2 outputs the initial charge density
+out_chg             2  5 // 2 outputs the initial charge density
+out_pot             1  5
 
 cal_force 1
 cal_stress 1

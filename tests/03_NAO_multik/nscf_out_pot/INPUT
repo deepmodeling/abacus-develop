@@ -5,7 +5,7 @@ calculation     nscf
 
 nbands			6
 symmetry		1
-out_pot			1
+out_pot			1  5
 
 #Parameters (2.Iteration)
 ecutwfc			5

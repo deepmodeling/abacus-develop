@@ -1,7 +1,7 @@
-etotref -196.6254071148606
+etotref -196.6254071148605
 etotperatomref -98.3127035574
-ComparePot1_pass 1
+ComparePot1_pass 0
 pointgroupref T_d
 spacegroupref O_h
 nksibzref 1
-totaltimeref 0.34
+totaltimeref 0.25
