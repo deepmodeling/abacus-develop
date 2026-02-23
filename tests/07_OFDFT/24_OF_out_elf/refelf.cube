@@ -1,5 +1,5 @@
-STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x
-1 (nspin) 
+Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x
+1 # number of spin directions 
 1 0.0 0.0 0.0 
 15 0.000000 0.250080 0.250080
 15 0.250080 0.000000 0.250080

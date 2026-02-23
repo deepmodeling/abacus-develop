@@ -54,16 +54,25 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_pot");
-        item.annotation = "output realspace potential";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.out_pot = 0;
-            }
-        };
-        read_sync_int(input.out_pot);
-        this->add_item(item);
+            Input_Item item("out_pot");
+            item.annotation = "output real space potential (with precision 8)";
+            item.read_value = [](const Input_Item& item, Parameter& para) {
+                    const size_t count = item.get_size();
+                    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_pot needs at least 1 value");
+                    para.input.out_pot[0] = std::stoi(item.str_values[0]);
+                    para.input.out_pot[1] = 8;
+                    if (count >= 2) try { para.input.out_pot[1] = std::stoi(item.str_values[1]); }
+                    catch (const std::invalid_argument&) { /* do nothing */ }
+                    catch (const std::out_of_range&) {/* do nothing */}
+                    // some special case
+                    if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+                    {
+                            para.input.out_pot[0] = 0;
+                    }
+            };
+
+            sync_intvec(input.out_pot, 2, 0);
+            this->add_item(item);
     }
     {
         Input_Item item("out_wfc_pw");
@@ -207,33 +216,32 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_dmr");
-        item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+	    Input_Item item("out_dmr");
+	    item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+	    item.read_value = [](const Input_Item& item, Parameter& para) {
+		    const size_t count = item.get_size();
+		    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
+		    para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
+		    para.input.out_dmr[1] = 8;
+		    if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
+		    catch (const std::invalid_argument&) { /* do nothing */ }
+		    catch (const std::out_of_range&) {/* do nothing */}
+		    // some special case
+		    if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+		    {
+			    para.input.out_dmr[0] = 0;
+		    }
+	    };
 
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
-			para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_dmr[1] = 8;
-			if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-            // some special case
-			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-			{
-				para.input.out_dmr[0] = 0;
-			}
-        };
+	    item.check_value = [](const Input_Item& item, const Parameter& para) {
+		    if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
+		    {
+			    ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
+		    }
+	    };
 
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
-            }
-        };
-
-        sync_intvec(input.out_dmr, 2, 0);
-        this->add_item(item);
+	    sync_intvec(input.out_dmr, 2, 0);
+	    this->add_item(item);
     }
     {
         Input_Item item("out_mat_hs");

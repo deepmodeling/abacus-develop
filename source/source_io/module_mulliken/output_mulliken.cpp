@@ -17,7 +17,8 @@ Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
                                      CellIndex* cell_index,
                                      const std::vector<int>& isk,
                                      int nspin)
-    : output_sk_(output_sk), output_dmk_(output_dmk), ParaV_(ParaV), cell_index_(cell_index), isk_(isk), nspin_(nspin)
+    : output_sk_(output_sk), output_dmk_(output_dmk), 
+	ParaV_(ParaV), cell_index_(cell_index), isk_(isk), nspin_(nspin)
 {
     this->set_nspin(nspin);
     this->set_ParaV(ParaV);
@@ -69,20 +70,27 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "STEP: " << istep << std::endl;
-    os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
-    os << " Total charge:\t" << tot_chg[0] << std::endl;
+    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
-    FmtCore fmt_of_chg("%20.4f");
-    FmtCore fmt_of_label("%-20s");
-    FmtCore fmt_of_Z("%20d");
-    os << "Decomposed Mulliken populations" << std::endl;
+    FmtCore fmt_of_chg("%10.4f");
+    FmtCore fmt_of_label("%12s");
+    FmtCore fmt_of_Z("%2d");
+    FmtCore fmt_of_sum("%14s");
+    os << " Decomposed Mulliken population analysis for each atom" << std::endl;
+    os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
+    os << std::endl;
+
     for (int iat = 0; iat < this->cell_index_->get_nat(); ++iat)
     {
         /// header of the table
         std::string atom_label = this->cell_index_->get_atom_label(iat);
-        os << FmtCore::format("%-20d", iat) << FmtCore::format("%20s", std::string("Zeta of ") + atom_label)
-           << FmtCore::format("%20s", std::string("Spin 1")) << std::endl;
+	os << " ------------------" << std::endl;
+	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
+	os << " ------------------" << std::endl;
+        os << FmtCore::format("%14s", std::string("zeta"))
+           << FmtCore::format("%10s", std::string("spin1")) << std::endl;
+
         /// loop of L
         for (int L = 0; L <= this->cell_index_->get_maxL(iat); L++)
         {
@@ -91,7 +99,8 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
             {
                 for (int M = 0; M < (2 * L + 1); M++)
                 {
-                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) << fmt_of_Z.format(Z)
+                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) 
+		       << fmt_of_Z.format(Z+1)
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 0, L, Z, M}]) << std::endl;
                 }
                 // sum over m
@@ -106,20 +115,20 @@ void Output_Mulliken<TK>::write_mulliken_nspin1(int istep,
                 }
                 if (L > 0)
                 {
-                    os << fmt_of_label.format(std::string("SUM OVER M")) << std::setw(20) << ""
+                    os << fmt_of_sum.format(std::string(" sum m"))
                        << fmt_of_chg.format(sum_over_m[0]) << std::endl;
                 }
             }
-            os << fmt_of_label.format(std::string("SUM OVER M+Zeta")) << std::setw(20) << ""
+            os << fmt_of_sum.format(std::string(" sum mz"))
                << fmt_of_chg.format(sum_over_m_and_z[0]) << std::endl;
             os << std::endl;
         }
-        os << fmt_of_label.format(std::string("SUM OVER M+Zeta+L")) << std::setw(20) << ""
+        os << fmt_of_sum.format(std::string(" sum lmz"))
            << fmt_of_chg.format(atom_chg[iat][0]) << std::endl;
         os << std::endl;
-        os << std::left << std::setw(30) << "Total Charge on atom:" << std::right << std::setw(10) << atom_label
+        os << std::left << " total charge    on atom " << iat+1 << " "
            << fmt_of_chg.format(atom_chg[iat][0]) << std::endl;
-        os << std::endl << std::endl;
+        os << std::endl;
     }
 }
 
@@ -132,23 +141,32 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "STEP: " << istep << std::endl;
-    os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
-    os << " Total charge of spin " << 1 << ":\t" << tot_chg[0] << std::endl;
-    os << " Total charge of spin " << 2 << ":\t" << tot_chg[1] << std::endl;
-    os << " Total charge:\t" << tot_chg[0] + tot_chg[1] << std::endl;
+    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " Total charge " << tot_chg[0] + tot_chg[1] << std::endl;
+    os << " Total charge of spin1 " << tot_chg[0] << std::endl;
+    os << " Total charge of spin2 " << tot_chg[1] << std::endl;
     /// orbital decomposed mulliken populations
-    FmtCore fmt_of_chg("%20.4f");
-    FmtCore fmt_of_label("%-20s");
-    FmtCore fmt_of_Z("%20d");
-    os << "Decomposed Mulliken populations" << std::endl;
+    FmtCore fmt_of_chg("%10.4f");
+    FmtCore fmt_of_label("%12s");
+    FmtCore fmt_of_Z("%2d");
+    FmtCore fmt_of_sum("%14s");
+    os << " Decomposed Mulliken population analysis for each atom" << std::endl;
+    os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
+    os << std::endl;
+
     for (int iat = 0; iat < this->cell_index_->get_nat(); ++iat)
     {
         /// header of the table
         std::string atom_label = this->cell_index_->get_atom_label(iat);
-        os << FmtCore::format("%-20d", iat) << FmtCore::format("%20s", std::string("Zeta of ") + atom_label)
-           << FmtCore::format("%20s", std::string("Spin 1")) << FmtCore::format("%20s", std::string("Spin 2"))
-           << FmtCore::format("%20s", std::string("Sum")) << FmtCore::format("%20s", std::string("Diff")) << std::endl;
+	os << " ------------------" << std::endl;
+	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
+	os << " ------------------" << std::endl;
+        os << FmtCore::format("%14s", std::string("zeta"))
+           << FmtCore::format("%10s", std::string("spin1")) 
+	   << FmtCore::format("%10s", std::string("spin2"))
+           << FmtCore::format("%10s", std::string("sum")) 
+	   << FmtCore::format("%10s", std::string("diff")) << std::endl;
+
         /// loop of L
         for (int L = 0; L <= this->cell_index_->get_maxL(iat); L++)
         {
@@ -157,7 +175,8 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
             {
                 for (int M = 0; M < (2 * L + 1); M++)
                 {
-                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) << fmt_of_Z.format(Z)
+                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) 
+		       << fmt_of_Z.format(Z+1) // be careful, Z+1, modified by mohan 2026-02-21
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 0, L, Z, M}])
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 1, L, Z, M}])
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 0, L, Z, M}]
@@ -178,28 +197,31 @@ void Output_Mulliken<TK>::write_mulliken_nspin2(int istep,
                 }
                 if (L > 0)
                 {
-                    os << fmt_of_label.format(std::string("SUM OVER M")) << std::setw(20) << ""
-                       << fmt_of_chg.format(sum_over_m[0]) << fmt_of_chg.format(sum_over_m[1])
+                    os << fmt_of_sum.format(std::string(" sum m"))
+                       << fmt_of_chg.format(sum_over_m[0]) 
+		       << fmt_of_chg.format(sum_over_m[1])
                        << fmt_of_chg.format(sum_over_m[0] + sum_over_m[1])
                        << fmt_of_chg.format(sum_over_m[0] - sum_over_m[1]) << std::endl;
                 }
             }
-            os << fmt_of_label.format(std::string("SUM OVER M+Zeta")) << std::setw(20) << ""
-               << fmt_of_chg.format(sum_over_m_and_z[0]) << fmt_of_chg.format(sum_over_m_and_z[1])
+            os << fmt_of_sum.format(std::string(" sum mz"))
+               << fmt_of_chg.format(sum_over_m_and_z[0]) 
+	       << fmt_of_chg.format(sum_over_m_and_z[1])
                << fmt_of_chg.format(sum_over_m_and_z[0] + sum_over_m_and_z[1])
                << fmt_of_chg.format(sum_over_m_and_z[0] - sum_over_m_and_z[1]) << std::endl;
             os << std::endl;
         }
-        os << fmt_of_label.format(std::string("SUM OVER M+Zeta+L")) << std::setw(20) << ""
-           << fmt_of_chg.format(atom_chg[iat][0]) << fmt_of_chg.format(atom_chg[iat][1])
+        os << fmt_of_sum.format(std::string(" sum lmz"))
+           << fmt_of_chg.format(atom_chg[iat][0]) 
+	   << fmt_of_chg.format(atom_chg[iat][1])
            << fmt_of_chg.format(atom_chg[iat][0] + atom_chg[iat][1])
            << fmt_of_chg.format(atom_chg[iat][0] - atom_chg[iat][1]) << std::endl;
         os << std::endl;
-        os << std::left << std::setw(30) << "Total Charge on atom:" << std::right << std::setw(10) << atom_label
+        os << std::left << " total charge    on atom " << iat+1 << " "
            << fmt_of_chg.format(atom_chg[iat][0] + atom_chg[iat][1]) << std::endl;
-        os << std::left << std::setw(30) << "Total Magnetism on atom: " << std::right << std::setw(10) << atom_label
+        os << std::left << " total magnetism on atom " << iat+1 << " "
            << fmt_of_chg.format(atom_chg[iat][0] - atom_chg[iat][1]) << std::endl;
-        os << std::endl << std::endl;
+        os << std::endl;
     }
 }
 
@@ -212,22 +234,30 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
 {
     os << std::setprecision(4);
     /// step info
-    os << "STEP: " << istep << std::endl;
-    os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
-    os << " Total charge:\t" << tot_chg[0] << std::endl;
+    os << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    os << " Total charge " << tot_chg[0] << std::endl;
     /// orbital decomposed mulliken populations
-    FmtCore fmt_of_chg("%20.4f");
-    FmtCore fmt_of_label("%-20s");
-    FmtCore fmt_of_Z("%20d");
-    os << "Decomposed Mulliken populations" << std::endl;
+    FmtCore fmt_of_chg("%10.4f");
+    FmtCore fmt_of_label("%12s");
+    FmtCore fmt_of_Z("%2d");
+    FmtCore fmt_of_sum("%14s");
+    os << " Decomposed Mulliken population analysis for each atom" << std::endl;
+    os << " l and m from Ylm, z stands for zeta orbital" << std::endl;
+    os << std::endl;
+
     for (int iat = 0; iat < this->cell_index_->get_nat(); ++iat)
     {
         /// header of the table
         std::string atom_label = this->cell_index_->get_atom_label(iat);
-        os << FmtCore::format("%-20d", iat) << FmtCore::format("%20s", std::string("Zeta of ") + atom_label)
-           << FmtCore::format("%20s", std::string("Spin 1")) << FmtCore::format("%20s", std::string("Spin 2"))
-           << FmtCore::format("%20s", std::string("Spin 3")) << FmtCore::format("%20s", std::string("Spin 4"))
-           << std::endl;
+	os << " ------------------" << std::endl;
+	os << " Atom " << iat+1 << " is " << atom_label << std::endl; 
+	os << " ------------------" << std::endl;
+        os << FmtCore::format("%14s", std::string("zeta"))
+           << FmtCore::format("%10s", std::string("spin1")) 
+           << FmtCore::format("%10s", std::string("spin2"))
+           << FmtCore::format("%10s", std::string("spin3")) 
+           << FmtCore::format("%10s", std::string("spin4")) << std::endl;
+
         /// loop of L
         for (int L = 0; L <= this->cell_index_->get_maxL(iat); L++)
         {
@@ -236,7 +266,8 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
             {
                 for (int M = 0; M < (2 * L + 1); M++)
                 {
-                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) << fmt_of_Z.format(Z)
+                    os << fmt_of_label.format(ModuleBase::Name_Angular[L][M]) 
+		       << fmt_of_Z.format(Z+1)
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 0, L, Z, M}])
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 1, L, Z, M}])
                        << fmt_of_chg.format(orb_chg[std::vector<int>{iat, 2, L, Z, M}])
@@ -254,26 +285,33 @@ void Output_Mulliken<TK>::write_mulliken_nspin4(int istep,
                 }
                 if (L > 0)
                 {
-                    os << fmt_of_label.format(std::string("SUM OVER M")) << std::setw(20) << ""
-                       << fmt_of_chg.format(sum_over_m[0]) << fmt_of_chg.format(sum_over_m[1])
-                       << fmt_of_chg.format(sum_over_m[2]) << fmt_of_chg.format(sum_over_m[3]) << std::endl;
+                    os << fmt_of_sum.format(std::string(" sum m"))
+                       << fmt_of_chg.format(sum_over_m[0]) 
+		       << fmt_of_chg.format(sum_over_m[1])
+                       << fmt_of_chg.format(sum_over_m[2]) 
+		       << fmt_of_chg.format(sum_over_m[3]) << std::endl;
                 }
             }
-            os << fmt_of_label.format(std::string("SUM OVER M+Zeta")) << std::setw(20) << ""
-               << fmt_of_chg.format(sum_over_m_and_z[0]) << fmt_of_chg.format(sum_over_m_and_z[1])
-               << fmt_of_chg.format(sum_over_m_and_z[2]) << fmt_of_chg.format(sum_over_m_and_z[3]) << std::endl;
+            os << fmt_of_sum.format(std::string(" sum mz"))
+               << fmt_of_chg.format(sum_over_m_and_z[0]) 
+	       << fmt_of_chg.format(sum_over_m_and_z[1])
+               << fmt_of_chg.format(sum_over_m_and_z[2]) 
+	       << fmt_of_chg.format(sum_over_m_and_z[3]) << std::endl;
             os << std::endl;
         }
-        os << fmt_of_label.format(std::string("SUM OVER M+Zeta+L")) << std::setw(20) << ""
-           << fmt_of_chg.format(atom_chg[iat][0]) << fmt_of_chg.format(atom_chg[iat][1])
-           << fmt_of_chg.format(atom_chg[iat][2]) << fmt_of_chg.format(atom_chg[iat][3]) << std::endl;
+        os << fmt_of_sum.format(std::string(" sum lmz"))
+           << fmt_of_chg.format(atom_chg[iat][0]) 
+	   << fmt_of_chg.format(atom_chg[iat][1])
+           << fmt_of_chg.format(atom_chg[iat][2]) 
+	   << fmt_of_chg.format(atom_chg[iat][3]) << std::endl;
         os << std::endl;
-        os << std::left << std::setw(30) << "Total Charge on atom:" << std::right << std::setw(10) << atom_label
+        os << std::left << " total charge    on atom " << iat+1 << " "
            << fmt_of_chg.format(atom_chg[iat][0]) << std::endl;
-        os << std::left << std::setw(30) << "Total Magnetism on atom: " << std::right << std::setw(10) << atom_label
-           << fmt_of_chg.format(atom_chg[iat][1]) << fmt_of_chg.format(atom_chg[iat][2])
+        os << std::left << " total magnetism on atom " << iat+1 << " "
+           << fmt_of_chg.format(atom_chg[iat][1]) << " "
+           << fmt_of_chg.format(atom_chg[iat][2]) << " "
            << fmt_of_chg.format(atom_chg[iat][3]) << std::endl;
-        os << std::endl << std::endl;
+        os << std::endl;
     }
 }
 

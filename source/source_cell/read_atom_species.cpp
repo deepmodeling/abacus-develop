@@ -162,7 +162,7 @@ bool read_lattice_constant(std::ifstream& ifa,
     // Read in latticies vector
     //===========================
 
-    if(latName=="none")
+    if(latName=="user_defined_lattice")
     {
         // check the existence of keyword "LATTICE_PARAMETERS"
         if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,

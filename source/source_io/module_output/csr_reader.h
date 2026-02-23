@@ -14,17 +14,30 @@ namespace ModuleIO
  * @details This class is used to read CSR file
  * the default format is like:
  * ```
- * STEP: 0
- * Matrix Dimension of S(R): 4
- * Matrix number of S(R): 2
- * 0 1 1 2            # (0,1,1) is the R coordinate, 2 is the number of non-zero elements
- *  4.00e+00 7.00e+00 # non-zero elements
- *  3 2               # column indices
- *  0 1 2 2 2         # row pointer
- * 0 0 0 3            # the second R coordinate and number of non-zero elements
- * 5.00e+00 6.00e+00 1.00e+01
- * 2 3 3
- * 0 0 0 2 3
+ *  --- Ionic Step 1 ---
+ *  # print density matrix in real space DM(R)
+ *  26 # number of localized basis
+ *  13 # number of Bravais lattice vector R
+ *
+ *  unitcell_information
+ *
+ *  #--------------------------------------------------------#
+ *  #                      CSR format                        #
+ *  # Outer loop is the number of Bravais lattice vectors.   #
+ *  # First line is Bravais lattice vector index Rx, Ry, Rz, #
+ *  # followed by the number of non-zero elements.           #
+ *  # Next are three blocks of data.                         #
+ *  #--------------------------------------------------------#
+ * 
+ *  -1 0 0 507
+ *  # CSR values
+ *  6.73361941e-04 -3.97537783e-05 7.92408228e-04 ...
+ *  # CSR column indices
+ *  0 1 2 ...
+ *  # CSR row pointers
+ *  0 26 52 ...
+ *  ...
+ *
  * ```
  * It will store the R coordinates and sparse matrices as two vectors.
  * One can use getter functions to get the R coordinates and sparse matrices,

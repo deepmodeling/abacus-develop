@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix               autotest
+pseudo_dir           ../../PP_ORB
+orbital_dir          ../../PP_ORB
+
+nbands               8
+calculation          cell-relax
+#Parameters (Accuracy)
+ecutwfc              20
+scf_nmax             20
+
+basis_type           lcao
+
+cal_stress           1
+stress_thr           0.5
+cal_force            1
+force_thr_ev         0.02
+
+ks_solver            scalapack_gvx
+mixing_type          broyden
+mixing_beta          0.7
+
+gamma_only           1
+
+relax_method         cg
+relax_new            1
+relax_nmax           2
+relax_scale_force    0.4

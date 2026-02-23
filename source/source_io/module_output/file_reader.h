@@ -28,6 +28,9 @@ class FileReader
     // read a line to string stream
     void readLine();
 
+    // read unitcell
+    void read_ucell();
+
     std::stringstream ss;
 
   private:
