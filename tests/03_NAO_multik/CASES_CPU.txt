@@ -1,7 +1,7 @@
-#scf_in_dmr_GaAs
-#scf_in_dmr_Si
-#scf_out_chg
-#scf_out_dmr_dmk
+scf_in_dmr_GaAs
+scf_in_dmr_Si
+scf_out_chg_pot
+scf_out_dmr_dmk
 scf_out_chg_tau
 scf_out_elf
 nscf_out_pot
