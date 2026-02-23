@@ -1,7 +1,13 @@
 scf_u_spin1
 scf_u_spin2
 scf_u_spin4
+scf_eadd_spin2
+scf_eminus
+scf_eminus_spin2
+scf_bspline
 scf_0atoms
+scf_smallg_spin1
+scf_smallg_spin2
 scf_in_dmr_GaAs
 scf_in_dmr_Si
 scf_out_wf
@@ -16,6 +22,7 @@ scf_out_elf
 scf_out_qo
 nscf_out_pot
 nscf_out_mul
+relax_bfgs2
 relax_old_cg
 relax_cell
 md_nvt
@@ -30,9 +37,6 @@ get_pchg_k
 04_NO_KP_GTH
 06_NO_KP_OU
 07_NO_KP_UPF201
-08_NO_KP_bspline
-09_NO_S1_smallg
-10_NO_S2_smallg
 11_NO_KP_AFM
 12_NO_KP_FM_OD
 13_NO_KP_NC
@@ -42,10 +46,6 @@ get_pchg_k
 19_NO_KP_OH_nscf
 20_NO_KP_OHS_S4
 21_NO_KP_OS
-27_NO_KP_eadd
-28_NO_KP_eminus
-29_NO_KP_S2_eadd
-30_NO_KP_S2_eminus
 31_NO_KP_nupdown0
 38_NO_OP3
 48_NO_KP_symm
