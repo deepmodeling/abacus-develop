@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
-suffix	    autotest
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
+suffix              autotest
+pseudo_dir          ../../PP_ORB
+orbital_dir         ../../PP_ORB
 
 gamma_only          0
 
@@ -18,5 +18,5 @@ ks_solver           scalapack_gvx
 out_chg             2  5 // 2 outputs the initial charge density
 out_pot             1  5
 
-cal_force 1
-cal_stress 1
+cal_force           1
+cal_stress          1

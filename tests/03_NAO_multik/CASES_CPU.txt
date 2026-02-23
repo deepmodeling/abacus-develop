@@ -1,5 +1,6 @@
 scf_in_dmr_GaAs
 scf_in_dmr_Si
+scf_out_dos_nspin4
 scf_out_chg_pot
 scf_out_dmr_dmk
 scf_out_chg_tau
@@ -46,7 +47,6 @@ md_out_syns
 44_NO_KP_MD_OW
 45_NO_KP_QO
 46_NO_0ATOM
-47_NO_KP_SO_OD
 48_NO_KP_symm
 49_NO_KP_CR_VDW3ABC
 50_NO_KP_CR_VDW3BJ

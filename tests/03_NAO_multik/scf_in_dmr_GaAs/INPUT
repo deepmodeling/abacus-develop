@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
-suffix	        autotest
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
+suffix              autotest
+pseudo_dir          ../../PP_ORB
+orbital_dir         ../../PP_ORB
 
 gamma_only          0
 
@@ -19,9 +19,9 @@ scf_nmax            100
 basis_type          lcao
 ks_solver           scalapack_gvx
 #out_dmr             1
-init_chg           dm
-read_file_dir           ./
+init_chg            dm
+read_file_dir       ./
 
-cal_force 1
-cal_stress 1
+cal_force           1
+cal_stress          1
 force_thr_ev        0.001
