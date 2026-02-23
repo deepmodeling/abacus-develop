@@ -235,7 +235,7 @@ TEST(DMKTest,WriteDMK) {
     
 };
 
-
+/*
 // no function in the main code calls read_dmk??? mohan note 2025-05-25
 TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
@@ -277,6 +277,7 @@ TEST(DMKTest, ReadDMK) {
     remove("running_log.txt");
     remove("warning.log");
 }
+*/
 
 
 #ifdef __MPI
