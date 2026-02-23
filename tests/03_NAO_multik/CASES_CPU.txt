@@ -8,9 +8,11 @@ scf_out_dos_nspin4
 scf_out_chg_pot
 scf_out_dmr_dmk
 scf_out_chg_tau
+scf_out_mul
 scf_out_elf
 scf_out_qo
 nscf_out_pot
+nscf_out_mul
 md_nvt
 md_out_wf
 md_out_syns
@@ -45,8 +47,6 @@ md_out_syns
 33_NO_KP_wf0
 34_NO_KP_pchg
 35_NO_KP_pchg_k
-36_NO_KP_MU
-37_NO_KP_MU_nscf
 38_NO_OP3
 41_NO_KP_MSST
 42_NO_KP_MSST2
