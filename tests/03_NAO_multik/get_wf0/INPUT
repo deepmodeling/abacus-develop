@@ -11,7 +11,7 @@ latname           sc
 ecutwfc           25.0
 basis_type        lcao
 scf_thr           1e-10
-read_file_dir     ../32_NO_KP_wf/
+read_file_dir     ../get_wf/
 
 out_wfc_norm      1
 out_wfc_re_im     1
