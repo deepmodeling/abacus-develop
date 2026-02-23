@@ -1,5 +1,5 @@
-STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x
-1 (nspin) 0.517574 (fermi energy, in Ry)
+Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x
+1 # number of spin directions 0.517574 # Fermi energy, in Ry
 2 0.0 0.0 0.0 
 24 0.000000 0.212500 0.212500
 24 0.212500 0.000000 0.212500

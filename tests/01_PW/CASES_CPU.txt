@@ -1,6 +1,7 @@
 nscf_out_pot
 scf_out_elf
 scf_out_ldos
+scf_out_chg_tau
 001_PW_UPF100_Al
 002_PW_UPF100_RAPPE_Fe
 003_PW_UPF100_USPP_Fe
@@ -104,7 +105,6 @@ scf_out_ldos
 102_PW_MD_2O
 201_PW_UPF201_Ce_f
 202_PW_ONCV_Libxc
-203_PW_OK
 204_PW_SY
 205_PW_SCAN
 206_PW_SCAN_S2
