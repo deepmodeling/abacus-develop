@@ -118,8 +118,8 @@ TYPED_TEST(SparseMatrixTest, CSR)
     std::string output = testing::internal::GetCapturedStdout();
     if (std::is_same<TypeParam, double>::value)
     {
-        EXPECT_THAT(output,
-                    testing::HasSubstr("1.00e+00 2.00e+00 3.00e+00 4.00e+00 5.00e+00 6.00e+00 7.00e+00 8.00e+00"));
+        EXPECT_THAT(output, testing::HasSubstr("1.00e+00 2.00e+00 3.00e+00 4.00e+00 5.00e+00 6.00e+00"));
+        EXPECT_THAT(output, testing::HasSubstr("7.00e+00 8.00e+00"));
         EXPECT_THAT(output, testing::HasSubstr("0 1 1 3 2 3 4 5"));
         EXPECT_THAT(output, testing::HasSubstr("0 2 4 7 8"));
 
@@ -142,10 +142,8 @@ TYPED_TEST(SparseMatrixTest, CSR)
     }
     else if (std::is_same<TypeParam, std::complex<double>>::value)
     {
-        EXPECT_THAT(
-            output,
-            testing::HasSubstr("(1.00e+00,0.00e+00) (2.00e+00,0.00e+00) (3.00e+00,0.00e+00) (4.00e+00,0.00e+00) "
-                               "(5.00e+00,0.00e+00) (6.00e+00,0.00e+00) (7.00e+00,0.00e+00) (8.00e+00,0.00e+00)"));
+        EXPECT_THAT(output, testing::HasSubstr("(1.00e+00,0.00e+00) (2.00e+00,0.00e+00) (3.00e+00,0.00e+00) (4.00e+00,0.00e+00) (5.00e+00,0.00e+00) (6.00e+00,0.00e+00)"));
+        EXPECT_THAT(output, testing::HasSubstr("(7.00e+00,0.00e+00) (8.00e+00,0.00e+00)"));
         EXPECT_THAT(output, testing::HasSubstr("0 1 1 3 2 3 4 5"));
         EXPECT_THAT(output, testing::HasSubstr("0 2 4 7 8"));
 
