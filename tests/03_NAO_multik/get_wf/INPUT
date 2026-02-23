@@ -1,9 +1,6 @@
 INPUT_PARAMETERS 
 suffix            autotest
 
-#calculation     scf
-#out_wfc_lcao    1 
-
 calculation       get_wf
 symmetry          -1
 nbands            2
