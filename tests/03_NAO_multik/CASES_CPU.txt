@@ -1,3 +1,7 @@
+scf_u_spin1
+scf_u_spin2
+scf_u_spin4
+scf_0atoms
 scf_in_dmr_GaAs
 scf_in_dmr_Si
 scf_out_dos_nspin4
@@ -46,16 +50,12 @@ md_out_syns
 38_NO_OP3
 41_NO_KP_MSST
 42_NO_KP_MSST2
-46_NO_0ATOM
 48_NO_KP_symm
 49_NO_KP_CR_VDW3ABC
 50_NO_KP_CR_VDW3BJ
 51_NO_KP_CR_VDW2
 52_NO_KP_CR_VDW3
 53_NO_PK_URAMP
-54_NO_PK_PU
-55_NO_PK_PU_S1
-56_NO_PK_PU_SO
 58_NO_MD_2O
 60_NO_KP_OW
 61_NO_KP_sol
