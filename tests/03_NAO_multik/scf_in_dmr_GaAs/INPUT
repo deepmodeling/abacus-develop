@@ -20,6 +20,7 @@ basis_type          lcao
 ks_solver           scalapack_gvx
 #out_dmr             1
 init_chg           dm
+read_file_dir           ./
 
 cal_force 1
 cal_stress 1
