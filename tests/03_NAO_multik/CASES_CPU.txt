@@ -19,6 +19,7 @@ nscf_out_mul
 relax_old_cg
 relax_cell
 md_nvt
+md_msst
 md_out_wf
 md_out_syns
 get_wf
@@ -47,8 +48,6 @@ get_pchg_k
 30_NO_KP_S2_eminus
 31_NO_KP_nupdown0
 38_NO_OP3
-41_NO_KP_MSST
-42_NO_KP_MSST2
 48_NO_KP_symm
 49_NO_KP_CR_VDW3ABC
 50_NO_KP_CR_VDW3BJ
