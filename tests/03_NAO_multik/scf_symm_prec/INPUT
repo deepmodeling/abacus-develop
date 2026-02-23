@@ -2,8 +2,6 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix            autotest
 calculation       scf
-ntype             1
-#nbands			46
 symmetry          1
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
@@ -14,6 +12,7 @@ scf_thr           1e-1
 scf_nmax          1
 cal_force         1
 cal_stress        1
+
 #Parameters (3.Basis)
 basis_type        lcao
 

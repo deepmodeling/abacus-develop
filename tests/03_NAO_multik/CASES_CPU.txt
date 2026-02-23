@@ -1,6 +1,8 @@
+scf_symm_prec
 scf_u_spin1
 scf_u_spin2
 scf_u_spin4
+scf_solvation
 scf_eadd
 scf_eadd_spin2
 scf_eminus
@@ -49,14 +51,12 @@ get_pchg_k
 20_NO_KP_OHS_S4
 21_NO_KP_OS
 31_NO_KP_nupdown0
-48_NO_KP_symm
 49_NO_KP_CR_VDW3ABC
 50_NO_KP_CR_VDW3BJ
 51_NO_KP_CR_VDW2
 52_NO_KP_CR_VDW3
 53_NO_PK_URAMP
 58_NO_MD_2O
-61_NO_KP_sol
 62_NO_KP_restart
 #59_NO_KP_initHR (has bug)
 #scf_in_dmr_Si_spin2_hasbug
