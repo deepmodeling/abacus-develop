@@ -1,3 +1,6 @@
+scf_pp_upf1
+scf_pp_sg15
+scf_pp_gth
 scf_symm_prec
 scf_u_spin1
 scf_u_spin2
@@ -50,9 +53,6 @@ get_wf0
 get_pchg
 get_pchg_k
 get_s
-03_NO_KP_15_kpar
-04_NO_KP_GTH
-06_NO_KP_OU
 07_NO_KP_UPF201
 11_NO_KP_AFM
 13_NO_KP_NC

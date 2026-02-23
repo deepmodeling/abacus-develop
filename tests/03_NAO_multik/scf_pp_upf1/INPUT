@@ -13,7 +13,6 @@ ecutwfc           20
 scf_thr           1e-6
 scf_nmax          100
 
-
 #Parameters (3.Basis)
 basis_type        lcao
 
