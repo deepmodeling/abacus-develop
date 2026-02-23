@@ -30,7 +30,7 @@ jobs:
       - name: Install abacuslite
         shell: bash -l {0}
         run: |
-          cd python/ase-plugin
+          cd interfaces/ASE_interface
           pip install .
 
       - name: Configure & Build ABACUS (GNU)
@@ -54,13 +54,13 @@ jobs:
       - name: Run unit tests
         shell: bash -l {0}
         run: |
-          cd python/ase-plugin/abacuslite
+          cd interfaces/ASE_interface/abacuslite
           chmod +x xtest.sh
           ./xtest.sh
 
       - name: Run integration tests
         shell: bash -l {0}
         run: |
-          cd python/ase-plugin/tests
+          cd interfaces/ASE_interface/tests
           chmod +x xtest.sh
           ./xtest.sh
