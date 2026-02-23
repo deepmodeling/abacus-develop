@@ -537,8 +537,10 @@ void HamiltLCAO<TK, TR>::refresh(bool yes)
         this->refresh_times = 0;
         if (PARAM.inp.nspin == 2)
         {
-            ModuleBase::WARNING_QUIT("HamiltLCAO::refresh",
-                                      "When turning off the refresh flag, the nspin==2 case is not supported yet.");
+            // HR has been loaded from file into both halves of hRS2.
+            // Reset to spin-up; updateHk will switch pointers as needed.
+            this->current_spin = 0;
+            this->hR->allocate(this->hRS2.data(), 0);
         }
     }
 }
