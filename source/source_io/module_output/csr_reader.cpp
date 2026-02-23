@@ -1,5 +1,4 @@
 #include "csr_reader.h"
-
 #include "source_base/tool_quit.h"
 
 namespace ModuleIO
@@ -26,22 +25,50 @@ void csrFileReader<T>::parseFile()
 
     // Read the step
     readLine();
-    ss >> tmp_string >> step;
+    ss >> tmp_string >> tmp_string >> tmp_string >> step;
+
+    //std::cout << " step is " << step << std::endl; 
+    // Read the title
+    readLine();
+    // Read the total spin
+    readLine();
+    // Read the spin index
+    readLine();
 
     // Read the matrix dimension
     readLine();
-    ss >> tmp_string >> tmp_string >> tmp_string >> tmp_string >> matrixDimension;
+    ss >> matrixDimension;
+    // std::cout << " mat dim is " << matrixDimension << std::endl; 
 
     // Read the number of R
     readLine();
-    ss >> tmp_string >> tmp_string >> tmp_string >> tmp_string >> numberOfR;
+    ss >> numberOfR;
+    // std::cout << " number of R is " << numberOfR << std::endl;
+    readLine();
+
+    // Read cell
+    read_ucell();
+
+    // Read CSR format
+    readLine();
+    readLine();
+    readLine();
+    readLine();
+    readLine();
+    readLine();
+    readLine();
+    readLine();
+    readLine(); // read the last line of CSR format
 
     // Read the matrices
     for (int i = 0; i < numberOfR; i++)
     {
+        // std::cout << " read R " << i+1 << std::endl;
+
         std::vector<int> RCoord(3);
         int nonZero = 0;
 
+        readLine();
         readLine();
         ss >> RCoord[0] >> RCoord[1] >> RCoord[2] >> nonZero;
         RCoordinates.push_back(RCoord);
@@ -52,23 +79,60 @@ void csrFileReader<T>::parseFile()
 
         // read CSR values
         readLine();
-        for (int i = 0; i < nonZero; i++)
-        {
-            ss >> csr_values[i];
-        }
-        // read column indices
+        // std::cout << " ss1: " << ss.str() << std::endl;
+
         readLine();
-        for (int i = 0; i < nonZero; i++)
+	size_t count1 = 0;
+        while (count1 < nonZero)
         {
-            ss >> csr_col_ind[i];
-        }
+            if (ss.eof() || ss.fail())
+            {
+                readLine();
+	    }
+            if (ss >> csr_values[count1])
+            {
+                count1++;
+            }
+	}
+        // std::cout << "count1=" << count1 << std::endl;
+
+        // read CSR column indices
+        readLine();
+        // std::cout << " ss2: " << ss.str() << std::endl;
+
+	size_t count2 = 0;
+        while (count2 < nonZero)
+        {
+            if (ss.eof() || ss.fail())
+            {
+                readLine();
+	    }
+            if (ss >> csr_col_ind[count2])
+            {
+                count2++;
+            }
+	}
+        // std::cout << "count2=" << count2 << std::endl;
+
         // read row pointers
         readLine();
-        for (int i = 0; i < matrixDimension + 1; i++)
-        {
-            ss >> csr_row_ptr[i];
-        }
+        // std::cout << " ss3: " << ss.str() << std::endl;
 
+	size_t count3 = 0;
+        while (count3 < matrixDimension + 1)
+        {
+            if (ss.eof() || ss.fail())
+            {
+                readLine();
+	    }
+            if (ss >> csr_row_ptr[count3])
+            {
+                count3++;
+            }
+	}
+        // std::cout << "count3=" << count3 << std::endl;
+
+        // create sparse matrix
         SparseMatrix<T> matrix(matrixDimension, matrixDimension);
         matrix.readCSR(csr_values, csr_col_ind, csr_row_ptr);
         sparse_matrices.push_back(matrix);

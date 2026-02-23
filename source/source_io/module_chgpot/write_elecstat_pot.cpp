@@ -21,7 +21,8 @@ void write_elecstat_pot(
     const Charge* const chr,
     const UnitCell* ucell,
     const double* v_eff,
-    const surchem& solvent)
+    const surchem& solvent,
+    const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::tick("ModuleIO", "write_elecstat_pot");
@@ -88,7 +89,6 @@ void write_elecstat_pot(
     //-------------------------------------------
     //! Write down the electrostatic potential
     //-------------------------------------------
-    int precision = 9;
     int is = -1;
     double ef_tmp = 0.0;
     int out_fermi = 0;

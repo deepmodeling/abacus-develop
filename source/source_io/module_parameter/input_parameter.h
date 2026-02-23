@@ -33,7 +33,7 @@ struct Input_para
     bool cal_stress = false;        ///< calculate the stress
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
-    std::string latname = "none";   ///< lattice name
+    std::string latname = "user_defined_lattice";   ///< lattice name
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
@@ -373,7 +373,7 @@ struct Input_para
     int out_freq_td = 0;                  ///< print information every few completed electronic iterations in RT-TDDFT
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
-    int out_pot = 0;                      ///< yes or no
+    std::vector<int> out_pot = {0, 8};    ///< output potential 
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
