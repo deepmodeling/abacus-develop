@@ -365,6 +365,7 @@ TEST_F(InputTest, Item_test)
     }
     { // out_pot
         auto it = find_label("out_pot", readinput.input_lists);
+        param.input.calculation = "scf";
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_pot[0], 1);
