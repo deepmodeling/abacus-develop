@@ -181,31 +181,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         }
         if(PARAM.inp.init_chg == "hr")
         {
-            //! 13.1.2) init HR from file
-            if (PARAM.inp.nspin == 2)
-            {
-                // nspin=2: load spin-up into first half of hRS2, spin-down into second half
-                const std::string hrfile_up = PARAM.globalv.global_readin_dir + "/hrs1_nao.csr";
-                LCAO_domain::init_hr_from_file<TR>(hrfile_up, hamilt_lcao->getHR(), ucell, &(this->pv));
-
-                // switch hR data pointer to spin-down half, then read hrs2
-                auto& hRS2 = hamilt_lcao->getHRS2();
-                hamilt_lcao->getHR()->allocate(hRS2.data() + hRS2.size() / 2, 0);
-                const std::string hrfile_down = PARAM.globalv.global_readin_dir + "/hrs2_nao.csr";
-                LCAO_domain::init_hr_from_file<TR>(hrfile_down, hamilt_lcao->getHR(), ucell, &(this->pv));
-
-                // restore hR to spin-up half (refresh(false) will also do this, but be explicit)
-                hamilt_lcao->getHR()->allocate(hRS2.data(), 0);
-            }
-            else
-            {
-                const std::string hrfile = PARAM.globalv.global_readin_dir + "/hrs1_nao.csr";
-                LCAO_domain::init_hr_from_file<TR>(hrfile, hamilt_lcao->getHR(), ucell, &(this->pv));
-            }
-            this->p_hamilt->refresh(false);
-            hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, *this->dmat.dm,
-                this->chr, PARAM.inp.nspin, 0);
+            //! 13.1.2) init charge density from Hamiltonian matrix file
+            LCAO_domain::init_chg_hr<TK, TR>(PARAM.globalv.global_readin_dir, PARAM.inp.nspin,
+                this->p_hamilt, ucell, &(this->pv), this->psi[0], this->pelec, *this->dmat.dm,
+                this->chr, PARAM.inp.ks_solver);
         }
     }
     else //if not, use the DMR calculated from last step

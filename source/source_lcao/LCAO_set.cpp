@@ -5,6 +5,8 @@
 #include "source_estate/elecstate_tools.h" // use fixed_weights
 #include "source_lcao/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
+#include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
+#include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -157,6 +159,57 @@ void LCAO_domain::init_hr_from_file(
     return;
 }
 
+template <typename TK, typename TR>
+void LCAO_domain::init_chg_hr(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<TK>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<TK>& psi,
+    elecstate::ElecState* pelec,
+    elecstate::DensityMatrix<TK, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver)
+{
+    ModuleBase::TITLE("LCAO_domain", "init_chg_hr");
+
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+    if (!hamilt_lcao)
+    {
+        ModuleBase::WARNING_QUIT("LCAO_domain::init_chg_hr", "p_hamilt is not HamiltLCAO");
+    }
+
+    // Step 1: Read HR from file(s)
+    if (nspin == 2)
+    {
+        // nspin=2: load spin-up into first half of hRS2, spin-down into second half
+        const std::string hrfile_up = readin_dir + "/hrs1_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile_up, hamilt_lcao->getHR(), ucell, pv);
+
+        // switch hR data pointer to spin-down half, then read hrs2
+        auto& hRS2 = hamilt_lcao->getHRS2();
+        hamilt_lcao->getHR()->allocate(hRS2.data() + hRS2.size() / 2, 0);
+        const std::string hrfile_down = readin_dir + "/hrs2_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile_down, hamilt_lcao->getHR(), ucell, pv);
+
+        // restore hR to spin-up half
+        hamilt_lcao->getHR()->allocate(hRS2.data(), 0);
+    }
+    else
+    {
+        const std::string hrfile = readin_dir + "/hrs1_nao.csr";
+        LCAO_domain::init_hr_from_file<TR>(hrfile, hamilt_lcao->getHR(), ucell, pv);
+    }
+
+    // Step 2: Mark HR as loaded from file (skip operator recalculation)
+    p_hamilt->refresh(false);
+
+    // Step 3: Diagonalize to get wavefunctions and charge density
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv, ks_solver);
+    hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
+}
+
 
 
 template void LCAO_domain::set_psi_occ_dm_chg<double>(
@@ -247,3 +300,37 @@ template void LCAO_domain::init_hr_from_file<std::complex<double>>(
     hamilt::HContainer<std::complex<double>>* hmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);
+
+template void LCAO_domain::init_chg_hr<double, double>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<double>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<double>& psi,
+    elecstate::ElecState* pelec,
+    elecstate::DensityMatrix<double, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
+template void LCAO_domain::init_chg_hr<std::complex<double>, double>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<std::complex<double>>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<std::complex<double>>& psi,
+    elecstate::ElecState* pelec,
+    elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
+template void LCAO_domain::init_chg_hr<std::complex<double>, std::complex<double>>(
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<std::complex<double>>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<std::complex<double>>& psi,
+    elecstate::ElecState* pelec,
+    elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
