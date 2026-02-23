@@ -2,6 +2,8 @@ scf_symm_prec
 scf_u_spin1
 scf_u_spin2
 scf_u_spin4
+scf_u_ramp
+scf_vdw3abc
 scf_solvation
 scf_eadd
 scf_eadd_spin2
@@ -13,6 +15,7 @@ scf_smallg_spin1
 scf_smallg_spin2
 scf_in_dmr_GaAs
 scf_in_dmr_Si
+scf_out_dos_spin2
 scf_out_wf
 scf_out_chg_pot1
 scf_out_chg_tau
@@ -23,8 +26,10 @@ scf_out_dh_t
 scf_out_dos_spin4
 scf_out_mul
 scf_out_mul_spin4
+scf_out_mul_nupdw
 scf_out_elf
 scf_out_qo
+nscf_out_dos
 nscf_out_band_pband
 nscf_out_pot1
 nscf_out_mul
@@ -32,6 +37,9 @@ nscf_out_hsr_tr_rr
 relax_bfgs2
 relax_old_cg
 relax_cell
+relax_cell_vdw2
+relax_cell_vdw3
+relax_cell_vdw3bj
 md_nvt
 md_msst
 md_out_wf
@@ -41,22 +49,14 @@ get_wf
 get_wf0
 get_pchg
 get_pchg_k
+get_s
 03_NO_KP_15_kpar
 04_NO_KP_GTH
 06_NO_KP_OU
 07_NO_KP_UPF201
 11_NO_KP_AFM
-12_NO_KP_FM_OD
 13_NO_KP_NC
-16_NO_KP_OD
 20_NO_KP_OHS_S4
-21_NO_KP_OS
-31_NO_KP_nupdown0
-49_NO_KP_CR_VDW3ABC
-50_NO_KP_CR_VDW3BJ
-51_NO_KP_CR_VDW2
-52_NO_KP_CR_VDW3
-53_NO_PK_URAMP
 62_NO_KP_restart
 #59_NO_KP_initHR (has bug)
 #scf_in_dmr_Si_spin2_hasbug
