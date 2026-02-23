@@ -25,8 +25,10 @@ scf_out_mul
 scf_out_mul_spin4
 scf_out_elf
 scf_out_qo
+nscf_out_band_pband
 nscf_out_pot1
 nscf_out_mul
+nscf_out_hsr_tr_rr
 relax_bfgs2
 relax_old_cg
 relax_cell
@@ -34,6 +36,7 @@ md_nvt
 md_msst
 md_out_wf
 md_out_syns
+md_chg_extra
 get_wf
 get_wf0
 get_pchg
@@ -45,9 +48,7 @@ get_pchg_k
 11_NO_KP_AFM
 12_NO_KP_FM_OD
 13_NO_KP_NC
-15_NO_KP_OB
 16_NO_KP_OD
-19_NO_KP_OH_nscf
 20_NO_KP_OHS_S4
 21_NO_KP_OS
 31_NO_KP_nupdown0
@@ -56,7 +57,6 @@ get_pchg_k
 51_NO_KP_CR_VDW2
 52_NO_KP_CR_VDW3
 53_NO_PK_URAMP
-58_NO_MD_2O
 62_NO_KP_restart
 #59_NO_KP_initHR (has bug)
 #scf_in_dmr_Si_spin2_hasbug
