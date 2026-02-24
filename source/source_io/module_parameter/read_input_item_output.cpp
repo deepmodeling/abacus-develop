@@ -82,7 +82,7 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
         item.availability = "";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
-				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
+				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
 				para.input.out_chg[0] = std::stoi(item.str_values[0]);
             para.input.out_chg[1] = 3;
 			if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
@@ -123,7 +123,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
                     const size_t count = item.get_size();
-                    if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_pot should have 1 or 2 values");
+                    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_pot needs at least 1 value");
                     para.input.out_pot[0] = std::stoi(item.str_values[0]);
                     para.input.out_pot[1] = 8;
                     if (count >= 2) try { para.input.out_pot[1] = std::stoi(item.str_values[1]); }
@@ -159,7 +159,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.availability = "Numerical atomic orbital basis";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
-				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk should have 1 or 2 values");
+				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
 				para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_dmk[1] = 8;
 			if (count >= 2) try { para.input.out_dmk[1] = std::stoi(item.str_values[1]); }
@@ -190,7 +190,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.availability = "Numerical atomic orbital basis (multi-k points)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
 		    const size_t count = item.get_size();
-		    if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr should have 1 or 2 values");
+		    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
 		    para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
 		    para.input.out_dmr[1] = 8;
 		    if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
@@ -466,7 +466,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.availability = "Numerical atomic orbital basis";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
-				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
+				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
 				para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_hs[1] = 8;
 			if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
@@ -514,7 +514,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.availability = "Numerical atomic orbital basis";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
-				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
+				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
 				para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_tk[1] = 8;
 			if (count >= 2) try { para.input.out_mat_tk[1] = std::stoi(item.str_values[1]); }
@@ -635,7 +635,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.availability = "Numerical atomic orbital (NAO) basis";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
-				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
+				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
 				para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_l[1] = 8;
 			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
@@ -665,12 +665,14 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count != 1 && count != 2)
+            if (count >= 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_xc_r should have 1 or 2 values");
+                para.input.out_xc_r[0] = std::stoi(item.str_values[0]);
             }
-            para.input.out_xc_r[0] = std::stoi(item.str_values[0]);
-            para.input.out_xc_r[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+            if (count >= 2)
+            {
+                para.input.out_xc_r[1] = std::stoi(item.str_values[1]);
+            }
         };
         // check value
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -880,12 +882,14 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.availability = "Only for Kohn-Sham DFT and Orbital Free DFT.";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count != 1 && count != 2)
+            if (count >= 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_elf should have 1 or 2 values");
+                para.input.out_elf[0] = std::stoi(item.str_values[0]);
             }
-            para.input.out_elf[0] = std::stoi(item.str_values[0]);
-            para.input.out_elf[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+            if (count >= 2)
+            {
+                para.input.out_elf[1] = std::stoi(item.str_values[1]);
+            }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
@@ -992,12 +996,14 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count != 1 && count != 2)
+            if (count >= 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "cal_symm_repr should have 1 or 2 values");
+                para.input.cal_symm_repr[0] = std::stoi(item.str_values[0]);
             }
-            para.input.cal_symm_repr[0] = std::stoi(item.str_values[0]);
-            para.input.cal_symm_repr[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+            if (count >= 2)
+            {
+                para.input.cal_symm_repr[1] = std::stoi(item.str_values[1]);
+            }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.cal_symm_repr[0] < 0 || para.input.cal_symm_repr[0] > 1)
