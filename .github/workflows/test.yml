@@ -81,7 +81,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER
+          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
           
       - name: Module_Cell Unittests
         env:
