@@ -21,5 +21,8 @@ AddTest(
     ${ABACUS_SOURCE_DIR}/source_io/module_output/csr_reader.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/file_reader.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/output.cpp
+    ${ABACUS_SOURCE_DIR}/source_io/module_dm/write_dmr.cpp
+    ${ABACUS_SOURCE_DIR}/source_io/module_output/ucell_io.cpp
+    ${ABACUS_SOURCE_DIR}/source_lcao/module_hcontainer/output_hcontainer.cpp
 )
 endif()
