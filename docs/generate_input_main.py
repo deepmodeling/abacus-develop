@@ -27,6 +27,7 @@ except ImportError:
     sys.exit("Error: PyYAML is required. Install with: pip install pyyaml")
 
 
+DOC_FOLDER = Path(__file__).parent
 # Desired category display order
 CATEGORY_ORDER = [
     "System variables",
@@ -262,7 +263,7 @@ def main():
     parser.add_argument(
         '--output',
         type=Path,
-        default=Path('docs/advanced/input_files/input-main.md'),
+        default=Path(f'{DOC_FOLDER}/advanced/input_files/input-main.md'),
         help='Output markdown file'
     )
     parser.add_argument(

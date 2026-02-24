@@ -583,7 +583,7 @@
 
 ### symmetry
 
-- **Type**: Integer
+- **Type**: String
 - **Description**: Takes value 1, 0 or -1.
   - -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
@@ -690,7 +690,7 @@
 
 ### mem_saver
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: *Used only for nscf calculations with plane wave basis set.*
 - **Description**: Save memory when performing nscf calculations.
   - 0: no memory saving techniques are used.
@@ -788,7 +788,7 @@
 
 ### cal_symm_repr
 
-- **Type**: Integer Integer
+- **Type**: Integer \[Integer\](optional)
 - **Description**: Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.
 - **Default**: 1 3
 
@@ -1175,7 +1175,7 @@
 
 ### pseudo_mesh
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: - 0: Use a mesh for radial integration of pseudopotentials.
   - 1: Use the mesh that is consistent with quantum espresso
 - **Default**: 0
@@ -1316,7 +1316,7 @@
 
 ### gamma_only
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Availability**: *Only used in localized orbitals set*
 - **Description**: Whether to use gamma_only algorithm.
   - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
@@ -1737,7 +1737,7 @@
 
 ### out_chg
 
-- **Type**: Integer Integer
+- **Type**: Integer \[Integer\](optional)
 - **Description**: The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder OUT.{suffix} too, which can be read in NSCF calculation.
 
@@ -1748,12 +1748,18 @@
 
 ### out_pot
 
-- **Type**: Integer
-- **Description**: - 1: Output the total local potential (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+- **Type**: Integer \[Integer\](optional)
+- **Description**: - 1: Output the total local potential (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder OUT.{suffix}. The files are named as:
+   - nspin = 1: pots1.cube;
+   - nspin = 2: pots1.cube and pots2.cube;
+   - nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
+  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
    - nspin = 1: pots1_ini.cube;
    - nspin = 2: pots1_ini.cube and pots2_ini.cube;
    - nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+
+  The optional second integer controls the output precision. If not provided, the default precision is 8.
 
   In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
 
@@ -1762,7 +1768,7 @@
 
 ### out_dmk
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. The files are named as:
   - For gamma only case:
@@ -1777,7 +1783,7 @@
 
 ### out_dmr
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (multi-k points)*
 - **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_mat_hs2. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
   - nspin = 1: dmrs1_nao.csr;
@@ -1822,7 +1828,7 @@
   Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
-- **Default**: False
+- **Default**: 0
 
 ### out_dos
 
@@ -1838,7 +1844,7 @@
 
 ### out_ldos
 
-- **Type**: Integer
+- **Type**: Integer \[Integer\](optional)
 - **Description**: Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
   - 0: no output
   - 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
@@ -1848,7 +1854,7 @@
 
 ### out_band
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
    - nspin = 1 or 4: eig.txt;
    - nspin = 2: eigs1.txt and eigs2.txt;
@@ -1878,7 +1884,7 @@
 
 ### out_mat_hs
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controled by out_freq_ion and out_app_flag.
   - For gamma only case:
@@ -1906,7 +1912,7 @@
 
 ### out_mat_tk
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision.
 
@@ -1976,14 +1982,14 @@
 
 ### out_mat_l
 
-- **Type**: Boolean Integer
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital (NAO) basis*
 - **Description**: Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.
 - **Default**: False 8
 
 ### out_xc_r
 
-- **Type**: Integer Integer
+- **Type**: Integer \[Integer\](optional)
 - **Description**: The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
   - 0: rho, amag, sigma, exc
   - 1: vrho, vsigma
@@ -2174,7 +2180,7 @@
 
 ### bessel_nao_ecut
 
-- **Type**: Real
+- **Type**: String
 - **Description**: "Energy cutoff" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(bessel_nao_ecut)*bessel_nao_rcut/.
 - **Default**: ecutwfc
 
@@ -2264,7 +2270,7 @@
 
 ### bessel_descriptor_ecut
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *gen_bessel calculation*
 - **Description**: energy cutoff of Bessel functions
 - **Default**: same as ecutwfc
@@ -2941,7 +2947,7 @@
 
 ### exx_ccp_rmesh_times
 
-- **Type**: Real
+- **Type**: String
 - **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 
 ### exx_opt_orb_lmax
@@ -2968,7 +2974,7 @@
 
 ### exx_real_number
 
-- **Type**: Boolean
+- **Type**: String
 - **Description**: - True: Enforce LibRI to use double data type.
   - False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
 - **Default**: depends on the gamma_only option
@@ -3527,25 +3533,25 @@
 
 ### vdw_s6
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *vdw_method is set to d2, d3_0, or d3_bj*
 - **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_s8
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *vdw_method is set to d3_0 or d3_bj*
 - **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_a1
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *vdw_method is set to d3_0 or d3_bj*
 - **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_a2
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *vdw_method is set to d3_0 or d3_bj*
 - **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
@@ -3615,7 +3621,7 @@
 
 ### vdw_cutoff_radius
 
-- **Type**: Real
+- **Type**: String
 - **Availability**: *vdw_cutoff_type is set to radius*
 - **Description**: Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
 - **Unit**: defined by vdw_radius_unit (default Bohr)
@@ -3673,7 +3679,7 @@
 
 ### towannier90
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**: Controls the generation of files for the Wannier90 code.
   - 1: Generate files for the Wannier90 code.
   - 0: Do not generate files for the Wannier90 code.
