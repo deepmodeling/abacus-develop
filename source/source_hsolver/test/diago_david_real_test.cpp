@@ -195,7 +195,7 @@ TEST(DiagoDavRealSystemTest, dataH)
 {
     std::vector<double> hmatrix;
     std::ifstream ifs;
-    std::string filename = "H-GammaOnly-Si64.dat";
+    std::string filename = "H-GammaOnly-Si2.dat";
     ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())
