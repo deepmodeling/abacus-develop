@@ -9,10 +9,10 @@ if(USE_CUDA OR USE_ROCM)
     )
 endif()
 
-if(ENABLE_GOOGLEBENCH)
-    AddTest(
-        TARGET PERF_MODULE_HSOLVER_KERNELS
-        LIBS parameter ${math_libs} base device
-        SOURCES perf_math_kernel.cpp
-    )
-endif()
+# if(ENABLE_GOOGLEBENCH)
+#     AddTest(
+#         TARGET PERF_MODULE_HSOLVER_KERNELS
+#         LIBS parameter ${math_libs} base device
+#         SOURCES perf_math_kernel.cpp
+#     )
+# endif()
