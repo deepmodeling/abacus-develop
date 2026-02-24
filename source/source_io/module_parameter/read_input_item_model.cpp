@@ -273,7 +273,7 @@ void ReadInput::item_model()
         Input_Item item("vdw_s6");
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
         item.category = "vdW correction";
-        item.type = "Real";
+        item.type = "String";
         item.description = "This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
@@ -298,7 +298,7 @@ void ReadInput::item_model()
         Input_Item item("vdw_s8");
         item.annotation = "scale parameter of d3_0/d3_bj";
         item.category = "vdW correction";
-        item.type = "Real";
+        item.type = "String";
         item.description = "This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
@@ -323,7 +323,7 @@ void ReadInput::item_model()
         Input_Item item("vdw_a1");
         item.annotation = "damping parameter of d3_0/d3_bj";
         item.category = "vdW correction";
-        item.type = "Real";
+        item.type = "String";
         item.description = "This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
@@ -348,7 +348,7 @@ void ReadInput::item_model()
         Input_Item item("vdw_a2");
         item.annotation = "damping parameter of d3_bj";
         item.category = "vdW correction";
-        item.type = "Real";
+        item.type = "String";
         item.description = "This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
@@ -491,7 +491,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
         Input_Item item("vdw_cutoff_radius");
         item.annotation = "radius cutoff for periodic structure";
         item.category = "vdW correction";
-        item.type = "Real";
+        item.type = "String";
         item.description = "Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.";
         item.default_value = "";
         item.unit = "defined by vdw_radius_unit (default Bohr)";

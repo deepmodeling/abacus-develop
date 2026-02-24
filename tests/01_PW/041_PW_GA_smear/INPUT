@@ -1,27 +1,27 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     scf
-init_wfc        random
+suffix            autotest
+calculation       scf
+init_wfc          random
 
-nbands			30
-symmetry		1
-pseudo_dir	../../PP_ORB
+nbands            30
+symmetry          1
+pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr				1e-8
-scf_nmax			100
+ecutwfc           20
+scf_thr           1e-8
+scf_nmax          100
 
 
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #Parameters (4.Smearing)
-smearing_method	    gauss
-smearing_sigma			0.002
+smearing_method   gauss
+smearing_sigma    0.002
 
 #Parameters (5.Mixing)
-mixing_type		broyden
-mixing_beta		0.3
-mixing_gg0 1.5
+mixing_type       broyden
+mixing_beta       0.3
+mixing_gg0        1.5

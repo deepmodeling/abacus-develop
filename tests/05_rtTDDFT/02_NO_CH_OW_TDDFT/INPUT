@@ -1,42 +1,42 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (General)
-suffix             autotest
-pseudo_dir         ../../PP_ORB
-orbital_dir        ../../PP_ORB
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
 
-nbands             10
-calculation        md
-esolver_type       tddft
-basis_type         lcao
-gamma_only         0
-ecutwfc            5
+nbands            10
+calculation       md
+esolver_type      tddft
+basis_type        lcao
+gamma_only        0
+ecutwfc           5
 
 #Parameter (Electronic Structure)
-scf_nmax           50
+scf_nmax          50
 
-smearing_method    gaussian
-smearing_sigma     0.02
+smearing_method   gaussian
+smearing_sigma    0.02
 
-ks_solver          scalapack_gvx
+ks_solver         scalapack_gvx
 
-mixing_type        broyden
-mixing_beta        0.7
-mixing_gg0         0.0
-scf_thr            1.0e-6
+mixing_type       broyden
+mixing_beta       0.7
+mixing_gg0        0.0
+scf_thr           1.0e-6
 
-cal_stress         1
-stress_thr         1e-6
-cal_force          1
-force_thr_ev       1e-3
+cal_stress        1
+stress_thr        1e-6
+cal_force         1
+force_thr_ev      1e-3
 
 #Paramters (Output)
-out_dipole         1
-out_wfc_lcao       1
-out_app_flag       0
+out_dipole        1
+out_wfc_lcao      1
+out_app_flag      0
 
 #Parameters (MD)
-md_nstep           3
-estep_per_md       1
-md_type            nve
-md_dt              0.01
-init_vel           1
+md_nstep          3
+estep_per_md      1
+md_type           nve
+md_dt             0.01
+init_vel          1

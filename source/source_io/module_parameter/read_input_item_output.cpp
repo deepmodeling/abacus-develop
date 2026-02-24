@@ -70,7 +70,7 @@ void ReadInput::item_output()
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
         item.category = "Output information";
-        item.type = "Integer Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(The first integer controls whether to output the charge density on real space grids:
 * 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder OUT.{suffix} too, which can be read in NSCF calculation.
 
@@ -80,10 +80,10 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
         item.default_value = "0 3";
         item.unit = "";
         item.availability = "";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
-			para.input.out_chg[0] = std::stoi(item.str_values[0]);
+			item.read_value = [](const Input_Item& item, Parameter& para) {
+				const size_t count = item.get_size();
+				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
+				para.input.out_chg[0] = std::stoi(item.str_values[0]);
             para.input.out_chg[1] = 3;
 			if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
 			catch (const std::invalid_argument&) { /* do nothing */ }
@@ -100,14 +100,20 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
     }
     {
         Input_Item item("out_pot");
-        item.annotation = "output realspace potential";
+        item.annotation = "output real space potential (with precision 8)";
         item.category = "Output information";
-        item.type = "Integer";
-        item.description = R"(* 1: Output the total local potential (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+        item.type = R"(Integer \[Integer\](optional))";
+        item.description = R"(* 1: Output the total local potential (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder OUT.{suffix}. The files are named as:
+ * nspin = 1: pots1.cube;
+ * nspin = 2: pots1.cube and pots2.cube;
+ * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
+* 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
 * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
  * nspin = 1: pots1_ini.cube;
  * nspin = 2: pots1_ini.cube and pots2_ini.cube;
  * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+
+The optional second integer controls the output precision. If not provided, the default precision is 8.
 
 In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
 
@@ -115,20 +121,30 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.default_value = "0";
         item.unit = "";
         item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+                    const size_t count = item.get_size();
+                    if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_pot should have 1 or 2 values");
+                    para.input.out_pot[0] = std::stoi(item.str_values[0]);
+                    para.input.out_pot[1] = 8;
+                    if (count >= 2) try { para.input.out_pot[1] = std::stoi(item.str_values[1]); }
+                    catch (const std::invalid_argument&) { /* do nothing */ }
+                    catch (const std::out_of_range&) {/* do nothing */}
+            };
+
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
-                para.input.out_pot = 0;
+                para.input.out_pot[0] = 0;
             }
         };
-        read_sync_int(input.out_pot);
+        sync_intvec(input.out_pot, 2, 0);
         this->add_item(item);
     }
     {
         Input_Item item("out_dmk");
         item.annotation = ">0 output density matrix DM(k) for each k-point";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. The files are named as:
 * For gamma only case:
  * nspin = 1 and 4: dm_nao.csr;
@@ -141,28 +157,29 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.default_value = "False";
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
-			para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
+			item.read_value = [](const Input_Item& item, Parameter& para) {
+				const size_t count = item.get_size();
+				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk should have 1 or 2 values");
+				para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_dmk[1] = 8;
 			if (count >= 2) try { para.input.out_dmk[1] = std::stoi(item.str_values[1]); }
 			catch (const std::invalid_argument&) { /* do nothing */ }
 			catch (const std::out_of_range&) {/* do nothing */}
-			// some other case
-			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-			{
-				para.input.out_dmk[0] = 0;
-			}
-		};
+			};
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+            {
+                para.input.out_dmk[0] = 0;
+            }
+        };
         sync_intvec(input.out_dmk, 2, 0);
         this->add_item(item);
     }
     {
         Input_Item item("out_dmr");
-        item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+	    item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_mat_hs2. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
 * nspin = 1: dmrs1_nao.csr;
 * nspin = 2: dmrs1_nao.csr and dmrs2_nao.csr for the two spin channels.
@@ -171,31 +188,30 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.default_value = "False";
         item.unit = "";
         item.availability = "Numerical atomic orbital basis (multi-k points)";
-
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
-			para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_dmr[1] = 8;
-			if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-            // some special case
-			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-			{
-				para.input.out_dmr[0] = 0;
-			}
-        };
-
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+		    const size_t count = item.get_size();
+		    if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr should have 1 or 2 values");
+		    para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
+		    para.input.out_dmr[1] = 8;
+		    if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
+		    catch (const std::invalid_argument&) { /* do nothing */ }
+		    catch (const std::out_of_range&) {/* do nothing */}
+	    };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
+                para.input.out_dmr[0] = 0;
             }
         };
+	    item.check_value = [](const Input_Item& item, const Parameter& para) {
+		    if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
+		    {
+			    ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
+		    }
+	    };
 
-        sync_intvec(input.out_dmr, 2, 0);
-        this->add_item(item);
+	    sync_intvec(input.out_dmr, 2, 0);
+	    this->add_item(item);
     }
     {
         Input_Item item("out_wfc_pw");
@@ -239,7 +255,7 @@ The corresponding sequence of the orbitals can be seen in Basis Set.
 Also controled by out_freq_ion and out_app_flag.
 
 [NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.)";
-        item.default_value = "False";
+        item.default_value = "0";
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
         read_sync_int(input.out_wfc_lcao);
@@ -303,7 +319,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_ldos");
         item.annotation = "output mode of local density of states, second parameter controls the precision";
         item.category = "Output information";
-        item.type = "Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
 * 0: no output
 * 1: output the partial charge density for given bias (controlled by stm_bias) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script plot.py.
@@ -334,7 +350,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
  * nspin = 1 or 4: eig.txt;
  * nspin = 2: eigs1.txt and eigs2.txt;
@@ -433,7 +449,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controled by out_freq_ion and out_app_flag.
 * For gamma only case:
  * nspin = 1: hks1_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix;
@@ -448,10 +464,10 @@ Also controled by out_freq_ion and out_app_flag.
         item.default_value = "False 8";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
-			para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+			item.read_value = [](const Input_Item& item, Parameter& para) {
+				const size_t count = item.get_size();
+				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
+				para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_hs[1] = 8;
 			if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
 			catch (const std::invalid_argument&) { /* do nothing */ }
@@ -490,16 +506,16 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_tk");
         item.annotation = "output kinetic matrix of electrons T(k)";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = "Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision."
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.";
         item.default_value = "False [8]";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
-			para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
+			item.read_value = [](const Input_Item& item, Parameter& para) {
+				const size_t count = item.get_size();
+				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
+				para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_tk[1] = 8;
 			if (count >= 2) try { para.input.out_mat_tk[1] = std::stoi(item.str_values[1]); }
 			catch (const std::invalid_argument&) { /* do nothing */ }
@@ -612,15 +628,15 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_l");
         item.annotation = "output the expectation values of angular momentum operators";
         item.category = "Output information";
-        item.type = "Boolean Integer";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.";
         item.default_value = "False 8";
         item.unit = "";
         item.availability = "Numerical atomic orbital (NAO) basis";
-		item.read_value = [](const Input_Item& item, Parameter& para) {
-			const size_t count = item.get_size();
-			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
-			para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+			item.read_value = [](const Input_Item& item, Parameter& para) {
+				const size_t count = item.get_size();
+				if (count < 1 || count > 2) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
+				para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_l[1] = 8;
 			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
 			catch (const std::invalid_argument&) { /* do nothing */ }
@@ -633,7 +649,7 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_xc_r");
         item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
         item.category = "Output information";
-        item.type = "Integer Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder OUT.${suffix}:
 * 0: rho, amag, sigma, exc
 * 1: vrho, vsigma
@@ -648,13 +664,13 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_xc_r(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), 
-                           item.str_values.end(), 
-                           out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
-            // assign non-negative values to para.input.out_xc_r
-            std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_xc_r should have 1 or 2 values");
+            }
+            para.input.out_xc_r[0] = std::stoi(item.str_values[0]);
+            para.input.out_xc_r[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         // check value
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -863,13 +879,13 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.unit = "";
         item.availability = "Only for Kohn-Sham DFT and Orbital Free DFT.";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_elf(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) {
-                return std::stoi(s);
-            });
-            // assign non-negative values to para.input.out_elf
-            std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_elf should have 1 or 2 values");
+            }
+            para.input.out_elf[0] = std::stoi(item.str_values[0]);
+            para.input.out_elf[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
@@ -969,20 +985,19 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
                           " > 0 output the matrix representation of symmetry operation "
                           ", the second parameter controls the precision, default is 3.";
         item.category = "System variables";
-        item.type = "Integer Integer";
+        item.type = R"(Integer \[Integer\](optional))";
         item.description = "Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.";
         item.default_value = "1 3";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> cal_symm_repr(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), // iterators of 1
-                           cal_symm_repr.begin(),                       // iterator of 2
-                           [](std::string s){ return std::stoi(s); });     // lambda func
-            // assign non-negative values to para.input.cal_symm_repr
-            std::copy(cal_symm_repr.begin(), cal_symm_repr.end(), 
-                      para.input.cal_symm_repr.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "cal_symm_repr should have 1 or 2 values");
+            }
+            para.input.cal_symm_repr[0] = std::stoi(item.str_values[0]);
+            para.input.cal_symm_repr[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.cal_symm_repr[0] < 0 || para.input.cal_symm_repr[0] > 1)

@@ -97,12 +97,12 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_MD
           
-      - name: source_psi Unittests
+      - name: Module_Psi Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R source_psi
+          ctest --test-dir build -V --timeout 1700 -R MODULE_PSI
           
       - name: Module_RI Unittests
         env:
@@ -110,6 +110,13 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_RI
+      
+      - name: Module_Estate Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R MODULE_ESTATE
           
       - name: 01_PW Test
         env:
@@ -186,4 +193,4 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|source_psi|MODULE_RI'
+          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI'

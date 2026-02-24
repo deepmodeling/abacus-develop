@@ -1,0 +1,17 @@
+INPUT_PARAMETERS 
+
+basis_type        lcao
+calculation       scf
+gamma_only        1
+
+out_dmk           1 3 // file name is dm_nao.txt
+nbands            4
+latname           sc
+ecutwfc           25.0 // Rydberg
+scf_thr           1e-10
+
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+suffix            autotest
+stru_file         STRU
+kpoint_file       KPT

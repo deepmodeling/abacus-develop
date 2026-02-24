@@ -1,21 +1,21 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters	(General)
-suffix      	autotest
-pseudo_dir	../../PP_ORB
-init_wfc        random
-pw_seed         1
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+init_wfc          random
+pw_seed           1
 
-nbands			2
-calculation 	scf
-basis_type		pw
+nbands            2
+calculation       scf
+basis_type        pw
 
 #Parameters (Accuracy)
-ecutwfc			20
-scf_nmax	    50
+ecutwfc           20
+scf_nmax          50
 
 #Parameters (Solvation Model)
-imp_sol         1
-eb_k            80
-tau             0.000010798
-sigma_k         0.6
-nc_k            0.00037
+imp_sol           1
+eb_k              80
+tau               0.000010798
+sigma_k           0.6
+nc_k              0.00037

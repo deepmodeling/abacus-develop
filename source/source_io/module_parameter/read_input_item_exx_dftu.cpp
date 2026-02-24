@@ -355,7 +355,7 @@ void ReadInput::item_exx()
                           "calculating Columb potential is to that "
                           "of atomic orbitals";
         item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
+        item.type = "String";
         item.description = "This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.";
         item.default_value = "";
         item.unit = "";
@@ -456,7 +456,7 @@ void ReadInput::item_exx()
         Input_Item item("exx_real_number");
         item.annotation = "exx calculated in real or complex";
         item.category = "Exact Exchange (LCAO)";
-        item.type = "Boolean";
+        item.type = "String";
         item.description = R"(* True: Enforce LibRI to use double data type.
 * False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.)";
         item.default_value = "depends on the gamma_only option";

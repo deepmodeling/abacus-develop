@@ -334,7 +334,7 @@ void ReadInput::item_postprocess()
         Input_Item item("towannier90");
         item.annotation = "use wannier90 code interface or not";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Integer";
+        item.type = "Boolean";
         item.description = R"(Controls the generation of files for the Wannier90 code.
 * 1: Generate files for the Wannier90 code.
 * 0: Do not generate files for the Wannier90 code.)";

@@ -449,7 +449,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "0: use our own mesh to do radial renormalization; "
                           "1: use mesh as in QE";
         item.category = "Electronic structure";
-        item.type = "Integer";
+        item.type = "Boolean";
         item.description = R"(* 0: Use a mesh for radial integration of pseudopotentials.
 * 1: Use the mesh that is consistent with quantum espresso)";
         item.default_value = "0";
@@ -766,7 +766,7 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.annotation = "Only for localized orbitals set and gamma point. If "
                           "set to 1, a fast algorithm is used";
         item.category = "Electronic structure";
-        item.type = "Integer";
+        item.type = "Boolean";
         item.description = R"(Whether to use gamma_only algorithm.
 * 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 * 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
@@ -1314,7 +1314,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         Input_Item item("bessel_nao_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         item.category = "NAOs";
-        item.type = "Real";
+        item.type = "String";
         item.description = "\"Energy cutoff\" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(bessel_nao_ecut)*bessel_nao_rcut/.";
         item.default_value = "ecutwfc";
         item.unit = "";

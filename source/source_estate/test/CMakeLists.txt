@@ -12,44 +12,44 @@ if (ENABLE_MPI)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
-  TARGET Elecstate_Op_UTs
+  TARGET MODULE_ESTATE_Elecstate_Op_UTs
   LIBS parameter  ${math_libs} psi base device
   SOURCES ../kernels/test/elecstate_op_test.cpp
 )
 
 AddTest(
-  TARGET elecstate_occupy
+  TARGET MODULE_ESTATE_elecstate_occupy
   LIBS parameter  ${math_libs} base device
   SOURCES elecstate_occupy_test.cpp ../occupy.cpp
 )
 
 AddTest(
-  TARGET elecstate_magnetism
+  TARGET MODULE_ESTATE_elecstate_magnetism
   LIBS parameter  ${math_libs} base device
   SOURCES elecstate_magnetism_test.cpp ../magnetism.cpp
 )
 
 AddTest(
-  TARGET elecstate_fp_energy
+  TARGET MODULE_ESTATE_elecstate_fp_energy
   LIBS parameter  ${math_libs} base device
   SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp
 )
 
 AddTest(
-  TARGET elecstate_print
+  TARGET MODULE_ESTATE_elecstate_print
   LIBS parameter  ${math_libs} base device 
   SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
 )
 
 AddTest(
-  TARGET elecstate_base
+  TARGET MODULE_ESTATE_elecstate_base
   LIBS parameter  ${math_libs} base device 
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
 AddTest(
-  TARGET elecstate_pw
+  TARGET MODULE_ESTATE_elecstate_pw
   LIBS parameter  ${math_libs} planewave_serial base device
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
@@ -62,31 +62,31 @@ AddTest(
 )
 
 AddTest(
-  TARGET elecstate_energy
+  TARGET MODULE_ESTATE_elecstate_energy
   LIBS parameter  ${math_libs} base device 
   SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
 )
 
 AddTest(
-  TARGET potentials_base
+  TARGET MODULE_ESTATE_potentials_base
   SOURCES potentials_base_test.cpp
 )
 
 AddTest(
-  TARGET potentials_new
+  TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  ${math_libs} base device planewave_serial
   SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
 )
 
 AddTest(
-  TARGET charge_test
+  TARGET MODULE_ESTATE_charge_test
   LIBS parameter  ${math_libs} planewave_serial base device cell_info 
   SOURCES charge_test.cpp ../module_charge/charge.cpp
     ../../source_io/module_output/output.cpp
 )
 
 AddTest(
-  TARGET charge_mixing
+  TARGET MODULE_ESTATE_charge_mixing
   LIBS parameter   base ${math_libs}  psi  device planewave_serial cell_info 
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
@@ -95,7 +95,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET charge_extra
+  TARGET MODULE_ESTATE_charge_extra
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../source_io/module_output/read_cube.cpp ../../source_io/module_output/write_cube.cpp
   ../../source_io/module_output/output.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp

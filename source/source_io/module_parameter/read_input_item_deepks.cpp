@@ -147,7 +147,7 @@ void ReadInput::item_deepks()
         Input_Item item("bessel_descriptor_ecut");
         item.annotation = "energy cutoff for spherical bessel functions(Ry)";
         item.category = "DeePKS";
-        item.type = "Real";
+        item.type = "String";
         item.description = "energy cutoff of Bessel functions";
         item.default_value = "same as ecutwfc";
         item.unit = "Ry";

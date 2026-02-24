@@ -181,7 +181,7 @@ void ReadInput::item_system()
         Input_Item item("symmetry");
         item.annotation = "the control of symmetry";
         item.category = "System variables";
-        item.type = "Integer";
+        item.type = "String";
         item.description = R"(Takes value 1, 0 or -1.
 * -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
 * 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
@@ -486,7 +486,7 @@ Available options are:
                           "memory saving technique will be used for "
                           "many k point calculations.";
         item.category = "System variables";
-        item.type = "Boolean";
+        item.type = "Integer";
         item.description = R"(Save memory when performing nscf calculations.
 * 0: no memory saving techniques are used.
 * 1: a memory saving technique will be used for many k point calculations.)";

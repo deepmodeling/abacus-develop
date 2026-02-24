@@ -201,7 +201,7 @@ TEST(DiagoDavRealSystemTest, dataH)
 {
 	std::vector<std::complex<double>> hmatrix;
 	std::ifstream ifs;
-	std::string filename = "H-KPoints-Si64.dat";
+	std::string filename = "H-KPoints-Si2.dat";
 	ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

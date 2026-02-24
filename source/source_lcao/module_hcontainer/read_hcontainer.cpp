@@ -68,7 +68,6 @@ void Read_HContainer<T>::read()
             int row = element.first.first;
             int col = element.first.second;
             T value = element.second;
-           
 
             //insert into hcontainer
             int atom_i = atom_index_row[row];
