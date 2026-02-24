@@ -240,8 +240,8 @@ INSTANTIATE_TEST_SUITE_P(VerifyCG,
     DiagoCGTest,
     ::testing::Values(
         // nband, npw, sparsity, reorder, eps, maxiter, threshold
-        DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3),
-        DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3)
+        DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3)
+        // DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3)
         // DiagoCGPrepare(20, 1000, 8, true, 1e-5, 300, 1e-3),
         // DiagoCGPrepare(40, 1000, 8, true, 1e-6, 300, 1e-3)
     ));

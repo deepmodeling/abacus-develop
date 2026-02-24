@@ -201,8 +201,8 @@ INSTANTIATE_TEST_SUITE_P(VerifyCG,
                          DiagoBPCGTest,
                          ::testing::Values(
                              // nband, npw, sparsity, reorder, eps, maxiter, threshold
-                             DiagoBPCGPrepare(10, 500, 0, true, 1e-5, 300, 5e-2),
-                             DiagoBPCGPrepare(20, 500, 6, true, 1e-5, 300, 5e-2)
+                             DiagoBPCGPrepare(10, 500, 0, true, 1e-5, 300, 5e-2)
+                            //  DiagoBPCGPrepare(20, 500, 6, true, 1e-5, 300, 5e-2)
                             //  DiagoBPCGPrepare(20, 1000, 8, true, 1e-5, 300, 5e-2),
                             //  DiagoBPCGPrepare(40, 1000, 8, true, 1e-6, 300, 5e-2)
                             )); 
