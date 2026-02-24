@@ -1,3 +1,3 @@
-EXEC /home/510Group/2_abacus/abacus-mc/build_5pt/abacus_5p 
+EXEC abacus 
 CHECKACCURACY 2 
 NUMBEROFPROCESS 4
