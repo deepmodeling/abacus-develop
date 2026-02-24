@@ -51,7 +51,8 @@ bool ModuleIO::read_vdata_palgrid(
         std::vector<double> data_read;
 
         // we've already checked the file existence, so we don't need the returned value here
-        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
+        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, 
+			dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
 
         // if mismatch, trilinear interpolate
         if (nx == nx_read && ny == ny_read && nz == nz_read)
@@ -161,14 +162,24 @@ bool ModuleIO::read_cube(const std::string& file,
 {
     std::ifstream ifs(file);
 
-    if (!ifs) { return false; }
+    if (!ifs) 
+    { 
+	    return false; 
+    }
 
     comment.resize(2);
-    for (auto& c : comment) { std::getline(ifs, c); }
+    for (auto& c : comment) 
+    { 
+	    std::getline(ifs, c); 
+    }
 
     ifs >> natom;
+
     origin.resize(3);
-    for (auto& cp : origin) { ifs >> cp; }
+    for (auto& cp : origin) 
+    { 
+	    ifs >> cp; 
+    }
 
     dx.resize(3);
     dy.resize(3);
@@ -187,7 +198,10 @@ bool ModuleIO::read_cube(const std::string& file,
 
     const int nxyz = nx * ny * nz;
     data.resize(nxyz);
-    for (int i = 0;i < nxyz;++i) { ifs >> data[i]; }
+    for (int i = 0;i < nxyz;++i) 
+    { 
+	    ifs >> data[i]; 
+    }
 
     ifs.close();
     return true;

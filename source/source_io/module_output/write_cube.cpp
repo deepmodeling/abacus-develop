@@ -16,7 +16,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                                    const double* const data,
                                    const int is,
                                    const int nspin,
-                                   const int iter,
+                                   const int istep,
                                    const std::string& fn,
                                    const double ef,
                                    const UnitCell* const ucell,
@@ -64,27 +64,29 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     if ((!reduce_all_pool && my_rank == 0) || (reduce_all_pool && rank_in_pool == 0))
     {
         /// output header for cube file
-        ss << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
-
-        ss << nspin << " (nspin) ";
         ss << std::fixed;
         ss << std::setprecision(6);
+
+        ss << "Ionic_Step " << istep+1 
+		<< "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
+
+        ss << nspin << " # number of spin directions ";
         if (out_fermi == 1)
         {
             if (PARAM.globalv.two_fermi)
             {
                 if (is == 0)
                 {
-                    ss << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+                    ss << ef << " # Fermi energy for spin=1, in Ry" << std::endl;
                 }
                 else if (is == 1)
                 {
-                    ss << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+                    ss << ef << " # Fermi energy for spin=2, in Ry" << std::endl;
                 }
             }
             else
             {
-                ss << ef << " (fermi energy, in Ry)" << std::endl;
+                ss << ef << " # Fermi energy, in Ry" << std::endl;
             }
         }
         else

@@ -4,56 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-
-/*
-The format of the DMK file is as follows:
-'''
-<latName>
-<lat0>
-<latvec a>
-<latvec b>
-<latvec c>
-<label1> <label2> ...
-<na1> <na2> ...
-Direct
-<label1-atom1-x> <label1-atom1-y> <label1-atom1-z>
-<label1-atom2-x> <label1-atom2-y> <label1-atom2-z>
-...
-<label2-atom1-x> <label2-atom1-y> <label2-atom1-z>
-<label2-atom2-x> <label2-atom2-y> <label2-atom2-z>
-...
-
-<ispin>
-<Efermi> (fermi energy)
-<nlocal> <nlocal>
-
-<dmk data>
-...
-'''
-
-
-Example:
-'''
-sc
- 5.29177
- 1 0 0
- 0 1 0
- 0 0 1
- H
- 2
-Direct
- 0 0 0.933859999999186
- 0 0 0.0661400000008143
-
- 1
- -0.0883978533958687 (fermi energy)
-  10 10
-
- 5.773e-01 3.902e-02 1.661e-02 4.797e-17 -2.255e-17 5.773e-01 3.902e-02
--1.661e-02 -1.461e-17 -4.414e-17
- ...
- '''
- */
+#include "source_io/module_output/ucell_io.h"
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
@@ -65,14 +16,14 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
     std::string fname = "dm";
 
     if (!gamma_only)
-	{
-		fname += "k" + std::to_string(ik + 1); 
+    {
+        fname += "k" + std::to_string(ik + 1);
     }
 
-	if (nspin == 2)
-	{
-		fname += "s" + std::to_string(ispin + 1);
-	}
+    if (nspin == 2)
+    {
+        fname += "s" + std::to_string(ispin + 1);
+    }
 
     if( istep >= 0 )
     {
@@ -84,57 +35,7 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
     return fname;
 }
 
-void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
-{
-    // write the UnitCell information
-    ofs << " " << ucell->latName << std::endl;
-    ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
-    ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
-    ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
-    ofs << " " << ucell->latvec.e31 << " " << ucell->latvec.e32 << " " << ucell->latvec.e33 << std::endl;
-    for (int it = 0; it < ucell->ntype; it++)
-    {
-        ofs << " " << ucell->atoms[it].label;
-    }
-    ofs << std::endl;
-    for (int it = 0; it < ucell->ntype; it++)
-    {
-        ofs << " " << ucell->atoms[it].na;
-    }
-    ofs << std::endl;
-    ofs << " Direct" << std::endl;
-    for (int it = 0; it < ucell->ntype; it++)
-    {
-        Atom* atom = &ucell->atoms[it];
-        ofs << std::setprecision(15);
-        for (int ia = 0; ia < ucell->atoms[it].na; ia++)
-        {
-            ofs << " " << atom->taud[ia].x << " " << atom->taud[ia].y << " " << atom->taud[ia].z << std::endl;
-        }
-    }
-}
 
-void ModuleIO::dmk_read_ucell(std::ifstream& ifs)
-{
-    std::string tmp;
-    for (int i = 0; i < 6; i++)
-    {
-        std::getline(ifs, tmp); // latName + lat0 + latvec + atom label
-    }
-    std::getline(ifs, tmp); // atom number of each type
-
-    std::istringstream iss(tmp);
-    int natom = 0;
-    int total_natom = 0;
-    while (iss >> natom)
-    {
-        total_natom += natom;
-    }
-    for (int i = 0; i < total_natom + 1; i++)
-    {
-        std::getline(ifs, tmp); // Direct + atom coordinates
-    }
-}
 
 void ModuleIO::dmk_readData(std::ifstream& ifs, double& data)
 {
@@ -156,17 +57,18 @@ void ModuleIO::dmk_readData(std::ifstream& ifs, std::complex<double>& data)
     else
     {
         ModuleBase::WARNING_QUIT("ModuleIO::dmk_readData",
-                                 "Invalid complex number format in dmk: " + complex_str);
+        "Invalid complex number format in dmk: " + complex_str);
     }
 }
 
 template <typename T>
 bool ModuleIO::read_dmk(const int nspin,
-                        const int nk,
-                        const Parallel_2D& pv,
-                        const std::string& dmk_dir,
-                        std::vector<std::vector<T>>& dmk,
-                        std::ofstream &ofs_running)
+		const int nk,
+		const K_Vectors &kv,
+		const Parallel_2D& pv,
+		const std::string& dmk_dir,
+		std::vector<std::vector<T>>& dmk,
+		std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_dmk");
     ModuleBase::timer::tick("ModuleIO", "read_dmk");
@@ -201,31 +103,28 @@ bool ModuleIO::read_dmk(const int nspin,
                     read_success = false;
                     break;
                 }
-				else
-				{
+                else
+                {
                     ofs_running << " Read density matrix file " << fn << " for k-point " << ik+1 << std::endl;
-				}
+                }
 
-                // read the UnitCell
-                dmk_read_ucell(ifs);
-
-				int spin_tmp = 0;
-				ModuleBase::GlobalFunc::READ_VALUE(ifs, spin_tmp);
+                int spin_tmp = 0;
+                ModuleBase::GlobalFunc::READ_VALUE(ifs, spin_tmp);
 
                 double fermi_tmp = 0.0;
-				ModuleBase::GlobalFunc::READ_VALUE(ifs, fermi_tmp);
+                ModuleBase::GlobalFunc::READ_VALUE(ifs, fermi_tmp);
 
                 int nlocal_tmp = 0;
-				ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal_tmp);
+                ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal_tmp);
 
                 if(nlocal_tmp==nlocal)
-				{
-					ofs_running << " number of basis (nlocal) is correct: " << nlocal << std::endl;
-				}
-				else
-				{
-					ModuleBase::WARNING_QUIT("ModuleIO::read_dmk","nlocal does not match!");
-				}
+                {
+                    ofs_running << " number of basis (nlocal) is correct: " << nlocal << std::endl;
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("ModuleIO::read_dmk","nlocal does not match!");
+                }
 
                 // read the DMK data
                 const size_t index_k = ik + nk * ispin;
@@ -259,17 +158,18 @@ bool ModuleIO::read_dmk(const int nspin,
         pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
         for (int ik = 0; ik < nspin * nk; ik++)
         {
-            Cpxgemr2d(nlocal,
-                      nlocal,
-                      dmk_global[ik].data(),
-                      1,
-                      1,
-                      pv_glb.desc,
-                      dmk[ik].data(),
-                      1,
-                      1,
-                      const_cast<int*>(pv.desc),
-                      pv_glb.blacs_ctxt);
+            Cpxgemr2d(
+            nlocal,
+            nlocal,
+            dmk_global[ik].data(),
+            1,
+            1,
+            pv_glb.desc,
+            dmk[ik].data(),
+            1,
+            1,
+            const_cast<int*>(pv.desc),
+            pv_glb.blacs_ctxt);
         }
 #else
         dmk = dmk_global;
@@ -281,11 +181,12 @@ bool ModuleIO::read_dmk(const int nspin,
 
 template <typename T>
 void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
-                         const int precision,
-                         const std::vector<double>& efs,
-                         const UnitCell* ucell,
-						 const Parallel_2D& pv,
-						 const int istep)
+		const K_Vectors &kv,
+		const int precision,
+		const std::vector<double>& efs,
+		const UnitCell* ucell,
+		const Parallel_2D& pv,
+		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::tick("ModuleIO", "write_dmk");
@@ -309,8 +210,6 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
     Parallel_2D pv_glb;
 
-    // when nspin == 2, assume the order of K in dmk is K1_up, K2_up, ...,
-    // K1_down, K2_down, ...
     for (int ispin = 0; ispin < nspin; ispin++)
     {
         for (int ik = 0; ik < nk; ik++)
@@ -319,83 +218,97 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
 #ifdef __MPI
             pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
-            Cpxgemr2d(nlocal,
-                      nlocal,
-                      const_cast<T*>(dmk[ik + nk * ispin].data()),
-                      1,
-                      1,
-                      const_cast<int*>(pv.desc),
-                      dmk_global.data(),
-                      1,
-                      1,
-                      pv_glb.desc,
-                      pv_glb.blacs_ctxt);
+            Cpxgemr2d(
+            nlocal,
+            nlocal,
+            const_cast<T*>(dmk[ik + nk * ispin].data()),
+            1,
+            1,
+            const_cast<int*>(pv.desc),
+            dmk_global.data(),
+            1,
+            1,
+            pv_glb.desc,
+            pv_glb.blacs_ctxt);
 #else
             dmk_global = dmk[ik + nk * ispin];
 #endif
 
             if (my_rank == 0)
             {
-                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+                std::string fn = PARAM.globalv.global_out_dir 
+			+ dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+
                 std::ofstream ofs(fn.c_str());
 
+                ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+
                 if (!ofs)
-				{
-					ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
-					continue;
-				}
-				else
-				{
-//					std::cout << " Write the density matrix to file " << fn << std::endl;
-				}
-
-                // write the UnitCell information
-                dmk_write_ucell(ofs, ucell);
+                {
+                    ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
+                    continue;
+                }
+                else
+                {
+                    //std::cout << " Write the density matrix to file " << fn << std::endl;
+                }
 
 
-                ofs << "\n " << nspin << " (nspin)"; // nspin
-                ofs << "\n " << std::fixed << std::setprecision(5) << efs[ispin]
-                    << " (fermi energy)";
-                ofs << "\n " << nlocal << " (number of basis)" << std::endl;
+		// information about density matrix at this k-point
+		ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " " << ispin+1 << " # spin index" << std::endl; 
+		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
+		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+		ofs << " " << ik+1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
+			<< " # k point coordinate (Cartesian) " << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
+			<< " # k point coordinate (direct) " << std::endl;
+		ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
+		ofs << " " << nlocal << " # number of localized basis " << std::endl;
+		ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl; 
+		ofs << std::endl;
+
+		// write ucell
+		ModuleIO::UcellIO::write_ucell(ofs, ucell);
 
                 ofs << std::fixed;
                 ofs << std::scientific;
                 ofs << std::setprecision(precision);
                 ofs << std::right;
-//              ofs << std::showpos; // show positive label 
                 for (int i = 0; i < nlocal; ++i)
                 {
+		    const size_t ii = i * nlocal;
                     for (int j = 0; j < nlocal; ++j)
                     {
                         if (std::is_same<double, T>::value)
                         {
-							if (j % 8 == 0)
-							{
-								ofs << "\n";
-							}
-                            ofs << " " << dmk_global[i * nlocal + j];
+                            if (j % 8 == 0)
+                            {
+                                ofs << "\n";
+                            }
+                            ofs << " " << dmk_global[ii + j];
                         }
                         else if (std::is_same<std::complex<double>, T>::value)
                         {
-							if (j % 4 == 0)
-							{
-								ofs << "\n";
-							}
+                            if (j % 4 == 0)
+                            {
+                                ofs << "\n";
+                            }
 
-                            double real_v = std::real(dmk_global[i * nlocal + j]);
-							if(std::abs(real_v) < dm_thr)
-							{
-								real_v = 0.0;
-							} 
-                            double imag_v = std::imag(dmk_global[i * nlocal + j]);
-							if(std::abs(imag_v) < dm_thr)
-							{
-								imag_v = 0.0;
-							} 
+                            double real_v = std::real(dmk_global[ii + j]);
+                            if(std::abs(real_v) < dm_thr)
+                            {
+                                real_v = 0.0;
+                            }
+                            double imag_v = std::imag(dmk_global[ii + j]);
+                            if(std::abs(imag_v) < dm_thr)
+                            {
+                                imag_v = 0.0;
+                            }
 
                             ofs << " (" << real_v << "," << imag_v << ")";
- //                           ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
-   //                             << std::imag(dmk_global[i * nlocal + j]) << ")";
                         }
                     }
                 }
@@ -408,29 +321,34 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 }
 
 template bool ModuleIO::read_dmk<double>(const int nspin,
-                                         const int nk,
-                                         const Parallel_2D& pv,
-                                         const std::string& dmk_dir,
-										 std::vector<std::vector<double>>& dmk,
-										 std::ofstream &ofs);
+		const int nk,
+		const K_Vectors &kv,
+		const Parallel_2D& pv,
+		const std::string& dmk_dir,
+		std::vector<std::vector<double>>& dmk,
+		std::ofstream &ofs);
 
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
-                                                       const int nk,
-                                                       const Parallel_2D& pv,
-                                                       const std::string& dmk_dir,
-													   std::vector<std::vector<std::complex<double>>>& dmk,
-													   std::ofstream &ofs);
+		const int nk,
+		const K_Vectors &kv,
+		const Parallel_2D& pv,
+		const std::string& dmk_dir,
+		std::vector<std::vector<std::complex<double>>>& dmk,
+		std::ofstream &ofs);
 
 template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>& dmk,
-                                          const int precision,
-                                          const std::vector<double>& efs,
-                                          const UnitCell* ucell,
-                                          const Parallel_2D& pv,
-                                          const int istep);
+		const K_Vectors &kv,
+		const int precision,
+		const std::vector<double>& efs,
+		const UnitCell* ucell,
+		const Parallel_2D& pv,
+		const int istep);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
-                                                        const int precision,
-                                                        const std::vector<double>& efs,
-                                                        const UnitCell* ucell,
-                                                        const Parallel_2D& pv,
-                                                        const int istep);
+		const K_Vectors &kv,
+		const int precision,
+		const std::vector<double>& efs,
+		const UnitCell* ucell,
+		const Parallel_2D& pv,
+		const int istep);
+

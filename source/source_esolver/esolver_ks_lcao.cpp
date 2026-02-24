@@ -176,13 +176,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         if(PARAM.inp.init_chg == "dm")
         {
             //! 13.1.1) init density matrix from file
-            std::string dmfile = PARAM.globalv.global_readin_dir + "/dmrs1_nao.csr";
+            std::string dmfile = PARAM.globalv.global_readin_dir + "dmrs1_nao.csr";
             LCAO_domain::init_dm_from_file<TK>(dmfile, this->dmat, ucell, &(this->pv));
+	    GlobalV::ofs_running << " Read density matrix (real space) from file: " 
+		    << dmfile << std::endl;
         }
         if(PARAM.inp.init_chg == "hr")
         {
             //! 13.1.2) init HR from file
-            std::string hrfile = PARAM.globalv.global_readin_dir + "/hrs1_nao.csr";
+            std::string hrfile = PARAM.globalv.global_readin_dir + "hrs1_nao.csr";
             LCAO_domain::init_hr_from_file<TR>(
                 hrfile, 
                 dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR(), 

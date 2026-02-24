@@ -1,8 +1,13 @@
-01_NO_KP_15f_ODM
-02_NO_KP_15
+scf_in_dmr_GaAs
+scf_in_dmr_Si
+scf_out_chg_pot
+scf_out_dmr_dmk
+scf_out_chg_tau
+scf_out_elf
+nscf_out_pot
+md_out_syns
 03_NO_KP_15_kpar
 04_NO_KP_GTH
-05_NO_KP_DJ_OC2
 06_NO_KP_OU
 07_NO_KP_UPF201
 08_NO_KP_bspline
@@ -20,7 +25,6 @@
 20_NO_KP_OHS_S4
 21_NO_KP_OS
 22_NO_KP_OTdH
-23_NO_KP_OK
 24_NO_KP_RE
 25_NO_KP_CR
 26_NO_KP_RE_MB
@@ -36,8 +40,6 @@
 36_NO_KP_MU
 37_NO_KP_MU_nscf
 38_NO_OP3
-39_NO_OP_nscf
-40_NO_ELF
 41_NO_KP_MSST
 42_NO_KP_MSST2
 43_NO_KP_NVT
@@ -54,10 +56,9 @@
 54_NO_PK_PU
 55_NO_PK_PU_S1
 56_NO_PK_PU_SO
-57_NO_MD_1O
 58_NO_MD_2O
-59_NO_KP_initHR
 60_NO_KP_OW
 61_NO_KP_sol
 62_NO_KP_restart
-63_NO_KP_out_elf
+#59_NO_KP_initHR (has bug)
+#scf_in_dmr_Si_spin2_hasbug
