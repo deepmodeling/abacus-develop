@@ -1350,7 +1350,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         Input_Item item("bessel_nao_rcut");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
         item.category = "NAOs";
-        item.type = "Real";
+        item.type = "Vector of Real (N values)";
         item.description = "Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.";
         item.default_value = "6.0";
         item.unit = "";

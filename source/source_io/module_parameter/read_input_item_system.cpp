@@ -564,7 +564,7 @@ Available options are:
         item.annotation = "unit in 1/bohr, should be > 0, default is 0 which "
                           "means read KPT file";
         item.category = "System variables";
-        item.type = "Real";
+        item.type = "Vector of Real (1 or 3 values)";
         item.description = "Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, "
                           "and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. "
                           "The default value 0.0 means that ABACUS will read the applied KPT file."

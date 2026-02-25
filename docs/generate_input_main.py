@@ -79,6 +79,10 @@ def format_description(desc: str) -> str:
     if not desc:
         return ''
 
+    # Prevent placeholder tokens like <property> from being parsed as raw HTML
+    # and breaking list/heading structure in rendered docs.
+    desc = desc.replace('<', '&lt;').replace('>', '&gt;')
+
     lines = desc.split('\n')
     result_lines = []
 
@@ -155,6 +159,10 @@ def generate_category_markdown(category: str, params: List[Dict[str, str]]) -> s
 
     for param in params:
         lines.append(generate_parameter_markdown(param))
+
+    # Keep legacy navigation aid used by downstream tooling/rendering.
+    lines.append("[back to top](#full-list-of-input-keywords)")
+    lines.append("")
 
     return '\n'.join(lines)
 
