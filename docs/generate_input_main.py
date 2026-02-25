@@ -15,6 +15,7 @@ Can also be imported from conf.py:
 """
 
 import argparse
+import html
 import re
 import sys
 from pathlib import Path
@@ -84,6 +85,16 @@ def normalize_type(type_text: str) -> str:
     return aliases.get(normalized, normalized)
 
 
+def escape_md_text(text: str) -> str:
+    """
+    Escape markdown-sensitive angle brackets while avoiding double escaping.
+    """
+    if text is None:
+        return ''
+    normalized = html.unescape(str(text))
+    return normalized.replace('<', '&lt;').replace('>', '&gt;')
+
+
 def format_description(desc: str) -> str:
     """
     Format description text for markdown output.
@@ -96,7 +107,7 @@ def format_description(desc: str) -> str:
 
     # Prevent placeholder tokens like <property> from being parsed as raw HTML
     # and breaking list/heading structure in rendered docs.
-    desc = desc.replace('<', '&lt;').replace('>', '&gt;')
+    desc = escape_md_text(desc)
 
     lines = desc.split('\n')
     result_lines = []
@@ -138,11 +149,13 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Type
     if param.get('type', '') != '':
-        lines.append(f"- **Type**: {normalize_type(str(param['type']))}")
+        type_text = escape_md_text(normalize_type(str(param['type'])))
+        lines.append(f"- **Type**: {type_text}")
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
-        lines.append(f"- **Availability**: *{param['availability']}*")
+        availability_text = escape_md_text(str(param['availability']))
+        lines.append(f"- **Availability**: *{availability_text}*")
 
     # Description
     if param.get('description', '') != '':
@@ -160,11 +173,13 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Default
     if param.get('default_value', '') != '':
-        lines.append(f"- **Default**: {param['default_value']}")
+        default_text = escape_md_text(str(param['default_value']))
+        lines.append(f"- **Default**: {default_text}")
 
     # Unit
     if param.get('unit', '') != '':
-        lines.append(f"- **Unit**: {param['unit']}")
+        unit_text = escape_md_text(str(param['unit']))
+        lines.append(f"- **Unit**: {unit_text}")
 
     lines.append("")
     return '\n'.join(lines)

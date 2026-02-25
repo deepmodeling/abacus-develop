@@ -64,7 +64,7 @@ void ReadInput::item_exx()
         item.annotation = "fraction of exchange erfc(wr)/r in hybrid functionals";
         item.category = "Exact Exchange (Common)";
         item.type = "Real";
-        item.description = R"(Fraction $\beta$ of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.)";
+        item.description = R"(Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
         item.availability = "";

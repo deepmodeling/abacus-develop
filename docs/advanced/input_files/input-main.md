@@ -719,7 +719,7 @@
 
 ### kspacing
 
-- **Type**: Real
+- **Type**: Vector of Real (1 or 3 values)
 - **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value &gt; 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
 
   > Note: If gamma_only is set to be true, kspacing is invalid.
@@ -1269,7 +1269,7 @@
 ### mixing_dmr
 
 - **Type**: Boolean
-- **Availability**: *Only for mixing_restart>=0.0*
+- **Availability**: *Only for mixing_restart &gt;= 0.0*
 - **Description**: At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
 - **Default**: false
 
@@ -2210,7 +2210,7 @@
 
 ### bessel_nao_rcut
 
-- **Type**: Real
+- **Type**: Vector of Real (N values)
 - **Description**: Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
 - **Default**: 6.0
 
@@ -2874,19 +2874,19 @@
 
 ### exx_fock_alpha
 
-- **Type**: Vector of Real
-- **Description**: Fraction $\alpha$ of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
+- **Type**: Real
+- **Description**: Fraction of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_alpha
 
-- **Type**: Vector of Real
-- **Description**: Fraction $\beta$ of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
+- **Type**: Real
+- **Description**: Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_omega
 
-- **Type**: Vector of Real
+- **Type**: Real
 - **Description**: Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.
 - **Default**: see hybrid_func_params
 
@@ -2918,7 +2918,7 @@
 
 ### exx_fock_lambda
 
-- **Type**: Vector of Real
+- **Type**: Real
 - **Availability**: *basis_type==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
 - **Default**: 0.3
@@ -3427,7 +3427,7 @@
 
 ### orbital_corr
 
-- **Type**: Integer
+- **Type**: Vector of Integer (ntype values)
 - **Description**: Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
   - -1: The plus U correction will not be calculated for this atom.
   - 1: For p-electron orbits, the plus U correction is needed.
@@ -3437,7 +3437,7 @@
 
 ### hubbard_u
 
-- **Type**: Real
+- **Type**: Vector of Real (ntype values)
 - **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
   > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
@@ -3461,7 +3461,7 @@
 ### uramping
 
 - **Type**: Real
-- **Availability**: *DFT+U calculations with mixing_restart > 0.*
+- **Availability**: *DFT+U calculations with mixing_restart &gt; 0.*
 - **Description**: Once uramping &gt; 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho&lt;mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
 - **Default**: -1.0.
 - **Unit**: eV
@@ -4283,13 +4283,13 @@
 
 ### qo_strategy
 
-- **Type**: String
+- **Type**: Vector of String (1 or n values where n is the number of atomic types)
 - **Description**: Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all
 - **Default**: for hydrogen: energy-valence, for pswfc and szv: all
 
 ### qo_screening_coeff
 
-- **Type**: Real
+- **Type**: Vector of Real (ntype values; 1 value allowed for qo_basis=pswfc)
 - **Description**: The screening coefficient for each atom type to rescale the shape of radial orbitals
 - **Default**: 0.1
 - **Unit**: Bohr^-1
@@ -4471,7 +4471,7 @@
 
 ### lr_init_xc_kernel
 
-- **Type**: String
+- **Type**: Vector of String (&gt;=1 values)
 - **Description**: The method to initalize the xc kernel.
   - "default": Calculate xc kernel from the ground-state charge density.
   - "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.

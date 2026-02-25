@@ -216,7 +216,7 @@ parameters:
     availability: ""
   - name: kspacing
     category: System variables
-    type: Real
+    type: Vector of Real (1 or 3 values)
     description: |
       Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
 
@@ -674,7 +674,7 @@ parameters:
       * 0.8: nspin=1
       * 0.4: nspin=2 and nspin=4
       * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
-      * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+      * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 &lt; mixing_beta &lt; 0.1.
 
       Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
     default_value: "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4."
@@ -710,16 +710,16 @@ parameters:
     category: Electronic structure
     type: Boolean
     description: |
-      At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+      At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
     default_value: "false"
     unit: ""
-    availability: "Only for mixing_restart>=0.0"
+    availability: "Only for mixing_restart &gt;= 0.0"
   - name: mixing_gg0
     category: Electronic structure
     type: Real
     description: |
       Whether to perfom Kerker scaling for charge density.
-      * >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta <= 0.1.
+      * >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta &lt;= 0.1.
       * 0: No Kerker scaling is performed.
 
       For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
@@ -747,8 +747,8 @@ parameters:
     type: Real
     description: |
       Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments' directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, mixing_angle is the angle mixing parameter. In fact, only mixing_angle=1.0 is implemented currently.
-      * <=0: Normal broyden mixing
-      * >0: Angle mixing for the modulus with mixing_angle=1.0
+      * &lt;=0: Normal broyden mixing
+      * &gt;0: Angle mixing for the modulus with mixing_angle=1.0
     default_value: "-10.0"
     unit: ""
     availability: Only relevant for non-colinear calculations nspin=4.
@@ -915,7 +915,7 @@ parameters:
     category: Plane wave related variables
     type: Real
     description: |
-      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
+      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
     default_value: "0.01"
     unit: ""
     availability: ""
@@ -1075,7 +1075,7 @@ parameters:
     availability: ""
   - name: bessel_nao_rcut
     category: NAOs
-    type: Real
+    type: Vector of Real (N values)
     description: |
       Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
     default_value: "6.0"
@@ -1683,7 +1683,7 @@ parameters:
     description: |
       Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
-      [NOTE] Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep > 0).
+      [NOTE] Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep &gt; 0).
     default_value: "False"
     unit: ""
     availability: ""
@@ -2316,7 +2316,7 @@ parameters:
     availability: Numerical atomic orbital basis and deepks_scf is true
   - name: deepks_band_range
     category: DeePKS
-    type: Integer*2
+    type: "Integer*2"
     description: |
       The first value should not be larger than the second one and the meaning differs in different cases below
       * deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
@@ -2672,7 +2672,7 @@ parameters:
     availability: ""
   - name: lr_init_xc_kernel
     category: Linear Response TDDFT (Under Development Feature)
-    type: String
+    type: "Vector of String (>=1 values)"
     description: |
       The method to initalize the xc kernel.
       * "default": Calculate xc kernel from the ground-state charge density.
@@ -2705,7 +2705,7 @@ parameters:
     type: Integer
     description: |
       The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
-      * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.
+      * Note: If the value is illegal ( &gt; nelec/2 or &lt;= 0), it will be autoset to nelec/2.
     default_value: nband
     unit: ""
     availability: ""
@@ -3562,7 +3562,7 @@ parameters:
     category: Electric field and dipole correction
     type: Real
     description: |
-      Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 <= efield_pos_max < 1.
+      Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 &lt;= efield_pos_max &lt; 1.
     default_value: Autoset to center of vacuum - width of vacuum / 20
     unit: ""
     availability: with efield_flag = True.
@@ -3570,7 +3570,7 @@ parameters:
     category: Electric field and dipole correction
     type: Real
     description: |
-      Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
+      Zone in the unit cell where the saw-like potential decreases, 0 &lt; efield_pos_dec &lt; 1.
     default_value: Autoset to width of vacuum / 10
     unit: ""
     availability: with efield_flag = True.
@@ -3840,23 +3840,23 @@ parameters:
     availability: ""
   - name: exx_fock_alpha
     category: Exact Exchange (Common)
-    type: Vector of Real
+    type: Real
     description: |
-      Fraction $\alpha$ of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
+      Fraction of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
     default_value: see hybrid_func_params
     unit: ""
     availability: ""
   - name: exx_erfc_alpha
     category: Exact Exchange (Common)
-    type: Vector of Real
+    type: Real
     description: |
-      Fraction $\beta$ of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
+      Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
     default_value: see hybrid_func_params
     unit: ""
     availability: ""
   - name: exx_erfc_omega
     category: Exact Exchange (Common)
-    type: Vector of Real
+    type: Real
     description: |
       Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.
     default_value: see hybrid_func_params
@@ -3890,7 +3890,7 @@ parameters:
     availability: exx_separate_loop==1
   - name: exx_fock_lambda
     category: Exact Exchange (LCAO in PW)
-    type: Vector of Real
+    type: Real
     description: |
       It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
     default_value: "0.3"
@@ -3916,7 +3916,7 @@ parameters:
     category: Exact Exchange (LCAO)
     type: Real
     description: |
-      By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
+      By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr &gt; 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
     default_value: "-1"
     unit: ""
     availability: ""
@@ -4064,7 +4064,7 @@ parameters:
     availability: basis_type==lcao
   - name: orbital_corr
     category: DFT+U correction
-    type: Integer
+    type: Vector of Integer (ntype values)
     description: |
       Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
       * -1: The plus U correction will not be calculated for this atom.
@@ -4076,7 +4076,7 @@ parameters:
     availability: ""
   - name: hubbard_u
     category: DFT+U correction
-    type: Real
+    type: Vector of Real (ntype values)
     description: |
       Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
@@ -4106,10 +4106,10 @@ parameters:
     category: DFT+U correction
     type: Real
     description: |
-      Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
+      Once uramping &gt; 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho&lt;mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
     default_value: "-1.0."
     unit: eV
-    availability: "DFT+U calculations with mixing_restart > 0."
+    availability: "DFT+U calculations with mixing_restart &gt; 0."
   - name: omc
     category: DFT+U correction
     type: Integer
@@ -4233,7 +4233,7 @@ parameters:
     availability: ""
   - name: qo_strategy
     category: Quasiatomic Orbital (QO) analysis
-    type: String
+    type: Vector of String (1 or n values where n is the number of atomic types)
     description: |
       Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all
     default_value: "for hydrogen: energy-valence, for pswfc and szv: all"
@@ -4241,7 +4241,7 @@ parameters:
     availability: ""
   - name: qo_screening_coeff
     category: Quasiatomic Orbital (QO) analysis
-    type: Real
+    type: Vector of Real (ntype values; 1 value allowed for qo_basis=pswfc)
     description: |
       The screening coefficient for each atom type to rescale the shape of radial orbitals
     default_value: "0.1"
