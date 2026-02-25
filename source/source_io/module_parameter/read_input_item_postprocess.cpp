@@ -426,7 +426,7 @@ void ReadInput::item_postprocess()
         Input_Item item("out_wannier_mmn");
         item.annotation = "output .mmn file or not";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
+        item.type = "Boolean";
         item.description = R"(Write the "*.mmn" file or not.
 * 0: don't write the "*.mmn" file.
 * 1: write the "*.mmn" file.)";
@@ -440,7 +440,7 @@ void ReadInput::item_postprocess()
         Input_Item item("out_wannier_amn");
         item.annotation = "output .amn file or not";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
+        item.type = "Boolean";
         item.description = R"(Write the "*.amn" file or not.
 * 0: don't write the "*.amn" file.
 * 1: write the "*.amn" file.)";
@@ -454,7 +454,7 @@ void ReadInput::item_postprocess()
         Input_Item item("out_wannier_eig");
         item.annotation = "output .eig file or not";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
+        item.type = "Boolean";
         item.description = R"(Write the "*.eig" file or not.
 * 0: don't write the "*.eig" file.
 * 1: write the "*.eig" file.)";
@@ -468,7 +468,7 @@ void ReadInput::item_postprocess()
         Input_Item item("out_wannier_unk");
         item.annotation = "output UNK. file or not";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
+        item.type = "Boolean";
         item.description = R"(Write the "UNK.*" file or not.
 * 0: don't write the "UNK.*" file.
 * 1: write the "UNK.*" file.)";
@@ -482,7 +482,7 @@ void ReadInput::item_postprocess()
         Input_Item item("out_wannier_wvfn_formatted");
         item.annotation = "output UNK. file in text format or in binary format";
         item.category = "Berry phase and wannier90 interface";
-        item.type = "Bool";
+        item.type = "Boolean";
         item.description = R"(Write the "UNK.*" file in ASCII format or binary format.
 * 0: write the "UNK.*" file in binary format.
 * 1: write the "UNK.*" file in ASCII format (text file format).)";

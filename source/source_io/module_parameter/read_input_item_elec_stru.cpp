@@ -350,7 +350,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         Input_Item item("xc_exch_ext");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
-        item.type = "Integer Real ...";
+        item.type = "Integer followed by Real values";
         item.description = "Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
@@ -393,7 +393,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         Input_Item item("xc_corr_ext");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
-        item.type = "Integer Real ...";
+        item.type = "Integer followed by Real values";
         item.description = "Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "

@@ -596,7 +596,7 @@
 
 - **Type**: Real
 - **Description**: The accuracy for symmetry analysis. Typically, the default value is good enough, but if the lattice parameters or atom positions in STRU file are not accurate enough, this value should be enlarged.
-  > Note: Note: if calculation==cell_relax, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation.
+  > Note: if calculation==cell_relax, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation.
 - **Default**: 1.0e-6
 - **Unit**: Bohr
 
@@ -1160,7 +1160,7 @@
 
 ### xc_exch_ext
 
-- **Type**: Integer Real ...
+- **Type**: Integer followed by Real values
 - **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one exchange functional.
@@ -1168,7 +1168,7 @@
 
 ### xc_corr_ext
 
-- **Type**: Integer Real ...
+- **Type**: Integer followed by Real values
 - **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one correlation functional.
@@ -1713,7 +1713,7 @@
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 
-  > Note: Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
+  > Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
 - **Default**: False
 
 ### fixed_atoms
@@ -2339,7 +2339,7 @@
 
 ### deepks_band_range
 
-- **Type**: Int*2
+- **Type**: Integer*2
 - **Availability**: *Numerical atomic orbital basis, deepks_scf is true, and deepks_bandgap is 1 or 2*
 - **Description**: The first value should not be larger than the second one and the meaning differs in different cases below
   - deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
@@ -2783,7 +2783,7 @@
   - True: A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
 
-  > Note: Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+  > Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
 - **Default**: False
 
 ### efield_dir
@@ -2816,7 +2816,7 @@
 - **Availability**: *with efield_flag = True.*
 - **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp in the region from efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir.
 
-  > Note: Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+  > Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
 - **Unit**: a.u., 1 a.u. = 51.4220632*10^10 V/m.
 
@@ -2874,20 +2874,20 @@
 
 ### exx_fock_alpha
 
-- **Type**: Real \Real...\
-- **Description**: Fraction of full-ranged Fock exchange 1/r () in range-separated hybrid funtionals, so that .
+- **Type**: Vector of Real
+- **Description**: Fraction $\alpha$ of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_alpha
 
-- **Type**: Real \Real...\
-- **Description**: Fraction of short-ranged Fock exchange erfc(wr)/r () in range-separated hybrid funtionals, so that .
+- **Type**: Vector of Real
+- **Description**: Fraction $\beta$ of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_omega
 
-- **Type**: Real \Real...\
-- **Description**: Range-separation parameter in exchange, such that
+- **Type**: Vector of Real
+- **Description**: Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.
 - **Default**: see hybrid_func_params
 
 ### exx_separate_loop
@@ -2918,7 +2918,7 @@
 
 ### exx_fock_lambda
 
-- **Type**: Real \Real...\
+- **Type**: Vector of Real
 - **Availability**: *basis_type==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
 - **Default**: 0.3
@@ -3440,7 +3440,7 @@
 - **Type**: Real
 - **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
-  > Note: Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
+  > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 - **Default**: 0.0
 
 ### yukawa_potential
@@ -3474,15 +3474,15 @@
   - 1: The first SCF step will use an initial density matrix read from a file named initial_onsite.dm, but for later steps, the onsite density matrix will be updated.
   - 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
 
-  > Note: Note : The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
+  > Note: The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 - **Default**: 0
 
 ### onsite_radius
 
 - **Type**: Real
 - **Availability**: *dft_plus_u is set to 1*
-- **Description**: - The Onsite-radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U.
-  - The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization. Consider the function: $\sigmar_c\sigmaf'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
+- **Description**: - The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
+  - The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.
 - **Default**: 3.0
 - **Unit**: Bohr
 
@@ -3757,7 +3757,7 @@
 
 ### out_wannier_mmn
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.mmn" file or not.
   - 0: don't write the "*.mmn" file.
   - 1: write the "*.mmn" file.
@@ -3765,7 +3765,7 @@
 
 ### out_wannier_amn
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.amn" file or not.
   - 0: don't write the "*.amn" file.
   - 1: write the "*.amn" file.
@@ -3773,7 +3773,7 @@
 
 ### out_wannier_eig
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.eig" file or not.
   - 0: don't write the "*.eig" file.
   - 1: write the "*.eig" file.
@@ -3781,7 +3781,7 @@
 
 ### out_wannier_unk
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "UNK.*" file or not.
   - 0: don't write the "UNK.*" file.
   - 1: write the "UNK.*" file.
@@ -3789,7 +3789,7 @@
 
 ### out_wannier_wvfn_formatted
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "UNK.*" file in ASCII format or binary format.
   - 0: write the "UNK.*" file in binary format.
   - 1: write the "UNK.*" file in ASCII format (text file format).

@@ -69,6 +69,21 @@ CATEGORY_ORDER = [
 ]
 
 
+def normalize_type(type_text: str) -> str:
+    """
+    Normalize legacy type labels for cleaner generated docs.
+    """
+    if not type_text:
+        return ''
+
+    normalized = type_text.strip()
+    aliases = {
+        "Bool": "Boolean",
+        "Int*2": "Integer*2",
+    }
+    return aliases.get(normalized, normalized)
+
+
 def format_description(desc: str) -> str:
     """
     Format description text for markdown output.
@@ -98,6 +113,10 @@ def format_description(desc: str) -> str:
         if '[WARNING]' in line:
             line = line.replace('[WARNING]', '> Warning:')
 
+        # Normalize doubled note/warning prefixes from legacy content
+        line = re.sub(r'>\s*Note:\s*Note\s*:?\s*', '> Note: ', line)
+        line = re.sub(r'>\s*Warning:\s*Warning\s*:?\s*', '> Warning: ', line)
+
         result_lines.append(line)
 
     # Join and clean up
@@ -119,7 +138,7 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Type
     if param.get('type', '') != '':
-        lines.append(f"- **Type**: {param['type']}")
+        lines.append(f"- **Type**: {normalize_type(str(param['type']))}")
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
