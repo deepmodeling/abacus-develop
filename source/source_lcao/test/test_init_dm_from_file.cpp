@@ -1,5 +1,7 @@
+#include <cerrno>
 #include <fstream>
 #include <iomanip>
+#include <sys/stat.h>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -139,7 +141,7 @@ class InitDMFileTest : public testing::Test
 
 TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
 {
-    system("mkdir -p ./test_dm_dir");
+    mkdir("./test_dm_dir", 0755);
     write_test_csr("./test_dm_dir/dmrs1_nao.csr", 1.0, 0, 1);
 
     auto* dm = create_dm(1);
@@ -166,12 +168,11 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     EXPECT_TRUE(has_nonzero);
 
     delete dm;
-    system("rm -rf ./test_dm_dir");
 }
 
 TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 {
-    system("mkdir -p ./test_dm_dir");
+    mkdir("./test_dm_dir", 0755);
     write_test_csr("./test_dm_dir/dmrs1_nao.csr", 1.0, 0, 2);  // spin-up
     write_test_csr("./test_dm_dir/dmrs2_nao.csr", 0.5, 1, 2);  // spin-down
 
@@ -213,7 +214,6 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
     EXPECT_TRUE(values_differ);
 
     delete dm;
-    system("rm -rf ./test_dm_dir");
 }
 
 TEST_F(InitDMFileTest, Nspin2_DMRVectorSize)
@@ -244,7 +244,7 @@ TEST_F(InitDMFileTest, Nspin1_DMRVectorSize)
 TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
 {
     // Write an HR CSR file (same format as DM CSR)
-    system("mkdir -p ./test_hr_dir");
+    mkdir("./test_hr_dir", 0755);
     write_test_csr("./test_hr_dir/hrs1_nao.csr", 2.0, 0, 1);
 
     // Create an HContainer to read into
@@ -276,14 +276,12 @@ TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
         double expected = 2.0 * (k + 1) * 0.1;
         EXPECT_NEAR(ap->get_pointer()[k * nw + k], expected, 1e-6);
     }
-
-    system("rm -rf ./test_hr_dir");
 }
 
 TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
 {
     // Write two HR CSR files with different scale factors
-    system("mkdir -p ./test_hr_dir");
+    mkdir("./test_hr_dir", 0755);
     write_test_csr("./test_hr_dir/hrs1_nao.csr", 1.0, 0, 2);  // spin-up
     write_test_csr("./test_hr_dir/hrs2_nao.csr", 3.0, 1, 2);  // spin-down
 
@@ -346,7 +344,6 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
 
     delete hR_up;
     delete hR_down;
-    system("rm -rf ./test_hr_dir");
 }
 
 int main(int argc, char** argv)
