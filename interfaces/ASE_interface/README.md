@@ -31,6 +31,7 @@ Please refer to the example scripts in the `examples` folder. Recommended learni
 6. **md.py** - Molecular dynamics simulation
 7. **constraintmd.py** - Constrained molecular dynamics simulation
 8. **metadynamics.py** - Metadynamics simulation
+9. **neb.py** - Nudged Elastic Band (NEB) calculation
 
 More usage examples will be provided in future versions.
 
