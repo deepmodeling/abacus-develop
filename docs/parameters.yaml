@@ -940,9 +940,9 @@ parameters:
     type: Integer
     description: |
       Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-    default_value: "40"
+    default_value: "50"
     unit: ""
-    availability: ""
+    availability: "basis_type==pw, ks_solver== cg/dav/dav_subspace/bpcg"
   - name: pw_diag_ndim
     category: Plane wave related variables
     type: Integer

@@ -1094,9 +1094,9 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.category = "Plane wave related variables";
         item.type = "Integer";
         item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
-        item.default_value = "40";
+        item.default_value = "50";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg";
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }

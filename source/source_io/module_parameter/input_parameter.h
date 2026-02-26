@@ -83,7 +83,7 @@ struct Input_para
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:
                                             ///< use mesh, which is used in QE.
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
-    int pw_diag_nmax = 50;
+    int pw_diag_nmax = 50;          ///< max number of iterations for pw diagonalization
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
@@ -368,12 +368,12 @@ struct Input_para
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
     bool out_stru = false;                ///< outut stru file each ion step
-    int out_freq_elec = 0;                ///< print information every few electronic steps 
-    int out_freq_ion = 0;                 ///< print information every few ionic steps 
+    int out_freq_elec = 0;                ///< print information every few electronic steps
+    int out_freq_ion = 0;                 ///< print information every few ionic steps
     int out_freq_td = 0;                  ///< print information every few completed electronic iterations in RT-TDDFT
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
-    std::vector<int> out_pot = {0, 8};    ///< output potential 
+    std::vector<int> out_pot = {0, 8};    ///< output potential
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
