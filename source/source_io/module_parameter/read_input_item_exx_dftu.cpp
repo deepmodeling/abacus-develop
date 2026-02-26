@@ -638,7 +638,7 @@ void ReadInput::item_dftu()
         item.annotation = "which correlated orbitals need corrected ; d:2 "
                           ",f:3, do not need correction:-1";
         item.category = "DFT+U correction";
-        item.type = "Vector of Integer (ntype values)";
+        item.type = "Vector of Integer (n values where n is the number of atomic types)";
         item.description = R"(Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
 * -1: The plus U correction will not be calculated for this atom.
 * 1: For p-electron orbits, the plus U correction is needed.
@@ -681,7 +681,7 @@ void ReadInput::item_dftu()
         Input_Item item("hubbard_u");
         item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
         item.category = "DFT+U correction";
-        item.type = "Vector of Real (ntype values)";
+        item.type = "Vector of Real (n values where n is the number of atomic types)";
         item.description = R"(Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
 [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.)";

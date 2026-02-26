@@ -173,10 +173,10 @@ You **must** regenerate `docs/parameters.yaml` whenever you:
 
 ### How to Regenerate
 
-After building ABACUS, run:
+After building and installing ABACUS, run:
 
 ```bash
-./build/abacus --generate-parameters-yaml > docs/parameters.yaml
+abacus --generate-parameters-yaml > docs/parameters.yaml
 ```
 
 Then verify the YAML is valid:
@@ -191,7 +191,7 @@ You can also regenerate the markdown documentation locally:
 python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
 ```
 
-**Important:** Include the updated `docs/parameters.yaml` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes.
+**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes and the `input-main.md` is updated.
 
 ### Parameter Documentation Format
 

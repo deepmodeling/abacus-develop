@@ -674,7 +674,7 @@ parameters:
       * 0.8: nspin=1
       * 0.4: nspin=2 and nspin=4
       * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
-      * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 &lt; mixing_beta &lt; 0.1.
+      * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
 
       Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
     default_value: "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4."
@@ -710,16 +710,16 @@ parameters:
     category: Electronic structure
     type: Boolean
     description: |
-      At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+      At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
     default_value: "false"
     unit: ""
-    availability: "Only for mixing_restart &gt;= 0.0"
+    availability: "Only for mixing_restart >= 0.0"
   - name: mixing_gg0
     category: Electronic structure
     type: Real
     description: |
       Whether to perfom Kerker scaling for charge density.
-      * >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta &lt;= 0.1.
+      * >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta <= 0.1.
       * 0: No Kerker scaling is performed.
 
       For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
@@ -747,8 +747,8 @@ parameters:
     type: Real
     description: |
       Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments' directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, mixing_angle is the angle mixing parameter. In fact, only mixing_angle=1.0 is implemented currently.
-      * &lt;=0: Normal broyden mixing
-      * &gt;0: Angle mixing for the modulus with mixing_angle=1.0
+      * <=0: Normal broyden mixing
+      * >0: Angle mixing for the modulus with mixing_angle=1.0
     default_value: "-10.0"
     unit: ""
     availability: Only relevant for non-colinear calculations nspin=4.
@@ -915,7 +915,7 @@ parameters:
     category: Plane wave related variables
     type: Real
     description: |
-      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
+      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
     default_value: "0.01"
     unit: ""
     availability: ""
@@ -1683,7 +1683,7 @@ parameters:
     description: |
       Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
-      [NOTE] Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep &gt; 0).
+      [NOTE] Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep > 0).
     default_value: "False"
     unit: ""
     availability: ""
@@ -2705,7 +2705,7 @@ parameters:
     type: Integer
     description: |
       The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
-      * Note: If the value is illegal ( &gt; nelec/2 or &lt;= 0), it will be autoset to nelec/2.
+      * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.
     default_value: nband
     unit: ""
     availability: ""
@@ -3562,7 +3562,7 @@ parameters:
     category: Electric field and dipole correction
     type: Real
     description: |
-      Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 &lt;= efield_pos_max &lt; 1.
+      Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 <= efield_pos_max < 1.
     default_value: Autoset to center of vacuum - width of vacuum / 20
     unit: ""
     availability: with efield_flag = True.
@@ -3570,7 +3570,7 @@ parameters:
     category: Electric field and dipole correction
     type: Real
     description: |
-      Zone in the unit cell where the saw-like potential decreases, 0 &lt; efield_pos_dec &lt; 1.
+      Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
     default_value: Autoset to width of vacuum / 10
     unit: ""
     availability: with efield_flag = True.
@@ -3916,7 +3916,7 @@ parameters:
     category: Exact Exchange (LCAO)
     type: Real
     description: |
-      By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr &gt; 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
+      By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
     default_value: "-1"
     unit: ""
     availability: ""
@@ -4064,7 +4064,7 @@ parameters:
     availability: basis_type==lcao
   - name: orbital_corr
     category: DFT+U correction
-    type: Vector of Integer (ntype values)
+    type: Vector of Integer (n values where n is the number of atomic types)
     description: |
       Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
       * -1: The plus U correction will not be calculated for this atom.
@@ -4076,7 +4076,7 @@ parameters:
     availability: ""
   - name: hubbard_u
     category: DFT+U correction
-    type: Vector of Real (ntype values)
+    type: Vector of Real (n values where n is the number of atomic types)
     description: |
       Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
@@ -4106,10 +4106,10 @@ parameters:
     category: DFT+U correction
     type: Real
     description: |
-      Once uramping &gt; 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho&lt;mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
+      Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
     default_value: "-1.0."
     unit: eV
-    availability: "DFT+U calculations with mixing_restart &gt; 0."
+    availability: "DFT+U calculations with mixing_restart > 0."
   - name: omc
     category: DFT+U correction
     type: Integer
@@ -4241,7 +4241,7 @@ parameters:
     availability: ""
   - name: qo_screening_coeff
     category: Quasiatomic Orbital (QO) analysis
-    type: Vector of Real (ntype values; 1 value allowed for qo_basis=pswfc)
+    type: Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)
     description: |
       The screening coefficient for each atom type to rescale the shape of radial orbitals
     default_value: "0.1"

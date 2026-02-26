@@ -284,7 +284,7 @@ void ReadInput::item_others()
         Input_Item item("qo_screening_coeff");
         item.annotation = "rescale the shape of radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
-        item.type = "Vector of Real (ntype values; 1 value allowed for qo_basis=pswfc)";
+        item.type = "Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)";
         item.description = "The screening coefficient for each atom type to rescale the shape of radial orbitals";
         item.default_value = "0.1";
         item.unit = "Bohr^-1";

@@ -3427,7 +3427,7 @@
 
 ### orbital_corr
 
-- **Type**: Vector of Integer (ntype values)
+- **Type**: Vector of Integer (n values where n is the number of atomic types)
 - **Description**: Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
   - -1: The plus U correction will not be calculated for this atom.
   - 1: For p-electron orbits, the plus U correction is needed.
@@ -3437,7 +3437,7 @@
 
 ### hubbard_u
 
-- **Type**: Vector of Real (ntype values)
+- **Type**: Vector of Real (n values where n is the number of atomic types)
 - **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
   > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
@@ -4289,7 +4289,7 @@
 
 ### qo_screening_coeff
 
-- **Type**: Vector of Real (ntype values; 1 value allowed for qo_basis=pswfc)
+- **Type**: Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)
 - **Description**: The screening coefficient for each atom type to rescale the shape of radial orbitals
 - **Default**: 0.1
 - **Unit**: Bohr^-1
