@@ -1,19 +1,19 @@
 AddTest(
-  TARGET XCTest_PBE
+  TARGET MODULE_HAMILT_XCTest_PBE
   LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
   ../xc_functional_libxc_wrapper_gcxc.cpp ../xc_functional_libxc.cpp
 )
 
 AddTest(
-  TARGET XCTest_HSE
+  TARGET MODULE_HAMILT_XCTest_HSE
   LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc1.cpp ../xc_functional.cpp ../xc_functional_libxc.cpp
 )
 
 
 AddTest(
-  TARGET XCTest_PZ_SPN
+  TARGET MODULE_HAMILT_XCTest_PZ_SPN
   LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
   SOURCES test_xc2.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp ../xc_funct_corr_gga.cpp ../xc_funct_corr_lda.cpp ../xc_funct_exch_gga.cpp ../xc_funct_exch_lda.cpp ../xc_funct_hcth.cpp
   ../xc_functional_libxc_wrapper_gcxc.cpp ../xc_functional_libxc_wrapper_xc.cpp ../xc_functional_libxc.cpp
@@ -26,7 +26,7 @@ if (USE_ROCM)
 list(APPEND FFT_SRC ../../../source_base/module_fft/fft_rocm.cpp)
 endif()
 AddTest(
-  TARGET XCTest_GRADCORR
+  TARGET MODULE_HAMILT_XCTest_GRADCORR
   LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
   SOURCES test_xc3.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
@@ -47,7 +47,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET XCTest_SCAN
+  TARGET MODULE_HAMILT_XCTest_SCAN
   LIBS parameter MPI::MPI_CXX Libxc::xc 
   SOURCES test_xc4.cpp ../xc_functional.cpp ../xc_functional_wrapper_xc.cpp
     ../xc_functional_wrapper_gcxc.cpp
@@ -60,7 +60,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET XCTest_VXC
+  TARGET MODULE_HAMILT_XCTest_VXC
   LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
   SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
