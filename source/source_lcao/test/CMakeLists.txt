@@ -4,7 +4,7 @@ remove_definitions(-D__ROCM)
 
 if(ENABLE_LCAO)
 AddTest(
-  TARGET init_dm_from_file_test
+  TARGET MODULE_LCAO_init_dm_from_file_test
   LIBS parameter ${math_libs} base device
   SOURCES test_init_dm_from_file.cpp tmp_mocks.cpp
     ${ABACUS_SOURCE_DIR}/source_estate/module_dm/density_matrix.cpp

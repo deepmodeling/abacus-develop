@@ -1,7 +1,7 @@
 add_definitions(-D__NORMAL)
 
 AddTest(
-    TARGET PW_Kernels_UTs
+    TARGET MODULE_PW_PW_Kernels_UTs
     LIBS parameter ${math_libs} psi device
     SOURCES pw_op_test.cpp
     ../../../../source_base/tool_quit.cpp ../../../../source_base/global_variable.cpp
