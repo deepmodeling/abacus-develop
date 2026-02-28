@@ -194,7 +194,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.deepks_equiv, 0);
     EXPECT_EQ(param.inp.deepks_bandgap, 0);
     EXPECT_EQ(param.inp.deepks_out_unittest, 0);
-    EXPECT_EQ(param.inp.out_pot, 2);
+    EXPECT_EQ(param.inp.out_pot[0], 2);
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
     EXPECT_EQ(param.inp.out_dos, 0);
     EXPECT_EQ(param.inp.out_ldos[0], 1);

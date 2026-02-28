@@ -1,9 +1,9 @@
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_base/global_variable.h"
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 #include "prepare_unitcell.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
@@ -204,8 +204,8 @@ TEST_F(CubeIOTest, ReadCube)
      nx_read, ny_read, nz_read, 
      dx, dy, dz, 
      atom_type, atom_charge, atom_pos, data_read);
-    EXPECT_EQ(comment[0], "STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
-    EXPECT_EQ(comment[1], "1 (nspin) 0.461002 (fermi energy, in Ry)");
+    EXPECT_EQ(comment[0], "Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
+    EXPECT_EQ(comment[1], "1 # number of spin directions 0.461002 # Fermi energy, in Ry");
     EXPECT_EQ(natom, 2);
     for (auto& o : origin) { EXPECT_EQ(o, 0.0); }
     EXPECT_EQ(nx_read, 36);

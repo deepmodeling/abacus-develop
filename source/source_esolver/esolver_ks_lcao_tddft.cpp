@@ -1,7 +1,7 @@
 #include "esolver_ks_lcao_tddft.h"
 
 //----------------IO-----------------
-#include "source_io/dipole_io.h"
+#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_current/td_current_io.h"
 #include "source_io/module_output/output_log.h"

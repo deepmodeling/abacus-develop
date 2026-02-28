@@ -49,8 +49,8 @@ TYPED_TEST(OutputMullikenTest, nspin1)
     EXPECT_NEAR(tot_chg[0], 4.0, 1e-5);
     std::ifstream ifs("./mulliken.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Total charge:\t4"));
-    EXPECT_THAT(str, testing::HasSubstr("Total Charge on atom:                 Si              4.0000"));
+    EXPECT_THAT(str, testing::HasSubstr(" Total charge 4"));
+    EXPECT_THAT(str, testing::HasSubstr("total charge    on atom 1     4.0000"));
     remove("./mulliken.txt");
 }
 
@@ -69,11 +69,11 @@ TYPED_TEST(OutputMullikenTest, nspin2)
     EXPECT_NEAR(tot_chg[1], 1.0, 1e-5);
     std::ifstream ifs("./mulliken.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Total charge:\t4"));
-    EXPECT_THAT(str, testing::HasSubstr("Total charge of spin 1:\t3"));
-    EXPECT_THAT(str, testing::HasSubstr("Total charge of spin 2:\t1"));
-    EXPECT_THAT(str, testing::HasSubstr("Total Charge on atom:                 Si              4.0000"));
-    EXPECT_THAT(str, testing::HasSubstr("Total Magnetism on atom:              Si              2.0000"));
+    EXPECT_THAT(str, testing::HasSubstr(" Total charge 4"));
+    EXPECT_THAT(str, testing::HasSubstr(" Total charge of spin1 3"));
+    EXPECT_THAT(str, testing::HasSubstr(" Total charge of spin2 1"));
+    EXPECT_THAT(str, testing::HasSubstr("total charge    on atom 1     4.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("total magnetism on atom 1     2.0000"));
     remove("./mulliken.txt");
 }
 
@@ -95,12 +95,9 @@ TYPED_TEST(OutputMullikenTest, nspin4)
     EXPECT_NEAR(tot_chg[3], 2.0, 1e-5);
     std::ifstream ifs("./mulliken.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Total charge:\t4"));
-    EXPECT_THAT(str, testing::HasSubstr("Total Charge on atom:                 Si              4.0000"));
-    EXPECT_THAT(
-        str,
-        testing::HasSubstr(
-            "Total Magnetism on atom:              Si              0.0000              0.0000              2.0000"));
+    EXPECT_THAT(str, testing::HasSubstr(" Total charge 4"));
+    EXPECT_THAT(str, testing::HasSubstr("total charge    on atom 1     4.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("total magnetism on atom 1     0.0000     0.0000     2.0000"));
     remove("./mulliken.txt");
 }
 
@@ -111,8 +108,8 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    int nprocs;
-    int myrank;
+    int nprocs=0;
+    int myrank=0;
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);

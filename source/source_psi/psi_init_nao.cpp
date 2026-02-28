@@ -16,7 +16,7 @@
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #endif
-#include "source_io/orb_io.h"
+#include "source_io/module_output/orb_io.h"
 #include "source_io/module_parameter/parameter.h"
 // GlobalV::NQX and GlobalV::DQ are here
 #include "source_io/module_parameter/parameter.h"

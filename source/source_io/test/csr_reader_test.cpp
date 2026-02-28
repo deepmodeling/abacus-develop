@@ -1,4 +1,4 @@
-#include "source_io/csr_reader.h"
+#include "source_io/module_output/csr_reader.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -39,7 +39,7 @@ TEST_F(csrFileReaderTest, CsrReader)
     // Check if file is open
     EXPECT_TRUE(csr.isOpen());
     // get step
-    EXPECT_EQ(csr.getStep(), 0);
+    EXPECT_EQ(csr.getStep(), 1);
     // get matrix dimension
     EXPECT_EQ(csr.getMatrixDimension(), 4);
     // get number of R

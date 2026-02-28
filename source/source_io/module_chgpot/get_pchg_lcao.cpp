@@ -1,6 +1,6 @@
 #include "get_pchg_lcao.h"
 
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_gint/gint_interface.h"
@@ -91,8 +91,11 @@ void Get_pchg_lcao::begin(double** rho,
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
+		const int precision = 6;
                 double ef_spin = ef_all_spin[is];
-                ModuleIO::write_vdata_palgrid(pgrid, rho_save[is].data(), is, nspin, 0, ssc.str(), ef_spin, ucell_in);
+                ModuleIO::write_vdata_palgrid(pgrid, 
+				rho_save[is].data(), is, nspin, 0, 
+				ssc.str(), ef_spin, ucell_in, precision);
             }
         }
     }
@@ -180,6 +183,7 @@ void Get_pchg_lcao::begin(double** rho,
                         ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                         double ef_spin = ef_all_spin[is];
+			const int precision = 6;
                         ModuleIO::write_vdata_palgrid(pgrid,
                                                       rho_save[is].data(),
                                                       is,
@@ -187,7 +191,8 @@ void Get_pchg_lcao::begin(double** rho,
                                                       0,
                                                       ssc.str(),
                                                       ef_spin,
-                                                      ucell_in);
+                                                      ucell_in, 
+						      precision);
                     }
                 }
             }
@@ -230,6 +235,7 @@ void Get_pchg_lcao::begin(double** rho,
                     ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                     double ef_spin = ef_all_spin[is];
+		    const int precision = 6;
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_save[is].data(),
                                                   is,
@@ -237,7 +243,8 @@ void Get_pchg_lcao::begin(double** rho,
                                                   0,
                                                   ssc.str(),
                                                   ef_spin,
-                                                  ucell_in);
+                                                  ucell_in, 
+						  precision);
                 }
             }
         }

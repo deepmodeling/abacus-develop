@@ -2,7 +2,7 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
-#include "../nscf_fermi_surf.h"
+#include "source_io/module_energy/nscf_fermi_surf.h"
 #include "source_io/module_parameter/parameter.h"
 
 namespace ModuleIO

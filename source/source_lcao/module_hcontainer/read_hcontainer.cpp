@@ -1,7 +1,7 @@
 #include "read_hcontainer.h"
 
-#include "source_io/sparse_matrix.h"
-#include "source_io/csr_reader.h"
+#include "source_io/module_output/sparse_matrix.h"
+#include "source_io/module_output/csr_reader.h"
 #include "hcontainer_funcs.h"
 
 #include <fstream>
@@ -68,7 +68,6 @@ void Read_HContainer<T>::read()
             int row = element.first.first;
             int col = element.first.second;
             T value = element.second;
-           
 
             //insert into hcontainer
             int atom_i = atom_index_row[row];

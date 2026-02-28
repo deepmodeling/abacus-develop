@@ -1,13 +1,13 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
 
-#include "../cube_io.h"                                  // use write_vdata_palgrid
+#include "../module_output/cube_io.h"                                  // use write_vdata_palgrid
 #include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
 #include "source_io/module_chgpot/write_elecstat_pot.h"             // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
 
 #ifdef USE_LIBXC
-#include "source_io/write_libxc_r.h"
+#include "source_io/module_chgpot/write_libxc_r.h"
 #endif
 
 namespace ModuleIO
@@ -82,7 +82,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                           chr.rho_save[is],
                                           is,
                                           nspin,
-                                          istep_in,
+                                          istep, // change istep_in to istep, mohan 20260222
                                           fn,
                                           pelec->eferm.get_efval(is),
                                           &(ucell),
@@ -108,7 +108,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 
     // 5) write potential
-    if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
+    if (PARAM.inp.out_pot[0] == 1 || PARAM.inp.out_pot[0] == 3)
     {
         for (int is = 0; is < nspin; is++)
         {
@@ -134,11 +134,11 @@ void ctrl_output_fp(UnitCell& ucell,
                                           fn,
                                           0.0, // efermi
                                           &(ucell),
-                                          3,  // precision
+                                          PARAM.inp.out_pot[1],  // precision
                                           0); // out_fermi
         }
     }
-    else if (PARAM.inp.out_pot == 2)
+    else if (PARAM.inp.out_pot[0] == 2)
     {
         std::string fn = PARAM.globalv.global_out_dir + "potes";
         fn += geom_block + ".cube";
@@ -154,7 +154,8 @@ void ctrl_output_fp(UnitCell& ucell,
             &chr,
             &(ucell),
             pelec->pot->get_fixed_v(),
-            solvent);
+            solvent,
+	    PARAM.inp.out_pot[1]);
     }
 
     // 6) write ELF

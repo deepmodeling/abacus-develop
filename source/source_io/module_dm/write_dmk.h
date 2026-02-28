@@ -3,6 +3,7 @@
 
 #include "source_base/parallel_2d.h"
 #include "source_cell/unitcell.h"
+#include "source_cell/klist.h"
 
 #include <string>
 #include <vector>
@@ -20,21 +21,6 @@ namespace ModuleIO {
 std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep);
 
 /**
- * @brief Writes the unit cell information to a DMK file.
- *
- * @param ofs The output file stream.
- * @param ucell A pointer to the UnitCell object.
- */
-void dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell);
-
-/**
- * @brief Reads the unit cell information lines in a DMK file.
- *
- * @param ifs The input file stream.
- */
-void dmk_read_ucell(std::ifstream& ifs);
-
-/**
  * @brief Read one double from a file.
  */
 void dmk_readData(std::ifstream& ifs, double& data);
@@ -50,6 +36,7 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
  * @tparam T The type of the DMK data.
  * @param nspin The number of spin components.
  * @param nk The number of k-points.
+ * @param k-vector information.
  * @param pv The Parallel_2D object. Will get the global size and local size
  * from it, and seperate the data into different processors accordingly.
  * @param dmk_dir The directory path of the DMK file.
@@ -60,10 +47,11 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
 template <typename T>
 bool read_dmk(const int nspin,
               const int nk,
+	      const K_Vectors &kv,
               const Parallel_2D& pv,
-			  const std::string& dmk_dir,
-			  std::vector<std::vector<T>>& dmk,
-			  std::ofstream &ofs_running);
+	      const std::string& dmk_dir,
+	      std::vector<std::vector<T>>& dmk,
+	      std::ofstream &ofs_running);
 
 /**
  * @brief Writes the DMK data to a file.
@@ -72,6 +60,7 @@ bool read_dmk(const int nspin,
  * @param dmk A vector containing the DMK data. The first dimension is nspin*nk,
  * and the second dimension is nlocal*nlocal. DMK is parallel in 2d-block type
  * if using MPI.
+ * @param k-vector information.
  * @param precision The precision of the output of DMK.
  * @param efs A vector containing the Fermi energies, and should have the same
  * size as the number of SPIN.
@@ -80,6 +69,7 @@ bool read_dmk(const int nspin,
  */
 template <typename T>
 void write_dmk(const std::vector<std::vector<T>>& dmk,
+	       const K_Vectors &kv,
                const int precision,
                const std::vector<double>& efs,
                const UnitCell* ucell,

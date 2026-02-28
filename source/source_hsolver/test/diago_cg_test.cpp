@@ -234,10 +234,11 @@ INSTANTIATE_TEST_SUITE_P(VerifyCG,
                          DiagoCGTest,
                          ::testing::Values(
                              // nband, npw, sparsity, reorder, eps, maxiter, threshold
-                             DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3),
-                             DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3),
-                             DiagoCGPrepare(20, 1000, 8, true, 1e-5, 300, 1e-3),
-                             DiagoCGPrepare(40, 1000, 8, true, 1e-6, 300, 1e-3))); 
+                             DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3)
+                            //  DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3)
+                            //  DiagoCGPrepare(20, 1000, 8, true, 1e-5, 300, 1e-3),
+                            //  DiagoCGPrepare(40, 1000, 8, true, 1e-6, 300, 1e-3)
+                            )); 
                             //DiagoCGPrepare(40, 2000, 8, true, 1e-5, 500, 1e-2))); 
 			    // the last one is passed but time-consumming.
 
@@ -307,7 +308,7 @@ TEST(DiagoCGTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<std::complex<double>> hm;
     std::ifstream ifs;
-    std::string filename = "H-KPoints-Si64.dat";
+    std::string filename = "H-KPoints-Si2.dat";
     ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

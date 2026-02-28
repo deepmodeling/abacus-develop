@@ -28,6 +28,15 @@ class ReadInput
         }
         readvalue_items.clear();
     }
+
+    /**
+     * @brief Get all registered input items (for help system)
+     * @return Reference to the vector of input items
+     */
+    const std::vector<std::pair<std::string, Input_Item>>& get_input_lists() const
+    {
+        return input_lists;
+    }
     /**
      * @brief read in parameters from input file
      *

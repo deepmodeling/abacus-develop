@@ -8,8 +8,8 @@
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
-#include "../cal_pLpR.h"                            // use AngularMomentumCalculator()
-#include "../output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
+#include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
 #include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
@@ -128,7 +128,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         const int precision = inp.out_dmr[1];
 
-        ModuleIO::write_dmr(dm->get_DMR_vector(), precision, pv, out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+        ModuleIO::write_dmr(dm->get_DMR_vector(), &ucell, precision, pv, out_app_flag, 
+			ucell.get_iat2iwt(), ucell.nat, istep);
     }
 
     //------------------------------------------------------------------
@@ -143,7 +144,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_DMK_vector(), precision, efermis, &(ucell), pv, istep);
+        ModuleIO::write_dmk(dm->get_DMK_vector(), kv, precision, efermis, &(ucell), pv, istep);
     }
 
     //------------------------------------------------------------------

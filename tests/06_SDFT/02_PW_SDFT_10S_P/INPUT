@@ -1,35 +1,35 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     scf
-esolver_type    sdft
-method_sto      1
+suffix            autotest
+calculation       scf
+esolver_type      sdft
+method_sto        1
 
-symmetry		0
-pseudo_dir	../../PP_ORB
+symmetry          0
+pseudo_dir        ../../PP_ORB
 
-nbands			0
-nbands_sto		10
+nbands            0
+nbands_sto        10
 
-nche_sto		120
-seed_sto        20000
-kpar            1
-cal_force       1
-cal_stress      1
+nche_sto          120
+seed_sto          20000
+kpar              1
+cal_force         1
+cal_stress        1
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr			1e-4
-scf_nmax		20
+ecutwfc           20
+scf_thr           1e-4
+scf_nmax          20
 
 
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #Parameters (4.Smearing)
-smearing_method		fd
-smearing_sigma		0.6
+smearing_method   fd
+smearing_sigma    0.6
 
 #Parameters (5.Mixing)
-mixing_type		broyden
-mixing_beta		0.4
+mixing_type       broyden
+mixing_beta       0.4

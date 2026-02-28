@@ -1,6 +1,6 @@
 #include "get_wf_lcao.h"
 
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 #include "source_io/module_wf/write_wfc_pw.h"
 #include "source_base/memory.h"
 

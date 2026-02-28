@@ -572,9 +572,9 @@ int ReadInput::current_md_step(const std::string& file_dir)
 
 void ReadInput::add_item(const Input_Item& item)
 {
-    // only rank 0 read the input file
-    // So only rank 0 add the item to the input list
-    if (this->rank == 0)
+    // Normally only rank 0 reads the input file
+    // But rank -1 is used for help system mode where items should also be added
+    if (this->rank == 0 || this->rank == -1)
     {
         this->input_lists.push_back(make_pair(item.label, item));
     }

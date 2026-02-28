@@ -24,6 +24,13 @@ class Input_Item
         label = item.label;
         str_values = item.str_values;
         final_value.str(item.final_value.str());
+        // Documentation fields
+        category = item.category;
+        type = item.type;
+        description = item.description;
+        default_value = item.default_value;
+        unit = item.unit;
+        availability = item.availability;
         annotation = item.annotation;
         read_value = item.read_value;
         check_value = item.check_value;
@@ -35,6 +42,14 @@ class Input_Item
     std::vector<std::string> str_values; ///< string values of the input item
     std::stringstream final_value;       ///< final value for writing to output INPUT file
 
+    // Documentation fields for built-in help system
+    std::string category;      ///< category for grouping (e.g., "System variables")
+    std::string type;          ///< data type ("Integer", "Real", "String", "Boolean")
+    std::string description;   ///< full description (supports multi-line, lists, notes)
+    std::string default_value; ///< default value as string
+    std::string unit;          ///< unit of measurement (empty if none)
+    std::string availability;  ///< availability conditions (empty if always)
+
     bool is_read() const ///< check if the input item is read
     {
         return !str_values.empty();
@@ -45,7 +60,7 @@ class Input_Item
         return str_values.size();
     }
 
-    std::string annotation; ///< annotation of the input item
+    std::string annotation; ///< brief annotation (kept for backward compatibility)
 
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
