@@ -237,10 +237,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
-    ModuleIO::output_mat_sparse(inp.out_mat_dh,
-                                inp.out_mat_ds,
-                                inp.out_mat_t,
-                                inp.out_mat_r,
+    ModuleIO::output_mat_sparse(inp.out_mat_dh[0],
+                                inp.out_mat_ds[0],
+                                inp.out_mat_t[0],
+                                inp.out_mat_r[0],
                                 istep,
                                 pelec->pot->get_eff_v(),
                                 pv,

@@ -8,6 +8,32 @@
 #include "source_lcao/spar_st.h"
 #include "write_HS_sparse.h"
 
+namespace {
+// Helper: Convert sparse map to HContainer
+template <typename T>
+hamilt::HContainer<T>* sparse_map_to_hcontainer(
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparse_map,
+    const Parallel_Orbitals& pv,
+    const int nbasis)
+{
+    hamilt::HContainer<T>* hc = new hamilt::HContainer<T>(&pv);
+    hc->set_zero();
+
+    for (const auto& [R, row_map] : sparse_map)
+    {
+        for (const auto& [row, col_map] : row_map)
+        {
+            for (const auto& [col, value] : col_map)
+            {
+                hc->set_value(R.x, R.y, R.z, row, col, value);
+            }
+        }
+    }
+
+    return hc;
+}
+} // anonymous namespace
+
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.
 // If the absolute value of the matrix element is less than or equal to the
@@ -226,6 +252,20 @@ std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
     }
 }
 
+std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
+                                     const int ispin,
+                                     const bool append,
+                                     const int istep)
+{
+    std::string fname = prefix + "rs" + std::to_string(ispin + 1);
+    if (!append && istep >= 0)
+    {
+        fname += "g" + std::to_string(istep + 1);
+    }
+    fname += "_nao.csr";
+    return fname;
+}
+
 template <typename TR>
 void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const UnitCell* ucell,
@@ -344,3 +384,78 @@ template void ModuleIO::write_hsr<std::complex<double>>(
     const UnitCell*, const int, const Parallel_2D&,
     const bool, const int*, const int, const int);
 
+
+template <typename TR>
+void ModuleIO::write_matrix_r(const std::string& matrix_label,
+                               const std::string& description,
+                               const std::vector<hamilt::HContainer<TR>*>& matrices,
+                               const UnitCell* ucell,
+                               const int precision,
+                               const Parallel_2D& paraV,
+                               const bool append,
+                               const int* iat2iwt,
+                               const int nat,
+                               const int istep)
+{
+    const int nspin = matrices.size();
+    assert(nspin > 0);
+    
+    for (int ispin = 0; ispin < nspin; ispin++)
+    {
+        const int nbasis = matrices[ispin]->get_nbasis();
+        
+        // Generate filename
+        std::string fname = dhr_gen_fname(matrix_label, ispin, append, istep);
+        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+        {
+            fname = PARAM.globalv.global_matrix_dir + fname;
+        }
+        else
+        {
+            fname = PARAM.globalv.global_out_dir + fname;
+        }
+        
+        // Gather parallel matrix to serial
+#ifdef __MPI
+        Parallel_Orbitals serialV;
+        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+        serialV.set_serial(nbasis, nbasis);
+        serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+        
+        hamilt::HContainer<TR> matrix_serial(&serialV);
+        hamilt::gatherParallels(*matrices[ispin], &matrix_serial, 0);
+        
+        if (GlobalV::MY_RANK == 0)
+        {
+            write_hcontainer_csr(fname, ucell, precision, &matrix_serial, istep, ispin, nspin, description);
+        }
+#else
+        write_hcontainer_csr(fname, ucell, precision, matrices[ispin], istep, ispin, nspin, description);
+#endif
+    }
+}
+
+// Template instantiations
+template void ModuleIO::write_matrix_r<double>(
+    const std::string&,
+    const std::string&,
+    const std::vector<hamilt::HContainer<double>*>&,
+    const UnitCell*,
+    const int,
+    const Parallel_2D&,
+    const bool,
+    const int*,
+    const int,
+    const int);
+
+template void ModuleIO::write_matrix_r<std::complex<double>>(
+    const std::string&,
+    const std::string&,
+    const std::vector<hamilt::HContainer<std::complex<double>>*>&,
+    const UnitCell*,
+    const int,
+    const Parallel_2D&,
+    const bool,
+    const int*,
+    const int,
+    const int);

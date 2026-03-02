@@ -63,6 +63,12 @@ std::string hsr_gen_fname(const std::string& prefix,
                           const bool append,
                           const int istep);
 
+/// Generate filename for derivative matrices (dH/dR, dS/dR).
+std::string dhr_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const bool append,
+                          const int istep);
+
 /// Write a single HContainer to CSR file with header.
 template <typename TR>
 void write_hcontainer_csr(const std::string& fname,
@@ -85,6 +91,19 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const int* iat2iwt,
                const int nat,
                const int istep);
+
+/// Write real-space matrix in CSR format (generic interface).
+template <typename TR>
+void write_matrix_r(const std::string& matrix_label,
+                    const std::string& description,
+                    const std::vector<hamilt::HContainer<TR>*>& matrices,
+                    const UnitCell* ucell,
+                    const int precision,
+                    const Parallel_2D& paraV,
+                    const bool append,
+                    const int* iat2iwt,
+                    const int nat,
+                    const int istep);
 
 } // namespace ModuleIO
 

@@ -76,7 +76,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         );
     }
 
-    if (inp.out_mat_xc2)
+    if (inp.out_mat_xc2[0])
     {
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,

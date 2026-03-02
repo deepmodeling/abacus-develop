@@ -207,10 +207,12 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_mat_hs2[0], 0);
     EXPECT_EQ(param.inp.out_mat_hs2[1], 8);
     EXPECT_FALSE(param.inp.out_mat_xc);
-    EXPECT_FALSE(param.inp.out_mat_xc2);
+    EXPECT_EQ(param.inp.out_mat_xc2[0], 0);
+    EXPECT_EQ(param.inp.out_mat_xc2[1], 8);
     EXPECT_FALSE(param.inp.out_eband_terms);
     EXPECT_EQ(param.inp.out_app_flag, 0);
-    EXPECT_EQ(param.inp.out_mat_r, 0);
+    EXPECT_EQ(param.inp.out_mat_r[0], 0);
+    EXPECT_EQ(param.inp.out_mat_r[1], 8);
     EXPECT_FALSE(param.inp.out_wfc_lcao);
     EXPECT_FALSE(param.inp.out_alllog);
     EXPECT_DOUBLE_EQ(param.inp.dos_emin_ev, -15);

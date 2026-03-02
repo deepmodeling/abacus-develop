@@ -387,18 +387,18 @@ struct Input_para
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
     std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
-    bool out_mat_dh = false;
-    bool out_mat_ds = false;
+    std::vector<int> out_mat_dh = {0, 8};   ///< output dH/dR matrices with precision
+    std::vector<int> out_mat_ds = {0, 8};   ///< output dS/dR matrices with precision
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
-    bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
+    std::vector<int> out_mat_xc2 = {0, 8};  ///< output Vxc(R) matrix with precision
     bool out_eband_terms = false; ///< output the band energy terms separately
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output
-    bool out_mat_t = false;
+    std::vector<int> out_mat_t = {0, 8};    ///< output T(R) matrix with precision
     bool out_element_info = false;        ///< output information of all elements
-    bool out_mat_r = false;               ///< jingan add 2019-8-14, output r(R) matrix.
+    std::vector<int> out_mat_r = {0, 8};    ///< output r(R) matrix with precision
     int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
     bool out_dipole = false;              ///< output the dipole or not
     bool out_efield = false;              ///< output the efield or not

@@ -925,7 +925,7 @@ TEST_F(InputTest, Item_test)
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
         param.input.esolver_type = "lcao";
-        param.input.out_mat_r = true;
+        param.input.out_mat_r[0] = 1;
         param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -967,7 +967,7 @@ TEST_F(InputTest, Item_test2)
     std::string output = "";
     { // out_mat_dh
         auto it = find_label("out_mat_dh", readinput.input_lists);
-        param.input.out_mat_dh = true;
+        param.input.out_mat_dh[0] = 1;
         param.input.nspin = 4;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -1847,4 +1847,104 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.nocc, 4);
     }
+}
+
+TEST_F(InputParaTest, OutMatDH)
+{
+    std::string input_file = "./support/INPUT";
+    std::ofstream ofs(input_file);
+    ofs << "out_mat_dh 1" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_dh[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_dh[1], 8);
+    remove(input_file.c_str());
+
+    ofs.open(input_file);
+    ofs << "out_mat_dh 1 12" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_dh[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_dh[1], 12);
+    remove(input_file.c_str());
+}
+
+TEST_F(InputParaTest, OutMatDS)
+{
+    std::string input_file = "./support/INPUT";
+    std::ofstream ofs(input_file);
+    ofs << "out_mat_ds 1" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_ds[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_ds[1], 8);
+    remove(input_file.c_str());
+
+    ofs.open(input_file);
+    ofs << "out_mat_ds 1 10" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_ds[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_ds[1], 10);
+    remove(input_file.c_str());
+}
+
+TEST_F(InputParaTest, OutMatT)
+{
+    std::string input_file = "./support/INPUT";
+    std::ofstream ofs(input_file);
+    ofs << "out_mat_t 1" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_t[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_t[1], 8);
+    remove(input_file.c_str());
+
+    ofs.open(input_file);
+    ofs << "out_mat_t 1 15" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_t[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_t[1], 15);
+    remove(input_file.c_str());
+}
+
+TEST_F(InputParaTest, OutMatR)
+{
+    std::string input_file = "./support/INPUT";
+    std::ofstream ofs(input_file);
+    ofs << "out_mat_r 1" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_r[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_r[1], 8);
+    remove(input_file.c_str());
+
+    ofs.open(input_file);
+    ofs << "out_mat_r 1 6" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_r[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_r[1], 6);
+    remove(input_file.c_str());
+}
+
+TEST_F(InputParaTest, OutMatXC2)
+{
+    std::string input_file = "./support/INPUT";
+    std::ofstream ofs(input_file);
+    ofs << "out_mat_xc2 1" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_xc2[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_xc2[1], 8);
+    remove(input_file.c_str());
+
+    ofs.open(input_file);
+    ofs << "out_mat_xc2 1 9" << std::endl;
+    ofs.close();
+    PARAM.input.Read(input_file);
+    EXPECT_EQ(PARAM.input.out_mat_xc2[0], 1);
+    EXPECT_EQ(PARAM.input.out_mat_xc2[1], 9);
+    remove(input_file.c_str());
 }
