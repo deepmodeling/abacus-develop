@@ -126,6 +126,11 @@ class HamiltLCAO : public Hamilt<TK>
     /// get hRS2 buffer for NSPIN=2 case (spin-up in first half, spin-down in second half)
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
+    /// Get HR as a vector of HContainer pointers (one per spin).
+    /// For nspin=2, creates temporary HContainers wrapping each spin half of hRS2.
+    /// Caller must delete returned pointers when nspin=2.
+    std::vector<HContainer<TR>*> getHR_vector();
+
     /// refresh the status of HR
     void refresh(bool yes) override;
 

@@ -2982,12 +2982,12 @@ parameters:
     availability: Numerical atomic orbital basis
   - name: out_mat_hs2
     category: Output information
-    type: Boolean
+    type: "Boolean \\[Integer\\](optional)"
     description: |
-      Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
+      Output H(R) and S(R) matrices in CSR format with optional precision. Optional second parameter specifies output precision (default 8). For more information, please refer to hs_matrix.md.
 
       [NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
-    default_value: "False"
+    default_value: "False [8]"
     unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_mat_tk

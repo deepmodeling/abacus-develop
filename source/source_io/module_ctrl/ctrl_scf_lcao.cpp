@@ -10,6 +10,7 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
 #include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
@@ -213,13 +214,30 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 7) Output <phi_i|O|phi_j> matrices, where O can be chosen as
-    //!    H, S, dH, dS, T, r. The format is CSR format.
+    //! 7a) Output H(R) and S(R) matrices in CSR format
+    //------------------------------------------------------------------
+    if (inp.out_mat_hs2[0])
+    {
+        const int precision = inp.out_mat_hs2[1];
+        std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
+        const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
+
+        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
+                            out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+
+        // nspin=2: getHR_vector() returns new'd temporary objects
+        if (PARAM.inp.nspin == 2)
+        {
+            for (auto* p : hr_vec) { delete p; }
+        }
+    }
+
+    //------------------------------------------------------------------
+    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S)
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
-    ModuleIO::output_mat_sparse(inp.out_mat_hs2,
-                                inp.out_mat_dh,
+    ModuleIO::output_mat_sparse(inp.out_mat_dh,
                                 inp.out_mat_ds,
                                 inp.out_mat_t,
                                 inp.out_mat_r,

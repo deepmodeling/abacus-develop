@@ -10,10 +10,9 @@
 
 namespace ModuleIO
 {
-/// @brief the output interface to write the sparse matrix of H, S, T, and r
-template <typename T> 
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
+/// @brief the output interface to write the sparse matrix of dH, dS, T, and r
+template <typename T>
+void output_mat_sparse(const bool& out_mat_dh,
                        const bool& out_mat_ds,
                        const bool& out_mat_t,
                        const bool& out_mat_r,
@@ -23,10 +22,10 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       const Grid_Driver& grid, // mohan add 2024-04-06
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
 					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U* p_dftu); // mohan add 20251107
+					   Plus_U* p_dftu);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

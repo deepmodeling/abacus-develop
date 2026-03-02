@@ -487,19 +487,28 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_hs2");
         item.annotation = "output H(R) and S(R) matrix";
         item.category = "Output information";
-        item.type = "Boolean";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = "Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md."
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.";
-        item.default_value = "False";
+        item.default_value = "False [8]";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_bool(input.out_mat_hs2);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs2 needs at least 1 value");
+            para.input.out_mat_hs2[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_hs2[1] = 8;
+            if (count >= 2) try { para.input.out_mat_hs2[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_mat_r && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r is not available for gamma only calculations");
             }
         };
+        sync_intvec(input.out_mat_hs2, 2, 0);
         this->add_item(item);
     }
     {
@@ -536,7 +545,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
         read_sync_bool(input.out_mat_r);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t || para.inp.out_mat_dh
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2[0] || para.inp.out_mat_t || para.inp.out_mat_dh
                  || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {

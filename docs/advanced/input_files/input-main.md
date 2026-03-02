@@ -1916,13 +1916,15 @@
 
 ### out_mat_hs2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
+- **Description**: Output Hamiltonian H(R) and overlap S(R) matrices in CSR format. Optional second parameter specifies output precision (default 8). For more information, please refer to hs_matrix.md.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
-- **Default**: False
+- **Default**: False [8]
 - **Unit**: Ry
+- **Output files**: `hrs1_nao.csr`, `hrs2_nao.csr` (if nspin=2), `srs1_nao.csr`
+- **Format**: Standard CSR format with UnitCell header, compatible with `out_dmr` format
 
 ### out_mat_tk
 

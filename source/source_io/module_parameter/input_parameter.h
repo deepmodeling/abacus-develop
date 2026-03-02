@@ -386,8 +386,7 @@ struct Input_para
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
-    bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
-                                          ///< S(R) matrix in local basis.
+    std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
     bool out_mat_dh = false;
     bool out_mat_ds = false;
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
