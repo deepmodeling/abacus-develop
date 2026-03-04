@@ -593,7 +593,7 @@ void ReadInput::item_lr_tddft()
         Input_Item item("lr_init_xc_kernel");
         item.annotation = "The method to initalize the xc kernel";
         item.category = "Linear Response TDDFT (Under Development Feature)";
-        item.type = "String";
+        item.type = "Vector of String (>=1 values)";
         item.description = R"(The method to initalize the xc kernel.
 * "default": Calculate xc kernel from the ground-state charge density.
 * "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.

@@ -4,6 +4,16 @@ To run the metadynamics, you need to configure the plumed correctly:
 conda install -c conda-forge plumed=2.8.2=mpi_openmpi_hb0545ae_0
 conda install -c conda-forge py-plumed
 
+You may be also interested in a newer version of plumed, a possible solution is
+to search `plumed` at conda website:
+https://anaconda.org/channels/conda-forge/packages/plumed/files
+in which, up to 2026/02/25, the latest version is 
+```
+linux-64/plumed-2.9.2-mpi_openmpi_h02da92d_0.conda,
+```
+you can install it with:
+conda install -c conda-forge plumed=2.9.2=mpi_openmpi_h02da92d_0
+
 we do not recommend the default version of plumed installed by conda, which
 is nompi-labelled, may cause segmentation fault error during the MTD run.
 

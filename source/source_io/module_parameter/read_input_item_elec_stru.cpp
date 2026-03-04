@@ -350,7 +350,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         Input_Item item("xc_exch_ext");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
-        item.type = "Integer Real ...";
+        item.type = "Integer followed by Real values";
         item.description = "Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
@@ -393,7 +393,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         Input_Item item("xc_corr_ext");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
-        item.type = "Integer Real ...";
+        item.type = "Integer followed by Real values";
         item.description = "Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
@@ -675,7 +675,7 @@ For systems that are difficult to converge, one could try increasing the value o
         item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "Only for mixing_restart>=0.0";
+        item.availability = "Only for mixing_restart >= 0.0";
         read_sync_bool(input.mixing_dmr);
         this->add_item(item);
     }
@@ -1094,9 +1094,9 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.category = "Plane wave related variables";
         item.type = "Integer";
         item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
-        item.default_value = "40";
+        item.default_value = "50";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg";
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
@@ -1350,7 +1350,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         Input_Item item("bessel_nao_rcut");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
         item.category = "NAOs";
-        item.type = "Real";
+        item.type = "Vector of Real (N values)";
         item.description = "Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.";
         item.default_value = "6.0";
         item.unit = "";

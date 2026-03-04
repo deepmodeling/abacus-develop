@@ -15,6 +15,7 @@ Can also be imported from conf.py:
 """
 
 import argparse
+import html
 import re
 import sys
 from pathlib import Path
@@ -69,6 +70,31 @@ CATEGORY_ORDER = [
 ]
 
 
+def normalize_type(type_text: str) -> str:
+    """
+    Normalize legacy type labels for cleaner generated docs.
+    """
+    if not type_text:
+        return ''
+
+    normalized = type_text.strip()
+    aliases = {
+        "Bool": "Boolean",
+        "Int*2": "Integer*2",
+    }
+    return aliases.get(normalized, normalized)
+
+
+def escape_md_text(text: str) -> str:
+    """
+    Escape markdown-sensitive angle brackets while avoiding double escaping.
+    """
+    if text is None:
+        return ''
+    normalized = html.unescape(str(text))
+    return normalized.replace('<', '&lt;').replace('>', '&gt;')
+
+
 def format_description(desc: str) -> str:
     """
     Format description text for markdown output.
@@ -78,6 +104,10 @@ def format_description(desc: str) -> str:
     """
     if not desc:
         return ''
+
+    # Prevent placeholder tokens like <property> from being parsed as raw HTML
+    # and breaking list/heading structure in rendered docs.
+    desc = escape_md_text(desc)
 
     lines = desc.split('\n')
     result_lines = []
@@ -93,6 +123,10 @@ def format_description(desc: str) -> str:
         # Convert [WARNING] markers to blockquotes
         if '[WARNING]' in line:
             line = line.replace('[WARNING]', '> Warning:')
+
+        # Normalize doubled note/warning prefixes from legacy content
+        line = re.sub(r'>\s*Note:\s*Note\s*:?\s*', '> Note: ', line)
+        line = re.sub(r'>\s*Warning:\s*Warning\s*:?\s*', '> Warning: ', line)
 
         result_lines.append(line)
 
@@ -115,11 +149,13 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Type
     if param.get('type', '') != '':
-        lines.append(f"- **Type**: {param['type']}")
+        type_text = escape_md_text(normalize_type(str(param['type'])))
+        lines.append(f"- **Type**: {type_text}")
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
-        lines.append(f"- **Availability**: *{param['availability']}*")
+        availability_text = escape_md_text(str(param['availability']))
+        lines.append(f"- **Availability**: *{availability_text}*")
 
     # Description
     if param.get('description', '') != '':
@@ -137,11 +173,13 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Default
     if param.get('default_value', '') != '':
-        lines.append(f"- **Default**: {param['default_value']}")
+        default_text = escape_md_text(str(param['default_value']))
+        lines.append(f"- **Default**: {default_text}")
 
     # Unit
     if param.get('unit', '') != '':
-        lines.append(f"- **Unit**: {param['unit']}")
+        unit_text = escape_md_text(str(param['unit']))
+        lines.append(f"- **Unit**: {unit_text}")
 
     lines.append("")
     return '\n'.join(lines)
@@ -155,6 +193,10 @@ def generate_category_markdown(category: str, params: List[Dict[str, str]]) -> s
 
     for param in params:
         lines.append(generate_parameter_markdown(param))
+
+    # Keep legacy navigation aid used by downstream tooling/rendering.
+    lines.append("[back to top](#full-list-of-input-keywords)")
+    lines.append("")
 
     return '\n'.join(lines)
 

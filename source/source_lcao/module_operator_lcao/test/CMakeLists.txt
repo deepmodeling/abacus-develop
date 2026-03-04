@@ -2,7 +2,7 @@ if(ENABLE_LCAO)
 remove_definitions(-DUSE_NEW_TWO_CENTER)
 
 AddTest(
-  TARGET operator_overlap_test
+  TARGET MODULE_LCAO_operator_overlap_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_overlap.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -15,7 +15,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_overlap_serial_test
+  TARGET MODULE_LCAO_operator_overlap_serial_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_overlap_serial.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -28,7 +28,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_overlap_cd_test
+  TARGET MODULE_LCAO_operator_overlap_cd_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_overlap_cd.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -41,7 +41,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_ekinetic_test
+  TARGET MODULE_LCAO_operator_ekinetic_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_ekinetic.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -51,7 +51,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_ekinetic_serial_test
+  TARGET MODULE_LCAO_operator_ekinetic_serial_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_ekinetic_serial.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -61,7 +61,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_nonlocal_test
+  TARGET MODULE_LCAO_operator_nonlocal_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_nonlocal.cpp ../nonlocal.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -71,7 +71,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_T_NL_cd_test
+  TARGET MODULE_LCAO_operator_T_NL_cd_test
   LIBS parameter ${math_libs} psi base device container
   SOURCES test_T_NL_cd.cpp ../nonlocal.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
@@ -81,7 +81,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET operator_dftu_test
+  TARGET MODULE_LCAO_operator_dftu_test
   LIBS parameter ${math_libs} psi base device container 
   SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../module_hcontainer/func_folding.cpp 
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp  
@@ -92,7 +92,7 @@ AddTest(
 
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
-add_test(NAME operators_para_test
+add_test(NAME MODULE_LCAO_operators_para_test
       COMMAND ${BASH} parallel_operator_tests.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

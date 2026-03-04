@@ -1,35 +1,35 @@
 
 if(ENABLE_LCAO)
 AddTest(
-  TARGET hcontainer_test
+  TARGET MODULE_LCAO_hcontainer_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET hcontainer_complex_test
+  TARGET MODULE_LCAO_hcontainer_complex_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer_complex.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET hcontainer_cost_test
+  TARGET MODULE_LCAO_hcontainer_cost_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET hcontainer_folding_test
+  TARGET MODULE_LCAO_hcontainer_folding_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_func_folding.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../func_folding.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET hcontainer_transfer_test
+  TARGET MODULE_LCAO_hcontainer_transfer_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_transfer.cpp ../func_transfer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../transfer.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
@@ -37,13 +37,13 @@ AddTest(
 
 install(FILES parallel_hcontainer_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
-add_test(NAME hontainer_para_test
+add_test(NAME MODULE_LCAO_hcontainer_para_test
       COMMAND ${BASH} parallel_hcontainer_tests.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
-  TARGET hcontainer_output_test
+  TARGET MODULE_LCAO_hcontainer_output_test
   LIBS parameter base ${math_libs} device
   SOURCES test_hcontainer_output.cpp
     tmp_mocks.cpp

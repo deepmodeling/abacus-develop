@@ -64,6 +64,10 @@ if(ENABLE_LCAO)
     add_coverage(hamilt_lcao)
     endif()
 
+    IF (BUILD_TESTING)
+        add_subdirectory(test)
+    endif()
+
 endif()
 
 

@@ -4,7 +4,7 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
 AddTest(
-  TARGET pwdft_soc
+  TARGET MODULE_PW_pwdft_soc
   LIBS parameter  ${math_libs}
   SOURCES soc_test.cpp ../soc.cpp
   	../../../source_base/global_variable.cpp
@@ -23,13 +23,13 @@ AddTest(
 )
 
 AddTest(
-	TARGET radial_proj_test
+	TARGET MODULE_PW_radial_proj_test
 	LIBS parameter  base device ${math_libs}
 	SOURCES radial_proj_test.cpp ../radial_proj.cpp
 )
 
 AddTest(
-	TARGET structure_factor_test
+	TARGET MODULE_PW_structure_factor_test
 	LIBS parameter ${math_libs} base device planewave
 	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
 	../../../source_cell/unitcell.cpp

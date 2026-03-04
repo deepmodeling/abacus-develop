@@ -14,8 +14,8 @@ void ReadInput::item_exx()
         Input_Item item("exx_fock_alpha");
         item.annotation = "fraction of Fock exchange 1/r in hybrid functionals";
         item.category = "Exact Exchange (Common)";
-        item.type = "Real \\Real...\\";
-        item.description = "Fraction of full-ranged Fock exchange 1/r () in range-separated hybrid funtionals, so that .";
+        item.type = "Real";
+        item.description = R"(Fraction of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
         item.availability = "";
@@ -63,8 +63,8 @@ void ReadInput::item_exx()
         Input_Item item("exx_erfc_alpha");
         item.annotation = "fraction of exchange erfc(wr)/r in hybrid functionals";
         item.category = "Exact Exchange (Common)";
-        item.type = "Real \\Real...\\";
-        item.description = "Fraction of short-ranged Fock exchange erfc(wr)/r () in range-separated hybrid funtionals, so that .";
+        item.type = "Real";
+        item.description = R"(Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
         item.availability = "";
@@ -113,8 +113,8 @@ void ReadInput::item_exx()
         Input_Item item("exx_erfc_omega");
         item.annotation = "range-separation parameter erfc(wr)/r in hybrid functionals";
         item.category = "Exact Exchange (Common)";
-        item.type = "Real \\Real...\\";
-        item.description = "Range-separation parameter in exchange, such that";
+        item.type = "Real";
+        item.description = R"(Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
         item.availability = "";
@@ -222,7 +222,7 @@ void ReadInput::item_exx()
                           "the evaluation of Fock exchange using "
                           "lcao_in_pw method";
         item.category = "Exact Exchange (LCAO in PW)";
-        item.type = "Real \\Real...\\";
+        item.type = "Real";
         item.description = "It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.";
         item.default_value = "0.3";
         item.unit = "";
@@ -638,7 +638,7 @@ void ReadInput::item_dftu()
         item.annotation = "which correlated orbitals need corrected ; d:2 "
                           ",f:3, do not need correction:-1";
         item.category = "DFT+U correction";
-        item.type = "Integer";
+        item.type = "Vector of Integer (n values where n is the number of atomic types)";
         item.description = R"(Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
 * -1: The plus U correction will not be calculated for this atom.
 * 1: For p-electron orbits, the plus U correction is needed.
@@ -681,7 +681,7 @@ void ReadInput::item_dftu()
         Input_Item item("hubbard_u");
         item.annotation = "Hubbard Coulomb interaction parameter U(ev)";
         item.category = "DFT+U correction";
-        item.type = "Real";
+        item.type = "Vector of Real (n values where n is the number of atomic types)";
         item.description = R"(Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
 [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.)";
@@ -791,7 +791,7 @@ void ReadInput::item_dftu()
 * 1: The first SCF step will use an initial density matrix read from a file named initial_onsite.dm, but for later steps, the onsite density matrix will be updated.
 * 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
 
-[NOTE] Note : The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.)";
+[NOTE] The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.)";
         item.default_value = "0";
         item.unit = "";
         item.availability = "";
@@ -803,8 +803,8 @@ void ReadInput::item_dftu()
         item.annotation = "radius of the sphere for onsite projection (Bohr)";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = R"(* The Onsite-radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U.
-* The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization. Consider the function: $\sigmar_c\sigmaf'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.)";
+        item.description = R"(* The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
+* The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
         item.default_value = "3.0";
         item.unit = "Bohr";
         item.availability = "dft_plus_u is set to 1";

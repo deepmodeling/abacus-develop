@@ -596,7 +596,7 @@
 
 - **Type**: Real
 - **Description**: The accuracy for symmetry analysis. Typically, the default value is good enough, but if the lattice parameters or atom positions in STRU file are not accurate enough, this value should be enlarged.
-  > Note: Note: if calculation==cell_relax, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation.
+  > Note: if calculation==cell_relax, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation.
 - **Default**: 1.0e-6
 - **Unit**: Bohr
 
@@ -708,7 +708,7 @@
 - **Type**: Integer
 - **Availability**: *Used only for plane wave basis set.*
 - **Description**: - 0: it will be set to the number of MPI processes.
-  - >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
+  - &gt;0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
 - **Default**: 0
 
 ### nbspline
@@ -719,8 +719,8 @@
 
 ### kspacing
 
-- **Type**: Real
-- **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
+- **Type**: Vector of Real (1 or 3 values)
+- **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value &gt; 0.0, then the KPT file is unnecessary. The default value 0.0 means that ABACUS will read the applied KPT file.
 
   > Note: If gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
@@ -792,6 +792,8 @@
 - **Description**: Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.
 - **Default**: 1 3
 
+[back to top](#full-list-of-input-keywords)
+
 ## Input files
 
 ### stru_file
@@ -837,6 +839,8 @@
 - **Availability**: *Used only for plane wave basis set.*
 - **Description**: The directory to save the spillage files.
 - **Default**: "./"
+
+[back to top](#full-list-of-input-keywords)
 
 ## Plane wave related variables
 
@@ -953,7 +957,7 @@
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
+- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
 - **Default**: 0.01
 
 ### diago_smooth_ethr
@@ -986,6 +990,8 @@
 - **Type**: Integer
 - **Description**: Preconditioner type for conjugate gradient diagonalization method.
 - **Default**: 1
+
+[back to top](#full-list-of-input-keywords)
 
 ## Numerical atomic orbitals related variables
 
@@ -1061,6 +1067,8 @@
 - **Description**: The number of CUDA streams used in LCAO calculations with GPU acceleration.
 - **Default**: 4
 
+[back to top](#full-list-of-input-keywords)
+
 ## Electronic structure
 
 ### basis_type
@@ -1108,7 +1116,7 @@
 
 - **Type**: Real
 - **Description**: - 0.0: The total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
-  - >0.0: this denotes the total number of electrons in the system. Must be less than 2*nbands.
+  - &gt;0.0: this denotes the total number of electrons in the system. Must be less than 2*nbands.
 - **Default**: 0.0
 
 ### nelec_delta
@@ -1121,7 +1129,7 @@
 
 - **Type**: Real
 - **Description**: - 0.0: no constrain apply to system.
-  - >0.0: The different number of electrons between spin-up and spin-down channels. The range of value must be in [-nelec ~ nelec]. It is one type of constrainted DFT method, two Fermi energies will be calculated.
+  - &gt;0.0: The different number of electrons between spin-up and spin-down channels. The range of value must be in [-nelec ~ nelec]. It is one type of constrainted DFT method, two Fermi energies will be calculated.
 - **Default**: 0.0
 
 ### dft_functional
@@ -1152,7 +1160,7 @@
 
 ### xc_exch_ext
 
-- **Type**: Integer Real ...
+- **Type**: Integer followed by Real values
 - **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one exchange functional.
@@ -1160,7 +1168,7 @@
 
 ### xc_corr_ext
 
-- **Type**: Integer Real ...
+- **Type**: Integer followed by Real values
 - **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one correlation functional.
@@ -1233,7 +1241,7 @@
   - 0.8: nspin=1
   - 0.4: nspin=2 and nspin=4
   - 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 &lt; mixing_beta &lt; 0.1.
 
   Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
 - **Default**: 0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.
@@ -1261,15 +1269,15 @@
 ### mixing_dmr
 
 - **Type**: Boolean
-- **Availability**: *Only for mixing_restart>=0.0*
-- **Description**: At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+- **Availability**: *Only for mixing_restart &gt;= 0.0*
+- **Description**: At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
 - **Default**: false
 
 ### mixing_gg0
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling for charge density.
-  - >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta <= 0.1.
+  - &gt;0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta &lt;= 0.1.
   - 0: No Kerker scaling is performed.
 
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
@@ -1292,8 +1300,8 @@
 - **Type**: Real
 - **Availability**: *Only relevant for non-colinear calculations nspin=4.*
 - **Description**: Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments' directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, mixing_angle is the angle mixing parameter. In fact, only mixing_angle=1.0 is implemented currently.
-  - <=0: Normal broyden mixing
-  - >0: Angle mixing for the modulus with mixing_angle=1.0
+  - &lt;=0: Normal broyden mixing
+  - &gt;0: Angle mixing for the modulus with mixing_angle=1.0
 - **Default**: -10.0
 
 ### mixing_tau
@@ -1432,6 +1440,8 @@
   - 1: Shell DFT-1/2 method is used.
 - **Default**: 0
 
+[back to top](#full-list-of-input-keywords)
+
 ## Electronic structure (SDFT)
 
 ### method_sto
@@ -1449,7 +1459,7 @@
 - **Type**: Integer or string
 - **Availability**: *esolver_type = sdft*
 - **Description**: The number of stochastic orbitals
-  - > 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+  - &gt; 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
   - 0: Perform Kohn-Sham DFT.
   - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
@@ -1482,9 +1492,9 @@
 - **Type**: Integer
 - **Availability**: *esolver_type = sdft*
 - **Description**: The random seed to generate stochastic orbitals.
-  - >= 0: Stochastic orbitals have the form of exp(i*theta), where theta is a uniform distribution in [0, 2*pi).
+  - &gt;= 0: Stochastic orbitals have the form of exp(i*theta), where theta is a uniform distribution in [0, 2*pi).
   - 0: the seed is decided by time(NULL).
-  - <= -1: Stochastic orbitals have the form of +1 or -1 with equal probability.
+  - &lt;= -1: Stochastic orbitals have the form of +1 or -1 with equal probability.
   - -1: the seed is decided by time(NULL).
 - **Default**: 0
 
@@ -1511,6 +1521,8 @@
 - **Availability**: *method_sto = 2 and out_dos = 1 or cal_cond = True*
 - **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
+
+[back to top](#full-list-of-input-keywords)
 
 ## Geometry relaxation
 
@@ -1701,7 +1713,7 @@
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 
-  > Note: Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
+  > Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
 - **Default**: False
 
 ### fixed_atoms
@@ -1710,6 +1722,8 @@
 - **Description**: - True: The direct coordinates of atoms will be preserved during variable-cell relaxation.
   - False: No restrictions are exerted on positions of all atoms. However, users can still fix certain components of certain atoms by using the m keyword in STRU file. For the latter option, check the end of this instruction.
 - **Default**: False
+
+[back to top](#full-list-of-input-keywords)
 
 ## Output information
 
@@ -2114,6 +2128,8 @@
   - True: Information from each rank will be written into individual files named OUT.{calculation}_{suffix}/running_${calculation}.log.
 - **Default**: False
 
+[back to top](#full-list-of-input-keywords)
+
 ## Density of states
 
 ### dos_edelta_ev
@@ -2176,6 +2192,8 @@
 - **Description**: Specify the path of the three-dimensional space and display LDOS in the form of a two-dimensional color chart, see details in out_ldos. The first three paramenters are the direct coordinates of the start point, the next three paramenters are the direct coordinates of the end point, and the final one is the number of points along the path, whose default is 100.
 - **Default**: 0.0 0.0 0.0 0.0 0.0 1.0 100
 
+[back to top](#full-list-of-input-keywords)
+
 ## NAOs
 
 ### bessel_nao_ecut
@@ -2192,7 +2210,7 @@
 
 ### bessel_nao_rcut
 
-- **Type**: Real
+- **Type**: Vector of Real (N values)
 - **Description**: Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
 - **Default**: 6.0
 
@@ -2208,6 +2226,8 @@
 - **Description**: Smoothing range (in Bohr). See also bessel_nao_smooth.
 - **Default**: 0.1
 
+[back to top](#full-list-of-input-keywords)
+
 ## DeePKS
 
 ### deepks_out_labels
@@ -2217,7 +2237,7 @@
 - **Description**: Print labels and descriptors for DeePKS in OUT.${suffix}. The names of these files start with "deepks".
   - 0 : No output.
   - 1 : Output intermediate files needed during DeePKS training.
-  - 2 : Output target labels for label preperation. The label files are named as deepks_<property>.npy or deepks_<property>.csr, where the units and formats are the same as label files <property>.npy or <property>.csr required for training, except that the first dimension (nframes) is excluded. System structrue files are also given in deepks_atom.npy and deepks_box.npy in the unit of Bohr, which means lattice_constant should be set to 1 when training.
+  - 2 : Output target labels for label preperation. The label files are named as deepks_&lt;property&gt;.npy or deepks_&lt;property&gt;.csr, where the units and formats are the same as label files &lt;property&gt;.npy or &lt;property&gt;.csr required for training, except that the first dimension (nframes) is excluded. System structrue files are also given in deepks_atom.npy and deepks_box.npy in the unit of Bohr, which means lattice_constant should be set to 1 when training.
 
   > Note: When deepks_out_labels equals 1, the path of a numerical descriptor (an orb file) is needed to be specified under the NUMERICAL_DESCRIPTOR tag in the STRU file. This is not needed when deepks_out_labels equals 2.
 - **Default**: 0
@@ -2319,7 +2339,7 @@
 
 ### deepks_band_range
 
-- **Type**: Int*2
+- **Type**: Integer*2
 - **Availability**: *Numerical atomic orbital basis, deepks_scf is true, and deepks_bandgap is 1 or 2*
 - **Description**: The first value should not be larger than the second one and the meaning differs in different cases below
   - deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
@@ -2330,7 +2350,7 @@
 
 - **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis*
-- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When deepks_out_labels is true and deepks_v_delta > 0 (k space), ABACUS will output deepks_hbase.npy, deepks_vdelta.npy and deepks_htot.npy(htot=hbase+vdelta). When deepks_out_labels is true and deepks_v_delta < 0 (real space), ABACUS will output deepks_hrtot.csr, deepks_hrdelta.csr. Some more files output for different settings. NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.
+- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When deepks_out_labels is true and deepks_v_delta &gt; 0 (k space), ABACUS will output deepks_hbase.npy, deepks_vdelta.npy and deepks_htot.npy(htot=hbase+vdelta). When deepks_out_labels is true and deepks_v_delta &lt; 0 (real space), ABACUS will output deepks_hrtot.csr, deepks_hrdelta.csr. Some more files output for different settings. NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.
   - deepks_v_delta = 1: deepks_vdpre.npy, which is used to calculate V_delta during DeePKS training.
   - deepks_v_delta = 2: deepks_phialpha.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdpre.npy. A recommanded method for memory saving.
   - deepks_v_delta = -1: deepks_vdrpre.npy, which is used to calculate V_delta_R during DeePKS training.
@@ -2344,6 +2364,8 @@
 
   > Note: Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
 - **Default**: False
+
+[back to top](#full-list-of-input-keywords)
 
 ## OFDFT: orbital free density functional theory
 
@@ -2499,6 +2521,8 @@
 
   Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set of_full_pw_dim = 1 if nbspline != -1.
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ## ML-KEDF: machine learning based kinetic energy density functional for OFDFT
 
@@ -2719,6 +2743,8 @@
 - **Description**: Whether to use machine learning based exact exchange (ML-EXX).
 - **Default**: False
 
+[back to top](#full-list-of-input-keywords)
+
 ## TDOFDFT: time dependent orbital free density functional theory
 
 ### of_cd
@@ -2736,6 +2762,8 @@
 - **Availability**: *TDOFDFT*
 - **Description**: The value of the parameter alpha in modified CD potential method. mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)
 - **Default**: 1.0
+
+[back to top](#full-list-of-input-keywords)
 
 ## Electric field and dipole correction
 
@@ -2755,7 +2783,7 @@
   - True: A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
 
-  > Note: Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+  > Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
 - **Default**: False
 
 ### efield_dir
@@ -2772,14 +2800,14 @@
 
 - **Type**: Real
 - **Availability**: *with efield_flag = True.*
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 <= efield_pos_max < 1.
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 &lt;= efield_pos_max &lt; 1.
 - **Default**: Autoset to center of vacuum - width of vacuum / 20
 
 ### efield_pos_dec
 
 - **Type**: Real
 - **Availability**: *with efield_flag = True.*
-- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
+- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 &lt; efield_pos_dec &lt; 1.
 - **Default**: Autoset to width of vacuum / 10
 
 ### efield_amp
@@ -2788,9 +2816,11 @@
 - **Availability**: *with efield_flag = True.*
 - **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp in the region from efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir.
 
-  > Note: Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+  > Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
 - **Unit**: a.u., 1 a.u. = 51.4220632*10^10 V/m.
+
+[back to top](#full-list-of-input-keywords)
 
 ## Gate field (compensating charge)
 
@@ -2838,24 +2868,26 @@
 - **Default**: 0.1
 - **Unit**: Rydberg
 
+[back to top](#full-list-of-input-keywords)
+
 ## Exact Exchange (Common)
 
 ### exx_fock_alpha
 
-- **Type**: Real \Real...\
-- **Description**: Fraction of full-ranged Fock exchange 1/r () in range-separated hybrid funtionals, so that .
+- **Type**: Real
+- **Description**: Fraction of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_alpha
 
-- **Type**: Real \Real...\
-- **Description**: Fraction of short-ranged Fock exchange erfc(wr)/r () in range-separated hybrid funtionals, so that .
+- **Type**: Real
+- **Description**: Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.
 - **Default**: see hybrid_func_params
 
 ### exx_erfc_omega
 
-- **Type**: Real \Real...\
-- **Description**: Range-separation parameter in exchange, such that
+- **Type**: Real
+- **Description**: Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.
 - **Default**: see hybrid_func_params
 
 ### exx_separate_loop
@@ -2880,14 +2912,18 @@
 - **Description**: Mixing parameter for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
+[back to top](#full-list-of-input-keywords)
+
 ## Exact Exchange (LCAO in PW)
 
 ### exx_fock_lambda
 
-- **Type**: Real \Real...\
+- **Type**: Real
 - **Availability**: *basis_type==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
 - **Default**: 0.3
+
+[back to top](#full-list-of-input-keywords)
 
 ## Exact Exchange (LCAO)
 
@@ -2906,7 +2942,7 @@
 ### exx_cs_inv_thr
 
 - **Type**: Real
-- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
+- **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr &gt; 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
 - **Default**: -1
 
 ### exx_v_threshold
@@ -3006,6 +3042,8 @@
 - **Description**: Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
 - **Default**: false
 
+[back to top](#full-list-of-input-keywords)
+
 ## Exact Exchange (PW)
 
 ### exxace
@@ -3045,6 +3083,8 @@
 - **Description**: The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.
 - **Default**: 1e-5
 - **Unit**: Ry
+
+[back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
 
@@ -3162,8 +3202,8 @@
 
 - **Type**: Integer
 - **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
-  - < 0: No srand() function is called.
-  - >= 0: The function srand(md_seed) is called.
+  - &lt; 0: No srand() function is called.
+  - &gt;= 0: The function srand(md_seed) is called.
 - **Default**: -1
 
 ### md_tfreq
@@ -3353,9 +3393,9 @@
 ### cal_syns
 
 - **Type**: Boolean
-- **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
+- **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
-  > Note: Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep > 0).
+  > Note: Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep &gt; 0).
 - **Default**: False
 
 ### dmax
@@ -3364,6 +3404,8 @@
 - **Description**: The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.
 - **Default**: 0.01
 - **Unit**: bohr
+
+[back to top](#full-list-of-input-keywords)
 
 ## DFT+U correction
 
@@ -3385,7 +3427,7 @@
 
 ### orbital_corr
 
-- **Type**: Integer
+- **Type**: Vector of Integer (n values where n is the number of atomic types)
 - **Description**: Specifies which orbits need plus U correction for each atom type ( for atom type 1, 2, 3, respectively).
   - -1: The plus U correction will not be calculated for this atom.
   - 1: For p-electron orbits, the plus U correction is needed.
@@ -3395,10 +3437,10 @@
 
 ### hubbard_u
 
-- **Type**: Real
+- **Type**: Vector of Real (n values where n is the number of atomic types)
 - **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
-  > Note: Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
+  > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 - **Default**: 0.0
 
 ### yukawa_potential
@@ -3419,8 +3461,8 @@
 ### uramping
 
 - **Type**: Real
-- **Availability**: *DFT+U calculations with mixing_restart > 0.*
-- **Description**: Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
+- **Availability**: *DFT+U calculations with mixing_restart &gt; 0.*
+- **Description**: Once uramping &gt; 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho&lt;mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
 - **Default**: -1.0.
 - **Unit**: eV
 
@@ -3432,17 +3474,19 @@
   - 1: The first SCF step will use an initial density matrix read from a file named initial_onsite.dm, but for later steps, the onsite density matrix will be updated.
   - 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
 
-  > Note: Note : The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
+  > Note: The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 - **Default**: 0
 
 ### onsite_radius
 
 - **Type**: Real
 - **Availability**: *dft_plus_u is set to 1*
-- **Description**: - The Onsite-radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U.
-  - The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization. Consider the function: $\sigmar_c\sigmaf'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
+- **Description**: - The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
+  - The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.
 - **Default**: 3.0
 - **Unit**: Bohr
+
+[back to top](#full-list-of-input-keywords)
 
 ## Spin-Constrained DFT
 
@@ -3516,6 +3560,8 @@
 - **Availability**: *sc_mag_switch is true*
 - **Description**: Density error threshold for inner loop of spin-constrained SCF
 - **Default**: 1.0e-4
+
+[back to top](#full-list-of-input-keywords)
 
 ## vdW correction
 
@@ -3658,6 +3704,8 @@
   - Bohr
 - **Default**: Bohr
 
+[back to top](#full-list-of-input-keywords)
+
 ## Berry phase and wannier90 interface
 
 ### berry_phase
@@ -3709,7 +3757,7 @@
 
 ### out_wannier_mmn
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.mmn" file or not.
   - 0: don't write the "*.mmn" file.
   - 1: write the "*.mmn" file.
@@ -3717,7 +3765,7 @@
 
 ### out_wannier_amn
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.amn" file or not.
   - 0: don't write the "*.amn" file.
   - 1: write the "*.amn" file.
@@ -3725,7 +3773,7 @@
 
 ### out_wannier_eig
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "*.eig" file or not.
   - 0: don't write the "*.eig" file.
   - 1: write the "*.eig" file.
@@ -3733,7 +3781,7 @@
 
 ### out_wannier_unk
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "UNK.*" file or not.
   - 0: don't write the "UNK.*" file.
   - 1: write the "UNK.*" file.
@@ -3741,11 +3789,13 @@
 
 ### out_wannier_wvfn_formatted
 
-- **Type**: Bool
+- **Type**: Boolean
 - **Description**: Write the "UNK.*" file in ASCII format or binary format.
   - 0: write the "UNK.*" file in binary format.
   - 1: write the "UNK.*" file in ASCII format (text file format).
 - **Default**: 1
+
+[back to top](#full-list-of-input-keywords)
 
 ## RT-TDDFT: Real-Time Time-Dependent Density Functional Theory
 
@@ -3774,8 +3824,8 @@
 
 - **Type**: Real
 - **Description**: Controls the printing of Hamiltonian matrix elements.
-  - < 0: Suppress all output.
-  - >= 0: Print only elements with either i or j exceeding td_print_eij.
+  - &lt; 0: Suppress all output.
+  - &gt;= 0: Print only elements with either i or j exceeding td_print_eij.
 - **Default**: -1
 - **Unit**: Ry
 
@@ -4028,6 +4078,8 @@
   - False: Do not output vector potential.
 - **Default**: False
 
+[back to top](#full-list-of-input-keywords)
+
 ## Variables useful for debugging
 
 ### nurse
@@ -4099,6 +4151,8 @@
   - 0: No.
   - 1: Yes.
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
 
 ## Electronic conductivities
 
@@ -4173,6 +4227,8 @@
   - False: .
 - **Default**: True
 
+[back to top](#full-list-of-input-keywords)
+
 ## Implicit solvation model
 
 ### imp_sol
@@ -4206,6 +4262,8 @@
 - **Description**: The value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 
+[back to top](#full-list-of-input-keywords)
+
 ## Quasiatomic Orbital (QO) analysis
 
 ### qo_switch
@@ -4225,13 +4283,13 @@
 
 ### qo_strategy
 
-- **Type**: String
+- **Type**: Vector of String (1 or n values where n is the number of atomic types)
 - **Description**: Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all
 - **Default**: for hydrogen: energy-valence, for pswfc and szv: all
 
 ### qo_screening_coeff
 
-- **Type**: Real
+- **Type**: Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)
 - **Description**: The screening coefficient for each atom type to rescale the shape of radial orbitals
 - **Default**: 0.1
 - **Unit**: Bohr^-1
@@ -4241,6 +4299,8 @@
 - **Type**: Real
 - **Description**: The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
 - **Default**: 1.0e-6
+
+[back to top](#full-list-of-input-keywords)
 
 ## PEXSI
 
@@ -4382,6 +4442,8 @@
 - **Description**: if the absolute value of CCS matrix element is less than this value, it will be considered as zero.
 - **Default**: 1e-10
 
+[back to top](#full-list-of-input-keywords)
+
 ## Linear Response TDDFT
 
 ### ri_hartree_benchmark
@@ -4397,6 +4459,8 @@
 - **Description**: Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
 
+[back to top](#full-list-of-input-keywords)
+
 ## Linear Response TDDFT (Under Development Feature)
 
 ### xc_kernel
@@ -4407,7 +4471,7 @@
 
 ### lr_init_xc_kernel
 
-- **Type**: String
+- **Type**: Vector of String (&gt;=1 values)
 - **Description**: The method to initalize the xc kernel.
   - "default": Calculate xc kernel from the ground-state charge density.
   - "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.
@@ -4433,7 +4497,7 @@
 
 - **Type**: Integer
 - **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
-  - Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.
+  - Note: If the value is illegal ( &gt; nelec/2 or &lt;= 0), it will be autoset to nelec/2.
 - **Default**: nband
 
 ### nvirt
@@ -4481,6 +4545,8 @@
 - **Description**: The broadening factor for the absorption spectrum calculation.
 - **Default**: 0.01
 
+[back to top](#full-list-of-input-keywords)
+
 ## Reduced Density Matrix Functional Theory
 
 ### rdmft
@@ -4494,3 +4560,5 @@
 - **Type**: Real
 - **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
 - **Default**: 0.656
+
+[back to top](#full-list-of-input-keywords)

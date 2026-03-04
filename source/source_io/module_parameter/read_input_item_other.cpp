@@ -236,7 +236,7 @@ void ReadInput::item_others()
         Input_Item item("qo_strategy");
         item.annotation = "strategy to generate generate radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
-        item.type = "String";
+        item.type = "Vector of String (1 or n values where n is the number of atomic types)";
         item.description = "Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all";
         item.default_value = "for hydrogen: energy-valence, for pswfc and szv: all";
         item.unit = "";
@@ -284,7 +284,7 @@ void ReadInput::item_others()
         Input_Item item("qo_screening_coeff");
         item.annotation = "rescale the shape of radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
-        item.type = "Real";
+        item.type = "Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)";
         item.description = "The screening coefficient for each atom type to rescale the shape of radial orbitals";
         item.default_value = "0.1";
         item.unit = "Bohr^-1";

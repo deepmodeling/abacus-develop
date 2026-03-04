@@ -247,7 +247,7 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_band_range");
         item.annotation = "(int, int) range of bands for bandgap label";
         item.category = "DeePKS";
-        item.type = "Int*2";
+        item.type = "Integer*2";
         item.description = R"(The first value should not be larger than the second one and the meaning differs in different cases below
 * deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
 * deepks_bandgap is 2: Bandgap labels are energies between HOMO and all states in range [LUMO + deepks_band_range[0], LUMO + deepks_band_range[1]] (Thus there are deepks_band_range[1] - deepks_band_range[0] + 1 bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (deepks_band_range[1] - deepks_band_range[0] bandgaps in this case). NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.)";

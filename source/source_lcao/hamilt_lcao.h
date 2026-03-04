@@ -123,6 +123,9 @@ class HamiltLCAO : public Hamilt<TK>
     }
 #endif
 
+    /// get hRS2 buffer for NSPIN=2 case (spin-up in first half, spin-down in second half)
+    std::vector<TR>& getHRS2() { return this->hRS2; }
+
     /// refresh the status of HR
     void refresh(bool yes) override;
 
