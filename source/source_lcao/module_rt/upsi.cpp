@@ -195,56 +195,6 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               &beta,
                                                               psi_k.data<std::complex<double>>(),
                                                               nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
-        ct::Tensor psi_k_laststep_cpu = psi_k_laststep.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::endl;
-        ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = psi_k_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
 }
 
 // Explicit instantiation of template functions

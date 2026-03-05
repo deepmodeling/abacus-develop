@@ -1,14 +1,13 @@
 #include "norm_psi.h"
 
+#include "source_base/global_function.h" // ModuleBase::GlobalFunc::ZEROS
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 
-#include "source_base/global_function.h" // ModuleBase::GlobalFunc::ZEROS
-
+#include <cassert>
 #include <complex>
 #include <iostream>
-#include <cassert>
 
 namespace module_rt
 {
@@ -494,33 +493,6 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               Cij.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of Cij
 
-    if (print_matrix)
-    {
-        ct::Tensor Cij_print_cpu = Cij.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << "original Cij :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = Cij_print_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = Cij_print_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
     // Normalize Cij: set diagonal elements to 1/sqrt(Cij[i][i]), off-diagonal elements to 0
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
@@ -587,70 +559,6 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               &beta,
                                                               psi_k.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of psi_k
-
-    if (print_matrix)
-    {
-        ct::Tensor Cij_print_cpu = Cij.to_device<ct::DEVICE_CPU>();
-        ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
-        ct::Tensor tmp1_cpu = tmp1.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << " Cij:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Cij_print_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Cij_print_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = psi_k_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " psi_k before normalization:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = tmp1_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = tmp1_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-    }
 }
 
 // Explicit instantiation of template functions
