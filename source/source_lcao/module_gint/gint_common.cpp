@@ -2,6 +2,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/tool_quit.h"
 
 #ifdef __MPI
 #include "source_base/module_external/blacs_connector.h"
@@ -10,6 +11,57 @@
 
 namespace ModuleGint
 {
+
+template<typename Tout, typename Tin>
+void cast_hcontainer_values(const HContainer<Tin>& src, HContainer<Tout>& dst)
+{
+    if (src.get_ijr_info() != dst.get_ijr_info()
+        || src.is_gamma_only() != dst.is_gamma_only()
+        || src.get_nnr() != dst.get_nnr())
+    {
+        ModuleBase::WARNING_QUIT("cast_hcontainer_values", "Source and destination HContainer shapes do not match.");
+    }
+
+    const Tin* src_values = src.get_wrapper();
+    Tout* dst_values = dst.get_wrapper();
+    if (src_values == nullptr || dst_values == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("cast_hcontainer_values", "HContainer data buffer is not allocated.");
+    }
+
+    const size_t nnr = src.get_nnr();
+    for (size_t i = 0; i < nnr; ++i)
+    {
+        dst_values[i] = static_cast<Tout>(src_values[i]);
+    }
+}
+
+template<typename Tout, typename Tin>
+HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
+{
+    const auto ijr_info = src.get_ijr_info();
+
+    if (src.get_paraV() != nullptr)
+    {
+        HContainer<Tout> dst(src.get_paraV(), nullptr, &ijr_info);
+        if (src.is_gamma_only())
+        {
+            dst.fix_gamma();
+        }
+        cast_hcontainer_values(src, dst);
+        return dst;
+    }
+
+    HContainer<Tout> dst(static_cast<int>(src.get_sparse_ap().size()));
+    if (src.is_gamma_only())
+    {
+        dst.fix_gamma();
+    }
+    dst.insert_ijrs(&ijr_info);
+    dst.allocate(nullptr, false);
+    cast_hcontainer_values(src, dst);
+    return dst;
+}
 
 void compose_hr_gint(HContainer<double>& hr_gint)
 {
@@ -389,6 +441,14 @@ template void transfer_hr_gint_to_hR(
 template void transfer_hr_gint_to_hR(
     const HContainer<std::complex<double>>& hr_gint,
     HContainer<std::complex<double>>& hR);
+template void cast_hcontainer_values(
+    const HContainer<double>& src,
+    HContainer<float>& dst);
+template void cast_hcontainer_values(
+    const HContainer<float>& src,
+    HContainer<double>& dst);
+template HContainer<float> make_cast_hcontainer(const HContainer<double>& src);
+template HContainer<double> make_cast_hcontainer(const HContainer<float>& src);
 template void transfer_dm_2d_to_gint(
     const GintInfo& gint_info,
     std::vector<HContainer<double>*> dm,

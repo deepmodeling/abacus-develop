@@ -288,6 +288,7 @@ void GintInfo::init_bgrid_batches_(int batch_size)
 }
 #endif
 
+template HContainer<float> GintInfo::get_hr<float>(int npol) const;
 template HContainer<double> GintInfo::get_hr<double>(int npol) const;
 template HContainer<std::complex<double>> GintInfo::get_hr<std::complex<double>>(int npol) const;
 }
