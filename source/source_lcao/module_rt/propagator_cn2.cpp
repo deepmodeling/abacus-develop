@@ -510,211 +510,73 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-    // (1) copy Htmp to Numerator & Denominator
-    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
-    Numerator.zero();
-    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        Numerator.data<std::complex<double>>(),
-        Htmp.data<std::complex<double>>(),
-        nlocal * nlocal);
-
-    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
-    Denominator.zero();
-    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        Denominator.data<std::complex<double>>(),
-        Htmp.data<std::complex<double>>(),
-        nlocal * nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor Stmp_cpu = Stmp.to_device<ct::DEVICE_CPU>();
-        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::endl;
-        ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Stmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Stmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
-    // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
-    std::complex<double> one = {1.0, 0.0};
+    // Define coefficients
+    // beta1 = -i * dt/4 (for Numerator)
+    // beta2 = +i * dt/4 (for Denominator)
     std::complex<double> beta1 = {0.0, -0.25 * this->dt};
     std::complex<double> beta2 = {0.0, 0.25 * this->dt};
 
-    // Numerator = -i*para * Htmp
-    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+    // ========================================================================
+    // Numerator = Stmp + beta1 * Htmp
+    // ========================================================================
+
+    // 1. Copy Stmp to U_operator
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        U_operator.data<std::complex<double>>(),
+        Stmp.data<std::complex<double>>(),
+        nlocal * nlocal);
+
+    // 2. U_operator = beta1 * Htmp + U_operator
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
                                                               &beta1,
-                                                              Numerator.data<std::complex<double>>(),
-                                                              1);
-    // Numerator = Stmp + (-i*para * Htmp)
-    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
-                                                              &one,
-                                                              Stmp.data<std::complex<double>>(),
+                                                              Htmp.data<std::complex<double>>(),
                                                               1,
-                                                              Numerator.data<std::complex<double>>(),
+                                                              U_operator.data<std::complex<double>>(),
                                                               1);
-    // Denominator = i*para * Htmp
-    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+
+    // ========================================================================
+    // Denominator = Stmp + beta2 * Htmp
+    // ========================================================================
+
+    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
+
+    // 1. Copy Stmp to Denominator
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        Denominator.data<std::complex<double>>(),
+        Stmp.data<std::complex<double>>(),
+        nlocal * nlocal);
+
+    // 2. Denominator = beta2 * Htmp + Denominator
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
                                                               &beta2,
-                                                              Denominator.data<std::complex<double>>(),
-                                                              1);
-    // Denominator = Stmp + (i*para * Htmp)
-    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
-                                                              &one,
-                                                              Stmp.data<std::complex<double>>(),
+                                                              Htmp.data<std::complex<double>>(),
                                                               1,
                                                               Denominator.data<std::complex<double>>(),
                                                               1);
 
-    if (print_matrix)
-    {
-        ct::Tensor Denominator_cpu = Denominator.to_device<ct::DEVICE_CPU>();
+    // ========================================================================
+    // Solve D * U = N, result overwrites N (which is U_operator)
+    // ========================================================================
 
-        ofs_running << " beta=" << beta1 << std::endl;
-        ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Denominator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (3) Next, invert Denominator
     ct::Tensor ipiv(ct::DataType::DT_INT, ct_device_type, ct::TensorShape({nlocal}));
-    ipiv.zero();
-    // (3.1) compute ipiv
+    // No need to zero ipiv, it is output only.
+
+    // 1. LU Factorization of Denominator (In-place)
     ct::kernels::lapack_getrf<std::complex<double>, ct_Device>()(nlocal,
                                                                  nlocal,
                                                                  Denominator.data<std::complex<double>>(),
                                                                  nlocal,
                                                                  ipiv.data<int>());
 
-    // Print ipiv
-    if (print_matrix)
-    {
-        ct::Tensor ipiv_cpu = ipiv.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            ofs_running << ipiv_cpu.data<int>()[i] << " ";
-        }
-        ofs_running << std::endl;
-    }
-
-    // (3.2) compute inverse matrix of Denominator
-    ct::Tensor Denominator_inv = create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
+    // 2. Solve D * X = B
     ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()('N',
                                                                  nlocal,
                                                                  nlocal,
                                                                  Denominator.data<std::complex<double>>(),
                                                                  nlocal,
                                                                  ipiv.data<int>(),
-                                                                 Denominator_inv.data<std::complex<double>>(),
+                                                                 U_operator.data<std::complex<double>>(),
                                                                  nlocal);
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    // (4) U_operator = Denominator_inv * Numerator;
-    std::complex<double> one_gemm = {1.0, 0.0};
-    std::complex<double> zero_gemm = {0.0, 0.0};
-    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
-                                                              'N',
-                                                              nlocal,
-                                                              nlocal,
-                                                              nlocal,
-                                                              &one_gemm,
-                                                              Denominator_inv.data<std::complex<double>>(),
-                                                              nlocal,
-                                                              Numerator.data<std::complex<double>>(),
-                                                              nlocal,
-                                                              &zero_gemm,
-                                                              U_operator.data<std::complex<double>>(),
-                                                              nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor Denominator_inv_cpu = Denominator_inv.to_device<ct::DEVICE_CPU>();
-        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
-        ct::Tensor U_operator_cpu = U_operator.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Denominator_inv_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator_inv_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = U_operator_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = U_operator_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-    }
 }
 
 // Explicit instantiation of template functions
