@@ -3,6 +3,7 @@
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_quit.h"
+#include <type_traits>
 
 #ifdef __MPI
 #include "source_base/module_external/blacs_connector.h"
@@ -248,11 +249,11 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
 
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
-template<typename T>
+template<typename TGint, typename TDM>
 void transfer_dm_2d_to_gint(
     const GintInfo& gint_info,
-    std::vector<HContainer<T>*> dm,
-    std::vector<HContainer<T>>& dm_gint)
+    const std::vector<HContainer<TDM>*>& dm,
+    std::vector<HContainer<TGint>>& dm_gint)
 {
     ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
     ModuleBase::timer::start("Gint", "transfer_dm_2d_to_gint");
@@ -263,12 +264,26 @@ void transfer_dm_2d_to_gint(
         // but there is exception within source_lcao/module_lr
         for (int is = 0; is < dm_gint.size(); is++)
         {
+            if constexpr (std::is_same_v<TGint, TDM>)
+            {
 #ifdef __MPI
-            hamilt::transferParallels2Serials(*dm[is], &dm_gint[is]);
+                hamilt::transferParallels2Serials(*dm[is], &dm_gint[is]);
 #else
-            dm_gint[is].set_zero();
-            dm_gint[is].add(*dm[is]);
+                dm_gint[is].set_zero();
+                dm_gint[is].add(*dm[is]);
 #endif
+            }
+            else
+            {
+                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+#ifdef __MPI
+                hamilt::transferParallels2Serials(*dm[is], &dm_tmp);
+#else
+                dm_tmp.set_zero();
+                dm_tmp.add(*dm[is]);
+#endif
+                cast_hcontainer_values(dm_tmp, dm_gint[is]);
+            }
         }
     } else  // NSPIN=4 case
     {
@@ -290,9 +305,9 @@ void transfer_dm_2d_to_gint(
         Parallel_Orbitals pv{};
         pv.set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        HContainer<T> dm2d_tmp(&pv, nullptr, &ijr_info);
+        HContainer<TDM> dm2d_tmp(&pv, nullptr, &ijr_info);
 #else
-        auto* dm2d_tmp = new hamilt::HContainer<T>(ucell->nat);
+        auto* dm2d_tmp = new hamilt::HContainer<TDM>(ucell->nat);
         dm2d_tmp -> insert_ijrs(&ijr_info, *ucell);
         dm2d_tmp -> allocate(nullptr, true);
 #endif
@@ -304,11 +319,11 @@ void transfer_dm_2d_to_gint(
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
 #ifdef __MPI
-                    T* matrix_out = dm2d_tmp.find_matrix(iat1, iat2, r_index)->get_pointer();
+                    TDM* matrix_out = dm2d_tmp.find_matrix(iat1, iat2, r_index)->get_pointer();
 #else
-                    T* matrix_out = dm2d_tmp->find_matrix(iat1, iat2, r_index)->get_pointer();
+                    TDM* matrix_out = dm2d_tmp->find_matrix(iat1, iat2, r_index)->get_pointer();
 #endif
-                    T* matrix_in = ap.get_pointer(ir);
+                    TDM* matrix_in = ap.get_pointer(ir);
                     for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
                         for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
                             int index_i = irow* ap.get_col_size()/2 + icol;
@@ -318,13 +333,35 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
-#ifdef __MPI         
-            hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint[is]);
+#ifdef __MPI
+            if constexpr (std::is_same_v<TGint, TDM>)
+            {
+                hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint[is]);
+            }
+            else
+            {
+                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+                hamilt::transferParallels2Serials(dm2d_tmp, &dm_tmp);
+                cast_hcontainer_values(dm_tmp, dm_gint[is]);
+            }
 #else
-            dm_gint[is].set_zero();
-            dm_gint[is].add(*dm2d_tmp);
+            if constexpr (std::is_same_v<TGint, TDM>)
+            {
+                dm_gint[is].set_zero();
+                dm_gint[is].add(*dm2d_tmp);
+            }
+            else
+            {
+                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+                dm_tmp.set_zero();
+                dm_tmp.add(*dm2d_tmp);
+                cast_hcontainer_values(dm_tmp, dm_gint[is]);
+            }
 #endif
         }//is=4
+#ifndef __MPI
+        delete dm2d_tmp;
+#endif
     }
     ModuleBase::timer::end("Gint", "transfer_dm_2d_to_gint");
 }
@@ -454,11 +491,15 @@ template HContainer<float> make_cast_hcontainer(const HContainer<double>& src);
 template HContainer<double> make_cast_hcontainer(const HContainer<float>& src);
 template void transfer_dm_2d_to_gint(
     const GintInfo& gint_info,
-    std::vector<HContainer<double>*> dm,
+    const std::vector<HContainer<double>*>& dm,
     std::vector<HContainer<double>>& dm_gint);
 template void transfer_dm_2d_to_gint(
     const GintInfo& gint_info,
-    std::vector<HContainer<std::complex<double>>*> dm,
+    const std::vector<HContainer<double>*>& dm,
+    std::vector<HContainer<float>>& dm_gint);
+template void transfer_dm_2d_to_gint(
+    const GintInfo& gint_info,
+    const std::vector<HContainer<std::complex<double>>*>& dm,
     std::vector<HContainer<std::complex<double>>>& dm_gint);
 template void wfc_2d_to_gint(
     const double* wfc_2d,

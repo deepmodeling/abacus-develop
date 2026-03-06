@@ -22,11 +22,11 @@ namespace ModuleGint
                          hamilt::HContainer<std::complex<double>>* hR,
                          const GintInfo& gint_info);
 
-    template<typename T>
+    template<typename TGint, typename TDM>
     void transfer_dm_2d_to_gint(
         const GintInfo& gint_info,
-        std::vector<HContainer<T>*> dm,
-        std::vector<HContainer<T>>& dm_gint);
+        const std::vector<HContainer<TDM>*>& dm,
+        std::vector<HContainer<TGint>>& dm_gint);
 
     template<typename T>
     void wfc_2d_to_gint(const T* wfc_2d, int nbands, int nlocal, const Parallel_Orbitals& pv, T* wfc_grid, const GintInfo& gint_info);

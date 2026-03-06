@@ -171,3 +171,98 @@
 - 本阶段过程中新增的 `GintAtom<float>` 显式实例化是实际需要的最小补丁；这说明 `phi` 相关单精度链路现在已经从 `GintAtom -> PhiOperator -> Gint_vl` 串通。
 - 由于当前上层还没有把 `GintExecConfig{cpu_internal_real = fp32}` 传到 `cal_gint_vl(...)`，性能用例的实际运行结果仍与阶段 A 相同，这符合当前分阶段计划。
 - `P101_si32_lcao` 的输出依旧与目录内 `result.ref` 不一致，且 `catch_properties.sh` 仍未提取到 `totaltimeref`；这延续了阶段 A 的观测，不应归因为阶段 B 的默认行为变化。
+
+## 阶段 C
+
+### 状态
+
+已完成。
+
+### 本阶段实现
+
+1. 重构 `source/source_lcao/module_gint/gint_rho.h/.cpp`
+   - `Gint_rho` 新增 `GintExecConfig cfg_`
+   - `cal_gint()` 改为调度器，根据 `cfg_.cpu_internal_real` 选择：
+     - `cal_gint_impl_<double>()`
+     - `cal_gint_impl_<float>()`
+
+2. 将 `dm_gint_vec_` 从类成员改为模板内部容器
+   - 在 `cal_gint_impl_<Real>()` 内按需创建
+     `std::vector<HContainer<Real>> dm_gint_vec`
+   - `init_dm_gint_<Real>()` 通过 `gint_info_->get_hr<Real>()` 初始化内部 serial `HContainer`
+   - 类本身保持非模板，外部接口继续维持双精度输入/输出
+
+3. 泛化 `transfer_dm_2d_to_gint`
+   - `source/source_lcao/module_gint/gint_common.h/.cpp`
+   - 接口改为：
+     `transfer_dm_2d_to_gint<TGint, TDM>(...)`
+   - 补上显式实例化：
+     - `double <- double`
+     - `float <- double`
+     - `std::complex<double> <- std::complex<double>`
+
+4. 按计划实现 `float <- double` 的推荐搬运路径
+   - 先沿用现有 `double` DMR gather 逻辑得到 serial `HContainer<double>`
+   - 再使用 `cast_hcontainer_values<float>(...)` 做本地数值转换
+   - 避免把 mixed-precision MPI gather 和本阶段目标耦合在一起
+
+5. 放开 `phi_dot_phi` 的输出精度
+   - `source/source_lcao/module_gint/phi_operator.h/.hpp`
+   - `phi_dot_phi` 从单模板参数改为 `template<typename Tin, typename Tout = Tin>`
+   - `gint_rho` 的 `fp32` 路径现在可以使用：
+     - `float phi`
+     - `float phi_dm`
+     - `double rho`
+
+6. 接通 `gint_interface` 到 `gint_rho`
+   - `source/source_lcao/module_gint/gint_interface.cpp`
+   - CPU 路径下不再忽略 `cfg`
+   - `cal_gint_rho(...)` 会把 `GintExecConfig` 传给 `Gint_rho`
+
+### 对后续阶段的意义
+
+- `gint_rho` 已经具备完整的内部 `fp32/fp64` 双路径骨架，和阶段 B 的 `gint_vl` 结构对齐。
+- `double DMR -> float dm_gint -> float phi/phi_dm -> double rho` 这条 CPU 数据流已经在 `module_gint` 内部打通。
+- 由于主 SCF 上层目前仍未下发 `GintExecConfig{cpu_internal_real = fp32}`，集成运行默认仍走 `fp64`；下一阶段可以把重点转到“上层如何按策略真正启用 `fp32` 路径”。
+- `phi_dot_phi` 的输出类型已经解耦，这为后续 `gint_tau` 或更多内部 mixed-precision 累加场景提供了可复用的基础设施。
+
+### 验证记录
+
+1. 构建配置
+   - 命令：`../build.sh build_phase_c`
+   - 结果：成功生成 `build_phase_c`
+
+2. 实际编译
+   - 命令：`cmake --build build_phase_c -j14`
+   - 结果：成功，最终产物为 `build_phase_c/abacus_2g`
+
+3. 运行测试
+   - 目录：`tests/performance/P101_si32_lcao`
+   - 命令：`OMP_NUM_THREADS=7 mpirun -n 2 --bind-to socket /home/dzc/abacus/abacus-mix/build_phase_c/abacus_2g`
+   - 结果：程序正常结束，退出码为 0
+
+4. 结果抽取
+   - 命令：`bash ../catch_properties.sh result.out`
+   - 生成结果：
+     - `etotref -3403.2017700426458759`
+     - `etotperatomref -106.3500553138`
+     - `totalforceref 2.961504`
+     - `totalstressref 469.743372`
+     - `totaltimeref` 为空
+   - 参考结果 `result.ref`：
+     - `etotref -3404.7663590699248743`
+     - `etotperatomref -106.3989487209`
+     - `totalforceref 2.688768`
+     - `totalstressref 473.654463`
+     - `totaltimeref +85.40579`
+
+5. 运行日志中的额外观测
+   - `Gint cal_gint_vl`：`1.69 s / 9 calls / 0.19 s avg`
+   - `Gint cal_gint_rho`：`1.71 s / 9 calls / 0.19 s avg`
+
+### 重要观察
+
+- 阶段 C 的核心边界已经落地：`gint_rho` 不再被 `HContainer<double>` 和 `double phi_dm` 写死，内部单精度数据流已经和阶段 B 的 `gint_vl` 对齐。
+- 本阶段没有新增链接错误或运行期崩溃；全量工程编译和 `P101_si32_lcao` 用例都稳定通过。
+- 由于当前主流程仍未主动传入 `GintExecConfig{cpu_internal_real = fp32}`，本次集成测试依旧走默认 `fp64`，因此数值结果与阶段 A/B 保持一致，这符合当前分阶段计划。
+- `P101_si32_lcao` 与目录内 `result.ref` 的偏差、以及 `catch_properties.sh` 未提取到 `totaltimeref` 的现象仍然延续，继续应视为环境/基线观测项，而不是阶段 C 新引入的行为变化。

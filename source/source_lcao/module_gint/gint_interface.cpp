@@ -105,7 +105,6 @@ void cal_gint_rho(
     bool is_dm_symm,
     const GintExecConfig& cfg)
 {
-    (void)cfg;
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -114,7 +113,7 @@ void cal_gint_rho(
     } else
     #endif
     {
-        Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
+        Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm, cfg);
         gint_rho.cal_gint();
     }
 }
