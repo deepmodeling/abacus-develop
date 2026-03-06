@@ -5,7 +5,8 @@
 namespace ModuleGint
 {
     // fill the lower triangle matrix with the upper triangle matrix
-    void compose_hr_gint(HContainer<double>& hr_gint);
+    template<typename T>
+    void compose_hr_gint(HContainer<T>& hr_gint);
 
     template<typename Tout, typename Tin>
     void cast_hcontainer_values(const HContainer<Tin>& src, HContainer<Tout>& dst);

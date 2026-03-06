@@ -5,6 +5,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
+#include "gint_precision.h"
 
 namespace ModuleGint
 {
@@ -14,18 +15,22 @@ class Gint_vl : public Gint
     public:
     Gint_vl(
         const double* vr_eff,
-        HContainer<double>* hR)
-        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
+        HContainer<double>* hR,
+        const GintExecConfig& cfg = {})
+        : vr_eff_(vr_eff), hR_(hR), cfg_(cfg), dr3_(gint_info_->get_mgrid_volume()) {}
     
     void cal_gint();
 
     private:
 
-    void init_hr_gint_();
-    
-    // note that only the upper triangle matrix of hR is calculated
-    // that's why we need compose_hr_gint() to fill the lower triangle matrix.
-    void cal_hr_gint_();
+    template<typename Real>
+    void cal_gint_impl_();
+
+    template<typename Real>
+    HContainer<Real> init_hr_gint_() const;
+
+    template<typename Real>
+    const Real* get_vr_eff_data_(std::vector<Real>& vr_eff_buffer) const;
 
     // input
     const double* vr_eff_ = nullptr;
@@ -33,10 +38,10 @@ class Gint_vl : public Gint
     // output
     HContainer<double>* hR_;
 
+    GintExecConfig cfg_;
+
     // Intermediate variables
     double dr3_;
-
-    HContainer<double> hr_gint_;
 };
 
 }

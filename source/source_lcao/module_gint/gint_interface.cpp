@@ -38,7 +38,7 @@ void cal_gint_vl(
     } else
 #endif
     {
-        Gint_vl gint_vl(vr_eff, hR);
+        Gint_vl gint_vl(vr_eff, hR, cfg);
         gint_vl.cal_gint();
     }
 }

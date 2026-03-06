@@ -63,7 +63,8 @@ HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
     return dst;
 }
 
-void compose_hr_gint(HContainer<double>& hr_gint)
+template<typename T>
+void compose_hr_gint(HContainer<T>& hr_gint)
 {
     ModuleBase::TITLE("Gint", "compose_hr_gint");
     ModuleBase::timer::start("Gint", "compose_hr_gint");
@@ -76,8 +77,8 @@ void compose_hr_gint(HContainer<double>& hr_gint)
         {
             // fill lower triangle matrix with upper triangle matrix
             // the upper <IJR> is <iat2, iat1>
-            const hamilt::AtomPair<double>* upper_ap = hr_gint.find_pair(iat2, iat1);
-            const hamilt::AtomPair<double>* lower_ap = hr_gint.find_pair(iat1, iat2);
+            const hamilt::AtomPair<T>* upper_ap = hr_gint.find_pair(iat2, iat1);
+            const hamilt::AtomPair<T>* lower_ap = hr_gint.find_pair(iat1, iat2);
 #ifdef __DEBUG
             assert(upper_ap != nullptr);
 #endif
@@ -435,6 +436,8 @@ void wfc_2d_to_gint(const T* wfc_2d,
     ModuleBase::timer::end("Gint", "wfc_2d_to_gint");
 }
 
+template void compose_hr_gint(HContainer<double>& hr_gint);
+template void compose_hr_gint(HContainer<float>& hr_gint);
 template void transfer_hr_gint_to_hR(
     const HContainer<double>& hr_gint,
     HContainer<double>& hR);
