@@ -4,7 +4,6 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_base/module_mixing/mixing.h"
 #include "source_base/module_mixing/plain_mixing.h"
-#include "gint_precision_controller.h"
 
 class Charge_Mixing
 {
@@ -102,8 +101,6 @@ class Charge_Mixing
     int get_mixing_ndim() const {return mixing_ndim;}
     double get_mixing_gg0() const {return mixing_gg0;}
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
-    GintPrecisionController& get_gint_precision_controller() { return gint_precision_controller_; }
-    const GintPrecisionController& get_gint_precision_controller() const { return gint_precision_controller_; }
 
     // for mixing restart
     int mixing_restart_step = 0; //which step to restart mixing during SCF, always equal to scf_namx except for the mixing restart
@@ -140,7 +137,6 @@ class Charge_Mixing
     double* tpiba = nullptr;                  ///< 2*pi/beta for non-linear core correction
     double* tpiba2 = nullptr;                 ///< 2*pi/beta^2 for non-linear core correction
     std::vector<double> _drho_history; ///< history of drho used to determine the oscillation, size is scf_nmax
-    GintPrecisionController gint_precision_controller_;
     
     bool new_e_iteration = true;
 

@@ -271,7 +271,7 @@
 
 ### 状态
 
-已完成。
+已完成（按“最小侵入重做版”收口）。
 
 ### 本阶段实现
 
@@ -283,15 +283,11 @@
      - `update_after_iteration(...)`
      - `current_config()`
 
-2. 按计划把控制器挂到 SCF/charge mixing 层
-   - `source/source_estate/module_charge/charge_mixing.h`
-   - `Charge_Mixing` 新增 `gint_precision_controller_`
-   - 暴露 `get_gint_precision_controller()`
-
-3. 在 SCF 迭代边界接通控制器生命周期
-   - `source/source_estate/module_charge/chgmixing.cpp`
-   - `chgmixing_ks_lcao(iter == 1)` 时调用 `reset_for_new_scf()`
-   - `chgmixing_ks(...)` 在完成本轮 `drho / conv_esolver / restart-step` 判定后调用
+2. 将控制器收回到 `ESolver_KS_LCAO`
+   - `source/source_esolver/esolver_ks_lcao.h/.cpp`
+   - `ESolver_KS_LCAO` 新增 `gint_precision_controller_`
+   - `iter_init(iter == 1)` 时调用 `reset_for_new_scf()`
+   - `iter_finish(...)` 在本轮 `drho / conv_esolver / restart-step` 判定完成后调用
      `update_after_iteration(...)`
    - 当前策略严格按阶段 D 文档首版规则实现：
      - 初始 `fp32`
@@ -301,41 +297,53 @@
      - 连续 2 轮满足后，下一轮切到 `fp64`
      - 一旦切到 `fp64`，本轮 SCF 不再切回
 
-4. 建立上层配置传播路径
+3. 在 `module_gint` 内引入作用域执行上下文
+   - `source/source_lcao/module_gint/gint_precision.h/.cpp`
+   - 新增：
+     - `current_exec_config()`
+     - `ScopedExecConfig`
+   - 作用域对象在进入 LCAO 主 SCF 的 `hamilt2rho_single(...)` 时设置当前 `GintExecConfig`
+   - 离开该作用域后自动恢复默认状态，避免把精度选择扩散成 `Charge` / `Potential` 的持久对象状态
+
+4. 精简 `gint_interface` 的接入方式
+   - `source/source_lcao/module_gint/gint_interface.h/.cpp`
+   - 为 `cal_gint_vl(...)` / `cal_gint_rho(...)` 新增“不显式传 `cfg`”的重载
+   - 默认重载内部通过 `current_exec_config()` 读取当前作用域配置
+   - 显式 `cfg` 重载仍保留，便于后续需要时做定点调用
+
+5. 用最小改动接通 LCAO 主 SCF 路径
+   - `source/source_esolver/esolver_ks_lcao.cpp`
+   - `hamilt2rho_single(...)` 在进入本轮 `updateHk -> veff_lcao -> dm2rho` 前创建
+     `ScopedExecConfig`
+   - `source/source_lcao/module_operator_lcao/veff_lcao.cpp`
+   - `source/source_lcao/rho_tau_lcao.cpp`
+   - `source/source_estate/elecstate_lcao.cpp`
+   - 这些调用点重新回到原有的简洁接口：
+     - `ModuleGint::cal_gint_vl(...)`
+     - `ModuleGint::cal_gint_rho(...)`
+   - 由 `module_gint` 内部作用域上下文完成精度选择，不再显式层层传参
+
+6. 回退旧版阶段 D 的侵入式状态传播
    - `source/source_estate/module_charge/charge.h`
    - `source/source_estate/module_pot/potential_new.h`
-   - `Charge` 和 `Potential` 新增 `GintExecConfig` 存取接口
-   - `source/source_esolver/esolver_ks_lcao.cpp`
-   - `ESolver_KS_LCAO::iter_init()` 每轮从
-     `p_chgmix->get_gint_precision_controller().current_config()`
-     读取配置，并下发给：
-     - `chr`
-     - `pelec->pot`
-
-5. 接通 LCAO SCF 主路径的 `gint_vl`
-   - `source/source_lcao/module_operator_lcao/veff_lcao.cpp`
-   - `Veff<OperatorLCAO<double, double>>::contributeHR()`
-   - `Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()`
-   - 非 meta-GGA 分支现在会把 `pot->get_gint_exec_config()` 传给
-     `ModuleGint::cal_gint_vl(...)`
-   - meta-GGA 分支保持现状，继续 `fp64`
-
-6. 接通 LCAO SCF 主路径的 `gint_rho`
-   - `source/source_lcao/rho_tau_lcao.cpp`
-   - `LCAO_domain::dm2rho(...)` 现在从 `Charge` 读取当前配置，并传给
-     `ModuleGint::cal_gint_rho(...)`
-   - `source/source_estate/elecstate_lcao.cpp`
-   - PEXSI 路径也改为从 `charge->get_gint_exec_config()` 读取配置
+   - `source/source_estate/module_charge/charge_mixing.h/.cpp`
+   - 删除：
+     - `Charge::gint_exec_cfg_`
+     - `Potential::gint_exec_cfg_`
+     - `Charge_Mixing::gint_precision_controller_`
+   - 这次重做后，`Charge` / `Potential` / `Charge_Mixing` 不再承载 `module_gint` 的执行精度状态
 
 7. 构建系统接入新源文件
    - `source/source_estate/CMakeLists.txt`
    - 新增 `module_charge/gint_precision_controller.cpp`
+   - `source/source_lcao/module_gint/CMakeLists.txt`
+   - 新增 `gint_precision.cpp`
 
 ### 对后续阶段的意义
 
 - 阶段 B/C 准备好的 `gint_vl` / `gint_rho` 内部 `fp32/fp64` 双路径，现在已经真正接入了 LCAO 主 SCF 调度闭环。
-- 当前架构中，精度决策由 `Charge_Mixing` 持有并更新，`ESolver_KS_LCAO` 负责把当前配置下发给 `Charge` 与 `Potential`；`module_gint` 仍只做执行，不参与策略判断。
-- 非 SCF 和后处理路径仍默认 `fp64`，因为它们没有在阶段 D 中主动下发新的 `GintExecConfig`，符合“先只接主 SCF 路径”的计划。
+- 这次重做后，精度策略所有权收敛在 `ESolver_KS_LCAO`，而不是扩散到 `Charge` / `Potential` / `Charge_Mixing`，代码边界更清晰。
+- `module_gint` 通过作用域上下文感知当前执行精度，非主 SCF 路径若未主动设置上下文，会自然回退到默认 `fp64`；因此“先只接主 SCF 路径”的阶段目标仍然成立。
 - 阶段 E 可以在此基础上直接做：
   - `fp32/fp64` 数值接近性测试
   - SCF 收敛轮数比较
@@ -359,7 +367,7 @@
 4. 结果抽取
    - 命令：`bash ../catch_properties.sh result.out`
    - 生成结果：
-     - `etotref -3403.2017700426458759`
+     - `etotref -3403.2017700426454212`
      - `etotperatomref -106.3500553138`
      - `totalforceref 2.961504`
      - `totalstressref 469.743372`
@@ -372,14 +380,15 @@
      - `totaltimeref +85.40579`
 
 5. 运行日志中的额外观测
-   - `Gint cal_gint_vl`：`1.68 s / 9 calls / 0.19 s avg`
-   - `Gint cal_gint_rho`：`1.72 s / 9 calls / 0.19 s avg`
-   - `LCAO_domain dm2rho`：`1.77 s / 9 calls / 0.20 s avg`
+   - `Gint cal_gint_vl`：`1.70 s / 9 calls / 0.19 s avg`
+   - `Gint cal_gint_rho`：`1.73 s / 9 calls / 0.19 s avg`
+   - `LCAO_domain dm2rho`：`1.78 s / 9 calls / 0.20 s avg`
 
 ### 重要观察
 
-- 阶段 D 已经把精度选择真正接入 LCAO 主 SCF：不再只是 `module_gint` 内部有 `fp32` 路径，而是 SCF 迭代会在每轮开始前拿到当前 `GintExecConfig`。
+- 阶段 D 已经把精度选择真正接入 LCAO 主 SCF：不再只是 `module_gint` 内部有 `fp32` 路径，而是 `ESolver_KS_LCAO` 会在 `hamilt2rho_single(...)` 的作用域内为本轮 SCF 设置当前 `GintExecConfig`。
 - 本用例 `tests/performance/P101_si32_lcao/INPUT` 中 `scf_thr = 1e-6`，因此阶段 D 策略的切换阈值为 `max(100 * 1e-6, 1e-5) = 1e-4`。
 - 从本次日志的 `drho` 观察，`CU6 = 6.1217e-05`、`CU7 = 2.1956e-05` 已连续满足阈值条件；据此可推断后续迭代已进入 `fp64` 收尾阶段。这一判断来自策略与日志的联合推断，而不是新增的显式运行日志。
-- 接入上层策略后，`P101_si32_lcao` 仍可稳定收敛并正常结束，且抽取到的总能、力和应力结果与阶段 C 保持一致，说明当前切换策略没有破坏主 SCF 默认行为。
+- 和旧版阶段 D 相比，这次重做没有再把精度配置挂到 `Charge` / `Potential` / `Charge_Mixing` 上，减少了跨层状态传播，保留了同样的主 SCF 功能覆盖范围。
+- 接入上层策略后，`P101_si32_lcao` 仍可稳定收敛并正常结束，且抽取到的总能、力和应力结果与阶段 C 保持一致，说明这版最小侵入方案没有破坏主 SCF 默认行为。
 - `P101_si32_lcao` 与目录内 `result.ref` 的偏差、以及 `catch_properties.sh` 未提取到 `totaltimeref` 的现象仍然延续，继续应视为环境/基线观测项，而不是阶段 D 新引入的行为变化。

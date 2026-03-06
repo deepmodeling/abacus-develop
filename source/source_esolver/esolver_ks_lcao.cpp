@@ -23,6 +23,7 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
+#include "source_lcao/module_gint/gint_precision.h"
 
 namespace ModuleESolver
 {
@@ -308,12 +309,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
       this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
-    const ModuleGint::GintExecConfig gint_cfg
-        = this->p_chgmix->get_gint_precision_controller().current_config();
-    this->chr.set_gint_exec_config(gint_cfg);
-    if (this->pelec != nullptr && this->pelec->pot != nullptr)
+    if (iter == 1)
     {
-        this->pelec->pot->set_gint_exec_config(gint_cfg);
+        this->gint_precision_controller_.reset_for_new_scf();
     }
 
     // mohan update 2012-06-05
@@ -379,6 +377,10 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
+    const ModuleGint::GintExecConfig gint_cfg = (PARAM.inp.calculation == "scf")
+        ? this->gint_precision_controller_.current_config()
+        : ModuleGint::GintExecConfig{};
+    const ModuleGint::ScopedExecConfig scoped_gint_cfg(gint_cfg);
 
     // 1) reset energy
     this->pelec->f_en.eband = 0.0;
@@ -446,7 +448,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // eig and occ are printed, magnetization is calculated,
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
+    const bool is_restart_step = (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0);
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+    if (PARAM.inp.calculation == "scf")
+    {
+        this->gint_precision_controller_.update_after_iteration(
+            iter,
+            this->drho,
+            this->scf_thr,
+            conv_esolver,
+            is_restart_step);
+    }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter except the last iter

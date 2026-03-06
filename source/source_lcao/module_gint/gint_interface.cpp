@@ -26,6 +26,13 @@ namespace ModuleGint
 
 void cal_gint_vl(
     const double* vr_eff,
+    HContainer<double>* hR)
+{
+    cal_gint_vl(vr_eff, hR, current_exec_config());
+}
+
+void cal_gint_vl(
+    const double* vr_eff,
     HContainer<double>* hR,
     const GintExecConfig& cfg)
 {
@@ -96,6 +103,15 @@ void cal_gint_vl_metagga(
         Gint_vl_metagga_nspin4 gint_vl_metagga_nspin4(vr_eff, vofk, hR);
         gint_vl_metagga_nspin4.cal_gint();
     }
+}
+
+void cal_gint_rho(
+    const std::vector<HContainer<double>*>& dm_vec,
+    const int nspin,
+    double **rho,
+    bool is_dm_symm)
+{
+    cal_gint_rho(dm_vec, nspin, rho, is_dm_symm, current_exec_config());
 }
 
 void cal_gint_rho(

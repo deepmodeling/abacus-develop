@@ -8,6 +8,7 @@ list(APPEND objects
     gint_atom.cpp
     gint_info.cpp
     gint.cpp
+    gint_precision.cpp
     gint_vl.cpp
     gint_vl_metagga.cpp
     gint_vl_nspin4.cpp

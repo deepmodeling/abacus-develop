@@ -59,12 +59,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    ModuleGint::cal_gint_rho(
-        dm->get_DMR_vector(),
-        PARAM.inp.nspin,
-        this->charge->rho,
-        true,
-        this->charge->get_gint_exec_config());
+    ModuleGint::cal_gint_rho(dm->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
     if (XC_Functional::get_ked_flag())
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
