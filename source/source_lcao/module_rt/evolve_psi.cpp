@@ -274,6 +274,17 @@ void evolve_psi_tensor(const int nband,
     // (5) Compute ekb
     ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
+    // Resync H matrix
+    if (h_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
+        {
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+        }
+    }
+
     if (!use_lapack)
     {
         compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
