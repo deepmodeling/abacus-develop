@@ -37,6 +37,7 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
         // drho will be 0 at p_chgmix->mixing_restart step, which is
         // not ground state
         bool not_restart_step = !(iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0);
+        const bool is_restart_step = !not_restart_step;
 
         conv_esolver = (drho < scf_thr && not_restart_step && converged_u);
 
@@ -57,6 +58,16 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
                 conv_esolver
                     = (std::abs(pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < scf_ene_thr);
             }
+        }
+
+        if (inp.basis_type == "lcao")
+        {
+            p_chgmix->get_gint_precision_controller().update_after_iteration(
+                iter,
+                drho,
+                scf_thr,
+                conv_esolver,
+                is_restart_step);
         }
 
         // If drho < hsolver_error in the first iter or drho < scf_thr, we
@@ -184,6 +195,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mix_reset(); // init mixing
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         p_chgmix->mixing_restart_count = 0;
+        p_chgmix->get_gint_precision_controller().reset_for_new_scf();
         // this output will be removed once the feeature is stable
         if (dftu.uramping > 0.01)
         {

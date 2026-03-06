@@ -266,3 +266,120 @@
 - 本阶段没有新增链接错误或运行期崩溃；全量工程编译和 `P101_si32_lcao` 用例都稳定通过。
 - 由于当前主流程仍未主动传入 `GintExecConfig{cpu_internal_real = fp32}`，本次集成测试依旧走默认 `fp64`，因此数值结果与阶段 A/B 保持一致，这符合当前分阶段计划。
 - `P101_si32_lcao` 与目录内 `result.ref` 的偏差、以及 `catch_properties.sh` 未提取到 `totaltimeref` 的现象仍然延续，继续应视为环境/基线观测项，而不是阶段 C 新引入的行为变化。
+
+## 阶段 D
+
+### 状态
+
+已完成。
+
+### 本阶段实现
+
+1. 新增上层精度控制器
+   - 新增 `source/source_estate/module_charge/gint_precision_controller.h/.cpp`
+   - 定义 `GintPrecisionController`
+   - 提供：
+     - `reset_for_new_scf()`
+     - `update_after_iteration(...)`
+     - `current_config()`
+
+2. 按计划把控制器挂到 SCF/charge mixing 层
+   - `source/source_estate/module_charge/charge_mixing.h`
+   - `Charge_Mixing` 新增 `gint_precision_controller_`
+   - 暴露 `get_gint_precision_controller()`
+
+3. 在 SCF 迭代边界接通控制器生命周期
+   - `source/source_estate/module_charge/chgmixing.cpp`
+   - `chgmixing_ks_lcao(iter == 1)` 时调用 `reset_for_new_scf()`
+   - `chgmixing_ks(...)` 在完成本轮 `drho / conv_esolver / restart-step` 判定后调用
+     `update_after_iteration(...)`
+   - 当前策略严格按阶段 D 文档首版规则实现：
+     - 初始 `fp32`
+     - `iter >= 3`
+     - 非 restart step
+     - `drho <= max(100 * scf_thr, 1e-5)`
+     - 连续 2 轮满足后，下一轮切到 `fp64`
+     - 一旦切到 `fp64`，本轮 SCF 不再切回
+
+4. 建立上层配置传播路径
+   - `source/source_estate/module_charge/charge.h`
+   - `source/source_estate/module_pot/potential_new.h`
+   - `Charge` 和 `Potential` 新增 `GintExecConfig` 存取接口
+   - `source/source_esolver/esolver_ks_lcao.cpp`
+   - `ESolver_KS_LCAO::iter_init()` 每轮从
+     `p_chgmix->get_gint_precision_controller().current_config()`
+     读取配置，并下发给：
+     - `chr`
+     - `pelec->pot`
+
+5. 接通 LCAO SCF 主路径的 `gint_vl`
+   - `source/source_lcao/module_operator_lcao/veff_lcao.cpp`
+   - `Veff<OperatorLCAO<double, double>>::contributeHR()`
+   - `Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()`
+   - 非 meta-GGA 分支现在会把 `pot->get_gint_exec_config()` 传给
+     `ModuleGint::cal_gint_vl(...)`
+   - meta-GGA 分支保持现状，继续 `fp64`
+
+6. 接通 LCAO SCF 主路径的 `gint_rho`
+   - `source/source_lcao/rho_tau_lcao.cpp`
+   - `LCAO_domain::dm2rho(...)` 现在从 `Charge` 读取当前配置，并传给
+     `ModuleGint::cal_gint_rho(...)`
+   - `source/source_estate/elecstate_lcao.cpp`
+   - PEXSI 路径也改为从 `charge->get_gint_exec_config()` 读取配置
+
+7. 构建系统接入新源文件
+   - `source/source_estate/CMakeLists.txt`
+   - 新增 `module_charge/gint_precision_controller.cpp`
+
+### 对后续阶段的意义
+
+- 阶段 B/C 准备好的 `gint_vl` / `gint_rho` 内部 `fp32/fp64` 双路径，现在已经真正接入了 LCAO 主 SCF 调度闭环。
+- 当前架构中，精度决策由 `Charge_Mixing` 持有并更新，`ESolver_KS_LCAO` 负责把当前配置下发给 `Charge` 与 `Potential`；`module_gint` 仍只做执行，不参与策略判断。
+- 非 SCF 和后处理路径仍默认 `fp64`，因为它们没有在阶段 D 中主动下发新的 `GintExecConfig`，符合“先只接主 SCF 路径”的计划。
+- 阶段 E 可以在此基础上直接做：
+  - `fp32/fp64` 数值接近性测试
+  - SCF 收敛轮数比较
+  - `cal_gint_vl` / `cal_gint_rho` 的真实性能评估
+
+### 验证记录
+
+1. 构建配置
+   - 命令：`../build.sh build_phase_d`
+   - 结果：成功生成 `build_phase_d`
+
+2. 实际编译
+   - 命令：`cmake --build build_phase_d -j14`
+   - 结果：成功，最终产物为 `build_phase_d/abacus_2g`
+
+3. 运行测试
+   - 目录：`tests/performance/P101_si32_lcao`
+   - 命令：`OMP_NUM_THREADS=7 mpirun -n 2 --bind-to socket /home/dzc/abacus/abacus-mix/build_phase_d/abacus_2g`
+   - 结果：程序正常结束，退出码为 0
+
+4. 结果抽取
+   - 命令：`bash ../catch_properties.sh result.out`
+   - 生成结果：
+     - `etotref -3403.2017700426458759`
+     - `etotperatomref -106.3500553138`
+     - `totalforceref 2.961504`
+     - `totalstressref 469.743372`
+     - `totaltimeref` 为空
+   - 参考结果 `result.ref`：
+     - `etotref -3404.7663590699248743`
+     - `etotperatomref -106.3989487209`
+     - `totalforceref 2.688768`
+     - `totalstressref 473.654463`
+     - `totaltimeref +85.40579`
+
+5. 运行日志中的额外观测
+   - `Gint cal_gint_vl`：`1.68 s / 9 calls / 0.19 s avg`
+   - `Gint cal_gint_rho`：`1.72 s / 9 calls / 0.19 s avg`
+   - `LCAO_domain dm2rho`：`1.77 s / 9 calls / 0.20 s avg`
+
+### 重要观察
+
+- 阶段 D 已经把精度选择真正接入 LCAO 主 SCF：不再只是 `module_gint` 内部有 `fp32` 路径，而是 SCF 迭代会在每轮开始前拿到当前 `GintExecConfig`。
+- 本用例 `tests/performance/P101_si32_lcao/INPUT` 中 `scf_thr = 1e-6`，因此阶段 D 策略的切换阈值为 `max(100 * 1e-6, 1e-5) = 1e-4`。
+- 从本次日志的 `drho` 观察，`CU6 = 6.1217e-05`、`CU7 = 2.1956e-05` 已连续满足阈值条件；据此可推断后续迭代已进入 `fp64` 收尾阶段。这一判断来自策略与日志的联合推断，而不是新增的显式运行日志。
+- 接入上层策略后，`P101_si32_lcao` 仍可稳定收敛并正常结束，且抽取到的总能、力和应力结果与阶段 C 保持一致，说明当前切换策略没有破坏主 SCF 默认行为。
+- `P101_si32_lcao` 与目录内 `result.ref` 的偏差、以及 `catch_properties.sh` 未提取到 `totaltimeref` 的现象仍然延续，继续应视为环境/基线观测项，而不是阶段 D 新引入的行为变化。

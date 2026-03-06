@@ -308,6 +308,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
       this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
+    const ModuleGint::GintExecConfig gint_cfg
+        = this->p_chgmix->get_gint_precision_controller().current_config();
+    this->chr.set_gint_exec_config(gint_cfg);
+    if (this->pelec != nullptr && this->pelec->pot != nullptr)
+    {
+        this->pelec->pot->set_gint_exec_config(gint_cfg);
+    }
+
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 

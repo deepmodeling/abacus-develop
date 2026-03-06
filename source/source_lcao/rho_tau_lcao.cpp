@@ -15,7 +15,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
         ModuleBase::GlobalFunc::ZEROS(chr->rho[is], chr->nrxx);
     }
 
-    ModuleGint::cal_gint_rho(dmr, nspin, chr->rho);
+    ModuleGint::cal_gint_rho(dmr, nspin, chr->rho, true, chr->get_gint_exec_config());
 
     if(!skip_normalize)chr->renormalize_rho();
 

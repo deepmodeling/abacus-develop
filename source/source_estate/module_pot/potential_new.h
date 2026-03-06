@@ -6,6 +6,7 @@
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
+#include "source_lcao/module_gint/gint_precision.h"
 #include "pot_base.h"
 
 #include <vector>
@@ -176,6 +177,14 @@ class Potential : public PotBase
     {
         return this->rho_basis_;
     }
+    void set_gint_exec_config(const ModuleGint::GintExecConfig& cfg)
+    {
+        this->gint_exec_cfg_ = cfg;
+    }
+    const ModuleGint::GintExecConfig& get_gint_exec_config() const
+    {
+        return this->gint_exec_cfg_;
+    }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 
@@ -230,6 +239,7 @@ class Potential : public PotBase
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
     bool use_gpu_ = false;
+    ModuleGint::GintExecConfig gint_exec_cfg_;
 };
 
 } // namespace elecstate

@@ -7,6 +7,7 @@
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
+#include "source_lcao/module_gint/gint_precision.h"
 // #include "source_estate/fp_energy.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
@@ -146,6 +147,8 @@ class Charge
 	void reduce_diff_pools(double* array_rho) const;
 
     void set_omega(double* omega_in){this->omega_ = omega_in;};
+    void set_gint_exec_config(const ModuleGint::GintExecConfig& cfg) { this->gint_exec_cfg_ = cfg; }
+    const ModuleGint::GintExecConfig& get_gint_exec_config() const { return this->gint_exec_cfg_; }
 
     // mohan add 2021-02-20
     int nrxx=0; // number of r vectors in this processor
@@ -164,6 +167,7 @@ class Charge
     bool allocate_rho;
 
     bool allocate_rho_final_scf; // LiuXh add 20180606
+    ModuleGint::GintExecConfig gint_exec_cfg_;
 
 #ifdef __MPI
     int *rec = nullptr; //The number of elements each process should receive into the receive buffer.

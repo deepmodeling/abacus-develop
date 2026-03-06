@@ -74,7 +74,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     }
     else
     {
-        ModuleGint::cal_gint_vl(vr_eff1, this->hR);
+        ModuleGint::cal_gint_vl(vr_eff1, this->hR, this->pot->get_gint_exec_config());
     }
 
     if(this->nspin == 2) 
@@ -104,7 +104,7 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     }
     else
     {
-        ModuleGint::cal_gint_vl(vr_eff1, this->hR);
+        ModuleGint::cal_gint_vl(vr_eff1, this->hR, this->pot->get_gint_exec_config());
     }
 
     if(this->nspin == 2) 
