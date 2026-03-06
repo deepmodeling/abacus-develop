@@ -101,11 +101,6 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 Real* eigenvalue_in,
                                 const std::vector<double>& ethr_band,
                                 const Real* prec) {
-    (void)hpsi_func;
-    (void)spsi_func;
-    (void)dim;
-    (void)ethr_band;
-    (void)prec;
     // do something
     for (int ib = 0; ib < nband; ib++) {
         eigenvalue_in[ib] = 0.0;

@@ -259,7 +259,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                               const int ld_psi,
                                               const int nband,
                                               const bool S_orth) {
-            (void)S_orth;
             auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
             auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
             std::vector<Real> eigen(nband, 0.0);

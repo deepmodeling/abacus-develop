@@ -141,8 +141,7 @@ namespace LR
                     auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {
                         hm.hPsi(psi_in, hpsi, ld_psi, nvec);
                     };
-                    auto spsi_func = [&hm](T* psi_in, T* spsi, const int ld_psi, const int nvec) {
-                        (void)hm;
+                    auto spsi_func = [](T* psi_in, T* spsi, const int ld_psi, const int nvec) {
                         std::memcpy(spsi, psi_in, sizeof(T) * static_cast<size_t>(ld_psi) * static_cast<size_t>(nvec));
                     };
 

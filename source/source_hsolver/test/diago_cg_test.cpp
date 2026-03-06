@@ -141,7 +141,6 @@ class DiagoCGPrepare
                       const int ld_psi,
                       const int nband,
                       const bool S_orth) {
-            (void)S_orth;
             auto psi_in_wrapper = psi::Psi<std::complex<double>>(psi_in, 1, nband, ld_psi, true);
             auto psi_out_wrapper = psi::Psi<std::complex<double>>(psi_out, 1, nband, ld_psi, true);
             std::vector<double> eigen(nband, 0.0);
