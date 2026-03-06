@@ -5,6 +5,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/atom_spec.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
 #include "big_grid.h"
@@ -35,6 +36,22 @@ class GintInfo
 
     ~GintInfo();
 
+    static GintInfo make_test_instance(const UnitCell& ucell, std::vector<int> ijr_info)
+    {
+        GintInfo info;
+        info.ucell_ = &ucell;
+        info.ijr_info_ = std::move(ijr_info);
+        return info;
+    }
+
+    static GintInfo* make_test_instance_ptr(const UnitCell& ucell, std::vector<int> ijr_info)
+    {
+        GintInfo* info = new GintInfo();
+        info->ucell_ = &ucell;
+        info->ijr_info_ = std::move(ijr_info);
+        return info;
+    }
+
     // getter functions
     const std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; }
     int get_bgrids_num() const { return static_cast<int>(biggrids_.size()); }
@@ -50,9 +67,21 @@ class GintInfo
     // functions about hcontainer
     //=========================================
     template <typename T>
-    HContainer<T> get_hr(int npol = 1) const;
+    HContainer<T> get_hr(int npol = 1) const
+    {
+        auto hr = HContainer<T>(ucell_->nat);
+        if(PARAM.inp.gamma_only)
+        {
+            hr.fix_gamma();
+        }
+        hr.insert_ijrs(&ijr_info_, *ucell_, npol);
+        hr.allocate(nullptr, true);
+        return hr;
+    }
     
     private:
+    GintInfo() = default;
+
     // initialize the atoms
     void init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi);
 

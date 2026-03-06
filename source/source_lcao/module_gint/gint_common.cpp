@@ -58,7 +58,18 @@ HContainer<Tout> make_cast_hcontainer(const HContainer<Tin>& src)
     {
         dst.fix_gamma();
     }
-    dst.insert_ijrs(&ijr_info);
+    for (int iap = 0; iap < src.size_atom_pairs(); ++iap)
+    {
+        const auto& src_ap = src.get_atom_pair(iap);
+        hamilt::AtomPair<Tout> dst_ap(src_ap.get_atom_i(), src_ap.get_atom_j());
+        dst_ap.set_size(src_ap.get_col_size(), src_ap.get_row_size());
+        for (int ir = 0; ir < src_ap.get_R_size(); ++ir)
+        {
+            const auto r_index = src_ap.get_R_index(ir);
+            dst_ap.get_HR_values(r_index.x, r_index.y, r_index.z);
+        }
+        dst.insert_pair(dst_ap);
+    }
     dst.allocate(nullptr, false);
     cast_hcontainer_values(src, dst);
     return dst;

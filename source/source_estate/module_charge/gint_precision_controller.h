@@ -19,11 +19,15 @@ class GintPrecisionController
     ModuleGint::GintExecConfig current_config() const;
 
   private:
+    void apply_runtime_override_();
+
     ModuleGint::GintExecConfig current_cfg_{
         ModuleGint::GintRealPrecision::fp32
     };
     int qualified_small_drho_iters_ = 0;
     bool locked_fp64_ = false;
+    bool force_precision_enabled_ = false;
+    ModuleGint::GintRealPrecision forced_precision_ = ModuleGint::GintRealPrecision::fp32;
 };
 
 #endif

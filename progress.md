@@ -392,3 +392,159 @@
 - 和旧版阶段 D 相比，这次重做没有再把精度配置挂到 `Charge` / `Potential` / `Charge_Mixing` 上，减少了跨层状态传播，保留了同样的主 SCF 功能覆盖范围。
 - 接入上层策略后，`P101_si32_lcao` 仍可稳定收敛并正常结束，且抽取到的总能、力和应力结果与阶段 C 保持一致，说明这版最小侵入方案没有破坏主 SCF 默认行为。
 - `P101_si32_lcao` 与目录内 `result.ref` 的偏差、以及 `catch_properties.sh` 未提取到 `totaltimeref` 的现象仍然延续，继续应视为环境/基线观测项，而不是阶段 D 新引入的行为变化。
+
+## 阶段 E
+
+### 目标
+
+- 为阶段 B/C/D 引入的单精度执行路径补齐可回归的单元测试与小规模运行期开关，确保后续继续优化时可以快速验证：
+  - `module_gint` 关键数据转换逻辑是否正确
+  - 作用域精度上下文是否可控
+  - 主 SCF 精度调度器是否可在运行期强制切换
+- 用 `tests/performance/P101_si32_lcao` 对比默认混合策略、强制 `fp32`、强制 `fp64` 三种模式的数值差异与真实耗时趋势。
+
+### 本阶段完成内容
+
+1. 为 `GintInfo::get_hr<T>()` 补齐可测试入口
+   - 文件：
+     - `source/source_lcao/module_gint/gint_info.h`
+     - `source/source_lcao/module_gint/gint_info.cpp`
+   - 调整：
+     - 将 `get_hr<T>()` 模板定义移到头文件，避免单元测试和新调用点受显式实例化限制
+     - 新增仅供测试使用的轻量工厂：
+       - `GintInfo::make_test_instance(...)`
+       - `GintInfo::make_test_instance_ptr(...)`
+     - 新增私有默认构造函数，方便测试构造最小化对象
+
+2. 为 `module_gint` 新增独立测试目录并接入构建
+   - 文件：
+     - `source/source_lcao/module_gint/CMakeLists.txt`
+     - `source/source_lcao/module_gint/test/CMakeLists.txt`
+     - `source/source_lcao/module_gint/test/tmp_mocks.cpp`
+     - `source/source_lcao/module_gint/test/test_gint_common.cpp`
+     - `source/source_lcao/module_gint/test/test_gint_precision.cpp`
+   - 覆盖点：
+     - `get_hr<float>()` / `get_hr<double>()` 访问正确性
+     - `cast_hcontainer_values(...)`
+     - `make_cast_hcontainer(...)`
+     - `transfer_dm_2d_to_gint<float, double>(...)`
+     - `ScopedExecConfig` 的作用域覆盖与恢复逻辑
+
+3. 为主 SCF 精度调度器新增运行期强制覆盖能力
+   - 文件：
+     - `source/source_estate/module_charge/gint_precision_controller.h`
+     - `source/source_estate/module_charge/gint_precision_controller.cpp`
+     - `source/source_estate/test/CMakeLists.txt`
+     - `source/source_estate/test/gint_precision_controller_test.cpp`
+   - 新增环境变量：
+     - `ABACUS_GINT_FORCE_CPU_REAL=fp32`
+     - `ABACUS_GINT_FORCE_CPU_REAL=fp64`
+     - `ABACUS_GINT_FORCE_CPU_REAL=auto` 或未设置
+   - 行为：
+     - `reset_for_new_scf()` 会读取运行期覆盖配置
+     - 若启用强制模式，`update_after_iteration(...)` 不再按 `drho` 自动切换
+     - 这样阶段 E 的对照测试可以不改输入文件、直接在运行期切换 `module_gint` CPU 内部精度
+
+4. 修复 `make_cast_hcontainer(...)` 串行分支的真实缺陷
+   - 文件：
+     - `source/source_lcao/module_gint/gint_common.cpp`
+   - 问题：
+     - 原串行路径错误调用了 `dst.insert_ijrs(&ijr_info)`，这个重载依赖并行分发信息，适用于 `paraV != nullptr` 的场景
+   - 修复：
+     - 在串行分支中按 `src` 的 atom-pair / `R` 索引重建目标 `HContainer<Tout>` 拓扑，再执行 `allocate()` 与数值 cast
+   - 影响：
+     - 这是阶段 E 测试过程中发现并修掉的产品代码问题，不只是测试支撑改动
+
+### 对后续阶段的意义
+
+- 阶段 E 之后，`module_gint` 单精度链路不再只依赖集成用例验证，已经具备针对核心转换逻辑和精度上下文的独立单元测试。
+- `ABACUS_GINT_FORCE_CPU_REAL` 让后续阶段可以快速对比：
+  - 全 `fp32`
+  - 收尾 `fp64`
+  - 全 `fp64`
+  三种模式，而无需继续扩大接口侵入面。
+- 串行 `make_cast_hcontainer(...)` 的修复降低了后续在单元测试、非并行路径或更小型 case 上踩隐蔽 bug 的风险。
+
+### 验证记录
+
+1. 主构建
+   - 命令：`../build.sh build_phase_e`
+   - 结果：成功生成 `build_phase_e`
+
+2. 主程序编译
+   - 命令：`cmake --build build_phase_e -j14`
+   - 后续在修复 `gint_common.cpp` 后又执行：
+     - `cmake --build build_phase_e -j14 --target abacus_2g`
+   - 结果：成功，最终产物为 `build_phase_e/abacus_2g`
+
+3. 单元测试构建目录
+   - 命令：
+     - `../build.sh build_phase_e_ut`
+     - `cmake -S . -B build_phase_e_ut -DBUILD_TESTING=ON`
+   - 结果：成功生成 `build_phase_e_ut`
+
+4. 阶段 E 相关测试目标编译
+   - 命令：
+     - `cmake --build build_phase_e_ut -j14 --target MODULE_LCAO_gint_common_test MODULE_LCAO_gint_precision_test MODULE_ESTATE_gint_precision_controller`
+   - 结果：成功
+
+5. 阶段 E 相关单元测试
+   - 命令：
+     - `ctest --output-on-failure -R "MODULE_LCAO_gint_common_test|MODULE_LCAO_gint_precision_test|MODULE_ESTATE_gint_precision_controller"`
+   - 结果：
+     - `MODULE_ESTATE_gint_precision_controller` 通过
+     - `MODULE_LCAO_gint_common_test` 通过
+     - `MODULE_LCAO_gint_precision_test` 通过
+
+6. 默认混合策略集成运行
+   - 目录：`tests/performance/P101_si32_lcao`
+   - 命令：`OMP_NUM_THREADS=7 mpirun -n 2 --bind-to socket /home/dzc/abacus/abacus-mix/build_phase_e/abacus_2g`
+   - 结果：程序正常结束，退出码为 0
+   - `catch_properties.sh` 抽取：
+     - `etotref -3403.2017700426463307`
+     - `etotperatomref -106.3500553138`
+     - `totalforceref 2.961504`
+     - `totalstressref 469.743372`
+     - `totaltimeref` 为空
+   - 运行日志观测：
+     - `Gint cal_gint_vl`：`1.69 s / 9 calls / 0.19 s avg`
+     - `Gint cal_gint_rho`：`1.72 s / 9 calls / 0.19 s avg`
+     - `LCAO_domain dm2rho`：`1.83 s / 9 calls / 0.20 s avg`
+
+7. 强制 `fp32` 集成运行
+   - 命令：`ABACUS_GINT_FORCE_CPU_REAL=fp32 OMP_NUM_THREADS=7 mpirun -n 2 --bind-to socket /home/dzc/abacus/abacus-mix/build_phase_e/abacus_2g`
+   - 结果：程序正常结束，退出码为 0
+   - `catch_properties.sh` 抽取：
+     - `etotref -3403.2017700426476949`
+     - `etotperatomref -106.3500553138`
+     - `totalforceref 2.961504`
+     - `totalstressref 469.743372`
+     - `totaltimeref` 为空
+   - 运行日志观测：
+     - `Gint cal_gint_vl`：`1.69 s / 9 calls / 0.19 s avg`
+     - `Gint cal_gint_rho`：`1.72 s / 9 calls / 0.19 s avg`
+     - `LCAO_domain dm2rho`：`1.78 s / 9 calls / 0.20 s avg`
+
+8. 强制 `fp64` 集成运行
+   - 命令：`ABACUS_GINT_FORCE_CPU_REAL=fp64 OMP_NUM_THREADS=7 mpirun -n 2 --bind-to socket /home/dzc/abacus/abacus-mix/build_phase_e/abacus_2g`
+   - 结果：程序正常结束，退出码为 0
+   - `catch_properties.sh` 抽取：
+     - `etotref -3403.2017700426467854`
+     - `etotperatomref -106.3500553138`
+     - `totalforceref 2.961504`
+     - `totalstressref 469.743372`
+     - `totaltimeref` 为空
+   - 运行日志观测：
+     - `Gint cal_gint_vl`：`1.70 s / 9 calls / 0.19 s avg`
+     - `Gint cal_gint_rho`：`1.72 s / 9 calls / 0.19 s avg`
+     - `LCAO_domain dm2rho`：`1.78 s / 9 calls / 0.20 s avg`
+
+### 重要观察
+
+- 默认混合策略、强制 `fp32`、强制 `fp64` 三种模式的总能差异约在 `1e-12 eV` 量级；这说明当前 `P101_si32_lcao` 用例下，阶段 B/C/D 的单精度路径在最终总能上与全双精度高度接近。
+- 从 `catch_properties.sh` 可见，三种模式下抽取到的 `totalforceref` 和 `totalstressref` 完全一致，至少在当前脚本保留的小数精度下没有可见差异。
+- 这次对比没有观察到明确的性能收益：
+  - `cal_gint_vl` 与 `cal_gint_rho` 基本都稳定在 `1.69-1.72 s`
+  - `dm2rho` 也基本在 `1.78-1.83 s`
+  - 这与阶段 E 预期一致，说明本算例的热点可能仍被 `set_phi`、周边调度或转换开销主导
+- `catch_properties.sh` 在当前环境下依旧没有提取到 `totaltimeref`；这仍是测试脚本/环境观测项，而不是阶段 E 引入的新问题。
