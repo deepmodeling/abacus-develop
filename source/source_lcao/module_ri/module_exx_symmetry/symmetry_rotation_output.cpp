@@ -3,7 +3,7 @@ namespace ModuleSymmetry
 {
     std::string mat3_fmt(const ModuleBase::Matrix3& m)
     {
-        auto s = [](auto x) { return std::to_string(x); };
+        auto s = [](double x) { return std::to_string(x); };
         return s(m.e11) + " " + s(m.e12) + " " + s(m.e13) + "\n" +
                s(m.e21) + " " + s(m.e22) + " " + s(m.e23) + "\n" +
                s(m.e31) + " " + s(m.e32) + " " + s(m.e33);
