@@ -2,7 +2,6 @@
 
 #include "source_base/name_angular.h"
 #include "source_base/tool_quit.h"
-#include <stdexcept>
 
 CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,
                      const std::vector<int>& atomCounts_in,
@@ -185,7 +184,7 @@ int CellIndex::iw2l(int iat, int iw)
     {
         ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2l", "unreachable code reached");
 }
 
 int CellIndex::iw2z(int iat, int iw)
@@ -208,9 +207,9 @@ int CellIndex::iw2z(int iat, int iw)
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2z", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2z", "unreachable code reached");
 }
 
 int CellIndex::iw2m(int iat, int iw)
@@ -233,9 +232,9 @@ int CellIndex::iw2m(int iat, int iw)
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2m", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2m", "unreachable code reached");
 }
 
 bool CellIndex::check_nspin(int nspin)
