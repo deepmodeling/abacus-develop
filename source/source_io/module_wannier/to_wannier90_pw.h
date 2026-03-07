@@ -13,6 +13,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/matrix.h"
+#include "source_base/tool_quit.h"
 #include "source_base/matrix3.h"
 #include "source_cell/klist.h"
 #include "source_lcao/wavefunc_in_pw.h"
@@ -50,7 +51,7 @@ class toWannier90_PW : public toWannier90
       const psi::Psi<double>* psi
     )
     {
-      throw std::logic_error("The wave function of toWannier90_PW is generally a std::complex<double> type.");
+      ModuleBase::WARNING_QUIT("toWannier90_PW", "The wave function of toWannier90_PW is generally a std::complex<double> type.");
     }
 
     void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);

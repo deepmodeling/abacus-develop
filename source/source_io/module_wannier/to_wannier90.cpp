@@ -5,6 +5,7 @@
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
+#include "source_base/tool_quit.h"
 
 toWannier90::toWannier90()
 {
@@ -425,8 +426,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             }
             else
             {
-                throw std::runtime_error("numkpt_nnkp uninitialized in " + std::string(__FILE__)
-                                         + " line " + std::to_string(__LINE__));
+                ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "numkpt_nnkp uninitialized, nspin must be 1 or 2");
             }
 
             for (int ik = 0; ik < numkpt_nnkp; ik++)

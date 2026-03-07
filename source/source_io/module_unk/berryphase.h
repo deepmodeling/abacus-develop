@@ -8,6 +8,7 @@
 #include "source_cell/klist.h"
 #include "source_psi/psi.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_base/tool_quit.h"
 
 class berryphase
 {
@@ -69,7 +70,7 @@ class berryphase
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv)
     {
-        throw std::logic_error("berry phase supports only multi-k");
+        ModuleBase::WARNING_QUIT("berryphase", "berry phase supports only multi-k");
     };
     void Macroscopic_polarization(const UnitCell& ucell,
                                   const int npwx,

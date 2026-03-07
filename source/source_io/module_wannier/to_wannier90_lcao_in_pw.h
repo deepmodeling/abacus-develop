@@ -9,6 +9,7 @@
 #include "source_base/matrix3.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
@@ -61,7 +62,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
                    const psi::Psi<double>* psi,
                    const Parallel_Orbitals* pv)
     {
-        throw std::logic_error("The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
+        ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW", "The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
     }
 
   protected:
