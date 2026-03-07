@@ -20,8 +20,8 @@
 #include <xc.h>
 #include <iostream>
 #include <vector>
-#include <stdexcept>
 #include <unistd.h>
+#include "source_base/tool_quit.h"
 
 void ModuleIO::write_libxc_r(
 	const int order,
@@ -116,10 +116,7 @@ void ModuleIO::write_libxc_r(
 		case 1:		vrho  .resize( nrxx * nspin            );
 		case 0:		exc   .resize( nrxx                    );
 					break;
-		default: throw std::domain_error(
-					"order =" + std::to_string(order) +
-					" unfinished in " + std::string(__FILE__) +
-					" line " + std::to_string(__LINE__));
+		default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported (must be 0-4)");
 					break;
 	}
 	if(is_gga)
@@ -137,10 +134,7 @@ void ModuleIO::write_libxc_r(
 					v2sigma2    .resize( nrxx * ((1==nspin)?1:6)  );
 			case 1:		vsigma      .resize( nrxx * ((1==nspin)?1:3)  );
 			case 0:		break;
-			default: throw std::domain_error(
-					"order =" + std::to_string(order) +
-					" unfinished in " + std::string(__FILE__) +
-					" line " + std::to_string(__LINE__));
+			default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported for GGA (must be 0-4)");
 						break;
 		}
 	}
@@ -173,11 +167,8 @@ void ModuleIO::write_libxc_r(
 								break;
 					case 0:	xc_lda_exc    ( &func, nrxx, rho.data(), exc.data() );
 								break;
-					default: throw std::domain_error(
-						"order =" + std::to_string(order) +
-						" unfinished in " + std::string(__FILE__) +
-						" line " + std::to_string(__LINE__));
-								break;
+					default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported for LDA (must be 0-4)");
+							break;
 				}
 				break;
 			}
@@ -205,21 +196,14 @@ void ModuleIO::write_libxc_r(
 						break;
 					case 0:	xc_gga_exc ( &func, nrxx, rho.data(), sigma.data(), exc.data() );
 						break;
-					default: throw std::domain_error(
-						"order =" + std::to_string(order) +
-						" unfinished in " + std::string(__FILE__) +
-						" line " + std::to_string(__LINE__));
+					default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported for GGA (must be 0-4)");
 						break;
 				}
 				break;
 			}
 			default:
-			{
-				throw std::domain_error(
-				"func.info->family =" + std::to_string(func.info->family) +
-				" unfinished in " + std::string(__FILE__) +
-				" line " + std::to_string(__LINE__));
-				break;
+			ModuleBase::WARNING_QUIT("write_libxc_r", "func.info->family =" + std::to_string(func.info->family) + " not supported");
+			break;
 			}
 		} // end switch( func.info->family )
 	} // end for( xc_func_type &func : funcs )
@@ -258,11 +242,7 @@ void ModuleIO::write_libxc_r(
 			pw_rhod.nz);
 	  #else
 		if(nspin!=1)
-		{ throw std::invalid_argument(
-			"nspin=" + std::to_string(nspin) +
-			" is invalid for ModuleIO::write_cube_core without MPI. see " +
-			std::string(__FILE__) + " line " +
-			std::to_string(__LINE__)); 
+		{ ModuleBase::WARNING_QUIT("write_libxc_r", "nspin=" + std::to_string(nspin) + " is invalid for ModuleIO::write_cube_core without MPI");
 		}
 		ModuleIO::write_cube_core(
 			ofs,
@@ -294,10 +274,7 @@ void ModuleIO::write_libxc_r(
 		case 1:	write_data( "vrho"  , vrho  , nspin );
 		case 0:	write_data( "exc"   , exc   , 1 );
 			break;
-		default: throw std::domain_error(
-				"order =" + std::to_string(order) +
-				" unfinished in " + std::string(__FILE__) +
-				" line " + std::to_string(__LINE__));
+		default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported (must be 0-4)");
 				break;
 	}
 	if(is_gga)
@@ -315,10 +292,7 @@ void ModuleIO::write_libxc_r(
 				write_data( "v2sigma2"    , v2sigma2    , (1==nspin)?1:6  );
 			case 1:	write_data( "vsigma"      , vsigma      , (1==nspin)?1:3  );
 			case 0:	break;
-			default: throw std::domain_error(
-						"order =" + std::to_string(order) +
-						" unfinished in " + std::string(__FILE__) +
-						" line " + std::to_string(__LINE__));
+			default: ModuleBase::WARNING_QUIT("write_libxc_r", "order =" + std::to_string(order) + " not supported for GGA (must be 0-4)");
 						break;
 		}
 	}
