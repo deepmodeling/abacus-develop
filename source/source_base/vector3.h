@@ -389,8 +389,7 @@ template <class T> inline bool operator!=(const Vector3<T> &u, const Vector3<T> 
 // whether u == v
 template <class T> inline bool operator==(const Vector3<T> &u, const Vector3<T> &v)
 {
-    const T eps = 1e-15;
-    if (std::abs(u.x - v.x) < eps && std::abs(u.y - v.y) < eps && std::abs(u.z - v.z) < eps)
+    if (u.x == v.x && u.y == v.y && u.z == v.z)
         return true;
     return false;
 }
