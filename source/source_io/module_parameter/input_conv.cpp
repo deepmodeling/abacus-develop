@@ -2,7 +2,6 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/tool_quit.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
@@ -399,7 +398,7 @@ void Input_Conv::Convert()
             }
             else
             {
-                ModuleBase::WARNING_QUIT("input_conv", "Invalid exx_hybrid_alpha type");
+                throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
             }
         }
         if(!erfc_alpha.empty())

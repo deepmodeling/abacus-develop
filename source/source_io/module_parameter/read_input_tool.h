@@ -1,9 +1,9 @@
 #include <string>
 #include <vector>
+#include <stdexcept>
 #ifdef __MPI
 #include "source_base/parallel_common.h"
 #endif
-#include "source_base/tool_quit.h"
 
 #define strvalue item.str_values[0]
 #define intvalue std::stoi(item.str_values[0])
@@ -200,7 +200,7 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         // If more than one '*' found, output an error message
         else
         {
-            ModuleBase::WARNING_QUIT("split_expr", "Invalid expression: " + expr + " - More than one '*' found.");
+            throw std::runtime_error("Invalid expression: " + expr + " - More than one '*' found.");
         }
     }
 }
