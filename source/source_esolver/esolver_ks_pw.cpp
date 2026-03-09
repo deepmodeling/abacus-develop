@@ -28,6 +28,7 @@
 #include "source_io/module_ctrl/ctrl_output_pw.h" // mohan add 20250927
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_estate/update_pot.h" // mohan add 20251016
+#include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
@@ -119,17 +120,10 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ESolver_KS<T, Device>::before_scf(ucell, istep);
 
     //! Init variables (once the cell has changed)
+    pw::update_cell_pw(ucell, this->ppcell, this->kv, this->pw_wfc, PARAM.inp);
+
     if (ucell.cell_parameter_updated)
     {
-        this->ppcell.rescale_vnl(ucell.omega);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-
-        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz);
-
-        this->pw_wfc->initparameters(false, PARAM.inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
-
-        this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
-
         this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
 
