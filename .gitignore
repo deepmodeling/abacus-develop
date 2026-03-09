@@ -26,3 +26,11 @@ abacus.json
 toolchain/install/
 toolchain/abacus_env.sh
 .trae
+Agent.md
+compile_commands.json
+reports/
+tests/performance/.tmp_gint_profile/
+tests/performance/P103_mixprof_fp32/
+tests/performance/P103_mixprof_fp64/
+tests/performance/P103_profile_base/
+tests/performance/P103_profile_mix_fp32/

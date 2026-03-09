@@ -48,7 +48,7 @@ class ScopedEnvVar
 };
 }
 
-TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64AfterTwoQualifiedIterations)
+TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSmallEnough)
 {
     ScopedEnvVar env_guard("ABACUS_GINT_FORCE_CPU_REAL", nullptr);
     GintPrecisionController controller;
@@ -56,10 +56,7 @@ TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64AfterTwoQualifiedIterati
     controller.reset_for_new_scf();
     EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
 
-    controller.update_after_iteration(3, 9.0e-5, 1.0e-6, false, false);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
-
-    controller.update_after_iteration(4, 8.0e-5, 1.0e-6, false, false);
+    controller.update_after_iteration(9.0e-5, 1.0e-7);
     EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
 }
 
@@ -70,7 +67,7 @@ TEST(GintPrecisionControllerTest, RuntimeOverrideCanForceFp32OrFp64)
         GintPrecisionController controller;
         controller.reset_for_new_scf();
         EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
-        controller.update_after_iteration(4, 9.0e-5, 1.0e-6, false, false);
+        controller.update_after_iteration(9.0e-5, 1.0e-6);
         EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
     }
 
@@ -79,8 +76,8 @@ TEST(GintPrecisionControllerTest, RuntimeOverrideCanForceFp32OrFp64)
         GintPrecisionController controller;
         controller.reset_for_new_scf();
         EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
-        controller.update_after_iteration(3, 1.0e-4, 1.0e-6, false, false);
-        controller.update_after_iteration(4, 9.0e-5, 1.0e-6, false, false);
+        controller.update_after_iteration(1.0e-4, 1.0e-6);
+        controller.update_after_iteration(9.0e-5, 1.0e-6);
         EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
     }
 }

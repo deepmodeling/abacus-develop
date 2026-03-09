@@ -9,7 +9,7 @@ symmetry          1
 #Parameters (2.Iteration)
 ecutwfc           100
 scf_thr           1e-6
-scf_nmax          100
+scf_nmax          2
 cal_force         1
 cal_stress        1
 #Parameters (3.Basis)
@@ -23,3 +23,4 @@ smearing_sigma    0.002
 mixing_type       broyden
 mixing_beta       0.3
 ks_solver         scalapack_gvx
+device cpu

@@ -10,11 +10,7 @@ class GintPrecisionController
 
     void reset_for_new_scf();
 
-    void update_after_iteration(int iter,
-                                double drho,
-                                double scf_thr,
-                                bool conv_esolver,
-                                bool is_restart_step);
+    void update_after_iteration(double drho, double scf_thr);
 
     ModuleGint::GintExecConfig current_config() const;
 
@@ -24,7 +20,6 @@ class GintPrecisionController
     ModuleGint::GintExecConfig current_cfg_{
         ModuleGint::GintRealPrecision::fp32
     };
-    int qualified_small_drho_iters_ = 0;
     bool locked_fp64_ = false;
     bool force_precision_enabled_ = false;
     ModuleGint::GintRealPrecision forced_precision_ = ModuleGint::GintRealPrecision::fp32;

@@ -452,12 +452,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
     if (PARAM.inp.calculation == "scf")
     {
-        this->gint_precision_controller_.update_after_iteration(
-            iter,
-            this->drho,
-            this->scf_thr,
-            conv_esolver,
-            is_restart_step);
+        this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
