@@ -195,18 +195,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-	if (frozen.x == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.y == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.z == 0)
-	{
-		++frozen_freedom;
-	}
+    if (frozen.x == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.y == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.z == 0)
+    {
+        ++frozen_freedom;
+    }
 
     if (unit_in.init_vel)
     {

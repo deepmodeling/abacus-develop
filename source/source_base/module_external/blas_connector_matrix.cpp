@@ -506,6 +506,22 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
+#ifdef __DSP
+    else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+        mtfunc::sgemv_mth_(&trans,
+                          &m,
+                          &n,
+                          &alpha,
+                          A,
+                          &lda,
+                          X,
+                          &incx,
+                          &beta,
+                          Y,
+                          &incy,
+                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    }
+#endif
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
@@ -524,6 +540,22 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
+#ifdef __DSP
+    else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+        mtfunc::dgemv_mth_(&trans,
+                          &m,
+                          &n,
+                          &alpha,
+                          A,
+                          &lda,
+                          X,
+                          &incx,
+                          &beta,
+                          Y,
+                          &incy,
+                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    }
+#endif
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
@@ -542,6 +574,22 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	cgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
+#ifdef __DSP
+    else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+        mtfunc::cgemv_mth_(&trans,
+                          &m,
+                          &n,
+                          &alpha,
+                          A,
+                          &lda,
+                          X,
+                          &incx,
+                          &beta,
+                          Y,
+                          &incy,
+                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    }
+#endif
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cuFloatComplex alpha_cu = make_cuFloatComplex(alpha.real(), alpha.imag());
@@ -562,6 +610,22 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	zgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
+#ifdef __DSP
+    else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+        mtfunc::zgemv_mth_(&trans,
+                          &m,
+                          &n,
+                          &alpha,
+                          A,
+                          &lda,
+                          X,
+                          &incx,
+                          &beta,
+                          Y,
+                          &incy,
+                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    }
+#endif
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cuDoubleComplex alpha_cu = make_cuDoubleComplex(alpha.real(), alpha.imag());

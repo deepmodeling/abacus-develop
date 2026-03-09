@@ -94,27 +94,48 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             module_rt::Matrix_g<std::complex<double>> psi_g;
             module_rt::Matrix_g<std::complex<double>> psi_laststep_g;
 
+            // Prepare host pointers for psi and psi_laststep
+            std::complex<double>* p_psi_host = nullptr;
+            std::complex<double>* p_psi_last_host = nullptr;
+
             if (use_lapack)
             {
-                // Need to gather the psi to the root process on CPU
-                // H_laststep and S_laststep are already gathered in esolver_ks_lcao_tddft.cpp
 #ifdef __MPI
-                // Access the rank of the calling process in the communicator
                 int myid = 0;
                 const int root_proc = 0;
+                int num_procs = 1;
                 MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+                MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                // Gather psi to the root process
-                gatherPsi(myid, root_proc, psi[0].get_pointer(), para_orb, psi_g);
-                gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), para_orb, psi_laststep_g);
+                if (num_procs == 1)
+                {
+                    // Single process: directly point to local data without gather
+                    p_psi_host = psi[0].get_pointer();
+                    p_psi_last_host = psi_laststep[0].get_pointer();
+                }
+                else
+                {
+                    // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
+                    gatherPsi(myid, root_proc, psi[0].get_pointer(), para_orb, psi_g);
+                    gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), para_orb, psi_laststep_g);
 
-                // Syncronize data from CPU to Device
-                syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
-                                         psi_g.p.get(),
-                                         len_psi_k_1 * len_psi_k_2);
-                syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
-                                         psi_laststep_g.p.get(),
-                                         len_psi_k_1 * len_psi_k_2);
+                    if (myid == root_proc)
+                    {
+                        p_psi_host = psi_g.p.get();
+                        p_psi_last_host = psi_laststep_g.p.get();
+                    }
+                }
+
+                // Only the root process (myid == 0) performs the copy
+                if (myid == root_proc)
+                {
+                    syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
+                                             p_psi_host,
+                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
+                                             p_psi_last_host,
+                                             len_psi_k_1 * len_psi_k_2);
+                }
 #endif
             }
             else
@@ -157,17 +178,27 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             if (use_lapack)
             {
 #ifdef __MPI
-                // Syncronize data from Device to CPU
-                syncmem_complex_d2h_op()(psi_g.p.get(),
-                                         psi_k_tensor.data<std::complex<double>>(),
-                                         len_psi_k_1 * len_psi_k_2);
-                syncmem_complex_d2h_op()(psi_laststep_g.p.get(),
-                                         psi_k_laststep_tensor.data<std::complex<double>>(),
-                                         len_psi_k_1 * len_psi_k_2);
+                int myid = 0;
+                int num_procs = 1;
+                MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+                MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                // Distribute psi to all processes
-                distributePsi(para_orb, psi[0].get_pointer(), psi_g);
-                distributePsi(para_orb, psi_laststep[0].get_pointer(), psi_laststep_g);
+                if (myid == 0)
+                {
+                    syncmem_complex_d2h_op()(p_psi_host,
+                                             psi_k_tensor.data<std::complex<double>>(),
+                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_d2h_op()(p_psi_last_host,
+                                             psi_k_laststep_tensor.data<std::complex<double>>(),
+                                             len_psi_k_1 * len_psi_k_2);
+                }
+
+                // If it's multi-process, distribute back; if it's single-process, the data is already in psi[0]
+                if (num_procs > 1)
+                {
+                    distributePsi(para_orb, psi[0].get_pointer(), psi_g);
+                    distributePsi(para_orb, psi_laststep[0].get_pointer(), psi_laststep_g);
+                }
 #endif
             }
             else

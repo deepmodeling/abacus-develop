@@ -155,83 +155,92 @@ void evolve_psi_tensor(const int nband,
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
-    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+    int myid = 0;
+    int num_procs = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    const int root_proc = 0;
 
-    // Create Tensor objects for temporary data and sync from host to device
-    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
-    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
-    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
-    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+    std::complex<double>* h_src = nullptr;
+    std::complex<double>* s_src = nullptr;
+
+    module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g;
 
     if (use_lapack)
     {
-        // Need to gather H and S matrix to root process here
-        int myid = 0;
-        int num_procs = 1;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-        MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-
-        module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
-
-        // Collect H matrix
-        module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
-        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
-        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
-
-        // Collect S matrix
-        module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
-        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat_g.p.get(), len_HS);
+        if (num_procs == 1)
+        {
+            h_src = h_mat.p;
+            s_src = s_mat.p;
+        }
+        else
+        {
+            module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
+            module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
+            if (myid == root_proc)
+            {
+                h_src = h_mat_g.p.get();
+                s_src = s_mat_g.p.get();
+            }
+        }
     }
     else
     {
-        // Original code
-        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat.p, len_HS);
-        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat.p, len_HS);
-        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat.p, len_HS);
+        h_src = h_mat.p;
+        s_src = s_mat.p;
     }
 
-    ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
 
-    ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
-    U_operator.zero();
+    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
-    int myid = 0;
-    int root_proc = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    if (s_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
+        {
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+        }
+    }
 
-    // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
-    /// @brief compute H(t+dt/2)
-    /// @input H_laststep, Htmp, print_matrix
-    /// @output Htmp
+    if (h_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
+        {
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_src, len_HS);
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+        }
+    }
+
+    // (1) Compute H(t+dt/2)
     if (propagator != 2)
     {
         if (!use_lapack)
         {
             half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
         }
-        else
+        else if (myid == root_proc)
         {
-            if (myid == root_proc)
-            {
-                half_Hmatrix_tensor_lapack<Device>(pv,
-                                                   nband,
-                                                   nlocal,
-                                                   Htmp,
-                                                   Stmp,
-                                                   H_laststep,
-                                                   S_laststep,
-                                                   ofs_running,
-                                                   print_matrix);
-            }
+            half_Hmatrix_tensor_lapack<Device>(pv,
+                                               nband,
+                                               nlocal,
+                                               Htmp,
+                                               Stmp,
+                                               H_laststep,
+                                               S_laststep,
+                                               ofs_running,
+                                               print_matrix);
         }
     }
 
-    // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+    U_operator.zero();
 
-    /// @brief compute U_operator
-    /// @input Stmp, Htmp, print_matrix
-    /// @output U_operator
+    // (2) Compute U_operator
     Propagator prop(propagator, pv, PARAM.inp.td_dt);
     prop.compute_propagator_tensor<Device>(nlocal,
                                            Stmp,
@@ -242,55 +251,47 @@ void evolve_psi_tensor(const int nband,
                                            print_matrix,
                                            use_lapack);
 
-    // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief apply U_operator to the wave function of the previous step for new wave function
-    /// @input U_operator, psi_k_laststep, print_matrix
-    /// @output psi_k
+    // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)
     {
         upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
     }
-    else
+    else if (myid == root_proc)
     {
-        if (myid == root_proc)
-        {
-            upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
-        }
+        upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
     }
 
-    // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief normalize psi_k
-    /// @input Stmp, psi_not_norm, psi_k, print_matrix
-    /// @output psi_k
+    // (4) Normalize psi_k
     if (!use_lapack)
     {
         norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
     }
-    else
+    else if (myid == root_proc)
     {
-        if (myid == root_proc)
+        norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+    }
+
+    // (5) Compute ekb
+    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+
+    // Resync H matrix
+    if (h_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
         {
-            norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
+            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
         }
     }
 
-    // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute ekb
-    /// @input Htmp, psi_k
-    /// @output ekb
     if (!use_lapack)
     {
         compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
     }
-    else
+    else if (myid == root_proc)
     {
-        if (myid == root_proc)
-        {
-            compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
-        }
+        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
     }
 #endif // __MPI
 
