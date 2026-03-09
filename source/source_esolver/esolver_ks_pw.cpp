@@ -134,17 +134,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
 
-    //! Exx calculations
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" 
-        || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
-        {
-            auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-            hamilt_pw->set_exx_helper(exx_helper);
-            exx_helper.set_psi(this->stp.psi_t);
-        }
-    }
+    //! Setup EXX helper for Hamiltonian and psi
+    exx_helper.before_scf(this->p_hamilt, this->stp.psi_t, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 }

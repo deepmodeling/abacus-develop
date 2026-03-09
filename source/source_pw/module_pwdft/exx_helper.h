@@ -17,6 +17,19 @@ struct Exx_Helper
 
     void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg);
 
+    /**
+     * @brief Setup EXX helper before SCF iteration.
+     *
+     * This function sets up the EXX helper for the Hamiltonian and psi
+     * before each SCF iteration. It checks if the calculation type and
+     * EXX settings are appropriate.
+     *
+     * @param p_hamilt Pointer to the Hamiltonian object (void* to avoid circular dependency).
+     * @param psi Pointer to the wave function object.
+     * @param inp The input parameters.
+     */
+    void before_scf(void* p_hamilt, psi::Psi<T, Device>* psi, const Input_para& inp);
+
     void set_firstiter(bool flag = true) { first_iter = flag; }
     void set_wg(const ModuleBase::matrix *wg_) { wg = wg_; }
     void set_psi(psi::Psi<T, Device> *psi_);

@@ -2,6 +2,7 @@
 #include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+#include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
 
 template <typename T, typename Device>
 void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg)
@@ -24,6 +25,30 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
     }
 
     this->set_wg(&wg);
+}
+
+template <typename T, typename Device>
+void Exx_Helper<T, Device>::before_scf(void* p_hamilt, psi::Psi<T, Device>* psi, const Input_para& inp)
+{
+    /// Return if not a valid calculation type
+    if (inp.calculation != "scf" && inp.calculation != "relax"
+        && inp.calculation != "cell-relax" && inp.calculation != "md")
+    {
+        return;
+    }
+
+    /// Return if EXX is not enabled or not PW basis
+    if (!GlobalC::exx_info.info_global.cal_exx || inp.basis_type != "pw")
+    {
+        return;
+    }
+
+    /// Set EXX helper to Hamiltonian
+    auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(p_hamilt);
+    hamilt_pw->set_exx_helper(*this);
+
+    /// Set psi for EXX calculation
+    this->set_psi(psi);
 }
 
 template <typename T, typename Device>
