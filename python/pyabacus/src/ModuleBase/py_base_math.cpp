@@ -1,8 +1,8 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
-#include "source_base/math_sphbes.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_sphbes.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/spherical_bessel_transformer.h"
 
 #include "../utils/pybind_utils.h"

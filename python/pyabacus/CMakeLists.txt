@@ -70,6 +70,7 @@ include_directories(
     ${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
     ${ABACUS_SOURCE_DIR}/source_base/module_container
+    ${ABACUS_SOURCE_DIR}/source_base/module_math
     )
 
 # add basic libraries
