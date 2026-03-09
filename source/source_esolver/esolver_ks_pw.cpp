@@ -239,49 +239,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
-    // Related to EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        if (GlobalC::exx_info.info_global.separate_loop)
-        {
-            if (conv_esolver)
-            {
-                auto start = std::chrono::high_resolution_clock::now();
-                exx_helper.set_firstiter(false);
-                exx_helper.op_exx->first_iter = false;
-                double dexx = 0.0;
-                if (PARAM.inp.exx_thr_type == "energy")
-                {
-                    dexx = exx_helper.cal_exx_energy(this->stp.psi_t);
-                    exx_helper.set_psi(this->stp.psi_t);
-                    dexx -= exx_helper.cal_exx_energy(this->stp.psi_t);
-                    // std::cout << "dexx = " << dexx << std::endl;
-                }
-                bool conv_ene = std::abs(dexx) < PARAM.inp.exx_ene_thr;
-
-                conv_esolver = exx_helper.exx_after_converge(iter, conv_ene);
-                if (!conv_esolver)
-                {
-                    if (PARAM.inp.exx_thr_type != "energy")
-                    {
-                        exx_helper.set_psi(this->stp.psi_t);
-                    }
-                    auto duration = std::chrono::high_resolution_clock::now() - start;
-                    std::cout << " Setting Psi for EXX PW Inner Loop took "
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0 << "s"
-                              << std::endl;
-                    exx_helper.op_exx->first_iter = false;
-                    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-					elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
-					exx_helper.iter_inc();
-                }
-            }
-        }
-        else
-        {
-            exx_helper.set_psi(this->stp.psi_t);
-        }
-    }
+    // Handle EXX-related operations after SCF iteration
+    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.psi_t, ucell, PARAM.inp, conv_esolver, iter);
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);

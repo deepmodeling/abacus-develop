@@ -5,6 +5,9 @@
 
 #ifndef EXX_HELPER_H
 #define EXX_HELPER_H
+
+class Charge;
+
 template <typename T, typename Device>
 struct Exx_Helper
 {
@@ -29,6 +32,25 @@ struct Exx_Helper
      * @param inp The input parameters.
      */
     void before_scf(void* p_hamilt, psi::Psi<T, Device>* psi, const Input_para& inp);
+
+    /**
+     * @brief Handle EXX-related operations after SCF iteration.
+     *
+     * This function handles EXX convergence checking and potential update
+     * after each SCF iteration. It is called in iter_finish.
+     *
+     * @param p_elec Pointer to the ElecState object (void* to avoid circular dependency).
+     * @param p_charge Pointer to the Charge object.
+     * @param psi Pointer to the wave function object.
+     * @param ucell The unit cell (non-const reference for update_pot).
+     * @param inp The input parameters.
+     * @param conv_esolver Whether SCF is converged (may be modified).
+     * @param iter The current iteration number (may be modified).
+     * @return true if EXX processing was done, false otherwise.
+     */
+    bool iter_finish(void* p_elec, Charge* p_charge, psi::Psi<T, Device>* psi,
+                     UnitCell& ucell, const Input_para& inp,
+                     bool& conv_esolver, int& iter);
 
     void set_firstiter(bool flag = true) { first_iter = flag; }
     void set_wg(const ModuleBase::matrix *wg_) { wg = wg_; }
