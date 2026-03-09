@@ -28,25 +28,25 @@ class CellIndex
 
   public:
     /// @brief the total number of atoms
-    int get_nat();
+    int get_nat() const;
     /// @brief the total number of atoms of a given type
-    int get_nat(int it);
+    int get_nat(int it) const;
     /// @brief get ntype
-    int get_ntype();
+    int get_ntype() const;
     /// @brief get nw
-    int get_nw();
+    int get_nw() const;
     /// @brief get nw of a given type
-    int get_nw(int iat);
+    int get_nw(int iat) const;
     /// @brief get iwt
-    int get_iwt(int iat, int orbital_index);
+    int get_iwt(int iat, int orbital_index) const;
     /// @brief get maximum L of a given atom
-    int get_maxL(int iat);
+    int get_maxL(int iat) const;
     /// @brief  get nchi of a given atom and a give L
-    int get_nchi(int iat, int L);
+    int get_nchi(int iat, int L) const;
     /// @brief get atom label of a given atom
-    std::string get_atom_label(int iat, bool order = false);
+    std::string get_atom_label(int iat, bool order = false) const;
     /// @brief write orbital info into file
-    void write_orb_info(std::string out_dir);
+    void write_orb_info(const std::string& out_dir) const;
 
   private:
     /// atomCounts is a vector used to store the number of atoms for each type
@@ -66,15 +66,15 @@ class CellIndex
     /// check if atomCounts is set ok
     void check_atomCounts();
     /// get type of atom from total order
-    int iat2it(int iat);
+    int iat2it(int iat) const;
     /// get index of atom in the same type
-    int iat2ia(int iat);
+    int iat2ia(int iat) const;
     /// get L from iw
-    int iw2l(int iat, int iw);
+    int iw2l(int iat, int iw) const;
     /// get Z from iw
-    int iw2z(int iat, int iw);
+    int iw2z(int iat, int iw) const;
     /// get m from iw
-    int iw2m(int iat, int iw);
+    int iw2m(int iat, int iw) const;
 };
 
 #endif // CELL_INDEX_H
