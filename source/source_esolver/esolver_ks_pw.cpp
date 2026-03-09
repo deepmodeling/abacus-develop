@@ -29,6 +29,7 @@
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_estate/update_pot.h" // mohan add 20251016
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
+#include "source_pw/module_pwdft/dftu_pw.h" // mohan add 20250309
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
@@ -162,16 +163,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // 4) update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
-    {
-        // only old DFT+U method should calculate energy correction in esolver,
-        // new DFT+U method will calculate energy when evaluating the Hamiltonian
-        if (this->dftu.omc != 2)
-        {
-            this->dftu.cal_occ_pw(iter, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
-        }
-        this->dftu.output(ucell);
-    }
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp);
 }
 
 // Temporary, it should be replaced by hsolver later.
