@@ -190,15 +190,4 @@ AddTest(
   SOURCES formatter_test.cpp
 )
 
-AddTest(
-  TARGET MODULE_BASE_lebedev_laikov
-  SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../module_math/math_lebedev_laikov.cpp
-)
 
-if(ENABLE_GOOGLEBENCH)
-  AddTest(
-    TARGET MODULE_BASE_perf_sphbes
-  LIBS parameter
-    SOURCES perf_sphbes_test.cpp ../module_math/math_sphbes.cpp ../timer.cpp
-  )
-endif()

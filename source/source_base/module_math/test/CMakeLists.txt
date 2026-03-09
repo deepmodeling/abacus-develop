@@ -51,4 +51,18 @@ if(BUILD_TESTING)
         LIBS module_math
         SOURCES mymath_test.cpp
     )
+
+    # Test for spherical Bessel functions performance
+    AddTest(
+        TARGET test_perf_sphbes
+        LIBS module_math
+        SOURCES perf_sphbes_test.cpp
+    )
+
+    # Test for Lebedev-Laikov grid
+    AddTest(
+        TARGET test_lebedev_laikov
+        LIBS module_math
+        SOURCES test_lebedev_laikov.cpp
+    )
 endif()
