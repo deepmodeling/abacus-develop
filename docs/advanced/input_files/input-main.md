@@ -976,8 +976,9 @@
 ### pw_diag_nmax
 
 - **Type**: Integer
+- **Availability**: *basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg*
 - **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-- **Default**: 40
+- **Default**: 50
 
 ### pw_diag_ndim
 
@@ -1918,13 +1919,11 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Output Hamiltonian H(R) and overlap S(R) matrices in CSR format. Optional second parameter specifies output precision (default 8). For more information, please refer to hs_matrix.md.
+- **Description**: Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
 - **Default**: False [8]
 - **Unit**: Ry
-- **Output files**: `hrs1_nao.csr`, `hrs2_nao.csr` (if nspin=2), `srs1_nao.csr`
-- **Format**: Standard CSR format with UnitCell header, compatible with `out_dmr` format
 
 ### out_mat_tk
 
@@ -1938,42 +1937,42 @@
 
 ### out_mat_r
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
+- **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
 
   > Note: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Bohr
 
 ### out_mat_t
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_dh
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: 0 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_ds
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsrxs1.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_xc
@@ -1988,12 +1987,12 @@
 
 ### out_mat_xc2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital (NAO) basis*
-- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.s.
+- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on.
 
   > Note: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_l
