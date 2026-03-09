@@ -1,9 +1,9 @@
 #include "esolver_ks_lcao_tddft.h"
 
 //----------------IO-----------------
-#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_current/td_current_io.h"
+#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
@@ -425,32 +425,51 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
             // Store H and S matrices to Hk_laststep and Sk_laststep
             if (use_tensor && use_lapack)
             {
-                // Gather H and S matrices to root process
 #ifdef __MPI
                 int myid = 0;
                 int num_procs = 1;
                 MPI_Comm_rank(MPI_COMM_WORLD, &myid);
                 MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                // Global matrix structure
+                std::complex<double>* h_ptr = nullptr;
+                std::complex<double>* s_ptr = nullptr;
+
+                // Define containers for gathered data (only needed for multi-process)
                 module_rt::Matrix_g<std::complex<double>> h_mat_g;
                 module_rt::Matrix_g<std::complex<double>> s_mat_g;
 
-                // Collect H matrix
-                module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
-                BlasConnector::copy(len_HS_ik,
-                                    h_mat_g.p.get(),
-                                    1,
-                                    this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
-                                    1);
+                if (num_procs == 1)
+                {
+                    // Single process: directly point to local data without gather
+                    h_ptr = h_mat.p;
+                    s_ptr = s_mat.p;
+                }
+                else
+                {
+                    // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
+                    module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
+                    module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
+                    if (myid == 0)
+                    {
+                        h_ptr = h_mat_g.p.get();
+                        s_ptr = s_mat_g.p.get();
+                    }
+                }
 
-                // Collect S matrix
-                module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
-                BlasConnector::copy(len_HS_ik,
-                                    s_mat_g.p.get(),
-                                    1,
-                                    this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
-                                    1);
+                // Only the root process (myid == 0) performs the copy
+                if (myid == 0 && h_ptr != nullptr && s_ptr != nullptr)
+                {
+                    BlasConnector::copy(len_HS_ik,
+                                        h_ptr,
+                                        1,
+                                        this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
+                                        1);
+                    BlasConnector::copy(len_HS_ik,
+                                        s_ptr,
+                                        1,
+                                        this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
+                                        1);
+                }
 #endif
             }
             else

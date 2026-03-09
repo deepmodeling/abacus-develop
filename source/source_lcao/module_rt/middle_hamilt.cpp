@@ -180,40 +180,6 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-    if (print_matrix)
-    {
-        ct::Tensor Htmp_cpu = Htmp.to_device<ct::DEVICE_CPU>();
-        ct::Tensor H_laststep_cpu = H_laststep.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::setprecision(10);
-        ofs_running << std::endl;
-        ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Htmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Htmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << H_laststep_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << H_laststep_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
     std::complex<double> one_half = {0.5, 0.0};
 
     // Perform the operation Htmp = one_half * H_laststep + one_half * Htmp
@@ -243,25 +209,6 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                                               1,
                                                               Stmp.data<std::complex<double>>(),
                                                               1);
-
-    if (print_matrix)
-    {
-        ct::Tensor Htmp_cpu = Htmp.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::endl;
-        ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Htmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Htmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
 }
 
 // Explicit instantiation of template functions
