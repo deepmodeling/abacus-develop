@@ -64,9 +64,9 @@ For numerical atomic orbitals basis,
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-* elpa: The ELPA solver supports both CPU and GPU. By setting the device to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
-If you set ks_solver=genelpa for basis_type=pw, the program will stop with an error message:
+If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
 ``text genelpa can not be used with plane wave basis. ``
 
