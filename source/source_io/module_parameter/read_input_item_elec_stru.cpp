@@ -71,7 +71,13 @@ If you set ks_solver=genelpa for basis_type=pw, the program will stop with an er
 ``text genelpa can not be used with plane wave basis. ``
 
 Then the user has to correct the input file and restart the calculation.)";
-        item.default_value = "";
+        item.default_value = R"(
+    - PW basis: cg.
+    - LCAO basis:
+    - genelpa (if compiling option `USE_ELPA` has been set)
+    - lapack (if compiling option `ENABLE_MPI` has not been set)
+    - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+    - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
         item.availability = "";
         read_sync_string(input.ks_solver);
