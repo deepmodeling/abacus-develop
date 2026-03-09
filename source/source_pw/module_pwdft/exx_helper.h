@@ -1,6 +1,7 @@
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/op_pw_exx.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #ifndef EXX_HELPER_H
 #define EXX_HELPER_H
@@ -13,6 +14,8 @@ struct Exx_Helper
   public:
     Exx_Helper() = default;
     OperatorEXX *op_exx = nullptr;
+
+    void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg);
 
     void set_firstiter(bool flag = true) { first_iter = flag; }
     void set_wg(const ModuleBase::matrix *wg_) { wg = wg_; }

@@ -1,6 +1,30 @@
 #include "exx_helper.h"
 #include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+
+template <typename T, typename Device>
+void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg)
+{
+    if (inp.calculation != "scf" && inp.calculation != "relax" 
+        && inp.calculation != "cell-relax" && inp.calculation != "md")
+    {
+        return;
+    }
+
+    if (!GlobalC::exx_info.info_global.cal_exx)
+    {
+        return;
+    }
+
+    if (GlobalC::exx_info.info_global.separate_loop)
+    {
+        XC_Functional::set_xc_first_loop(ucell);
+        this->set_firstiter();
+    }
+
+    this->set_wg(&wg);
+}
 
 template <typename T, typename Device>
 double Exx_Helper<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_)

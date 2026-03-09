@@ -94,20 +94,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     //! Initialize exx pw
-    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
-        || inp.calculation == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx && GlobalC::exx_info.info_global.separate_loop == true)
-        {
-            XC_Functional::set_xc_first_loop(ucell);
-            exx_helper.set_firstiter();
-        }
-
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            exx_helper.set_wg(&this->pelec->wg);
-        }
-    }
+    this->exx_helper.init(ucell, inp, this->pelec->wg);
 }
 
 template <typename T, typename Device>
