@@ -1,8 +1,8 @@
 #ifndef MATH_YLMREAL_H
 #define MATH_YLMREAL_H
 
-#include "vector3.h"
-#include "matrix.h"
+#include "../vector3.h"
+#include "../matrix.h"
 
 namespace ModuleBase
 {

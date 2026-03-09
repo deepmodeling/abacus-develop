@@ -1,6 +1,6 @@
 #ifndef STO_CHE_H
 #define STO_CHE_H
-#include "source_base/math_chebyshev.h"
+#include "source_base/module_math/math_chebyshev.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 

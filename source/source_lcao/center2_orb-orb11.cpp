@@ -7,7 +7,7 @@
 
 #include "center2_orb.h"
 #include "source_base/constants.h"
-#include "source_base/math_polyint.h"
+#include "source_base/module_math/math_polyint.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/ylm.h"
 #include "source_base/array_pool.h"

@@ -1,4 +1,4 @@
-#include "../math_bspline.h"
+#include "math_bspline.h"
 #include "gtest/gtest.h"
 
 /************************************************

@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private

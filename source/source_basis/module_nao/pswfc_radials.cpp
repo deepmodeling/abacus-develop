@@ -1,6 +1,6 @@
 #include "source_basis/module_nao/pswfc_radials.h"
 
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/tool_quit.h"
 
 #include <algorithm>

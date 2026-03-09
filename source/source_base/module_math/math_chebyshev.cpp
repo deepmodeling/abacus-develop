@@ -2,9 +2,9 @@
 
 #include "module_external/blas_connector.h"
 #include "constants.h"
-#include "global_function.h"
+#include "../global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
-#include "tool_quit.h"
+#include "../tool_quit.h"
 
 #include <cassert>
 

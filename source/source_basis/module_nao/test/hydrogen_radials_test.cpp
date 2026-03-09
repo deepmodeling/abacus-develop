@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include "source_basis/module_nao/hydrogen_radials.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 
 #ifdef __MPI
 #include <mpi.h>

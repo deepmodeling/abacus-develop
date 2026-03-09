@@ -14,9 +14,12 @@
 
 #include <iostream> // For std::ostream
 #include <stdexcept> // For std::invalid_argument
+
+#ifdef USE_CUDA
 #include <cuda.h> // defines CUDA_VERSION
 #include <cuda_runtime.h>
 #include <cufft.h>
+#endif
 
 
 // NVTX header for CUDA versions prior to 12.9 vs. 12.9+
@@ -42,6 +45,7 @@
 namespace ModuleBase {
 namespace cuda_compat {
 
+#ifdef USE_CUDA
 /**
  * @brief Prints device information that was deprecated or removed in CUDA 13.0.
  *
@@ -63,6 +67,7 @@ void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop);
  * @param prop The cudaDeviceProp structure containing device properties.
  */
 void printComputeModeInfo(std::ostream& os, const cudaDeviceProp& prop);
+#endif
 
 } // namespace cuda_compat
 } // namespace ModuleBase

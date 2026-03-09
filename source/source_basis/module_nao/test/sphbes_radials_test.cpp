@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/math_sphbes.h"
+#include "source_base/module_math/math_sphbes.h"
 
 #ifdef __MPI
 #include <mpi.h>

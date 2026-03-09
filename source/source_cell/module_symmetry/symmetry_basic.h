@@ -5,7 +5,7 @@
 #ifndef SYMMETRY_BASIC_H
 #define SYMMETRY_BASIC_H
 #include "symm_other.h"
-#include "source_base/mymath.h"
+#include "source_base/module_math/mymath.h"
 #include "source_base/ylm.h"
 #include "source_base/matrix3.h"
 namespace ModuleSymmetry

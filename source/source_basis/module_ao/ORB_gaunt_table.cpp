@@ -7,7 +7,7 @@
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
 #include "source_base/constants.h"
-#include "source_base/math_ylmreal.h"
+#include "source_base/module_math/math_ylmreal.h"
 
 ORB_gaunt_table::ORB_gaunt_table(){}
 ORB_gaunt_table::~ORB_gaunt_table(){}

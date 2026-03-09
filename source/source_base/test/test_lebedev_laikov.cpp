@@ -1,4 +1,4 @@
-#include "source_base/math_lebedev_laikov.h"
+#include "source_base/module_math/math_lebedev_laikov.h"
 #include "source_base/ylm.h"
 
 #include "gtest/gtest.h"

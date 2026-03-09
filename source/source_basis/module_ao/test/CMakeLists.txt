@@ -1,10 +1,10 @@
 remove_definitions(-D__EXX)
 
 list(APPEND depend_files
- ../../../source_base/math_integral.cpp
-  ../../../source_base/math_sphbes.cpp
-  ../../../source_base/math_polyint.cpp
-  ../../../source_base/math_ylmreal.cpp
+  ../../../source_base/module_math/math_integral.cpp
+  ../../../source_base/module_math/math_sphbes.cpp
+  ../../../source_base/module_math/math_polyint.cpp
+  ../../../source_base/module_math/math_ylmreal.cpp
   ../../../source_base/ylm.cpp
   ../../../source_base/memory.cpp
   ../../../source_base/module_external/blas_connector_base.cpp

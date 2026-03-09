@@ -1,4 +1,4 @@
-#include"../math_integral.h"
+#include"math_integral.h"
 #include"gtest/gtest.h"
 
 #include<math.h>

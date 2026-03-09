@@ -1,6 +1,6 @@
 #include "source_basis/module_nao/sphbes_radials.h"
 
-#include "source_base/math_sphbes.h"
+#include "source_base/module_math/math_sphbes.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_quit.h"
 

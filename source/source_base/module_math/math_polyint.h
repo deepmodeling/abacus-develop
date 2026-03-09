@@ -1,7 +1,7 @@
 #ifndef MATH_POLYINT_H
 #define MATH_POLYINT_H
 
-#include "realarray.h"
+#include "../realarray.h"
 
 namespace ModuleBase
 {

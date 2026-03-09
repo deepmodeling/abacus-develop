@@ -1,10 +1,10 @@
 #include "to_wannier90.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_polyint.h"
-#include "source_base/math_sphbes.h"
-#include "source_base/math_ylmreal.h"
+#include "source_base/module_math/math_integral.h"
+#include "source_base/module_math/math_polyint.h"
+#include "source_base/module_math/math_sphbes.h"
+#include "source_base/module_math/math_ylmreal.h"
 
 toWannier90::toWannier90()
 {

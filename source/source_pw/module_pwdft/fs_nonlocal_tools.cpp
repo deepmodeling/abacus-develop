@@ -1,7 +1,7 @@
 #include "fs_nonlocal_tools.h"
 
-#include "source_base/math_polyint.h"
-#include "source_base/math_ylmreal.h"
+#include "source_base/module_math/math_polyint.h"
+#include "source_base/module_math/math_ylmreal.h"
 #include "source_base/memory.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"

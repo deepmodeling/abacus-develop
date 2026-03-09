@@ -2,10 +2,10 @@
 
 #include <fstream>
 // numerical algorithm support
-#include "source_base/math_integral.h" // for numerical integration
+#include "source_base/module_math/math_integral.h" // for numerical integration
 // numerical algorithm support
-#include "source_base/math_polyint.h" // for polynomial interpolation
-#include "source_base/math_ylmreal.h" // for real spherical harmonics
+#include "source_base/module_math/math_polyint.h" // for polynomial interpolation
+#include "source_base/module_math/math_ylmreal.h" // for real spherical harmonics
 // basic functions support
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"

@@ -10,7 +10,7 @@
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 
 // new
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"

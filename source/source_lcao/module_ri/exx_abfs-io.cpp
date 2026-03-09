@@ -6,7 +6,7 @@
 #include "exx_abfs-jle.h"
 #include "../../source_basis/module_ao/ORB_read.h"
 #include "../../source_base/global_function.h"
-#include "../../source_base/math_integral.h" // mohan add 2021-04-03
+#include "../../source_base/module_math/math_integral.h" // mohan add 2021-04-03
 
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::construct_abfs(

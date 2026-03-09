@@ -1,7 +1,7 @@
 #ifndef MATH_LEBEDEV_LAIKOV_H
 #define MATH_LEBEDEV_LAIKOV_H
 
-#include "vector3.h"
+#include "../vector3.h"
 #include <set>
 #include <string>
 

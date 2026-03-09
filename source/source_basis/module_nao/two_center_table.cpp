@@ -2,7 +2,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/cubic_spline.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 
 #include <algorithm>
 #include <cstring>

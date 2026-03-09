@@ -1,4 +1,4 @@
-#include "../mymath.h"
+#include "mymath.h"
 #include "gtest/gtest.h"
 #include <iostream>
 #include <algorithm>

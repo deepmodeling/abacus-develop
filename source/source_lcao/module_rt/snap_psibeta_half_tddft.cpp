@@ -1,8 +1,8 @@
 #include "snap_psibeta_half_tddft.h"
 
 #include "source_base/constants.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_polyint.h"
+#include "source_base/module_math/math_integral.h"
+#include "source_base/module_math/math_polyint.h"
 #include "source_base/timer.h"
 #include "source_base/ylm.h"
 

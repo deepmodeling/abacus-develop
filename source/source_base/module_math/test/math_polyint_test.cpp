@@ -1,4 +1,4 @@
-#include "../math_polyint.h"
+#include "math_polyint.h"
 
 #include <math.h>
 

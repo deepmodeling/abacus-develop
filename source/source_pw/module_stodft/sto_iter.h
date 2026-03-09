@@ -1,6 +1,6 @@
 #ifndef STO_ITER_H
 #define STO_ITER_H
-#include "source_base/math_chebyshev.h"
+#include "source_base/module_math/math_chebyshev.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_stodft/hamilt_sdft_pw.h"

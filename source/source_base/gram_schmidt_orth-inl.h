@@ -10,7 +10,7 @@
 
 #include "mathzone.h"
 #include "module_external/blas_connector.h"
-#include "math_integral.h" // mohan add 2021-04-03
+#include "module_math/math_integral.h" // mohan add 2021-04-03
 namespace ModuleBase
 {
 

@@ -1,7 +1,7 @@
 #include "source_basis/module_nao/two_center_table.h"
 
 #include "source_base/constants.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/spherical_bessel_transformer.h"
 
 #include "gtest/gtest.h"

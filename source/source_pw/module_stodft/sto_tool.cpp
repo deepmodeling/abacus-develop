@@ -1,6 +1,6 @@
 #include "sto_tool.h"
 
-#include "source_base/math_chebyshev.h"
+#include "source_base/module_math/math_chebyshev.h"
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"

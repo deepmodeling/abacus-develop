@@ -1,4 +1,4 @@
-#include "../math_sphbes.h"
+#include "math_sphbes.h"
 
 #include <cmath>
 #include <cstring> // Dependency for memset initialization

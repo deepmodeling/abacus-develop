@@ -1,5 +1,5 @@
 #include "symmetry.h"
-#include "source_base/mymath.h"
+#include "source_base/module_math/mymath.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
 

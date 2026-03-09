@@ -1,10 +1,10 @@
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 #include "wavefunc_in_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_sphbes.h"
-#include "source_base/math_polyint.h"
-#include "source_base/math_ylmreal.h"
+#include "source_base/module_math/math_integral.h"
+#include "source_base/module_math/math_sphbes.h"
+#include "source_base/module_math/math_polyint.h"
+#include "source_base/module_math/math_ylmreal.h"
 #include "source_pw/module_pwdft/soc.h"
 
 void Wavefunc_in_pw::make_table_q(

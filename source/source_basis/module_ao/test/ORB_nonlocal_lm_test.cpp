@@ -4,7 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include <fstream>
 #include <iomanip>
 

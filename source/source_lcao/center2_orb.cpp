@@ -1,7 +1,7 @@
 #include "center2_orb.h"
 
 #include "source_base/constants.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/mathzone_add1.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"

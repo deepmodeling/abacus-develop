@@ -25,19 +25,10 @@ add_library(
     global_function_ddotreal.cpp
     global_variable.cpp
     intarray.cpp
-    math_integral.cpp
-    math_lebedev_laikov.cpp
-    math_polyint.cpp
-    math_sphbes.cpp
-    math_erf_complex.cpp
-    math_ylmreal.cpp
-    math_bspline.cpp
-    math_chebyshev.cpp
     mathzone_add1.cpp
     matrix.cpp
     matrix3.cpp
     memory.cpp
-    mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
     para_gemm.cpp
@@ -64,15 +55,31 @@ add_library(
     module_mixing/plain_mixing.cpp
     module_mixing/pulay_mixing.cpp
     module_mixing/broyden_mixing.cpp
+    module_math/math_bspline.cpp
+    module_math/math_chebyshev.cpp
+    module_math/math_erf_complex.cpp
+    module_math/math_integral.cpp
+    module_math/math_lebedev_laikov.cpp
+    module_math/math_polyint.cpp
+    module_math/math_sphbes.cpp
+    module_math/math_ylmreal.cpp
+    module_math/mymath.cpp
     ${LIBM_SRC}
 )
 
-target_link_libraries(base PUBLIC container)
+target_link_libraries(base PUBLIC container device)
+
+target_include_directories(base
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/module_math
+)
 if (USE_DSP)
   target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a)
   target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a)
 endif()
 add_subdirectory(module_container)
+add_subdirectory(module_math)
 
 if(ENABLE_COVERAGE)
   add_coverage(base)

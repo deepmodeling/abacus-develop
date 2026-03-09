@@ -5,9 +5,9 @@
 #include "source_base/libm/libm.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/array_pool.h"
-#include "realarray.h"
-#include "timer.h"
-#include "tool_quit.h"
+#include "../realarray.h"
+#include "../timer.h"
+#include "../tool_quit.h"
 #include "ylm.h"
 
 #include <cassert>

@@ -1,7 +1,7 @@
 #include "H_TDDFT_pw.h"
 
 #include "source_base/constants.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"

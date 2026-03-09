@@ -1,4 +1,4 @@
-#include "../math_chebyshev.h"
+#include "math_chebyshev.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

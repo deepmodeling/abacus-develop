@@ -2,7 +2,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
 #include "source_base/truncated_func.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/timer.h"
 
 pseudopot_cell_vl::pseudopot_cell_vl()

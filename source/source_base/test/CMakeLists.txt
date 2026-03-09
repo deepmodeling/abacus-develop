@@ -70,24 +70,9 @@ AddTest(
   SOURCES complexmatrix_test.cpp
 )
 AddTest(
-  TARGET MODULE_BASE_integral
-  LIBS parameter 
-  SOURCES math_integral_test.cpp ../math_integral.cpp
-)
-AddTest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter 
   SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp ../memory.cpp ../global_variable.cpp
-)
-AddTest(
-  TARGET MODULE_BASE_ylmreal
-  LIBS parameter  ${math_libs} base device
-  SOURCES math_ylmreal_test.cpp ../libm/branred.cpp ../libm/sincos.cpp
-)
-AddTest(
-  TARGET MODULE_BASE_math_sphbes
-  LIBS parameter 
-  SOURCES math_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
 )
 AddTest(
   TARGET MODULE_BASE_mathzone
@@ -100,19 +85,9 @@ AddTest(
   SOURCES mathzone_add1_test.cpp
 )
 AddTest(
-  TARGET MODULE_BASE_math_polyint
-  LIBS parameter 
-  SOURCES math_polyint_test.cpp ../math_polyint.cpp ../realarray.cpp ../timer.cpp
-)
-AddTest(
   TARGET MODULE_BASE_gram_schmidt_orth
   LIBS parameter  ${math_libs} base device
   SOURCES gram_schmidt_orth_test.cpp
-)
-AddTest(
-  TARGET MODULE_BASE_math_bspline
-  LIBS parameter 
-  SOURCES math_bspline_test.cpp ../math_bspline.cpp
 )
 AddTest(
   TARGET MODULE_BASE_inverse_matrix
@@ -120,20 +95,9 @@ AddTest(
   SOURCES inverse_matrix_test.cpp 
 )
 AddTest(
-  TARGET MODULE_BASE_mymath
-  LIBS parameter 
-  SOURCES mymath_test.cpp ../mymath.cpp ../timer.cpp
-)
-AddTest(
   TARGET MODULE_BASE_container
   LIBS parameter 
   SOURCES container_operator_test.cpp ../container_operator.h
-)
-
-AddTest(
-  TARGET MODULE_BASE_math_chebyshev
-  LIBS parameter  ${math_libs} base device container
-  SOURCES math_chebyshev_test.cpp
 )
 
 AddTest(
@@ -228,13 +192,13 @@ AddTest(
 
 AddTest(
   TARGET MODULE_BASE_lebedev_laikov
-  SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
+  SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../module_math/math_lebedev_laikov.cpp
 )
 
 if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET MODULE_BASE_perf_sphbes
-  LIBS parameter 
-    SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
+  LIBS parameter
+    SOURCES perf_sphbes_test.cpp ../module_math/math_sphbes.cpp ../timer.cpp
   )
 endif()

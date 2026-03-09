@@ -1,5 +1,7 @@
 #include "cuda_compat.h"
 
+#ifdef USE_CUDA
+
 namespace ModuleBase {
 namespace cuda_compat {
 
@@ -64,3 +66,5 @@ void printComputeModeInfo(std::ostream& ofs_device, const cudaDeviceProp& device
 
 } // namespace cuda_compat
 } // namespace ModuleBase
+
+#endif

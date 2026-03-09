@@ -6,7 +6,7 @@
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"
 #include "source_base/truncated_func.h"
-#include "source_base/math_integral.h"
+#include "source_base/module_math/math_integral.h"
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"

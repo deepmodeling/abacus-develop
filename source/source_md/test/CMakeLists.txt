@@ -40,7 +40,7 @@ list(APPEND depend_files
   ../../source_base/global_variable.cpp
   ../../source_base/libm/branred.cpp
   ../../source_base/libm/sincos.cpp
-  ../../source_base/math_integral.cpp
+  ../../source_base/module_math/math_integral.cpp
   ../../source_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../source_cell/module_neighbor/sltk_atom.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp

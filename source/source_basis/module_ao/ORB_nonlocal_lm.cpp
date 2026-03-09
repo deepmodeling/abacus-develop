@@ -2,9 +2,9 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_polyint.h"
-#include "source_base/math_sphbes.h"
+#include "source_base/module_math/math_integral.h"
+#include "source_base/module_math/math_polyint.h"
+#include "source_base/module_math/math_sphbes.h"
 #include "source_base/mathzone.h"      /// use Polynomial_Interpolation_xy, Spherical_Bessel
 #include "source_base/mathzone_add1.h" /// use SplineD2
 #include "source_io/module_parameter/parameter.h"

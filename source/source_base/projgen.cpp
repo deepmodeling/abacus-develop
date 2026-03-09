@@ -7,8 +7,8 @@
 #include <numeric>
 
 #include "source_base/cubic_spline.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_sphbes.h"
+#include "source_base/module_math/math_integral.h"
+#include "source_base/module_math/math_sphbes.h"
 
 using namespace ModuleBase;
 
