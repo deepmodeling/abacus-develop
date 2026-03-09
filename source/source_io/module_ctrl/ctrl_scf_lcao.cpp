@@ -224,12 +224,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
                             out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
-
-        // nspin=2: getHR_vector() returns new'd temporary objects
-        if (PARAM.inp.nspin == 2)
-        {
-            for (auto* p : hr_vec) { delete p; }
-        }
     }
 
     //------------------------------------------------------------------

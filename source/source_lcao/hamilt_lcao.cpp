@@ -484,9 +484,9 @@ std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
     if (PARAM.inp.nspin == 2)
     {
         const int nnr = this->hRS2.size() / 2;
-        HContainer<TR>* hr_up = new HContainer<TR>(*this->hR, this->hRS2.data());
-        HContainer<TR>* hr_dn = new HContainer<TR>(*this->hR, this->hRS2.data() + nnr);
-        return {hr_up, hr_dn};
+        this->hr_spin_up_ = std::make_unique<HContainer<TR>>(*this->hR, this->hRS2.data());
+        this->hr_spin_dn_ = std::make_unique<HContainer<TR>>(*this->hR, this->hRS2.data() + nnr);
+        return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
     }
     else
     {
