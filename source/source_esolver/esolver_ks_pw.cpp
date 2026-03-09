@@ -30,6 +30,7 @@
 #include "source_estate/update_pot.h" // mohan add 20251016
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
 #include "source_pw/module_pwdft/dftu_pw.h" // mohan add 20250309
+#include "source_pw/module_pwdft/deltaspin_pw.h" // mohan add 20250309
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
@@ -191,26 +192,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    bool skip_solve = false;
-
-    if (PARAM.inp.sc_mag_switch)
-    {
-        spinconstrain::SpinConstrain<std::complex<double>>& sc
-            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-        if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
-        {
-            // optimize lambda to get target magnetic moments, but the lambda is not near target
-            sc.run_lambda_loop(iter - 1);
-            sc.set_mag_converged(true);
-            skip_solve = true;
-        }
-        else if (sc.mag_converged())
-        {
-            // optimize lambda to get target magnetic moments, but the lambda is not near target
-            sc.run_lambda_loop(iter - 1);
-            skip_solve = true;
-        }
-    }
+    bool skip_solve = pw::run_deltaspin_lambda_loop(iter - 1, this->drho, PARAM.inp);
 
     if (!skip_solve)
     {
