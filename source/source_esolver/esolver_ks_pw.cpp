@@ -293,20 +293,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // check if oscillate for delta_spin method
-    if (PARAM.inp.sc_mag_switch)
-    {
-        spinconstrain::SpinConstrain<std::complex<double>>& sc
-            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-        if (!sc.higher_mag_prec)
-        {
-            sc.higher_mag_prec = this->p_chgmix->if_scf_oscillate(iter, 
-              this->drho, PARAM.inp.sc_os_ndim, PARAM.inp.scf_os_thr);
-            if (sc.higher_mag_prec)
-            { // if oscillate, increase the precision of magnetization and do mixing_restart in next iteration
-                this->p_chgmix->mixing_restart_step = iter + 1;
-            }
-        }
-    }
+    pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);
 
     // the output quantities
     ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, 
