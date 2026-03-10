@@ -2,6 +2,7 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
+#include "source_lcao/dftu_lcao.h"
 #include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
@@ -338,15 +339,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     }
 #endif
 
-    if (PARAM.inp.dft_plus_u)
-    {
-        if (istep != 0 || iter != 1)
-        {
-            this->dftu.set_dmr(this->dmat.dm);
-        }
-        // Calculate U and J if Yukawa potential is used
-        this->dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
-    }
+    init_dftu_lcao<TK>(istep, iter, PARAM.inp, &(this->dftu), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
 
 #ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
@@ -431,26 +424,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    if (PARAM.inp.dft_plus_u)
-    {
-        // old DFT+U method calculates energy correction in esolver,
-        // new DFT+U method calculates energy in Hamiltonian
-        if (PARAM.inp.dft_plus_u == 2)
-        {
-            if (this->dftu.omc != 2)
-            {
-                dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
-                  this->p_chgmix->get_mixing_beta(), hamilt_lcao, this->dftu);
-            }
-            this->dftu.cal_energy_correction(ucell, istep);
-        }
-		this->dftu.output(ucell);
-		// use the converged occupation matrix for next MD/Relax SCF calculation
-		if (conv_esolver)
-		{
-			this->dftu.initialed_locale = true;
-		}
-	}
+    finish_dftu_lcao<TK>(iter, conv_esolver, PARAM.inp, &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao);
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
