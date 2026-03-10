@@ -705,6 +705,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     setup_pot.o\
     setup_pwrho.o\
     setup_pwwfc.o\
+    update_cell_pw.o\
+    dftu_pw.o\
+    deltaspin_pw.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
