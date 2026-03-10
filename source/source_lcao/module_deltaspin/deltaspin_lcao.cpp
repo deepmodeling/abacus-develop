@@ -24,12 +24,20 @@ void init_deltaspin_lcao(const UnitCell& ucell,
     }
     
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+#ifdef __LCAO
     sc.init_sc(inp.sc_thr, inp.nsc, inp.nsc_min, inp.alpha_trial,
                inp.sccut, inp.sc_drop_thr, ucell,
                static_cast<Parallel_Orbitals*>(pv),
                inp.nspin, kv, p_hamilt, psi,
                static_cast<elecstate::DensityMatrix<TK, double>*>(dm),
                static_cast<elecstate::ElecState*>(pelec));
+#else
+    sc.init_sc(inp.sc_thr, inp.nsc, inp.nsc_min, inp.alpha_trial,
+               inp.sccut, inp.sc_drop_thr, ucell,
+               static_cast<Parallel_Orbitals*>(pv),
+               inp.nspin, kv, p_hamilt, psi,
+               static_cast<elecstate::ElecState*>(pelec));
+#endif
 }
 
 template <typename TK>
@@ -40,8 +48,10 @@ void cal_mi_lcao_wrapper(const int iter, const Input_para& inp)
         return;
     }
     
+#ifdef __LCAO
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
     sc.cal_mi_lcao(iter);
+#endif
 }
 
 template <typename TK>
