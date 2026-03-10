@@ -190,11 +190,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 
     if (PARAM.globalv.ks_run)
     {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
     else

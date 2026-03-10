@@ -234,11 +234,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
 
-    Symmetry_rho srho;
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-    }
+    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {

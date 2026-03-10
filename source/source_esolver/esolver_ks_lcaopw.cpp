@@ -157,11 +157,7 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band

@@ -290,11 +290,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     // Symmetrize the charge density only for ground state
     if (istep <= 1)
     {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)

@@ -201,11 +201,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     }
 
     // symmetrize the charge density
-    Symmetry_rho srho;
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-    }
+    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 }
