@@ -31,7 +31,15 @@ class Gint_rho : public Gint
     std::vector<HContainer<Real>> init_dm_gint_() const;
 
     template<typename Real>
-    void cal_rho_(const std::vector<HContainer<Real>>& dm_gint_vec) const;
+    Real* get_rho_data_(int is, std::vector<std::vector<Real>>& rho_cache) const;
+
+    template<typename Real>
+    void cal_rho_(
+        const std::vector<HContainer<Real>>& dm_gint_vec,
+        const std::vector<Real*>& rho_data) const;
+
+    template<typename Real>
+    void transfer_rho_cache_(const std::vector<std::vector<Real>>& rho_cache) const;
 
     // input
     const std::vector<HContainer<double>*> dm_vec_;

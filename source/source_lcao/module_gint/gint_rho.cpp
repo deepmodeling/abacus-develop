@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <type_traits>
+
 #include "source_base/global_function.h"
 #include "gint_rho.h"
 #include "gint_common.h"
@@ -27,8 +30,15 @@ template<typename Real>
 void Gint_rho::cal_gint_impl_()
 {
     std::vector<HContainer<Real>> dm_gint_vec = init_dm_gint_<Real>();
+    std::vector<std::vector<Real>> rho_cache(nspin_);
+    std::vector<Real*> rho_data(nspin_);
+    for (int is = 0; is < nspin_; ++is)
+    {
+        rho_data[is] = get_rho_data_<Real>(is, rho_cache);
+    }
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
-    cal_rho_(dm_gint_vec);
+    cal_rho_(dm_gint_vec, rho_data);
+    transfer_rho_cache_(rho_cache);
 }
 
 template<typename Real>
@@ -43,7 +53,25 @@ std::vector<HContainer<Real>> Gint_rho::init_dm_gint_() const
 }
 
 template<typename Real>
-void Gint_rho::cal_rho_(const std::vector<HContainer<Real>>& dm_gint_vec) const
+Real* Gint_rho::get_rho_data_(int is, std::vector<std::vector<Real>>& rho_cache) const
+{
+    if constexpr (std::is_same_v<Real, double>)
+    {
+        return rho_[is];
+    }
+
+    const int local_mgrid_num = gint_info_->get_local_mgrid_num();
+    rho_cache[is].resize(local_mgrid_num);
+    std::transform(rho_[is], rho_[is] + local_mgrid_num, rho_cache[is].begin(), [](const double value) {
+        return static_cast<Real>(value);
+    });
+    return rho_cache[is].data();
+}
+
+template<typename Real>
+void Gint_rho::cal_rho_(
+    const std::vector<HContainer<Real>>& dm_gint_vec,
+    const std::vector<Real*>& rho_data) const
 {
 #pragma omp parallel
     {
@@ -54,7 +82,7 @@ void Gint_rho::cal_rho_(const std::vector<HContainer<Real>>& dm_gint_vec) const
         for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
+            if (biggrid->get_atoms().empty())
             {
                 continue;
             }
@@ -66,11 +94,28 @@ void Gint_rho::cal_rho_(const std::vector<HContainer<Real>>& dm_gint_vec) const
             for (int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_dm(phi.data(), dm_gint_vec[is], is_dm_symm_, phi_dm.data());
-                phi_op.phi_dot_phi(phi.data(), phi_dm.data(), rho_[is]);
+                phi_op.phi_dot_phi(phi.data(), phi_dm.data(), rho_data[is]);
             }
         }
     }
 }
 
+template<typename Real>
+void Gint_rho::transfer_rho_cache_(const std::vector<std::vector<Real>>& rho_cache) const
+{
+    if constexpr (std::is_same_v<Real, double>)
+    {
+        return;
+    }
+
+    const int local_mgrid_num = gint_info_->get_local_mgrid_num();
+    for (int is = 0; is < nspin_; ++is)
+    {
+        for (int ir = 0; ir < local_mgrid_num; ++ir)
+        {
+            rho_[is][ir] = static_cast<double>(rho_cache[is][ir]);
+        }
+    }
+}
 
 }
