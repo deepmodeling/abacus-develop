@@ -48,10 +48,10 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
-	// delete Hamilt
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
+    // delete Hamilt
     this->deallocate_hamilt();
 
     // mohan add 2025-10-12
@@ -83,7 +83,6 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    //! Call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
     //! setup and allocation for pelec, potentials, etc. 
@@ -105,7 +104,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 
-    //! Call before_scf() of ESolver_KS
     ESolver_KS<T, Device>::before_scf(ucell, istep);
 
     //! Init variables (once the cell has changed)
@@ -143,17 +141,15 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    // 1) Call iter_init() of ESolver_KS
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
-    // 2) perform charge mixing for KSDFT using pw basis
     module_charge::chgmixing_ks_pw(iter, this->p_chgmix, this->dftu, PARAM.inp);
 
-    // 3) mohan move harris functional here, 2012-06-05
+    // mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
-    // 4) update local occupations for DFT+U
+    // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
     pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp);
 }
@@ -265,7 +261,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         this->pelec->cal_tau(*(this->psi));
     }
 
-    // Call 'after_scf' of ESolver_KS
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
     // Output quantities
