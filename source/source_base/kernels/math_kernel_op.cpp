@@ -163,6 +163,8 @@ template struct matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_C
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
 #endif
 #ifdef __DSP
+template struct gemm_op_mt<float, base_device::DEVICE_CPU>;
+template struct gemm_op_mt<double, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
