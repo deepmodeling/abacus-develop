@@ -2,10 +2,47 @@
 #define DELTASPIN_LCAO_H
 
 #include "source_cell/unitcell.h"
+#include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 namespace ModuleESolver
 {
+
+/**
+ * @brief Initialize DeltaSpin for LCAO method
+ *
+ * This function initializes the DeltaSpin calculation by setting up
+ * the SpinConstrain object with input parameters.
+ *
+ * @param ucell Unit cell
+ * @param inp Input parameters
+ * @param pv Parallel orbitals
+ * @param kv K-vectors
+ * @param p_hamilt Pointer to Hamiltonian
+ * @param psi Pointer to wave functions
+ * @param dm Density matrix
+ * @param pelec Pointer to electronic state
+ */
+template <typename TK>
+void init_deltaspin_lcao(const UnitCell& ucell,
+                          const Input_para& inp,
+                          void* pv,
+                          const K_Vectors& kv,
+                          void* p_hamilt,
+                          void* psi,
+                          void* dm,
+                          void* pelec);
+
+/**
+ * @brief Calculate magnetic moments for DeltaSpin in LCAO method
+ *
+ * This function calculates the magnetic moments for each atom
+ * in the DeltaSpin method.
+ *
+ * @param iter Current iteration number
+ */
+template <typename TK>
+void cal_mi_lcao_wrapper(const int iter);
 
 /**
  * @brief Run DeltaSpin lambda loop for LCAO method
