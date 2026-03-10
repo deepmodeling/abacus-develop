@@ -8,8 +8,6 @@ scf_nmax		100
 scf_thr                 1e-6
 basis_type		lcao
 
-ks_solver lapack
-kpar 3
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
 ###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
