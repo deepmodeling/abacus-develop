@@ -6,6 +6,7 @@
 
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
+#include "source_hsolver/diago_params.h"
 
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_parameter/parameter.h"
@@ -164,17 +165,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
 
-    // choose if psi should be diag in subspace
-    // be careful that istep start from 0 and iter start from 1
-    // if (iter == 1)
-    hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-    hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
-    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-
-    if (PARAM.inp.calculation != "nscf")
-    {
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-    }
+    // setup diagonalization parameters
+    hsolver::setup_diago_params_pw<T, Device>(istep, iter, ethr, PARAM.inp);
 
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
