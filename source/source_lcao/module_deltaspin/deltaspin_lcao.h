@@ -40,9 +40,10 @@ void init_deltaspin_lcao(const UnitCell& ucell,
  * in the DeltaSpin method.
  *
  * @param iter Current iteration number
+ * @param inp Input parameters
  */
 template <typename TK>
-void cal_mi_lcao_wrapper(const int iter);
+void cal_mi_lcao_wrapper(const int iter, const Input_para& inp);
 
 /**
  * @brief Run DeltaSpin lambda loop for LCAO method

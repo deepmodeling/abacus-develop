@@ -33,8 +33,13 @@ void init_deltaspin_lcao(const UnitCell& ucell,
 }
 
 template <typename TK>
-void cal_mi_lcao_wrapper(const int iter)
+void cal_mi_lcao_wrapper(const int iter, const Input_para& inp)
 {
+    if (!inp.sc_mag_switch)
+    {
+        return;
+    }
+    
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
     sc.cal_mi_lcao(iter);
 }
@@ -86,8 +91,8 @@ template void init_deltaspin_lcao<std::complex<double>>(const UnitCell& ucell,
                                                          void* dm,
                                                          void* pelec);
 
-template void cal_mi_lcao_wrapper<double>(const int iter);
-template void cal_mi_lcao_wrapper<std::complex<double>>(const int iter);
+template void cal_mi_lcao_wrapper<double>(const int iter, const Input_para& inp);
+template void cal_mi_lcao_wrapper<std::complex<double>>(const int iter, const Input_para& inp);
 
 template bool run_deltaspin_lambda_loop_lcao<double>(const int iter,
                                                       const double drho,

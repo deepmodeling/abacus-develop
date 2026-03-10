@@ -430,7 +430,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);
 
     // 3) for delta spin
-    cal_mi_lcao_wrapper<TK>(iter);
+    cal_mi_lcao_wrapper<TK>(iter, PARAM.inp);
 
     // call iter_finish() of ESolver_KS, where band gap is printed,
     // eig and occ are printed, magnetization is calculated,
