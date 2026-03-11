@@ -32,7 +32,7 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
     {
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
-                             this->psi[0],
+                             *(this->stp.psi_cpu),
                              PARAM.inp.bessel_descriptor_lmax,
                              PARAM.inp.bessel_descriptor_rcut,
                              PARAM.inp.bessel_descriptor_tolerence,

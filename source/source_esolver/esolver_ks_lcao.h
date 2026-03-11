@@ -57,6 +57,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     virtual void others(UnitCell& ucell, const int istep) override;
 
+    //! Electronic wave functions (moved from base class)
+    psi::Psi<TK>* psi = nullptr;
+
     //! Store information about Adjacent Atoms 
     Record_adj RA;
 

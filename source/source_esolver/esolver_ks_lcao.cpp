@@ -22,6 +22,7 @@
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
+#include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
 
 namespace ModuleESolver
 {
@@ -40,6 +41,7 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 	//****************************************************
 	// do not add any codes in this deconstructor funcion
 	//****************************************************
+    Setup_Psi<TK>::deallocate_psi(this->psi);
 }
 
 template <typename TK, typename TR>
