@@ -189,7 +189,6 @@ endif()
 # Use DSP hardware
 if (USE_DSP)
   set(USE_ELPA OFF)
-  set(ENABLE_LCAO OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
