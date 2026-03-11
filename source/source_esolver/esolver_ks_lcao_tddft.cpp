@@ -235,7 +235,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                       PARAM.inp.nbands,
                                                       PARAM.globalv.nlocal,
                                                       this->kv.get_nks(),
-                                                      this->p_hamilt,
+                                                      static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                                       this->pv,
                                                       this->psi,
                                                       this->psi_laststep,
@@ -255,7 +255,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   PARAM.inp.nbands,
                                                   PARAM.globalv.nlocal,
                                                   this->kv.get_nks(),
-                                                  this->p_hamilt,
+                                                  static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                                   this->pv,
                                                   this->psi,
                                                   this->psi_laststep,
@@ -277,7 +277,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt,
+            hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                    this->psi[0],
                                    this->pelec,
                                    *this->dmat.dm,
@@ -342,11 +342,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     {
         if (use_tensor && use_lapack)
         {
-            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
         else
         {
-            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
     }
 }
@@ -416,7 +416,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
             this->p_hamilt->updateHk(ik);
             hamilt::MatrixBlock<std::complex<double>> h_mat;
             hamilt::MatrixBlock<std::complex<double>> s_mat;
-            this->p_hamilt->matrix(h_mat, s_mat);
+            static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt)->matrix(h_mat, s_mat);
 
             // Store H and S matrices to Hk_laststep and Sk_laststep
             if (use_tensor && use_lapack)

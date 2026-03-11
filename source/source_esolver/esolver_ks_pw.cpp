@@ -128,10 +128,10 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
-              this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->stp.psi_t, static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     // setup psi (electronic wave functions)
-    this->stp.init(this->p_hamilt);
+    this->stp.init(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt));
 
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper.before_scf(this->p_hamilt, this->stp.psi_t, PARAM.inp);
