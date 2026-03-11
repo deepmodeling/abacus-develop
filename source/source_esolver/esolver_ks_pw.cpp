@@ -84,7 +84,7 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    ESolver_KS<T, Device>::before_all_runners(ucell, inp);
+    ESolver_KS::before_all_runners(ucell, inp);
 
     //! setup and allocation for pelec, potentials, etc. 
     elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
@@ -105,7 +105,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 
-    ESolver_KS<T, Device>::before_scf(ucell, istep);
+    ESolver_KS::before_scf(ucell, istep);
 
     //! Init variables (once the cell has changed)
     pw::update_cell_pw(ucell, this->ppcell, this->kv, this->pw_wfc, PARAM.inp);
@@ -142,7 +142,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
+    ESolver_KS::iter_init(ucell, istep, iter);
 
     module_charge::chgmixing_ks_pw(iter, this->p_chgmix, this->dftu, PARAM.inp);
 
@@ -212,7 +212,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
     // Call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 
     // D in USPP needs vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local
@@ -246,7 +246,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         this->pelec->cal_tau(*(this->stp.psi_cpu));
     }
 
-    ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS::after_scf(ucell, istep, conv_esolver);
 
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
@@ -300,7 +300,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::after_all_runners(ucell);
+    ESolver_KS::after_all_runners(ucell);
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 

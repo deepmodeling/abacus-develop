@@ -12,7 +12,6 @@
 namespace ModuleESolver
 {
 
-template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_KS : public ESolver_FP
 {
   public:

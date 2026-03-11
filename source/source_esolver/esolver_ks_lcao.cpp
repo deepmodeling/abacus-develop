@@ -51,7 +51,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
     // 1) before_all_runners in ESolver_KS
-    ESolver_KS<TK>::before_all_runners(ucell, inp);
+    ESolver_KS::before_all_runners(ucell, inp);
 
     // 2) autoset nbands in ElecState before init_basis (for Psi 2d division)
     if (this->pelec == nullptr)
@@ -107,7 +107,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     //! 1) call before_scf() of ESolver_KS.
-    ESolver_KS<TK>::before_scf(ucell, istep);
+    ESolver_KS::before_scf(ucell, istep);
 
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
@@ -271,7 +271,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
-    ESolver_KS<TK>::after_all_runners(ucell);
+    ESolver_KS::after_all_runners(ucell);
 
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
     if(!hamilt_lcao)
@@ -303,7 +303,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_init");
 
     // call iter_init() of ESolver_KS
-    ESolver_KS<TK>::iter_init(ucell, istep, iter);
+    ESolver_KS::iter_init(ucell, istep, iter);
 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
       this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
@@ -438,7 +438,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // eig and occ are printed, magnetization is calculated,
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
-    ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter except the last iter
@@ -476,7 +476,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 	}
 
     //! 1) call after_scf() of ESolver_KS
-    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS::after_scf(ucell, istep, conv_esolver);
 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,

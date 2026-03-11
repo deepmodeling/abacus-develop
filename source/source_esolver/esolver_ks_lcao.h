@@ -28,7 +28,7 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS<TK>
+class ESolver_KS_LCAO : public ESolver_KS
 {
   public:
     ESolver_KS_LCAO();
