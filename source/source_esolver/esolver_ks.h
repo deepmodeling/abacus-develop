@@ -7,6 +7,7 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_psi/psi.h" // use electronic wave functions
 #include "source_hamilt/hamilt.h" // use Hamiltonian
+#include "source_hamilt/hamilt_base.h" // use Hamiltonian base class
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 namespace ModuleESolver
@@ -47,8 +48,8 @@ class ESolver_KS : public ESolver_FP
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    //! Hamiltonian
-    hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
+    //! Hamiltonian (base class pointer, actual type determined at runtime)
+    hamilt::HamiltBase* p_hamilt = nullptr;
 
     //! PW for wave functions, only used in KSDFT, not in OFDFT
     ModulePW::PW_Basis_K* pw_wfc = nullptr;

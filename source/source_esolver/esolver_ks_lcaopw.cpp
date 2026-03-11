@@ -146,7 +146,7 @@ namespace ModuleESolver
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->stp.psi_t[0], this->pelec, 
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), this->stp.psi_t[0], this->pelec, 
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx

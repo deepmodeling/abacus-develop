@@ -167,7 +167,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
     hsolver_pw_sdft_obj.solve(ucell,
-                              this->p_hamilt,
+                              static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
                               this->stp.psi_t[0],
                               this->stp.psi_cpu[0],
                               this->pelec,
@@ -291,7 +291,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
                                               this->pw_wfc,
                                               this->stp.psi_t,
                                               &this->ppcell,
-                                              this->p_hamilt,
+                                              static_cast<hamilt::Hamilt<std::complex<double>, Device>*>(this->p_hamilt),
                                               this->stoche,
                                               &stowf);
         sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
