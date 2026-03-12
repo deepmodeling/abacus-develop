@@ -503,18 +503,6 @@ Also controled by out_freq_ion and out_app_flag.
         this->add_item(item);
     }
     {
-        Input_Item item("out_interval");
-        item.annotation = "interval for printing H(R) and S(R) matrix during MD";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Controls the output interval for H(R) and S(R) matrices during molecular dynamics.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_int(input.out_interval);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_mat_tk");
         item.annotation = "output kinetic matrix of electrons T(k)";
         item.category = "Output information";

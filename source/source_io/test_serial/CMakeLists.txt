@@ -23,7 +23,7 @@ add_library(
     ../module_parameter/read_set_globalv.cpp
 )
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_IO_read_input_serial
   LIBS parameter ${math_libs} io_input_serial 

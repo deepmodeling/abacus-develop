@@ -22,18 +22,6 @@ void ReadInput::item_rt_tddft()
         read_sync_int(input.estep_per_md);
         this->add_item(item);
     }
-    {
-        Input_Item item("td_force_dt");
-        item.annotation = "time of force change";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
-        item.type = "Real";
-        item.description = "Time interval for force updates in RT-TDDFT.";
-        item.default_value = "0.02";
-        item.unit = "fs";
-        item.availability = "";
-        read_sync_double(input.td_force_dt);
-        this->add_item(item);
-    }
     // real time TDDFT
     {
         Input_Item item("td_dt");
