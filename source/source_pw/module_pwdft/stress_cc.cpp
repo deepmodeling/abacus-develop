@@ -230,7 +230,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 	double gx = 0.0;
     double rhocg1 = 0.0;
 	std::vector<double> aux(mesh);
-	this->device = base_device::get_device_type<Device>(this->ctx);
+	this->device = base_device::get_device_type(this->ctx);
 
 	// the modulus of g for a given shell
 	// the fourier transform

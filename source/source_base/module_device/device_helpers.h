@@ -13,6 +13,7 @@
 #include "types.h"
 #include <complex>
 #include <string>
+#include <type_traits>
 
 namespace base_device
 {
@@ -24,14 +25,13 @@ namespace base_device
  * @return AbacusDevice_t enum value
  */
 template <typename Device>
-AbacusDevice_t get_device_type(const Device* dev);
-
-// Template specialization declarations
-template <>
-AbacusDevice_t get_device_type<DEVICE_CPU>(const DEVICE_CPU* dev);
-
-template <>
-AbacusDevice_t get_device_type<DEVICE_GPU>(const DEVICE_GPU* dev);
+AbacusDevice_t get_device_type(const Device* dev)
+{
+    if (std::is_same<Device, DEVICE_CPU>::value) return CpuDevice;
+    else if (std::is_same<Device, DEVICE_GPU>::value) return GpuDevice;
+    else if (std::is_same<Device, DEVICE_DSP>::value) return DspDevice;
+    else return UnKnown;
+}
 
 /**
  * @brief Get the precision string for a given numeric type.

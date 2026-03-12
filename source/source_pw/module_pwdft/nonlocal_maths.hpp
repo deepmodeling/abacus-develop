@@ -18,14 +18,14 @@ class Nonlocal_maths
   public:
     Nonlocal_maths(const pseudopot_cell_vnl* nlpp_in, const UnitCell* ucell_in)
     {
-        this->device = base_device::get_device_type<Device>(this->ctx);
+        this->device = base_device::get_device_type(this->ctx);
         this->nhtol_ = nlpp_in->nhtol;
         this->lmax_ = nlpp_in->lmaxkb;
         this->ucell_ = ucell_in;
     }
     Nonlocal_maths(const ModuleBase::matrix& nhtol, const int lmax, const UnitCell* ucell_in)
     {
-        this->device = base_device::get_device_type<Device>(this->ctx);
+        this->device = base_device::get_device_type(this->ctx);
         this->nhtol_ = nhtol;
         this->lmax_ = lmax;
         this->ucell_ = ucell_in;

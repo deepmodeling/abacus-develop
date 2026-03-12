@@ -152,7 +152,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     int igl0 = 0;
     double gx = 0;
     double rhocg1 = 0;
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     /// the modulus of g for a given shell
     /// the fourier transform
     /// auxiliary memory for integration

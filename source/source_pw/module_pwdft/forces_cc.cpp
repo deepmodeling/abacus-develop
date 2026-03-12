@@ -116,7 +116,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     double *force_d = nullptr;
     double *rhocgigg_vec_d = nullptr;
     std::complex<FPTYPE>* psiv_d = nullptr;
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
@@ -258,7 +258,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 	double gx = 0, rhocg1 = 0;
 	//double *aux = new double[mesh];
 	std::vector<double> aux(mesh);
-	this->device = base_device::get_device_type<Device>(this->ctx);
+	this->device = base_device::get_device_type(this->ctx);
 	// the modulus of g for a given shell
 	// the fourier transform
 	// auxiliary memory for integration

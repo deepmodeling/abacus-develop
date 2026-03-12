@@ -43,7 +43,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 }
 
 template <typename T, typename Device>

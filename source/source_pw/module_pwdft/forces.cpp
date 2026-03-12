@@ -38,7 +38,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 {
     ModuleBase::timer::tick("Forces", "cal_force");
     ModuleBase::TITLE("Forces", "init");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;
@@ -331,7 +331,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
     // now, in all pools , the charge are the same,
     // so, the force calculated by each pool is equal.
@@ -478,7 +478,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     double fact = 2.0;
     std::vector<std::complex<double>> aux(rho_basis->npw);
 
