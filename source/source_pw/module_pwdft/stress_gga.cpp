@@ -55,7 +55,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
         }
 	}
 
-	ModuleBase::timer::start("Stress","stress_gga");
+	ModuleBase::timer::end("Stress","stress_gga");
 	return;
 }
 

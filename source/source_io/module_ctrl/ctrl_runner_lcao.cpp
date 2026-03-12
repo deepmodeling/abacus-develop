@@ -127,6 +127,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
        );
     }
 
+    ModuleBase::timer::end("ModuleIO", "ctrl_runner_lcao");
 }
 
 

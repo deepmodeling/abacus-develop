@@ -795,7 +795,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
     } // end of stress calculation
 
-    ModuleBase::timer::start("Force_Stress_LCAO", "getForceStress");
+    ModuleBase::timer::end("Force_Stress_LCAO", "getForceStress");
     return;
 }
 

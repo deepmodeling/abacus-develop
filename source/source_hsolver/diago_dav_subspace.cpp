@@ -260,7 +260,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               this->scc,
                               this->vcc);
 
-                ModuleBase::timer::start("Diago_DavSubspace", "last");
+                ModuleBase::timer::end("Diago_DavSubspace", "last");
             }
         }
 

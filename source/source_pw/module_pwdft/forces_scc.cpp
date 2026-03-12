@@ -135,7 +135,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
 	Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
 
-    ModuleBase::timer::start("Forces", "cal_force_scc");
+    ModuleBase::timer::end("Forces", "cal_force_scc");
     return;
 }
 

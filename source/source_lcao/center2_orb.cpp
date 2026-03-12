@@ -332,6 +332,4 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
     }
 
     ModuleBase::timer::end("Center2_Orb", "cal_ST_Phi12_R");
-
-    return;
 }

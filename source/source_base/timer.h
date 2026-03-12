@@ -52,7 +52,7 @@ class timer
      * @param ofs The output file for print out timings
      * @param print_flag Print timings or not
      */
-    static void finish(std::ofstream &ofs, const bool print_flag = 1);
+    static void finish(std::ofstream &ofs, const bool print_flag = true, const bool check_end = true);
 
     /**
      * @brief Enable time computation
@@ -84,7 +84,7 @@ class timer
      *
      * @param ofs The output file for print out timings
      */
-    static void print_all(std::ofstream &ofs);
+    static void print_all(std::ofstream &ofs, const bool check_end);
 
     /**
      * @brief Stop total time calculation, print total time until now,

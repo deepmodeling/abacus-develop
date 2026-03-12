@@ -236,7 +236,9 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
                 = this->hr_done;
         }
         // call init() function of next node
+        ModuleBase::timer::end("OperatorLCAO", "init");
         this->next_op->init(ik_in);
+        ModuleBase::timer::start("OperatorLCAO", "init");
     } else { // it is the last node, update HK with the current total HR
         OperatorLCAO<TK, TR>::contributeHk(ik_in);
     }

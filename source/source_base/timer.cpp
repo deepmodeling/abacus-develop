@@ -30,11 +30,11 @@ bool timer::disabled = false;
 size_t timer::n_now = 0;
 std::map<std::string,std::map<std::string,timer::Timer_One>> timer::timer_pool;
 
-void timer::finish(std::ofstream &ofs,const bool print_flag)
+void timer::finish(std::ofstream &ofs, const bool print_flag, const bool check_end)
 {
 	timer::end("","total");
 	if(print_flag)
-		{ print_all( ofs ); }
+		{ print_all( ofs, check_end ); }
 }
 
 //----------------------------------------------------------
@@ -43,7 +43,8 @@ void timer::finish(std::ofstream &ofs,const bool print_flag)
 void timer::start()
 {
 	// first init ,then we can use tick
-	timer::start("","total");
+	if(timer_pool[""]["total"].start_flag)
+		{ timer::start("","total"); }
 }
 
 double timer::cpu_time()
@@ -262,7 +263,7 @@ void timer::write_to_json(std::string file_name)
 	ofs.close();
 }
 
-void timer::print_all(std::ofstream &ofs)
+void timer::print_all(std::ofstream &ofs, const bool check_end)
 {
 	constexpr double small = 0.1; // cpu = 10^6
 	// if want to print > 1s , set small = 10^6
@@ -275,7 +276,7 @@ void timer::print_all(std::ofstream &ofs)
 		{
 			const std::string name = timer_pool_B.first;
 			const Timer_One &timer_one = timer_pool_B.second;
-			if(!timer_one.start_flag)
+			if(check_end && !timer_one.start_flag)
 				{ throw std::runtime_error("timer::print_all " + class_name + "::" + name); }
 			if(timer_pool_order.size() < timer_one.order+1)
 			{

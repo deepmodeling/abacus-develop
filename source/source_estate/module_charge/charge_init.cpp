@@ -369,7 +369,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     // The term was present in previous versions of the code but it shouldn't
     delete [] rhocg;
     delete [] vg;
-    ModuleBase::timer::start("Charge","set_rho_core");
+    ModuleBase::timer::end("Charge","set_rho_core");
     return;
 } // end subroutine set_rhoc
 

@@ -234,7 +234,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     delete[] psiv;                                                           // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
-    ModuleBase::timer::start("Forces", "cal_force_cc");
+    ModuleBase::timer::end("Forces", "cal_force_cc");
     return;
 }
 

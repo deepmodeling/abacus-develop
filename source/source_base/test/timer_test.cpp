@@ -110,7 +110,7 @@ TEST_F(TimerTest, PrintAll)
 	// call print_all
 	ofs.open("tmp");
 	testing::internal::CaptureStdout();
-	ModuleBase::timer::print_all(ofs);
+	ModuleBase::timer::print_all(ofs, true);
 	output = testing::internal::GetCapturedStdout();
 	ofs.close();
 
