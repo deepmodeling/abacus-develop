@@ -363,6 +363,18 @@ void ReadInput::item_postprocess()
         this->add_item(item);
     }
     {
+        Input_Item item("wannier_card");
+        item.annotation = "input card for wannier functions";
+        item.category = "Berry phase and wannier90 interface";
+        item.type = "String";
+        item.description = "Input card for Wannier functions (e.g. none or a filename).";
+        item.default_value = "none";
+        item.unit = "";
+        item.availability = "";
+        read_sync_string(input.wannier_card);
+        this->add_item(item);
+    }
+    {
         Input_Item item("nnkpfile");
         item.annotation = "the wannier90 code nnkp file name";
         item.category = "Berry phase and wannier90 interface";
