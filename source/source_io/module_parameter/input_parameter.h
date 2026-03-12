@@ -27,17 +27,16 @@ struct Input_para
       0, only basic time reversal would be considered;
       1, point group symmetry would be considered*/
     std::string symmetry = "default";
-    double symmetry_prec = 1.0e-6;                ///< LiuXh add 2021-08-12, accuracy for symmetry
-    bool symmetry_autoclose = true;               ///< whether to close symmetry automatically
-                                                  ///< when error occurs in symmetry analysis
-    bool cal_force = false;                       ///< calculate the force
-    bool cal_stress = false;                      ///< calculate the stress
-    int kpar = 1;                                 ///< ecch pool is for one k point
-    int bndpar = 1;                               ///< parallel for stochastic/deterministic bands
-    std::string latname = "user_defined_lattice"; ///< lattice name
-    std::string assume_isolated = "none";         ///< isolated-system correction: none or makov-payne
-    double ecutwfc = 0;                           ///< energy cutoff for wavefunctions
-    double ecutrho = 0;                           ///< energy cutoff for charge/potential
+    double symmetry_prec = 1.0e-6;  ///< LiuXh add 2021-08-12, accuracy for symmetry
+    bool symmetry_autoclose = true; ///< whether to close symmetry automatically
+                                    ///< when error occurs in symmetry analysis
+    bool cal_force = false;         ///< calculate the force
+    bool cal_stress = false;        ///< calculate the stress
+    int kpar = 1;                   ///< ecch pool is for one k point
+    int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
+    std::string latname = "user_defined_lattice";   ///< lattice name
+    double ecutwfc = 0;             ///< energy cutoff for wavefunctions
+    double ecutrho = 0;             ///< energy cutoff for charge/potential
 
     int nx = 0, ny = 0, nz = 0;    ///< three dimension of FFT wavefunc
     int ndx = 0, ndy = 0, ndz = 0; ///< three dimension of FFT smooth charge density
