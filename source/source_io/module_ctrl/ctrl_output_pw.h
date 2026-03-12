@@ -31,7 +31,6 @@ void ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis_Big *pw_big,
         Setup_Psi_pw<T, Device> &stp,
         const Device* ctx,
-        const base_device::AbacusDevice_t &device, // mohan add 2025-10-15
         const Parallel_Grid &para_grid,
         const Input_para& inp);
 
