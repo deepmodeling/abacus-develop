@@ -43,6 +43,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
+    this->ctx = nullptr;
 }
 
 template <typename T, typename Device>
