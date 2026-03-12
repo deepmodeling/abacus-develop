@@ -30,6 +30,107 @@
 #include <malloc.h>
 #endif
 
+namespace ExxLriDetail
+{
+using CoulombParam
+    = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
+
+inline void trim_malloc_cache()
+{
+#if defined(__GLIBC__)
+	malloc_trim(0);
+#endif
+}
+
+inline double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
+{
+    return std::pow(0.75 * kv.get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+}
+
+inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
+                                                    const UnitCell& ucell,
+                                                    const K_Vectors& kv,
+                                                    bool* synthesized_rcut = nullptr)
+{
+    CoulombParam center2_param = RI_Util::update_coulomb_param(coulomb_param, ucell, &kv);
+    const double fallback_rcut = default_spencer_rcut(ucell, kv);
+    bool used_fallback_rcut = false;
+
+    for (auto& param_list: center2_param)
+    {
+        if (param_list.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
+        {
+            continue;
+        }
+        for (auto& param: param_list.second)
+        {
+            auto rcut_it = param.find("Rcut");
+            if (rcut_it == param.end() || rcut_it->second.empty())
+            {
+                param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
+                used_fallback_rcut = true;
+            }
+        }
+    }
+
+    if (synthesized_rcut != nullptr)
+    {
+        *synthesized_rcut = used_fallback_rcut;
+    }
+    return center2_param;
+}
+}
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
+						  const UnitCell &ucell,
+						  const K_Vectors &kv_in,
+						  const LCAO_Orbitals& orb)
+{
+	ModuleBase::TITLE("Exx_LRI","init");
+	ModuleBase::timer::tick("Exx_LRI", "init");
+
+	this->mpi_comm = mpi_comm_in;
+	this->p_kv = &kv_in;
+	this->orb_cutoff_ = orb.cutoffs();
+
+	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
+
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
+	if(this->info.files_abfs.empty())
+		{ this->abfs = abfs_same_atom;}
+	else
+		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
+	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+
+	for( size_t T=0; T!=this->abfs.size(); ++T )
+		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+
+	this->exx_objs.clear();
+	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
+	
+	bool init_MGT = true;
+	for(const auto &settings_list : this->coulomb_settings)
+	{
+		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
+															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
+															this->info.kmesh_times, this->MGT, init_MGT, settings_list.second.first );
+		init_MGT = false; // only init once
+		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
+			this->exx_objs[settings_list.first].evq.init(ucell, orb, 
+														this->mpi_comm, this->p_kv, this->lcaos, this->abfs, 
+														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
+		}
+	}
+
+	ModuleBase::timer::tick("Exx_LRI", "init");
+}
+
 template<typename Tdata>
 void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 						  const UnitCell &ucell,
