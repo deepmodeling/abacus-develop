@@ -190,7 +190,7 @@ void write_Vxc(const int nspin,
     {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(
             &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
-
+        vxcs_op_ao[is]->set_current_spin(is);
         vxcs_op_ao[is]->contributeHR();
     }
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)

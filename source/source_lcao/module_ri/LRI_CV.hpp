@@ -9,11 +9,11 @@
 #include "LRI_CV.h"
 #include "LRI_CV_Tools.h"
 #include "exx_abfs-construct_orbs.h"
-#include "RI_Util.h"
 #include "../../source_basis/module_ao/element_basis_index-ORB.h"
+#include "RI_Util.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h"
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
@@ -44,7 +44,8 @@ void LRI_CV<Tdata>::set_orbitals(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 	const double &kmesh_times,
-	std::shared_ptr<ORB_gaunt_table> MGT,
+	ORB_gaunt_table& MGT,
+    const bool& init_MGT,
     const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
@@ -56,6 +57,9 @@ void LRI_CV<Tdata>::set_orbitals(
 
 	this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos);
     this->abfs_ccp_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs_ccp);
+    const double lcaos_rmax = Exx_Abfs::Construct_Orbs::get_Rmax(this->lcaos);
+    const double abfs_ccp_rmax
+        = Exx_Abfs::Construct_Orbs::get_Rmax(this->abfs_ccp);
 
 	const ModuleBase::Element_Basis_Index::Range
 		range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
@@ -65,17 +69,25 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
-    this->m_abfs_abfs.init(
-		this->abfs_ccp, this->abfs,
-		ucell, orb, kmesh_times);
+    int Lmax_v = std::numeric_limits<double>::min();
+    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
+    int Lmax_c = std::numeric_limits<double>::min();
     if (init_C)
-        this->m_abfslcaos_lcaos.init(
-			this->abfs_ccp, this->lcaos, this->lcaos,
-			ucell, orb, kmesh_times);
+        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, Lmax_c);
+    int Lmax = std::max(Lmax_v, Lmax_c);
 
+    if (init_MGT) {
+        MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+    }
+
+    this->m_abfs_abfs.init_radial(this->abfs_ccp, this->abfs, MGT);
     this->m_abfs_abfs.init_radial_table();
     if (init_C) {
+        this->m_abfslcaos_lcaos.init_radial(this->abfs_ccp,
+                                            this->lcaos,
+                                            this->lcaos,
+                                            MGT);
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 
@@ -158,7 +170,7 @@ auto LRI_CV<Tdata>::cal_Vs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-	
+
 	return this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_V);
 }
 
@@ -175,7 +187,7 @@ auto LRI_CV<Tdata>::cal_dVs(
 		func_DPcal_dV = std::bind(
 			&LRI_CV<Tdata>::DPcal_dV, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	
+
 	const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_V_Rcut,
                                                     this,
                                                     std::placeholders::_1,
@@ -203,7 +215,7 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-	
+
 	std::map<TA,std::map<TAC, std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>>
 		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_C_dC);
 

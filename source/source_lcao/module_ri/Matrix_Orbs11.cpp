@@ -5,50 +5,66 @@
 
 #include "Matrix_Orbs11.h"
 
-#include "exx_abfs-construct_orbs.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
-void Matrix_Orbs11::init(
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B, 
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb, 
-    const double kmesh_times)
+void Matrix_Orbs11::init(const int mode, 
+                         const UnitCell& ucell,
+                         const LCAO_Orbitals& orb, 
+                         const double kmesh_times, 
+                         const double rmax, 
+                         int& Lmax)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
     ModuleBase::timer::tick("Matrix_Orbs11", "init");
 
+    int Lmax_used;
     this->lat0 = &ucell.lat0;
+    const int ntype = orb.get_ntype();
+    int lmax_orb = -1, lmax_beta = -1;
+    for (int it = 0; it < ntype; it++)
+    {
+        lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
+        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
+    }
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
+    int Rmesh = static_cast<int>(rmax / dr) + 4;
+    Rmesh += 1 - Rmesh % 2;
+    switch (mode)
+    {
+        case 1:
+            Lmax = std::max({-1, lmax_orb, lmax_beta});
+            Lmax_used = 2 * Lmax + 1;
+            break;
+        case 2:
+            Lmax = std::max(-1, GlobalC::exx_info.info_ri.abfs_Lmax);
+            Lmax_used = 2 * Lmax + 1;
+            break;
+        default:
+            ModuleBase::WARNING_QUIT("Matrix_Orbs11::init", "unsupported mode");
+    }
 
-    const int Lmax = std::max({ Exx_Abfs::Construct_Orbs::get_Lmax(orb_A), Exx_Abfs::Construct_Orbs::get_Lmax(orb_B) });
-    const int Lmax_used = Exx_Abfs::Construct_Orbs::get_Lmax(orb_A) + Exx_Abfs::Construct_Orbs::get_Lmax(orb_B);
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used, dr, dk, kmesh, Rmesh, psb_);
 
     //=========================================
     // (3) make Gaunt coefficients table
     //=========================================
-    if(!this->MGT)
-        { this->MGT = std::make_shared<ORB_gaunt_table>(); }
-    if(this->MGT->get_Lmax_Gaunt_CH() < Lmax)
-        { this->MGT->init_Gaunt_CH(Lmax); }
-    if(this->MGT->get_Lmax_Gaunt_Coefficients() < Lmax)
-        { this->MGT->init_Gaunt(Lmax); }
+    // this->MGT.init_Gaunt_CH(Lmax);
+    // this->MGT.init_Gaunt(Lmax);
 
-    const double dr = orb.get_dR();
-    const double dk = orb.get_dk();
-    const int kmesh = orb.get_kmesh() * kmesh_times + 1;
-    const double rmax
-        = Exx_Abfs::Construct_Orbs::get_Rmax(orb_A)
-        + Exx_Abfs::Construct_Orbs::get_Rmax(orb_B);
-    int Rmesh = static_cast<int>(rmax / dr) + 4;                            // extend Rcut, keep dR
-    Rmesh += 1 - Rmesh % 2;
-    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
-                                             dr,
-                                             dk,
-                                             kmesh,
-                                             Rmesh,
-                                             psb_);
+    ModuleBase::timer::tick("Matrix_Orbs11", "init");
+}
 
+void Matrix_Orbs11::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
+                                const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
+                                const ORB_gaunt_table& MGT)
+{
+    ModuleBase::TITLE("Matrix_Orbs11", "init_radial");
+    ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
     for (size_t TA = 0; TA != orb_A.size(); ++TA) {
         for (size_t TB = 0; TB != orb_B.size(); ++TB) {
             for (int LA = 0; LA != orb_A[TA].size(); ++LA) {
@@ -57,14 +73,17 @@ void Matrix_Orbs11::init(
                         for (size_t NB = 0; NB != orb_B[TB][LB].size(); ++NB) {
                             center2_orb11_s[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
-                                Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, *this->MGT)));
-    }}}}}}
-
-    ModuleBase::timer::tick("Matrix_Orbs11", "init");
+                                Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, MGT)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
-/*
-void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B)
+void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B, const ORB_gaunt_table& MGT)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
@@ -79,7 +98,7 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
                                                Center2_Orb::Orb11(orb_A.Phi[TA].PhiLN(LA, NA),
                                                                   orb_B.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
-                                                                  *this->MGT)));
+                                                                  MGT)));
                         }
                     }
                 }
@@ -88,7 +107,6 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
     }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
-*/
 
 void Matrix_Orbs11::init_radial_table()
 {

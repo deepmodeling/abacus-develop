@@ -1,14 +1,13 @@
 #include "exx_opt_orb.h"
 #include "exx_abfs-jle.h"
 #include "source_base/tool_title.h"
+#include <cmath>
 #include <iomanip>
 
 void Exx_Opt_Orb::print_matrix(
 	const Exx_Info::Exx_Info_Opt_ABFs &info,
 	const UnitCell& ucell,
 	const K_Vectors &kv,
-	const int Lmax,
-	const std::vector<std::size_t> &ecut_number,
 	const std::string &file_name,
 	const std::vector<RI::Tensor<double>> &matrix_Q, 
 	const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,
@@ -78,6 +77,15 @@ void Exx_Opt_Orb::print_matrix(
 
 		ofs << info.tolerence << " tolerence" << std::endl;
 
+		const int Lmax = [&range_jles]() -> int
+		{
+			int max_l = -1;
+			for (const auto& range_t : range_jles)
+			{
+				max_l = std::max(max_l, static_cast<int>(range_t.size()) - 1);
+			}
+			return max_l;
+		}();
 		ofs << Lmax << " lmax" << std::endl;
 
 		ofs << kv.get_nkstot() << " nks" << std::endl;
@@ -94,8 +102,18 @@ void Exx_Opt_Orb::print_matrix(
 		const std::size_t nwfc = (TA==TB && IA==IB) ? cal_sum_M(TA) : cal_sum_M(TA)+cal_sum_M(TB);
 		ofs	<< nwfc << " nwfc" << std::endl;
 		
-		for(const std::size_t ne : ecut_number)
-			{ ofs << ne << " "; }
+		const std::size_t ecut_numberA
+			= static_cast<std::size_t>(std::sqrt(info.ecut_exx) * orb_cutoff[TA] / ModuleBase::PI);
+		const std::size_t ecut_numberB
+			= static_cast<std::size_t>(std::sqrt(info.ecut_exx) * orb_cutoff[TB] / ModuleBase::PI);
+		if (TA == TB)
+		{
+			ofs << ecut_numberA << " ";
+		}
+		else
+		{
+			ofs << ecut_numberA << " " << ecut_numberB << " ";
+		}
 		ofs << "ne" << std::endl;
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;

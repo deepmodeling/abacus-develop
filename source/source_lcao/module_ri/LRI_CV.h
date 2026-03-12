@@ -40,7 +40,8 @@ public:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 		const double &kmesh_times,
-		std::shared_ptr<ORB_gaunt_table> MGT,
+		ORB_gaunt_table& MGT,
+        const bool& init_MGT,
         const bool& init_C);
 	inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 	cal_Vs(

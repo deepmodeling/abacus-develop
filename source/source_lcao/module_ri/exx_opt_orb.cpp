@@ -1,50 +1,47 @@
 #include "exx_opt_orb.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "exx_abfs.h"
 #include "exx_abfs-construct_orbs.h"
-#include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
-#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_ri/Matrix_Orbs11.h"
 #include "source_lcao/module_ri/Matrix_Orbs21.h"
 #include "source_lcao/module_ri/Matrix_Orbs22.h"
 #include "source_lcao/module_ri/LRI_CV_Tools.h"
-#include <RI/global/Tensor_Multiply.h>
 
-void Exx_Opt_Orb::generate_matrix(
-	const Exx_Info::Exx_Info_Opt_ABFs &info,
-	const K_Vectors &kv,
-	const UnitCell &ucell,
-	const LCAO_Orbitals &orb) const
+#include "../../source_lcao/module_ri/test_code/element_basis_index-test.h"
+#include "../../source_lcao/module_ri/test_code/test_function.h"
+#include <sched.h>
+
+void Exx_Opt_Orb::generate_matrix(const Exx_Info::Exx_Info_Opt_ABFs &info,
+                                  const K_Vectors &kv,
+                                  const UnitCell& ucell,
+                                  const LCAO_Orbitals& orb) const
 {
+// std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+
 	ModuleBase::TITLE("Exx_Opt_Orb::generate_matrix");
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
-	auto judge_orbs_empty = [](const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs) -> bool
-	{
-		for(const auto &orb_t : orbs) {
-			for(const auto &orb_tl : orb_t) {
-				if(orb_tl.size()>0) {
-					return false;
-		}}}
-		return true;
-	};
-
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, info.kmesh_times );
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(lcaos);
 
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,orb, lcaos, info.kmesh_times, info.pca_threshold );
-	if(!info.files_abfs.empty())
-		{ abfs = Exx_Abfs::IO::construct_abfs( abfs, orb, info.files_abfs, info.kmesh_times ); 	}
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(abfs);
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, lcaos, info.kmesh_times, info.pca_threshold);
 
-	std::vector< std::vector< std::vector< Numerical_Orbital_Lm>>>
-		jle = Exx_Abfs::Jle::init_jle(info, info.kmesh_times, ucell , orb);
-	if(!info.files_jles.empty())
-		{ jle = Exx_Abfs::IO::construct_abfs( jle, orb, info.files_jles, info.kmesh_times ); 	}
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(jle);
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+	
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+		jle = Exx_Abfs::Jle::init_jle(info, info.kmesh_times, ucell, orb);
+
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+	
+	GlobalC::exx_info.info_ri.abfs_Lmax = info.abfs_Lmax;
+	for( size_t T=0; T!=abfs.size(); ++T ) {
+		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
+}
 
 	const ModuleBase::Element_Basis_Index::Range    range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
@@ -55,17 +52,36 @@ void Exx_Opt_Orb::generate_matrix(
 	const ModuleBase::Element_Basis_Index::Range    range_jys = ModuleBase::Element_Basis_Index::construct_range( jle );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_jys = ModuleBase::Element_Basis_Index::construct_index( range_jys );
 
-	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs, GlobalV::ofs_running);
-	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, jle, GlobalV::ofs_running);
+// ofs_mpi<<range_lcaos<<std::endl;
+// ofs_mpi<<range_abfs<<std::endl;
+// ofs_mpi<<range_jys<<std::endl;
 
-	const std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R(ucell);
+	std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R(ucell);
+#if TEST_EXX_RADIAL==2
+	{
+		for(const auto & rA : radial_R)
+			for(const auto & rB : rA.second)
+			{
+				ofs_mpi<<rA.first<<"\t"<<rB.first<<":\t";
+				for(const auto & rC : rB.second)
+					ofs_mpi<<rC<<"\t";
+				ofs_mpi<<std::endl;
+			}
+	}
+#endif
+
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | lcaos lcaos >
 	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> 
 	{
-		if(judge_orbs_empty(lcaos))	{ return {}; }
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
-		m_lcaoslcaos_lcaoslcaos.init( lcaos, lcaos, lcaos, lcaos, ucell,orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_lcaoslcaos_lcaoslcaos.init( 1, ucell, orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_lcaoslcaos_lcaoslcaos.init_radial( lcaos, lcaos, lcaos, lcaos, MGT );
 		#if TEST_EXX_RADIAL>=1
 		m_lcaoslcaos_lcaoslcaos.init_radial_table(radial_R);
 		#else
@@ -73,14 +89,19 @@ void Exx_Opt_Orb::generate_matrix(
 		#endif
 		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix_all<double>(ucell,index_lcaos, index_lcaos, index_lcaos, index_lcaos);
 	}();
+	
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | jys >
 	const auto ms_lcaoslcaos_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
-		if(judge_orbs_empty(lcaos))	{ return {}; }
-		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs21 m_jyslcaos_lcaos;
-		m_jyslcaos_lcaos.init( jle, lcaos, lcaos, ucell , orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_jyslcaos_lcaos.init( 1, ucell , orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_jyslcaos_lcaos.init_radial( jle, lcaos, lcaos, MGT);
 		#if TEST_EXX_RADIAL>=1
 		m_jyslcaos_lcaos.init_radial_table( radial_R);
 		#else
@@ -89,12 +110,18 @@ void Exx_Opt_Orb::generate_matrix(
 		return m_jyslcaos_lcaos.cal_overlap_matrix_all<double>(ucell,index_jys, index_lcaos, index_lcaos );
 	}();
 
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+
 	// < jys | jys >
 	const auto ms_jys_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs11 m_jys_jys;
-		m_jys_jys.init( jle, jle, ucell,orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_jys_jys.init( 2,ucell,orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_jys_jys.init_radial( jle, jle, MGT );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_jys.init_radial_table(radial_R);
 		#else
@@ -103,12 +130,18 @@ void Exx_Opt_Orb::generate_matrix(
 		return m_jys_jys.cal_overlap_matrix_all<double>(ucell,index_jys, index_jys );
 	}();
 
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+
 	// < abfs | abfs >
 	const auto ms_abfs_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_abfs_abfs;
-		m_abfs_abfs.init( abfs, abfs, ucell, orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_abfs_abfs.init( 2, ucell, orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_abfs_abfs.init_radial( abfs, abfs, MGT );
 		#if TEST_EXX_RADIAL>=1
 		m_abfs_abfs.init_radial_table(radial_R);
 		#else
@@ -117,13 +150,18 @@ void Exx_Opt_Orb::generate_matrix(
 		return m_abfs_abfs.cal_overlap_matrix_all<double>(ucell,index_abfs, index_abfs );
 	}();
 
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+
 	// < lcaos lcaos | abfs >
 	const auto ms_lcaoslcaos_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
-		if(judge_orbs_empty(lcaos))	{ return {}; }
-		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs21 m_abfslcaos_lcaos;
-		m_abfslcaos_lcaos.init( abfs, lcaos, lcaos, ucell , orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_abfslcaos_lcaos.init( 1, ucell , orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos, MGT );
 		#if TEST_EXX_RADIAL>=1
 		m_abfslcaos_lcaos.init_radial_table(radial_R);
 		#else
@@ -132,13 +170,18 @@ void Exx_Opt_Orb::generate_matrix(
 		return m_abfslcaos_lcaos.cal_overlap_matrix_all<double>(ucell,index_abfs, index_lcaos, index_lcaos );
 	}();
 
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+
 	// < jys | abfs >
 	const auto ms_jys_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		if(judge_orbs_empty(jle))	{ return {}; }
-		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_jys_abfs;
-		m_jys_abfs.init( jle, abfs, ucell,orb, info.kmesh_times );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_jys_abfs.init( 2, ucell,orb, info.kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_jys_abfs.init_radial( jle, abfs, MGT );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_abfs.init_radial_table(radial_R);
 		#else
@@ -146,6 +189,15 @@ void Exx_Opt_Orb::generate_matrix(
 		#endif
 		return m_jys_abfs.cal_overlap_matrix_all<double>(ucell,index_jys, index_abfs );
 	}();
+
+// ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
+
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_jys_jys",ms_jys_jys);
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_lcaoslcaos_jys",ms_lcaoslcaos_jys);
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_lcaoslcaos_lcaoslcaos",ms_lcaoslcaos_lcaoslcaos);
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_abfs_abfs",ms_abfs_abfs);
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_lcaoslcaos_abfs",ms_lcaoslcaos_abfs);
+// ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_jys_abfs",ms_jys_abfs);
 
 	for( size_t TA=0; TA!=ucell.ntype; ++TA )
 	{
@@ -158,106 +210,35 @@ void Exx_Opt_Orb::generate_matrix(
 					if( TA==TB && IA==IB )
 					{
 						const size_t T=TA, I=IA;
-						if(!judge_orbs_empty(abfs))
+						if(info.pca_threshold<=1)
 						{
 							// < abfs | abfs >.I
 							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, T,I,T,I );
 							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
 							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
-								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I) - cal_mul_22(
+								cal_proj(
+									ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I));
 							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
-								{ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I)[0] - cal_mul_21(
+								{cal_proj(
+									ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I)[0],
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})};
 							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
-								{{ms_jys_jys.at(T).at(I).at(T).at(I) - cal_mul_11(
+								{{cal_proj(
+									ms_jys_jys.at(T).at(I).at(T).at(I),
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)},
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})}};
-							print_matrix(
-								info,
+							print_matrix(info,
 								ucell,
 								kv,
-								jle.at(T).size()-1,
-								{jle.at(T).at(0).size()},
-								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
-								m_lcaoslcaos_jys_proj,
-								m_jys_jys_proj,
-								m_lcaoslcaos_lcaoslcaos_proj,
-								T, I, T, I,
-                                orb.cutoffs(),
-								range_jys, index_jys );
-						}
-						else
-						{
-							print_matrix(
-								info,
-								ucell,
-								kv,
-								jle.at(T).size()-1,
-								{jle.at(T).at(0).size()},
-								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
-								ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I),
-								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
-								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
-								T, I, T, I,
-                                orb.cutoffs(),
-								range_jys, index_jys );
-						}
-					}
-					else
-					{
-						if(!judge_orbs_empty(abfs))
-						{
-							// < abfs | abfs >.I
-							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
-							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
-							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
-								ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB) - cal_mul_22(
-									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
-									ms_abfs_abfs_I,
-									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB));
-							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
-								{ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[0] - cal_mul_21(
-									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								 ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[1] - cal_mul_21(
-									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) })};
-							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
-								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA) - cal_mul_11(
-									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								  ms_jys_jys.at(TA).at(IA).at(TB).at(IB) - cal_mul_11(
-									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) },
-								 {ms_jys_jys.at(TB).at(IB).at(TA).at(IA) - cal_mul_11(
-									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								  ms_jys_jys.at(TB).at(IB).at(TB).at(IB) - cal_mul_11(
-									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
-									ms_abfs_abfs_I,
-									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) }};
-							print_matrix(
-								info,
-								ucell,
-								kv,
-								std::max(jle.at(TA).size(), jle.at(TB).size())-1,
-								{jle.at(TA).at(0).size(), jle.at(TB).at(0).size()},
-								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
+								"matrix",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
 								m_lcaoslcaos_lcaoslcaos_proj,
@@ -267,13 +248,82 @@ void Exx_Opt_Orb::generate_matrix(
 						}
 						else
 						{
-							print_matrix(
-								info,
+							print_matrix(info,
 								ucell,
 								kv,
-								std::max(jle.at(TA).size(), jle.at(TB).size())-1,
-								{jle.at(TA).at(0).size(), jle.at(TB).at(0).size()},
-								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
+								"matrix",
+								ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I),
+								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
+								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
+								TA, IA, TB, IB,
+                                orb.cutoffs(),
+								range_jys, index_jys );
+						}
+					}
+					else
+					{
+						if(info.pca_threshold<=1)
+						{
+							// < abfs | abfs >.I
+							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
+							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
+							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
+								cal_proj(
+									ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB),
+									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
+									ms_abfs_abfs_I,
+									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB));
+							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
+							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
+								{cal_proj(
+									ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[0],
+									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
+								 cal_proj(
+									ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[1],
+									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) })};
+							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
+							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
+								{{cal_proj(
+									ms_jys_jys.at(TA).at(IA).at(TA).at(IA),
+									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
+								  cal_proj(
+									ms_jys_jys.at(TA).at(IA).at(TB).at(IB),
+									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) },
+								 {cal_proj(
+									ms_jys_jys.at(TB).at(IB).at(TA).at(IA),
+									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
+								  cal_proj(
+									ms_jys_jys.at(TB).at(IB).at(TB).at(IB),
+									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
+									ms_abfs_abfs_I,
+									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) }};
+							print_matrix(info,
+								ucell,
+								kv,
+								"matrix",
+								m_lcaoslcaos_jys_proj,
+								m_jys_jys_proj,
+								m_lcaoslcaos_lcaoslcaos_proj,
+								TA, IA, TB, IB,
+                                orb.cutoffs(),
+								range_jys, index_jys );
+						}
+						else
+						{
+							print_matrix(info,
+								ucell,
+								kv,
+								"matrix",
 								ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB),
 								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA), ms_jys_jys.at(TA).at(IA).at(TB).at(IB)},
 								 {ms_jys_jys.at(TB).at(IB).at(TA).at(IA), ms_jys_jys.at(TB).at(IB).at(TB).at(IB)}},
@@ -289,94 +339,31 @@ void Exx_Opt_Orb::generate_matrix(
 	}
 }
 
-// m_left * m_middle * m_right.T
-RI::Tensor<double> Exx_Opt_Orb::cal_mul_22(
-	const std::vector<RI::Tensor<double>> & m_left,
-	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
+// m_big - m_left * m_middle * m_right.T
+RI::Tensor<double> Exx_Opt_Orb::cal_proj( 
+	const RI::Tensor<double> & m_big, 
+	const std::vector<RI::Tensor<double>> & m_left, 
+	const std::vector<std::vector<RI::Tensor<double>>> & m_middle, 
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_22");
-	RI::Tensor<double> m_mul;
+    ModuleBase::TITLE("Exx_Opt_Orb::cal_proj");
+
+//auto print_nrc = [](const matrix & m){ std::cout<<"\t"<<m.nr<<"\t"<<m.nc<<std::endl; };
+
+	RI::Tensor<double> m_proj = m_big;
+//print_nrc(m_proj);
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
 		for( size_t ir=0; ir!=m_right.size(); ++ir )
 		{
-			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
-			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0x1y1_x0x1a_ay1(m_left[il], m_middle[il][ir]);
-			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0x1y0y1_x0x1a_y0y1a(m_lm, m_right[ir]);
-			if(m_mul.empty())
-				{ m_mul = std::move(m_lmr); }
-			else
-				{ m_mul += m_lmr; }
+//std::cout<<il<<"\t"<<ir<<std::endl;
+//print_nrc(m_left[il]);
+//print_nrc(m_middle[il][ir]);
+//print_nrc(m_right[ir]);
+			m_proj = m_proj - m_left[il] *m_middle[il][ir] * m_right[ir].transpose();
 		}
 	}
-	return m_mul;
-}
-RI::Tensor<double> Exx_Opt_Orb::cal_mul_21(
-	const std::vector<RI::Tensor<double>> & m_left,
-	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
-	const std::vector<RI::Tensor<double>> & m_right ) const
-{
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_21");
-	RI::Tensor<double> m_mul;
-	for( size_t il=0; il!=m_left.size(); ++il )
-	{
-		for( size_t ir=0; ir!=m_right.size(); ++ir )
-		{
-			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
-			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0x1y1_x0x1a_ay1(m_left[il], m_middle[il][ir]);
-			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0x1y0_x0x1a_y0a(m_lm, m_right[ir]);
-			if(m_mul.empty())
-				{ m_mul = std::move(m_lmr); }
-			else
-				{ m_mul += m_lmr; }
-		}
-	}
-	return m_mul;
-}
-RI::Tensor<double> Exx_Opt_Orb::cal_mul_12(
-	const std::vector<RI::Tensor<double>> & m_left,
-	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
-	const std::vector<RI::Tensor<double>> & m_right ) const
-{
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_12");
-	RI::Tensor<double> m_mul;
-	for( size_t il=0; il!=m_left.size(); ++il )
-	{
-		for( size_t ir=0; ir!=m_right.size(); ++ir )
-		{
-			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
-			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0y1_x0a_ay1(m_left[il], m_middle[il][ir]);
-			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0y0y1_x0a_y0y1a(m_lm, m_right[ir]);
-			if(m_mul.empty())
-				{ m_mul = std::move(m_lmr); }
-			else
-				{ m_mul += m_lmr; }
-		}
-	}
-	return m_mul;
-}
-RI::Tensor<double> Exx_Opt_Orb::cal_mul_11(
-	const std::vector<RI::Tensor<double>> & m_left,
-	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
-	const std::vector<RI::Tensor<double>> & m_right ) const
-{
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_11");
-	RI::Tensor<double> m_mul;
-	for( size_t il=0; il!=m_left.size(); ++il )
-	{
-		for( size_t ir=0; ir!=m_right.size(); ++ir )
-		{
-			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
-			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0y1_x0a_ay1(m_left[il], m_middle[il][ir]);
-			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0y0_x0a_y0a(m_lm, m_right[ir]);
-			if(m_mul.empty())
-				{ m_mul = std::move(m_lmr); }
-			else
-				{ m_mul += m_lmr; }
-		}
-	}
-	return m_mul;
+	return m_proj;
 }
 
 std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
@@ -387,16 +374,18 @@ std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
 
 	if( TA==TB && IA==IB )
 	{
-		return {{LRI_CV_Tools::cal_I(RI::Tensor<double>(ms.at(TA).at(IA).at(TA).at(IA)))}};
+		std::vector<std::vector<RI::Tensor<double>>> m_I
+        {{ RI::Tensor<double>(ms.at(TA).at(IA).at(TA).at(IA).shape) }};
+		return LRI_CV_Tools::cal_I(m_I);
 	}
 	else
 	{
-		std::vector<std::vector<RI::Tensor<double>>> m_in
-			{{ ms.at(TA).at(IA).at(TA).at(IA),
-			   ms.at(TA).at(IA).at(TB).at(IB) },
-			 { ms.at(TB).at(IB).at(TA).at(IA),
-			   ms.at(TB).at(IB).at(TB).at(IB) }};
-		return LRI_CV_Tools::cal_I(m_in);
+		std::vector<std::vector<RI::Tensor<double>>> m_I
+			{{ RI::Tensor<double>(ms.at(TA).at(IA).at(TA).at(IA).shape),
+			   RI::Tensor<double>(ms.at(TA).at(IA).at(TB).at(IB).shape) },
+			 { RI::Tensor<double>(ms.at(TB).at(IB).at(TA).at(IA).shape),
+			   RI::Tensor<double>(ms.at(TB).at(IB).at(TB).at(IB).shape) }};
+		return LRI_CV_Tools::cal_I(m_I);
 	}
 }
 

@@ -1,13 +1,16 @@
 #include "ABFs_Construct-PCA.h"
 
+#include "../../source_basis/module_ao/element_basis_index-ORB.h"
 #include "../../source_base/module_external/lapack_connector.h"
 #include "../../source_base/global_function.h"
-#include "../../source_basis/module_ao/element_basis_index-ORB.h"
+#include "../../source_base/element_basis_index.h"
 #include "../../source_base/matrix.h"
 #include "../../source_lcao/module_ri/Matrix_Orbs11.h"
 #include "../../source_lcao/module_ri/Matrix_Orbs21.h"
 
+#include <algorithm>
 #include <cassert>
+#include <complex>
 #include <limits>
 
 namespace ABFs_Construct
@@ -118,7 +121,7 @@ RI::Tensor<double> get_sub_matrix(const RI::Tensor<double>& m, // size: (lcaos, 
                                   const ModuleBase::Element_Basis_Index::Range& range,
                                   const ModuleBase::Element_Basis_Index::IndexLNM& index)
 	{
-		ModuleBase::TITLE("ABFs_Construct::PCA::get_sub_matrix");		
+		ModuleBase::TITLE("ABFs_Construct::PCA::get_sub_matrix");
 		assert(m.shape.size() == 3);
     RI::Tensor<double> m_sub({m.shape[0], m.shape[1], range[T][L].N});
     for (std::size_t ir = 0; ir != m.shape[0]; ++ir)
@@ -163,7 +166,7 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
     const double kmesh_times)
 	{
 		ModuleBase::TITLE("ABFs_Construct::PCA::cal_PCA");
-		
+
     const ModuleBase::Element_Basis_Index::Range range_lcaos = ModuleBase::Element_Basis_Index::construct_range(lcaos);
     const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos
         = ModuleBase::Element_Basis_Index::construct_index(range_lcaos);
@@ -172,33 +175,50 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
-	Matrix_Orbs21 m_abfslcaos_lcaos;
-    m_abfslcaos_lcaos.init(abfs, lcaos, lcaos, ucell, orb, kmesh_times);
+		const int Lmax_bak = GlobalC::exx_info.info_ri.abfs_Lmax;
+		GlobalC::exx_info.info_ri.abfs_Lmax = std::numeric_limits<int>::min();
+    for (std::size_t T = 0; T != abfs.size(); ++T)
+    {
+        GlobalC::exx_info.info_ri.abfs_Lmax
+            = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size()) - 1);
+}
+
+		Matrix_Orbs21 m_abfslcaos_lcaos;
+		ORB_gaunt_table MGT;
+		int Lmax;
+    m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, orb.get_Rmax(), Lmax);
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+    m_abfslcaos_lcaos.init_radial(abfs, lcaos, lcaos, MGT);
 
     std::map<std::size_t, std::map<std::size_t, std::set<double>>> delta_R;
     for (std::size_t it = 0; it != abfs.size(); ++it)
-        { delta_R[it][it] = {0.0}; }
+    {
+			delta_R[it][it] = {0.0};
+}
 		m_abfslcaos_lcaos.init_radial_table(delta_R);
-		
+
+		GlobalC::exx_info.info_ri.abfs_Lmax = Lmax_bak;
+
     std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> eig(abfs.size());
     for (std::size_t T = 0; T != abfs.size(); ++T)
 		{
         const RI::Tensor<double> A = m_abfslcaos_lcaos.cal_overlap_matrix<double>(T,
-				T, 
+				T,
                                                                                   ModuleBase::Vector3<double>{0, 0, 0},
                                                                                   ModuleBase::Vector3<double>{0, 0, 0},
-				index_abfs, 
+				index_abfs,
 				index_lcaos,
 				index_lcaos,
 				Matrix_Orbs21::Matrix_Order::A2BA1);
-			
+
 			eig[T].resize(abfs[T].size());
         for (std::size_t L = 0; L != abfs[T].size(); ++L)
 			{
             const RI::Tensor<double> A_sub = get_sub_matrix(A, T, L, range_abfs, index_abfs);
 				RI::Tensor<double> mm = A_sub.transpose() * A_sub;
 				std::vector<double> eig_value(mm.shape[0]);
-				
+
             int info = 1;
 
             tensor_syev<double>('V', 'L', mm, eig_value.data(), info);
@@ -231,7 +251,7 @@ RI::Tensor<double> get_column_mean0_matrix(const RI::Tensor<double>& m)
             eig[T][L] = std::make_pair(eig_value, mm);
 			}
 		}
-		
+
 		return eig;
 	}
 

@@ -116,7 +116,10 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
                                                   HS_Arrays.HR_sparse[current_spin]);
         }
 
-        sparse_format::cal_HContainer<double>(pv, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_sparse);
+        if (HS_Arrays.SR_sparse.empty())
+        {
+            sparse_format::cal_HContainer<double>(pv, sparse_thr, *(p_ham_lcao->getSR()), HS_Arrays.SR_sparse);
+        }
     }
     else if (nspin == 4)
     {
