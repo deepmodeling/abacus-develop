@@ -69,7 +69,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       std::ostream& ofs_running)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
-    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
+    ModuleBase::timer::start("LCAO_Deepks_Interface", "out_deepks_labels");
 
     // Note: out_deepks_labels does not support equivariant version now!
 
@@ -646,7 +646,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
         }
     }
-    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
+    ModuleBase::timer::end("LCAO_Deepks_Interface", "out_deepks_labels");
 }
 
 template class LCAO_Deepks_Interface<double, double>;

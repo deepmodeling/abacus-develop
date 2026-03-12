@@ -48,7 +48,7 @@ void LRI_CV<Tdata>::set_orbitals(
     const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
-	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
+	ModuleBase::timer::start("LRI_CV", "set_orbitals");
 
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
@@ -79,7 +79,7 @@ void LRI_CV<Tdata>::set_orbitals(
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 
-	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
+	ModuleBase::timer::end("LRI_CV", "set_orbitals");
 }
 
 template <typename Tdata>
@@ -104,7 +104,7 @@ auto LRI_CV<Tdata>::cal_datas(
 -> std::map<TA,std::map<TAC,Tresult>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_datas");
-	ModuleBase::timer::tick("LRI_CV", "cal_datas");
+	ModuleBase::timer::start("LRI_CV", "cal_datas");
 
 	std::map<TA,std::map<TAC,Tresult>> Datas;
 	#pragma omp parallel
@@ -136,7 +136,7 @@ auto LRI_CV<Tdata>::cal_datas(
 			}
 		}
 	}
-	ModuleBase::timer::tick("LRI_CV", "cal_datas");
+	ModuleBase::timer::end("LRI_CV", "cal_datas");
 	return Datas;
 }
 

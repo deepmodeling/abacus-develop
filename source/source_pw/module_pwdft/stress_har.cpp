@@ -12,7 +12,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 											 const Charge* const chr)
 {
     ModuleBase::TITLE("Stress","stress_har");
-	ModuleBase::timer::tick("Stress","stress_har");
+	ModuleBase::timer::start("Stress","stress_har");
 
     assert(rho_basis->nmaxgr>0);
 
@@ -149,7 +149,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 	}
 
 	delete[] aux;
-	ModuleBase::timer::tick("Stress","stress_har");
+	ModuleBase::timer::end("Stress","stress_har");
 	return;
 }
 

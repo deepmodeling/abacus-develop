@@ -37,7 +37,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
-	ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
+	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR");
 
 	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
 	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
@@ -115,7 +115,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 			}
         }
     }
-	ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
+	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR");
 	return mRs_a2D;
 }
 
@@ -131,7 +131,7 @@ void RI_2D_Comm::add_Hexx(
     TK* hk)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
-	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
+	ModuleBase::timer::start("RI_2D_Comm", "add_Hexx");
 
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(PARAM.inp.nspin))
@@ -166,7 +166,7 @@ void RI_2D_Comm::add_Hexx(
 			}
 		}
 	}
-	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
+	ModuleBase::timer::end("RI_2D_Comm", "add_Hexx");
 }
 template <typename Tdata, typename TK>
 void RI_2D_Comm::add_Hexx_td(
@@ -180,7 +180,7 @@ void RI_2D_Comm::add_Hexx_td(
     TK* hk)
 {
     ModuleBase::TITLE("RI_2D_Comm", "add_Hexx_td");
-    ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx_td");
+    ModuleBase::timer::start("RI_2D_Comm", "add_Hexx_td");
 
     const std::map<int, std::vector<int>> is_list = {{1, {0}}, {2, {kv.isk[ik]}}, {4, {0, 1, 2, 3}}};
     for (const int is_b: is_list.at(PARAM.inp.nspin))
@@ -230,7 +230,7 @@ void RI_2D_Comm::add_Hexx_td(
             }
         }
     }
-    ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx_td");
+    ModuleBase::timer::end("RI_2D_Comm", "add_Hexx_td");
 }
 std::tuple<int,int,int>
 RI_2D_Comm::get_iat_iw_is_block(const UnitCell& ucell,const int& iwt)
@@ -307,7 +307,7 @@ void RI_2D_Comm::add_HexxR(
     const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
 {
     ModuleBase::TITLE("RI_2D_Comm", "add_HexxR");
-    ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
+    ModuleBase::timer::start("RI_2D_Comm", "add_HexxR");
     const std::map<int, std::vector<int>> is_list = { {1,{0}}, {2,{current_spin}}, {4,{0,1,2,3}} };
     for (const int is_hs : is_list.at(PARAM.inp.nspin))
     {
@@ -343,7 +343,7 @@ void RI_2D_Comm::add_HexxR(
         }
     }
 
-    ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
+    ModuleBase::timer::end("RI_2D_Comm", "add_HexxR");
 }
 
 #endif

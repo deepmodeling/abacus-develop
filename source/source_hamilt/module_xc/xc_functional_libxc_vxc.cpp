@@ -22,7 +22,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const std::map<int, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
-    ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_libxc");
+    ModuleBase::timer::start("XC_Functional_Libxc","v_xc_libxc");
 
     const int nspin =
         (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
@@ -151,7 +151,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     XC_Functional_Libxc::finish_func(funcs);
 
-    ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_libxc");
+    ModuleBase::timer::end("XC_Functional_Libxc","v_xc_libxc");
     return std::make_tuple( etxc, vtxc, std::move(v) );
 }
 
@@ -176,7 +176,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const Charge* const chr)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
-    ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_meta");
+    ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
 
     double e2 = 2.0;
 
@@ -406,7 +406,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     XC_Functional_Libxc::finish_func(funcs);
 
-    ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_meta");
+    ModuleBase::timer::end("XC_Functional_Libxc","v_xc_meta");
     return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk) );
 }
 

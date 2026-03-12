@@ -60,7 +60,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft");
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -303,7 +303,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 #endif
     } // end ik
 
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft
 
@@ -313,7 +313,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
                           hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor");
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -532,7 +532,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
         ModuleBase::WARNING_QUIT("elecstate::cal_edm_tddft_tensor", "MPI is required for this function!");
 #endif
     } // end ik
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft_tensor
 
@@ -544,7 +544,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
                                  hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor_lapack");
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -801,7 +801,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
     }
 #endif // __CUDA
 
-    ModuleBase::timer::tick("TD_Efficiency", "cal_edm_tddft");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft_tensor_lapack
 

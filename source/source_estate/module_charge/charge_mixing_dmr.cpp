@@ -9,7 +9,7 @@ void Charge_Mixing::allocate_mixing_dmr(const int nnr)
     // since the size of dmr_mdata is given by the size of HContainer.nnr, which is calculated in DensityMatrix::init_DMR().
     // and DensityMatrix::init_DMR() is called in beforescf(). While set_mixing() is called in ESolver_KS::Init().
     ModuleBase::TITLE("Charge_Mixing", "allocate_mixing_dmr");
-    ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
+    ModuleBase::timer::start("Charge_Mixing", "allocate_mixing_dmr");
     //
     const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
     // allocate memory for dmr_mdata
@@ -23,7 +23,7 @@ void Charge_Mixing::allocate_mixing_dmr(const int nnr)
     }
 
     this->dmr_mdata.reset();
-    ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
+    ModuleBase::timer::end("Charge_Mixing", "allocate_mixing_dmr");
 
     return;
 }
@@ -32,7 +32,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
 {
     // Notice that DensityMatrix object is a Template class
     ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
-    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::start("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
@@ -122,7 +122,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
         delete[] dmr_mag_save;
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::end("Charge_Mixing", "mix_dmr");
 
     return;
 }
@@ -131,7 +131,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
 {
     // Notice that DensityMatrix object is a Template class
     ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
-    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::start("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
@@ -221,7 +221,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
         delete[] dmr_mag_save;
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::end("Charge_Mixing", "mix_dmr");
 
     return;
 }

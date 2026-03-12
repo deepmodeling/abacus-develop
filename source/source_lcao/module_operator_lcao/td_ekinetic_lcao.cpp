@@ -71,7 +71,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
     {
         ModuleBase::WARNING_QUIT("TDEkinetic::calculate_HR", "hR_tmp is nullptr or empty");
     }
-    ModuleBase::timer::tick("TDEkinetic", "calculate_HR");
+    ModuleBase::timer::start("TDEkinetic", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
@@ -114,7 +114,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
     }
-    ModuleBase::timer::tick("TDEkinetic", "calculate_HR");
+    ModuleBase::timer::end("TDEkinetic", "calculate_HR");
 }
 
 template <typename TK, typename TR>
@@ -243,7 +243,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
         return;
     }
     ModuleBase::TITLE("TDEkinetic", "initialize_HR");
-    ModuleBase::timer::tick("TDEkinetic", "initialize_HR");
+    ModuleBase::timer::start("TDEkinetic", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -281,7 +281,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
     }
-    ModuleBase::timer::tick("TDEkinetic", "initialize_HR");
+    ModuleBase::timer::end("TDEkinetic", "initialize_HR");
 }
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp()
@@ -291,7 +291,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp()
         return;
     }
     ModuleBase::TITLE("TDEkinetic", "initialize_HR_tmp");
-    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
+    ModuleBase::timer::start("TDEkinetic", "initialize_HR_tmp");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -310,7 +310,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp()
     }
     this->hR_tmp->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
+    ModuleBase::timer::end("TDEkinetic", "initialize_HR_tmp");
 }
 
 template <typename TK, typename TR>
@@ -318,7 +318,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
 {
     // const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
     ModuleBase::TITLE("TDEkinetic", "contributeHR");
-    ModuleBase::timer::tick("TDEkinetic", "contributeHR");
+    ModuleBase::timer::start("TDEkinetic", "contributeHR");
     // skip if not TDDFT velocity gauge
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
@@ -356,7 +356,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
         this->hR_tmp_done = true;
     }
 
-    ModuleBase::timer::tick("TDEkinetic", "contributeHR");
+    ModuleBase::timer::end("TDEkinetic", "contributeHR");
     return;
 }
 
@@ -370,7 +370,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     else
     {
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
-        ModuleBase::timer::tick("TDEkinetic", "contributeHk");
+        ModuleBase::timer::start("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
         int spin_tot = PARAM.inp.nspin;
@@ -395,7 +395,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
 
-        ModuleBase::timer::tick("TDEkinetic", "contributeHk");
+        ModuleBase::timer::end("TDEkinetic", "contributeHk");
     }
 }
 

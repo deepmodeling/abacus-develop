@@ -79,7 +79,7 @@ template <typename FPTYPE, typename Device>
 void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart)
 {
     ModuleBase::TITLE("Sto_DOS", "caldos");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::start("Sto_DOS", "caldos");
     std::cout << "=========================" << std::endl;
     std::cout << "###Calculating Dos....###" << std::endl;
     std::cout << "=========================" << std::endl;
@@ -99,7 +99,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         int nchip_new = ceil((double)this->p_stowf->nchip_max / npart);
         allorderchi.resize(nchip_new * npwx * dos_nche);
     }
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::start("Sto_DOS", "Tracepoly");
     std::cout << "1. TracepolyA:" << std::endl;
     for (int ik = 0; ik < nk; ik++)
     {
@@ -168,10 +168,10 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
     this->stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::end("Sto_DOS", "Tracepoly");
 
     std::cout << "2. Dos:" << std::endl;
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::start("Sto_DOS", "DOS Loop");
     int n10 = ndos / 10;
     int percent = 10;
     std::vector<double> sto_dos(ndos);
@@ -266,8 +266,8 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
     }
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::end("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::end("Sto_DOS", "caldos");
     return;
 }
 

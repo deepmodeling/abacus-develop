@@ -12,7 +12,7 @@
 bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog)
 {
     ModuleBase::TITLE("ModuleIO", "read_rhog");
-    ModuleBase::timer::tick("ModuleIO", "read_rhog");
+    ModuleBase::timer::start("ModuleIO", "read_rhog");
 
     const int nx = pw_rhod->nx;
     const int ny = pw_rhod->ny;
@@ -194,7 +194,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     //     }
     //     ofs.close();
     // }
-    ModuleBase::timer::tick("ModuleIO", "read_rhog");
+    ModuleBase::timer::end("ModuleIO", "read_rhog");
     return true;
 }
 
@@ -209,7 +209,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                           const int nrank)
 {
     ModuleBase::TITLE("ModuleIO", "write_rhog");
-    ModuleBase::timer::tick("ModuleIO", "write_rhog");
+    ModuleBase::timer::start("ModuleIO", "write_rhog");
     if (ipool != 0) { return true; }
     // only one pool writes the rhog, because rhog in all pools are identical.
 
@@ -390,7 +390,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     //     }
     //     ofs.close();
     // }
-    ModuleBase::timer::tick("ModuleIO", "write_rhog");
+    ModuleBase::timer::end("ModuleIO", "write_rhog");
     return true;
 }
 

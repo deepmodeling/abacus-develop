@@ -27,7 +27,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
                                 torch::Tensor& gdmepsl)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gdmepsl");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmepsl");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gdmepsl");
     // get DS_alpha_mu and S_nu_beta
 
     int nrow = pv.nrow;
@@ -147,7 +147,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * deepks_param.inlmax * nm * nm);
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmepsl");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gdmepsl");
     return;
 }
 
@@ -161,7 +161,7 @@ void DeePKS_domain::cal_gvepsl(const int nat,
                                const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gvepsl");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gvepsl");
     // dD/d\epsilon_{\alpha\beta}, tensor vector form of gdmepsl
     std::vector<torch::Tensor> gdmepsl_vector;
     auto accessor = gdmepsl.accessor<double, 4>();
@@ -197,7 +197,7 @@ void DeePKS_domain::cal_gvepsl(const int nat,
         assert(gvepsl.size(2) == deepks_param.des_per_atom);
     }
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gvepsl");
     return;
 }
 

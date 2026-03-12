@@ -14,7 +14,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                                           const int ngk_ik,
                                           const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op_ace");
     //    std::cout << "act_op_ace" << std::endl;
     // hpsi += -Xi^\dagger * Xi * psi
     T* Xi_ace = Xi_ace_k[this->ik];
@@ -64,7 +64,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
     );
 
     delmem_complex_op()(Xi_psi);
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op_ace");
 
 }
 
@@ -112,7 +112,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     }
 
     if (first_iter) return;
-    ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
+    ModuleBase::timer::start("OperatorEXXPW", "construct_ace");
 
     int nk_max = kv->para_k.get_max_nks_pool();
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -300,7 +300,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 
     *ik_ = ik_save;
 
-    ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
+    ModuleBase::timer::end("OperatorEXXPW", "construct_ace");
 
 }
 

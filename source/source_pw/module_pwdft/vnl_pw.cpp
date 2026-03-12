@@ -80,7 +80,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
 {
     const int ntype = ucell.ntype;
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
-    ModuleBase::timer::tick("ppcell_vnl", "init");
+    ModuleBase::timer::start("ppcell_vnl", "init");
 
     GlobalV::ofs_running << "\n SETUP NONLOCAL PSEUDOPOTENTIALS IN PLANE WAVE BASIS" << std::endl;
 
@@ -284,7 +284,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         // There's no need to delete double precision pointers while in a CPU environment.
     }
 
-    ModuleBase::timer::tick("ppcell_vnl", "init");
+    ModuleBase::timer::end("ppcell_vnl", "init");
     return;
 }
 
@@ -302,7 +302,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
     }
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
+    ModuleBase::timer::start("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
@@ -422,13 +422,13 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         delmem_int_op()(atom_nb);
         delmem_int_op()(atom_na);
     }
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
+    ModuleBase::timer::end("pp_cell_vnl", "getvnl");
 } // end subroutine getvnl
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
+    ModuleBase::timer::start("ppcell_vnl", "init_vnl");
 
     this->omega_old = cell.omega;
 
@@ -782,7 +782,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
+    ModuleBase::timer::end("ppcell_vnl", "init_vnl");
     GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done." << std::endl;
     return;
 }
@@ -1057,7 +1057,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  2018-3-23
 // {
 // 	if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl_alpha");
-// 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
+// 	ModuleBase::timer::start("pp_cell_vnl","getvnl_alpha");
 
 // 	if(lmaxkb < 0)
 // 	{
@@ -1170,7 +1170,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 
 // 	delete [] gk;
 // 	delete [] vq;
-// 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
+// 	ModuleBase::timer::end("pp_cell_vnl","getvnl_alpha");
 // 	return;
 // }
 #endif
@@ -1180,7 +1180,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
     if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl_alpha");
 }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");
+    ModuleBase::timer::start("ppcell_vnl", "init_vnl_alpha");
 
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -1244,7 +1244,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
         delete[] aux;
         delete[] jl;
     }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");
+    ModuleBase::timer::end("ppcell_vnl", "init_vnl_alpha");
     GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done(including L)." << std::endl;
     return;
 }

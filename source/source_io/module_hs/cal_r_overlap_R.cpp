@@ -449,26 +449,26 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
 void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
-    ModuleBase::timer::tick("cal_r_overlap_R", "init");
+    ModuleBase::timer::start("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
     initialize_orb_table(ucell,orb);
     construct_orbs_and_orb_r(ucell,orb);
 
-    ModuleBase::timer::tick("cal_r_overlap_R", "init");
+    ModuleBase::timer::end("cal_r_overlap_R", "init");
     return;
 }
 
 void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init_nonlocal");
-    ModuleBase::timer::tick("cal_r_overlap_R", "init_nonlocal");
+    ModuleBase::timer::start("cal_r_overlap_R", "init_nonlocal");
     this->ParaV = &pv;
 
     initialize_orb_table(ucell,orb);
     construct_orbs_and_nonlocal_and_orb_r(ucell,orb);
 
-    ModuleBase::timer::tick("cal_r_overlap_R", "init_nonlocal");
+    ModuleBase::timer::end("cal_r_overlap_R", "init_nonlocal");
     return;
 }
 
@@ -597,7 +597,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
 void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
-    ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
+    ModuleBase::timer::start("cal_r_overlap_R", "out_rR");
 
     int step = istep;
     // set R coor range
@@ -859,14 +859,14 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         std::remove(tem1.str().c_str());
     }
 
-    ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
+    ModuleBase::timer::end("cal_r_overlap_R", "out_rR");
     return;
 }
 
 void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
-    ModuleBase::timer::tick("cal_r_overlap_R", "out_rR_other");
+    ModuleBase::timer::start("cal_r_overlap_R", "out_rR_other");
 
     // calculate rR matrix
     ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -1072,6 +1072,6 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
         out_r.close();
     }
 
-    ModuleBase::timer::tick("cal_r_overlap_R", "out_rR_other");
+    ModuleBase::timer::end("cal_r_overlap_R", "out_rR_other");
     return;
 }

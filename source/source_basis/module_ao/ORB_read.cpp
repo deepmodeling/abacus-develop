@@ -160,7 +160,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
                                   const int& my_rank)     // mohan add 2021-04-26
 {
     ModuleBase::TITLE("LCAO_Orbitals", "Read_Orbitals");
-    ModuleBase::timer::tick("LCAO_Orbitals", "Read_Orbitals");
+    ModuleBase::timer::start("LCAO_Orbitals", "Read_Orbitals");
 
     ofs_in << "\n\n\n\n";
     ofs_in << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -266,7 +266,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
         this->Read_Descriptor(ofs_in, force_flag, my_rank);
     }
 
-    ModuleBase::timer::tick("LCAO_Orbitals", "Read_Orbitals");
+    ModuleBase::timer::end("LCAO_Orbitals", "Read_Orbitals");
     return;
 }
 

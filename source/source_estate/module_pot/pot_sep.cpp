@@ -8,7 +8,7 @@ namespace elecstate
 void PotSep::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("PotSep", "cal_fixed_v");
-    ModuleBase::timer::tick("PotSep", "cal_fixed_v");
+    ModuleBase::timer::start("PotSep", "cal_fixed_v");
 
     // GlobalC::vsep_cell.generate_vsep_r(this->rho_basis_[0], this->sf_[0]);
 
@@ -22,7 +22,7 @@ void PotSep::cal_fixed_v(double* vl_pseudo)
         }
     }
 
-    ModuleBase::timer::tick("PotSep", "cal_fixed_v");
+    ModuleBase::timer::end("PotSep", "cal_fixed_v");
     return;
 }
 } // namespace elecstate

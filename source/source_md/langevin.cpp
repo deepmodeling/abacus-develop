@@ -25,13 +25,13 @@ Langevin::~Langevin()
 void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Langevin", "setup");
-    ModuleBase::timer::tick("Langevin", "setup");
+    ModuleBase::timer::start("Langevin", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
 
     post_force();
 
-    ModuleBase::timer::tick("Langevin", "setup");
+    ModuleBase::timer::end("Langevin", "setup");
     return;
 }
 
@@ -39,12 +39,12 @@ void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& globa
 void Langevin::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Langevin", "first_half");
-    ModuleBase::timer::tick("Langevin", "first_half");
+    ModuleBase::timer::start("Langevin", "first_half");
 
     MD_base::update_vel(total_force);
     MD_base::update_pos();
 
-    ModuleBase::timer::tick("Langevin", "first_half");
+    ModuleBase::timer::end("Langevin", "first_half");
     return;
 }
 
@@ -52,12 +52,12 @@ void Langevin::first_half(std::ofstream& ofs)
 void Langevin::second_half()
 {
     ModuleBase::TITLE("Langevin", "second_half");
-    ModuleBase::timer::tick("Langevin", "second_half");
+    ModuleBase::timer::start("Langevin", "second_half");
 
     post_force();
     MD_base::update_vel(total_force);
 
-    ModuleBase::timer::tick("Langevin", "second_half");
+    ModuleBase::timer::end("Langevin", "second_half");
     return;
 }
 

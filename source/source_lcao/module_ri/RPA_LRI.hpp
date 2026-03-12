@@ -19,7 +19,7 @@ template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
-    ModuleBase::timer::tick("RPA_LRI", "init");
+    ModuleBase::timer::start("RPA_LRI", "init");
     this->mpi_comm = mpi_comm_in;
     this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_lri_rpa.lcaos;

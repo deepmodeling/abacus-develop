@@ -17,7 +17,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                                  const ModuleBase::ComplexMatrix& strucFac)
 {
     ModuleBase::TITLE("H_Ewald_pw","compute_ewald");
-    ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
+    ModuleBase::timer::start("H_Ewald_pw","compute_ewald");
 
 //----------------------------------------------------------
 // Calculates Ewald energy with both G- and R-space terms.
@@ -276,7 +276,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         ModuleBase::GlobalFunc::OUT("ewalds",ewalds);
     }
 
-    ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
+    ModuleBase::timer::end("H_Ewald_pw","compute_ewald");
     return ewalds;
 } // end function ewald
 

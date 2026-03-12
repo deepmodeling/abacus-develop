@@ -281,7 +281,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
                                                  const std::complex<FPTYPE>* ppsi_in)
 {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
+    ModuleBase::timer::start("Onsite_Proj_tools", "cal_becp");
 
     const int npol = this->ucell_->get_npol();
     const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
@@ -458,7 +458,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
     // {
     //     std::cout << "becp[" << i << "]: " << becp[i] << std::endl;
     // }
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
+    ModuleBase::timer::end("Onsite_Proj_tools", "cal_becp");
 }
 
 // cal_dbecp
@@ -466,7 +466,7 @@ template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, int jpol)
 {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_dbecp_s");
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_dbecp_s");
+    ModuleBase::timer::start("Onsite_Proj_tools", "cal_dbecp_s");
     this->current_ik = -1; // reset the current ik, vkb has been reused to save dvkb
     const int npol = this->ucell_->get_npol();
     const int size_becp = this->nbands * npol * this->nkb;
@@ -588,7 +588,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
               &ModuleBase::ZERO,
               dbecp,
               nkb);
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_dbecp_s");
+    ModuleBase::timer::end("Onsite_Proj_tools", "cal_dbecp_s");
 }
 
 // cal_dbecp_f
@@ -601,7 +601,7 @@ template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
 {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_dbecp_f");
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_dbecp_f");
+    ModuleBase::timer::start("Onsite_Proj_tools", "cal_dbecp_f");
 
     this->current_ik = -1; // reset the current ik, vkb has been reused to save dvkb
 
@@ -668,7 +668,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
               nkb);
     this->revert_vkb(npw, ipol);
     this->pre_ik_f = ik;
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_dbecp_f");
+    ModuleBase::timer::end("Onsite_Proj_tools", "cal_dbecp_f");
 }
 
 // save_vkb

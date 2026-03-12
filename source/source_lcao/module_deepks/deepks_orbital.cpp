@@ -15,7 +15,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 const int nspin)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_o_delta");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::start("DeePKS_domain", "cal_o_delta");
 
     for (int ik = 0; ik < nks / nspin; ik++)
     {
@@ -51,7 +51,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
         const double* o_delta_ptr = reinterpret_cast<const double*>(&o_delta_tmp);
         o_delta(ik, 0) = o_delta_ptr[0]; // real part in complex case
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::end("DeePKS_domain", "cal_o_delta");
     return;
 }
 

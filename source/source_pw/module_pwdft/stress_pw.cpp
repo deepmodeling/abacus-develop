@@ -21,7 +21,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("Stress_PW", "cal_stress");
+    ModuleBase::timer::start("Stress_PW", "cal_stress");
 
     // total stress
     sigmatot.create(3, 3);
@@ -175,7 +175,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         }
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("Stress_PW", "cal_stress");
+    ModuleBase::timer::end("Stress_PW", "cal_stress");
     return;
 }
 

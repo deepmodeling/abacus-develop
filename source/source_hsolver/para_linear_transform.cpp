@@ -77,7 +77,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
-    ModuleBase::timer::tick("PLinearTransform", "act");
+    ModuleBase::timer::start("PLinearTransform", "act");
 #ifdef __MPI
     if (nproc_col > 1)
     {
@@ -166,7 +166,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                          B,
                                          LDA);
     }
-    ModuleBase::timer::tick("PLinearTransform", "act");
+    ModuleBase::timer::end("PLinearTransform", "act");
 };
 
 template struct PLinearTransform<double, base_device::DEVICE_CPU>;

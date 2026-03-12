@@ -8,7 +8,7 @@ bool unitcell::check_tau(const Atom* atoms,
 		const double& lat0) 
 {
 	ModuleBase::TITLE("UnitCell","check_tau");
-	ModuleBase::timer::tick("UnitCell","check_tau");
+	ModuleBase::timer::start("UnitCell","check_tau");
 
 	ModuleBase::Vector3<double> diff = 0.0;
 	double norm = 0.0;
@@ -48,7 +48,7 @@ bool unitcell::check_tau(const Atom* atoms,
 			}
 		}
 	}
-	ModuleBase::timer::tick("UnitCell","check_tau");
+	ModuleBase::timer::end("UnitCell","check_tau");
 	return true;
 }
 

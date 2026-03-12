@@ -26,7 +26,7 @@ void ModuleIO::read_wf2rho_pw(
 		std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_wf2rho_pw");
-    ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
+    ModuleBase::timer::start("ModuleIO", "read_wf2rho_pw");
 
 	ofs_running << " READING WAVE FUNCTIONS" << std::endl;
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -180,5 +180,5 @@ void ModuleIO::read_wf2rho_pw(
         srho.begin(is, chg, chg.rhopw, symm);
     }
 
-    ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
+    ModuleBase::timer::end("ModuleIO", "read_wf2rho_pw");
 }

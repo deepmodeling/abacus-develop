@@ -25,7 +25,7 @@ namespace LR
     void PotHxcLR::cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op)
     {
         ModuleBase::TITLE("PotHxcLR", "cal_v_eff");
-        ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
+        ModuleBase::timer::start("PotHxcLR", "cal_v_eff");
         auto& fxc = this->xc_kernel_components_;
 
         // Hartree
@@ -48,7 +48,7 @@ namespace LR
         throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())
             + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 #endif
-        ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
+        ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
     }
 
     void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)

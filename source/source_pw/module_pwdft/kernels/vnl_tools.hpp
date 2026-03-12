@@ -24,7 +24,7 @@ static inline FPTYPE _polynomial_interpolation(const FPTYPE* table,
                      - table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 2] * x1 * x0 * x3 / 2.0
                      + table[(dim1 * tab_2 + dim2) * tab_3 + iq + 0 + 3] * x1 * x2 * x0 / 6.0;
 
-    //	ModuleBase::timer::tick("PolyInt","Poly_Interpo_2");
+    //	ModuleBase::timer::start("PolyInt","Poly_Interpo_2");
     return y;
 }
 

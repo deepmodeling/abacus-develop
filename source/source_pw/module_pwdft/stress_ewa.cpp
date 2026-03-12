@@ -16,7 +16,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 											 const bool is_pw)
 {
     ModuleBase::TITLE("Stress","stress_ewa");
-    ModuleBase::timer::tick("Stress","stress_ewa");
+    ModuleBase::timer::start("Stress","stress_ewa");
 
     FPTYPE charge=0;
     for(int it=0; it < ucell.ntype; it++)
@@ -198,7 +198,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 		}
 	}
 
-	ModuleBase::timer::tick("Stress","stress_ewa");
+	ModuleBase::timer::end("Stress","stress_ewa");
 
 	return;
 }

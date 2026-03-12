@@ -21,7 +21,7 @@ void DeePKS_domain::cal_descriptor_equiv(const int nat,
                                          std::vector<torch::Tensor>& descriptor)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_descriptor_equiv");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_descriptor_equiv");
+    ModuleBase::timer::start("DeePKS_domain", "cal_descriptor_equiv");
 
     assert(deepks_param.des_per_atom > 0);
     for (int iat = 0; iat < nat; iat++)
@@ -31,7 +31,7 @@ void DeePKS_domain::cal_descriptor_equiv(const int nat,
         descriptor.push_back(tmp);
     }
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_descriptor_equiv");
+    ModuleBase::timer::end("DeePKS_domain", "cal_descriptor_equiv");
 }
 
 // calculates descriptors from projected density matrices
@@ -41,7 +41,7 @@ void DeePKS_domain::cal_descriptor(const int nat,
                                    std::vector<torch::Tensor>& descriptor)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_descriptor");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_descriptor");
+    ModuleBase::timer::start("DeePKS_domain", "cal_descriptor");
 
     if (PARAM.inp.deepks_equiv)
     {
@@ -66,7 +66,7 @@ void DeePKS_domain::cal_descriptor(const int nat,
         d_v = torch::linalg_eigh(pdm[inl], /*uplo*/ "U");
         descriptor[inl] = std::get<0>(d_v);
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_descriptor");
+    ModuleBase::timer::end("DeePKS_domain", "cal_descriptor");
     return;
 }
 

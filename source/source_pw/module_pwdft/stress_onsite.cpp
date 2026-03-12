@@ -20,7 +20,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
     {
         return;
     }
-    ModuleBase::timer::tick("Stress", "stress_onsite");
+    ModuleBase::timer::start("Stress", "stress_onsite");
 
     FPTYPE* stress_device = nullptr;
     resmem_var_op()(stress_device, 9);
@@ -115,7 +115,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
         p_symm->symmetrize_mat3(sigma, ucell_in.lat);
     }
 
-    ModuleBase::timer::tick("Stress", "stress_onsite");
+    ModuleBase::timer::end("Stress", "stress_onsite");
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

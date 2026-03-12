@@ -219,7 +219,7 @@ void Numerical_Orbital_Lm::copy_parameter(
 #include "source_base/mathzone_add1.h"
 void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool &force_flag)
 {
-	ModuleBase::timer::tick("NOrbital_Lm", "extra_uniform");
+	ModuleBase::timer::start("NOrbital_Lm", "extra_uniform");
 	
 	//---------------------------------------------
 	// set the dr, fixed by liaochen.
@@ -321,7 +321,7 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool
 	delete [] y2;
 	delete [] rad;
 	delete [] tmp;
-	ModuleBase::timer::tick("NOrbital_Lm", "extra_uniform");
+	ModuleBase::timer::end("NOrbital_Lm", "extra_uniform");
 }
 
 /*

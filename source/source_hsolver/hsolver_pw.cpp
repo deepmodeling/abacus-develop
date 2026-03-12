@@ -76,7 +76,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int nat)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
-    ModuleBase::timer::tick("HSolverPW", "solve");
+    ModuleBase::timer::start("HSolverPW", "solve");
 
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;
@@ -229,7 +229,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
     }
 
-	ModuleBase::timer::tick("HSolverPW", "solve");
+	ModuleBase::timer::end("HSolverPW", "solve");
 	return;
 }
 
@@ -240,7 +240,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            Real* eigenvalue,
                                            const int& nk_nums)
 {
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    ModuleBase::timer::start("HSolverPW", "solve_psik");
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
@@ -363,7 +363,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                         ntry_max,
                         notconv_max));
     }
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;
 }
 

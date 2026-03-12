@@ -32,7 +32,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 						  const LCAO_Orbitals& orb)
 {
 	ModuleBase::TITLE("Exx_LRI","init");
-	ModuleBase::timer::tick("Exx_LRI", "init");
+	ModuleBase::timer::start("Exx_LRI", "init");
 
 	this->mpi_comm = mpi_comm_in;
 	this->p_kv = &kv_in;
@@ -61,7 +61,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 															this->info.kmesh_times, MGT, settings_list.second.first );
 	}
 
-	ModuleBase::timer::tick("Exx_LRI", "init");
+	ModuleBase::timer::end("Exx_LRI", "init");
 }
 
 template<typename Tdata>
@@ -69,7 +69,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 								  const bool write_cv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_ions");
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
+	ModuleBase::timer::start("Exx_LRI", "cal_exx_ions");
 
 	std::vector<TA> atoms(ucell.nat);
 	for(int iat=0; iat<ucell.nat; ++iat)
@@ -171,7 +171,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
 		}
 	}
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
+	ModuleBase::timer::end("Exx_LRI", "cal_exx_ions");
 }
 
 template<typename Tdata>
@@ -181,7 +181,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
+	ModuleBase::timer::start("Exx_LRI", "cal_exx_elec");
 
 	const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
 
@@ -223,7 +223,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
+	ModuleBase::timer::end("Exx_LRI", "cal_exx_elec");
 }
 
 template<typename Tdata>
@@ -267,7 +267,7 @@ template<typename Tdata>
 void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
+	ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
 	this->force_exx.create(nat, Ndim);
 	for(int is=0; is<PARAM.inp.nspin; ++is)
@@ -282,7 +282,7 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
 	const double frac = -2 * SPIN_multiple;		// why?
 	this->force_exx *= frac;
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
+	ModuleBase::timer::end("Exx_LRI", "cal_exx_force");
 }
 
 
@@ -290,7 +290,7 @@ template<typename Tdata>
 void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_stress");
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
+	ModuleBase::timer::start("Exx_LRI", "cal_exx_stress");
 
 	this->stress_exx.create(Ndim, Ndim);
 	for(int is=0; is<PARAM.inp.nspin; ++is)
@@ -306,7 +306,7 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	const double frac = 2 * SPIN_multiple / omega * lat0;		// why?
 	this->stress_exx *= frac;
 
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
+	ModuleBase::timer::end("Exx_LRI", "cal_exx_stress");
 }
 
 /*

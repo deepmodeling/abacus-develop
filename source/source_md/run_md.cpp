@@ -18,7 +18,7 @@ namespace Run_MD
 void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
-    ModuleBase::timer::tick("Run_MD", "md_line");
+    ModuleBase::timer::start("Run_MD", "md_line");
 
     /// determine the md_type
     MD_base* mdrun = nullptr;
@@ -130,7 +130,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     }
 
     delete mdrun;
-    ModuleBase::timer::tick("Run_MD", "md_line");
+    ModuleBase::timer::end("Run_MD", "md_line");
     return;
 }
 

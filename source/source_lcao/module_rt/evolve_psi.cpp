@@ -198,9 +198,9 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
@@ -210,9 +210,9 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
@@ -279,9 +279,9 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 

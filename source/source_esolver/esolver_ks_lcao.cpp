@@ -46,7 +46,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS<TK>::before_all_runners(ucell, inp);
@@ -93,7 +93,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
           two_center_bundle_, inp.dft_functional, inp.rdmft_power_alpha);
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "before_all_runners");
     return;
 }
 
@@ -102,7 +102,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "before_scf");
 
     //! 1) call before_scf() of ESolver_KS.
     ESolver_KS<TK>::before_scf(ucell, istep);
@@ -207,7 +207,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         rdmft_solver.update_ion(ucell, *(this->pw_rho), this->locpp.vloc, this->sf.strucFac);
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "before_scf");
     return;
 }
 
@@ -222,7 +222,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_force");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "cal_force");
 
     Force_Stress_LCAO<TK> fsl(this->RA, ucell.nat);
 
@@ -241,14 +241,14 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 
     this->have_force = true;
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "cal_force");
 }
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "cal_stress");
 
     if (!this->have_force)
     {
@@ -260,14 +260,14 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     stress = this->scs;
     this->have_force = false;
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "cal_stress");
 }
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "after_all_runners");
 
     ESolver_KS<TK>::after_all_runners(ucell);
 
@@ -292,7 +292,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 #endif
 #endif
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "after_all_runners");
 }
 
 template <typename TK, typename TR>
@@ -459,7 +459,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
+    ModuleBase::timer::start("ESolver_KS_LCAO", "after_scf");
 
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
 
@@ -490,7 +490,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         this->RA.delete_grid();
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
+    ModuleBase::timer::end("ESolver_KS_LCAO", "after_scf");
 }
 
 template class ESolver_KS_LCAO<double, double>;

@@ -23,7 +23,7 @@ void ctrl_output_fp(UnitCell& ucell,
                     const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_fp");
+    ModuleBase::timer::start("ModuleIO", "ctrl_output_fp");
 
     const bool out_app_flag = PARAM.inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
@@ -200,7 +200,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_fp");
+    ModuleBase::timer::end("ModuleIO", "ctrl_output_fp");
 }
 
 } // namespace ModuleIO

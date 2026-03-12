@@ -51,7 +51,7 @@ OnsiteProj<OperatorPW<T, Device>>::~OnsiteProj() {
 template<typename T, typename Device>
 void OnsiteProj<OperatorPW<T, Device>>::init(const int ik_in)
 {
-    ModuleBase::timer::tick("OnsiteProj", "getvnl");
+    ModuleBase::timer::start("OnsiteProj", "getvnl");
     this->ik = ik_in;
 
     auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
@@ -63,7 +63,7 @@ void OnsiteProj<OperatorPW<T, Device>>::init(const int ik_in)
         this->next_op->init(ik_in);
     }
 
-    ModuleBase::timer::tick("OnsiteProj", "getvnl");
+    ModuleBase::timer::end("OnsiteProj", "getvnl");
 }
 
 //--------------------------------------------------------------------------
@@ -72,7 +72,7 @@ void OnsiteProj<OperatorPW<T, Device>>::init(const int ik_in)
 template<typename T, typename Device>
 void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int npol, const int m) const
 {
-    ModuleBase::timer::tick("OnsiteProj", "add_onsite_proj");
+    ModuleBase::timer::start("OnsiteProj", "add_onsite_proj");
 
     auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
     // apply the operator to the wavefunction
@@ -98,7 +98,7 @@ void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int np
         hpsi_in,
         npwx
     );
-    ModuleBase::timer::tick("OnsiteProj", "add_onsite_proj");
+    ModuleBase::timer::end("OnsiteProj", "add_onsite_proj");
 }
 
 template<typename T, typename Device>
@@ -422,12 +422,12 @@ void OnsiteProj<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "OnsiteProjPW");
+    ModuleBase::timer::start("Operator", "OnsiteProjPW");
     this->update_becp(tmpsi_in, npol, nbands);
     this->cal_ps_delta_spin(npol, nbands);
     this->cal_ps_dftu(npol, nbands);
     this->add_onsite_proj(tmhpsi, npol, nbands);
-    ModuleBase::timer::tick("Operator", "OnsiteProjPW");
+    ModuleBase::timer::end("Operator", "OnsiteProjPW");
 }
 
 template<typename T, typename Device>

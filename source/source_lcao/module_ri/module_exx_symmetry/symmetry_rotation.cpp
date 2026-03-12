@@ -21,7 +21,7 @@ namespace ModuleSymmetry
         const UnitCell& ucell, const Parallel_2D& pv)
     {
         ModuleBase::TITLE("Symmetry_rotation", "cal_Ms");
-        ModuleBase::timer::tick("Symmetry_rotation", "cal_Ms");
+        ModuleBase::timer::start("Symmetry_rotation", "cal_Ms");
 
         this->nsym_ = ucell.symm.nrotk;
         this->eps_ = ucell.symm.epsilon;
@@ -72,14 +72,14 @@ namespace ModuleSymmetry
         // ofs << std::endl;
         // ofs.close();
 
-        ModuleBase::timer::tick("Symmetry_rotation", "cal_Ms");
+        ModuleBase::timer::end("Symmetry_rotation", "cal_Ms");
     }
 
     std::vector<std::vector<std::complex<double>>> Symmetry_rotation::restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz, const Parallel_2D& pv)const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_dm");
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_dm");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_dm");
         auto vec3_eq = [](const TCdouble& v1, const TCdouble& v2, const double& prec) -> bool
             {
                 return (std::abs(v1.x - v2.x) < prec) && (std::abs(v1.y - v2.y) < prec) && (std::abs(v1.z - v2.z) < prec);
@@ -139,7 +139,7 @@ namespace ModuleSymmetry
             }
         ofs.close();
 */
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_dm");
+        ModuleBase::timer::end("Symmetry_rotation", "restore_dm");
         return dm_k_full;
     }
     std::vector<std::vector<double>> Symmetry_rotation::restore_dm(const K_Vectors& kv,

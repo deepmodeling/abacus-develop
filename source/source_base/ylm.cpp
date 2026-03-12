@@ -17,7 +17,7 @@ int Ylm::nlm = 0;
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
 {
-	//ModuleBase::timer::tick ("Ylm","get_ylm_real");
+	//ModuleBase::timer::start("Ylm","get_ylm_real");
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
@@ -128,7 +128,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		}
 	}// end do
 
-	//ModuleBase::timer::tick ("Ylm", "get_ylm_real");
+	//ModuleBase::timer::end("Ylm", "get_ylm_real");
 	return;
 }
 
@@ -295,7 +295,7 @@ void Ylm::rlylm
 )
 {
 //	ModuleBase::TITLE("Ylm","rlylm");
-//	ModuleBase::timer::tick("Ylm","rlylm");
+//	ModuleBase::timer::start("Ylm","rlylm");
 
 	int MaxL = Lmax - 1;
 
@@ -485,7 +485,7 @@ void Ylm::rlylm
 		}
 	}
 
-//	ModuleBase::timer::tick("Ylm", "rlylm");
+//	ModuleBase::timer::end("Ylm", "rlylm");
 	return;
 }
 

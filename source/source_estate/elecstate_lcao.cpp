@@ -34,7 +34,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
 		std::vector<double*> pexsi_EDM,
 		DensityMatrix<double, double>* dm)
 {
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
+    ModuleBase::timer::start("ElecStateLCAO", "dm2rho");
 
     int nspin = PARAM.inp.nspin;
     if (PARAM.inp.nspin == 4)
@@ -71,7 +71,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
 
     this->charge->renormalize_rho();
 
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
+    ModuleBase::timer::end("ElecStateLCAO", "dm2rho");
     return;
 }
 

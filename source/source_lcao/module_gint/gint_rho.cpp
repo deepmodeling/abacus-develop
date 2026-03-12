@@ -9,11 +9,11 @@ namespace ModuleGint
 void Gint_rho::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_rho");
-    ModuleBase::timer::tick("Gint", "cal_gint_rho");
+    ModuleBase::timer::start("Gint", "cal_gint_rho");
     init_dm_gint_();
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_rho_();
-    ModuleBase::timer::tick("Gint", "cal_gint_rho");
+    ModuleBase::timer::end("Gint", "cal_gint_rho");
 }
 
 void Gint_rho::init_dm_gint_()

@@ -249,7 +249,7 @@ void Charge::atomic_rho(const int spin_number_need,
                         const UnitCell& ucell) const // Peize Lin refactor 2021.04.08
 {
     ModuleBase::TITLE("Charge", "atomic_rho");
-    ModuleBase::timer::tick("Charge", "atomic_rho");
+    ModuleBase::timer::start("Charge", "atomic_rho");
 
     {
 		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
@@ -635,7 +635,7 @@ void Charge::atomic_rho(const int spin_number_need,
 		}
     }
 
-    ModuleBase::timer::tick("Charge", "atomic_rho");
+    ModuleBase::timer::end("Charge", "atomic_rho");
     return;
 }
 

@@ -30,7 +30,7 @@ void PotXC_FDM::cal_v_eff(
 	ModuleBase::matrix& v_eff)
 {
 	ModuleBase::TITLE("PotXC_FDM", "cal_veff");
-	ModuleBase::timer::tick("PotXC_FDM", "cal_veff");
+	ModuleBase::timer::start("PotXC_FDM", "cal_veff");
 
 	assert(this->chg_0->nrxx == chg_1->nrxx);
 	assert(this->chg_0->nspin == chg_1->nspin);
@@ -52,7 +52,7 @@ void PotXC_FDM::cal_v_eff(
 
 	v_eff += v_xc_01 - this->v_xc_0;
 
-	ModuleBase::timer::tick("PotXC_FDM", "cal_veff");
+	ModuleBase::timer::end("PotXC_FDM", "cal_veff");
 }
 
 } // namespace elecstate
