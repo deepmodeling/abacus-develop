@@ -6,14 +6,14 @@
 #ifndef LRI_CV_HPP
 #define LRI_CV_HPP
 
-#include "lri_cv.h"
-#include "lri_cv_tools.h"
-#include "exx_abfs_ctor_orbs.h"
-#include "ri_util.h"
-#include "source_basis/module_ao/elem_basis_idx_orb.h"
-#include "source_base/tool_title.h"
-#include "source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
+#include "LRI_CV.h"
+#include "LRI_CV_Tools.h"
+#include "exx_abfs-construct_orbs.h"
+#include "RI_Util.h"
+#include "../../source_basis/module_ao/element_basis_index-ORB.h"
+#include "../../source_base/tool_title.h"
+#include "../../source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
@@ -48,7 +48,7 @@ void LRI_CV<Tdata>::set_orbitals(
     const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
-	ModuleBase::timer::start("LRI_CV", "set_orbitals");
+	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
@@ -79,7 +79,7 @@ void LRI_CV<Tdata>::set_orbitals(
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 
-	ModuleBase::timer::end("LRI_CV", "set_orbitals");
+	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 }
 
 template <typename Tdata>
@@ -104,7 +104,7 @@ auto LRI_CV<Tdata>::cal_datas(
 -> std::map<TA,std::map<TAC,Tresult>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_datas");
-	ModuleBase::timer::start("LRI_CV", "cal_datas");
+	ModuleBase::timer::tick("LRI_CV", "cal_datas");
 
 	std::map<TA,std::map<TAC,Tresult>> Datas;
 	#pragma omp parallel
@@ -136,7 +136,7 @@ auto LRI_CV<Tdata>::cal_datas(
 			}
 		}
 	}
-	ModuleBase::timer::end("LRI_CV", "cal_datas");
+	ModuleBase::timer::tick("LRI_CV", "cal_datas");
 	return Datas;
 }
 
@@ -158,7 +158,7 @@ auto LRI_CV<Tdata>::cal_Vs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-
+	
 	return this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_V);
 }
 
@@ -175,7 +175,7 @@ auto LRI_CV<Tdata>::cal_dVs(
 		func_DPcal_dV = std::bind(
 			&LRI_CV<Tdata>::DPcal_dV, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-
+	
 	const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_V_Rcut,
                                                     this,
                                                     std::placeholders::_1,
@@ -203,7 +203,7 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-
+	
 	std::map<TA,std::map<TAC, std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>>
 		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_C_dC);
 
@@ -353,9 +353,8 @@ LRI_CV<Tdata>::DPcal_C_dC(
 						Matrix_Orbs21::Matrix_Order::A1A2B);
             const RI::Tensor<Tdata> V = this->DPcal_V(it0, it0, {0, 0, 0}, {{"writable_Vws", true}});
             RI::Tensor<Tdata> L;
-            const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
-            if (cs_inv_thr > 0)
-                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, cs_inv_thr);
+            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
             else
                 L = LRI_CV_Tools::cal_I(V);
 
@@ -406,9 +405,8 @@ LRI_CV<Tdata>::DPcal_C_dC(
 				      DPcal_V(it1, it1, {0,0,0}, {{"writable_Vws",true}})}};
 
             std::vector<std::vector<RI::Tensor<Tdata>>> L;
-            const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
-            if (cs_inv_thr > 0)
-                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, cs_inv_thr);
+            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
             else
 				L = LRI_CV_Tools::cal_I(V);
 

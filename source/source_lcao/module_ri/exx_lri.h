@@ -6,10 +6,10 @@
 #ifndef EXX_LRI_H
 #define EXX_LRI_H
 
-#include "lri_cv.h"
-#include "ewald_vq.h"
+#include "LRI_CV.h"
+#include "ewald_Vq.h"
 #include "source_hamilt/module_xc/exx_info.h"
-#include "source_basis/module_ao/orb_atomic_lm.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "source_base/matrix.h"
 #include <RI/physics/Exx.h>
 
@@ -19,7 +19,7 @@
 #include <deque>
 #include <mpi.h>
 
-#include "module_exx_symmetry/symm_rotation.h"
+#include "module_exx_symmetry/symmetry_rotation.h"
 
 	class Parallel_Orbitals;
 
@@ -31,6 +31,9 @@
 
 	namespace LR
 	{
+		template<typename T, typename TR>
+		class ESolver_LR;
+
 		template<typename T>
 		class OperatorLREXX;
 	}
@@ -57,7 +60,7 @@ private:
 	using TatomR = std::array<double,Ndim>;		// tmp
 
 public:
-	Exx_LRI(const Exx_Info_RI& info_in) :info(info_in) {}
+	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in) {}
 	Exx_LRI operator=(const Exx_LRI&) = delete;
 	Exx_LRI operator=(Exx_LRI&&);
 
@@ -65,13 +68,22 @@ public:
 		const MPI_Comm &mpi_comm_in,
 		const UnitCell &ucell,
 		const K_Vectors &kv_in,
+		const LCAO_Orbitals& orb);
+	void init(
+		const MPI_Comm &mpi_comm_in,
+		const UnitCell &ucell,
+		const K_Vectors &kv_in,
 		const LCAO_Orbitals& orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
+    void init_spencer(const MPI_Comm& mpi_comm_in,
+                      const UnitCell& ucell,
+                      const K_Vectors& kv_in,
+                      const LCAO_Orbitals& orb);
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
                       const LCAO_Orbitals& orb,
-                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
+                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
     void cal_cut_coulomb_cs(
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut_IJR,
@@ -88,37 +100,21 @@ public:
 		const UnitCell& ucell,
 		const Parallel_Orbitals& pv,
 		const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
-	// (nspin=4) real-space symmetry EXX: the spinor H(R) rotation couples the 4 spin channels via
-	// the SU(2) part U(isym), so the 4 channels must be rotated together (not one-per-outer-loop).
-	// Gathers the irreducible Hs of all 4 channels, calls Symmetry_rotation::restore_HR_nspin4, then
-	// finishes energy/gather per channel. Called from cal_exx_elec when p_symrot && nspin==4.
-	void cal_exx_elec_soc(
-		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-		const UnitCell& ucell,
-		const std::vector<std::tuple<std::set<TA>, std::set<TA>>>& judge,
-		const ModuleSymmetry::Symmetry_rotation* p_symrot);
 	void cal_exx_force(const int& nat);
 	void cal_exx_stress(const double& omega, const double& lat0);
-	void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-		const UnitCell& ucell,
-		const Parallel_Orbitals& pv);
 
 	void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
 	void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
 	//std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
-	std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs; // direction, atom, spin, (i,j,R)
 	double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 
-	int abfs_Lmax() const { return abfs_Lmax_; }
-	const Exx_Info_RI& get_info_ri() const { return info; }
 
 private:
-	Exx_Info_RI info;
-	int abfs_Lmax_ = 0;
+	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
 	std::shared_ptr<ORB_gaunt_table> MGT;
@@ -130,9 +126,9 @@ private:
 	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
 	//LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
-        std::pair<bool,
-            std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
+        std::pair<bool, 
+            std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
                 std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
@@ -142,10 +138,12 @@ private:
 	friend class RPA_LRI<std::complex<double>, Tdata>;
 	friend class Exx_LRI_Interface<double, Tdata>;
 	friend class Exx_LRI_Interface<std::complex<double>, Tdata>;
+	friend class LR::ESolver_LR<double, double>;
+	friend class LR::ESolver_LR<std::complex<double>, double>;
 	friend class LR::OperatorLREXX<double>;
 	friend class LR::OperatorLREXX<std::complex<double>>;
 };
 
-#include "exx_lri.hpp"
+#include "Exx_LRI.hpp"
 
 #endif

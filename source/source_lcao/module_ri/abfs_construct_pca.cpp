@@ -1,11 +1,11 @@
 #include "abfs_construct_pca.h"
 
-#include "source_base/module_external/lapack_connector.h"
-#include "source_base/global_function.h"
-#include "source_basis/module_ao/elem_basis_idx_orb.h"
-#include "source_base/matrix.h"
-#include "source_lcao/module_ri/matrix_orbs11.h"
-#include "source_lcao/module_ri/matrix_orbs21.h"
+#include "../../source_base/module_external/lapack_connector.h"
+#include "../../source_base/global_function.h"
+#include "../../source_basis/module_ao/element_basis_index-ORB.h"
+#include "../../source_base/matrix.h"
+#include "../../source_lcao/module_ri/Matrix_Orbs11.h"
+#include "../../source_lcao/module_ri/Matrix_Orbs21.h"
 
 #include <cassert>
 #include <limits>

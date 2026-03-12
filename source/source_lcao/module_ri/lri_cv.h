@@ -6,12 +6,11 @@
 #ifndef LRI_CV_H
 #define LRI_CV_H
 
-#include "matrix_orbs11.h"
-#include "matrix_orbs21.h"
-#include "source_basis/module_ao/orb_atomic_lm.h"
-#include "abfs_vector3_order.h"
+#include "Matrix_Orbs11.h"
+#include "Matrix_Orbs21.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_base/abfs-vector3_order.h"
 #include "source_base/element_basis_index.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
 
 #include <RI/global/Tensor.h>
 #include <RI/global/Global_Func-2.h>
@@ -33,8 +32,6 @@ private:
 public:
 	LRI_CV();
 	~LRI_CV();
-
-	void set_info_ri(const Exx_Info_RI* p) { p_info_ri = p; }
 
 	void set_orbitals(
 		const UnitCell &ucell,
@@ -64,7 +61,7 @@ public:
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
-
+	
 	size_t get_index_abfs_size(const size_t &iat){return this->index_abfs[iat].count_size; }
 
 private:
@@ -75,7 +72,6 @@ private:
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
 	std::vector<double> lcaos_rcut;
     std::vector<double> abfs_ccp_rcut;
-	const Exx_Info_RI* p_info_ri = nullptr;
 
 public:
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Vws;
@@ -141,6 +137,6 @@ private:
 		const Tfunc &func_cal_o11);
 };
 
-#include "lri_cv.hpp"
+#include "LRI_CV.hpp"
 
 #endif

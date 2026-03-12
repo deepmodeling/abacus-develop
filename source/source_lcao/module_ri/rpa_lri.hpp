@@ -466,12 +466,12 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     // <smaller abfs|larger abfs>
     Matrix_Orbs11 m_abfs_abf;
 
-    m_abfs_abf.MGT = this->MGT;
     m_abfs_abf.init(abfs_s, this->abfs, ucell, orb, this->info.kmesh_times);
+    m_abfs_abf.MGT = this->MGT;
     m_abfs_abf.init_radial_table();
 
-    m_abfs_abfs.MGT = this->MGT;
     m_abfs_abfs.init(abfs_s, abfs_s, ucell, orb, this->info.kmesh_times);
+    m_abfs_abfs.MGT = this->MGT;
     m_abfs_abfs.init_radial_table();
     // get Rlist
     const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
