@@ -44,16 +44,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 		}
 	}
 
-	for (int T = 0;  T < orbs.size() ; T++)
-	{
-		for (int L=orbs[T].size()-1; L >= 0  ; L--)
-		{
-			if (orbs[T][L].size()>0)
-				break;
-			else
-				orbs[T].resize(L);
-		}
-	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(orbs);
 	return orbs;
 }
 
@@ -94,6 +85,8 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	const double times_threshold )
 {
 	ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::abfs_same_atom");
+	if(times_threshold>1)
+		{ return std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>(orb.get_ntype()); }
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
 		abfs_same_atom_psi = psi_mult_psi( orbs );
@@ -547,4 +540,18 @@ std::vector<double> Exx_Abfs::Construct_Orbs::get_Rcut(const std::vector<std::ve
     }
 
     return Rcut;
+}
+
+void Exx_Abfs::Construct_Orbs::filter_empty_orbs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs)
+{
+	for (int T=0;  T<orbs.size(); ++T)
+	{
+		for (int L=orbs[T].size()-1; L>=0 ; --L)
+		{
+			if (orbs[T][L].size()>0)
+				{ break; }
+			else
+				{ orbs[T].resize(L); }
+		}
+	}
 }

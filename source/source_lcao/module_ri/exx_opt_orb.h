@@ -23,11 +23,6 @@ private:
 	std::vector<std::vector<RI::Tensor<double>>> cal_I( 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> &ms, 
 		const size_t TA, const size_t IA, const size_t TB, const size_t IB ) const;
-	RI::Tensor<double> cal_proj(
-		const RI::Tensor<double> & m_big,
-		const std::vector<RI::Tensor<double>> & m_left,
-		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
-		const std::vector<RI::Tensor<double>> & m_right ) const;
 	RI::Tensor<double> cal_mul_22(
 		const std::vector<RI::Tensor<double>> & m_left,
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
@@ -48,6 +43,8 @@ private:
 		const Exx_Info::Exx_Info_Opt_ABFs &info,
 		const UnitCell& ucell,
 		const K_Vectors &kv,
+		const int Lmax,
+		const std::vector<std::size_t> &ecut_number,
 		const std::string& file_name,
 		const std::vector<RI::Tensor<double>> &matrix_Q, 
 		const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,

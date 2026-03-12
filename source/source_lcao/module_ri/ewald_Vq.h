@@ -54,7 +54,7 @@ class Ewald_Vq
               std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
               std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in,
               const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
-              ORB_gaunt_table& MGT_in,
+              std::shared_ptr<ORB_gaunt_table> MGT_in,
               const double &ccp_rmesh_times_in,
               const double &kmesh_times_in);
 

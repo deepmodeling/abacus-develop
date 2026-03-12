@@ -341,7 +341,6 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            center2_obj_it->second.abfs_ccp,
                                            this->info.kmesh_times,
                                            this->MGT, // get MGT from exx_cut_coulomb and used in `cal_abfs_overlap`
-                                           true,
                                            true);
 
     const std::array<Tcell, Ndim> period_Vs
@@ -423,14 +422,13 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     Matrix_Orbs11 m_abfs_abfs;
     // <smaller abfs|larger abfs>
     Matrix_Orbs11 m_abfs_abf;
-    int Lmax_flag = 0;
 
-    m_abfs_abf.init(2, ucell, orb, this->info.kmesh_times, orb.get_Rmax() * 2, Lmax_flag);
-    m_abfs_abf.init_radial(abfs_s, this->abfs, this->MGT);
+    m_abfs_abf.init(abfs_s, this->abfs, ucell, orb, this->info.kmesh_times);
+    m_abfs_abf.MGT = this->MGT;
     m_abfs_abf.init_radial_table();
 
-    m_abfs_abfs.init(2, ucell, orb, this->info.kmesh_times, orb.get_Rmax() * 2, Lmax_flag);
-    m_abfs_abfs.init_radial(abfs_s, abfs_s, this->MGT);
+    m_abfs_abfs.init(abfs_s, abfs_s, ucell, orb, this->info.kmesh_times);
+    m_abfs_abfs.MGT = this->MGT;
     m_abfs_abfs.init_radial_table();
     // get Rlist
     const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);

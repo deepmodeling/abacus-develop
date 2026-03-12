@@ -92,7 +92,7 @@ template <typename T, typename Tdata> class RPA_LRI
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
     // shrinked abfs
-    ORB_gaunt_table MGT;
+    std::shared_ptr<ORB_gaunt_table> MGT;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_shrink;
 
 

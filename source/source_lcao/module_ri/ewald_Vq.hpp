@@ -38,7 +38,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
                            std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
                            std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in,
                            const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
-                           ORB_gaunt_table& MGT_in,
+                           std::shared_ptr<ORB_gaunt_table> MGT_in,
                            const double &ccp_rmesh_times_in,
                            const double &kmesh_times_in)
 {
@@ -66,11 +66,11 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->index_abfs = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
     this->cv
-        .set_orbitals(ucell, orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, kmesh_times_in, MGT_in, false, false);
-    this->gaunt.create(MGT_in.Gaunt_Coefficients.getBound1(),
-                       MGT_in.Gaunt_Coefficients.getBound2(),
-                       MGT_in.Gaunt_Coefficients.getBound3());
-    this->gaunt = MGT_in.Gaunt_Coefficients;
+        .set_orbitals(ucell, orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, kmesh_times_in, MGT_in, false);
+    this->gaunt.create(MGT_in->Gaunt_Coefficients.getBound1(),
+                       MGT_in->Gaunt_Coefficients.getBound2(),
+                       MGT_in->Gaunt_Coefficients.getBound3());
+    this->gaunt = MGT_in->Gaunt_Coefficients;
 
     this->atoms_vec.resize(ucell.nat);
     std::iota(this->atoms_vec.begin(), this->atoms_vec.end(), 0);

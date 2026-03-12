@@ -95,6 +95,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->orb_cutoff_ = orb.cutoffs();
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
@@ -102,16 +103,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = abfs_same_atom;}
 	else
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
-	for (int T = 0; T < this->abfs.size(); T++)
-	{
-		for (int L = this->abfs[T].size()-1; L >= 0; L--)
-		{
-			if (this->abfs[T][L].size() > 0)
-				break;
-			else
-				this->abfs[T].resize(L);
-		}
-	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -119,19 +111,18 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-	
-	bool init_MGT = true;
+
+	this->MGT = std::make_shared<ORB_gaunt_table>();
 	for(const auto &settings_list : this->coulomb_settings)
 	{
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->MGT, init_MGT, settings_list.second.first );
-		init_MGT = false; // only init once
+															this->info.kmesh_times, this->MGT, settings_list.second.first );
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
-			this->exx_objs[settings_list.first].evq.init(ucell, orb, 
-														this->mpi_comm, this->p_kv, this->lcaos, this->abfs, 
+			this->exx_objs[settings_list.first].evq.init(ucell, orb,
+														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
 														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
 		}
 	}
@@ -154,8 +145,10 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->orb_cutoff_ = orb.cutoffs();
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
 	this->abfs = abfs_in;
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -163,19 +156,18 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-	
-	bool init_MGT = true;
+
+	this->MGT = std::make_shared<ORB_gaunt_table>();
 	for(const auto &settings_list : this->coulomb_settings)
 	{
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->MGT, init_MGT, settings_list.second.first );
-		init_MGT = false; // only init once
+															this->info.kmesh_times, this->MGT, settings_list.second.first );
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
-			this->exx_objs[settings_list.first].evq.init(ucell, orb, 
-														this->mpi_comm, this->p_kv, this->lcaos, this->abfs, 
+			this->exx_objs[settings_list.first].evq.init(ucell, orb,
+														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
 														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
 		}
 	}
@@ -197,6 +189,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
     this->orb_cutoff_ = orb.cutoffs();
 
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
         = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,
@@ -212,6 +205,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
     {
         this->abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times);
     }
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
     Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
     for (size_t T = 0; T != this->abfs.size(); ++T)
@@ -227,7 +221,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
                          ExxLriDetail::build_center2_cut_coulomb_param(
                              this->info.coulomb_param, ucell, kv_in));
 
-    bool init_MGT = true;
+    this->MGT = std::make_shared<ORB_gaunt_table>();
     const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
     if (center2_settings == this->coulomb_settings.end())
     {
@@ -246,9 +240,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        init_MGT,
         center2_settings->second.first);
-    init_MGT = false; // only init once
 
     ModuleBase::timer::tick("Exx_LRI", "init_spencer");
 }
@@ -268,8 +260,10 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
     this->orb_cutoff_ = orb.cutoffs();
 
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
     this->abfs = abfs_in;
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
     Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
     for (size_t T = 0; T != this->abfs.size(); ++T)
@@ -285,7 +279,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
                          ExxLriDetail::build_center2_cut_coulomb_param(
                              this->info.coulomb_param, ucell, kv_in));
 
-    bool init_MGT = true;
+    this->MGT = std::make_shared<ORB_gaunt_table>();
     const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
     if (center2_settings == this->coulomb_settings.end())
     {
@@ -303,9 +297,7 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        init_MGT,
         center2_settings->second.first);
-    init_MGT = false; // only init once
 
     ModuleBase::timer::tick("Exx_LRI", "init_spencer");
 }
