@@ -4,9 +4,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <cstdio>
-#include <fstream>
-#include <functional>
+#include "source_base/tool_quit.h"
+#include "source_io/module_parameter/read_input.h"
+#include "source_io/module_parameter/parameter.h"
 
 // #ifdef __MPI
 #include "mpi.h"
