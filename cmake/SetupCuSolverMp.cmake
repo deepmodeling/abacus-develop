@@ -1,5 +1,5 @@
 # =============================================================================
-# Configure cuSolverMp dependencies and linking for ABACUS
+# Configure cuSOLVERMp dependencies and linking for ABACUS
 # =============================================================================
 
 include_guard(GLOBAL)
@@ -7,7 +7,7 @@ include_guard(GLOBAL)
 function(abacus_setup_cusolvermp target_name)
   add_compile_definitions(__CUSOLVERMP)
 
-  # Find cuSolverMp first, then decide communicator backend.
+  # Find cuSOLVERMp first, then decide communicator backend.
   find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
       HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
       PATH_SUFFIXES lib lib64 math_libs/lib math_libs/lib64)
@@ -18,11 +18,11 @@ function(abacus_setup_cusolvermp target_name)
 
   if(NOT CUSOLVERMP_LIBRARY OR NOT CUSOLVERMP_INCLUDE_DIR)
     message(FATAL_ERROR
-      "cusolverMp not found. Set CUSOLVERMP_PATH or NVHPC_ROOT_DIR."
+      "cuSOLVERMp not found. Set CUSOLVERMP_PATH or NVHPC_ROOT_DIR."
     )
   endif()
 
-  message(STATUS "Found cusolverMp: ${CUSOLVERMP_LIBRARY}")
+  message(STATUS "Found cuSOLVERMp: ${CUSOLVERMP_LIBRARY}")
 
   set(CUSOLVERMP_VERSION_STR "")
   set(CUSOLVERMP_VERSION_HEADER "${CUSOLVERMP_INCLUDE_DIR}/cusolverMp.h")
@@ -47,26 +47,29 @@ function(abacus_setup_cusolvermp target_name)
   # Check minimum version requirement (>= 0.4.0)
   if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.4.0")
     message(FATAL_ERROR
-      "cuSolverMp version ${CUSOLVERMP_VERSION_STR} is too old. "
-      "ABACUS requires cuSolverMp >= 0.4.0 (NVIDIA HPC SDK >= 23.5). "
+      "cuSOLVERMp version ${CUSOLVERMP_VERSION_STR} is too old. "
+      "ABACUS requires cuSOLVERMp >= 0.4.0 (NVIDIA HPC SDK >= 23.5). "
       "Please upgrade your NVIDIA HPC SDK installation."
     )
   endif()
 
-  # Auto-select communicator backend by cuSolverMp version.
-  # cuSolverMp < 0.7.0 -> CAL, otherwise -> NCCL.
+  # Auto-select communicator backend by cuSOLVERMp version.
+  # cuSOLVERMp < 0.7.0 -> CAL, otherwise -> NCCL.
   set(_use_cal OFF)
   if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.7.0")
     set(_use_cal ON)
     message(STATUS
-      "Detected cuSolverMp ${CUSOLVERMP_VERSION_STR} (< 0.7.0). Using CAL backend.")
+      "Detected cuSOLVERMp ${CUSOLVERMP_VERSION_STR} (< 0.7.0). Using CAL backend.")
   elseif(CUSOLVERMP_VERSION_STR)
     message(STATUS
-      "Detected cuSolverMp ${CUSOLVERMP_VERSION_STR} (>= 0.7.0). Using NCCL backend.")
+      "Detected cuSOLVERMp ${CUSOLVERMP_VERSION_STR} (>= 0.7.0). Using NCCL backend.")
   elseif(NOT CUSOLVERMP_VERSION_STR)
     message(WARNING
-      "Unable to detect cuSolverMp version from header. Using NCCL backend by default.")
+      "Unable to detect cuSOLVERMp version from header. Using NCCL backend by default.")
   endif()
+
+  # Raise the variable to the caller's scope
+  set(_use_cal ${_use_cal} PARENT_SCOPE)
 
   # Backend selection:
   # - _use_cal=ON  -> cal communicator backend
