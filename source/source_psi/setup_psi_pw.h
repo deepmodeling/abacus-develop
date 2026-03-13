@@ -36,7 +36,8 @@ class Setup_Psi_pw
     void* psi_t = nullptr;  // Use void* to store pointer, runtime type information records actual type 
 
     // originally, this term is __kspw_psi
-    psi::Psi<std::complex<double>, Device>* psi_d = nullptr;
+    // psi::Psi<std::complex<double>, Device>* psi_d = nullptr;  // Original template version
+    void* psi_d = nullptr;  // Use void* to store pointer, runtime type information records actual type
 
     // psi_initializer controller
     psi::PSIPrepare<T, Device>* p_psi_init = nullptr;
@@ -98,6 +99,14 @@ class Setup_Psi_pw
     // Get psi_t pointer (template version, for backward compatibility)
     psi::Psi<T, Device>* get_psi_t() { return static_cast<psi::Psi<T, Device>*>(psi_t); }
     const psi::Psi<T, Device>* get_psi_t() const { return static_cast<const psi::Psi<T, Device>*>(psi_t); }
+    
+    // Get psi_d pointer (template version, for backward compatibility)
+    psi::Psi<std::complex<double>, Device>* get_psi_d() { 
+        return static_cast<psi::Psi<std::complex<double>, Device>*>(psi_d); 
+    }
+    const psi::Psi<std::complex<double>, Device>* get_psi_d() const { 
+        return static_cast<const psi::Psi<std::complex<double>, Device>*>(psi_d); 
+    }
 
     private:
 

@@ -58,13 +58,15 @@ void Setup_Psi_pw<T, Device>::update_psi_d()
 {
     if (this->psi_d != nullptr && PARAM.inp.precision == "single")
     {
-        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_d);
+        delete this->get_psi_d();
     }
 
     // Refresh this->psi_d
-    this->psi_d = PARAM.inp.precision == "single"
-                           ? new psi::Psi<std::complex<double>, Device>(*this->get_psi_t())
-                           : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t);
+    if (PARAM.inp.precision == "single") {
+        this->psi_d = static_cast<void*>(new psi::Psi<std::complex<double>, Device>(*this->get_psi_t()));
+    } else {
+        this->psi_d = static_cast<void*>(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t));
+    }
 }
 
 template <typename T, typename Device>
@@ -126,7 +128,7 @@ void Setup_Psi_pw<T, Device>::clean()
     }
     if (PARAM.inp.precision == "single")
     {
-        delete this->psi_d;
+        delete this->get_psi_d();
     }
 
     delete this->psi_cpu;

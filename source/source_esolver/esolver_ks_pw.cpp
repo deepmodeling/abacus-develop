@@ -272,7 +272,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
     // Calculate forces
     ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
                  &this->sf, this->solvent, &this->dftu, &this->locpp, &this->ppcell, 
-                 &this->kv, this->pw_wfc, this->stp.psi_d);
+                 &this->kv, this->pw_wfc, this->stp.get_psi_d());
 }
 
 template <typename T, typename Device>
@@ -284,7 +284,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
     this->stp.update_psi_d();
 
     ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
-                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.psi_d);
+                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.get_psi_d());
 
     // external stress
     double unit_transform = 0.0;
