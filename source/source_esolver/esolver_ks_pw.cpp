@@ -111,7 +111,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->stp.p_psi_init);
+        p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
 
     //! Init Hamiltonian (cell changed)

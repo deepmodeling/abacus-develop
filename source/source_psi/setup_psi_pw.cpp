@@ -24,7 +24,8 @@ void Setup_Psi_pw<T, Device>::before_runner(
     //! Allocate memory for cpu version of psi
     allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 
-    this->p_psi_init->prepare_init(inp.pw_seed);
+    auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+    p_psi_init->prepare_init(inp.pw_seed);
 
     //! Set runtime type information
     if (std::is_same<T, float>::value) {
@@ -75,7 +76,8 @@ void Setup_Psi_pw<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
     //! Initialize wave functions
     if (!this->already_initpsi)
     {
-        this->p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), p_hamilt, GlobalV::ofs_running);
+        auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
+        p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }

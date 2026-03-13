@@ -40,7 +40,7 @@ class Setup_Psi_pw
     void* psi_d = nullptr;  // Use void* to store pointer, runtime type information records actual type
 
     // psi_initializer controller
-    psi::PSIPrepare<T, Device>* p_psi_init = nullptr;
+    psi::PSIPrepareBase* p_psi_init = nullptr;
 
     bool already_initpsi = false;
 
