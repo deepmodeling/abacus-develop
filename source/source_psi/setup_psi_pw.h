@@ -107,8 +107,8 @@ class Setup_Psi_pw
 
     private:
 
-    using castmem_2d_d2h_op
-        = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
+    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
+    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const size_t size);
 
 };
 
