@@ -36,16 +36,33 @@ void ctrl_scf_pw(const int istep,
 // print out information in 'after_all_runners' in ESolver_KS_PW
 template <typename T, typename Device>
 void ctrl_runner_pw(UnitCell& ucell, 
-		elecstate::ElecState* pelec,	
+        elecstate::ElecState* pelec,    
         ModulePW::PW_Basis_K* pw_wfc,
         ModulePW::PW_Basis* pw_rho,
         ModulePW::PW_Basis* pw_rhod,
-		Charge &chr,
+        Charge &chr,
         K_Vectors &kv,
         Setup_Psi_pw<T, Device> &stp,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
+        Parallel_Grid &para_grid,
+        const Input_para& inp);
+
+// print out information in 'after_all_runners' in ESolver_KS_PW (runtime version)
+template <typename T, typename Device>
+void ctrl_runner_pw(UnitCell& ucell, 
+        elecstate::ElecState* pelec,    
+        ModulePW::PW_Basis_K* pw_wfc,
+        ModulePW::PW_Basis* pw_rho,
+        ModulePW::PW_Basis* pw_rhod,
+        Charge &chr,
+        K_Vectors &kv,
+        Setup_Psi_pw<T, Device> &stp,
+        Structure_Factor &sf,
+        pseudopot_cell_vnl &ppcell,
+        surchem &solvent,
+        const base_device::DeviceContext* ctx,
         Parallel_Grid &para_grid,
         const Input_para& inp);
 
