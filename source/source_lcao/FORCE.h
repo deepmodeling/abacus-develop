@@ -26,9 +26,9 @@ class Force_LCAO
     ~Force_LCAO(){};
 
   private:
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 
-    elecstate::Potential* pot;
+    elecstate::Potential* pot = nullptr;
 
     // orthonormal force + contribution from T and VNL
     void ftable(const bool isforce,

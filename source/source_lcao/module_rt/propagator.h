@@ -144,7 +144,7 @@ class Propagator
 
   private:
     int ptype; // type of propagator
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     double dt; // time step
 
 #ifdef __MPI

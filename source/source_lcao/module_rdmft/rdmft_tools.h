@@ -293,9 +293,9 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
      */
     virtual void contributeHR() override;
 
-    const UnitCell* ucell;
+    const UnitCell* ucell = nullptr;
 
-    const Grid_Driver* gd;
+    const Grid_Driver* gd = nullptr;
 
   private:
 
@@ -317,19 +317,19 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     // added by jghan
 
-    const Charge* charge_;
+    const Charge* charge_ = nullptr;
 
     std::string potential_;
 
-    const ModulePW::PW_Basis* rho_basis_;
+    const ModulePW::PW_Basis* rho_basis_ = nullptr;
 
     const ModuleBase::matrix* vloc_;
 
-    const ModuleBase::ComplexMatrix* sf_;
+    const ModuleBase::ComplexMatrix* sf_ = nullptr;
 
-    double* etxc;
+    double* etxc = nullptr;
 
-    double* vtxc;
+    double* vtxc = nullptr;
 
 };
 

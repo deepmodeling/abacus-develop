@@ -23,7 +23,7 @@ class Gint_env_gamma : public Gint
 
     private:
     // output
-    double* rho_;
+    double* rho_ = nullptr;
 
     // intermediate variable
     std::vector<double> wfc_gint_;
