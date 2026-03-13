@@ -101,7 +101,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     Device* ctx = nullptr;
 
     // Transfer data from device (GPU) to host (CPU) in pw basis
-    stp.copy_d2h(ctx);
+    base_device::DeviceContext* device_ctx = &base_device::DeviceContext::instance();
+    device_ctx->set_device_type(stp.get_device_type());
+    stp.copy_d2h(device_ctx);
 
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)

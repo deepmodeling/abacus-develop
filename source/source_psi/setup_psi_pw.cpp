@@ -84,24 +84,6 @@ void Setup_Psi_pw<T, Device>::init(hamilt::HamiltBase* p_hamilt)
 }
 
 
-// Transfer data from GPU to CPU in pw basis
-template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::copy_d2h(const Device* ctx)
-{
-    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
-    {
-        auto* psi_t = this->get_psi_t();
-        castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                            psi_t->get_pointer() - psi_t->get_psi_bias(),
-                            this->psi_cpu[0].size());
-    }
-    else
-    {
-       // do nothing
-    }
-    return;
-}
-
 // Transfer data from GPU to CPU in pw basis (runtime version)
 template <typename T, typename Device>
 void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::DeviceContext* ctx)

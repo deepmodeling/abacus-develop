@@ -74,9 +74,6 @@ class Setup_Psi_pw
 
     void update_psi_d();
 
-    // Transfer data from device to host in pw basis
-    void copy_d2h(const Device* ctx);
-    
     // Transfer data from device to host in pw basis (runtime version)
     void copy_d2h(const base_device::DeviceContext* ctx);
 
