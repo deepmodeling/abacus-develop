@@ -45,9 +45,11 @@ void Setup_Psi_pw<T, Device>::before_runner(
 
     //! If GPU or single precision, allocate a new psi (psi_t).
     //! otherwise, transform psi_cpu to psi_t
-    this->psi_t = inp.device == "gpu" || inp.precision == "single"
-                         ? new psi::Psi<T, Device>(this->psi_cpu[0])
-                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu);
+    if (inp.device == "gpu" || inp.precision == "single") {
+        this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
+    } else {
+        this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
+    }
 }
 
 
@@ -61,7 +63,7 @@ void Setup_Psi_pw<T, Device>::update_psi_d()
 
     // Refresh this->psi_d
     this->psi_d = PARAM.inp.precision == "single"
-                           ? new psi::Psi<std::complex<double>, Device>(this->psi_t[0])
+                           ? new psi::Psi<std::complex<double>, Device>(*this->get_psi_t())
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t);
 }
 
@@ -71,7 +73,7 @@ void Setup_Psi_pw<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
     //! Initialize wave functions
     if (!this->already_initpsi)
     {
-        this->p_psi_init->initialize_psi(this->psi_cpu, this->psi_t, p_hamilt, GlobalV::ofs_running);
+        this->p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }
@@ -83,8 +85,9 @@ void Setup_Psi_pw<T, Device>::copy_d2h(const Device* ctx)
 {
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
+        auto* psi_t = this->get_psi_t();
         castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                            this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
+                            psi_t->get_pointer() - psi_t->get_psi_bias(),
                             this->psi_cpu[0].size());
     }
     else
@@ -100,8 +103,9 @@ void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::DeviceContext* ctx)
 {
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
+        auto* psi_t = this->get_psi_t();
         castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                            this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
+                            psi_t->get_pointer() - psi_t->get_psi_bias(),
                             this->psi_cpu[0].size());
     }
     else
@@ -118,7 +122,7 @@ void Setup_Psi_pw<T, Device>::clean()
 {
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
-        delete this->psi_t;
+        delete this->get_psi_t();
     }
     if (PARAM.inp.precision == "single")
     {

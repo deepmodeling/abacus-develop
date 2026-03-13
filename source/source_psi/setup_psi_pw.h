@@ -32,7 +32,8 @@ class Setup_Psi_pw
 
     // originally, this term is kspw_psi
     // if CPU, kspw_psi = psi, otherwise, kspw_psi has a new copy
-    psi::Psi<T, Device>* psi_t = nullptr; 
+    // psi::Psi<T, Device>* psi_t = nullptr;  // 原来的模板版本
+    void* psi_t = nullptr;  // 使用 void* 存储指针，运行时类型信息记录实际类型 
 
     // originally, this term is __kspw_psi
     psi::Psi<std::complex<double>, Device>* psi_d = nullptr;
@@ -95,8 +96,8 @@ class Setup_Psi_pw
     PrecisionType get_precision_type() const { return precision_type_; }
     
     // Get psi_t pointer (template version, for backward compatibility)
-    psi::Psi<T, Device>* get_psi_t() { return psi_t; }
-    const psi::Psi<T, Device>* get_psi_t() const { return psi_t; }
+    psi::Psi<T, Device>* get_psi_t() { return static_cast<psi::Psi<T, Device>*>(psi_t); }
+    const psi::Psi<T, Device>* get_psi_t() const { return static_cast<const psi::Psi<T, Device>*>(psi_t); }
 
     private:
 
