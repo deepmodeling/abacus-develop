@@ -32,7 +32,8 @@ std::map<std::string,std::map<std::string,timer::Timer_One>> timer::timer_pool;
 
 void timer::finish(std::ofstream &ofs, const bool print_flag, const bool check_end)
 {
-	timer::end("","total");
+	if(!timer_pool[""]["total"].start_flag)
+		{ timer::end("","total"); }
 	if(print_flag)
 		{ print_all( ofs, check_end ); }
 }
