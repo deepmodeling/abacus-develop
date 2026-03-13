@@ -43,6 +43,20 @@ class Setup_Psi_pw
     bool already_initpsi = false;
 
     //------------
+    // runtime type information
+    //------------
+    base_device::AbacusDevice_t device_type_ = base_device::CpuDevice;
+    
+    // Precision type: 0 = float, 1 = double, 2 = complex<float>, 3 = complex<double>
+    enum class PrecisionType {
+        Float = 0,
+        Double = 1,
+        ComplexFloat = 2,
+        ComplexDouble = 3
+    };
+    PrecisionType precision_type_ = PrecisionType::ComplexDouble;
+
+    //------------
     // functions
     //------------
 
@@ -65,6 +79,24 @@ class Setup_Psi_pw
     void copy_d2h(const base_device::DeviceContext* ctx);
 
     void clean();
+
+    //------------
+    // accessor functions
+    //------------
+    
+    // Get basic information (no type conversion needed, use psi_cpu)
+    int get_nbands() const { return this->psi_cpu->get_nbands(); }
+    int get_nk() const { return this->psi_cpu->get_nk(); }
+    int get_nbasis() const { return this->psi_cpu->get_nbasis(); }
+    size_t size() const { return this->psi_cpu->size(); }
+    
+    // Get runtime type information
+    base_device::AbacusDevice_t get_device_type() const { return device_type_; }
+    PrecisionType get_precision_type() const { return precision_type_; }
+    
+    // Get psi_t pointer (template version, for backward compatibility)
+    psi::Psi<T, Device>* get_psi_t() { return psi_t; }
+    const psi::Psi<T, Device>* get_psi_t() const { return psi_t; }
 
     private:
 

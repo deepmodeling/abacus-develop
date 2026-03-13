@@ -26,6 +26,23 @@ void Setup_Psi_pw<T, Device>::before_runner(
 
     this->p_psi_init->prepare_init(inp.pw_seed);
 
+    //! Set runtime type information
+    if (std::is_same<T, float>::value) {
+        precision_type_ = PrecisionType::Float;
+    } else if (std::is_same<T, double>::value) {
+        precision_type_ = PrecisionType::Double;
+    } else if (std::is_same<T, std::complex<float>>::value) {
+        precision_type_ = PrecisionType::ComplexFloat;
+    } else {
+        precision_type_ = PrecisionType::ComplexDouble;
+    }
+    
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
+        device_type_ = base_device::GpuDevice;
+    } else {
+        device_type_ = base_device::CpuDevice;
+    }
+
     //! If GPU or single precision, allocate a new psi (psi_t).
     //! otherwise, transform psi_cpu to psi_t
     this->psi_t = inp.device == "gpu" || inp.precision == "single"
