@@ -193,6 +193,7 @@ bool ModuleIO::read_wfc_nao(
         {
             std::cout << " Error in reading wave function files!\n";
             std::cout << errors << std::endl;
+            ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
             return false;
         }
 
@@ -218,6 +219,7 @@ bool ModuleIO::read_wfc_nao(
 #endif
     }// end of loop over k-points
     
+    ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
     return true;    
 };
 

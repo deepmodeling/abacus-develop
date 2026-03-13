@@ -278,7 +278,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               this->spsi,
                               this->hcc,
                               this->vcc);
-                ModuleBase::timer::start("DiagoDavid", "last");
+                ModuleBase::timer::end("DiagoDavid", "last");
             }
 
         } // end of if

@@ -206,7 +206,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	delete[] rhocg;
 	delete[] psic;
 
-	ModuleBase::timer::start("Stress","stress_cc");
+	ModuleBase::timer::end("Stress","stress_cc");
 	return;
 }
 

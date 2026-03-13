@@ -175,6 +175,6 @@ void ModuleIO::nscf_bands(
     ofs.close();
 #endif
 
-    ModuleBase::timer::start("ModuleIO", "nscf_band");
+    ModuleBase::timer::end("ModuleIO", "nscf_bands");
     return;
 }

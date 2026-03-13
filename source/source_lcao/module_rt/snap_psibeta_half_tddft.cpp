@@ -345,7 +345,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     }
 
     assert(index_offset == natomwfc);
-    ModuleBase::timer::start("module_rt", "snap_psibeta_half_tddft");
+    ModuleBase::timer::end("module_rt", "snap_psibeta_half_tddft");
 }
 
 } // namespace module_rt

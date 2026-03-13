@@ -89,6 +89,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if (!out_flag)
     {
+        ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
         return;
     }
 

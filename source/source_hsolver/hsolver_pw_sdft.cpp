@@ -117,7 +117,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     stoiter.cal_storho(ucell, stowf, pes_pw,wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::start("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::end("HSolverPW_SDFT", "solve");
     return;
 }
 

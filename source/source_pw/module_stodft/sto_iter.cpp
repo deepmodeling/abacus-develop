@@ -149,6 +149,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 5)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }
@@ -156,6 +157,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 1)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }

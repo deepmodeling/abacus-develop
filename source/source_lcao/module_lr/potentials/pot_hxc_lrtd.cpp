@@ -41,7 +41,10 @@ namespace LR
             break;
         }
         // XC
-        if (this->xc_kernel_ == "rpa" || this->xc_kernel_ == "hf") { return; }    // no xc
+        if (this->xc_kernel_ == "rpa" || this->xc_kernel_ == "hf") { 
+            ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
+            return; 
+        }    // no xc
 #ifdef USE_LIBXC
         this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else

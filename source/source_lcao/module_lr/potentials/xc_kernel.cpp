@@ -351,6 +351,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         this->drho_gs_ = std::move(gradrho);
     }
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
+        ModuleBase::timer::end("XC_Functional", "f_xc_libxc");
         return;
     // else if (4 == PARAM.inp.nspin)
     } else//NSPIN != 1,2,4 is not supported

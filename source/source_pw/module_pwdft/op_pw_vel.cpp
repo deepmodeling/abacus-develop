@@ -323,7 +323,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     delmem_complex_op()(ps2_);
     delmem_complex_op()(becp1_);
     delmem_complex_op()(becp2_);
-    ModuleBase::timer::start("Operator", "Velocity");
+    ModuleBase::timer::end("Operator", "Velocity");
     return;
 }
 

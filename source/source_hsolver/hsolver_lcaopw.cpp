@@ -112,7 +112,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
     }
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
 
-    ModuleBase::timer::start("HSolverLIP", "solve");
+    ModuleBase::timer::end("HSolverLIP", "solve");
     return;
 }
 
