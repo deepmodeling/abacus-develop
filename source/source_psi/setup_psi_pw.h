@@ -70,7 +70,7 @@ class Setup_Psi_pw
         const pseudopot_cell_vnl &ppcell,
         const Input_para &inp);
 
-    void init(hamilt::Hamilt<T, Device>* p_hamilt);
+    void init(hamilt::HamiltBase* p_hamilt);
 
     void update_psi_d();
 

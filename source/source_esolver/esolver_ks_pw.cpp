@@ -131,7 +131,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->stp.get_psi_t(), static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     // setup psi (electronic wave functions)
-    this->stp.init(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt));
+    this->stp.init(this->p_hamilt);
 
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper.before_scf(this->p_hamilt, this->stp.get_psi_t(), PARAM.inp);

@@ -71,13 +71,14 @@ void Setup_Psi_pw<T, Device>::update_psi_d()
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
+void Setup_Psi_pw<T, Device>::init(hamilt::HamiltBase* p_hamilt)
 {
     //! Initialize wave functions
     if (!this->already_initpsi)
     {
         auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
-        p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), p_hamilt, GlobalV::ofs_running);
+        auto* hamilt = static_cast<hamilt::Hamilt<T, Device>*>(p_hamilt);
+        p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }
