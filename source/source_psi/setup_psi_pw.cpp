@@ -9,12 +9,12 @@ Setup_Psi_pw<T, Device>::~Setup_Psi_pw(){}
 
 template <typename T, typename Device>
 void Setup_Psi_pw<T, Device>::before_runner(
-		const UnitCell &ucell,
-		const K_Vectors &kv,
-		const Structure_Factor &sf,
-		const ModulePW::PW_Basis_K &pw_wfc, 
-		const pseudopot_cell_vnl &ppcell,
-		const Input_para &inp)
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const Structure_Factor &sf,
+        const ModulePW::PW_Basis_K &pw_wfc, 
+        const pseudopot_cell_vnl &ppcell,
+        const Input_para &inp)
 {
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIPrepare<T, Device>(inp.init_wfc,
@@ -62,18 +62,35 @@ void Setup_Psi_pw<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
 
 // Transfer data from GPU to CPU in pw basis
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::AbacusDevice_t &device)
+void Setup_Psi_pw<T, Device>::copy_d2h(const Device* ctx)
 {
-    if (device == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
                             this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
                             this->psi_cpu[0].size());
     }
-	else
-	{
+    else
+    {
        // do nothing
-	}
+    }
+    return;
+}
+
+// Transfer data from GPU to CPU in pw basis (runtime version)
+template <typename T, typename Device>
+void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::DeviceContext* ctx)
+{
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
+    {
+        castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                            this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
+                            this->psi_cpu[0].size());
+    }
+    else
+    {
+       // do nothing
+    }
     return;
 }
 

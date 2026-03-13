@@ -40,7 +40,11 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
     //*************************************************
     // Do not add any code in this destructor function
     //*************************************************
-    delete psi_laststep;
+    if (psi_laststep != nullptr)
+    {
+        delete psi_laststep;
+        psi_laststep = nullptr;
+    }
 
     if (td_p != nullptr)
     {

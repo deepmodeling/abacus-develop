@@ -47,19 +47,22 @@ class Setup_Psi_pw
     //------------
 
     void before_runner(
-		const UnitCell &ucell,
-		const K_Vectors &kv,
-		const Structure_Factor &sf,
-		const ModulePW::PW_Basis_K &pw_wfc, 
-		const pseudopot_cell_vnl &ppcell,
-		const Input_para &inp);
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const Structure_Factor &sf,
+        const ModulePW::PW_Basis_K &pw_wfc, 
+        const pseudopot_cell_vnl &ppcell,
+        const Input_para &inp);
 
     void init(hamilt::Hamilt<T, Device>* p_hamilt);
 
     void update_psi_d();
 
     // Transfer data from device to host in pw basis
-    void copy_d2h(const base_device::AbacusDevice_t &device);
+    void copy_d2h(const Device* ctx);
+    
+    // Transfer data from device to host in pw basis (runtime version)
+    void copy_d2h(const base_device::DeviceContext* ctx);
 
     void clean();
 

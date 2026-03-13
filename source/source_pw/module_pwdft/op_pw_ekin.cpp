@@ -18,7 +18,7 @@ Ekinetic<OperatorPW<T, Device>>::Ekinetic(
   this->gk2 = gk2_in;
   this->gk2_row = gk2_row;
   this->gk2_col = gk2_col;
-  this->device = base_device::get_device_type<Device>(this->ctx);
+  this->device = base_device::get_device_type(this->ctx);
   if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) 
   {
       ModuleBase::WARNING_QUIT("EkineticPW", "Constuctor of Operator::EkineticPW is failed, please check your code!");
@@ -67,7 +67,7 @@ hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in
     this->gk2 = ekinetic->get_gk2();
     this->gk2_row = ekinetic->get_gk2_row();
     this->gk2_col = ekinetic->get_gk2_col();
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
         ModuleBase::WARNING_QUIT("EkineticPW", "Copy Constuctor of Operator::EkineticPW is failed, please check your code!");
     }

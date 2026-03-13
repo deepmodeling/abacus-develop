@@ -3,19 +3,6 @@
 namespace base_device
 {
 
-// Device type specializations
-template <>
-AbacusDevice_t get_device_type<DEVICE_CPU>(const DEVICE_CPU* dev)
-{
-    return CpuDevice;
-}
-
-template <>
-AbacusDevice_t get_device_type<DEVICE_GPU>(const DEVICE_GPU* dev)
-{
-    return GpuDevice;
-}
-
 // Precision specializations
 template <>
 std::string get_current_precision<float>(const float* var)

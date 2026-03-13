@@ -5,7 +5,6 @@
 #include "source_basis/module_pw/pw_basis_k.h" // use plane wave
 #include "source_cell/klist.h" // use k-points in Brillouin zone
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
-#include "source_psi/psi.h" // use electronic wave functions
 #include "source_hamilt/hamilt.h" // use Hamiltonian
 #include "source_hamilt/hamilt_base.h" // use Hamiltonian base class
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
@@ -13,7 +12,6 @@
 namespace ModuleESolver
 {
 
-template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_KS : public ESolver_FP
 {
   public:
@@ -59,9 +57,6 @@ class ESolver_KS : public ESolver_FP
 
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
-
-    //! Electronic wavefunctions
-    psi::Psi<T>* psi = nullptr;
 
     //! DFT+U method, mohan add 2025-11-07
     Plus_U dftu;

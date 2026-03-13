@@ -104,7 +104,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
 		const ModuleBase::matrix& wg,
 		const ModuleBase::matrix& ekb)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
     if(!this->initialed)
     {

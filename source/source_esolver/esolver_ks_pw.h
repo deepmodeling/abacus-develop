@@ -13,7 +13,7 @@ namespace ModuleESolver
 {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class ESolver_KS_PW : public ESolver_KS<T, Device>
+class ESolver_KS_PW : public ESolver_KS
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -59,9 +59,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     // for get_pchg and get_wf, use ctx as input of fft
     Device* ctx = {};
-
-    // for device to host data transformation
-    base_device::AbacusDevice_t device = {};
 
 };
 } // namespace ModuleESolver

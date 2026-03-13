@@ -61,7 +61,7 @@ Chebyshev<REAL, Device>::Chebyshev(const int norder_in) : fftw(2 * EXTEND * nord
     }
     coefr_cpu = new REAL[norder];
     coefc_cpu = new std::complex<REAL>[norder];
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         resmem_var_op()(this->coef_real, norder);
         resmem_complex_op()(this->coef_complex, norder);
@@ -82,7 +82,7 @@ template <typename REAL, typename Device>
 Chebyshev<REAL, Device>::~Chebyshev()
 {
     delete[] polytrace;
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(this->coef_real);
         delmem_complex_op()(this->coef_complex);
@@ -209,7 +209,7 @@ void Chebyshev<REAL, Device>::calcoef_real(std::function<REAL(REAL)> fun)
         }
     }
 
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         syncmem_var_h2d_op()(coef_real, coefr_cpu, norder);
     }
@@ -299,7 +299,7 @@ void Chebyshev<REAL, Device>::calcoef_complex(std::function<std::complex<REAL>(s
             coefc_cpu[i].imag(imag(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 2 / 3);
         }
     }
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         syncmem_complex_h2d_op()(coef_complex, coefc_cpu, norder);
     }
@@ -390,7 +390,7 @@ void Chebyshev<REAL, Device>::calcoef_pair(std::function<REAL(REAL)> fun1, std::
         }
     }
 
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         syncmem_complex_h2d_op()(coef_complex, coefc_cpu, norder);
     }
@@ -684,7 +684,7 @@ bool Chebyshev<REAL, Device>::checkconverge(
     funA(arrayn_1, arrayn, 1);
     REAL sum1, sum2;
     REAL t;
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
     {
         sum1 = this->ddot_real(arrayn_1, arrayn_1, N);
         sum2 = this->ddot_real(arrayn_1, arrayn, N);
@@ -714,7 +714,7 @@ bool Chebyshev<REAL, Device>::checkconverge(
     for (int ior = 2; ior < norder; ++ior)
     {
         funA(arrayn, arraynp1, 1);
-        if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+        if (base_device::get_device_type(this->ctx) == base_device::GpuDevice)
         {
             sum1 = this->ddot_real(arrayn, arrayn, N);
             sum2 = this->ddot_real(arrayn, arraynp1, N);

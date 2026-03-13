@@ -189,7 +189,7 @@ const UnitCell& ucell_in
 	
 
 	int igl0 = 0;
-	this->device = base_device::get_device_type<Device>(this->ctx);
+	this->device = base_device::get_device_type(this->ctx);
 
 	std::vector<double> gx_arr(rho_basis->ngg+1);
     double* gx_arr_d = nullptr;

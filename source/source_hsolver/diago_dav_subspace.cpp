@@ -36,7 +36,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
       diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in),
         diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
     this->one = &one_;
     this->zero = &zero_;
