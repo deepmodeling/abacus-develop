@@ -166,7 +166,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         // update psi_d
         stp.update_psi_d();
 
-        const int nbands = stp.psi_t->get_nbands();
+        const int nbands = stp.get_nbands();
         const int ngmc = chr.ngmc;
 
         ModuleIO::get_pchg_pw(inp.out_pchg,
@@ -237,7 +237,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.onsite_radius > 0)
     { // float type has not been implemented
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.psi_t),
+        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.get_psi_t()),
                                   pelec->wg);
     }
 
@@ -307,7 +307,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 
         ModuleIO::get_wf_pw(inp.out_wfc_norm,
                             inp.out_wfc_re_im,
-                            stp.psi_t->get_nbands(),
+                            stp.get_nbands(),
                             inp.nspin,
                             pw_rhod->nxyz,
                             &ucell,
@@ -327,7 +327,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     if (inp.cal_cond)
     {
         using Real = typename GetTypeReal<T>::type;
-        EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.psi_t, &ppcell);
+        EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.get_psi_t(), &ppcell);
         elec_cond.KG(inp.cond_smear,
                      inp.cond_fwhm,
                      inp.cond_wcut,
@@ -364,7 +364,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                              pw_rho);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
-                                               stp.psi_t,
+                                               stp.get_psi_t(),
                                                pelec,
                                                pw_wfc,
                                                pw_rho,

@@ -127,13 +127,13 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
-              this->stp.psi_t, static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->stp.get_psi_t(), static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt));
 
     //! Setup EXX helper for Hamiltonian and psi
-    exx_helper.before_scf(this->p_hamilt, this->stp.psi_t, PARAM.inp);
+    exx_helper.before_scf(this->p_hamilt, this->stp.get_psi_t(), PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 }
@@ -151,7 +151,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp);
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.get_psi_t(), this->pelec->wg, ucell, PARAM.inp);
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -187,7 +187,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                      PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->stp.psi_t[0], this->pelec, this->pelec->ekb.c,
+        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), *this->stp.get_psi_t(), this->pelec, this->pelec->ekb.c,
           GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, skip_charge, ucell.tpiba, ucell.nat);
     }
 
@@ -204,7 +204,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     if (GlobalC::exx_info.info_global.cal_exx && !exx_helper.op_exx->first_iter)
     {
-        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.psi_t));
+        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.get_psi_t()));
     }
 
     // deband is calculated from "output" charge density
@@ -223,7 +223,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // Handle EXX-related operations after SCF iteration
-    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.psi_t, ucell, PARAM.inp, conv_esolver, iter);
+    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.get_psi_t(), ucell, PARAM.inp, conv_esolver, iter);
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);
