@@ -91,12 +91,14 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis *pw_rhod,
 		const ModulePW::PW_Basis_Big *pw_big,
         Setup_Psi_pw<T, Device> &stp,
-        const Device* ctx,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
+
+    // Create local ctx for device type deduction
+    Device* ctx = nullptr;
 
     // Transfer data from device (GPU) to host (CPU) in pw basis
     stp.copy_d2h(ctx);
@@ -255,12 +257,14 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
-        const Device* ctx,
         Parallel_Grid &para_grid,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_pw");
     ModuleBase::timer::tick("ModuleIO", "ctrl_runner_pw");
+
+    // Create local ctx for device type deduction
+    Device* ctx = nullptr;
 
 	//----------------------------------------------------------
 	//! 1) Compute LDOS
@@ -384,7 +388,6 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi_pw<std::complex<float>, base_device::DEVICE_CPU> &stp,
-    const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -400,7 +403,6 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi_pw<std::complex<double>, base_device::DEVICE_CPU> &stp,
-    const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -417,13 +419,12 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi_pw<std::complex<float>, base_device::DEVICE_GPU> &stp,
-    const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
 // complex<double> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(
-	const int nstep,
+    const int nstep,
 	UnitCell& ucell,
     elecstate::ElecState* pelec,
     const Charge &chr,
@@ -433,7 +434,6 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi_pw<std::complex<double>, base_device::DEVICE_GPU> &stp,
-    const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif
@@ -444,14 +444,13 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
 	elecstate::ElecState* pelec,	
     ModulePW::PW_Basis_K* pw_wfc,
     ModulePW::PW_Basis* pw_rho,
-	ModulePW::PW_Basis* pw_rhod,
+    ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	K_Vectors &kv,
+    K_Vectors &kv,
     Setup_Psi_pw<std::complex<float>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-    const base_device::DEVICE_CPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -461,14 +460,13 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
 	elecstate::ElecState* pelec,	
     ModulePW::PW_Basis_K* pw_wfc,
     ModulePW::PW_Basis* pw_rho,
-	ModulePW::PW_Basis* pw_rhod,
+    ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	K_Vectors &kv,
+    K_Vectors &kv,
     Setup_Psi_pw<std::complex<double>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-    const base_device::DEVICE_CPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -481,12 +479,11 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     ModulePW::PW_Basis* pw_rho,
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	K_Vectors &kv,
+    K_Vectors &kv,
     Setup_Psi_pw<std::complex<float>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-    const base_device::DEVICE_GPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -498,12 +495,11 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     ModulePW::PW_Basis* pw_rho,
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	K_Vectors &kv,
+    K_Vectors &kv,
     Setup_Psi_pw<std::complex<double>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-    const base_device::DEVICE_GPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif
