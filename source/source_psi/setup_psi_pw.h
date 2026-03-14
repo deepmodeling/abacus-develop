@@ -61,7 +61,6 @@ class Setup_Psi_pw
     // functions
     //------------
 
-    template <typename T, typename Device>
     void before_runner(
         const UnitCell &ucell,
         const K_Vectors &kv,
@@ -116,6 +115,15 @@ class Setup_Psi_pw
     }
 
     private:
+
+    template <typename T, typename Device>
+    void before_runner_impl(
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const Structure_Factor &sf,
+        const ModulePW::PW_Basis_K &pw_wfc, 
+        const pseudopot_cell_vnl &ppcell,
+        const Input_para &inp);
 
     template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
