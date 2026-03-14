@@ -59,9 +59,8 @@ class Setup_Psi_pw
     template <typename T, typename Device>
     void update_psi_d();
 
-    // Transfer data from device to host in pw basis (runtime version)
-    template <typename T, typename Device>
-    void copy_d2h(const base_device::DeviceContext* ctx);
+    // Transfer data from device to host in pw basis
+    void copy_d2h();
 
     void clean();
 
@@ -136,6 +135,9 @@ class Setup_Psi_pw
 
     template <typename T, typename Device>
     void clean_impl();
+
+    template <typename T, typename Device>
+    void copy_d2h_impl();
 
     template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
