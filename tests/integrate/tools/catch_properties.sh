@@ -45,13 +45,14 @@ record_compare_result(){
 	ref_file=$3
 	cal_file=$4
 	accuracy=${5:-8}
+	use_abs=${6:-0}
 
 	if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
 		echo "$result_key 1" >> "$result_file"
 		return
 	fi
 
-	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy"
+	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"
 	echo "$result_key $?" >> "$result_file"
 }
 
@@ -669,7 +670,7 @@ if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 		for onref in "${rpa_ref_files[@]}"; do
 			oncal=${onref#ref}
 			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
-			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8
+			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
 		done
 	fi
 	shopt -u nullglob
