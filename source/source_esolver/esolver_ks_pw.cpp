@@ -82,7 +82,7 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 {
     if (this->p_hamilt != nullptr)
     {
-        delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        delete static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
 }
