@@ -195,6 +195,7 @@ class pseudopot_cell_vnl
     double* d_indv = nullptr;
     double* d_tab = nullptr;
     std::complex<double>* z_vkb = nullptr;
+    bool z_vkb_mt_allocated_ = false;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 

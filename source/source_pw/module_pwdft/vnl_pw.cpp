@@ -47,6 +47,7 @@ void pseudopot_cell_vnl::release_memory()
         delmem_zd_op()(this->z_qq_so);
         delmem_dd_op()(this->d_deeq);
         delmem_zd_op()(this->z_vkb);
+        this->z_vkb_mt_allocated_ = false;
         delmem_dd_op()(this->d_tab);
         delmem_dd_op()(this->d_indv);
         delmem_dd_op()(this->d_nhtol);
@@ -64,6 +65,14 @@ void pseudopot_cell_vnl::release_memory()
         delmem_ch_op()(this->c_deeq_nc);
         delmem_ch_op()(this->c_vkb);
         delmem_ch_op()(this->c_qq_so);
+#ifdef __DSP
+        if (this->z_vkb_mt_allocated_ && this->z_vkb != nullptr)
+        {
+            base_device::memory::delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(this->z_vkb);
+            this->z_vkb = nullptr;
+            this->z_vkb_mt_allocated_ = false;
+        }
+#endif
         // There's no need to delete double precision pointers while in a CPU environment.
     }
     memory_released = true;
@@ -264,6 +273,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_cd_op()(c_vkb, nkb * npwx);
         }
         resmem_zd_op()(z_vkb, nkb * npwx);
+        this->z_vkb_mt_allocated_ = false;
         resmem_dd_op()(d_tab, this->tab.getSize());
     }
     else
@@ -275,10 +285,12 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         }
         #ifdef __DSP
         base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()
-        (this->z_vkb, this->vkb.size, "Nonlocal<PW>::ps");
+        (this->z_vkb, this->vkb.size, "VNL::z_vkb");
         memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
+        this->z_vkb_mt_allocated_ = true;
         #else
         this->z_vkb = this->vkb.c;
+        this->z_vkb_mt_allocated_ = false;
         #endif
         this->d_tab = this->tab.ptr;
         // There's no need to delete double precision pointers while in a CPU environment.
