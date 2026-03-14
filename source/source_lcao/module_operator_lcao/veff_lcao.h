@@ -58,8 +58,8 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     virtual void contributeHR() override;
   
-  const UnitCell* ucell;
-  const Grid_Driver* gd;
+  const UnitCell* ucell = nullptr;
+  const Grid_Driver* gd = nullptr;
 
 private:
 

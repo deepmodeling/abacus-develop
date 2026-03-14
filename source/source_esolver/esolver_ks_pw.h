@@ -57,9 +57,6 @@ class ESolver_KS_PW : public ESolver_KS
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;
 
-    // for get_pchg and get_wf, use ctx as input of fft
-    Device* ctx = {};
-
 };
 } // namespace ModuleESolver
 #endif

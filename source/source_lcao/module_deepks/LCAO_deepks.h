@@ -156,7 +156,7 @@ class LCAO_Deepks
                     const LCAO_Orbitals& orb,
                     std::ofstream& ofs);
 
-    const Parallel_Orbitals* pv;
+    const Parallel_Orbitals* pv = nullptr;
 };
 
 #endif

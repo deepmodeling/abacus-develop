@@ -43,7 +43,6 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->ctx = nullptr;
 }
 
 template <typename T, typename Device>
@@ -112,7 +111,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->stp.p_psi_init);
+        p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
 
     //! Init Hamiltonian (cell changed)
@@ -128,13 +128,13 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
-              this->stp.psi_t, static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->stp.get_psi_t(), static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     // setup psi (electronic wave functions)
-    this->stp.init(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt));
+    this->stp.init(this->p_hamilt);
 
     //! Setup EXX helper for Hamiltonian and psi
-    exx_helper.before_scf(this->p_hamilt, this->stp.psi_t, PARAM.inp);
+    exx_helper.before_scf(this->p_hamilt, this->stp.get_psi_t(), PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 }
@@ -152,7 +152,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.psi_t, this->pelec->wg, ucell, PARAM.inp);
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.get_psi_t(), this->pelec->wg, ucell, PARAM.inp);
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -188,7 +188,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                      PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->stp.psi_t[0], this->pelec, this->pelec->ekb.c,
+        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), *this->stp.get_psi_t(), this->pelec, this->pelec->ekb.c,
           GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, skip_charge, ucell.tpiba, ucell.nat);
     }
 
@@ -205,7 +205,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     if (GlobalC::exx_info.info_global.cal_exx && !exx_helper.op_exx->first_iter)
     {
-        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.psi_t));
+        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.get_psi_t()));
     }
 
     // deband is calculated from "output" charge density
@@ -224,7 +224,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // Handle EXX-related operations after SCF iteration
-    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.psi_t, ucell, PARAM.inp, conv_esolver, iter);
+    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.get_psi_t(), ucell, PARAM.inp, conv_esolver, iter);
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);
@@ -251,7 +251,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
               this->pw_rho, this->pw_rhod, this->pw_big, this->stp,
-              this->ctx, this->Pgrid, PARAM.inp);
+              this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
@@ -273,7 +273,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
     // Calculate forces
     ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
                  &this->sf, this->solvent, &this->dftu, &this->locpp, &this->ppcell, 
-                 &this->kv, this->pw_wfc, this->stp.psi_d);
+                 &this->kv, this->pw_wfc, this->stp.get_psi_d());
 }
 
 template <typename T, typename Device>
@@ -285,7 +285,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
     this->stp.update_psi_d();
 
     ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
-                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.psi_d);
+                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.get_psi_d());
 
     // external stress
     double unit_transform = 0.0;
@@ -304,7 +304,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 
-            this->sf, this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
+            this->sf, this->ppcell, this->solvent, this->Pgrid, PARAM.inp); 
 
     elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
     

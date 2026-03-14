@@ -249,7 +249,7 @@ class FFTW<double>
     ~FFTW();
     void execute_fftw();
     double* dcoef; //[norder2]
-    fftw_complex* ccoef;
+    fftw_complex* ccoef = nullptr;
     fftw_plan coef_plan;
 };
 
@@ -262,7 +262,7 @@ class FFTW<float>
     ~FFTW();
     void execute_fftw();
     float* dcoef; //[norder2]
-    fftwf_complex* ccoef;
+    fftwf_complex* ccoef = nullptr;
     fftwf_plan coef_plan;
 };
 #endif

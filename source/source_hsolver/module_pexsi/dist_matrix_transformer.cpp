@@ -554,11 +554,11 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
 
         // setup up sender index and receiver index
         int sender_size = SRC_Matrix.get_nnzlocal();
-        int* sender_index;
-        double* sender_buffer;
-        int* dst_index;
-        int* receiver_index;
-        double* receiver_buffer;
+        int* sender_index = nullptr;
+        double* sender_buffer = nullptr;
+        int* dst_index = nullptr;
+        int* receiver_index = nullptr;
+        double* receiver_buffer = nullptr;
 
         if (sender_size > 0)
         {

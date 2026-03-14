@@ -22,7 +22,7 @@ class DiagoPexsi
   public:
     DiagoPexsi(const Parallel_Orbitals* ParaV_in);
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
     std::vector<T*> EDM;
     double totalEnergyH;

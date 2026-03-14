@@ -168,7 +168,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 
     hsolver_pw_sdft_obj.solve(ucell,
                               static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
-                              this->stp.psi_t[0],
+                              *this->stp.get_psi_t(),
                               this->stp.psi_cpu[0],
                               this->pelec,
                               this->pw_wfc,
@@ -221,7 +221,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& 
                     this->locpp,
                     this->ppcell,
                     ucell,
-                    *this->stp.psi_t,
+                    *this->stp.get_psi_t(),
                     this->stowf);
 }
 
@@ -236,7 +236,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  *this->stp.psi_t,
+                  *this->stp.get_psi_t(),
                   this->stowf,
                   &this->chr,
                   &this->locpp,
@@ -289,7 +289,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
                                               &this->kv,
                                               this->pelec,
                                               this->pw_wfc,
-                                              this->stp.psi_t,
+                                              this->stp.get_psi_t(),
                                               &this->ppcell,
                                               static_cast<hamilt::Hamilt<std::complex<double>, Device>*>(this->p_hamilt),
                                               this->stoche,

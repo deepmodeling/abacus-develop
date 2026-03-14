@@ -34,7 +34,7 @@ class Nonlocal_maths
   private:
     ModuleBase::matrix nhtol_;
     int lmax_ = 0;
-    const UnitCell* ucell_;
+    const UnitCell* ucell_ = nullptr;
 
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};

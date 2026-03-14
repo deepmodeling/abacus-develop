@@ -83,12 +83,12 @@ class LCAO_Orbitals
     std::vector<double> cutoffs() const;
 
 	/// numerical atomic orbitals
-	Numerical_Orbital* Phi;
+	Numerical_Orbital* Phi = nullptr;
 	
 	
 	//caoyu add 2021-3-10
 	/// descriptor bases, saved as one-type atom orbital
-	Numerical_Orbital* Alpha;
+	Numerical_Orbital* Alpha = nullptr;
 
 	// initialized in input.cpp
 	double ecutwfc;
