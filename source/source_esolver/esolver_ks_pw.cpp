@@ -54,6 +54,13 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     // delete Hamilt
     this->deallocate_hamilt();
 
+    // delete exx_helper
+    if (this->exx_helper != nullptr)
+    {
+        delete this->exx_helper;
+        this->exx_helper = nullptr;
+    }
+
     // mohan add 2025-10-12
     this->stp.clean();
 }
@@ -94,8 +101,37 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
+    //! Create exx_helper based on device and precision
+    const bool is_gpu = (inp.device == "gpu");
+    const bool is_single = (inp.precision == "single");
+
+#if ((defined __CUDA) || (defined __ROCM))
+    if (is_gpu)
+    {
+        if (is_single)
+        {
+            this->exx_helper = new Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>();
+        }
+        else
+        {
+            this->exx_helper = new Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>();
+        }
+    }
+    else
+#endif
+    {
+        if (is_single)
+        {
+            this->exx_helper = new Exx_Helper<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            this->exx_helper = new Exx_Helper<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
+
     //! Initialize exx pw
-    this->exx_helper.init(ucell, inp, this->pelec->wg);
+    this->exx_helper->init(ucell, inp, this->pelec->wg);
 }
 
 template <typename T, typename Device>
@@ -134,7 +170,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->stp.init(this->p_hamilt);
 
     //! Setup EXX helper for Hamiltonian and psi
-    exx_helper.before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), PARAM.inp);
+    exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 }
@@ -203,9 +239,9 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // Related to EXX
-    if (GlobalC::exx_info.info_global.cal_exx && !exx_helper.op_exx->first_iter)
+    if (GlobalC::exx_info.info_global.cal_exx && !exx_helper->get_op_first_iter())
     {
-        this->pelec->set_exx(exx_helper.cal_exx_energy(this->stp.template get_psi_t<T, Device>()));
+        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()));
     }
 
     // deband is calculated from "output" charge density
@@ -224,7 +260,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // Handle EXX-related operations after SCF iteration
-    exx_helper.iter_finish(this->pelec, &this->chr, this->stp.template get_psi_t<T, Device>(), ucell, PARAM.inp, conv_esolver, iter);
+    exx_helper->iter_finish(this->pelec, &this->chr, this->stp.template get_psi_t<T, Device>(), ucell, PARAM.inp, conv_esolver, iter);
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);

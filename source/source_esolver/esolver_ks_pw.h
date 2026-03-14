@@ -3,7 +3,7 @@
 #include "./esolver_ks.h"
 #include "source_psi/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/vsep_pw.h"
-#include "source_pw/module_pwdft/exx_helper.h"
+#include "source_pw/module_pwdft/exx_helper_base.h"
 #include "source_pw/module_pwdft/op_pw_vel.h"
 
 #include <memory>
@@ -33,7 +33,7 @@ class ESolver_KS_PW : public ESolver_KS
 
     void after_all_runners(UnitCell& ucell) override;
 
-    Exx_Helper<T, Device> exx_helper;
+    Exx_HelperBase* exx_helper = nullptr;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
