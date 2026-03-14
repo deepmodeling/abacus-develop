@@ -81,18 +81,46 @@ void Setup_Psi_pw::before_runner(
 
 
 template <typename T, typename Device>
-void Setup_Psi_pw::update_psi_d()
+void Setup_Psi_pw::update_psi_d_impl()
 {
-    if (this->psi_d != nullptr && PARAM.inp.precision == "single")
+    if (this->psi_d != nullptr && this->precision_type_ == PrecisionType::ComplexFloat)
     {
         delete this->get_psi_d<T, Device>();
     }
 
     // Refresh this->psi_d
-    if (PARAM.inp.precision == "single") {
+    if (this->precision_type_ == PrecisionType::ComplexFloat) {
         this->psi_d = static_cast<void*>(new psi::Psi<std::complex<double>, Device>(*this->get_psi_t<T, Device>()));
     } else {
         this->psi_d = static_cast<void*>(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t));
+    }
+}
+
+void Setup_Psi_pw::update_psi_d()
+{
+#if ((defined __CUDA) || (defined __ROCM))
+    if (this->device_type_ == base_device::GpuDevice)
+    {
+        if (this->precision_type_ == PrecisionType::ComplexFloat)
+        {
+            update_psi_d_impl<std::complex<float>, base_device::DEVICE_GPU>();
+        }
+        else
+        {
+            update_psi_d_impl<std::complex<double>, base_device::DEVICE_GPU>();
+        }
+    }
+    else
+#endif
+    {
+        if (this->precision_type_ == PrecisionType::ComplexFloat)
+        {
+            update_psi_d_impl<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            update_psi_d_impl<std::complex<double>, base_device::DEVICE_CPU>();
+        }
     }
 }
 
@@ -247,9 +275,9 @@ template void Setup_Psi_pw::init_impl<std::complex<float>, base_device::DEVICE_C
 template void Setup_Psi_pw::init_impl<std::complex<double>, base_device::DEVICE_CPU>(
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*);
 
-template void Setup_Psi_pw::update_psi_d<std::complex<float>, base_device::DEVICE_CPU>();
+template void Setup_Psi_pw::update_psi_d_impl<std::complex<float>, base_device::DEVICE_CPU>();
 
-template void Setup_Psi_pw::update_psi_d<std::complex<double>, base_device::DEVICE_CPU>();
+template void Setup_Psi_pw::update_psi_d_impl<std::complex<double>, base_device::DEVICE_CPU>();
 
 template void Setup_Psi_pw::clean_impl<std::complex<float>, base_device::DEVICE_CPU>();
 
@@ -285,9 +313,9 @@ template void Setup_Psi_pw::init_impl<std::complex<float>, base_device::DEVICE_G
 template void Setup_Psi_pw::init_impl<std::complex<double>, base_device::DEVICE_GPU>(
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*);
 
-template void Setup_Psi_pw::update_psi_d<std::complex<float>, base_device::DEVICE_GPU>();
+template void Setup_Psi_pw::update_psi_d_impl<std::complex<float>, base_device::DEVICE_GPU>();
 
-template void Setup_Psi_pw::update_psi_d<std::complex<double>, base_device::DEVICE_GPU>();
+template void Setup_Psi_pw::update_psi_d_impl<std::complex<double>, base_device::DEVICE_GPU>();
 
 template void Setup_Psi_pw::copy_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>();
 

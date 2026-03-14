@@ -56,7 +56,6 @@ class Setup_Psi_pw
 
     void init(hamilt::HamiltBase* p_hamilt);
 
-    template <typename T, typename Device>
     void update_psi_d();
 
     // Transfer data from device to host in pw basis
@@ -132,6 +131,9 @@ class Setup_Psi_pw
 
     template <typename T, typename Device>
     void init_impl(hamilt::Hamilt<T, Device>* p_hamilt);
+
+    template <typename T, typename Device>
+    void update_psi_d_impl();
 
     template <typename T, typename Device>
     void clean_impl();

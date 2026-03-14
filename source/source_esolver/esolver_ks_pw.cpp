@@ -268,7 +268,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
     Forces<double, Device> ff(ucell.nat);
 
     // mohan add 2025-10-12
-    this->stp.update_psi_d<T, Device>();
+    this->stp.update_psi_d();
 
     // Calculate forces
     ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
@@ -282,7 +282,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
     Stress_PW<double, Device> ss(this->pelec);
 
     // mohan add 2025-10-12
-    this->stp.update_psi_d<T, Device>();
+    this->stp.update_psi_d();
 
     ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
                   &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.template get_psi_d<T, Device>());

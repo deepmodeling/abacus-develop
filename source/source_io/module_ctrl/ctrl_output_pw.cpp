@@ -164,7 +164,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.out_pchg.size() > 0)
     {
         // update psi_d
-        stp.template update_psi_d<T, Device>();
+        stp.update_psi_d();
 
         const int nbands = stp.get_nbands();
         const int ngmc = chr.ngmc;
@@ -303,7 +303,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     //----------------------------------------------------------
     if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
     {
-        stp.template update_psi_d<T, Device>();
+        stp.update_psi_d();
 
         ModuleIO::get_wf_pw(inp.out_wfc_norm,
                             inp.out_wfc_re_im,
