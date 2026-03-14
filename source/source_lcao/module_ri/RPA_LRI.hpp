@@ -84,6 +84,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_cut_coulomb->lcaos;
     this->p_kv = &kv_in;
+    this->MGT = exx_cut_coulomb->MGT;
 
     if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
     {
@@ -316,6 +317,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->abfs = exx_cut_coulomb->abfs;
+    this->MGT = exx_cut_coulomb->MGT;
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -423,12 +425,12 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     // <smaller abfs|larger abfs>
     Matrix_Orbs11 m_abfs_abf;
 
-    m_abfs_abf.init(abfs_s, this->abfs, ucell, orb, this->info.kmesh_times);
     m_abfs_abf.MGT = this->MGT;
+    m_abfs_abf.init(abfs_s, this->abfs, ucell, orb, this->info.kmesh_times);
     m_abfs_abf.init_radial_table();
 
-    m_abfs_abfs.init(abfs_s, abfs_s, ucell, orb, this->info.kmesh_times);
     m_abfs_abfs.MGT = this->MGT;
+    m_abfs_abfs.init(abfs_s, abfs_s, ucell, orb, this->info.kmesh_times);
     m_abfs_abfs.init_radial_table();
     // get Rlist
     const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);

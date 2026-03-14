@@ -1,0 +1,1 @@
+Check k-point shrink RPA output files (`shrink_sinvS_*`, `Cs_*`, `coulomb_*`) for an AlAs `1x1x2` case.
