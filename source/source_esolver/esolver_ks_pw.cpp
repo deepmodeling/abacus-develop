@@ -55,7 +55,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     this->deallocate_hamilt();
 
     // mohan add 2025-10-12
-    this->stp.clean<T, Device>();
+    this->stp.clean();
 }
 
 template <typename T, typename Device>

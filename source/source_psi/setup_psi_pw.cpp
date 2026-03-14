@@ -175,22 +175,48 @@ void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::comple
     base_device::memory::cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, Device>()(dst, src, size);
 }
 
-
-
 template <typename T, typename Device>
-void Setup_Psi_pw::clean()
+void Setup_Psi_pw::clean_impl()
 {
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    if (this->device_type_ == base_device::GpuDevice || this->precision_type_ == PrecisionType::ComplexFloat)
     {
         delete this->get_psi_t<T, Device>();
     }
-    if (PARAM.inp.precision == "single")
+    if (this->precision_type_ == PrecisionType::ComplexFloat)
     {
         delete this->get_psi_d<T, Device>();
     }
 
     delete this->psi_cpu;
     delete this->p_psi_init;
+}
+
+void Setup_Psi_pw::clean()
+{
+#if ((defined __CUDA) || (defined __ROCM))
+    if (this->device_type_ == base_device::GpuDevice)
+    {
+        if (this->precision_type_ == PrecisionType::ComplexFloat)
+        {
+            clean_impl<std::complex<float>, base_device::DEVICE_GPU>();
+        }
+        else
+        {
+            clean_impl<std::complex<double>, base_device::DEVICE_GPU>();
+        }
+    }
+    else
+#endif
+    {
+        if (this->precision_type_ == PrecisionType::ComplexFloat)
+        {
+            clean_impl<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            clean_impl<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
 }
 
 template class psi::PSIPrepare<std::complex<float>, base_device::DEVICE_CPU>;
@@ -220,9 +246,9 @@ template void Setup_Psi_pw::copy_d2h<std::complex<float>, base_device::DEVICE_CP
 template void Setup_Psi_pw::copy_d2h<std::complex<double>, base_device::DEVICE_CPU>(
     const base_device::DeviceContext*);
 
-template void Setup_Psi_pw::clean<std::complex<float>, base_device::DEVICE_CPU>();
+template void Setup_Psi_pw::clean_impl<std::complex<float>, base_device::DEVICE_CPU>();
 
-template void Setup_Psi_pw::clean<std::complex<double>, base_device::DEVICE_CPU>();
+template void Setup_Psi_pw::clean_impl<std::complex<double>, base_device::DEVICE_CPU>();
 
 template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>(
     std::complex<double>*, const std::complex<float>*, const size_t);
@@ -264,9 +290,9 @@ template void Setup_Psi_pw::copy_d2h<std::complex<float>, base_device::DEVICE_GP
 template void Setup_Psi_pw::copy_d2h<std::complex<double>, base_device::DEVICE_GPU>(
     const base_device::DeviceContext*);
 
-template void Setup_Psi_pw::clean<std::complex<float>, base_device::DEVICE_GPU>();
+template void Setup_Psi_pw::clean_impl<std::complex<float>, base_device::DEVICE_GPU>();
 
-template void Setup_Psi_pw::clean<std::complex<double>, base_device::DEVICE_GPU>();
+template void Setup_Psi_pw::clean_impl<std::complex<double>, base_device::DEVICE_GPU>();
 
 template void Setup_Psi_pw::castmem_d2h_impl<std::complex<float>, base_device::DEVICE_GPU>(
     std::complex<double>*, const std::complex<float>*, const size_t);

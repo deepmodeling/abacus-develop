@@ -63,7 +63,6 @@ class Setup_Psi_pw
     template <typename T, typename Device>
     void copy_d2h(const base_device::DeviceContext* ctx);
 
-    template <typename T, typename Device>
     void clean();
 
     //------------
@@ -134,6 +133,9 @@ class Setup_Psi_pw
 
     template <typename T, typename Device>
     void init_impl(hamilt::Hamilt<T, Device>* p_hamilt);
+
+    template <typename T, typename Device>
+    void clean_impl();
 
     template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
