@@ -11,7 +11,6 @@
 #include "source_base/module_device/device.h"
 #include "source_hamilt/hamilt.h"
 
-template <typename T, typename Device = base_device::DEVICE_CPU>
 class Setup_Psi_pw
 {
     public:
@@ -62,6 +61,7 @@ class Setup_Psi_pw
     // functions
     //------------
 
+    template <typename T, typename Device>
     void before_runner(
         const UnitCell &ucell,
         const K_Vectors &kv,
@@ -70,13 +70,17 @@ class Setup_Psi_pw
         const pseudopot_cell_vnl &ppcell,
         const Input_para &inp);
 
-    void init(hamilt::HamiltBase* p_hamilt);
+    template <typename T, typename Device>
+    void init(hamilt::Hamilt<T, Device>* p_hamilt);
 
+    template <typename T, typename Device>
     void update_psi_d();
 
     // Transfer data from device to host in pw basis (runtime version)
+    template <typename T, typename Device>
     void copy_d2h(const base_device::DeviceContext* ctx);
 
+    template <typename T, typename Device>
     void clean();
 
     //------------
@@ -94,20 +98,29 @@ class Setup_Psi_pw
     PrecisionType get_precision_type() const { return precision_type_; }
     
     // Get psi_t pointer (template version, for backward compatibility)
+    template <typename T, typename Device>
     psi::Psi<T, Device>* get_psi_t() { return static_cast<psi::Psi<T, Device>*>(psi_t); }
+    
+    template <typename T, typename Device>
     const psi::Psi<T, Device>* get_psi_t() const { return static_cast<const psi::Psi<T, Device>*>(psi_t); }
     
     // Get psi_d pointer (template version, for backward compatibility)
+    template <typename T, typename Device>
     psi::Psi<std::complex<double>, Device>* get_psi_d() { 
         return static_cast<psi::Psi<std::complex<double>, Device>*>(psi_d); 
     }
+    
+    template <typename T, typename Device>
     const psi::Psi<std::complex<double>, Device>* get_psi_d() const { 
         return static_cast<const psi::Psi<std::complex<double>, Device>*>(psi_d); 
     }
 
     private:
 
+    template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
+    
+    template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const size_t size);
 
 };

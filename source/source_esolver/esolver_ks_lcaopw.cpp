@@ -107,7 +107,7 @@ namespace ModuleESolver
                                                                            ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
-                                                                           this->stp.get_psi_t(),
+                                                                           this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
@@ -148,7 +148,7 @@ namespace ModuleESolver
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.get_psi_t(), this->pelec, 
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
@@ -242,7 +242,7 @@ namespace ModuleESolver
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
-                                *this->stp.get_psi_t(),
+                                *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                 ucell,
                                 this->sf,
                                 this->solvent,

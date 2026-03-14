@@ -1,14 +1,12 @@
 #include "source_psi/setup_psi_pw.h"
 #include "source_io/module_parameter/parameter.h" // use parameter
 
-template <typename T, typename Device>
-Setup_Psi_pw<T, Device>::Setup_Psi_pw(){}
+Setup_Psi_pw::Setup_Psi_pw(){}
+
+Setup_Psi_pw::~Setup_Psi_pw(){}
 
 template <typename T, typename Device>
-Setup_Psi_pw<T, Device>::~Setup_Psi_pw(){}
-
-template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::before_runner(
+void Setup_Psi_pw::before_runner(
         const UnitCell &ucell,
         const K_Vectors &kv,
         const Structure_Factor &sf,
@@ -55,30 +53,29 @@ void Setup_Psi_pw<T, Device>::before_runner(
 
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::update_psi_d()
+void Setup_Psi_pw::update_psi_d()
 {
     if (this->psi_d != nullptr && PARAM.inp.precision == "single")
     {
-        delete this->get_psi_d();
+        delete this->get_psi_d<T, Device>();
     }
 
     // Refresh this->psi_d
     if (PARAM.inp.precision == "single") {
-        this->psi_d = static_cast<void*>(new psi::Psi<std::complex<double>, Device>(*this->get_psi_t()));
+        this->psi_d = static_cast<void*>(new psi::Psi<std::complex<double>, Device>(*this->get_psi_t<T, Device>()));
     } else {
         this->psi_d = static_cast<void*>(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t));
     }
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::init(hamilt::HamiltBase* p_hamilt)
+void Setup_Psi_pw::init(hamilt::Hamilt<T, Device>* p_hamilt)
 {
     //! Initialize wave functions
     if (!this->already_initpsi)
     {
         auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
-        auto* hamilt = static_cast<hamilt::Hamilt<T, Device>*>(p_hamilt);
-        p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t(), hamilt, GlobalV::ofs_running);
+        p_psi_init->initialize_psi(this->psi_cpu, this->get_psi_t<T, Device>(), p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }
@@ -86,11 +83,11 @@ void Setup_Psi_pw<T, Device>::init(hamilt::HamiltBase* p_hamilt)
 
 // Transfer data from GPU to CPU in pw basis (runtime version)
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::DeviceContext* ctx)
+void Setup_Psi_pw::copy_d2h(const base_device::DeviceContext* ctx)
 {
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        auto* psi_t = this->get_psi_t();
+        auto* psi_t = this->get_psi_t<T, Device>();
         this->castmem_d2h_impl(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
                                psi_t->get_pointer() - psi_t->get_psi_bias(),
                                this->psi_cpu[0].size());
@@ -103,13 +100,13 @@ void Setup_Psi_pw<T, Device>::copy_d2h(const base_device::DeviceContext* ctx)
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size)
+void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size)
 {
     base_device::memory::cast_memory_op<std::complex<double>, std::complex<double>, base_device::DEVICE_CPU, Device>()(dst, src, size);
 }
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const size_t size)
+void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const size_t size)
 {
     base_device::memory::cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, Device>()(dst, src, size);
 }
@@ -117,24 +114,17 @@ void Setup_Psi_pw<T, Device>::castmem_d2h_impl(std::complex<double>* dst, const 
 
 
 template <typename T, typename Device>
-void Setup_Psi_pw<T, Device>::clean()
+void Setup_Psi_pw::clean()
 {
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
-        delete this->get_psi_t();
+        delete this->get_psi_t<T, Device>();
     }
     if (PARAM.inp.precision == "single")
     {
-        delete this->get_psi_d();
+        delete this->get_psi_d<T, Device>();
     }
 
     delete this->psi_cpu;
     delete this->p_psi_init;
 }
-
-template class Setup_Psi_pw<std::complex<float>, base_device::DEVICE_CPU>;
-template class Setup_Psi_pw<std::complex<double>, base_device::DEVICE_CPU>;
-#if ((defined __CUDA) || (defined __ROCM))
-template class Setup_Psi_pw<std::complex<float>, base_device::DEVICE_GPU>;
-template class Setup_Psi_pw<std::complex<double>, base_device::DEVICE_GPU>;
-#endif
