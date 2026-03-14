@@ -455,18 +455,64 @@ fatal_case_list=""
 fatal_detail_list=""
 case_status=""
 for dir in $testdir; do
-    test -f "$result_dir/$dir.res" || continue
-    while read -r rkey rvalue; do
-        case "$rkey" in
-            FAILED)       failed=$(expr $failed + $rvalue);;
-            OK)           ok=$(expr $ok + $rvalue);;
-            FATAL)        fatal=$(expr $fatal + $rvalue);;
-            FAILED_LIST)  failed_case_list+=$rvalue;;
-            FATAL_LIST)   fatal_case_list+=$rvalue;;
-            FATAL_DETAIL) fatal_detail_list+=$rvalue;;
-            STATUS)       case_status+=$rvalue;;
-        esac
-    done < "$result_dir/$dir.res"
+    if [ ! -d $dir ];then
+        echo -e "\e[0;31m[ERROR     ]\e[0m $dir is not a directory.\n"
+        let fatal++
+        fatal_case_list+=$dir'\n'
+        continue
+    fi
+    cd $dir
+    echo -e "\e[0;32m[ RUN      ]\e[0m $dir"
+    TIMEFORMAT='[----------] Time elapsed: %R seconds'
+    #parallel test
+    time {
+        if [ "$case" = "282_NO_RPA" ]; then
+            mpirun -np 1 $abacus > log.txt
+        else
+            mpirun -np $np $abacus > log.txt
+        fi
+
+        # if ABACUS failed, print out the error message
+        if [ $? -ne 0 ]; then
+            echo -e "\e[0;31m[ERROR     ]\e[0m $dir failed."
+            let failed++
+            failed_case_list+=$dir'\n'
+            case_status+=$dir' 0\n'
+            cat log.txt
+        else
+            # check the output
+            test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
+            if test -z $g
+            then
+                bash -e ../../integrate/tools/catch_properties.sh result.out
+                if [ $? -ne 0 ]; then
+                    echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
+                    let fatal++
+                    fatal_case_list+=$dir'\n'
+                else
+                    my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
+                    my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
+                    my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
+                    my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
+                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
+                fi
+            else
+                bash -e ../../integrate/tools/catch_properties.sh result.ref
+            fi
+        fi
+
+        if [ "$sanitize" == true ]; then
+            echo -e "## Test case ${dir}\n" >> ${report}
+            for diagnostic in asan.*; do
+                echo -e "### On process id ${diagnostic}\n" >> ${report}
+                echo -e "\`\`\`bash" >> ${report}
+                cat ${diagnostic} >> ${report}
+                echo -e "\`\`\`\n" >> ${report}
+            done
+        fi
+    }
+    echo ""
+    cd ../
 done
 
 if [ "$sanitize" == true ]; then

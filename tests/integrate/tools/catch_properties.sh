@@ -46,14 +46,13 @@ record_compare_result(){
 	ref_file=$3
 	cal_file=$4
 	accuracy=${5:-8}
-	use_abs=${6:-0}
 
 	if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
 		echo "$result_key 1" >> "$result_file"
 		return
 	fi
 
-	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"
+	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy"
 	echo "$result_key $?" >> "$result_file"
 }
 
@@ -809,21 +808,15 @@ fi
 if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
-	rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
-	if [ -z "$rpa_outdir" ]; then
-		rpa_outdir="./OUT.librpa"
-	fi
-	rpa_outdir=${rpa_outdir%/}
 	shopt -s nullglob
 	rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
 	if [ ${#rpa_ref_files[@]} -gt 0 ]; then
 		IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
 		unset IFS
 		for onref in "${rpa_ref_files[@]}"; do
-			oncal_name=${onref#ref}
-			oncal="$rpa_outdir/$oncal_name"
-			compare_key="CompareRPA_$(sanitize_result_key "$oncal_name")_pass"
-			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
+			oncal=${onref#ref}
+			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
+			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8
 		done
 	fi
 	shopt -u nullglob

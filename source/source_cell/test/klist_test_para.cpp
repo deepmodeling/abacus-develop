@@ -207,8 +207,8 @@ TEST_F(KlistParaTest, Set)
     const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
-    EXPECT_EQ(kv->get_nkstot_nospin(), 512);
-    EXPECT_GT(kv->get_nkstot_nospin(), kv->get_nkstot());
+    EXPECT_EQ(kv->get_nkstot_full(), 512);
+    EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
