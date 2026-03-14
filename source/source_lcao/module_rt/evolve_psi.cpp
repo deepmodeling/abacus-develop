@@ -129,7 +129,8 @@ void evolve_psi_tensor(const int nband,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
-                       const bool use_lapack)
+                       const bool use_lapack,
+                       CublasMpResources& cublas_res)
 {
     ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
     time_t time_start = time(nullptr);
@@ -221,7 +222,16 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack)
         {
-            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
+            half_Hmatrix_tensor(pv,
+                                nband,
+                                nlocal,
+                                Htmp,
+                                Stmp,
+                                H_laststep,
+                                S_laststep,
+                                ofs_running,
+                                print_matrix,
+                                cublas_res);
         }
         else if (myid == root_proc)
         {
@@ -249,12 +259,13 @@ void evolve_psi_tensor(const int nband,
                                            U_operator,
                                            ofs_running,
                                            print_matrix,
-                                           use_lapack);
+                                           use_lapack,
+                                           cublas_res);
 
     // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)
     {
-        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -264,7 +275,7 @@ void evolve_psi_tensor(const int nband,
     // (4) Normalize psi_k
     if (!use_lapack)
     {
-        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -287,7 +298,7 @@ void evolve_psi_tensor(const int nband,
 
     if (!use_lapack)
     {
-        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
+        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -323,7 +334,8 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
@@ -338,7 +350,8 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 #endif // __CUDA
 
 } // namespace module_rt

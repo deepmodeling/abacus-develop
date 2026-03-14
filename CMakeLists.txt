@@ -449,9 +449,27 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_CUSOLVERMP)
-      # Keep cuSolverMp discovery/linking logic in a dedicated module.
+      # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
       include(cmake/SetupCuSolverMp.cmake)
       abacus_setup_cusolvermp(${ABACUS_BIN_NAME})
+    endif()
+    if (ENABLE_CUBLASMP)
+      # Enforcement 1: cuBLASMp requires cuSOLVERMp to be enabled
+      if (NOT ENABLE_CUSOLVERMP)
+        message(FATAL_ERROR 
+          "ENABLE_CUBLASMP is set to ON, but ENABLE_CUSOLVERMP is OFF."
+          "In ABACUS, cuBLASMp support requires cuSOLVERMp to be enabled simultaneously."
+          "Please set -DENABLE_CUSOLVERMP=ON.")
+      endif()
+      # Enforcement 2: cuBLASMp 0.8.0+ is incompatible with CAL backend
+      # Note: _use_cal is defined inside abacus_setup_cusolvermp
+      if (_use_cal)
+        message(FATAL_ERROR 
+          "cuBLASMp 0.8.0+ requires NCCL Symmetric Memory, but cuSOLVERMp is using CAL backend."
+          "Please upgrade cuSOLVERMp to >= 0.7.0 to use NCCL for both.")
+      endif()
+      include(cmake/SetupCuBlasMp.cmake)
+      abacus_setup_cublasmp(${ABACUS_BIN_NAME})
     endif()
   endif()
 endif()

@@ -3,10 +3,11 @@
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_lcao/module_rt/gather_mat.h"              // MPI gathering and distributing functions
+#include "source_lcao/module_rt/boundary_fix.h"
+#include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/velocity_op.h"
-#include "source_lcao/module_rt/boundary_fix.h"
 
 namespace ModuleESolver
 {
@@ -51,6 +52,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     //! Control heterogeneous computing of the TDDFT solver
     bool use_tensor = false;
     bool use_lapack = false;
+    CublasMpResources cublas_res;
 
     // Control the device type for Hk_laststep and Sk_laststep
     // Set to CPU temporarily, should wait for further GPU development

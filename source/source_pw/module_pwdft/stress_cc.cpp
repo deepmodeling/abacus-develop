@@ -31,7 +31,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 
 	FPTYPE sigmadiag;
-	FPTYPE* rhocg;
+	FPTYPE* rhocg = nullptr;
 
 	int judge=0;
 	for(int nt=0;nt<ucell.ntype;nt++)

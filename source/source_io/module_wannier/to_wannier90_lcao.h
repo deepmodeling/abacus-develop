@@ -126,7 +126,7 @@ class toWannier90_LCAO : public toWannier90
     std::vector<int> iw2im;
     std::vector<int> iw2iorb;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 
     void initialize_orb_table(const UnitCell& ucell);
     void produce_basis_orb();
