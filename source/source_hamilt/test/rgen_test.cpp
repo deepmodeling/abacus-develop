@@ -86,10 +86,12 @@ TEST_F(RgenTest, SimpleCubicNearestNeighbors)
 
 TEST_F(RgenTest, SimpleCubicNonZeroDtau)
 {
-    // dtau shifts the origin: vectors become R - dtau.  Using dtau=(0.5,0,0)
-    // with rmax=1.0 should find only the single vector at (0.5,0,0) with
-    // |r|^2 = 0.25 (i.e. lattice point (1,0,0) minus dtau = (0.5,0,0)).
-    // (The mirror point at (-0.5,0,0) also qualifies.)
+    // rgen computes t = R - dtau for each lattice vector R=(i,j,k)*latvec,
+    // and excludes vectors with |t|^2 < 1e-10 (i.e. R == dtau).
+    // With dtau=(0.5,0,0) and rmax=0.6, two vectors qualify:
+    //   R=(0,0,0): t = (0,0,0)-(0.5,0,0) = (-0.5,0,0), |t|^2=0.25 <= 0.36
+    //   R=(1,0,0): t = (1,0,0)-(0.5,0,0) = ( 0.5,0,0), |t|^2=0.25 <= 0.36
+    // No lattice point coincides with dtau, so neither is excluded.
     const double rmax = 0.6;
     const int mxr_test = 10;
     H_Ewald_pw::mxr = mxr_test;
@@ -101,10 +103,6 @@ TEST_F(RgenTest, SimpleCubicNonZeroDtau)
 
     H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), nrm);
 
-    // Only (1,0,0) and (0,0,0): (0,0,0) is excluded, so only (1,0,0)-dtau
-    // and (-1+1,0,0)-(-dtau) cases. Actually:
-    // i=0,j=0,k=0: t=(0,0,0)-(0.5,0,0)=(-0.5,0,0), tt=0.25 <=0.36 ✓
-    // i=1,j=0,k=0: t=(1,0,0)-(0.5,0,0)=(0.5,0,0),  tt=0.25 <=0.36 ✓
     EXPECT_EQ(nrm, 2);
     for (int i = 0; i < nrm; ++i)
     {
