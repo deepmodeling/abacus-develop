@@ -69,8 +69,7 @@ class Setup_Psi_pw
         const pseudopot_cell_vnl &ppcell,
         const Input_para &inp);
 
-    template <typename T, typename Device>
-    void init(hamilt::Hamilt<T, Device>* p_hamilt);
+    void init(hamilt::HamiltBase* p_hamilt);
 
     template <typename T, typename Device>
     void update_psi_d();
@@ -124,6 +123,9 @@ class Setup_Psi_pw
         const ModulePW::PW_Basis_K &pw_wfc, 
         const pseudopot_cell_vnl &ppcell,
         const Input_para &inp);
+
+    template <typename T, typename Device>
+    void init_impl(hamilt::Hamilt<T, Device>* p_hamilt);
 
     template <typename T, typename Device>
     void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
