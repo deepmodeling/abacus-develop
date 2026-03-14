@@ -93,7 +93,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     ESolver_KS::before_all_runners(ucell, inp);
 
     //! setup and allocation for pelec, potentials, etc. 
-    elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
+    elecstate::setup_estate_pw(ucell, this->kv, this->sf, this->pelec, this->chr,
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
@@ -342,7 +342,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 
             this->sf, this->ppcell, this->solvent, this->Pgrid, PARAM.inp); 
 
-    elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
+    elecstate::teardown_estate_pw(this->pelec, this->vsep_cell);
     
 }
 
