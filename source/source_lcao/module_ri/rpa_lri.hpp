@@ -695,6 +695,10 @@ void RPA_LRI<T, Tdata>::output_symmetry_sidecars(const UnitCell& ucell,
     {
         return;
     }
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     std::vector<std::vector<std::vector<int>>> abf_layout_candidates;
     if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
