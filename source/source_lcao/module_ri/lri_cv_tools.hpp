@@ -6,10 +6,10 @@
 #ifndef LRI_CV_TOOLS_HPP
 #define LRI_CV_TOOLS_HPP
 
-#include "source_base/mathzone.h"
-#include "invmat_ri.h"
-#include "lri_cv_tools.h"
-#include "ri_util.h"
+#include "../../source_base/mathzone.h"
+#include "Inverse_Matrix.h"
+#include "LRI_CV_Tools.h"
+#include "RI_Util.h"
 
 #include <RI/global/Global_Func-1.h>
 #include <RI/global/Map_Operator.h>
