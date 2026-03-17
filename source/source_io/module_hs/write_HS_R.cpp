@@ -19,13 +19,15 @@ hamilt::HContainer<T>* sparse_map_to_hcontainer(
     hamilt::HContainer<T>* hc = new hamilt::HContainer<T>(&pv);
     hc->set_zero();
 
-    for (const auto& [R, row_map] : sparse_map)
+    for (const auto& r_entry : sparse_map)
     {
-        for (const auto& [row, col_map] : row_map)
+        const auto& R = r_entry.first;
+        for (const auto& row_entry : r_entry.second)
         {
-            for (const auto& [col, value] : col_map)
+            const size_t row = row_entry.first;
+            for (const auto& col_entry : row_entry.second)
             {
-                hc->set_value(R.x, R.y, R.z, row, col, value);
+                hc->set_value(R.x, R.y, R.z, row, col_entry.first, col_entry.second);
             }
         }
     }

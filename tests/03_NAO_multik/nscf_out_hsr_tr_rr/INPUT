@@ -16,7 +16,7 @@ scf_thr           1e-8
 scf_nmax          100
 
 #out_chg      1
-init_chg          file
+init_chg          hr #file
 out_mat_hs2       1
 out_mat_r         1
 out_mat_t         1
