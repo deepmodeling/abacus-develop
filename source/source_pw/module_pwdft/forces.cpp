@@ -657,7 +657,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             int nrm = 0;
 
             // output of rgen: the number of vectors in the sphere
-            const int mxr = 200;
+            const int mxr = H_Ewald_pw::estimate_mxr(rmax, ucell.G);
             // the maximum number of R vectors included in r
             std::vector<ModuleBase::Vector3<double>> r(mxr);
             std::vector<double> r2(mxr);
@@ -681,7 +681,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                     {
                         ModuleBase::Vector3<double> d_tau
                             = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
-                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
+                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm);
 
                         for (int n = 0; n < nrm; n++)
                         {
