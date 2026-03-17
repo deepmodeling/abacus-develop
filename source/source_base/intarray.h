@@ -19,7 +19,7 @@ namespace ModuleBase
 class IntArray
 {
   public:
-    int *ptr;
+    int * ptr = nullptr;
 
     /**
      * @brief Construct a new Int Array object

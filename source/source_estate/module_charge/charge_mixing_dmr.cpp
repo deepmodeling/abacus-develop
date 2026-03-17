@@ -58,8 +58,8 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
         dmr_mag_save = new double[nnr * PARAM.inp.nspin];
         ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * PARAM.inp.nspin);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * PARAM.inp.nspin);
-        double* dmr_up;
-        double* dmr_down;
+        double* dmr_up = nullptr;
+        double* dmr_down = nullptr;
         // tranfer dmr into dmr_mag
         dmr_up = dmr[0]->get_wrapper();
         dmr_down = dmr[1]->get_wrapper();
@@ -157,8 +157,8 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
         dmr_mag_save = new double[nnr * PARAM.inp.nspin];
         ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * PARAM.inp.nspin);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * PARAM.inp.nspin);
-        double* dmr_up;
-        double* dmr_down;
+        double* dmr_up = nullptr;
+        double* dmr_down = nullptr;
         // tranfer dmr into dmr_mag
         dmr_up = dmr[0]->get_wrapper();
         dmr_down = dmr[1]->get_wrapper();

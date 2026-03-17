@@ -14,8 +14,8 @@ class Ions_Move_SD
 
   private:
     double energy_saved;
-    double* pos_saved;
-    double* grad_saved;
+    double* pos_saved = nullptr;
+    double* grad_saved = nullptr;
 
     void cal_tradius_sd(void) const;
 };

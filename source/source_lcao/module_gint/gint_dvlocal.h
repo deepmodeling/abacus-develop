@@ -51,7 +51,7 @@ class Gint_dvlocal : public Gint
         LCAO_HS_Arrays& HS_Arrays);
 
     // input
-    const double* vr_eff_;
+    const double* vr_eff_ = nullptr;
     int nspin_;
     int npol_;
 

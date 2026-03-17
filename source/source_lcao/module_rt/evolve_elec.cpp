@@ -41,6 +41,12 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
     // Control the print of matrix to running_md.log
     const int print_matrix = 0;
 
+    // Multi-GPU support
+    CublasMpResources cublas_res;
+#ifdef __CUBLASMP
+    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
+#endif
+
     for (int ik = 0; ik < nks; ik++)
     {
         phm->updateHk(ik);
@@ -171,7 +177,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                       propagator,
                                       ofs_running,
                                       print_matrix,
-                                      use_lapack);
+                                      use_lapack,
+                                      cublas_res);
 
             ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
@@ -236,6 +243,10 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
         ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
     } // end k
+
+#ifdef __CUBLASMP
+    finalize_cublasmp_resources(cublas_res);
+#endif
 
     ModuleBase::timer::tick("Evolve_elec", "solve_psi");
     return;

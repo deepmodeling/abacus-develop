@@ -64,7 +64,7 @@ void Mathzone_Add1::SplineD2 // modified by pengfei 13-8-8 add second derivative
 	ModuleBase::timer::tick("Mathzone_Add1","SplineD2");
 	
 	double dx1, dx2, dy1, dy2, p, qn, sig, un;
-	double *u;
+	double * u = nullptr;
 	
 	u = new double[mesh-1];
 	const double ypmax = 99999.00;

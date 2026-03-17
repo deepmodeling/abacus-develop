@@ -13,25 +13,35 @@
 #include "types.h"
 #include <complex>
 #include <string>
+#include <type_traits>
 
 namespace base_device
 {
 
+// Forward declaration
+class DeviceContext;
+
 /**
- * @brief Get the device type enum for a given device type.
+ * @brief Get the device type enum from DeviceContext (runtime version).
+ * @param ctx Pointer to DeviceContext
+ * @return AbacusDevice_t enum value
+ */
+inline AbacusDevice_t get_device_type(const DeviceContext* ctx);
+
+/**
+ * @brief Get the device type enum for a given device type (compile-time version).
  * @tparam Device The device type (DEVICE_CPU or DEVICE_GPU)
  * @param dev Pointer to device (used for template deduction)
  * @return AbacusDevice_t enum value
  */
 template <typename Device>
-AbacusDevice_t get_device_type(const Device* dev);
-
-// Template specialization declarations
-template <>
-AbacusDevice_t get_device_type<DEVICE_CPU>(const DEVICE_CPU* dev);
-
-template <>
-AbacusDevice_t get_device_type<DEVICE_GPU>(const DEVICE_GPU* dev);
+AbacusDevice_t get_device_type(const Device* dev)
+{
+    if (std::is_same<Device, DEVICE_CPU>::value) return CpuDevice;
+    else if (std::is_same<Device, DEVICE_GPU>::value) return GpuDevice;
+    else if (std::is_same<Device, DEVICE_DSP>::value) return DspDevice;
+    else return UnKnown;
+}
 
 /**
  * @brief Get the precision string for a given numeric type.

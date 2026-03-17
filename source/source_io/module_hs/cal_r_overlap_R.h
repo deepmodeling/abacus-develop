@@ -98,6 +98,6 @@ class cal_r_overlap_R
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>
         center2_orb21_r_nonlocal;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 };
 #endif

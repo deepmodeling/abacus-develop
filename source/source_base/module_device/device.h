@@ -145,6 +145,36 @@ public:
      */
     int get_local_rank() const { return local_rank_; }
 
+    /**
+     * @brief Set the device type (CpuDevice, GpuDevice, or DspDevice)
+     * @param type The device type
+     */
+    void set_device_type(AbacusDevice_t type) { device_type_ = type; }
+
+    /**
+     * @brief Get the device type
+     * @return AbacusDevice_t The device type
+     */
+    AbacusDevice_t get_device_type() const { return device_type_; }
+
+    /**
+     * @brief Check if the device is CPU
+     * @return true if the device is CPU
+     */
+    bool is_cpu() const { return device_type_ == CpuDevice; }
+
+    /**
+     * @brief Check if the device is GPU
+     * @return true if the device is GPU
+     */
+    bool is_gpu() const { return device_type_ == GpuDevice; }
+
+    /**
+     * @brief Check if the device is DSP
+     * @return true if the device is DSP
+     */
+    bool is_dsp() const { return device_type_ == DspDevice; }
+
     // Disable copy and assignment
     DeviceContext(const DeviceContext&) = delete;
     DeviceContext& operator=(const DeviceContext&) = delete;
@@ -158,9 +188,20 @@ private:
     int device_id_ = -1;
     int device_count_ = 0;
     int local_rank_ = 0;
+    AbacusDevice_t device_type_ = CpuDevice;
 
     std::mutex init_mutex_;
 };
+
+/**
+ * @brief Get the device type enum from DeviceContext (runtime version).
+ * @param ctx Pointer to DeviceContext
+ * @return AbacusDevice_t enum value
+ */
+inline AbacusDevice_t get_device_type(const DeviceContext* ctx)
+{
+    return ctx->get_device_type();
+}
 
 } // end of namespace base_device
 

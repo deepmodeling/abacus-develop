@@ -54,7 +54,8 @@ void Propagator::compute_propagator_tensor(const int nlocal,
                                            ct::Tensor& U_operator,
                                            std::ofstream& ofs_running,
                                            const int print_matrix,
-                                           const bool use_lapack) const
+                                           const bool use_lapack,
+                                           CublasMpResources& cublas_res) const
 {
     int tag = 0;
     switch (ptype)
@@ -62,7 +63,7 @@ void Propagator::compute_propagator_tensor(const int nlocal,
     case 0:
         if (!use_lapack)
         {
-            compute_propagator_cn2_tensor(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix);
+            compute_propagator_cn2_tensor(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix, cublas_res);
         }
         else
         {
@@ -91,7 +92,8 @@ template void Propagator::compute_propagator_tensor<base_device::DEVICE_CPU>(con
                                                                              ct::Tensor& U_operator,
                                                                              std::ofstream& ofs_running,
                                                                              const int print_matrix,
-                                                                             const bool use_lapack) const;
+                                                                             const bool use_lapack,
+                                                                             CublasMpResources& cublas_res) const;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void Propagator::compute_propagator_tensor<base_device::DEVICE_GPU>(const int nlocal,
                                                                              const ct::Tensor& Stmp,
@@ -100,7 +102,8 @@ template void Propagator::compute_propagator_tensor<base_device::DEVICE_GPU>(con
                                                                              ct::Tensor& U_operator,
                                                                              std::ofstream& ofs_running,
                                                                              const int print_matrix,
-                                                                             const bool use_lapack) const;
+                                                                             const bool use_lapack,
+                                                                             CublasMpResources& cublas_res) const;
 #endif // __CUDA
 #endif // __MPI
 } // namespace module_rt
