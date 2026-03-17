@@ -109,6 +109,7 @@ void Charge_Extra::extrapolate_charge(
     {
         sf->setup(&ucell, *Pgrid, chr->rhopw);
         ofs_running << " charge density from previous step !" << std::endl;
+        ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
         return;
     }
 

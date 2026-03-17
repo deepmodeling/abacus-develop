@@ -205,6 +205,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
             }
             en[iband] = 0.0;
         }
+        ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_init");
         return;
     }
 

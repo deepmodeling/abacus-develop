@@ -41,6 +41,7 @@ bool unitcell::check_tau(const Atom* atoms,
 							GlobalV::ofs_warning << " type:" << atoms[T1].label << " atom " << I1 + 1 << std::endl; 
 							GlobalV::ofs_warning << " type:" << atoms[T2].label << " atom " << I2 + 1 << std::endl; 
 							GlobalV::ofs_warning << " distance = " << norm << " Bohr" << std::endl;
+							ModuleBase::timer::end("UnitCell","check_tau");
 							return false;
 						}
 					}
