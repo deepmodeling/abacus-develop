@@ -17,9 +17,9 @@ class surchem
     surchem();
     ~surchem();
 
-    double* TOTN_real;
-    double* delta_phi;
-    double* epspot;
+    double* TOTN_real = nullptr;
+    double* delta_phi = nullptr;
+    double* epspot = nullptr;
     ModuleBase::matrix Vcav;
     ModuleBase::matrix Vel;
     double qs;

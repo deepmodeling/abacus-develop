@@ -32,7 +32,7 @@ class Numerical_Descriptor
 
 	Bessel_Basis bessel_basis;
 
-	ModuleBase::IntArray *mu_index;
+	ModuleBase::IntArray * mu_index = nullptr;
 	void init_mu_index(const UnitCell& ucell);//mohan added 2021-01-03
 
 	// void jlq3d_overlap(ModuleBase::realArray &overlap_Q1, ModuleBase::realArray &overlap_Q2,

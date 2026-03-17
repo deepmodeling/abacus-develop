@@ -30,7 +30,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         use_tensor = true;
-        use_lapack = true;
+        if (PARAM.inp.ks_solver != "cusolvermp")
+        {
+            use_lapack = true;
+        }
     }
 }
 
@@ -235,21 +238,22 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     {
         if (istep >= TD_info::estep_shift + 1)
         {
-            module_rt::Evolve_elec<Device>::solve_psi(istep,
-                                                      PARAM.inp.nbands,
-                                                      PARAM.globalv.nlocal,
-                                                      this->kv.get_nks(),
-                                                      static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
-                                                      this->pv,
-                                                      this->psi,
-                                                      this->psi_laststep,
-                                                      this->Hk_laststep,
-                                                      this->Sk_laststep,
-                                                      this->pelec->ekb,
-                                                      GlobalV::ofs_running,
-                                                      PARAM.inp.propagator,
-                                                      use_tensor,
-                                                      use_lapack);
+            module_rt::Evolve_elec<Device>::solve_psi(
+                istep,
+                PARAM.inp.nbands,
+                PARAM.globalv.nlocal,
+                this->kv.get_nks(),
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+                this->pv,
+                this->psi,
+                this->psi_laststep,
+                this->Hk_laststep,
+                this->Sk_laststep,
+                this->pelec->ekb,
+                GlobalV::ofs_running,
+                PARAM.inp.propagator,
+                use_tensor,
+                use_lapack);
         }
         this->weight_dm_rho(ucell);
     }
@@ -346,11 +350,18 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     {
         if (use_tensor && use_lapack)
         {
-            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
+            elecstate::cal_edm_tddft_tensor_lapack<Device>(
+                this->pv,
+                this->dmat,
+                this->kv,
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
         else
         {
-            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
+            elecstate::cal_edm_tddft(this->pv,
+                                     this->dmat,
+                                     this->kv,
+                                     static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
     }
 }

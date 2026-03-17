@@ -58,7 +58,7 @@ class Force_Stress_LCAO
 
   private:
     int nat;
-    Record_adj* RA;
+    Record_adj* RA = nullptr;
     Force_LCAO<T> flk;
     Stress_Func<double> sc_pw;
 

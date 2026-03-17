@@ -88,7 +88,7 @@ class GintAtom
 
     private:
         // the atom object
-        const Atom* atom_;
+        const Atom* atom_ = nullptr;
         
         // the global index of the atom type
         int it_;
@@ -110,9 +110,9 @@ class GintAtom
         Vec3d tau_in_biggrid_;
 
         // the numerical orbitals of this atom
-        const Numerical_Orbital* orb_;
+        const Numerical_Orbital* orb_ = nullptr;
 
-        const UnitCell* ucell_;
+        const UnitCell* ucell_ = nullptr;
         
         std::vector<const double*> p_psi_uniform_;
         std::vector<const double*> p_dpsi_uniform_;

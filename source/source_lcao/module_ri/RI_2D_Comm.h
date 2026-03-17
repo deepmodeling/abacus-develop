@@ -11,32 +11,32 @@
 #include "source_cell/klist.h"
 
 #include <RI/global/Tensor.h>
-
-#include <array>
-#include <vector>
-#include <tuple>
-#include <map>
-#include <set>
-#include <deque>
 #include <RI/ri/Cell_Nearest.h>
+#include <array>
+#include <deque>
+#include <map>
+#include <mpi.h>
+#include <set>
+#include <tuple>
+#include <vector>
 
 namespace RI_2D_Comm
 {
-	using TA = int;
-	using Tcell = int;
-	static const size_t Ndim = 3;
-	using TC = std::array<Tcell,Ndim>;
-	using TAC = std::pair<TA,TC>;
+using TA = int;
+using Tcell = int;
+static const size_t Ndim = 3;
+using TC = std::array<Tcell, Ndim>;
+using TAC = std::pair<TA, TC>;
 
-//public:
-	template<typename Tdata, typename Tmatrix>
-	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-        split_m2D_ktoR(const UnitCell& ucell,
-					   const K_Vectors& kv, 
-					   const std::vector<const Tmatrix*>& mks_2D, 
-					   const Parallel_2D& pv, 
-					   const int nspin, 
-					   const bool spgsym = false);
+// public:
+template <typename Tdata, typename Tmatrix>
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR(
+    const UnitCell& ucell,
+	const K_Vectors& kv, 
+    const std::vector<const Tmatrix*>& mks_2D, 
+    const Parallel_2D& pv, 
+    const int nspin, 
+    const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
@@ -44,7 +44,7 @@ namespace RI_2D_Comm
 
     template<typename Tdata, typename TK>
     extern void add_Hexx(
-		const UnitCell& ucell,
+        const UnitCell& ucell,
         const K_Vectors& kv,
         const int ik,
         const double alpha,
@@ -68,11 +68,11 @@ namespace RI_2D_Comm
     extern void add_HexxR(
         const int current_spin,
         const double alpha,
-        const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
-        const Parallel_Orbitals& pv,
-        const int npol,
-        hamilt::HContainer<TR>& HlocR,
-        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
+                      const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+                      const Parallel_Orbitals& pv,
+                      const int npol,
+                      hamilt::HContainer<TR>& HlocR,
+                      const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
@@ -94,7 +94,28 @@ namespace RI_2D_Comm
 	extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
 	extern inline std::tuple<int,int> split_is_block(const int is_b);
 	extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
-}
+
+    template <typename TA, typename TAC, typename T>
+    extern std::map<TA, std::map<TAC, T>> comm_map2_first(const MPI_Comm& mpi_comm,
+                                                                const std::map<TA, std::map<TAC, T>>& Ds_in,
+                                                                const std::set<TA>& s0,
+                                                                const std::set<TA>& s1);
+    template <typename TA, typename TAC, typename T, typename Tjudge>
+    extern std::map<TA, std::map<TAC, T>> comm_map2(const MPI_Comm& mpi_comm,
+                                                    const std::map<TA, std::map<TAC, T>>& Ds_in,
+                                                    const Tjudge& judge);
+    template <typename Tkey, typename Tvalue>
+    extern void set_value_add(Tkey&& key, Tvalue&& value, std::map<Tkey, Tvalue>& data);
+    template <typename Tkey0, typename Tkey1, typename Tvalue>
+    extern void set_value_add(std::tuple<Tkey0, Tkey1>&& key,
+                            Tvalue&& value,
+                            std::map<Tkey0, std::map<Tkey1, Tvalue>>& data);
+    template <typename Tkey, typename Tvalue>
+    extern void add_datas(std::map<Tkey, Tvalue>&& data_local, std::map<Tkey, Tvalue>& data_recv);
+    template <typename Tkey0, typename Tkey1, typename Tvalue>
+    extern void add_datas(std::map<Tkey0, std::map<Tkey1, Tvalue>>&& data_local,
+                        std::map<Tkey0, std::map<Tkey1, Tvalue>>& data_recv);
+} // namespace RI_2D_Comm
 
 #include "RI_2D_Comm.hpp"
 

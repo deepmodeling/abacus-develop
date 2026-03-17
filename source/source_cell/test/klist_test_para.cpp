@@ -1,4 +1,5 @@
 #include "source_base/mathzone.h"
+#include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -237,6 +238,8 @@ TEST_F(KlistParaTest, Set)
     ModuleSymmetry::Symmetry::symm_flag = 1;
     kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec,  GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
+    EXPECT_EQ(kv->get_nkstot_full(), 512);
+    EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
@@ -253,6 +256,64 @@ TEST_F(KlistParaTest, Set)
         if (GlobalV::MY_RANK == 3) {
             EXPECT_EQ(kv->get_nks(), 17);
 }
+    }
+    std::vector<double> local_kvec_c_full(kv->kvec_c_full.size() * 3);
+    for (size_t ik = 0; ik < kv->kvec_c_full.size(); ++ik)
+    {
+        local_kvec_c_full[3 * ik] = kv->kvec_c_full[ik].x;
+        local_kvec_c_full[3 * ik + 1] = kv->kvec_c_full[ik].y;
+        local_kvec_c_full[3 * ik + 2] = kv->kvec_c_full[ik].z;
+    }
+    const int local_count = static_cast<int>(local_kvec_c_full.size());
+    std::vector<int> counts;
+    std::vector<int> displs;
+    std::vector<int> pools;
+    if (GlobalV::MY_RANK == 0)
+    {
+        counts.resize(GlobalV::NPROC);
+        pools.resize(GlobalV::NPROC);
+    }
+    MPI_Gather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&GlobalV::MY_POOL, 1, MPI_INT, pools.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    std::vector<double> gathered_kvec_c_full;
+    if (GlobalV::MY_RANK == 0)
+    {
+        displs.resize(GlobalV::NPROC, 0);
+        for (int irank = 1; irank < GlobalV::NPROC; ++irank)
+        {
+            displs[irank] = displs[irank - 1] + counts[irank - 1];
+        }
+        gathered_kvec_c_full.resize(displs.back() + counts.back());
+    }
+    MPI_Gatherv(local_kvec_c_full.data(),
+                local_count,
+                MPI_DOUBLE,
+                gathered_kvec_c_full.data(),
+                counts.data(),
+                displs.data(),
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+    if (GlobalV::MY_RANK == 0)
+    {
+        for (int irank = 0; irank < GlobalV::NPROC; ++irank)
+        {
+            for (int jrank = irank + 1; jrank < GlobalV::NPROC; ++jrank)
+            {
+                if (pools[irank] != pools[jrank])
+                {
+                    continue;
+                }
+                ASSERT_EQ(counts[irank], counts[jrank]);
+                for (int i = 0; i < counts[irank]; ++i)
+                {
+                    EXPECT_NEAR(gathered_kvec_c_full[displs[irank] + i],
+                                gathered_kvec_c_full[displs[jrank] + i],
+                                1e-12);
+                }
+            }
+        }
     }
     ClearUcell();
     if (GlobalV::MY_RANK == 0)

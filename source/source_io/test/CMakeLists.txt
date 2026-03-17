@@ -3,8 +3,8 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(INPUTs ${CMAKE_CURRENT_BINARY_DIR}/INPUTs COPYONLY)
 
 AddTest(
   TARGET MODULE_IO_input_test_para
@@ -82,7 +82,7 @@ AddTest(
   SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../module_output/binstream.cpp
 )
 
-install(FILES write_wfc_nao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(write_wfc_nao_para.sh ${CMAKE_CURRENT_BINARY_DIR}/write_wfc_nao_para.sh COPYONLY)
 find_program(BASH bash)
 add_test(NAME MODULE_IO_write_wfc_nao_para
       COMMAND ${BASH} write_wfc_nao_para.sh
@@ -289,4 +289,3 @@ AddTest(
   TARGET MODULE_IO_write_elf_logic_test
   SOURCES write_elf_logic_test.cpp
 )
-

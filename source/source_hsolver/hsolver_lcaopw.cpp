@@ -9,6 +9,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 
 #ifdef __EXX

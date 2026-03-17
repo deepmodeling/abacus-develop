@@ -50,19 +50,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // buffer variable
     // used to optimize alpha
 
-	if(PARAM.inp.test_energy) 
-    {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
-    }
-    //r  = new ModuleBase::Vector3<double>[mxr];
-    //r2 = new double[mxr];
-    //int* irr = new int[mxr];
-    std::vector<ModuleBase::Vector3<double>> vec_r(mxr);
-    std::vector<double> vec_r2(mxr);
-    std::vector<int> vec_irr(mxr);
-    int* irr = vec_irr.data();
-    ModuleBase::Vector3<double>* r = vec_r.data();
-    double* r2 = vec_r2.data();
+    // (arrays are allocated below, after rmax and mxr are determined)
 
     // (1) calculate total ionic charge
     double charge = 0.0;
@@ -158,8 +146,33 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     // R-space sum here (only done for the processor that contains G=0)
     ewaldr = 0.0;
-#ifdef __MPI
+
+    // Compute rmax and dynamically determine mxr (maximum number of r-vectors)
+    // to avoid buffer overflow for very small unit cells or high cutoff energies.
     rmax = 4.0 / sqrt(alpha) / cell.lat0;
+    {
+        double bg1[3];
+        bg1[0] = cell.G.e11; bg1[1] = cell.G.e12; bg1[2] = cell.G.e13;
+        int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+        bg1[0] = cell.G.e21; bg1[1] = cell.G.e22; bg1[2] = cell.G.e23;
+        int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+        bg1[0] = cell.G.e31; bg1[1] = cell.G.e32; bg1[2] = cell.G.e33;
+        int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+        mxr = (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
+    }
+
+    if(PARAM.inp.test_energy) 
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
+    }
+    std::vector<ModuleBase::Vector3<double>> vec_r(mxr);
+    std::vector<double> vec_r2(mxr);
+    std::vector<int> vec_irr(mxr);
+    int* irr = vec_irr.data();
+    ModuleBase::Vector3<double>* r = vec_r.data();
+    double* r2 = vec_r2.data();
+
+#ifdef __MPI
     if(PARAM.inp.test_energy) 
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
@@ -220,8 +233,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 #else
     if (rho_basis->ig_gge0 >= 0)
     {	
-        rmax = 4.0 / sqrt(alpha) / cell.lat0;
-		if(PARAM.inp.test_energy) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
+        if(PARAM.inp.test_energy) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax(unit lat0)",rmax);
         // with this choice terms up to ZiZj*erfc(4) are counted (erfc(4)=2x10^-8
         int nt1=0;
         int nt2=0;
@@ -385,9 +397,10 @@ void H_Ewald_pw::rgen(
 
                 if (tt <= rmax * rmax && std::abs(tt) > 1.e-10)
                 {
-                    if (nrm > mxr)
+                    if (nrm >= mxr)
                     {
-                        std::cerr << "\n rgen, too many r-vectors," << nrm;
+                        ModuleBase::WARNING_QUIT("rgen", "too many r-vectors (nrm=" + std::to_string(nrm)
+                                                 + ", mxr=" + std::to_string(mxr) + "). Please report this issue.");
                     }
                     r[nrm] = t;
                     r2[nrm] = tt;
