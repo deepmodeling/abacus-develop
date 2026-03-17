@@ -5,7 +5,7 @@ NUMERICAL_ORBITAL
 Si_gga_8au_60Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-10.2  // add lattice constant
+15.3  // add lattice constant
 
 LATTICE_VECTORS
 0.0 0.5 0.5
