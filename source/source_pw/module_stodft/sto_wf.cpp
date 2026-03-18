@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <ctime>
+#include <random>
 
 #include "source_base/global_function.h"
 
@@ -66,11 +67,11 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
     if (seed_in == 0 || seed_in == -1)
     {
-        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
+        this->rng.seed((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
+        this->rng.seed((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
     }
 
     this->allocate_chi0();
@@ -136,17 +137,19 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
     this->chi0_cpu->fix_k(0);
     if (seed_in >= 0)
     {
+        std::uniform_real_distribution<double> dist(0.0, 2 * ModuleBase::PI);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = dist(this->rng);
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
     else
     {
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            if (dist(this->rng) < 0.5)
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
