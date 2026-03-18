@@ -12,6 +12,18 @@ int H_Ewald_pw::mxr = 200;
 H_Ewald_pw::H_Ewald_pw(){};
 H_Ewald_pw::~H_Ewald_pw(){};
 
+int H_Ewald_pw::estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg)
+{
+    double bg1[3];
+    bg1[0] = bg.e11; bg1[1] = bg.e12; bg1[2] = bg.e13;
+    const int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    bg1[0] = bg.e21; bg1[1] = bg.e22; bg1[2] = bg.e23;
+    const int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    bg1[0] = bg.e31; bg1[1] = bg.e32; bg1[2] = bg.e33;
+    const int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    return (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
+}
+
 double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                                  const ModulePW::PW_Basis* rho_basis,
                                  const ModuleBase::ComplexMatrix& strucFac)
@@ -150,16 +162,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // Compute rmax and dynamically determine mxr (maximum number of r-vectors)
     // to avoid buffer overflow for very small unit cells or high cutoff energies.
     rmax = 4.0 / sqrt(alpha) / cell.lat0;
-    {
-        double bg1[3];
-        bg1[0] = cell.G.e11; bg1[1] = cell.G.e12; bg1[2] = cell.G.e13;
-        int nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-        bg1[0] = cell.G.e21; bg1[1] = cell.G.e22; bg1[2] = cell.G.e23;
-        int nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-        bg1[0] = cell.G.e31; bg1[1] = cell.G.e32; bg1[2] = cell.G.e33;
-        int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
-        mxr = (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
-    }
+    mxr = H_Ewald_pw::estimate_mxr(rmax, cell.G);
 
     if(PARAM.inp.test_energy) 
     {
@@ -205,7 +208,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             // calculate tau[na1]-tau[na2]
             dtau = cell.atoms[it1].tau[ia1] - cell.atoms[it2].tau[ia2];
             // generates nearest-neighbors shells
-            H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, nrm);
+            H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, mxr, nrm);
             // at-->cell.latvec, bg-->G
             // and sum to the real space part
 
@@ -249,7 +252,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                         //calculate tau[na]-tau[nb]
                         dtau = cell.atoms[nt1].tau[na] - cell.atoms[nt2].tau[nb];
                         //generates nearest-neighbors shells
-                        H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, nrm);
+                        H_Ewald_pw::rgen(dtau, rmax, irr, cell.latvec, cell.G, r, r2, mxr, nrm);
                         // at-->cell.latvec, bg-->G
                         // and sum to the real space part
 
@@ -301,6 +304,7 @@ void H_Ewald_pw::rgen(
     const ModuleBase::Matrix3 &G,
     ModuleBase::Vector3<double> *r,
     double *r2,
+    const int mxr,
     int &nrm)
 {
     //-------------------------------------------------------------------

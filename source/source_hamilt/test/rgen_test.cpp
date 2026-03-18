@@ -43,13 +43,12 @@ TEST_F(RgenTest, ZeroRmax)
 {
     // When rmax==0 the function should return immediately with nrm=0
     const int mxr_test = 10;
-    H_Ewald_pw::mxr = mxr_test;
     std::vector<ModuleBase::Vector3<double>> r(mxr_test);
     std::vector<double> r2(mxr_test);
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), nrm);
+    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
 
     EXPECT_EQ(nrm, 0);
 }
@@ -60,13 +59,12 @@ TEST_F(RgenTest, SimpleCubicNearestNeighbors)
     // neighbors: 6 + 12 = 18 vectors total.
     const double rmax = 1.5;
     const int mxr_test = 50;
-    H_Ewald_pw::mxr = mxr_test;
     std::vector<ModuleBase::Vector3<double>> r(mxr_test);
     std::vector<double> r2(mxr_test);
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
 
     EXPECT_EQ(nrm, 18);
 
@@ -94,14 +92,13 @@ TEST_F(RgenTest, SimpleCubicNonZeroDtau)
     // No lattice point coincides with dtau, so neither is excluded.
     const double rmax = 0.6;
     const int mxr_test = 10;
-    H_Ewald_pw::mxr = mxr_test;
     dtau = ModuleBase::Vector3<double>(0.5, 0.0, 0.0);
     std::vector<ModuleBase::Vector3<double>> r(mxr_test);
     std::vector<double> r2(mxr_test);
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
 
     EXPECT_EQ(nrm, 2);
     for (int i = 0; i < nrm; ++i)
@@ -128,13 +125,12 @@ TEST_F(RgenTest, LargeRmaxExceedsOriginalLimit)
     int nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
     const int mxr_test = (2 * nm1 + 1) * (2 * nm2 + 1) * (2 * nm3 + 1);
 
-    H_Ewald_pw::mxr = mxr_test;
     std::vector<ModuleBase::Vector3<double>> r(mxr_test);
     std::vector<double> r2(mxr_test);
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
 
     // Must exceed the old hard-coded limit that caused the crash
     EXPECT_GT(nrm, 200);
