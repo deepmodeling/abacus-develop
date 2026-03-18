@@ -87,6 +87,18 @@ void K_Vectors::set(const UnitCell& ucell,
     std::string skpt1;
     std::string skpt2;
 
+    if (!this->kc_done && this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+    }
+    else if (this->kc_done && !this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_c[ik];
+    }
+
+
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
     // if symm_flag is not set, only time-reversal symmetry would be considered.
@@ -182,6 +194,7 @@ void K_Vectors::renew(const int& kpoint_number)
 {
     kvec_c.resize(kpoint_number);
     kvec_d.resize(kpoint_number);
+    kvec_c_full.resize(kpoint_number);
     wk.resize(kpoint_number);
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);

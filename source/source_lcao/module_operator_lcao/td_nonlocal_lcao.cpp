@@ -169,6 +169,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
         if (use_gpu)
         {
+            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
 #ifdef __CUDA
             // GPU path: Atom-level GPU batch processing
             module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
@@ -183,9 +184,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                         nlm_dim,
                                                         nlm_tot);
 #endif
+            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
         }
         else
         {
+            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
             // CPU path: OpenMP parallel over neighbors to compute nlm_tot
 #pragma omp parallel for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -224,6 +227,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                 }
             }
+            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
         }
 
         // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms

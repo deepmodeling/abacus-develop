@@ -266,9 +266,9 @@ public:
     /// @brief if atomic magnetic moment is converged
     bool is_Mi_converged = false;
 
-    TK* sub_h_save;
-    TK* sub_s_save;
-    TK* becp_save;
+    TK* sub_h_save = nullptr;
+    TK* sub_s_save = nullptr;
+    TK* becp_save = nullptr;
 };
 
 

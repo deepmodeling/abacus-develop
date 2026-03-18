@@ -58,9 +58,9 @@ class TensorAccessorBase {
     }
 
   protected:
-    T* data_;
-    const index_t* sizes_;
-    const index_t* strides_;
+    T* data_ = nullptr;
+    const index_t* sizes_ = nullptr;
+    const index_t* strides_ = nullptr;
 };
 
 template <typename T, size_t N, typename index_t = int64_t,

@@ -493,7 +493,7 @@ parameters:
       * cg: The conjugate-gradient (CG) method.
       * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
       * dav: The Davidson algorithm.
-      * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. pw_diag_ndim can be set to 2 for this method.
+      * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
       For numerical atomic orbitals basis,
 
@@ -502,14 +502,14 @@ parameters:
       * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
       * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
       * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-      * elpa: The ELPA solver supports both CPU and GPU. By setting the device to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+      * elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
-      If you set ks_solver=genelpa for basis_type=pw, the program will stop with an error message:
+      If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
       ``text genelpa can not be used with plane wave basis. ``
 
       Then the user has to correct the input file and restart the calculation.
-    default_value: ""
+    default_value: "\n    - PW basis: cg.\n    - LCAO basis:\n        - genelpa (if compiling option `USE_ELPA` has been set)\n        - lapack (if compiling option `ENABLE_MPI` has not been set)\n        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)\n        - cusolver (if compiling option `USE_CUDA` has been set)"
     unit: ""
     availability: ""
   - name: nbands
@@ -942,7 +942,7 @@ parameters:
       Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
     default_value: "50"
     unit: ""
-    availability: "basis_type==pw, ks_solver== cg/dav/dav_subspace/bpcg"
+    availability: "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg"
   - name: pw_diag_ndim
     category: Plane wave related variables
     type: Integer

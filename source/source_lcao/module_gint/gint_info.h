@@ -62,7 +62,7 @@ class GintInfo
     // initialize the ijr_info
     void init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd);
 
-    const UnitCell* ucell_;
+    const UnitCell* ucell_ = nullptr;
 
     // the unitcell information
     std::shared_ptr<const UnitCellInfo> unitcell_info_;

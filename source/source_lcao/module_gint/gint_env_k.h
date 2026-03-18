@@ -35,7 +35,7 @@ class Gint_env_k : public Gint
     int npol_;
 
     // output
-    double* rho_;
+    double* rho_ = nullptr;
 
     // intermediate variable
     std::vector<std::complex<double>> wfc_gint_;

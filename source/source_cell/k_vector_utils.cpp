@@ -260,6 +260,7 @@ void kvec_mpi_k(K_Vectors& kv)
     std::vector<double> wk_aux(kv.nkstot);
     std::vector<double> kvec_c_aux(kv.nkstot * 3);
     std::vector<double> kvec_d_aux(kv.nkstot * 3);
+    std::vector<double> kvec_c_full_aux(kv.nkstot_full * 3);
 
     // collect and process in rank 0
     if (GlobalV::MY_RANK == 0)
@@ -274,6 +275,9 @@ void kvec_mpi_k(K_Vectors& kv)
             kvec_d_aux[3 * ik] = kv.kvec_d[ik].x;
             kvec_d_aux[3 * ik + 1] = kv.kvec_d[ik].y;
             kvec_d_aux[3 * ik + 2] = kv.kvec_d[ik].z;
+            kvec_c_full_aux[3 * ik] = kv.kvec_c_full[ik].x;
+            kvec_c_full_aux[3 * ik + 1] = kv.kvec_c_full[ik].y;
+            kvec_c_full_aux[3 * ik + 2] = kv.kvec_c_full[ik].z;
         }
     }
 
@@ -283,6 +287,7 @@ void kvec_mpi_k(K_Vectors& kv)
     Parallel_Common::bcast_double(wk_aux.data(), kv.nkstot);
     Parallel_Common::bcast_double(kvec_c_aux.data(), kv.nkstot * 3);
     Parallel_Common::bcast_double(kvec_d_aux.data(), kv.nkstot * 3);
+    Parallel_Common::bcast_double(kvec_c_full_aux.data(), kv.nkstot_full * 3);
 
     // process k point data in each processor
     kv.renew(kv.nks * kv.nspin);
@@ -300,6 +305,9 @@ void kvec_mpi_k(K_Vectors& kv)
         kv.kvec_d[i].x = kvec_d_aux[k_index * 3];
         kv.kvec_d[i].y = kvec_d_aux[k_index * 3 + 1];
         kv.kvec_d[i].z = kvec_d_aux[k_index * 3 + 2];
+        kv.kvec_c_full[i].x = kvec_c_full_aux[k_index * 3];
+        kv.kvec_c_full[i].y = kvec_c_full_aux[k_index * 3 + 1];
+        kv.kvec_c_full[i].z = kvec_c_full_aux[k_index * 3 + 2];
         kv.wk[i] = wk_aux[k_index];
         kv.isk[i] = isk_aux[k_index];
     }
