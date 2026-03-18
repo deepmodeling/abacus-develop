@@ -127,6 +127,10 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     
     //! call dysev
     std::vector<double> omega(3*size);
+    if (3ll*size*3ll*size >= (long long)__INT_MAX__)
+    {
+        throw std::overflow_error("Matrix size is too large for computation.");
+    }
     std::vector<double> work(3*size*3*size);
     int lwork=3*size*3*size;
     int info=0;
