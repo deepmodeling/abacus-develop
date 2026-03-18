@@ -301,6 +301,8 @@
     - [exx\_pca\_threshold](#exx_pca_threshold)
     - [exx\_c\_threshold](#exx_c_threshold)
     - [exx\_cs\_inv\_thr](#exx_cs_inv_thr)
+    - [shrink\_abfs\_pca\_thr](#shrink_abfs_pca_thr)
+    - [shrink\_lu\_inv\_thr](#shrink_lu_inv_thr)
     - [exx\_v\_threshold](#exx_v_threshold)
     - [exx\_dm\_threshold](#exx_dm_threshold)
     - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
@@ -316,6 +318,10 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
+    - [out\_unshrinked\_v](#out_unshrinked_v)
+    - [exx\_coul\_moment](#exx_coul_moment)
+    - [exx\_rotate\_abfs](#exx_rotate_abfs)
+    - [exx\_multip\_moments\_threshold](#exx_multip_moments_threshold)
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
@@ -2945,6 +2951,18 @@
 - **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr &gt; 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
 - **Default**: -1
 
+### shrink_abfs_pca_thr
+
+- **Type**: Real
+- **Description**: Threshold to shrink the auxiliary basis for GW/RPA calculations.
+- **Default**: -1
+
+### shrink_lu_inv_thr
+
+- **Type**: Real
+- **Description**: Threshold for obtaining the inverse of the overlap matrix by LU decomposition in the auxiliary-basis representation.
+- **Default**: 1e-6
+
 ### exx_v_threshold
 
 - **Type**: Real
@@ -3041,6 +3059,30 @@
 - **Type**: Boolean
 - **Description**: Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
 - **Default**: false
+
+### out_unshrinked_v
+
+- **Type**: Boolean
+- **Description**: Whether to output the large Vq matrix in the unshrinked auxiliary basis.
+- **Default**: false
+
+### exx_coul_moment
+
+- **Type**: Boolean
+- **Description**: Whether to use the moment method for Coulomb calculation.
+- **Default**: false
+
+### exx_rotate_abfs
+
+- **Type**: Boolean
+- **Description**: Whether to rotate the auxiliary basis for Coulomb calculation.
+- **Default**: false
+
+### exx_multip_moments_threshold
+
+- **Type**: Real
+- **Description**: Threshold to screen multipole moments in Coulomb calculation.
+- **Default**: 1e-10
 
 [back to top](#full-list-of-input-keywords)
 

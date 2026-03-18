@@ -24,7 +24,7 @@ class berryphase
     unkOverlap_pw pw_method;
 #ifdef __LCAO
     unkOverlap_lcao lcao_method;
-    const Parallel_Orbitals* paraV;
+    const Parallel_Orbitals* paraV = nullptr;
 #endif
 
     int total_string=0;

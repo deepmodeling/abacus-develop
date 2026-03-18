@@ -57,7 +57,7 @@ void Structure_Factor::get_sk(Device* ctx,
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 
     base_device::DEVICE_CPU* cpu_ctx = {};
-    base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
+    base_device::AbacusDevice_t device = base_device::get_device_type(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;

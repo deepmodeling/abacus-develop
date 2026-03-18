@@ -187,6 +187,118 @@ void cgemm_mt_(const char* transa,
                  cluster_id);
 } // cgemm that needn't malloc_ht or free_ht
 
+void sgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const float* alpha,
+               const float* a,
+               const int* lda,
+               const float* x,
+               const int* incx,
+               const float* beta,
+               float* y,
+               const int* incy,
+               int cluster_id)
+{
+    mtblas_sgemv(CBLAS_ORDER::CblasColMajor,
+                 convertBLASTranspose(transa),
+                 *m,
+                 *n,
+                 *alpha,
+                 a,
+                 *lda,
+                 x,
+                 *incx,
+                 *beta,
+                 y,
+                 *incy,
+                 cluster_id);
+}
+
+void dgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const double* alpha,
+               const double* a,
+               const int* lda,
+               const double* x,
+               const int* incx,
+               const double* beta,
+               double* y,
+               const int* incy,
+               int cluster_id)
+{
+    mtblas_dgemv(CBLAS_ORDER::CblasColMajor,
+                 convertBLASTranspose(transa),
+                 *m,
+                 *n,
+                 *alpha,
+                 a,
+                 *lda,
+                 x,
+                 *incx,
+                 *beta,
+                 y,
+                 *incy,
+                 cluster_id);
+}
+
+void zgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const std::complex<double>* alpha,
+               const std::complex<double>* a,
+               const int* lda,
+               const std::complex<double>* x,
+               const int* incx,
+               const std::complex<double>* beta,
+               std::complex<double>* y,
+               const int* incy,
+               int cluster_id)
+{
+    mtblas_zgemv(CBLAS_ORDER::CblasColMajor,
+                 convertBLASTranspose(transa),
+                 *m,
+                 *n,
+                 (const void*)alpha,
+                 (const void*)a,
+                 *lda,
+                 (const void*)x,
+                 *incx,
+                 (const void*)beta,
+                 (void*)y,
+                 *incy,
+                 cluster_id);
+}
+
+void cgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const std::complex<float>* alpha,
+               const std::complex<float>* a,
+               const int* lda,
+               const std::complex<float>* x,
+               const int* incx,
+               const std::complex<float>* beta,
+               std::complex<float>* y,
+               const int* incy,
+               int cluster_id)
+{
+    mtblas_cgemv(CBLAS_ORDER::CblasColMajor,
+                 convertBLASTranspose(transa),
+                 *m,
+                 *n,
+                 (const void*)alpha,
+                 (const void*)a,
+                 *lda,
+                 (const void*)x,
+                 *incx,
+                 (const void*)beta,
+                 (void*)y,
+                 *incy,
+                 cluster_id);
+}
+
 // Used to replace original free
 
 void sgemm_mth_(const char* transa,
@@ -330,4 +442,132 @@ void cgemm_mth_(const char* transa,
     free_ht(alp);
     free_ht(bet);
 } // cgemm that needn't malloc_ht or free_ht
+
+void sgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const float* alpha,
+                const float* a,
+                const int* lda,
+                const float* x,
+                const int* incx,
+                const float* beta,
+                float* y,
+                const int* incy,
+                int cluster_id)
+{
+    mt_hthread_sgemv(CBLAS_ORDER::CblasColMajor,
+                     convertBLASTranspose(transa),
+                     *m,
+                     *n,
+                     *alpha,
+                     a,
+                     *lda,
+                     x,
+                     *incx,
+                     *beta,
+                     y,
+                     *incy,
+                     cluster_id);
+}
+
+void dgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const double* alpha,
+                const double* a,
+                const int* lda,
+                const double* x,
+                const int* incx,
+                const double* beta,
+                double* y,
+                const int* incy,
+                int cluster_id)
+{
+    mt_hthread_dgemv(CBLAS_ORDER::CblasColMajor,
+                     convertBLASTranspose(transa),
+                     *m,
+                     *n,
+                     *alpha,
+                     a,
+                     *lda,
+                     x,
+                     *incx,
+                     *beta,
+                     y,
+                     *incy,
+                     cluster_id);
+}
+
+void zgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const std::complex<double>* alpha,
+                const std::complex<double>* a,
+                const int* lda,
+                const std::complex<double>* x,
+                const int* incx,
+                const std::complex<double>* beta,
+                std::complex<double>* y,
+                const int* incy,
+                int cluster_id)
+{
+    std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
+    *alp = *alpha;
+    std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
+    *bet = *beta;
+
+    mt_hthread_zgemv(CBLAS_ORDER::CblasColMajor,
+                     convertBLASTranspose(transa),
+                     *m,
+                     *n,
+                     (const void*)alp,
+                     (const void*)a,
+                     *lda,
+                     (const void*)x,
+                     *incx,
+                     (const void*)bet,
+                     (void*)y,
+                     *incy,
+                     cluster_id);
+
+    free_ht(alp);
+    free_ht(bet);
+}
+
+void cgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const std::complex<float>* alpha,
+                const std::complex<float>* a,
+                const int* lda,
+                const std::complex<float>* x,
+                const int* incx,
+                const std::complex<float>* beta,
+                std::complex<float>* y,
+                const int* incy,
+                int cluster_id)
+{
+    std::complex<float>* alp = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
+    *alp = *alpha;
+    std::complex<float>* bet = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
+    *bet = *beta;
+
+    mt_hthread_cgemv(CBLAS_ORDER::CblasColMajor,
+                     convertBLASTranspose(transa),
+                     *m,
+                     *n,
+                     (const void*)alp,
+                     (const void*)a,
+                     *lda,
+                     (const void*)x,
+                     *incx,
+                     (const void*)bet,
+                     (void*)y,
+                     *incy,
+                     cluster_id);
+
+    free_ht(alp);
+    free_ht(bet);
+}
 } // namespace mtfunc

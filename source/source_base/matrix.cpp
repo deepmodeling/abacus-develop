@@ -323,35 +323,6 @@ double matrix::trace_on(void) const
     return tr;
 }
 
-//this function is wrong, and there is no file use this function.
-// void matrix::get_extreme_eigen_values(double &ev_lower, double &ev_upper)const
-// {
-//     double *a = new double[nr];
-//     double *b = new double[nr];
-//     for (int i = 0; i < nr; ++i)
-//     {
-//         double sum = 0.0;
-//         for(int j = 0; j < nc; ++j)
-//         {
-//             sum += fabs(c[i * nc + j]);
-//         }
-//         sum -= fabs(c[i * nc + i]);
-//         a[i] = c[i * nc + i] - sum;
-//         b[i] = c[i * nc + i] + sum;
-//     }
-
-//     ev_lower = a[0];
-//     ev_upper = b[0];
-
-//     for (int i = 1; i < nr; ++i)
-//     {
-//         if (a[i] < ev_lower) ev_lower = a[i];
-//         if (b[i] > ev_upper) ev_upper = b[i];
-//     }
-//     delete[] a;
-//     delete[] b;
-// }
-
 // Peize Lin add 2017-05-27
 void matrix::reshape( const int nr_new, const int nc_new, const bool flag_zero )
 {

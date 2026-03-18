@@ -8,6 +8,7 @@
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
 
@@ -43,7 +44,8 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          const ct::Tensor& H_laststep,
                          const ct::Tensor& S_laststep,
                          std::ofstream& ofs_running,
-                         const int print_matrix);
+                         const int print_matrix,
+                         CublasMpResources& cublas_res);
 
 template <typename Device>
 void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,

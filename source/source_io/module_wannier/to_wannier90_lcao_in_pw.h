@@ -65,7 +65,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     }
 
   protected:
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     /// @brief psi initializer for expanding nao in planewave basis
     psi_initializer<std::complex<double>>* psi_initer_ = nullptr;
 

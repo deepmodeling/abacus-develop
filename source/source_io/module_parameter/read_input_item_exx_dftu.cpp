@@ -564,6 +564,42 @@ void ReadInput::item_exx()
         read_sync_bool(input.out_ri_cv);
         this->add_item(item);
     }
+    {
+        Input_Item item("out_unshrinked_v");
+        item.annotation = "whether to output the large Vq matrix in unshrinked auxiliary basis";
+        read_sync_bool(input.out_unshrinked_v);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_coul_moment");
+        item.annotation = "whether to use moment method for Coulomb calculation";
+        read_sync_bool(input.exx_coul_moment);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_rotate_abfs");
+        item.annotation = "whether to rotate auxiliary basis for Coulomb calculation";
+        read_sync_bool(input.exx_rotate_abfs);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_multip_moments_threshold");
+        item.annotation = "threshold to screen multipole moments in Coulomb calculation";
+        read_sync_double(input.exx_multip_moments_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("shrink_abfs_pca_thr");
+        item.annotation = "threshold to shrink auxiliary basis for GW/RPA";
+        read_sync_double(input.shrink_abfs_pca_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("shrink_lu_inv_thr");
+        item.annotation = "threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation";
+        read_sync_double(input.shrink_LU_inv_thr);
+        this->add_item(item);
+    }
 }
 void ReadInput::item_dftu()
 {

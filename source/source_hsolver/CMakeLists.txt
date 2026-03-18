@@ -12,6 +12,7 @@ list(APPEND objects
     hsolver.cpp
     diago_pxxxgvx.cpp
     diag_hs_para.cpp
+    diago_params.cpp
 
 )
 

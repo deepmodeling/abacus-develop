@@ -416,7 +416,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
     double epsilonM = pelec->ekb(0,0);
     assert(PARAM.inp.nspin == 1);
 
-    base_device::DEVICE_CPU* ctx;
+    base_device::DEVICE_CPU* ctx = nullptr;
 
     // calculate positive definite kinetic energy density
     for (int ik = 0; ik < psi->get_nk(); ++ik)

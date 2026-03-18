@@ -28,7 +28,7 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS<TK>
+class ESolver_KS_LCAO : public ESolver_KS
 {
   public:
     ESolver_KS_LCAO();
@@ -56,6 +56,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     virtual void others(UnitCell& ucell, const int istep) override;
+
+    //! Electronic wave functions (moved from base class)
+    psi::Psi<TK>* psi = nullptr;
 
     //! Store information about Adjacent Atoms 
     Record_adj RA;

@@ -55,7 +55,7 @@ For plane-wave basis,
 * cg: The conjugate-gradient (CG) method.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
 * dav: The Davidson algorithm.
-* dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. pw_diag_ndim can be set to 2 for this method.
+* dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
 For numerical atomic orbitals basis,
 
@@ -64,14 +64,20 @@ For numerical atomic orbitals basis,
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-* elpa: The ELPA solver supports both CPU and GPU. By setting the device to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
-If you set ks_solver=genelpa for basis_type=pw, the program will stop with an error message:
+If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
 ``text genelpa can not be used with plane wave basis. ``
 
 Then the user has to correct the input file and restart the calculation.)";
-        item.default_value = "";
+        item.default_value = R"(
+    - PW basis: cg.
+    - LCAO basis:
+        - genelpa (if compiling option `USE_ELPA` has been set)
+        - lapack (if compiling option `ENABLE_MPI` has not been set)
+        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
         item.availability = "";
         read_sync_string(input.ks_solver);

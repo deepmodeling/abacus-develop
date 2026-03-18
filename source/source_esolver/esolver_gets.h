@@ -10,7 +10,7 @@
 namespace ModuleESolver
 {
 
-class ESolver_GetS : public ESolver_KS<std::complex<double>>
+class ESolver_GetS : public ESolver_KS
 {
   public:
     ESolver_GetS();
