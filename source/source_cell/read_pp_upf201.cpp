@@ -211,6 +211,8 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
 
     for (int ip = 0; ip < nparameter; ++ip)
     {
+        try
+        {
         if (name[ip] == "generated")
         {
             // add something//
@@ -307,31 +309,31 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            pp.etotps = std::stod(val[ip]);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            pp.ecutwfc = std::stod(val[ip]);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            pp.ecutrho = std::stod(val[ip]);
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            pp.lmax = std::stoi(val[ip]);
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            this->lmax_rho = std::stoi(val[ip]);
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            this->lloc = std::stoi(val[ip]);
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            pp.mesh = std::stoi(val[ip]);
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,17 +343,28 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            pp.nchi = std::stoi(val[ip]);
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            pp.nbeta = std::stoi(val[ip]);
         }
         else
         {
             std::string warningstr
                 = name[ip] + " is not read in. Please add this parameter in read_pp_upf201.cpp if needed.";
             ModuleBase::WARNING("PP_HEADRER reading", warningstr);
+        }
+        }
+        catch (const std::invalid_argument&)
+        {
+            ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                "Invalid numeric value for " + name[ip] + ": \"" + val[ip] + "\"");
+        }
+        catch (const std::out_of_range&)
+        {
+            ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                "Numeric value out of range for " + name[ip] + ": \"" + val[ip] + "\"");
         }
     }
     if (this->coulomb_potential)
