@@ -4,6 +4,8 @@
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include <limits>
+#include <stdexcept>
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
@@ -126,10 +128,21 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     this->Update(changedpos, changedforce,H,ucell);
     
     //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
-    int info=0;
+    // Prevent integer overflow for large systems (e.g., 3*size*3*size).
+    assert(size > 0);
+    if (size > std::numeric_limits<int>::max() / 3) {
+        throw std::overflow_error("BFGS::PrepareStep: size too large for 3*size");
+    }
+    const int dim = 3 * size;
+    const long long lwork_ll = static_cast<long long>(dim) * static_cast<long long>(dim);
+    if (lwork_ll > std::numeric_limits<int>::max()) {
+        throw std::overflow_error("BFGS::PrepareStep: lwork exceeds int max");
+    }
+    int lwork = static_cast<int>(lwork_ll);
+    const size_t work_n = static_cast<size_t>(lwork_ll);
+    std::vector<double> omega(dim);
+    std::vector<double> work(work_n);
+    int info = 0;
     std::vector<double> H_flat;
     
     for(const auto& row : H)
