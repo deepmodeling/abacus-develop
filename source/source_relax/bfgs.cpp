@@ -5,6 +5,7 @@
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
 
+
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
 {
@@ -128,7 +129,7 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     //! call dysev
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    size_t lwork=static_cast<size_t>(3)*size*3*size;
     int info=0;
     std::vector<double> H_flat;
     
