@@ -64,7 +64,7 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
-    const MAGIC_NUMBER = 10000;
+    const int MAGIC_NUMBER = 10000;
     if (seed_in == 0 || seed_in == -1)
     {
         srand(static_cast<unsigned>(time(nullptr)) + GlobalV::MY_RANK * MAGIC_NUMBER); // GlobalV global variables are reserved
