@@ -60,17 +60,17 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
     delete[] chiallorder;
     chiallorder = nullptr;
 }
-
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
+    const unsigned int rank_seed_offset = 10000;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
+        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
+        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
     }
 
     this->allocate_chi0();
