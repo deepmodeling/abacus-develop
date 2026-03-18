@@ -41,7 +41,7 @@ Soc::~Soc()
     }
 }
 
-double Soc::spinor(const int l, const double j, const int m, const int spin)
+double Soc::spinor(const int l, const double j, const int m, const int spin) const
 {
     if (spin != 0 && spin != 1)
         ModuleBase::WARNING_QUIT("spinor", "spin direction unknown");
@@ -116,7 +116,7 @@ void Soc::rot_ylm(const int lmax)
     return;
 }
 
-int Soc::sph_ind(const int l, const double j, const int m, const int spin)
+int Soc::sph_ind(const int l, const double j, const int m, const int spin) const
 {
     // This function calculates the m index of the spherical harmonic
     // in a spinor with orbital angular momentum l, total angular

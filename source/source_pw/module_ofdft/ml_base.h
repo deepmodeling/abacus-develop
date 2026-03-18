@@ -29,7 +29,7 @@ public:
     void dumpMatrix(std::string filename, const ModuleBase::matrix &data);
 
     int nx_tot = 0; // equal to nx (called by NN)
-    torch::Tensor get_data(std::string parameter, const int ikernel);
+    torch::Tensor get_data(std::string parameter, const int ikernel) const;
 
 protected:
     void updateInput(const double * const * prho, const ModulePW::PW_Basis *pw_rho);

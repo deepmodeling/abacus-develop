@@ -138,7 +138,7 @@ void RadialSet::indexing()
     }
 }
 
-const NumericalRadial& RadialSet::chi(const int l, const int izeta)
+const NumericalRadial& RadialSet::chi(const int l, const int izeta) const
 {
     int i = index_map_[l * nzeta_max_ + izeta];
 #ifdef __DEBUG

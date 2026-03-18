@@ -469,7 +469,7 @@ void UnitCell::setup(const std::string& latname_in,
 }
 
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2)
+void UnitCell::compare_atom_labels(const std::string& label1, const std::string& label2) const
 {
     if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {

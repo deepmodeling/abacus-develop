@@ -236,7 +236,7 @@ void MSST::restart(const std::string& global_readin_dir)
     return;
 }
 
-double MSST::vel_sum()
+double MSST::vel_sum() const
 {
     double vsum = 0;
 

@@ -29,7 +29,7 @@ void Data::load_data(Input &input, const int ndata, std::string *dir, const torc
     std::cout << "Load data done" << std::endl;
 }
 
-torch::Tensor Data::get_data(std::string parameter, const int ikernel){
+torch::Tensor Data::get_data(std::string parameter, const int ikernel) const {
     if (parameter == "gamma"){
         return this->gamma.reshape({this->nx_tot});
     }

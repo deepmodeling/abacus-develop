@@ -163,7 +163,7 @@ SparseMatrix<T> csrFileReader<T>::getMatrix(int index) const
 
 // function to get matrix using R coordinate
 template <typename T>
-SparseMatrix<T> csrFileReader<T>::getMatrix(int Rx, int Ry, int Rz)
+SparseMatrix<T> csrFileReader<T>::getMatrix(int Rx, int Ry, int Rz) const
 {
     for (int i = 0; i < RCoordinates.size(); i++)
     {
