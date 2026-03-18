@@ -128,7 +128,15 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     //! call dysev
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    int max_size_t=std::numeric_limits<size_t>::max();
+    size_t lwork;
+    if(size>=max_size_t/(3*3)/size){
+       lwork=3*size*3*size;
+     }else{
+         std::cout<<"overflow"<<std::endl;
+         throw std::runtime_error("lwork overflow");
+     }
+     
     int info=0;
     std::vector<double> H_flat;
     

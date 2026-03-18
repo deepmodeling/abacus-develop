@@ -188,6 +188,15 @@ void zhegv_(const int* itype, const char* jobz, const char* uplo, const int* n,
                 double* work,
                 const int* lwork,
                 int* info);
+    void dsyev_(const char* jobz,
+                const char* uplo,
+                const int* n,
+                double* a,
+                const int* lda,
+                double* w,
+                double* work,
+                const size_t* lwork,
+                int* info);
 
 void cheev_(const char* jobz, const char* uplo, const int* n,
             std::complex<float>* a, const int* lda,
