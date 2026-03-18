@@ -1,4 +1,5 @@
 #include "read_pp.h"
+#include <stdexcept>
 
 // qianrui rewrite it 2021-5-10
 // liuyu update 2023-09-17 add uspp support
@@ -307,31 +308,59 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            try {
+                pp.etotps = std::stod(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for total_psenergy: " + val[ip]);
+            }
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            try {
+                pp.ecutwfc = std::stod(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for wfc_cutoff: " + val[ip]);
+            }
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            try {
+                pp.ecutrho = std::stod(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for rho_cutoff: " + val[ip]);
+            }
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            try {
+                pp.lmax = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for l_max: " + val[ip]);
+            }
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            try {
+                this->lmax_rho = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for l_max_rho: " + val[ip]);
+            }
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            try {
+                this->lloc = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for l_local: " + val[ip]);
+            }
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            try {
+                pp.mesh = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for mesh_size: " + val[ip]);
+            }
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +370,19 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            try {
+                pp.nchi = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for number_of_wfc: " + val[ip]);
+            }
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            try {
+                pp.nbeta = std::stoi(val[ip]);
+            } catch (const std::invalid_argument&) {
+                ModuleBase::WARNING_QUIT("read_pp_upf201", "Invalid value for number_of_proj: " + val[ip]);
+            }
         }
         else
         {
