@@ -47,7 +47,6 @@ void pseudopot_cell_vnl::release_memory()
         delmem_zd_op()(this->z_qq_so);
         delmem_dd_op()(this->d_deeq);
         delmem_zd_op()(this->z_vkb);
-        this->z_vkb_mt_allocated_ = false;
         delmem_dd_op()(this->d_tab);
         delmem_dd_op()(this->d_indv);
         delmem_dd_op()(this->d_nhtol);
@@ -66,11 +65,10 @@ void pseudopot_cell_vnl::release_memory()
         delmem_ch_op()(this->c_vkb);
         delmem_ch_op()(this->c_qq_so);
 #ifdef __DSP
-        if (this->z_vkb_mt_allocated_ && this->z_vkb != nullptr)
+        if (this->z_vkb != nullptr)
         {
             base_device::memory::delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(this->z_vkb);
             this->z_vkb = nullptr;
-            this->z_vkb_mt_allocated_ = false;
         }
 #endif
         // There's no need to delete double precision pointers while in a CPU environment.
@@ -273,7 +271,6 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_cd_op()(c_vkb, nkb * npwx);
         }
         resmem_zd_op()(z_vkb, nkb * npwx);
-        this->z_vkb_mt_allocated_ = false;
         resmem_dd_op()(d_tab, this->tab.getSize());
     }
     else
@@ -283,15 +280,13 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_sh_op()(s_tab, this->tab.getSize());
             resmem_ch_op()(c_vkb, nkb * npwx);
         }
-        #ifdef __DSP
+#ifdef __DSP
         base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()
         (this->z_vkb, this->vkb.size, "VNL::z_vkb");
-        memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
-        this->z_vkb_mt_allocated_ = true;
-        #else
+        // memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
+#else
         this->z_vkb = this->vkb.c;
-        this->z_vkb_mt_allocated_ = false;
-        #endif
+#endif
         this->d_tab = this->tab.ptr;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
@@ -305,12 +300,12 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
 // with structure factor, for all atoms, in reciprocal space
 //----------------------------------------------------------
 template <typename FPTYPE, typename Device>
-void pseudopot_cell_vnl::getvnl(Device* ctx, 
+void pseudopot_cell_vnl::getvnl(Device* ctx,
                                 const UnitCell& ucell,
-                                const int& ik, 
+                                const int& ik,
                                 std::complex<FPTYPE>* vkb_in) const
 {
-    if (PARAM.inp.test_pp) 
+    if (PARAM.inp.test_pp)
     {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
     }
@@ -744,10 +739,10 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
             {
                 const double q = iq * PARAM.globalv.dq;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);  
+                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
                 for (int ir = 0; ir < kkbeta; ir++)
-                {   
-		            aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];   
+                {
+		            aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
                 }
                 double vqint=0.0;
                 ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
@@ -1735,7 +1730,7 @@ template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_de
                                                                          int const&,
                                                                          std::complex<float>*) const;
 template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
-                                                                          const UnitCell&, 
+                                                                          const UnitCell&,
                                                                           int const&,
                                                                           std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
