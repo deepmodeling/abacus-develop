@@ -1,9 +1,9 @@
 #include "esolver_ks_lcao_tddft.h"
 
 //----------------IO-----------------
-#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_current/td_current_io.h"
+#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
@@ -30,7 +30,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         use_tensor = true;
-        use_lapack = true;
+        if (PARAM.inp.ks_solver != "cusolvermp")
+        {
+            use_lapack = true;
+        }
     }
 }
 
@@ -40,7 +43,11 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
     //*************************************************
     // Do not add any code in this destructor function
     //*************************************************
-    delete psi_laststep;
+    if (psi_laststep != nullptr)
+    {
+        delete psi_laststep;
+        psi_laststep = nullptr;
+    }
 
     if (td_p != nullptr)
     {
@@ -231,21 +238,22 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     {
         if (istep >= TD_info::estep_shift + 1)
         {
-            module_rt::Evolve_elec<Device>::solve_psi(istep,
-                                                      PARAM.inp.nbands,
-                                                      PARAM.globalv.nlocal,
-                                                      this->kv.get_nks(),
-                                                      this->p_hamilt,
-                                                      this->pv,
-                                                      this->psi,
-                                                      this->psi_laststep,
-                                                      this->Hk_laststep,
-                                                      this->Sk_laststep,
-                                                      this->pelec->ekb,
-                                                      GlobalV::ofs_running,
-                                                      PARAM.inp.propagator,
-                                                      use_tensor,
-                                                      use_lapack);
+            module_rt::Evolve_elec<Device>::solve_psi(
+                istep,
+                PARAM.inp.nbands,
+                PARAM.globalv.nlocal,
+                this->kv.get_nks(),
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+                this->pv,
+                this->psi,
+                this->psi_laststep,
+                this->Hk_laststep,
+                this->Sk_laststep,
+                this->pelec->ekb,
+                GlobalV::ofs_running,
+                PARAM.inp.propagator,
+                use_tensor,
+                use_lapack);
         }
         this->weight_dm_rho(ucell);
     }
@@ -255,7 +263,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   PARAM.inp.nbands,
                                                   PARAM.globalv.nlocal,
                                                   this->kv.get_nks(),
-                                                  this->p_hamilt,
+                                                  static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                                   this->pv,
                                                   this->psi,
                                                   this->psi_laststep,
@@ -277,7 +285,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt,
+            hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                    this->psi[0],
                                    this->pelec,
                                    *this->dmat.dm,
@@ -290,11 +298,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     // Symmetrize the charge density only for ground state
     if (istep <= 1)
     {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
@@ -346,11 +350,18 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     {
         if (use_tensor && use_lapack)
         {
-            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft_tensor_lapack<Device>(
+                this->pv,
+                this->dmat,
+                this->kv,
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
         else
         {
-            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft(this->pv,
+                                     this->dmat,
+                                     this->kv,
+                                     static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
     }
 }
@@ -420,37 +431,56 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
             this->p_hamilt->updateHk(ik);
             hamilt::MatrixBlock<std::complex<double>> h_mat;
             hamilt::MatrixBlock<std::complex<double>> s_mat;
-            this->p_hamilt->matrix(h_mat, s_mat);
+            static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt)->matrix(h_mat, s_mat);
 
             // Store H and S matrices to Hk_laststep and Sk_laststep
             if (use_tensor && use_lapack)
             {
-                // Gather H and S matrices to root process
 #ifdef __MPI
                 int myid = 0;
                 int num_procs = 1;
                 MPI_Comm_rank(MPI_COMM_WORLD, &myid);
                 MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                // Global matrix structure
+                std::complex<double>* h_ptr = nullptr;
+                std::complex<double>* s_ptr = nullptr;
+
+                // Define containers for gathered data (only needed for multi-process)
                 module_rt::Matrix_g<std::complex<double>> h_mat_g;
                 module_rt::Matrix_g<std::complex<double>> s_mat_g;
 
-                // Collect H matrix
-                module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
-                BlasConnector::copy(len_HS_ik,
-                                    h_mat_g.p.get(),
-                                    1,
-                                    this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
-                                    1);
+                if (num_procs == 1)
+                {
+                    // Single process: directly point to local data without gather
+                    h_ptr = h_mat.p;
+                    s_ptr = s_mat.p;
+                }
+                else
+                {
+                    // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
+                    module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
+                    module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
+                    if (myid == 0)
+                    {
+                        h_ptr = h_mat_g.p.get();
+                        s_ptr = s_mat_g.p.get();
+                    }
+                }
 
-                // Collect S matrix
-                module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
-                BlasConnector::copy(len_HS_ik,
-                                    s_mat_g.p.get(),
-                                    1,
-                                    this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
-                                    1);
+                // Only the root process (myid == 0) performs the copy
+                if (myid == 0 && h_ptr != nullptr && s_ptr != nullptr)
+                {
+                    BlasConnector::copy(len_HS_ik,
+                                        h_ptr,
+                                        1,
+                                        this->Hk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
+                                        1);
+                    BlasConnector::copy(len_HS_ik,
+                                        s_ptr,
+                                        1,
+                                        this->Sk_laststep.template data<std::complex<double>>() + ik * len_HS_ik,
+                                        1);
+                }
 #endif
             }
             else

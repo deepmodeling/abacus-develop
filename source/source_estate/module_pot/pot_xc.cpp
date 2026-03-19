@@ -1,6 +1,7 @@
 #include "pot_xc.h"
 
 #include "source_base/timer.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 #ifdef USE_LIBXC
 #include "source_hamilt/module_xc/xc_functional_libxc.h"

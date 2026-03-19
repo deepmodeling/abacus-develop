@@ -18,6 +18,8 @@ list(APPEND objects
     module_pot/pot_ml_exx.cpp
     module_pot/pot_ml_exx_label.cpp
     module_pot/pot_sep.cpp
+    module_pot/pot_xc_fdm.cpp
+    module_pot/pot_cosikr.cpp
     module_charge/chgmixing.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp

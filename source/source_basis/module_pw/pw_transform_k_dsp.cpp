@@ -33,8 +33,8 @@ void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
                                 const bool add,
                                 const double factor) const
 {
-    const base_device::DEVICE_CPU* ctx;
-    const base_device::DEVICE_GPU* gpux;
+    const base_device::DEVICE_CPU* ctx = nullptr;
+    const base_device::DEVICE_GPU* gpux = nullptr;
     assert(this->gamma_only == false);
     auto* auxr = this->fft_bundle.get_auxr_3d_data<double>();
 
@@ -65,8 +65,8 @@ void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
                                 const double factor) const
 {
     assert(this->gamma_only == false);
-    const base_device::DEVICE_CPU* ctx;
-    const base_device::DEVICE_GPU* gpux;
+    const base_device::DEVICE_CPU* ctx = nullptr;
+    const base_device::DEVICE_GPU* gpux = nullptr;
     // memset the auxr of 0 in the auxr,here the len of the auxr is nxyz
     auto* auxr = this->fft_bundle.get_auxr_3d_data<double>();
     memset(auxr, 0, this->nxyz * 2 * 8);
@@ -115,7 +115,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     ModuleBase::timer::tick(this->classname, "convolution");
 
     assert(this->gamma_only == false);
-    const base_device::DEVICE_GPU* gpux;
+    const base_device::DEVICE_GPU* gpux = nullptr;
     // memset the auxr of 0 in the auxr,here the len of the auxr is nxyz
     auto* auxr = this->fft_bundle.get_auxr_3d_data<double>();
     memset(auxr, 0, this->nxyz * 2 * 8);

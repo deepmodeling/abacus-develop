@@ -32,7 +32,7 @@ class BFGS_Basic
 
     double* pos_p;  // p: previous
     double* grad_p; // p: previous
-    double* move_p;
+    double* move_p = nullptr;
 
   public:                        // mohan update 2011-06-12
     static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.

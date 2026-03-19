@@ -383,7 +383,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
 
     for (int dim = 0; dim < 3; dim++)
     {
-        double* tmp_ptr;
+        double* tmp_ptr = nullptr;
         if (dim == 0)
         {
             tmp_ptr = dsloc_x;

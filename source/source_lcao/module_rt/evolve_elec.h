@@ -12,6 +12,7 @@
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------
@@ -26,64 +27,101 @@
 // Print the shape of a Tensor
 inline void print_tensor_shape(const ct::Tensor& tensor, const std::string& name)
 {
-    std::cout << "Shape of " << name << ": [";
+    GlobalV::ofs_running << "Shape of " << name << ": [";
     for (int i = 0; i < tensor.shape().ndim(); ++i)
     {
-        std::cout << tensor.shape().dim_size(i);
+        GlobalV::ofs_running << tensor.shape().dim_size(i);
         if (i < tensor.shape().ndim() - 1)
         {
-            std::cout << ", ";
+            GlobalV::ofs_running << ", ";
         }
     }
-    std::cout << "]" << std::endl;
+    GlobalV::ofs_running << "]" << std::endl;
 }
 
 // Recursive print function
+template <typename T>
+inline void print_single_element(const T& val, double threshold)
+{
+    double clean_val = (std::abs(val) < threshold) ? 0.0 : static_cast<double>(val);
+    GlobalV::ofs_running << std::fixed << std::setprecision(6) << clean_val;
+}
+inline void print_single_element(const std::complex<double>& val, double threshold)
+{
+    double re = (std::abs(val.real()) < threshold) ? 0.0 : val.real();
+    double im = (std::abs(val.imag()) < threshold) ? 0.0 : val.imag();
+    GlobalV::ofs_running << std::fixed << std::setprecision(6) << "(" << re << "," << im << ")";
+}
+
 template <typename T>
 inline void print_tensor_data_recursive(const T* data,
                                         const std::vector<int64_t>& shape,
                                         const std::vector<int64_t>& strides,
                                         int dim,
                                         std::vector<int64_t>& indices,
-                                        const std::string& name)
+                                        const std::string& name,
+                                        const double threshold = 1e-10)
 {
     if (dim == shape.size())
     {
-        // Recursion base case: print data when reaching the innermost dimension
-        std::cout << name;
+        GlobalV::ofs_running << name;
         for (size_t i = 0; i < indices.size(); ++i)
         {
-            std::cout << "[" << indices[i] << "]";
+            GlobalV::ofs_running << "[" << indices[i] << "]";
         }
-        std::cout << " = " << *data << std::endl;
+        GlobalV::ofs_running << " = ";
+
+        print_single_element(*data, threshold);
+
+        GlobalV::ofs_running << std::endl;
         return;
     }
-    // Recursively process the current dimension
+
     for (int64_t i = 0; i < shape[dim]; ++i)
     {
         indices[dim] = i;
-        print_tensor_data_recursive(data + i * strides[dim], shape, strides, dim + 1, indices, name);
+        print_tensor_data_recursive(data + i * strides[dim], shape, strides, dim + 1, indices, name, threshold);
     }
 }
 
-// Generic print function
 template <typename T>
 inline void print_tensor_data(const ct::Tensor& tensor, const std::string& name)
 {
-    const std::vector<int64_t>& shape = tensor.shape().dims();
-    const std::vector<int64_t>& strides = tensor.shape().strides();
-    const T* data = tensor.data<T>();
+    const ct::Tensor* p_tensor = &tensor;
+    ct::Tensor cpu_tensor_buffer;
+
+    if (tensor.device_type() != ct::DeviceType::CpuDevice)
+    {
+        cpu_tensor_buffer = tensor.to_device<ct::DEVICE_CPU>();
+        p_tensor = &cpu_tensor_buffer;
+    }
+
+    const std::vector<int64_t>& shape = p_tensor->shape().dims();
+    const std::vector<int64_t>& strides = p_tensor->shape().strides();
+
+    const T* data = p_tensor->data<T>();
+
     std::vector<int64_t> indices(shape.size(), 0);
     print_tensor_data_recursive(data, shape, strides, 0, indices, name);
 }
 
-// Specialization for std::complex<double>
 template <>
 inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, const std::string& name)
 {
-    const std::vector<int64_t>& shape = tensor.shape().dims();
-    const std::vector<int64_t>& strides = tensor.shape().strides();
-    const std::complex<double>* data = tensor.data<std::complex<double>>();
+    const ct::Tensor* p_tensor = &tensor;
+    ct::Tensor cpu_tensor_buffer;
+
+    if (tensor.device_type() != ct::DeviceType::CpuDevice)
+    {
+        cpu_tensor_buffer = tensor.to_device<ct::DEVICE_CPU>();
+        p_tensor = &cpu_tensor_buffer;
+    }
+
+    const std::vector<int64_t>& shape = p_tensor->shape().dims();
+    const std::vector<int64_t>& strides = p_tensor->shape().strides();
+
+    const std::complex<double>* data = p_tensor->data<std::complex<double>>();
+
     std::vector<int64_t> indices(shape.size(), 0);
     print_tensor_data_recursive(data, shape, strides, 0, indices, name);
 }

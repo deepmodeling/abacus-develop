@@ -19,7 +19,7 @@ Stochastic_WF<T, Device>::~Stochastic_WF()
 {
     delete chi0_cpu;
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         delete chi0;
     }
@@ -60,18 +60,17 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
     delete[] chiallorder;
     chiallorder = nullptr;
 }
-
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
-    const unsigned int RANK_SEED_MULTIPLIER = 10000;
+    const unsigned int rank_seed_offset = 10000;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * RANK_SEED_MULTIPLIER); // GlobalV global variables are reserved
+        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
     }
     else
     {
-        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * RANK_SEED_MULTIPLIER);
+        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
     }
 
     this->allocate_chi0();
@@ -120,7 +119,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -249,7 +248,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     delete[] totnpw;
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -281,7 +280,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
 
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -371,7 +370,7 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::sync_chi0()
 {
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         syncmem_h2d_op()(this->chi0->get_pointer(),
                          this->chi0_cpu->get_pointer(),

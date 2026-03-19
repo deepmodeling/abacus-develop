@@ -57,7 +57,7 @@ void Structure_Factor::get_sk(Device* ctx,
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 
     base_device::DEVICE_CPU* cpu_ctx = {};
-    base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
+    base_device::AbacusDevice_t device = base_device::get_device_type(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
@@ -147,7 +147,7 @@ std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 const int it,
                                                 const int ia,
                                                 const ModulePW::PW_Basis_K* wfc_basis,
-                                                ModuleBase::Vector3<double> q) // pengfei 2016-11-23
+                                                ModuleBase::Vector3<double> q) const // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
     std::complex<double> *skq = new std::complex<double>[npw];

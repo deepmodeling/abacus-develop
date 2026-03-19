@@ -296,7 +296,12 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.rpa_ccp_rmesh_times, 10.0);
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_ecut, 0.0);
-    EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_tolerence, 1E-12);
+    EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_tolerence, 0.0);
+    EXPECT_DOUBLE_EQ(param.inp.shrink_abfs_pca_thr, 0.02);
+    EXPECT_DOUBLE_EQ(param.inp.shrink_LU_inv_thr, 1e-5);
+    EXPECT_TRUE(param.inp.exx_coul_moment);
+    EXPECT_TRUE(param.inp.exx_rotate_abfs);
+    EXPECT_DOUBLE_EQ(param.inp.exx_multip_moments_threshold, 1e-12);
     EXPECT_FALSE(param.inp.noncolin);
     EXPECT_FALSE(param.inp.lspinorb);
     EXPECT_DOUBLE_EQ(param.inp.soc_lambda, 1.0);
@@ -364,8 +369,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.of_full_pw_dim, 0);
     EXPECT_FALSE(param.inp.of_read_kernel);
     EXPECT_EQ(param.inp.of_kernel_file, "WTkernel.txt");
-    EXPECT_FALSE(param.inp.of_cd);
-    EXPECT_DOUBLE_EQ(param.inp.of_mCD_alpha,1.0);
     EXPECT_DOUBLE_EQ(param.inp.of_xwm_kappa, 1.);
     EXPECT_DOUBLE_EQ(param.inp.of_xwm_rho_ref, 1.);
     EXPECT_EQ(param.inp.device, "cpu");

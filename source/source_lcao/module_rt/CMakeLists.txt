@@ -22,6 +22,8 @@ if(ENABLE_LCAO)
         list(APPEND objects
             kernels/cuda/snap_psibeta_kernel.cu
             kernels/cuda/snap_psibeta_gpu.cu
+            kernels/cuda/norm_psi_kernel.cu
+            kernels/cuda/band_energy_kernel.cu
         )
     endif()
 

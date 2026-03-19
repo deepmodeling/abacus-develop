@@ -67,8 +67,8 @@ namespace LR
         const int ldim = 1;///< local leading dimension of X, or the data size of each state
         const int gdim = 1;///< global leading dimension of X
         const double ana_thr = 0.3;     ///< {abs(X) > thr} will appear in the transition analysis log
-        const double* eig;
-        const T* X;
+        const double* eig = nullptr;
+        const T* X = nullptr;
         const K_Vectors& kv;
         std::vector<psi::Psi<T>> psi_ks;
         const std::vector<Parallel_2D>& pX;

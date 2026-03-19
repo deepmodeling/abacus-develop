@@ -36,7 +36,7 @@ class HSolverLIP
                const int nat);
 
   private:
-    ModulePW::PW_Basis_K* wfc_basis;
+    ModulePW::PW_Basis_K* wfc_basis = nullptr;
 };
 
 } // namespace hsolver

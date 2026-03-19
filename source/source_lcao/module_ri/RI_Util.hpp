@@ -82,7 +82,7 @@ namespace RI_Util
 				{
 					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
 					const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
-					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_full()/nspin0 * ucell.omega / (ModuleBase::PI), 1.0/3.0);
+					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0/3.0);
 					param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
 				}
                 else if(param.at("singularity_correction") == "revised_spencer")
@@ -115,16 +115,32 @@ namespace RI_Util
 		std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_ewald;
 		for(auto &param_list : coulomb_param_updated)
 		{
-			for(auto &param : param_list.second)
+			switch(param_list.first)
 			{
-				if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "limits" 
-					|| param.at("singularity_correction") == "revised_spencer")
+				case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
 				{
-					coulomb_param_center2[param_list.first].push_back(param);
+					for(auto &param : param_list.second)
+					{
+						if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "limits" 
+							|| param.at("singularity_correction") == "revised_spencer")
+						{
+							coulomb_param_center2[param_list.first].push_back(param);
+						}
+						else if (param.at("singularity_correction") == "massidda" || param.at("singularity_correction") == "carrier" )
+						{
+							coulomb_param_ewald[param_list.first].push_back(param);
+						}
+					}
+					break;
 				}
-                else if (param.at("singularity_correction") == "massidda" || param.at("singularity_correction") == "carrier" )
+				case Conv_Coulomb_Pot_K::Coulomb_Type::Erfc:
 				{
-					coulomb_param_ewald[param_list.first].push_back(param);
+					coulomb_param_center2[param_list.first] = param_list.second; // Erfc is always calculated with Center2 method.
+					break;
+				}
+				default:
+				{
+					throw std::invalid_argument( std::string(__FILE__) + " line " + std::to_string(__LINE__) );
 				}
 			}
 		}
@@ -134,13 +150,19 @@ namespace RI_Util
                 std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
                     std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
-		if(!coulomb_param_center2.empty())
+		const bool cal_center = !coulomb_param_center2.empty();
+		const bool cal_ewald = !coulomb_param_ewald.empty();
+		if(cal_center)
 		{
-			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param_center2);
+			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(cal_center, coulomb_param_center2);
 		}
-		if (!coulomb_param_ewald.empty())
+		if(cal_ewald)
 		{
-			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald] = std::make_pair(false, coulomb_param_ewald);
+			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald] = std::make_pair(cal_ewald, coulomb_param_ewald);
+		}
+		if(cal_center && cal_ewald)
+		{
+			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].first = false; // If both methods are available, only HF for C is needed.
 		}
 
 		return coulomb_settings;

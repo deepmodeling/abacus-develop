@@ -20,7 +20,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const diag_comm_info& diag_comm_in)
     : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
     this->one = &one_;

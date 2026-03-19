@@ -5,6 +5,7 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_base/tool_quit.h"
 #include "source_base/constants.h"
 #include "source_cell/klist.h"
 
@@ -612,7 +613,7 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             }
             break;
         default:
-            throw std::string("Unknown mode in switch_dmr");
+            ModuleBase::WARNING_QUIT("density_matrix.cpp", "Unknown mode in switch_dmr");
         }
         ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
     }

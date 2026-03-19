@@ -56,8 +56,8 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         }
         else
         {
-			// mohan add 2026-01-04
-			const int stress_step = 0;
+            // mohan add 2026-01-04
+            const int stress_step = 0;
             const int force_step = 0;
             const int istep_print = mdrun->step_ + mdrun->step_rst_ + 1;
             ModuleIO::print_screen(stress_step, force_step, istep_print);

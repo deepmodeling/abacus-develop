@@ -92,24 +92,24 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template <typename T, typename Device>
-double DiagoCG<T, Device>::diag(const Func& hpsi_func,
-                              const Func& spsi_func,
-                              ct::Tensor& psi,
-                              ct::Tensor& eigen,
-                              const std::vector<double>& ethr_band,
-                              const ct::Tensor& prec) {
-    auto n_bands = psi.shape().dim_size(0);
-    auto n_basis = psi.shape().dim_size(1);
-    auto psi_pack = psi.accessor<T, 2>();
-    auto eigen_pack = eigen.accessor<Real, 1>();
+double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
+                                const SPsiFunc& spsi_func,
+                                const int ld_psi,
+                                const int nband,
+                                const int dim,
+                                T* psi_in,
+                                Real* eigenvalue_in,
+                                const std::vector<double>& ethr_band,
+                                const Real* prec) {
     // do something
-    for (int ib = 0; ib < n_bands; ib++) {
-        eigen_pack[ib] = 0.0;
-        for (int ig = 0; ig < n_basis; ig++) {
-            psi_pack[ib][ig] += T(2.0, 0.0);
-            eigen_pack[ib] += psi_pack[ib][ig].real();
+    for (int ib = 0; ib < nband; ib++) {
+        eigenvalue_in[ib] = 0.0;
+        T* psi_band = psi_in + static_cast<size_t>(ib) * static_cast<size_t>(ld_psi);
+        for (int ig = 0; ig < ld_psi; ig++) {
+            psi_band[ig] += T(2.0, 0.0);
+            eigenvalue_in[ib] += psi_band[ig].real();
         }
-        eigen_pack[ib] /= n_basis;
+        eigenvalue_in[ib] /= ld_psi;
     }
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return avg_iter_;
@@ -126,7 +126,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
     : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in) {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
     test_david = 2;

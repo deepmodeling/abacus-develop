@@ -57,7 +57,7 @@ void Kernel::fill_kernel(const int fftdim,
     std::cout << "Fill kernel done" << std::endl;
 }
 
-double Kernel::wt_kernel(double eta, double tf_weight, double vw_weight)
+double Kernel::wt_kernel(double eta, double tf_weight, double vw_weight) const
 {
     if (eta < 0.) 
     {
@@ -104,7 +104,7 @@ double Kernel::wt_kernel(double eta, double tf_weight, double vw_weight)
     }
 }
 
-double Kernel::yukawa_kernel(double eta, double alpha)
+double Kernel::yukawa_kernel(double eta, double alpha) const
 {
     return (eta == 0 && alpha == 0) ? 0. : M_PI / (eta * eta + alpha * alpha / 4.);
 }

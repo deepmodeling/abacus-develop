@@ -9,6 +9,7 @@
 #include "source_base/constants.h"
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
 
@@ -139,12 +140,13 @@ class Propagator
                                    ct::Tensor& U_operator,
                                    std::ofstream& ofs_running,
                                    const int print_matrix,
-                                   const bool use_lapack) const;
+                                   const bool use_lapack,
+                                   CublasMpResources& cublas_res) const;
 #endif // __MPI
 
   private:
     int ptype; // type of propagator
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     double dt; // time step
 
 #ifdef __MPI
@@ -170,7 +172,8 @@ class Propagator
                                        const ct::Tensor& Htmp,
                                        ct::Tensor& U_operator,
                                        std::ofstream& ofs_running,
-                                       const int print_matrix) const;
+                                       const int print_matrix,
+                                       CublasMpResources& cublas_res) const;
 
     template <typename Device>
     void compute_propagator_cn2_tensor_lapack(const int nlocal,

@@ -10,6 +10,18 @@ Symmetry_rho::~Symmetry_rho()
 {
 }
 
+void Symmetry_rho::symmetrize_rho(const int nspin,
+                                   const Charge& chr,
+                                   const ModulePW::PW_Basis* pw,
+                                   ModuleSymmetry::Symmetry& symm)
+{
+    Symmetry_rho srho;
+    for (int is = 0; is < nspin; is++)
+    {
+        srho.begin(is, chr, pw, symm);
+    }
+}
+
 void Symmetry_rho::begin(const int& spin_now,
                          const Charge& chr,
                          const ModulePW::PW_Basis* rho_basis,

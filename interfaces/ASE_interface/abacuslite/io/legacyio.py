@@ -12,7 +12,7 @@ from ase.calculators.singlepoint import (
     SinglePointDFTCalculator
 )
 from ase.units import Ry, eV, GPa, bar
-from ase.constraints import full_3x3_to_voigt_6_stress
+from ase.stress import full_3x3_to_voigt_6_stress
 # from ase.utils import reader
 
 __all__ = ['read_kpoints_from_running_log', 

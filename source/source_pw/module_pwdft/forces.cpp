@@ -38,7 +38,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 {
     ModuleBase::timer::tick("Forces", "cal_force");
     ModuleBase::TITLE("Forces", "init");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;
@@ -331,7 +331,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
     // now, in all pools , the charge are the same,
     // so, the force calculated by each pool is equal.
@@ -478,7 +478,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     double fact = 2.0;
     std::vector<std::complex<double>> aux(rho_basis->npw);
 
@@ -657,7 +657,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             int nrm = 0;
 
             // output of rgen: the number of vectors in the sphere
-            const int mxr = 200;
+            const int mxr = H_Ewald_pw::estimate_mxr(rmax, ucell.G);
             // the maximum number of R vectors included in r
             std::vector<ModuleBase::Vector3<double>> r(mxr);
             std::vector<double> r2(mxr);
@@ -681,7 +681,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                     {
                         ModuleBase::Vector3<double> d_tau
                             = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
-                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
+                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm);
 
                         for (int n = 0; n < nrm; n++)
                         {

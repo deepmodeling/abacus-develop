@@ -400,14 +400,14 @@ void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
     // (const Device *d, const int matrix_size, const int lda, const T *A, const int num_eigenpairs, Real *eigenvalues, T *eigenvectors);
     heevx_op<T, Device>()(ctx, matrix_size, ldh, h, num_eigenpairs, eigenvalues, v);
 
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
 #if ((defined __CUDA) || (defined __ROCM))
         // eigenvalues to e, from device to host
         syncmem_var_d2h_op()(e, eigenvalues, num_eigenpairs);
 #endif
     }
-    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         // eigenvalues to e
         syncmem_var_op()(e, eigenvalues, num_eigenpairs);
@@ -436,14 +436,14 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
 
     hegvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
 #if ((defined __CUDA) || (defined __ROCM))
         // set eigenvalues in GPU to e in CPU
         syncmem_var_d2h_op()(e, eigenvalues, nbands);
 #endif
     }
-    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         // set eigenvalues in CPU to e in CPU
         syncmem_var_op()(e, eigenvalues, nbands);
