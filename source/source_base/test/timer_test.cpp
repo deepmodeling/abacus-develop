@@ -65,6 +65,7 @@ TEST_F(TimerTest, Start)
 	ModuleBase::timer::start();
 	// start() called tick() once
 	EXPECT_FALSE(ModuleBase::timer::timer_pool[""]["total"].start_flag);
+	ModuleBase::timer::end("","total");
 }
 
 
@@ -159,7 +160,6 @@ TEST_F(TimerTest, Finish)
 
 	// call print_all
 	ofs.open("tmp");
-	testing::internal::CaptureStdout();
 	ModuleBase::timer::finish(ofs);
 	output = testing::internal::GetCapturedStdout();
 	ofs.close();
