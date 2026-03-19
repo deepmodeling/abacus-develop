@@ -35,17 +35,17 @@ public:
 	/// Assignment of scalar:  all entries set to c.
 	void operator=(std::complex <double> c);
 	/// Add two ComplexArray
-	ComplexArray operator+(const ComplexArray &cd);
+	ComplexArray operator+(const ComplexArray &cd) const;
 	/// Accumulate sum of ComplexArray
 	void operator+=(const ComplexArray &cd);
 	/// Subtract two ComplexArray
-	ComplexArray operator-(const ComplexArray &cd);
+	ComplexArray operator-(const ComplexArray &cd) const;
 	/// Accumulate difference of arrays
 	void operator-=(const ComplexArray &cd);
 	/// Scale a ComplexArray by real r
-	ComplexArray operator*(const double r);
+	ComplexArray operator*(const double r) const;
 	/// Scale a ComplexArray by a std::complex number c
-	ComplexArray operator*(const std::complex <double> c);
+	ComplexArray operator*(const std::complex <double> c) const;
 	/// Scale a ComplexArray by real number in place
 	void operator*=(const double r);
 	/// Scale a ComplexArray by std::complex c in place

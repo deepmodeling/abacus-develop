@@ -12,7 +12,7 @@ from ase.calculators.singlepoint import (
     SinglePointDFTCalculator
 )
 from ase.units import GPa
-from ase.constraints import full_3x3_to_voigt_6_stress
+from ase.stress import full_3x3_to_voigt_6_stress
 
 # some output formats are not updated,
 # for these cases, we import from the legacyio module

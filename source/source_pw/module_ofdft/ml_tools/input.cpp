@@ -9,7 +9,7 @@ void Input::readInput()
         exit(0);
     }
 
-    char word[80];
+    std::string word;
     int ierr = 0;
 
     ifs.rdstate();

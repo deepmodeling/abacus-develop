@@ -75,8 +75,8 @@ class Onsite_Proj_tools
     void cal_stress_dspin(int ik, int npm, FPTYPE* stress, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
 
 
-    std::complex<FPTYPE>* get_becp() { return becp; }
-    std::complex<FPTYPE>* get_dbecp() { return dbecp; }
+    std::complex<FPTYPE>* get_becp() const { return becp; }
+    std::complex<FPTYPE>* get_dbecp() const { return dbecp; }
 
   private:
     /**
