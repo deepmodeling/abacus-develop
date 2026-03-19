@@ -108,8 +108,9 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
                                                                                      orb_.cutoffs());
-            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
-                ->contributeHR();
+            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+            auto* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(hamilt_ptr->ops);
+            ops_ptr->contributeHR();
         }
         else
         {
@@ -119,13 +120,16 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
                                                                                   orb_.cutoffs());
-            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+            auto* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(hamilt_ptr->ops);
+            ops_ptr->contributeHR();
         }
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
 
-    ModuleIO::output_SR(pv, gd, this->p_hamilt, fn);
+    auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
 
     if (PARAM.inp.out_mat_r)
     {

@@ -24,7 +24,7 @@ class berryphase
     unkOverlap_pw pw_method;
 #ifdef __LCAO
     unkOverlap_lcao lcao_method;
-    const Parallel_Orbitals* paraV;
+    const Parallel_Orbitals* paraV = nullptr;
 #endif
 
     int total_string=0;
@@ -78,7 +78,7 @@ class berryphase
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv);
 
-    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
+    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
 };
 
 #endif

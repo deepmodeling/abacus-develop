@@ -23,8 +23,8 @@ void FFT_DSP<double>::setupFFT()
 {
     PROBLEM pbm_forward;
     PROBLEM pbm_backward;
-    PLAN* ptr_plan_forward;
-    PLAN* ptr_plan_backward;
+    PLAN* ptr_plan_forward = nullptr;
+    PLAN* ptr_plan_backward = nullptr;
     INT num_thread = 8;
     INT size=0;
     hthread_dat_load(cluster_id, FFT_DAT_DIR);

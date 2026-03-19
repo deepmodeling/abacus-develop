@@ -161,7 +161,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     }
 
     const int norder = p_che->norder;
-    T* pchi;
+    T* pchi = nullptr;
     int ntest = 1;
 
     if (nchip[ik] < ntest)
@@ -384,7 +384,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
             setmem_var_op()(spolyv, 0, norder * norder);
         }
     }
-    T* pchi;
+    T* pchi = nullptr;
     if (PARAM.globalv.nbands_l > 0)
     {
         stowf.chiortho->fix_k(ik);
@@ -743,7 +743,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
     const int npwx = stowf.npwx;
     stowf.shchi->fix_k(ik);
     T* out = stowf.shchi->get_pointer();
-    T* pchi;
+    T* pchi = nullptr;
     if (PARAM.globalv.nbands_l > 0)
     {
         stowf.chiortho->fix_k(ik);

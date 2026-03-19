@@ -411,9 +411,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (inp.rpa)
     {
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(*dm, MPI_COMM_WORLD, ucell, kv, orb);
-        rpa_lri_double.init(MPI_COMM_WORLD, kv, orb.cutoffs());
-        rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
+        rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
     }
 #endif
 

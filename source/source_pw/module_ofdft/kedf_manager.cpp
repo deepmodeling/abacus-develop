@@ -166,7 +166,7 @@ void KEDF_Manager::get_potential(
  *
  * @return kinetic energy
  */
-double KEDF_Manager::get_energy()
+double KEDF_Manager::get_energy() const
 {
     double kinetic_energy = 0.0;
 

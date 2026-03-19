@@ -47,7 +47,12 @@ pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
 from ase.io import read
 from ase.md import Bussi
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
-from ase.units import fs
+from ase.units import (
+    fs,
+    kJ as _kJ,
+    mol as _mol,
+)
+_ps = 1000 * fs
 from ase.constraints import FixCartesian
 from ase.calculators.plumed import Plumed
 from abacuslite import AbacusProfile, Abacus
@@ -109,7 +114,7 @@ atoms.set_constraint([FixCartesian(a=[4, 5], mask=(True, True, False)),
 MaxwellBoltzmannDistribution(atoms, temperature_K=300)
 
 setup = [# define the unit within the PLUMED runtime
-         'UNITS LENGTH=A TIME=fs ENERGY=eV',
+         f'UNITS LENGTH=A TIME={1/_ps} ENERGY={_mol/_kJ}',
          # define the two bond lengths
          'd1: DISTANCE ATOMS=1,5',
          'd2: DISTANCE ATOMS=1,6',

@@ -438,7 +438,7 @@ std::ostream & ComplexMatrix::print( std::ostream & os, const double threshold_a
 	return os;
 }
 
-bool ComplexMatrix::checkreal(void)
+bool ComplexMatrix::checkreal(void) const
 {
 	const double tiny = 1e-12;
 	for(int i=0;i<this->nr;i++)

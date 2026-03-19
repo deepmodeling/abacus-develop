@@ -5,13 +5,17 @@
 
 #ifndef RI_2D_COMM_HPP
 #define RI_2D_COMM_HPP
-
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_io/module_parameter/parameter.h"
+#include <Comm/Comm_Assemble/Comm_Assemble.h>
+#include <Comm/example/Communicate_Map-1.h>
+#include <Comm/example/Communicate_Map-2.h>
+#include <RI/comm/example/Communicate_Map_Period.h>
+#include <RI/comm/mix/Communicate_Tensors_Map.h>
 #include <RI/global/Global_Func-2.h>
 
 #include <cmath>
@@ -37,7 +41,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
-	ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
+    ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
 
 	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
 	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
@@ -125,7 +129,7 @@ void RI_2D_Comm::add_Hexx(
     const UnitCell &ucell,
 	const K_Vectors &kv,
 	const int ik,
-	const double alpha,
+    const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
     const Parallel_Orbitals& pv,
     TK* hk)
@@ -145,7 +149,7 @@ void RI_2D_Comm::add_Hexx(
 			{
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
-				const std::complex<double> frac = alpha
+                const std::complex<double> frac = alpha
 					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
@@ -168,9 +172,10 @@ void RI_2D_Comm::add_Hexx(
 	}
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
 }
+
 template <typename Tdata, typename TK>
 void RI_2D_Comm::add_Hexx_td(
-    const UnitCell &ucell,
+    const UnitCell& ucell,
     const K_Vectors& kv,
     const int ik,
     const double alpha,
@@ -183,20 +188,20 @@ void RI_2D_Comm::add_Hexx_td(
     ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx_td");
 
     const std::map<int, std::vector<int>> is_list = {{1, {0}}, {2, {kv.isk[ik]}}, {4, {0, 1, 2, 3}}};
-    for (const int is_b: is_list.at(PARAM.inp.nspin))
+    for (const int is_b : is_list.at(PARAM.inp.nspin))
     {
-        int is0_b, is1_b;
+        int is0_b = 0;
+        int is1_b = 0;
         std::tie(is0_b, is1_b) = RI_2D_Comm::split_is_block(is_b);
-        for (const auto& Hs_tmpA: Hs[is_b])
+        for (const auto& Hs_tmpA : Hs[is_b])
         {
             const TA& iat0 = Hs_tmpA.first;
-            for (const auto& Hs_tmpB: Hs_tmpA.second)
+            for (const auto& Hs_tmpB : Hs_tmpA.second)
             {
                 const TA& iat1 = Hs_tmpB.first.first;
                 const TC& cell1 = Hs_tmpB.first.second;
                 const ModuleBase::Vector3<int> r_index = RI_Util::array3_to_Vector3(cell1);
-                // cal tddft phase for hybrid gauge
-                ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat0, iat1, r_index);
+                const ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat0, iat1, r_index);
                 const double arg_td = At * dtau * ucell.lat0;
 
                 const std::complex<double> frac
@@ -232,6 +237,7 @@ void RI_2D_Comm::add_Hexx_td(
     }
     ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx_td");
 }
+
 std::tuple<int,int,int>
 RI_2D_Comm::get_iat_iw_is_block(const UnitCell& ucell,const int& iwt)
 {
@@ -344,6 +350,121 @@ void RI_2D_Comm::add_HexxR(
     }
 
     ModuleBase::timer::tick("RI_2D_Comm", "add_HexxR");
+}
+
+template <typename TA, typename TAC, typename T>
+std::map<TA, std::map<TAC, T>> RI_2D_Comm::comm_map2_first(const MPI_Comm& mpi_comm,
+                                                           const std::map<TA, std::map<TAC, T>>& Ds_in,
+                                                           const std::set<TA>& s0,
+                                                           const std::set<TA>& s1)
+{
+    RI::Communicate_Map_Period::Judge_Map2_First<TA> judge;
+    judge.s0 = s0;
+    judge.s1 = s1;
+    return comm_map2(mpi_comm, Ds_in, judge);
+}
+
+template <typename TA, typename TAC, typename T, typename Tjudge>
+std::map<TA, std::map<TAC, T>> RI_2D_Comm::comm_map2(const MPI_Comm& mpi_comm,
+                                                     const std::map<TA, std::map<TAC, T>>& Ds_in,
+                                                     const Tjudge& judge)
+{
+    Comm::Comm_Assemble<std::tuple<TA, TAC>, T, std::map<TA, std::map<TAC, T>>, Tjudge, std::map<TA, std::map<TAC, T>>>
+        com(mpi_comm);
+
+    com.traverse_keys_provide = Comm::Communicate_Map::traverse_keys<TA, TAC, T>;
+    com.get_value_provide = Comm::Communicate_Map::get_value<TA, TAC, T>;
+    com.set_value_require = set_value_add<TA, TAC, T>;
+    com.flag_lock_set_value = Comm::Comm_Tools::Lock_Type::Copy_merge;
+    com.init_datas_local = Comm::Communicate_Map::init_datas_local<TA, TAC, T>;
+    com.add_datas = add_datas<TA, TAC, T>;
+
+    std::map<TA, std::map<TAC, T>> Ds_out;
+    com.communicate(Ds_in, judge, Ds_out);
+    return Ds_out;
+}
+
+template <typename Tkey, typename Tvalue>
+void RI_2D_Comm::set_value_add(Tkey&& key, Tvalue&& value, std::map<Tkey, Tvalue>& data)
+{
+    using namespace RI::Array_Operator;
+    auto ptr = data.find(key);
+    if (ptr == data.end())
+        data[key] = std::move(value);
+    else
+        ptr->second = ptr->second + std::move(value);
+}
+
+template <typename Tkey0, typename Tkey1, typename Tvalue>
+void RI_2D_Comm::set_value_add(std::tuple<Tkey0, Tkey1>&& key,
+                               Tvalue&& value,
+                               std::map<Tkey0, std::map<Tkey1, Tvalue>>& data)
+{
+    set_value_add(std::move(std::get<1>(key)), std::move(value), data[std::get<0>(key)]);
+}
+
+template <typename Tkey, typename Tvalue>
+void RI_2D_Comm::add_datas(std::map<Tkey, Tvalue>&& data_local, std::map<Tkey, Tvalue>& data_recv)
+{
+    using namespace RI::Array_Operator;
+    auto ptr_local = data_local.begin();
+    auto ptr_recv = data_recv.begin();
+    for (; ptr_local != data_local.end() && ptr_recv != data_recv.end();)
+    {
+        const Tkey& key_local = ptr_local->first;
+        const Tkey& key_recv = ptr_recv->first;
+        if (key_local == key_recv)
+        {
+            ptr_recv->second = ptr_recv->second + std::move(ptr_local->second);
+            ++ptr_local;
+            ++ptr_recv;
+        }
+        else if (key_local < key_recv)
+        {
+            ptr_recv = data_recv.emplace_hint(ptr_recv, key_local, std::move(ptr_local->second));
+            ++ptr_local;
+        }
+        else
+        {
+            ++ptr_recv;
+        }
+    }
+    for (; ptr_local != data_local.end(); ++ptr_local)
+    {
+        ptr_recv = data_recv.emplace_hint(ptr_recv, ptr_local->first, std::move(ptr_local->second));
+    }
+}
+
+template <typename Tkey0, typename Tkey1, typename Tvalue>
+void RI_2D_Comm::add_datas(std::map<Tkey0, std::map<Tkey1, Tvalue>>&& data_local,
+                           std::map<Tkey0, std::map<Tkey1, Tvalue>>& data_recv)
+{
+    auto ptr_local = data_local.begin();
+    auto ptr_recv = data_recv.begin();
+    for (; ptr_local != data_local.end() && ptr_recv != data_recv.end();)
+    {
+        const Tkey0& key_local = ptr_local->first;
+        const Tkey0& key_recv = ptr_recv->first;
+        if (key_local == key_recv)
+        {
+            add_datas(std::move(ptr_local->second), ptr_recv->second);
+            ++ptr_local;
+            ++ptr_recv;
+        }
+        else if (key_local < key_recv)
+        {
+            ptr_recv = data_recv.emplace_hint(ptr_recv, key_local, std::move(ptr_local->second));
+            ++ptr_local;
+        }
+        else
+        {
+            ++ptr_recv;
+        }
+    }
+    for (; ptr_local != data_local.end(); ++ptr_local)
+    {
+        ptr_recv = data_recv.emplace_hint(ptr_recv, ptr_local->first, std::move(ptr_local->second));
+    }
 }
 
 #endif

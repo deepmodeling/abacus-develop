@@ -22,8 +22,9 @@ class DiagoCG final
     using Real = typename GetTypeReal<T>::type;
     using ct_Device = typename ct::PsiToContainer<Device>::type;
   public:
-    using Func = std::function<void(const ct::Tensor&, ct::Tensor&)>;
-    using SubspaceFunc = std::function<void(const ct::Tensor&, ct::Tensor&, const bool)>;
+        using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+        using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
+        using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
@@ -43,12 +44,15 @@ class DiagoCG final
     // refactor hpsi_info
     // this is the diag() function for CG method
     // returns avg_iter
-    double diag(const Func& hpsi_func,
-              const Func& spsi_func,
-              ct::Tensor& psi,
-              ct::Tensor& eigen,
-              const std::vector<double>& ethr_band,
-              const ct::Tensor& prec = {});
+    double diag(const HPsiFunc& hpsi_func,
+                const SPsiFunc& spsi_func,
+                const int ld_psi,
+                const int nband,
+                const int dim,
+                T* psi_in,
+                Real* eigenvalue_in,
+                const std::vector<double>& ethr_band,
+                const Real* prec = nullptr);
 
   private:
     Device * ctx_ = {};
@@ -77,9 +81,9 @@ class DiagoCG final
 
     bool need_subspace_ = false;
     /// A function object that performs the hPsi calculation.
-    Func hpsi_func_ = nullptr;
+    HPsiFunc hpsi_func_ = nullptr;
     /// A function object that performs the sPsi calculation.
-    Func spsi_func_ = nullptr;
+    SPsiFunc spsi_func_ = nullptr;
     /// A function object that performs the subspace calculation.
     SubspaceFunc subspace_func_ = nullptr;
 

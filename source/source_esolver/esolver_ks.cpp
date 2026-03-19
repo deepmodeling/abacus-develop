@@ -15,35 +15,29 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_io/module_output/print_info.h" // print_parameters
-#include "source_psi/setup_psi.h" // mohan add 20251009
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 namespace ModuleESolver
 {
 
-template <typename T, typename Device>
-ESolver_KS<T, Device>::ESolver_KS(){}
+ESolver_KS::ESolver_KS() {}
 
 
-template <typename T, typename Device>
-ESolver_KS<T, Device>::~ESolver_KS()
+ESolver_KS::~ESolver_KS()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
-    Setup_Psi<T>::deallocate_psi(this->psi);
-
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
     delete this->p_hamilt;
     delete this->p_chgmix;
     this->ppcell.release_memory();
-    
+
     // mohan add 2025-10-18, should be put int clean() function
     pw::teardown_pwwfc(this->pw_wfc);
 }
 
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
@@ -81,12 +75,10 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
   
 }
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {}
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     // 1) use Hamiltonian to obtain charge density
     this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
@@ -126,8 +118,7 @@ void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const i
     }
 }
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
+void ESolver_KS::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::tick(this->classname, "runner");
@@ -142,14 +133,14 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     this->diag_ethr = PARAM.inp.pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
     for (int iter = 1; iter <= this->maxniter; ++iter)
-	{
-		if(iter == this->maxniter)
-		{
-			this->scf_nmax_flag=true;
-		}
+    {
+        if(iter == this->maxniter)
+        {
+            this->scf_nmax_flag=true;
+        }
 
-		// 3) initialization of SCF iterations
-		this->iter_init(ucell, istep, iter);
+        // 3) initialization of SCF iterations
+        this->iter_init(ucell, istep, iter);
 
         // 4) use Hamiltonian to obtain charge density
         this->hamilt2rho(ucell, istep, iter, diag_ethr);
@@ -169,22 +160,20 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         }
     } // end scf iterations
 
-	// 7) after scf
+    // 7) after scf
     this->after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick(this->classname, "runner");
     return;
 };
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::before_scf(UnitCell& ucell, const int istep)
+void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS", "before_scf");
     ESolver_FP::before_scf(ucell, istep);
 }
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
+void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
     if(PARAM.inp.esolver_type != "tddft")
     {
@@ -210,8 +199,7 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
     this->chr.save_rho_before_sum_band();
 }
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
+void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
 
     // 1.1) print out band gap 
@@ -227,25 +215,25 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     // 1.2) print out eigenvalues and occupations
     if (PARAM.inp.out_band[0])
     {
-		if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-		{
-			ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
-		}
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+        {
+            ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+        }
     }
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
                                        this->pelec->nelec_spin.data());
 
-    // 2.2) charge mixing 
+    // 2.2) charge mixing
     // SCF will continue if U is not converged for uramping calculation
-	bool converged_u = true;
-	// to avoid unnecessary dependence on dft+u, refactor is needed
+    bool converged_u = true;
+    // to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-	if (PARAM.inp.dft_plus_u)
-	{
-		converged_u = this->dftu.u_converged();
-	}
+    if (PARAM.inp.dft_plus_u)
+    {
+        converged_u = this->dftu.u_converged();
+    }
 #endif
 
     module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
@@ -296,8 +284,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
     
@@ -321,29 +308,10 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
 
 }
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
+void ESolver_KS::after_all_runners(UnitCell& ucell)
 {
     // 1) write Etot information
     ESolver_FP::after_all_runners(ucell);
 }
 
-//------------------------------------------------------------------------------
-//! the 16th-20th functions of ESolver_KS
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-//! This is for mixed-precision pw/LCAO basis sets.
-template class ESolver_KS<std::complex<float>, base_device::DEVICE_CPU>;
-template class ESolver_KS<std::complex<double>, base_device::DEVICE_CPU>;
-
-//! This is for GPU codes.
-#if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<std::complex<float>, base_device::DEVICE_GPU>;
-template class ESolver_KS<std::complex<double>, base_device::DEVICE_GPU>;
-#endif
-
-//! This is for LCAO basis set.
-#ifdef __LCAO
-template class ESolver_KS<double, base_device::DEVICE_CPU>;
-#endif
 } // namespace ModuleESolver

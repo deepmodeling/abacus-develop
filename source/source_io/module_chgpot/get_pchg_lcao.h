@@ -101,6 +101,6 @@ class Get_pchg_lcao
     std::vector<int> bands_picked_;
     psi::Psi<double>* psi_gamma = nullptr;
     psi::Psi<std::complex<double>>* psi_k = nullptr;
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 };
 #endif // GET_PCHG_LCAO_H

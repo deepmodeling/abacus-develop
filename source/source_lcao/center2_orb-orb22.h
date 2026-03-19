@@ -49,7 +49,7 @@ class Center2_Orb::Orb22
     const Numerical_Orbital_Lm& nB1;
     const Numerical_Orbital_Lm& nB2;
 
-    const ModuleBase::Sph_Bessel_Recursive::D2* psb_;
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     const ORB_gaunt_table& MGT;
 
     std::map<int, Numerical_Orbital_Lm> nB;

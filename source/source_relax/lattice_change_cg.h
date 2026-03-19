@@ -14,10 +14,10 @@ class Lattice_Change_CG
     void start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot);
 
   private:
-    double *lat0;
-    double *grad0;
-    double *cg_grad0;
-    double *move0;
+    double * lat0 = nullptr;
+    double * grad0 = nullptr;
+    double * cg_grad0 = nullptr;
+    double * move0 = nullptr;
     double e0=0.0;
 
     // setup gradients.

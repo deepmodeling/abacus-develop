@@ -132,7 +132,7 @@ void ML_Base::NN_forward(const double * const * prho, const ModulePW::PW_Basis *
     }
 }
 
-torch::Tensor ML_Base::get_data(std::string parameter, const int ikernel){
+torch::Tensor ML_Base::get_data(std::string parameter, const int ikernel) const {
 
     if (parameter == "gamma") return torch::tensor(this->gamma, this->device_type);
     if (parameter == "p") return torch::tensor(this->p, this->device_type);

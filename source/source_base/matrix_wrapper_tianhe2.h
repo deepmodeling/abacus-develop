@@ -16,7 +16,7 @@ namespace ModuleBase
 class Matrix_Wrapper
 {
 public:
-	double *c;
+	double * c = nullptr;
 	int nr;
 	int nc;
 	

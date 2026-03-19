@@ -2,6 +2,7 @@
 #define EXX_INFO_H
 
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "xc_functional.h"
 
 #include <vector>
 #include <map>
@@ -17,7 +18,7 @@ struct Exx_Info
 
 		// Fock:
 		//		"alpha":		"0"
-		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer" / "massidda" / "carrier"
 		//		"lambda":		"0.3"
         //      "Rcut"
 		// Erfc:
@@ -53,9 +54,12 @@ struct Exx_Info
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
 
         bool real_number = false;
+        bool coul_moment = false;
+        bool rotate_abfs = false;
 
         double pca_threshold = 0;
         std::vector<std::string> files_abfs;
+        std::vector<std::string> files_shrink_abfs;
         double C_threshold = 0;
         double V_threshold = 0;
         double dm_threshold = 0;
@@ -67,6 +71,13 @@ struct Exx_Info
         bool exx_symmetry_realspace = true;
         double kmesh_times = 4;
         double Cs_inv_thr = -1;
+
+        double shrink_abfs_pca_thr = -1;
+        double shrink_LU_inv_thr = 1e-6;
+        double multip_moments_threshold = 1e-10;
+        double exx_cs_inv_thr = -1;
+
+        int abfs_Lmax = 0; // tmp
 
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
             : coulomb_param(info_global.coulomb_param)
@@ -94,12 +105,9 @@ struct Exx_Info
     }
 };
 
-//==========================================================
-// EXPLAIN : define "GLOBAL CLASS"
-//==========================================================
 namespace GlobalC
 {
     extern Exx_Info exx_info;
-} // namespace GlobalC
+}
 
 #endif

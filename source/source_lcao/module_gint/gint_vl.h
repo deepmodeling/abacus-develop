@@ -28,7 +28,7 @@ class Gint_vl : public Gint
     void cal_hr_gint_();
 
     // input
-    const double* vr_eff_;
+    const double* vr_eff_ = nullptr;
 
     // output
     HContainer<double>* hR_;
