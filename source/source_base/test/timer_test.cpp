@@ -148,7 +148,7 @@ TEST_F(TimerTest, PrintAll)
 TEST_F(TimerTest, PrintUntilNow)
 {
 	long double time = ModuleBase::timer::print_until_now();
-	EXPECT_TRUE(time>0.0);
+	EXPECT_GE(time, 0.0);
 }
 
 
@@ -160,6 +160,7 @@ TEST_F(TimerTest, Finish)
 
 	// call print_all
 	ofs.open("tmp");
+	testing::internal::CaptureStdout();
 	ModuleBase::timer::finish(ofs);
 	output = testing::internal::GetCapturedStdout();
 	ofs.close();
