@@ -38,7 +38,7 @@ class DiagoCusolver
   private:
 #ifdef __MPI
     // Function to check if ELPA handle needs to be created or reused in MPI settings
-    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
+    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const;
 #endif
 };
 

@@ -27,7 +27,7 @@ class DiagoElpa
 
   private:
 #ifdef __MPI
-    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
+    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const;
     static int lastmpinum; // last using mpi;
 #endif
 };

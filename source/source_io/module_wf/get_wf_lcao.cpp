@@ -589,14 +589,14 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
     ofs_running << std::setprecision(6);
 }
 
-int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc)
+int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc) const
 {
     const int iblock = localindex / nblk;
     const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;
 }
 
-int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc) const
 {
     myproc = int((globalindex % (nblk * nprocs)) / nblk);
     return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;

@@ -27,9 +27,9 @@ namespace ModuleESolver
         void after_all_runners(UnitCell& ucell) override;
 
       private:
-        double LJ_energy(const double& d, const int& i, const int& j);
+        double LJ_energy(const double& d, const int& i, const int& j) const;
 
-        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j);
+        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
 
         void LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau);
 
