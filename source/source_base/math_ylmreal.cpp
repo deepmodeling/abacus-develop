@@ -19,225 +19,264 @@ namespace ModuleBase
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
 
-void YlmReal::rlylm
-(
-    const int lmax, 	
-    const double& x,				
-    const double& y,
-	const double& z, // g_cartesian_vec(x,y,z)
-    double* rly 	 // output
-)
-{
-	ModuleBase::timer::tick("YlmReal","rlylm");
+/**
+ * @brief Initialize arrays to zero
+ * @param Am Array for Am coefficients
+ * @param Bm Array for Bm coefficients
+ * @param size Size of arrays (should be at least lmax+1)
+ */
+void init_arrays(double* Am, double* Bm, const int size) {
+    for(int i = 0; i < size; ++i) {
+        Am[i] = 0.0;
+        Bm[i] = 0.0;
+    }
+}
 
-	assert(lmax >= 0);
+/**
+ * @brief Initialize zdep array to zero
+ * @param zdep 2D array for z-dependent coefficients
+ * @param size Size of zdep (should be at least lmax+1)
+ */
+void init_zdep(double zdep[][20], const int size) {
+    for(int il = 0; il < size; ++il) {
+        for(int jl = 0; jl < size; ++jl) {
+            zdep[il][jl] = 0.0; // mohan add 2021-05-07
+        }
+    }
+}
 
-	//get xy_dependence
-	assert(lmax <= 19);
-	
-	double Am[20];
-	double Bm[20];
+/**
+ * @brief Calculate Am and Bm coefficients (xy-plane dependence)
+ * @param lmax Maximum angular momentum
+ * @param x x-coordinate
+ * @param y y-coordinate
+ * @param Am Output array for Am coefficients
+ * @param Bm Output array for Bm coefficients
+ * @param fact Factorial function (assumed to be available)
+ */
+void calculate_xy_coefficients(const int lmax, const double& x, const double& y,
+                              double* Am, double* Bm) {
+    double x2 = x * x;
+    double x3 = x2 * x;
+    double x4 = x3 * x;
+    double x5 = x4 * x;
 
-	// mohan add 2021-05-07
-	for(int i=0; i<20; ++i)
-	{
-		Am[i]=0.0;
-		Bm[i]=0.0;
-	}
-	
-	//ZEROS(Am, 20);
-	//ZEROS(Bm, 20);
-	
-	double x2, x3, x4, x5;
-	double y2, y3, y4, y5;
-	
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x3 * x;
-	x5 = x4 * x;
+    double y2 = y * y;
+    double y3 = y2 * y;
+    double y4 = y3 * y;
+    double y5 = y4 * y;
+    
+    for(int im = 0; im < lmax + 1; im++) {
+        if(im == 0) {
+            Am[0] = 1.0; 
+            Bm[0] = 0.0;
+        }
+        else if(im == 1) {
+            Am[1] = x; 
+            Bm[1] = y;
+        }
+        else if(im == 2) {
+            Am[2] = x2 - y2; 
+            Bm[2] = 2.0 * x * y;
+        }
+        else if(im == 3) {
+            Am[3] = x3 - 3.0 * x * y2;
+            Bm[3] = 3.0 * x2 * y - y3;
+        }
+        else if(im == 4) {
+            Am[4] = x4 - 6.0 * x2 * y2 + y4;
+            Bm[4] = 4.0 * (x3 * y - x * y3);
+        }
+        else if(im == 5) {
+            Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
+            Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
+        }
+        else {
+            for(int ip = 0; ip <= im; ip++) {
+                double aux = Fact(im) / Fact(ip) / Fact(im - ip);
+                Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos((im-ip) * ModuleBase::PI / 2.0);
+                Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin((im-ip) * ModuleBase::PI / 2.0);
+            }
+        }
+    }
+}
 
-	y2 = y * y;
-	y3 = y2 * y;
-	y4 = y3 * y;
-	y5 = y4 * y;
-		
-	//x-y dependence
-	//Am
-	//Bm
-	for(int im = 0; im < lmax+1; im++)
-	{
-		if(im == 0)
-		{
-			Am[0] = 1.0; 
-			Bm[0] = 0.0;
-		}
-		else if(im == 1)
-		{
-			Am[1] = x; 
-			Bm[1] = y;
-		}
-		else if(im == 2)
-		{
-			Am[2] = x2- y2; 
-			Bm[2] = 2.0 * x * y;
-		}
-		else if(im == 3)
-		{
-			Am[3] = x3 - 3.0 * x * y2;
-			Bm[3] = 3.0 * x2 * y - y3;
-		}
-		else if(im == 4)
-		{
-			Am[4] = x4 - 6.0 * x2 * y2 + y4;
-			Bm[4] = 4.0 * (x3 * y - x * y3);
-		}
-		else if(im == 5)
-		{
-			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
-			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
-		}
-		else
-		{
-			for(int ip = 0; ip <= im; ip++)
-			{
-				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
-				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
-				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
-			}
-		}
-	}
-			
-	//z dependence
-	double zdep[20][20];
-	
-	for(int il = 0; il < 20; il++)
-	{
-		for(int jl=0; jl < 20; jl++)
-		{
-			zdep[il][jl]=0.0; // mohan add 2021-05-07
-		}
-//		ZEROS(zdep[il], 20);
-	}
+/**
+ * @brief Calculate low-order zdep coefficients (l <= 5)
+ * @param il Current angular momentum
+ * @param zdep Output array for z-dependent coefficients
+ * @param z z-coordinate
+ * @param r radius
+ */
+void calculate_low_order_zdep(const int il, double zdep[][20], 
+                             const double& z, const double& r) {
+    double z2 = z * z;
+    double z3 = z2 * z;
+    double z4 = z3 * z;
+    double r2 = r * r;
+    double r3 = r2 * r;
+    double r4 = r3 * r;
+    
+    if(il == 0) {
+        zdep[0][0] = 1.0;
+    }
+    else if(il == 1) {
+        zdep[1][0] = z;
+        zdep[1][1] = 1.0;
+    }
+    else if(il == 2) {
+        zdep[2][0] = 0.5 * (3.0 * z2 - r2);
+        zdep[2][1] = sqrt(3.0) * z;
+        zdep[2][2] = sqrt(3.0) * 0.5;
+    }
+    else if(il == 3) {
+        zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
+        zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
+        zdep[3][2] = 0.5 * sqrt(15.0) * z;
+        zdep[3][3] = 0.25 * sqrt(10.0);
+    }
+    else if(il == 4) {
+        zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
+        zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
+        zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
+        zdep[4][3] = sqrt(70.0) * 0.25 * z;
+        zdep[4][4] = sqrt(35.0) * 0.125;
+    }
+    else if(il == 5) {
+        zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
+        zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
+        zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
+        zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
+        zdep[5][4] = 0.375 * sqrt(35.0) * z;
+        zdep[5][5] = 0.1875 * sqrt(14.0);
+    }
+}
 
-	double z2 = z * z;
-	double z3 = z2 * z;
-	double z4 = z3 * z;
-	//double z5 = z4 * z;
-	
-	double r = sqrt(x*x + y*y + z*z);
-	double r2 = r * r;
-	double r3 = r2 * r;
-	double r4 = r3 * r;
-	
-	for(int il = 0; il < lmax + 1; il++)
-	{
-		if(il == 0)
-		{
-			zdep[0][0] = 1.0;
-		}
-		else if(il == 1)
-		{
-			zdep[1][0] = z;
-			zdep[1][1] = 1.0;
-		}
-		else if(il == 2)
-		{
-			zdep[2][0] = 0.5 * (3.0 * z2 - r2);
-			zdep[2][1] = sqrt(3.0) * z;
-			zdep[2][2] = sqrt(3.0) * 0.5;
-		}
-		else if(il == 3)
-		{
-			zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
-			zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
-			zdep[3][2] = 0.5 * sqrt(15.0) * z;
-			zdep[3][3] = 0.25 * sqrt(10.0);
-		}
-		else if(il == 4)
-		{
-			zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
-			zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
-			zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
-			zdep[4][3] = sqrt(70.0) * 0.25 * z;
-			zdep[4][4] = sqrt(35.0) * 0.125;
-		}
-		else if(il == 5)
-		{
-			zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
-			zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
-			zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
-			zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
-			zdep[5][4] = 0.375 * sqrt(35.0) * z;
-			zdep[5][5] = 0.1875 * sqrt(14.0);
-		}
-		else
-		{
-			for(int im = 0; im <= il; im++)
-			{
-				int kmax = static_cast<int>( (il - im) / 2 );
-				for(int ik = 0; ik <= kmax; ik++)
-				{
-					int twok = 2 * ik;
-				
-					double gamma = 0.0;
-					double aux0, aux1, aux2, aux3;
-				
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
-					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
-					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
-					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
-					gamma = aux0 * aux1 * aux2 * aux3;
-					
-					assert(il - twok - im >= 0);
-					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
-				}
+/**
+ * @brief Calculate high-order zdep coefficients (l > 5)
+ * @param il Current angular momentum
+ * @param im Current magnetic quantum number
+ * @param zdep Output array for z-dependent coefficients
+ * @param r radius
+ * @param z z-coordinate
+ */
+void calculate_high_order_zdep(const int il, const int im, double zdep[][20],
+                              const double& r, const double& z) {
+    int kmax = static_cast<int>((il - im) / 2);
+    for(int ik = 0; ik <= kmax; ik++) {
+        int twok = 2 * ik;
+        
+        double gamma = 0.0;
+        double aux0, aux1, aux2, aux3;
+        
+        aux0 = pow(-1.0, ik) * pow(2.0, -il);
+        aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
+        aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
+        aux3 = Fact(il - twok) / Fact(il - twok - im);
+        
+        gamma = aux0 * aux1 * aux2 * aux3;
+        
+        assert(il - twok - im >= 0);
+        zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
+    }
 
-				if(im >= 1)
-				{
-					zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
-					
-				}
-			}
-		}			
-	}
+    if(im >= 1) {
+        zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
+    }
+}
 
-	//calc
-	int ic = 0;
+/**
+ * @brief Calculate zdep coefficients (z dependence)
+ * @param lmax Maximum angular momentum
+ * @param z z-coordinate
+ * @param r radius
+ * @param zdep Output 2D array for z-dependent coefficients
+ */
+void calculate_z_coefficients(const int lmax, const double& z, const double& r,
+                            double zdep[][20]) {
+    for(int il = 0; il < lmax + 1; il++) {
+        if(il <= 5) {
+            calculate_low_order_zdep(il, zdep, z, r);
+        }
+        else {
+            for(int im = 0; im <= il; im++) {
+                calculate_high_order_zdep(il, im, zdep, r, z);
+            }
+        }
+    }
+}
 
-	//special case for r=0
-	double rpi = r;
-	const double tiny =  1.0E-10;
-	if (rpi < tiny) rpi += tiny;
-	
-	for(int il = 0; il <= lmax; il++)
-	{
-		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
+/**
+ * @brief Combine coefficients to compute real spherical harmonics
+ * @param lmax Maximum angular momentum
+ * @param Am Am coefficients from xy-plane
+ * @param Bm Bm coefficients from xy-plane
+ * @param zdep z-dependent coefficients
+ * @param r radius
+ * @param rly Output array for real spherical harmonics
+ */
+void combine_coefficients(const int lmax, const double* Am, const double* Bm,
+                         double zdep[][20], const double& r, double* rly) {
+    int ic = 0;
+    double rpi = r;
+    const double tiny = 1.0E-10;
+    if (rpi < tiny) rpi += tiny;
+    
+    for(int il = 0; il <= lmax; il++) {
+        double fac = sqrt((2.0 * il + 1.0) / ModuleBase::FOUR_PI);
+        double rl = pow(rpi, il);
+        
+        // m=0
+        rly[ic] = Am[0] * zdep[il][0] * fac / rl;
+        ic++;
+        
+        // m != 0
+        for(int im = 1; im <= il; im++) {
+            // m>0
+            rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+            ic++;
+            
+            // m<0
+            rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+            ic++;
+        }
+    }
+}
 
-		double rl = pow(rpi, il);
-			
-		//m=0
-		rly[ic] = Am[0] * zdep[il][0] * fac / rl;
-		
-		ic++;
-		
-		//m ! = 0
-		for(int im = 1; im <= il; im++)
-		{
-			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-			
-			ic++;
-			
-			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+/**
+ * @brief Compute real spherical harmonics Ylm for given coordinates
+ * @param lmax Maximum angular momentum
+ * @param x x-coordinate in Cartesian
+ * @param y y-coordinate in Cartesian
+ * @param z z-coordinate in Cartesian
+ * @param rly Output array for real spherical harmonics
+ */
+void YlmReal::rlylm(const int lmax, const double& x, const double& y, const double& z,
+                    double* rly) {
+    ModuleBase::timer::tick("YlmReal", "rlylm");
 
-			ic++;
-		}
-	}
+    assert(lmax >= 0);
+    assert(lmax <= 19);  // mohan add 2021-05-07
+    
+    double Am[20];
+    double Bm[20];
+    double zdep[20][20];
+    
+    // Initialize arrays
+    init_arrays(Am, Bm, 20);
+    init_zdep(zdep, 20);
+    
+    // Calculate coefficients
+    calculate_xy_coefficients(lmax, x, y, Am, Bm);
+    
+    double r = sqrt(x*x + y*y + z*z);
+    calculate_z_coefficients(lmax, z, r, zdep);
+    
+    // Combine and output
+    combine_coefficients(lmax, Am, Bm, zdep, r, rly);
 
-	ModuleBase::timer::tick("YlmReal","rlylm");
-	return;
+    ModuleBase::timer::tick("YlmReal", "rlylm");
+    return;
 }
 
 
