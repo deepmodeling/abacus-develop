@@ -85,7 +85,7 @@ void ComplexArray::operator=(const std::complex < double> c){
 	const int size = this->getSize();
 	for (int i = 0; i < size; i++)
 		ptr[i] = c;}
-ComplexArray ComplexArray::operator+(const ComplexArray &cd){
+ComplexArray ComplexArray::operator+(const ComplexArray &cd) const{
 	const int size = this->getSize();
 	assert(size==cd.getSize());
 	ComplexArray cd2(*this);
@@ -98,7 +98,7 @@ void ComplexArray::operator+=(const ComplexArray & cd){
 	for (int i = 0; i < size; i++)
 		ptr[i] += cd.ptr[i];
 }
-ComplexArray ComplexArray::operator-(const ComplexArray &cd){
+ComplexArray ComplexArray::operator-(const ComplexArray &cd) const{
 	const int size = this->getSize();
 	assert(size==cd.getSize());
 	ComplexArray cd2(*this);
@@ -123,7 +123,7 @@ ComplexArray operator*(const double r, const ComplexArray &cd){
 	for (int i = 0; i < size; i++)
 		cd2.ptr[i] *= r;
 	return cd2;}
-ComplexArray ComplexArray::operator*(const double r){
+ComplexArray ComplexArray::operator*(const double r) const{
 	ComplexArray cd2(*this);
 	const int size = this->getSize();
 	for (int i = 0; i < size; i++)
@@ -135,7 +135,7 @@ ComplexArray operator*(const std::complex < double> c, const ComplexArray &cd){
 	for (int i = 0; i < size; i++)
 		cd2.ptr[i] = c * cd.ptr[i];
 	return cd2;}
-ComplexArray ComplexArray::operator*(const std::complex < double> c){
+ComplexArray ComplexArray::operator*(const std::complex < double> c) const{
 	const int size = this->getSize();
 	ComplexArray cd(size);
 	for (int i = 0; i < size; i++)

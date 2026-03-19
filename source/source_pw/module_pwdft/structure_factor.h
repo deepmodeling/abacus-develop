@@ -60,7 +60,7 @@ public:
                                   int it,
                                   int ia,
                                   const ModulePW::PW_Basis_K* wfc_basis,
-                                  ModuleBase::Vector3<double> q);
+                                  ModuleBase::Vector3<double> q) const;
 
   private:
 

@@ -60,7 +60,7 @@ class Data
     bool* load_tanhq_nl = nullptr;
 
     void load_data(Input &input, const int ndata, std::string *dir, const torch::Device device);
-    torch::Tensor get_data(std::string parameter, const int ikernel);
+    torch::Tensor get_data(std::string parameter, const int ikernel) const;
 
   private:
     void init_label(Input &input);

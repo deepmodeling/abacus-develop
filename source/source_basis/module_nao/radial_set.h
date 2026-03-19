@@ -159,7 +159,7 @@ class RadialSet
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 
-    const NumericalRadial& chi(const int l, const int izeta);
+    const NumericalRadial& chi(const int l, const int izeta) const;
     const NumericalRadial* cbegin() const { return chi_; }
     const NumericalRadial* cend() const { return chi_ + nchi_; }
     ///@}

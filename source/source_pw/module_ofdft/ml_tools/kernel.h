@@ -30,8 +30,8 @@ class Kernel
                      const std::string *cell,
                      const torch::Device device,
                      const std::vector<torch::Tensor> &fft_gg);
-    double wt_kernel(double eta, double tf_weight = 1., double vw_weight = 1.);
-    double yukawa_kernel(double eta, double alpha);
+    double wt_kernel(double eta, double tf_weight = 1., double vw_weight = 1.) const;
+    double yukawa_kernel(double eta, double alpha) const;
     void read_kernel(const int fftdim,
                      const int ndata,
                      const torch::Tensor &rho,
