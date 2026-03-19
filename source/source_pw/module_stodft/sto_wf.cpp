@@ -6,8 +6,18 @@
 
 #include <cassert>
 #include <ctime>
+#include <random>
 
 #include "source_base/global_function.h"
+
+namespace
+{
+inline std::mt19937& sto_rng()
+{
+    static thread_local std::mt19937 rng;
+    return rng;
+}
+} // namespace
 
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
@@ -64,14 +74,17 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
     const unsigned int rank_seed_offset = 10000;
+    unsigned int seed = 0;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
+        seed = static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset; // GlobalV global variables are reserved
     }
     else
     {
-        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
+        seed = static_cast<unsigned int>(std::abs(seed_in))
+               + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset;
     }
+    sto_rng().seed(seed);
 
     this->allocate_chi0();
     this->update_sto_orbitals(seed_in);
@@ -134,19 +147,22 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
+    auto& rng = sto_rng();
     if (seed_in >= 0)
     {
+        std::uniform_real_distribution<double> unif_phi(0.0, 2.0 * ModuleBase::PI);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = unif_phi(rng);
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
     else
     {
+        std::bernoulli_distribution coin(0.5);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            if (coin(rng))
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
@@ -342,10 +358,11 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
         for (int ichi = 0; ichi < nchiper; ++ichi)
         {
             unsigned int seed = std::abs(seed_in) * (nkstot * nchitot) + iktot * nchitot + ichi_start + ichi;
-            srand(seed);
+            std::mt19937 rng(seed);
+            std::bernoulli_distribution coin(0.5);
             for (int i = 0; i < nx * ny * nz; ++i)
             {
-                updown[i] = (rand() / double(RAND_MAX) < 0.5);
+                updown[i] = coin(rng);
             }
 
             for (int ig = 0; ig < npw; ++ig)
