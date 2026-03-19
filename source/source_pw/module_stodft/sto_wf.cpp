@@ -9,6 +9,8 @@
 
 #include "source_base/global_function.h"
 
+#include <random> // add C++ random library 
+
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
 {
@@ -64,13 +66,18 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
+    // fix magic number
+    constexpr unsigned int SEED_MULTIPLIER = 10000;
+
+    // replace C-style cast with static_cast
     if (seed_in == 0 || seed_in == -1)
     {
-        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
+        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * SEED_MULTIPLIER);
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
+        srand(static_cast<unsigned int>(std::abs(seed_in)) + 
+              (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * SEED_MULTIPLIER);
     }
 
     this->allocate_chi0();
@@ -134,19 +141,31 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
+
+    // initialize C++11 engine. 
+    std::mt19937 gen(rand());
+
     if (seed_in >= 0)
     {
+        // high precision uniform distribution
+        std::uniform_real_distribution<double> dist_phi(0.0, 2 * ModuleBase::PI);
+        
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            // replace low precision rand()/RAND_MAX
+            const double phi = dist_phi(gen); 
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
     else
     {
+        // generate accurate 50/50 probability
+        std::bernoulli_distribution dist_coin(0.5);
+        
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            // replace low precision rand()/RAND_MAX with dist_coin
+            if (dist_coin(gen))
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
