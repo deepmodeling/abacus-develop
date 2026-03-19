@@ -235,6 +235,13 @@ void MD_base::write_restart(const std::string& global_out_dir)
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
+        
+        if (!file.is_open()) 
+        {
+            std::cerr << "Fatal Error in MD_base::write_restart: " << std::endl;
+            std::cerr << "Cannot open file " << ssc.str() << " for writing." << std::endl;
+            std::cerr << "Please check if the directory exists and has write permissions." << std::endl;
+        }
 
         file << step_ + step_rst_ << std::endl;
         file << md_tfirst << std::endl;
