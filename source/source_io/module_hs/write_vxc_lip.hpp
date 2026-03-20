@@ -8,6 +8,7 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 #include "source_io/module_hs/write_HS.h"
 #include "source_io/module_output/filename.h" // use filename_output function
 #include <type_traits>
@@ -132,10 +133,12 @@ namespace ModuleIO
         // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
         // potxc.cal_v_eff(&chg, &ucell, vr_xc);
         elecstate::Potential* potxc
-            = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
+            = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell);
         std::vector<std::string> compnents_list = { "xc" };
 
-        potxc->pot_register(compnents_list);
+        elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, potxc->get_eff_vofk(), &solvent, nullptr, &ucell);
+        auto components = factory.create_components(compnents_list);
+        potxc->set_components(std::move(components));
         potxc->update_from_charge(&chg, &ucell);
         // const ModuleBase::matrix vr_localxc = potxc->get_veff_smooth();
 

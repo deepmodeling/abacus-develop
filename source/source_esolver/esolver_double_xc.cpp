@@ -11,6 +11,7 @@
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
@@ -95,14 +96,7 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
     {
-        this->pelec_base->pot = new elecstate::Potential(this->pw_rhod,
-                                                    this->pw_rho,
-                                                    &ucell,
-                                                    &(this->locpp.vloc),
-                                                    &(this->sf),
-                                                    &(this->solvent),
-                                                    &(this->pelec_base->f_en.etxc),
-                                                    &(this->pelec_base->f_en.vtxc));
+        this->pelec_base->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho, &ucell);
     }
 
     ModuleBase::timer::tick("ESolver_DoubleXC", "before_all_runners");

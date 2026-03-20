@@ -16,17 +16,9 @@ namespace elecstate
 {
 
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
-                     const ModulePW::PW_Basis* rho_basis_smooth_in,
-                     const UnitCell* ucell_in,
-                     const ModuleBase::matrix* vloc_in,
-                     Structure_Factor* structure_factors_in,
-                     surchem* solvent_in,
-                     double* etxc_in,
-                     double* vtxc_in,
-                     VSep* vsep_cell_in)
-    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), 
-      solvent_(solvent_in), vsep_cell(vsep_cell_in), etxc_(etxc_in),
-      vtxc_(vtxc_in)
+                    const ModulePW::PW_Basis* rho_basis_smooth_in,
+                    const UnitCell* ucell_in)
+    : ucell_(ucell_in)
 {
     this->rho_basis_ = rho_basis_in;
     this->rho_basis_smooth_ = rho_basis_smooth_in;
@@ -62,10 +54,8 @@ Potential::~Potential()
     }
 }
 
-void Potential::pot_register(const std::vector<std::string>& components_list)
+void Potential::set_components(std::vector<PotBase*> components_in)
 {
-    ModuleBase::TITLE("Potential", "pot_register");
-    // delete old components first.
     if (this->components.size() > 0)
     {
         for (auto comp: this->components)
@@ -75,20 +65,8 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
         this->components.clear();
     }
 
-    // register components
-    //---------------------------
-    // mapping for register
-    //---------------------------
-    for (auto comp: components_list)
-    {
-        PotBase* tmp = this->get_pot_type(comp);
-        this->components.push_back(tmp);
-    }
-
-    // after register, reset fixed_done to false
+    this->components = std::move(components_in);
     this->fixed_done = false;
-
-    return;
 }
 
 void Potential::allocate()
@@ -102,13 +80,13 @@ void Potential::allocate()
     const int nrxx_smooth = this->rho_basis_smooth_->nrxx;
 
     if (nrxx == 0)
-	{
-		return;
-	}
-	if (nrxx_smooth == 0)
-	{
-		return;
-	}
+    {
+        return;
+    }
+    if (nrxx_smooth == 0)
+    {
+        return;
+    }
 
     this->v_eff_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
@@ -259,7 +237,6 @@ void Potential::init_pot(const Charge*const chg)
     this->update_from_charge(chg, this->ucell_);
 
     ModuleBase::timer::tick("Potential", "init_pot");
-    return;
 }
 
 void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
@@ -274,8 +251,6 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
     {
         vnew.c[iter] = this->v_eff.c[iter] - vnew.c[iter];
     }
-
-    return;
 }
 
 void Potential::interpolate_vrs(void)

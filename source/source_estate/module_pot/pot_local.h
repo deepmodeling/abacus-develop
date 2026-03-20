@@ -13,8 +13,8 @@ class PotLocal : public PotBase
     PotLocal(const ModuleBase::matrix* vloc_in, // local pseduopotentials
              const ModuleBase::ComplexMatrix* sf_in,
              const ModulePW::PW_Basis* rho_basis_in,
-             double& vl_of_0)
-        : vloc_(vloc_in), sf_(sf_in), vl_of_0_(&vl_of_0)
+             double* vl_of_0_ptr)
+        : vloc_(vloc_in), sf_(sf_in), vl_of_0_(vl_of_0_ptr)
     {
         assert(this->vloc_->nr == this->sf_->nr);
         this->rho_basis_ = rho_basis_in;

@@ -5,6 +5,8 @@
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_basis/module_nao/two_center_bundle.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 
 namespace ModuleIO
 {
@@ -96,8 +98,10 @@ void write_eband_terms(const int nspin,
         // 2. pp: local
         if (PARAM.inp.vl_in_h)
         {
-            elecstate::Potential pot_local(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
-            pot_local.pot_register({ "local" });
+            elecstate::Potential pot_local(&rhod_basis, &rho_basis);
+            elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, pot_local.get_eff_vofk(), &solvent, nullptr, &ucell);
+            auto components = factory.create_components({ "local" });
+            pot_local.set_components(std::move(components));
             pot_local.update_from_charge(&chg, &ucell);
             hamilt::HS_Matrix_K<TK> v_pp_local_k_ao(pv, 1);
             hamilt::HContainer<TR> v_pp_local_R_ao(pv);
@@ -148,8 +152,10 @@ void write_eband_terms(const int nspin,
         // 4. hartree
         if (PARAM.inp.vh_in_h)
         {
-            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
-            pot_hartree.pot_register({ "hartree" });
+            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis);
+            elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, pot_hartree.get_eff_vofk(), &solvent, nullptr, &ucell);
+            auto components = factory.create_components({ "hartree" });
+            pot_hartree.set_components(std::move(components));
             pot_hartree.update_from_charge(&chg, &ucell);
             std::vector<hamilt::HContainer<TR>> v_hartree_R_ao(nspin0, hamilt::HContainer<TR>(pv));
             for (int is = 0; is < nspin0; ++is)

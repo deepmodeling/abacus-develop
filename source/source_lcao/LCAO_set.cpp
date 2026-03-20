@@ -7,6 +7,7 @@
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
+#include "source_estate/module_pot/potential_new.h"
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -73,9 +74,7 @@ void LCAO_domain::set_pot(
     if (pelec->pot == nullptr)
     {
         // where is the pot deleted?
-        pelec->pot = new elecstate::Potential(&pw_rhod, &pw_rho,
-          &ucell, &locpp.vloc, &sf, &solvent,
-          &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
+        pelec->pot = new elecstate::Potential(&pw_rhod, &pw_rho, &ucell);
     }
 
     //! 3) initialize DFT+U

@@ -5,6 +5,8 @@
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_lcao/spar_hsr.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
@@ -58,9 +60,11 @@ void write_Vxc_R(const int nspin,
     // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
     // potxc.cal_v_eff(&chg, &ucell, vr_xc);
     elecstate::Potential* potxc
-        = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
+        = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell);
     std::vector<std::string> compnents_list = {"xc"};
-    potxc->pot_register(compnents_list);
+    elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, potxc->get_eff_vofk(), &solvent, nullptr, &ucell);
+    auto components = factory.create_components(compnents_list);
+    potxc->set_components(std::move(components));
     potxc->update_from_charge(&chg, &ucell);
 
     // 2. allocate H(R)

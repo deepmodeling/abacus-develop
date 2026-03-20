@@ -2,6 +2,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_estate/module_pot/potential_new.h"
 
 namespace elecstate
 {
@@ -100,9 +101,7 @@ void setup_estate_pw_impl(
 
     if (pelec->pot == nullptr)
     {
-        pelec->pot = new elecstate::Potential(pw_rhod,
-              pw_rho, &ucell, &locpp.vloc, &sf,
-              &solvent, &(pelec->f_en.etxc), &(pelec->f_en.vtxc), vsep_cell);
+        pelec->pot = new elecstate::Potential(pw_rhod, pw_rho, &ucell);
     }
 
     locpp.init_vloc(ucell, pw_rhod);

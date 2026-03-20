@@ -8,6 +8,7 @@
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"
 
+#include <string>
 #include <vector>
 
 namespace elecstate
@@ -21,14 +22,9 @@ namespace elecstate
  *     c. it will reset fixed_done to false, v_eff_fixed will be calculated;
  *     d. it should be called after Charge is initialized;
  *     e. it can only be called once in one SCF loop
- * 3. Func pot_register() and components
- *     a. need vector<string> for choose target potentials
- *     b. "local", PotLocal introduces local pseudopotential part of potentials;
- *     c. "hartree", PotHartree introduces Coulombic interaction of electrons part of potentials;
- *     d. "xc", PotXC introduces exchange-correlation including meta-gga part of potentials;
- *     e. "surchem", PotSurChem introduces surface chemistry part of potentials;
- *     f. "efield", PotEfield introduces electronic field including dipole correction part of potentials;
- *     g. "gatefield", PotGate introduces gate field part of potentials;
+ * 3. Func set_components()
+ *     a. set potential components created by PotentialFactory
+ *     b. takes ownership of the components
  * 4. Func update_from_charge()
  *     a. regenerate v_eff
  *     b. if Meta-GGA is choosed, it will regenerate vofk_eff
@@ -57,19 +53,13 @@ class Potential : public PotBase
     // Note: rho_basis_in and rho_basis_smooth_in are the same in NCPP
     Potential(const ModulePW::PW_Basis* rho_basis_in,
               const ModulePW::PW_Basis* rho_basis_smooth_in,
-              const UnitCell* ucell_in,
-              const ModuleBase::matrix* vloc_in,
-              Structure_Factor* structure_factors_in,
-              surchem* solvent_in,
-              double* etxc_in,
-              double* vtxc_in,
-              VSep* vsep_cell_in = nullptr);
+              const UnitCell* ucell_in);
     ~Potential();
 
     // initialize potential when SCF begin
     void init_pot(const Charge*const chg);
-    // initialize potential components before SCF
-    void pot_register(const std::vector<std::string>& components_list);
+    void set_components(std::vector<PotBase*> components);
+    
     // update potential from current charge
     void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
@@ -191,6 +181,8 @@ class Potential : public PotBase
     /// @return E_ML-EXX
     double get_ml_exx_energy() const;
 
+    double vl_of_0 = 0.0;
+
   private:
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
@@ -198,6 +190,8 @@ class Potential : public PotBase
     void interpolate_vrs();
 
     void allocate();
+
+    const UnitCell* ucell_ = nullptr;
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;
@@ -215,21 +209,9 @@ class Potential : public PotBase
     ModuleBase::matrix vofk_eff;
 
     bool fixed_done = false;
-
-    // gather etxc and vtxc in Potential, will be used in ESolver
-    double* etxc_ = nullptr;
-    double* vtxc_ = nullptr;
-
-    double vl_of_0 = 0.0;
+    bool use_gpu_ = false;
 
     std::vector<PotBase*> components;
-
-    const UnitCell* ucell_ = nullptr;
-    const ModuleBase::matrix* vloc_ = nullptr;
-    Structure_Factor* structure_factors_ = nullptr;
-    surchem* solvent_ = nullptr;
-    VSep* vsep_cell = nullptr;
-    bool use_gpu_ = false;
 };
 
 } // namespace elecstate

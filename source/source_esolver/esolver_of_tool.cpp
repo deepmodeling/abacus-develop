@@ -5,6 +5,8 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 
 namespace ModuleESolver
 {
@@ -22,15 +24,8 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     }
 
     delete this->pelec->pot;
-    this->pelec->pot = new elecstate::Potential(this->pw_rhod,
-                                                this->pw_rho,
-                                                &ucell,
-                                                &(this->locpp.vloc),
-                                                &(this->sf),
-                                                &(this->solvent),
-                                                &(this->pelec->f_en.etxc),
-                                                &(this->pelec->f_en.vtxc));
-    // There is no Operator in ESolver_OF, register Potentials here!
+    this->pelec->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho);
+
     std::vector<std::string> pot_register_in;
     if (PARAM.inp.vion_in_h)
     {
@@ -58,11 +53,20 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     {
         pot_register_in.push_back("ml_exx");
     }
-    // only Potential is not empty, Veff and Meta are available
+
     if (pot_register_in.size() > 0)
     {
-        // register Potential by gathered operator
-        this->pelec->pot->pot_register(pot_register_in);
+        elecstate::PotentialFactory factory(&this->locpp.vloc,
+                                           &this->sf,
+                                           this->pw_rhod,
+                                           &(this->pelec->f_en.etxc),
+                                           &(this->pelec->f_en.vtxc),
+                                           this->pelec->pot->get_eff_vofk(),
+                                           &this->solvent,
+                                           nullptr,
+                                           &ucell);
+        auto components = factory.create_components(pot_register_in);
+        this->pelec->pot->set_components(std::move(components));
     }
 }
 
