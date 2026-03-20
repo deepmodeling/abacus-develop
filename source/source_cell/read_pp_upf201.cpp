@@ -1,5 +1,46 @@
 #include "read_pp.h"
 
+#include <stdexcept>
+
+namespace
+{
+void upf201_header_parse_double(const char* field, const std::string& s, double& out)
+{
+    try
+    {
+        out = std::stod(s);
+    }
+    catch (const std::invalid_argument&)
+    {
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                 std::string("Invalid numeric value for ") + field + ": \"" + s + "\"");
+    }
+    catch (const std::out_of_range&)
+    {
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                 std::string("Numeric value out of range for ") + field + ": \"" + s + "\"");
+    }
+}
+
+void upf201_header_parse_int(const char* field, const std::string& s, int& out)
+{
+    try
+    {
+        out = std::stoi(s);
+    }
+    catch (const std::invalid_argument&)
+    {
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                 std::string("Invalid integer value for ") + field + ": \"" + s + "\"");
+    }
+    catch (const std::out_of_range&)
+    {
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                 std::string("Integer value out of range for ") + field + ": \"" + s + "\"");
+    }
+}
+} // namespace
+
 // qianrui rewrite it 2021-5-10
 // liuyu update 2023-09-17 add uspp support
 int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
@@ -307,31 +348,31 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            upf201_header_parse_double("total_psenergy", val[ip], pp.etotps);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            upf201_header_parse_double("wfc_cutoff", val[ip], pp.ecutwfc);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            upf201_header_parse_double("rho_cutoff", val[ip], pp.ecutrho);
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            upf201_header_parse_int("l_max", val[ip], pp.lmax);
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            upf201_header_parse_int("l_max_rho", val[ip], this->lmax_rho);
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            upf201_header_parse_int("l_local", val[ip], this->lloc);
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            upf201_header_parse_int("mesh_size", val[ip], pp.mesh);
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +382,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            upf201_header_parse_int("number_of_wfc", val[ip], pp.nchi);
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            upf201_header_parse_int("number_of_proj", val[ip], pp.nbeta);
         }
         else
         {
