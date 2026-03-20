@@ -307,31 +307,115 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            //pp.etotps = atof(val[ip].c_str());
+	    try {
+		    pp.etotps=std::stod(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            //pp.ecutwfc = atof(val[ip].c_str());
+	    try {
+		    pp.ecutwfc=std::stod(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            //pp.ecutrho = atof(val[ip].c_str());
+	    try {
+		    pp.ecutrho=std::stod(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            //pp.lmax = atoi(val[ip].c_str());
+	    try {
+		    pp.lmax=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            //this->lmax_rho = atoi(val[ip].c_str());
+	    try {
+		    this->lmax_rho=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            //this->lloc = atoi(val[ip].c_str());
+	    try {
+		    this->lloc=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            //pp.mesh = atoi(val[ip].c_str());
+	    try {
+		    pp.mesh=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +425,35 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            //pp.nchi = atoi(val[ip].c_str());
+	    try {
+		    pp.nchi=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            //pp.nbeta = atoi(val[ip].c_str());
+	    try {
+		    pp.nbeta=std::stoi(val[ip]);
+	    }catch(const std::invalid_argument& e){
+		    std::cerr<<"错误：类型转换失败（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::out_of_range& e){
+		    std::cerr<<"错误：数值大小超出范围（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }catch(const std::exception& e){
+		    std::cerr<<"错误：未知问题（"<<e.what()<<"）"<<std::endl;
+		    return ;
+	    }
         }
         else
         {
