@@ -193,6 +193,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
             }
         }
     }
+    ModuleBase::timer::end("ModuleIO", "set_rR_from_hR");
     ModuleBase::TITLE("ModuleIO", "set_rR_from_sR");
 }
 template <typename TR>
@@ -801,6 +802,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
             delete[] velocity_basis_k[ik][i_alpha];
     }
 
+    ModuleBase::timer::end("ModuleIO", "cal_current_exx");
     ModuleBase::TITLE("ModuleIO", "cal_current_exx");
 }
 template <typename TR>

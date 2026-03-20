@@ -120,9 +120,7 @@ void sparse_format::cal_HR_dftu(
     HR_tmp = nullptr;
     SR_tmp = nullptr;
 
-    ModuleBase::timer::start("sparse_format","cal_HR_dftu_sparse");
-
-    return;
+    ModuleBase::timer::end("sparse_format","cal_HR_dftu");
 }
 
 
@@ -241,7 +239,5 @@ void sparse_format::cal_HR_dftu_soc(
     HR_soc_tmp = nullptr;
     SR_soc_tmp = nullptr;
 
-    ModuleBase::timer::start("sparse_format","calculat_HR_dftu_soc");
-
-    return;
+    ModuleBase::timer::end("sparse_format","cal_HR_dftu_soc");
 }

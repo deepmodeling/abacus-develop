@@ -160,7 +160,7 @@ auto Gaussian_Abfs::get_dVq(const int& lp_max,
                                                                                    gaunt,
                                                                                    func_DPcal_d_lattice_sum);
 
-    ModuleBase::timer::start("Gaussian_Abfs", "get_Vq");
+    ModuleBase::timer::end("Gaussian_Abfs", "get_dVq");
     return res;
 }
 

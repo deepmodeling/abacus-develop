@@ -214,6 +214,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     ModuleBase::timer::start("DeePKS", "calculate_HR");
     if (this->V_delta_R->size_atom_pairs() == 0)
     {
+        ModuleBase::timer::end("DeePKS", "calculate_HR");
         return;
     }
 
