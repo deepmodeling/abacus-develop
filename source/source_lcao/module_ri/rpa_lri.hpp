@@ -17,7 +17,6 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include "rpa_lri.h"
-#include "exx_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/global_function.h"
 #include "source_estate/elecstate_lcao.h"
@@ -107,7 +106,56 @@ inline int max_layout_lmax(const std::vector<std::vector<std::vector<int>>>& can
     }
     return lmax;
 }
-} // namespace RpaLriDetail
+
+template<typename Tdata>
+inline bool has_valid_matrix_shape(const RI::Tensor<Tdata>& tensor)
+{
+    return tensor.shape.size() == 2 && tensor.shape[0] > 0 && tensor.shape[1] > 0;
+}
+
+template<typename Tdata>
+inline std::map<RI_2D_Comm::TA, std::map<RI_2D_Comm::TAC, RI::Tensor<Tdata>>>
+collect_local_irreducible_abf_blocks(
+    const std::map<RI_2D_Comm::TA, std::map<RI_2D_Comm::TAC, RI::Tensor<Tdata>>>& period_blocks,
+    const std::map<ModuleSymmetry::Tap, std::set<ModuleSymmetry::TC>>& irreducible_sector,
+    std::size_t& n_skipped_irreducible_blocks)
+{
+    std::map<RI_2D_Comm::TA, std::map<RI_2D_Comm::TAC, RI::Tensor<Tdata>>> irreducible_blocks;
+    n_skipped_irreducible_blocks = 0;
+    for (const auto& irap_Rs: irreducible_sector)
+    {
+        const auto period_iter = period_blocks.find(irap_Rs.first.first);
+        for (const auto& irR: irap_Rs.second)
+        {
+            const RI_2D_Comm::TAC ir_key = {irap_Rs.first.second, irR};
+            if (period_iter == period_blocks.end())
+            {
+                ++n_skipped_irreducible_blocks;
+                continue;
+            }
+            const auto block_iter = period_iter->second.find(ir_key);
+            if (block_iter == period_iter->second.end()
+                || !has_valid_matrix_shape(block_iter->second))
+            {
+                ++n_skipped_irreducible_blocks;
+                continue;
+            }
+            irreducible_blocks[irap_Rs.first.first][ir_key] = block_iter->second;
+        }
+    }
+    return irreducible_blocks;
+}
+
+inline std::size_t sum_skipped_irreducible_blocks(const MPI_Comm& mpi_comm,
+                                                  const std::size_t local_count)
+{
+    unsigned long long global_count = static_cast<unsigned long long>(local_count);
+    unsigned long long reduced_count = global_count;
+    MPI_Allreduce(&global_count, &reduced_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, mpi_comm);
+    return static_cast<std::size_t>(reduced_count);
+}
+
+}
 
 template <typename T, typename Tdata>
 RPA_LRI<T, Tdata>::~RPA_LRI() = default;
@@ -115,7 +163,7 @@ RPA_LRI<T, Tdata>::~RPA_LRI() = default;
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
                                 const MPI_Comm& mpi_comm_in,
-                                const module_dm::DensityMatrix<T, Tdata>& dm,
+                                const elecstate::DensityMatrix<T, Tdata>& dm,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
                                 const LCAO_Orbitals& orb,
@@ -125,18 +173,15 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     ModuleBase::TITLE("RPA_LRI", "postSCF");
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
-    this->ccp_rmesh_times_cut = PARAM.inp.rpa_ccp_rmesh_times;
-    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times; // should be `exx_ccp_rmesh_times`
 
-    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
+    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb);
     this->init(mpi_comm_in, kv, orb.cutoffs());
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
     this->out_struc(ucell);
 
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
-    std::cout << "rpa_ccp_rmesh_times_cut: " << this->ccp_rmesh_times_cut << std::endl;
-    std::cout << "rpa_ccp_rmesh_times_ewald: " << this->ccp_rmesh_times_ewald << std::endl;
+    std::cout << "rpa_ccp_rmesh_times: " << this->info.ccp_rmesh_times << std::endl;
     std::cout << "rpa_lcao_exx(Ha): " << std::fixed << std::setprecision(15) << exx_cut_coulomb->Eexx / 2.0 << std::endl;
 
     std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etxc / 2.0 << std::endl;
@@ -183,12 +228,11 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>& dm,
+void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
                                         const UnitCell& ucell,
                                         const K_Vectors& kv,
-                                        const LCAO_Orbitals& orb,
-                                        const Parallel_Orbitals& parav)
+                                        const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("RPA_LRI", "cal_postSCF_exx");
     ModuleBase::timer::start("RPA_LRI", "cal_postSCF_exx");
@@ -197,77 +241,41 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     this->p_kv = &kv;
     this->orb_cutoff_ = orb.cutoffs();
 
-    Mix_DMk_2D<T> mix_DMk_2D;
-    bool exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
-    if (exx_spacegroup_symmetry)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (PARAM.inp.nspin == 2 ? 2 : 1));}
+    Mix_DMk_2D mix_DMk_2D;
+    this->use_spacegroup_symmetry_ = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    if (this->use_spacegroup_symmetry_)
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
-    mix_DMk_2D.set_mixing_plain(1.0);
-
-    // --------------------------------------------------------------------------------------
-    // NOTE: ABFs are constructed here BEFORE symmetry processing to calculate the correct
-    // abfs_Lmax for symrot.set_abfs_Lmax(). Previously, abfs_Lmax was obtained either from
-    // exx_cut_coulomb->abfs_Lmax() (which was nullptr at that point) or from this->info.abfs_Lmax
-    // (which defaults to 0). This caused abfs_Lmax to degrade to 0 in RPA + symmetry path,
-    // leading to incorrect rotation matrices for ABFs with higher angular momentum.
-    // --------------------------------------------------------------------------------------
-    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_for_lmax;
-    if (this->info.shrink_abfs_pca_thr >= 0.0)
-    {
-        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.shrink_abfs_pca_thr);
-        if (!this->info.files_shrink_abfs.empty())
-        {
-            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_shrink_abfs, this->info.kmesh_times);
-        }
-    }
-    else
-    {
-        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold);
-        if (!this->info.files_abfs.empty())
-        {
-            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_abfs, this->info.kmesh_times);
-        }
-    }
-
-    ModuleSymmetry::Symmetry_rotation symrot;
-    if (exx_spacegroup_symmetry)
+    mix_DMk_2D.set_mixing(nullptr);
+    if (this->use_spacegroup_symmetry_)
     {
         const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
         const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
-        symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat, PARAM.globalv.global_out_dir);
+        this->symmetry_rotation_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
-        // NOTE: Using Exx_Abfs::Construct_Orbs::get_Lmax() to compute Lmax from the actual ABFs
-        // instead of relying on exx_cut_coulomb->abfs_Lmax() (not yet initialized) or
-        // this->info.abfs_Lmax (defaults to 0). This ensures correct Lmax for symmetry rotation.
-        symrot.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
-        symrot.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
-        // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
-        ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
-        ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);
-        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_dmk_vec(), parav), true);
+        this->symmetry_rotation_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
+        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
+        mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
     }
-    else { mix_DMk_2D.mix(dm.get_dmk_vec(), true); }
+    else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
-        Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(
-            ucell,
-            kv,
-            mix_DMk_2D.get_DMk_out(),
-            parav,
-            PARAM.inp.nspin,
-            exx_spacegroup_symmetry);
-
+		Ds = PARAM.globalv.gamma_only_local
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, this->use_spacegroup_symmetry_);
+    
+    // reserve exx_ccp_rmesh_times to calculate full Coulomb
+    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on the global Exx_Info
+    // and sync_from_global() was called, but this->info (value copy) already has the correct
+    // coulomb_param from construction time, so those writes are redundant and removed.
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
+    // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
+    Exx_Info_RI local_info = this->info;
+    local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
-    {
-        Exx_Info_RI local_info = this->info;
-        local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
-        exx_cut_coulomb.reset(new_exx);
-    }
+        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
@@ -281,17 +289,25 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     else
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb);
 
-    // cal C and V for exx
-    Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
-    this->output_cut_coulomb_cs(ucell, cut_coulomb);
-    // cal CVCD
-    if (exx_spacegroup_symmetry && PARAM.inp.exx_symmetry_realspace)
+    if (this->use_spacegroup_symmetry_)
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav, &symrot);
+        // Refresh the ABF-side spherical-harmonic rotation matrices after the auxiliary basis
+        // is finalized by `init_spencer()`. The earlier `cal_Ms()` call only guaranteed the AO
+        // rotation blocks needed for density-matrix restoration.
+        this->symmetry_rotation_.set_Cs_rotation(exx_cut_coulomb->get_abfs_nchis());
+        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
+    }
+
+    // cal C and V for exx
+    this->output_cut_coulomb_cs(ucell, exx_cut_coulomb.get());
+    // cal CVCD
+    if (this->use_spacegroup_symmetry_ && PARAM.inp.exx_symmetry_realspace)
+    {
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symmetry_rotation_);
     }
     else
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav);
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());
     }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
     ModuleBase::timer::end("RPA_LRI", "cal_postSCF_exx");
@@ -308,7 +324,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    std::cout << "Use rpa_ccp_rmesh_times=" << this->ccp_rmesh_times_cut << " to calculate cut Coulomb" << std::endl;
+    std::cout << "Use rpa_ccp_rmesh_times=" << this->info.ccp_rmesh_times << " to calculate cut Coulomb" << std::endl;
     // Shrink_ABFS_ORBITAL cannot exceed this angular momentum of MGT
     exx_lri_rpa->cal_cut_coulomb_cs(Vs_cut_IJR, Cs, ucell, PARAM.inp.out_ri_cv);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
@@ -316,7 +332,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     for (int iat = 0; iat < ucell.nat; ++iat)
         atoms[iat] = iat;
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, this->orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, this->orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
     const auto list_A0_pair_R = list_As_Vs_atoms.first;
@@ -336,6 +352,43 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Vs_cut_IJR.clear();
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
+    if (this->use_spacegroup_symmetry_)
+    {
+        // Rebuild the full periodic cut Coulomb from the irreducible real-space sector using
+        // the same ABF rotation convention exported in `symrot_abf_k.txt`.
+        this->symmetry_rotation_.set_Cs_rotation(exx_lri_rpa->get_abfs_nchis());
+
+        // In MPI runs, Vs_period is distributed by atom pair. Gather the irreducible-sector
+        // source blocks needed by symmetry restoration before expanding back to the full
+        // periodic operator, then redistribute the restored full-period blocks to the original
+        // rank-local ownership expected by out_coulomb_k().
+        std::size_t n_skipped_irreducible_blocks_local = 0;
+        auto Vs_irreducible = RpaLriDetail::collect_local_irreducible_abf_blocks(
+            this->Vs_period,
+            this->symmetry_rotation_.get_irreducible_sector(),
+            n_skipped_irreducible_blocks_local);
+        if (GlobalV::NPROC > 1)
+        {
+            const std::set<TA> all_atoms_set(atoms.begin(), atoms.end());
+            Vs_irreducible = RI_2D_Comm::comm_map2_first(
+                this->mpi_comm, Vs_irreducible, all_atoms_set, all_atoms_set);
+        }
+        const std::size_t n_skipped_irreducible_blocks
+            = RpaLriDetail::sum_skipped_irreducible_blocks(
+                this->mpi_comm, n_skipped_irreducible_blocks_local);
+        if (n_skipped_irreducible_blocks != 0 && GlobalV::MY_RANK == 0)
+        {
+            std::cout << "Warning: skipped " << n_skipped_irreducible_blocks
+                      << " missing irreducible ABF cut-Coulomb blocks during symmetry restoration"
+                      << std::endl;
+        }
+        this->Vs_period
+            = this->symmetry_rotation_.restore_HR_abf(ucell.symm, ucell.atoms, ucell.st, Vs_irreducible);
+        if (GlobalV::NPROC > 1)
+        {
+            this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
+        }
+    }
     this->out_coulomb_k(ucell, this->Vs_period, "coulomb_cut_", exx_lri_rpa);
     Vs_period.clear();
     Vs_period.swap(tmp);
@@ -362,10 +415,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-    {
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
-        exx_full_coulomb.reset(new_exx);
-    }
+        exx_full_coulomb.reset(new Exx_LRI<double>(local_info));
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
@@ -401,8 +451,40 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
 
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_full_IJ, period);
-    Exx_LRI<double>* full_coulomb = exx_full_coulomb.get();
-    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", full_coulomb);
+    if (this->use_spacegroup_symmetry_)
+    {
+        // Rebuild the full periodic bare Coulomb from the irreducible real-space sector so that
+        // the exported `coulomb_mat_` uses the same ABF rotation convention as the sidecar files.
+        this->symmetry_rotation_.set_Cs_rotation(exx_full_coulomb->get_abfs_nchis());
+
+        std::size_t n_skipped_irreducible_blocks_local = 0;
+        auto Vs_irreducible = RpaLriDetail::collect_local_irreducible_abf_blocks(
+            this->Vs_period,
+            this->symmetry_rotation_.get_irreducible_sector(),
+            n_skipped_irreducible_blocks_local);
+        if (GlobalV::NPROC > 1)
+        {
+            const std::set<TA> all_atoms_set(atoms.begin(), atoms.end());
+            Vs_irreducible = RI_2D_Comm::comm_map2_first(
+                this->mpi_comm, Vs_irreducible, all_atoms_set, all_atoms_set);
+        }
+        const std::size_t n_skipped_irreducible_blocks
+            = RpaLriDetail::sum_skipped_irreducible_blocks(
+                this->mpi_comm, n_skipped_irreducible_blocks_local);
+        if (n_skipped_irreducible_blocks != 0 && GlobalV::MY_RANK == 0)
+        {
+            std::cout << "Warning: skipped " << n_skipped_irreducible_blocks
+                      << " missing irreducible ABF bare-Coulomb blocks during symmetry restoration"
+                      << std::endl;
+        }
+        this->Vs_period
+            = this->symmetry_rotation_.restore_HR_abf(ucell.symm, ucell.atoms, ucell.st, Vs_irreducible);
+        if (GlobalV::NPROC > 1)
+        {
+            this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
+        }
+    }
+    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb.get());
     Vs_period.clear();
     Vs_period.swap(tmp);
     Cs.clear();
@@ -420,12 +502,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-    {
-        Exx_Info_RI local_info = this->info;
-        local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
-        exx_cut_coulomb.reset(new_exx);
-    }
+        exx_cut_coulomb.reset(new Exx_LRI<double>(this->info));
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->abfs = exx_cut_coulomb->abfs;
@@ -458,7 +535,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            true);
 
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
     std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs start");
@@ -506,8 +583,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Vs_period_comm");
 
-        Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", cut_coulomb);
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", exx_cut_coulomb.get());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
@@ -1579,6 +1655,10 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 
                 auto R = JPp.first.second;
                 if (J < I)
+                {
+                    continue;
+                }
+                if (!RpaLriDetail::has_valid_matrix_shape(JPp.second))
                 {
                     continue;
                 }

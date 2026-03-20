@@ -6,8 +6,9 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "lri_cv.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
+#include "source_esolver/esolver_ks_lcao.h"
+#include "LRI_CV.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -117,6 +118,8 @@ template <typename T, typename Tdata> class RPA_LRI
 
     // Tdata post_process_Erpa( const Tdata &Erpa_in ) const;
 
+    ModuleSymmetry::Symmetry_rotation symmetry_rotation_;
+    bool use_spacegroup_symmetry_ = false;
     std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
     std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };

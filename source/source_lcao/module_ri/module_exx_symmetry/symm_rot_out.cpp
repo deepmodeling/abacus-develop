@@ -29,6 +29,28 @@ namespace ModuleSymmetry
             return type_lmaxs;
         }
 
+        void write_ao_layout_header(std::ofstream& ofs, const UnitCell& ucell)
+        {
+            ofs << "AO shell layouts:\n";
+            ofs << "# Each line stores one AO-basis layout for one atom type.\n";
+            ofs << "# shell_counts[l] is the number of AO radial shells at angular momentum l.\n";
+            for (int it = 0; it < ucell.ntype; ++it)
+            {
+                const auto& atom = ucell.atoms[it];
+                ofs << "type " << it + 1
+                    << " label " << atom.label
+                    << " nao " << atom.nw
+                    << " lmax " << atom.nwl
+                    << " shell_counts";
+                for (int l = 0; l <= atom.nwl; ++l)
+                {
+                    ofs << " " << atom.l_nchi[l];
+                }
+                ofs << "\n";
+            }
+            ofs << "End AO shell layouts\n";
+        }
+
         void write_abf_layout_header(
             std::ofstream& ofs,
             const std::vector<std::string>& type_labels,
@@ -74,6 +96,10 @@ namespace ModuleSymmetry
             if (abf_layout_candidates != nullptr && abf_type_labels != nullptr)
             {
                 write_abf_layout_header(ofs, *abf_type_labels, *abf_layout_candidates);
+            }
+            else
+            {
+                write_ao_layout_header(ofs, ucell);
             }
             ofs << "Number of IBZ k-points (k stars): " << kv.kstars.size() << std::endl;
             ofs << "Format:\n" << "The symmetry operation index to the irreducible k-point. For the irreducible k-points, isym=0.\n\n"

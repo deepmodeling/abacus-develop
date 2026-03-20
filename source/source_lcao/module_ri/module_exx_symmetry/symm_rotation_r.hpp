@@ -46,6 +46,12 @@ namespace ModuleSymmetry
     inline std::complex<double> conj_elem(const std::complex<double>& v) { return std::conj(v); }
 
     template<typename Tdata>
+    inline bool has_valid_matrix_shape(const RI::Tensor<Tdata>& tensor)
+    {
+        return tensor.shape.size() == 2 && tensor.shape[0] > 0 && tensor.shape[1] > 0;
+    }
+
+    template<typename Tdata>
     inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
     {
         GlobalV::ofs_running << name << ":\n";
@@ -350,6 +356,14 @@ namespace ModuleSymmetry
     template<typename Tdata>
     RI::Tensor<Tdata> Symmetry_rotation::set_rotation_matrix_abf(const int& type, const int& isym)const
     {
+        if (type < 0 || type >= static_cast<int>(this->abfs_l_nchi_.size()))
+        {
+            throw std::runtime_error("ABF rotation requested with an invalid atom type index.");
+        }
+        if (isym < 0 || isym >= static_cast<int>(this->rotmat_Slm_.size()))
+        {
+            throw std::runtime_error("ABF rotation requested with an invalid symmetry index.");
+        }
         int  nabfs = 0;
         for (int l = 0;l < this->abfs_l_nchi_[type].size();++l) {nabfs += this->abfs_l_nchi_[type][l] * (2 * l + 1);
 }
@@ -357,6 +371,15 @@ namespace ModuleSymmetry
         int iw = 0;
         for (int L = 0;L < this->abfs_l_nchi_[type].size();++L)
         {
+            if (L >= static_cast<int>(this->rotmat_Slm_[isym].size())
+                || !has_valid_matrix_shape(this->rotmat_Slm_[isym][L]))
+            {
+                std::ostringstream oss;
+                oss << "Missing ABF rotation block for symmetry " << isym
+                    << ", atom type " << type << ", angular momentum L=" << L
+                    << ". Recompute rotation matrices with the finalized ABF Lmax before restoring ABF tensors.";
+                throw std::runtime_error(oss.str());
+            }
             int nm = 2 * L + 1;
             for (int N = 0;N < this->abfs_l_nchi_[type][L];++N)
             {
@@ -367,6 +390,84 @@ namespace ModuleSymmetry
         }
         assert(iw == nabfs);
         return T;
+    }
+
+    template<typename Tdata>
+    RI::Tensor<Tdata> Symmetry_rotation::rotate_atompair_serial_abf(const RI::Tensor<Tdata>& A,
+        const int isym,
+        const int& type1,
+        const int& type2,
+        const bool output) const
+    {
+        assert(this->reduce_Cs_);
+        assert(has_valid_matrix_shape(A));
+        const RI::Tensor<Tdata>& T1 = this->set_rotation_matrix_abf<Tdata>(type1, isym);
+        const RI::Tensor<Tdata>& T2 = (type1 == type2) ? T1 : this->set_rotation_matrix_abf<Tdata>(type2, isym);
+        assert(A.shape[0] == T1.shape[0]);
+        assert(A.shape[1] == T2.shape[0]);
+
+        RI::Tensor<Tdata> TAT(A.shape);
+        RI::Sym::T1_HR_T2(TAT.ptr(), A.ptr(), T1, T2);
+        if (output)
+        {
+            print_tensor(A, "A_abf");
+            print_tensor(T1, "T1_abf");
+            print_tensor(T2, "T2_abf");
+            print_tensor(TAT, "TAT_abf");
+        }
+        return TAT;
+    }
+
+    template<typename Tdata>
+    std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> Symmetry_rotation::restore_HR_abf(
+        const Symmetry& symm,
+        const Atom* atoms,
+        const Statistics& st,
+        const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreducible) const
+    {
+        ModuleBase::TITLE("Symmetry_rotation", "restore_HR_abf");
+        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR_abf");
+        assert(this->reduce_Cs_);
+
+        std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_full;
+        for (auto& tmp1: HR_irreducible)
+        {
+            const int& irap1 = tmp1.first;
+            for (auto& tmp2: tmp1.second)
+            {
+                if (!has_valid_matrix_shape(tmp2.second))
+                {
+                    continue;
+                }
+                const int& irap2 = tmp2.first.first;
+                const Tap& irap = {irap1, irap2};
+                const TC& irR = tmp2.first.second;
+                const TapR& irapR = {irap, irR};
+                if (this->irs_.sector_stars_.find(irapR) != this->irs_.sector_stars_.end())
+                {
+                    const int type1 = st.iat2it[irap1];
+                    const int type2 = st.iat2it[irap2];
+                    for (auto& isym_apR: this->irs_.sector_stars_.at(irapR))
+                    {
+                        const int& isym = isym_apR.first;
+                        const TapR& apR = isym_apR.second;
+                        const int& ap1 = apR.first.first;
+                        const int& ap2 = apR.first.second;
+                        const TC& R = apR.second;
+                        HR_full[ap1][{ap2, R}]
+                            = rotate_atompair_serial_abf(tmp2.second, isym, type1, type2);
+                    }
+                }
+                else
+                {
+                    std::cout << "Warning: not found for ABF restore: irreducible atom pair =(" << irap1 << ","
+                              << irap2 << "), irR=(" << irR[0] << "," << irR[1] << "," << irR[2] << ")\n";
+                }
+            }
+        }
+
+        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR_abf");
+        return HR_full;
     }
 
     template<typename Tdata>
