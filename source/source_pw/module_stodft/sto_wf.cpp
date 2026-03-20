@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <ctime>
+#include <random>
 
 #include "source_base/global_function.h"
 
@@ -134,19 +135,24 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
+
+    std::mt19937 rng(std::random_device{}());
+
     if (seed_in >= 0)
     {
+        std::uniform_real_distribution<double> dist(0.0, 2.0 * ModuleBase::PI);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = dist(rng);
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
     else
     {
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            if (dist(rng) < 0.5)
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
