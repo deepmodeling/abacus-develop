@@ -94,7 +94,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -179,7 +179,7 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         matrixFile.width(24);
     }
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
