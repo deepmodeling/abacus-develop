@@ -5,58 +5,31 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-// mock functions
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+
+Charge::Charge() {}
+Charge::~Charge() {}
+
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
+
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 #endif
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
-}
-surchem::surchem()
-{
-}
-surchem::~surchem()
-{
-}
+
 int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
+
 namespace elecstate
 {
-
-PotBase* Potential::get_pot_type(const std::string& pot_type)
-{
-    return new PotBase;
-}
 
 void Set_GlobalV_Default()
 {
@@ -105,22 +78,12 @@ class PotentialNewTest : public ::testing::Test
     ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhodpw = nullptr;
     UnitCell* ucell = nullptr;
-    ModuleBase::matrix* vloc = nullptr;
-    Structure_Factor* structure_factors = nullptr;
-    surchem* solvent = nullptr;
-    double* etxc = nullptr;
-    double* vtxc = nullptr;
     elecstate::Potential* pot = nullptr;
     virtual void SetUp()
     {
         rhopw = new ModulePW::PW_Basis;
         rhodpw = new ModulePW::PW_Basis;
         ucell = new UnitCell;
-        vloc = new ModuleBase::matrix;
-        structure_factors = new Structure_Factor();
-        solvent = new surchem();
-        etxc = new double;
-        vtxc = new double;
         elecstate::Set_GlobalV_Default();
     }
     virtual void TearDown()
@@ -137,26 +100,6 @@ class PotentialNewTest : public ::testing::Test
         {
             delete ucell;
         }
-        if (vloc != nullptr)
-        {
-            delete vloc;
-        }
-        if (structure_factors != nullptr)
-        {
-            delete structure_factors;
-        }
-        if (solvent != nullptr)
-        {
-            delete solvent;
-        }
-        if (etxc != nullptr)
-        {
-            delete etxc;
-        }
-        if (vtxc != nullptr)
-        {
-            delete vtxc;
-        }
         if (pot != nullptr)
         {
             delete pot;
@@ -167,7 +110,7 @@ class PotentialNewTest : public ::testing::Test
 TEST_F(PotentialNewTest, ConstructorCPUDouble)
 {
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -179,7 +122,7 @@ TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
     rhopw->nrxx = 100;
     PARAM.input.precision = "single";
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -190,7 +133,7 @@ TEST_F(PotentialNewTest, ConstructorCPUSingle)
 TEST_F(PotentialNewTest, ConstructorNRXX0)
 {
     rhopw->nrxx = 0;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
 }
@@ -200,7 +143,7 @@ TEST_F(PotentialNewTest, ConstructorXC3)
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -212,10 +155,9 @@ TEST_F(PotentialNewTest, ConstructorXC3)
 
 TEST_F(PotentialNewTest, ConstructorGPUDouble)
 {
-    // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     PARAM.input.device = "gpu";
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -225,11 +167,10 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
 
 TEST_F(PotentialNewTest, ConstructorGPUSingle)
 {
-    // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     PARAM.input.device = "gpu";
     PARAM.input.precision = "single";
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -256,37 +197,32 @@ TEST_F(PotentialNewTest, Getters)
     delete doo;
 }
 
-TEST_F(PotentialNewTest, PotRegister)
+TEST_F(PotentialNewTest, SetComponents)
 {
     pot = new elecstate::Potential;
     elecstate::PotBase* pot0 = new elecstate::PotBase;
-    pot->components.push_back(pot0);
-    EXPECT_EQ(pot->components.size(), 1);
-    std::vector<std::string> compnents_list = {"hartree", "xc"};
-    pot->pot_register(compnents_list);
+    elecstate::PotBase* pot1 = new elecstate::PotBase;
+    std::vector<elecstate::PotBase*> components = {pot0, pot1};
+    pot->set_components(std::move(components));
     EXPECT_EQ(pot->components.size(), 2);
     EXPECT_FALSE(pot->fixed_done);
 }
 
 TEST_F(PotentialNewTest, CalFixedV)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
-    std::vector<bool> fixed = {true, false, false, false, true};
-    pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
+    std::vector<elecstate::PotBase*> components;
+    for (int i = 0; i < 5; i++)
     {
-        pot->components[i]->fixed_mode = fixed[i];
+        components.push_back(new elecstate::PotBase);
     }
+    std::vector<bool> fixed = {true, false, false, false, true};
+    for (int i = 0; i < components.size(); i++)
+    {
+        components[i]->fixed_mode = fixed[i];
+    }
+    pot->set_components(std::move(components));
     double* vl_pseudo = new double[1000];
     pot->cal_fixed_v(vl_pseudo);
     for (int i = 0; i < pot->v_eff_fixed.size(); i++)
@@ -298,27 +234,23 @@ TEST_F(PotentialNewTest, CalFixedV)
 
 TEST_F(PotentialNewTest, CalVeff)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
-    std::vector<bool> dynamic = {false, true, true, true, false};
-    pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
+    std::vector<elecstate::PotBase*> components;
+    for (int i = 0; i < 5; i++)
     {
-        pot->components[i]->dynamic_mode = dynamic[i];
+        components.push_back(new elecstate::PotBase);
     }
+    std::vector<bool> dynamic = {false, true, true, true, false};
+    for (int i = 0; i < components.size(); i++)
+    {
+        components[i]->dynamic_mode = dynamic[i];
+    }
+    pot->set_components(std::move(components));
     Charge* chg = new Charge;
     ModuleBase::matrix v_eff;
     v_eff.create(2, 100);
-    pot->cal_v_eff(chg,this->ucell,v_eff);
+    pot->cal_v_eff(chg, this->ucell, v_eff);
     for (int i = 0; i < pot->v_eff_fixed.size(); i++)
     {
         EXPECT_DOUBLE_EQ(pot->v_eff_fixed[i], 0.0);
@@ -328,25 +260,21 @@ TEST_F(PotentialNewTest, CalVeff)
 
 TEST_F(PotentialNewTest, UpdateFromCharge)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
+    std::vector<elecstate::PotBase*> components;
+    for (int i = 0; i < 5; i++)
+    {
+        components.push_back(new elecstate::PotBase);
+    }
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
-    pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
+    for (int i = 0; i < components.size(); i++)
     {
-        pot->components[i]->fixed_mode = fixed[i];
-        pot->components[i]->dynamic_mode = dynamic[i];
+        components[i]->fixed_mode = fixed[i];
+        components[i]->dynamic_mode = dynamic[i];
     }
+    pot->set_components(std::move(components));
     Charge* chg = new Charge;
     EXPECT_FALSE(pot->fixed_done);
     pot->update_from_charge(chg, this->ucell);
@@ -356,25 +284,21 @@ TEST_F(PotentialNewTest, UpdateFromCharge)
 
 TEST_F(PotentialNewTest, InitPot)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
+    std::vector<elecstate::PotBase*> components;
+    for (int i = 0; i < 5; i++)
+    {
+        components.push_back(new elecstate::PotBase);
+    }
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
-    pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
+    for (int i = 0; i < components.size(); i++)
     {
-        pot->components[i]->fixed_mode = fixed[i];
-        pot->components[i]->dynamic_mode = dynamic[i];
+        components[i]->fixed_mode = fixed[i];
+        components[i]->dynamic_mode = dynamic[i];
     }
+    pot->set_components(std::move(components));
     Charge* chg = new Charge;
     EXPECT_FALSE(pot->fixed_done);
     pot->init_pot(chg);
@@ -384,25 +308,21 @@ TEST_F(PotentialNewTest, InitPot)
 
 TEST_F(PotentialNewTest, GetVnew)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
+    std::vector<elecstate::PotBase*> components;
+    for (int i = 0; i < 5; i++)
+    {
+        components.push_back(new elecstate::PotBase);
+    }
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
-    pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
+    for (int i = 0; i < components.size(); i++)
     {
-        pot->components[i]->fixed_mode = fixed[i];
-        pot->components[i]->dynamic_mode = dynamic[i];
+        components[i]->fixed_mode = fixed[i];
+        components[i]->dynamic_mode = dynamic[i];
     }
+    pot->set_components(std::move(components));
     Charge* chg = new Charge;
     ModuleBase::matrix vnew;
     pot->get_vnew(chg, vnew);
@@ -413,10 +333,8 @@ TEST_F(PotentialNewTest, GetVnew)
 
 TEST_F(PotentialNewTest, GetEffectiveVmatrix)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     ModuleBase::matrix v_eff_tmp = pot->get_eff_v();
     const ModuleBase::matrix v_eff_tmp_const = pot->get_eff_v();
     EXPECT_EQ(v_eff_tmp.nr, PARAM.input.nspin);
@@ -435,10 +353,8 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
 
 TEST_F(PotentialNewTest, GetEffectiveVarray)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     double* v_eff_tmp = pot->get_eff_v(0);
     const double* v_eff_tmp_const = pot->get_eff_v(0);
     for (int ic = 0; ic < rhopw->nrxx; ic++)
@@ -463,12 +379,10 @@ TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr)
 
 TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
 {
-    // construct potential
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     ModuleBase::matrix vofk_eff_tmp = pot->get_eff_vofk();
     const ModuleBase::matrix vofk_eff_tmp_const = pot->get_eff_vofk();
     EXPECT_EQ(vofk_eff_tmp.nr, PARAM.input.nspin);
@@ -487,10 +401,8 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
 
 TEST_F(PotentialNewTest, GetEffectiveVofkarray)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     double* vofk_eff_tmp = pot->get_eff_vofk(0);
     const double* vofk_eff_tmp_const = pot->get_eff_vofk(0);
     for (int ic = 0; ic < rhopw->nrxx; ic++)
@@ -516,7 +428,7 @@ TEST_F(PotentialNewTest, GetEffectiveVofkarrayNullptr)
 TEST_F(PotentialNewTest, GetFixedV)
 {
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
@@ -532,12 +444,10 @@ TEST_F(PotentialNewTest, GetFixedV)
 
 TEST_F(PotentialNewTest, GetVeffSmooth)
 {
-    // construct potential
     rhopw->nrxx = 100;
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix veff_smooth_const_tmp = pot->get_veff_smooth();
     EXPECT_EQ(veff_smooth_tmp.nr, PARAM.input.nspin);
@@ -556,10 +466,8 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
 
 TEST_F(PotentialNewTest, GetVofkSmooth)
 {
-    // construct potential
     rhopw->nrxx = 100;
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
-    //
+    pot = new elecstate::Potential(rhopw, rhopw, ucell);
     ModuleBase::matrix vofk_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix vofk_smooth_const_tmp = pot->get_veff_smooth();
     EXPECT_EQ(vofk_smooth_tmp.nr, PARAM.input.nspin);
@@ -581,7 +489,6 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
      PARAM.sys.double_grid = true;
      XC_Functional::func_type = 3;
      XC_Functional::ked_flag = true;
-     // Init pw_basis
      rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
      rhopw->initparameters(false, 4);
      rhopw->setuptransform();
@@ -592,7 +499,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
      static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
      rhodpw->collect_local_pw();
 
-     pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+     pot = new elecstate::Potential(rhodpw, rhopw, ucell);
 
      for (int ir = 0; ir < pot->v_eff.nr; ir++)
      {
@@ -618,13 +525,11 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
             index++;
         }
     }
-
 }
 
 TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 {
      PARAM.sys.double_grid = true;
-    // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
     rhopw->initparameters(false, 4);
     rhopw->setuptransform();
@@ -637,7 +542,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
     rhodpw->collect_local_pw();
     rhodpw->gamma_only = true;
 
-    pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhodpw, rhopw, ucell);
 
     EXPECT_EXIT(pot->interpolate_vrs(), ::testing::ExitedWithCode(1), "");
 }
@@ -647,13 +552,12 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
      PARAM.sys.double_grid = false;
      XC_Functional::func_type = 3;
      XC_Functional::ked_flag = true;
-     // Init pw_basis
      rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
      rhopw->initparameters(false, 4);
      rhopw->setuptransform();
      rhopw->collect_local_pw();
 
-     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+     pot = new elecstate::Potential(rhopw, rhopw, ucell);
 
      for (int ir = 0; ir < pot->v_eff.nr; ir++)
      {
@@ -674,5 +578,4 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
             EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir,ic), ir+2*ic);
         }
     }
-
 }

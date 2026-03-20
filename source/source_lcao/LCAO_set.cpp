@@ -8,6 +8,7 @@
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
 #include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -73,8 +74,52 @@ void LCAO_domain::set_pot(
     //! 2) init potentials
     if (pelec->pot == nullptr)
     {
-        // where is the pot deleted?
         pelec->pot = new elecstate::Potential(&pw_rhod, &pw_rho, &ucell);
+
+        std::vector<std::string> pot_register_in;
+        if (inp.vion_in_h)
+        {
+            pot_register_in.push_back("local");
+        }
+        if (inp.vh_in_h)
+        {
+            pot_register_in.push_back("hartree");
+        }
+        pot_register_in.push_back("xc");
+        if (inp.imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (inp.efield_flag)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (inp.gate_flag)
+        {
+            pot_register_in.push_back("gatefield");
+        }
+#ifdef __LCAO
+        if (inp.esolver_type == "tddft")
+        {
+            pot_register_in.push_back("tddft");
+        }
+#endif
+        if (inp.ml_exx)
+        {
+            pot_register_in.push_back("ml_exx");
+        }
+
+        elecstate::PotentialFactory factory(&locpp.vloc,
+                                           &sf,
+                                           &pw_rhod,
+                                           &pelec->f_en.etxc,
+                                           &pelec->f_en.vtxc,
+                                           pelec->pot->get_eff_vofk(),
+                                           &solvent,
+                                           nullptr,
+                                           &ucell);
+        auto components = factory.create_components(pot_register_in);
+        pelec->pot->set_components(std::move(components));
     }
 
     //! 3) initialize DFT+U

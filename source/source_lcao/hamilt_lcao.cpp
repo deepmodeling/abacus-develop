@@ -92,41 +92,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     this->sR = new HContainer<TR>(paraV);
     this->hsk = new HS_Matrix_K<TK>(paraV);
 
-    // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>) is registered without template
-    std::vector<std::string> pot_register_in;
-    if (PARAM.inp.vl_in_h)
-    {
-        if (PARAM.inp.vion_in_h)
-        {
-            pot_register_in.push_back("local");
-        }
-        if (PARAM.inp.vh_in_h)
-        {
-            pot_register_in.push_back("hartree");
-        }
-        pot_register_in.push_back("xc");
-        if (PARAM.inp.imp_sol)
-        {
-            pot_register_in.push_back("surchem");
-        }
-        if (PARAM.inp.efield_flag)
-        {
-            pot_register_in.push_back("efield");
-        }
-        if (PARAM.inp.gate_flag)
-        {
-            pot_register_in.push_back("gatefield");
-        }
-        if (PARAM.inp.esolver_type == "tddft")
-        {
-            pot_register_in.push_back("tddft");
-        }
-        if (PARAM.inp.ml_exx) // sunliang
-        {
-            pot_register_in.push_back("ml_exx");
-        }
-    }
-
     // Gamma_only case to initialize HamiltLCAO
     //
     // code block to construct Operator Chains
@@ -177,22 +142,15 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // in general case, target HR is Gint::hRGint, while target HK is this->hsk->get_hk()
         if (PARAM.inp.vl_in_h)
         {
-            // only Potential is not empty, Veff and Meta are available
-            if (pot_register_in.size() > 0)
-            {
-                // register Potential by gathered operator
-                pot_in->pot_register(pot_register_in);
-                // effective potential term
-                Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
-                                                                    this->kv->kvec_d,
-                                                                    pot_in,
-                                                                    this->hR, // no explicit call yet
-                                                                    &ucell,
-                                                                    orb.cutoffs(),
-                                                                    &grid_d,
-                                                                    PARAM.inp.nspin);
-                this->getOperator()->add(veff);
-            }
+            Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                this->kv->kvec_d,
+                                                                pot_in,
+                                                                this->hR,
+                                                                &ucell,
+                                                                orb.cutoffs(),
+                                                                &grid_d,
+                                                                PARAM.inp.nspin);
+            this->getOperator()->add(veff);
         }
 
 #ifdef __MLALGO
@@ -247,21 +205,14 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // in general case, target HR is Gint::pvpR_reduced, while target HK is this->hsk->get_hk()
         if (PARAM.inp.vl_in_h)
         {
-            // only Potential is not empty, Veff and Meta are available
-            if (pot_register_in.size() > 0)
-            {
-                // register Potential by gathered operator
-                pot_in->pot_register(pot_register_in);
-                // Veff term
-                this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
-                                                                     this->kv->kvec_d,
-                                                                     pot_in,
-                                                                     this->hR,
-                                                                     &ucell,
-                                                                     orb.cutoffs(),
-                                                                     &grid_d,
-                                                                     PARAM.inp.nspin);
-            }
+            this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                 this->kv->kvec_d,
+                                                                 pot_in,
+                                                                 this->hR,
+                                                                 &ucell,
+                                                                 orb.cutoffs(),
+                                                                 &grid_d,
+                                                                 PARAM.inp.nspin);
         }
 
         // initial operator for multi-k case
