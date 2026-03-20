@@ -4,6 +4,9 @@
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include <limits>
+#include <stdexcept>
+#include <string>
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
@@ -126,9 +129,14 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     this->Update(changedpos, changedforce,H,ucell);
     
     //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    size_t matrix_dim = static_cast<size_t>(3) * static_cast<size_t>(size);
+    size_t lwork_size = matrix_dim * matrix_dim
+    if (lwork_size > static_cast<size_t>(std::numeric_limits<int>::max())){
+	throw std::overflow_error("lwork exceeds INT_MAX, matrix too large");
+    }
+    int lwork = static_cast<int>(lwork_size);
+    std::vector<double> omega(3 * size);
+    srd::vector<double> work(lwork);
     int info=0;
     std::vector<double> H_flat;
     
@@ -137,9 +145,13 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
         H_flat.insert(H_flat.end(), row.begin(), row.end());
     }
     
-    int value=3*size;
-    int* ptr=&value;
+    
+    int n = 3 * size
     dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
+    if (info !=0) {
+	throw std::runtime_error("dsyev failed with info = " + std::to_string(info));
+    }
+
     std::vector<std::vector<double>> V(3*size, std::vector<double>(3*size, 0.0));
     for(int i = 0; i < 3*size; i++)
     {
