@@ -109,7 +109,7 @@ void Parallel_Global::read_pal_param(int argc,
     MPI_Init(&argc, &argv); // Peize Lin change 2018-07-12
 #endif //_OPENMP
 
-    //  KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
+    //  KPAR = std::stoi(argv[1]); // mohan abandon 2010-06-09
 
     // get world size --> NPROC
     // get global rank --> MY_RANK

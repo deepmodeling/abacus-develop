@@ -157,9 +157,9 @@ void NumericalNonlocalLmTest::SetUp() {
         if (label == "element") {
             elem_label_ = val;
         } else if (label == "number_of_proj") {
-            nproj_ = std::atoi(val.c_str());
+            nproj_ = std::stoi(val);
         } else if (label == "mesh_size") {
-            nmesh_upf = std::atoi(val.c_str());
+            nmesh_upf = std::stoi(val);
         }
 
         if (linebuf.find("/>") != std::string::npos) {
