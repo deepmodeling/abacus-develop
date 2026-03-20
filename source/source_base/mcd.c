@@ -705,7 +705,7 @@ int MCD_sscanf(const char *str,const char *fmt,char*fun,char*file,int line,...)
 /* scanf etc helper function */
 void scan_args(const char *fmt,va_list argptr,char*fun,char*file,int line)
 {
-	char **ptr;
+	char ** ptr = nullptr;
 	void * dummy = nullptr;	// clear up the unused warning
 
 	for(;*fmt;fmt++) {
