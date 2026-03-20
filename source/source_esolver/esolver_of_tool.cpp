@@ -24,7 +24,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     }
 
     delete this->pelec->pot;
-    this->pelec->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho);
+    this->pelec->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho, &ucell);
 
     std::vector<std::string> pot_register_in;
     if (PARAM.inp.vion_in_h)

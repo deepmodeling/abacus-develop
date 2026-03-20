@@ -98,7 +98,7 @@ void write_eband_terms(const int nspin,
         // 2. pp: local
         if (PARAM.inp.vl_in_h)
         {
-            elecstate::Potential pot_local(&rhod_basis, &rho_basis);
+            elecstate::Potential pot_local(&rhod_basis, &rho_basis, &ucell);
             elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, pot_local.get_eff_vofk(), &solvent, nullptr, &ucell);
             auto components = factory.create_components({ "local" });
             pot_local.set_components(std::move(components));
@@ -152,7 +152,7 @@ void write_eband_terms(const int nspin,
         // 4. hartree
         if (PARAM.inp.vh_in_h)
         {
-            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis);
+            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis, &ucell);
             elecstate::PotentialFactory factory(&vloc, &sf, &rhod_basis, &etxc, &vtxc, pot_hartree.get_eff_vofk(), &solvent, nullptr, &ucell);
             auto components = factory.create_components({ "hartree" });
             pot_hartree.set_components(std::move(components));

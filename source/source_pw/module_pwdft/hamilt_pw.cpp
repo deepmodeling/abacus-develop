@@ -49,63 +49,26 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (PARAM.inp.vl_in_h)
     {
-        std::vector<std::string> pot_register_in;
-        if (PARAM.inp.vion_in_h)
+        Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
+                                                                    pot_in->get_veff_smooth_data<Real>(),
+                                                                    pot_in->get_veff_smooth().nr,
+                                                                    pot_in->get_veff_smooth().nc,
+                                                                    wfc_basis);
+        if(this->ops == nullptr)
         {
-            pot_register_in.push_back("local");
+            this->ops = veff;
         }
-        if (PARAM.inp.vh_in_h)
+        else
         {
-            pot_register_in.push_back("hartree");
+            this->ops->add(veff);
         }
-        //no variable can choose xc, maybe it is necessary
-        pot_register_in.push_back("xc");
-        if (PARAM.inp.imp_sol)
-        {
-            pot_register_in.push_back("surchem");
-        }
-        if (PARAM.inp.efield_flag)
-        {
-            pot_register_in.push_back("efield");
-        }
-        if (PARAM.inp.gate_flag)
-        {
-            pot_register_in.push_back("gatefield");
-        }
-        if (PARAM.inp.ml_exx) // sunliang
-        {
-            pot_register_in.push_back("ml_exx");
-        }
-        // DFT-1/2
-        if (PARAM.inp.dfthalf_type == 1) {
-            pot_register_in.push_back("dfthalf");
-        }
-        //only Potential is not empty, Veff and Meta are available
-        if(pot_register_in.size()>0)
-        {
-            //register Potential by gathered operator
-            pot_in->pot_register(pot_register_in);
-            Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
-                                                                        pot_in->get_veff_smooth_data<Real>(),
-                                                                        pot_in->get_veff_smooth().nr,
-                                                                        pot_in->get_veff_smooth().nc,
-                                                                        wfc_basis);
-            if(this->ops == nullptr)
-            {
-                this->ops = veff;
-            }
-            else
-            {
-                this->ops->add(veff);
-            }
-            Operator<T, Device>* meta = new Meta<OperatorPW<T, Device>>(tpiba,
-                                                                        isk,
-                                                                        pot_in->get_vofk_smooth_data<Real>(),
-                                                                        pot_in->get_vofk_smooth().nr,
-                                                                        pot_in->get_vofk_smooth().nc,
-                                                                        wfc_basis);
-            this->ops->add(meta);
-        }
+        Operator<T, Device>* meta = new Meta<OperatorPW<T, Device>>(tpiba,
+                                                                    isk,
+                                                                    pot_in->get_vofk_smooth_data<Real>(),
+                                                                    pot_in->get_vofk_smooth().nr,
+                                                                    pot_in->get_vofk_smooth().nc,
+                                                                    wfc_basis);
+        this->ops->add(meta);
     }
     if (PARAM.inp.vnl_in_h)
     {

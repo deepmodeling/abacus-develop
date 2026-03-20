@@ -3,6 +3,7 @@
 #include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_factory.h"
 
 namespace elecstate
 {
@@ -102,6 +103,49 @@ void setup_estate_pw_impl(
     if (pelec->pot == nullptr)
     {
         pelec->pot = new elecstate::Potential(pw_rhod, pw_rho, &ucell);
+
+        std::vector<std::string> pot_register_in;
+        if (inp.vion_in_h)
+        {
+            pot_register_in.push_back("local");
+        }
+        if (inp.vh_in_h)
+        {
+            pot_register_in.push_back("hartree");
+        }
+        pot_register_in.push_back("xc");
+        if (inp.imp_sol)
+        {
+            pot_register_in.push_back("surchem");
+        }
+        if (inp.efield_flag)
+        {
+            pot_register_in.push_back("efield");
+        }
+        if (inp.gate_flag)
+        {
+            pot_register_in.push_back("gatefield");
+        }
+        if (inp.ml_exx)
+        {
+            pot_register_in.push_back("ml_exx");
+        }
+        if (inp.dfthalf_type == 1)
+        {
+            pot_register_in.push_back("dfthalf");
+        }
+
+        elecstate::PotentialFactory factory(&locpp.vloc,
+                                           &sf,
+                                           pw_rhod,
+                                           &pelec->f_en.etxc,
+                                           &pelec->f_en.vtxc,
+                                           pelec->pot->get_eff_vofk(),
+                                           &solvent,
+                                           vsep_cell,
+                                           &ucell);
+        auto components = factory.create_components(pot_register_in);
+        pelec->pot->set_components(std::move(components));
     }
 
     locpp.init_vloc(ucell, pw_rhod);
