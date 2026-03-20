@@ -129,8 +129,11 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
     //add the check to avoid overflow
-    size_t size_overflow=static_cast<size_t>(size);
-    size_t lwork=3*size_overflow*3*size_overflow;
+    if(size>46340){
+	std::cerr<<"size out of range!"<<std::endl;
+	return ;
+    }
+    int lwork=3*size*3*size;
     int info=0;
     std::vector<double> H_flat;
     
