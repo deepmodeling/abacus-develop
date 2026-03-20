@@ -99,6 +99,19 @@ class YlmReal
 
     static long double Fact(const int n);
     static int Semi_Fact(const int n);
+	//auxiliary functions for rlylm
+	static void init_arrays(double* Am, double* Bm, const int size);
+    static void init_zdep(double zdep[][20], const int size);
+    static void calculate_xy_coefficients(const int lmax, const double& x, const double& y,
+                                          double* Am, double* Bm);
+    static void calculate_low_order_zdep(const int il, double zdep[][20],
+                                        const double& z, const double& r);
+    static void calculate_high_order_zdep(const int il, const int im, double zdep[][20],
+                                         const double& r, const double& z);
+    static void calculate_z_coefficients(const int lmax, const double& z, const double& r,
+                                        double zdep[][20]);
+    static void combine_coefficients(const int lmax, const double* Am, const double* Bm,
+                                    double zdep[][20], const double& r, double* rly);
 
 };
 

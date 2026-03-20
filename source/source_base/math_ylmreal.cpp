@@ -25,7 +25,7 @@ YlmReal::~YlmReal(){}
  * @param Bm Array for Bm coefficients
  * @param size Size of arrays (should be at least lmax+1)
  */
-void init_arrays(double* Am, double* Bm, const int size) {
+void YlmReal::init_arrays(double* Am, double* Bm, const int size) {
     for(int i = 0; i < size; ++i) {
         Am[i] = 0.0;
         Bm[i] = 0.0;
@@ -37,7 +37,7 @@ void init_arrays(double* Am, double* Bm, const int size) {
  * @param zdep 2D array for z-dependent coefficients
  * @param size Size of zdep (should be at least lmax+1)
  */
-void init_zdep(double zdep[][20], const int size) {
+void YlmReal::init_zdep(double zdep[][20], const int size) {
     for(int il = 0; il < size; ++il) {
         for(int jl = 0; jl < size; ++jl) {
             zdep[il][jl] = 0.0; // mohan add 2021-05-07
@@ -54,7 +54,7 @@ void init_zdep(double zdep[][20], const int size) {
  * @param Bm Output array for Bm coefficients
  * @param fact Factorial function (assumed to be available)
  */
-void calculate_xy_coefficients(const int lmax, const double& x, const double& y,
+void YlmReal::calculate_xy_coefficients(const int lmax, const double& x, const double& y,
                               double* Am, double* Bm) {
     double x2 = x * x;
     double x3 = x2 * x;
@@ -108,7 +108,7 @@ void calculate_xy_coefficients(const int lmax, const double& x, const double& y,
  * @param z z-coordinate
  * @param r radius
  */
-void calculate_low_order_zdep(const int il, double zdep[][20], 
+void YlmReal::calculate_low_order_zdep(const int il, double zdep[][20], 
                              const double& z, const double& r) {
     double z2 = z * z;
     double z3 = z2 * z;
@@ -160,7 +160,7 @@ void calculate_low_order_zdep(const int il, double zdep[][20],
  * @param r radius
  * @param z z-coordinate
  */
-void calculate_high_order_zdep(const int il, const int im, double zdep[][20],
+void YlmReal::calculate_high_order_zdep(const int il, const int im, double zdep[][20],
                               const double& r, const double& z) {
     int kmax = static_cast<int>((il - im) / 2);
     for(int ik = 0; ik <= kmax; ik++) {
@@ -192,7 +192,7 @@ void calculate_high_order_zdep(const int il, const int im, double zdep[][20],
  * @param r radius
  * @param zdep Output 2D array for z-dependent coefficients
  */
-void calculate_z_coefficients(const int lmax, const double& z, const double& r,
+void YlmReal::calculate_z_coefficients(const int lmax, const double& z, const double& r,
                             double zdep[][20]) {
     for(int il = 0; il < lmax + 1; il++) {
         if(il <= 5) {
@@ -215,7 +215,7 @@ void calculate_z_coefficients(const int lmax, const double& z, const double& r,
  * @param r radius
  * @param rly Output array for real spherical harmonics
  */
-void combine_coefficients(const int lmax, const double* Am, const double* Bm,
+void YlmReal::combine_coefficients(const int lmax, const double* Am, const double* Bm,
                          double zdep[][20], const double& r, double* rly) {
     int ic = 0;
     double rpi = r;
