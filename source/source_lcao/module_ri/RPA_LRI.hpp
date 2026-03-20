@@ -96,7 +96,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     }
     //	this->cv = std::move(exx_lri_rpa.cv);
     //    exx_lri_rpa.cv = exx_lri_rpa.cv;
-    ModuleBase::timer::start("RPA_LRI", "init");
+    ModuleBase::timer::end("RPA_LRI", "init");
 }
 
 template <typename T, typename Tdata>
