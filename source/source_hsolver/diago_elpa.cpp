@@ -211,7 +211,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
 
 #ifdef __MPI
 template <typename T>
-bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF) {
+bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const {
     int doHandle = false;
     if (newIteration) {
         doHandle = true;
