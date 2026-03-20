@@ -130,13 +130,13 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     
     //! call dysev
     size_t matrix_dim = static_cast<size_t>(3) * static_cast<size_t>(size);
-    size_t lwork_size = matrix_dim * matrix_dim
+    size_t lwork_size = matrix_dim * matrix_dim;
     if (lwork_size > static_cast<size_t>(std::numeric_limits<int>::max())){
 	throw std::overflow_error("lwork exceeds INT_MAX, matrix too large");
     }
     int lwork = static_cast<int>(lwork_size);
     std::vector<double> omega(3 * size);
-    srd::vector<double> work(lwork);
+    std::vector<double> work(lwork);
     int info=0;
     std::vector<double> H_flat;
     
@@ -146,7 +146,7 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     }
     
     
-    int n = 3 * size
+    int n = 3 * size;
     dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
     if (info !=0) {
 	throw std::runtime_error("dsyev failed with info = " + std::to_string(info));
