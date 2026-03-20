@@ -307,31 +307,31 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            pp.etotps = std::stod(val[ip]);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            pp.ecutwfc = std::stod(val[ip]);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            pp.ecutrho = std::stod(val[ip]);
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            pp.lmax = std::stoi(val[ip]);
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            this->lmax_rho = std::stoi(val[ip]);
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            this->lloc = std::stoi(val[ip]);
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            pp.mesh = std::stoi(val[ip]);
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +341,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            pp.nchi = std::stoi(val[ip]);
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            pp.nbeta = std::stoi(val[ip]);
         }
         else
         {
@@ -377,11 +377,11 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
         {
             if (name[ip] == "dx")
             {
-                dx = atof(val[ip].c_str());
+                dx = std::stod(val[ip]);
             }
             else if (name[ip] == "mesh")
             {
-                pp.mesh = atoi(val[ip].c_str());
+                pp.mesh = std::stoi(val[ip]);
 
                 this->mesh_changed = false;
                 if (pp.mesh % 2 == 0)
@@ -392,15 +392,15 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "xmin")
             {
-                xmin = atof(val[ip].c_str());
+                xmin = std::stod(val[ip]);
             }
             else if (name[ip] == "rmax")
             {
-                rmax = atof(val[ip].c_str());
+                rmax = std::stod(val[ip]);
             }
             else if (name[ip] == "zmesh")
             {
-                zmesh = atof(val[ip].c_str());
+                zmesh = std::stod(val[ip]);
             }
             else
             {
@@ -501,19 +501,19 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
             }
             else if (name[ip] == "angular_momentum")
             {
-                pp.lll[ib] = atoi(val[ip].c_str());
+                pp.lll[ib] = std::stoi(val[ip]);
             }
             else if (name[ip] == "cutoff_radius_index")
             {
-                this->kbeta[ib] = atoi(val[ip].c_str());
+                this->kbeta[ib] = std::stoi(val[ip]);
             }
             else if (name[ip] == "cutoff_radius")
             {
-                rcut[ib] = atof(val[ip].c_str());
+                rcut[ib] = std::stod(val[ip]);
             }
             else if (name[ip] == "ultrasoft_cutoff_radius")
             {
-                rcutus[ib] = atof(val[ip].c_str());
+                rcutus[ib] = std::stod(val[ip]);
             }
             else
             {
@@ -572,11 +572,11 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
             }
             else if (name[ip] == "nqf")
             {
-                nqf = atoi(val[ip].c_str());
+                nqf = std::stoi(val[ip]);
             }
             else if (name[ip] == "nqlc")
             {
-                pp.nqlc = atoi(val[ip].c_str());
+                pp.nqlc = std::stoi(val[ip]);
             }
             else
             {
@@ -752,7 +752,7 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
             }
             else if (name[ip] == "l")
             {
-                pp.lchi[iw] = atoi(val[ip].c_str());
+                pp.lchi[iw] = std::stoi(val[ip]);
                 if (nchi[iw] == -1)
                 {
                     nchi[iw] = pp.lchi[iw] - 1;
@@ -760,23 +760,23 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
             }
             else if (name[ip] == "occupation")
             {
-                pp.oc[iw] = atof(val[ip].c_str());
+                pp.oc[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "n")
             {
-                nchi[iw] = atoi(val[ip].c_str());
+                nchi[iw] = std::stoi(val[ip]);
             }
             else if (name[ip] == "pseudo_energy")
             {
-                epseu[iw] = atof(val[ip].c_str());
+                epseu[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "cutoff_radius")
             {
-                rcut_chi[iw] = atof(val[ip].c_str());
+                rcut_chi[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "ultrasoft_cutoff_radius")
             {
-                rcutus_chi[iw] = atof(val[ip].c_str());
+                rcutus_chi[iw] = std::stod(val[ip]);
             }
             else
             {
@@ -870,19 +870,19 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "nn")
             {
-                pp.nn[nw] = atoi(val[ip].c_str());
+                pp.nn[nw] = std::stoi(val[ip]);
             }
             else if (name[ip] == "lchi")
             {
-                pp.lchi[nw] = atoi(val[ip].c_str());
+                pp.lchi[nw] = std::stoi(val[ip]);
             }
             else if (name[ip] == "jchi")
             {
-                pp.jchi[nw] = atof(val[ip].c_str());
+                pp.jchi[nw] = std::stod(val[ip]);
             }
             else if (name[ip] == "oc")
             {
-                pp.oc[nw] = atof(val[ip].c_str());
+                pp.oc[nw] = std::stod(val[ip]);
             }
             else
             {
@@ -907,11 +907,11 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "lll")
             {
-                pp.lll[nb] = atoi(val[ip].c_str());
+                pp.lll[nb] = std::stoi(val[ip]);
             }
             else if (name[ip] == "jjj")
             {
-                pp.jjj[nb] = atof(val[ip].c_str());
+                pp.jjj[nb] = std::stod(val[ip]);
             }
             else
             {
