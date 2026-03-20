@@ -85,11 +85,11 @@ class Numerical_Nonlocal_Lm
 	double kcut;
 	double dk;
 
-	double* r_radial; //points of r
+	double* r_radial = nullptr; //points of r
 	double* k_radial = nullptr;
 
 	double* rab = nullptr;
-	double* beta_r; // |beta(r) * r>
+	double* beta_r = nullptr; // |beta(r) * r>
 	double* beta_k = nullptr;
 };
 

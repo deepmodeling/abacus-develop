@@ -44,7 +44,7 @@ class ForceStressArrays
     // r_mu - r_nu
     //----------------------------------------
 
-    double* DH_r;//zhengdy added 2017-07
+    double* DH_r = nullptr;//zhengdy added 2017-07
 
     double* stvnl11 = nullptr;
     double* stvnl12 = nullptr;

@@ -64,9 +64,9 @@ typedef struct ChunkS
 #else
 	long long	id;	// 64bit allocation ID
 #endif
-	char		*function;	//creating function
-	char		*file;		//file function is in
-	void		*ptr;		//pointer to allocation
+	char		* function = nullptr;	//creating function
+	char		* file = nullptr;		//file function is in
+	void		* ptr = nullptr;		//pointer to allocation
 	struct ChunkS 	*next,		//next chunk (null if nonw)
 			*prev;		//previous chunk (null if nonw)
 }Chunk;
@@ -706,7 +706,7 @@ int MCD_sscanf(const char *str,const char *fmt,char*fun,char*file,int line,...)
 void scan_args(const char *fmt,va_list argptr,char*fun,char*file,int line)
 {
 	char **ptr;
-	void *dummy;	// clear up the unused warning
+	void * dummy = nullptr;	// clear up the unused warning
 
 	for(;*fmt;fmt++) {
 		if(*fmt!='%')
