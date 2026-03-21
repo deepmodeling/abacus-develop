@@ -3,7 +3,8 @@
 
 #include "vector3.h"
 #include "matrix.h"
-
+#include "realarray.h"
+#include <vector>
 namespace ModuleBase
 {
 
@@ -99,6 +100,37 @@ class YlmReal
 
     static long double Fact(const int n);
     static int Semi_Fact(const int n);
+	// ------------------------------------------------------------------
+    // 以下为 Ylm_Real 函数重构拆分出的辅助函数
+    // ------------------------------------------------------------------
+    
+    // 根据 lmax2 计算 lmax，如果输入不合法返回 -1
+    static int get_lmax(const int lmax2);
+
+    // 计算极角 (cost = cos(theta)) 和方位角 (phi)
+    static void compute_polar_angles(
+        int ng, 
+        const ModuleBase::Vector3<double>* g, 
+        std::vector<double>& cost, 
+        std::vector<double>& phi
+    );
+
+    // 递推计算连带勒让德多项式
+    static void compute_Legendre_Polynomials(
+        int lmax, 
+        int ng, 
+        const std::vector<double>& cost, 
+        ModuleBase::realArray& p
+    );
+
+    // 组装最终的实球谐函数矩阵
+    static void assemble_ylm(
+        int lmax, 
+        int ng, 
+        const std::vector<double>& phi, 
+        const ModuleBase::realArray& p, 
+        matrix& ylm
+		);
 
 };
 

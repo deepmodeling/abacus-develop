@@ -353,63 +353,27 @@ void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE
 // Use Numerical recursive algorithm as given in Numerical Recipes
 //==========================================================
 // from ylmr2.f90
-void YlmReal::Ylm_Real
+int YlmReal::get_lmax(const int lmax2)
+{
+    for (int l = 0; l < 30; l++)
+    {
+        if ((l + 1) * (l + 1) == lmax2)
+        {
+            return l;
+        }
+    }
+    return -1; // 表示未找到合法范围内的 lmax
+}
+
+
+void YlmReal::compute_polar_angles
 (
-    const int lmax2, 			// lmax2 = (lmax+1)^2
-    const int ng,				//
-    const ModuleBase::Vector3<double> *g, 	// g_cartesian_vec(x,y,z)
-    matrix &ylm 				// output
+    int ng,				
+    const ModuleBase::Vector3<double> *g, 
+    std::vector<double>& cost,
+    std::vector<double>& phi
 )
 {
-
-    if (ng<1 || lmax2<1)
-    {
-        ModuleBase::WARNING("YLM_REAL","ng<1 or lmax2<1");
-        return;
-    }
-
-//----------------------------------------------------------
-// EXPLAIN : find out lmax
-//----------------------------------------------------------
-    bool out_of_range = true;
-    int lmax = 0;
-    for (int l= 0; l< 30; l++)
-    {
-        if ((l+1)*(l+1) == lmax2)
-        {
-            lmax = l;
-            out_of_range = false;
-            break;
-        }
-    }
-    if (out_of_range)
-    {
-        ModuleBase::WARNING_QUIT("YLM_REAL","l>30 or l<0");
-    }
-
-//----------------------------------------------------------
-// EXPLAIN : if lmax = 1,only use Y00 , output result.
-//----------------------------------------------------------
-    if (lmax == 0)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-        for (int i=0;i<ng;i++)
-        {
-            ylm(0, i) = ModuleBase::SQRT_INVERSE_FOUR_PI;
-        }
-        return;
-    }
-
-//----------------------------------------------------------
-// LOCAL VARIABLES :
-// NAME : cost = cos(theta),theta and phi are polar angles
-// NAME : phi
-//----------------------------------------------------------
-	std::vector <double> cost(ng);
-	std::vector <double> phi(ng);
-
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -439,15 +403,19 @@ void YlmReal::Ylm_Real
             phi[ig] = ModuleBase::PI_HALF * ((g[ig].y >= 0.0) ? 1.0 : -1.0); //HLX: modified on 10/13/2006
         } // end if
     } // enddo
+}
 
-//==========================================================
-// NAME : p(Legendre Polynomials) (0 <= m <= l)
-//==========================================================
-    ModuleBase::realArray p(lmax+1,lmax+1,ng);
-    int lm = -1;
+
+void YlmReal::compute_Legendre_Polynomials
+(
+    int lmax, 
+    int ng, 
+    const std::vector<double>& cost, 
+    ModuleBase::realArray& p
+)
+{
     for (int l=0; l<=lmax; l++)
     {
-        const double c = sqrt((2*l+1) / ModuleBase::FOUR_PI);
         if (l == 0)
         {
 #ifdef _OPENMP
@@ -503,7 +471,23 @@ void YlmReal::Ylm_Real
                 }
             }
         } // end if
+    }
+}
 
+
+void YlmReal::assemble_ylm
+(
+    int lmax, 
+    int ng,  
+    const std::vector<double>& phi, 
+    const ModuleBase::realArray& p, 
+    matrix& ylm
+)
+{
+    int lm=-1;
+    for (int l=0; l<=lmax; l++)
+    {
+        const double c = sqrt((2*l+1) / ModuleBase::FOUR_PI);
         // Y_lm, m = 0
         ++lm;
 #ifdef _OPENMP
@@ -538,84 +522,58 @@ void YlmReal::Ylm_Real
 
             // Y_lm, m < 0
             ++lm;
-
-            /*
-             * mohan test bug 2009-03-03
-             *
-            if(l==9 && m==8)
-            {
-            	if(my_rank==0)
-            	{
-            		std::ofstream ofs("Log2.txt");
-            		for(int ig=0; ig<ng; ig++)
-            		{
-            			if(ig%1==0) ofs << "\n";
-            			ofs << std::setw(20) << same
-            				<< std::setw(20) << Fact(l - m)
-            				<< std::setw(20) << Fact(l + m)
-            				<< std::setw(20) << ylm(lm, ig);
-            		}
-            	}
-            	MPI_Barrier(MPI_COMM_WORLD);
-            	ModuleBase::QUIT();
-            }
-            */
-
         }
     }// end do
+}
 
+void YlmReal::Ylm_Real
+(
+    const int lmax2, 			// lmax2 = (lmax+1)^2
+    const int ng,				//
+    const ModuleBase::Vector3<double> *g, 	// g_cartesian_vec(x,y,z)
+    matrix &ylm 				// output
+)
+{
+    // 1. 基础校验
+    if (ng<1 || lmax2<1)
+    {
+        ModuleBase::WARNING("YLM_REAL","ng<1 or lmax2<1");
+        return;
+    }
+    // 2. 获取 lmax
+    int lmax = get_lmax(lmax2); 
+    if (lmax == -1){
+        ModuleBase::WARNING_QUIT("YLM_REAL","l>30 or l<0");
+    }
 
+    // 3. 处理 lmax == 0 的特殊情况 (直接保留在主函数)
+    if (lmax == 0)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (int i = 0; i < ng; i++)
+        {
+            ylm(0, i) = ModuleBase::SQRT_INVERSE_FOUR_PI;
+        }
+        return;
+    }
 
-    /*	GlobalV::ofs_running<<"\n Unit Condition About Ylm_Real"<<std::endl;
-    	int count=0;
-    	for(int l=0; l<=lmax; l++)
-    	{
-    		for(int m=0; m<2*l+1; m++)
-    		{
-    			//  mohan debug 2009-03-03
-    			if(l==9 && m==15)
-    			{
-    				if(my_rank==0)
-    				{
-    					std::ofstream ofs("Log1.txt");
-    					for(int ig=0; ig<ng; ig++)
-    					{
-    						if(ig%6==0) ofs << "\n";
-    						ofs << std::setw(20) << ylm(count, ig);
-    					}
-    				}
-    				MPI_Barrier(MPI_COMM_WORLD);
-    				ModuleBase::QUIT();
-    			}
-    			double sum_before = 0.0;
-    			for(int ig=0; ig<ng; ig++)
-    			{
-    				sum_before += ylm(count, ig) * ylm(count, ig);
-    			}
-    			sum_before *= ModuleBase::FOUR_PI/ng;
-    			GlobalV::ofs_running<<std::setw(5)<<l<<std::setw(5)<<m<<std::setw(15)<<sum_before;
+    // 4. 为后续计算分配内存
+	std::vector <double> cost(ng);
+	std::vector <double> phi(ng);
+    ModuleBase::realArray p(lmax+1,lmax+1,ng);
 
+    // 5. 依次调用拆分出的逻辑模块
+    //步骤1：计算角度
+    compute_polar_angles(ng, g, cost, phi);
 
-    //			for(int ig=0; ig<ng; ig++)
-    //			{
-    //				ylm(count, ig) /= sqrt(sum_before);
-    //			}
-    //			double sum = 0;
-    //			for(int ig=0; ig<ng; ig++)
-    //			{
-    //				sum += ylm(count, ig) * ylm(count, ig);
-    //			}
-    //			count++;
-    //			GlobalV::ofs_running<<std::setw(15)<<sum*ModuleBase::FOUR_PI/ng;
+    //步骤2：计算勒让德多项式
+    compute_Legendre_Polynomials(lmax, ng, cost, p);
+    
+    //步骤3：组装实球谐函数
+    assemble_ylm(lmax, ng, phi, p, ylm);
 
-    			GlobalV::ofs_running<<std::endl;
-    		}
-    	}
-    	GlobalV::ofs_running<<std::endl;
-    */
-
-
-    return;
 } // end subroutine ylmr2
 
 void YlmReal::grad_Ylm_Real
