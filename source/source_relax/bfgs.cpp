@@ -126,18 +126,20 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     std::vector<double> changedpos = ReshapeMToV(pos);
     this->Update(changedpos, changedforce,H,ucell);
     
-    //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    // overflow checking for lwork added
-    if (size > 0 && 9 > INT_MAX / size) {
-        throw std::runtime_error("Integer overflow detected: 9 * size exceeds INT_MAX");
+    // overflow checking for size/lwork added by spokening125 2026-03-22 
+    if (size > 0 && 3 > INT_MAX / size) {
+        throw std::runtime_error("Integer overflow detected: 3 * size exceeds INT_MAX");
     }
-    int intermediate = 9 * size;
-    if (size > 0 && intermediate > INT_MAX / size) {
+    int intermediate = 3*size;
+    if (size > 0 && intermediate > INT_MAX / intermediate) {
         throw std::runtime_error("Integer overflow detected: lwork exceeds INT_MAX");
     }
-    int lwork = intermediate * size;
+    int lwork = intermediate*intermediate;
+
+    //! call dysev
+    std::vector<double> omega(intermediate);
+    std::vector<double> work(lwork);
+
     int info=0;
     std::vector<double> H_flat;
     
