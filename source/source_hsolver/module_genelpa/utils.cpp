@@ -3,6 +3,7 @@
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 
+#include <cerrno>
 #include <complex>
 #include <cstring>
 #include <fstream>
@@ -91,8 +92,14 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
-    if (myid == ROOT_PROC)
-        matrixFile.open(FileName);
+    if (myid == ROOT_PROC) {
+    matrixFile.open(FileName);
+    if (!matrixFile.is_open()) {
+        std::cerr << "Error: Failed to open file " << FileName 
+                  << " (errno: " << errno << ")" << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+}
 
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
