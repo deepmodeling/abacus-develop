@@ -29,7 +29,7 @@ void Data::load_data(Input &input, const int ndata, std::string *dir, const torc
     std::cout << "Load data done" << std::endl;
 }
 
-torch::Tensor Data::get_data(std::string parameter, const int ikernel){
+torch::Tensor Data::get_data(std::string parameter, const int ikernel) const {
     if (parameter == "gamma"){
         return this->gamma.reshape({this->nx_tot});
     }
@@ -208,7 +208,7 @@ void Data::init_data(const int nkernel, const int ndata, const int fftdim, const
         if (this->load_tanhxi[ik]){
             this->tanhxi[ik]    = torch::zeros({ndata, fftdim, fftdim, fftdim}).to(device);
         }
-        if (this->load_tanhxi_nl[ik{
+        if (this->load_tanhxi_nl[ik]){
             this->tanhxi_nl[ik] = torch::zeros({ndata, fftdim, fftdim, fftdim}).to(device);
         }
         if (this->load_tanh_pnl[ik]){
@@ -246,27 +246,28 @@ void Data::load_data_(
 
     for (int idata = 0; idata < ndata; ++idata)
     {
-        this->loadTensor(dir[idata] + "/rho.npy", cshape, fortran_order, container, idata, fftdim, rho);
+        this->loadTensor(dir[idata] + "/rho.npy", idata, fftdim, rho);
         if (this->load_gamma){
-            this->loadTensor(dir[idata] + "/gamma.npy", cshape, fortran_order, container, idata, fftdim, gamma);
+            this->loadTensor(dir[idata] + "/gamma.npy", idata, fftdim, gamma);
         }
         if (this->load_p){
-            this->loadTensor(dir[idata] + "/p.npy", cshape, fortran_order, container, idata, fftdim, p);
-            npy::LoadArrayFromNumpy(dir[idata] + "/nablaRhox.npy", cshape, fortran_order, container);
+            this->loadTensor(dir[idata] + "/p.npy", idata, fftdim, p);
+            this->loadVector(dir[idata] + "/nablaRhox.npy", container);
+            // npy::LoadArrayFromNumpy(dir[idata] + "/nablaRhox.npy", cshape, fortran_order, container);
             nablaRho[idata][0] = torch::tensor(container).reshape({fftdim, fftdim, fftdim});
-            npy::LoadArrayFromNumpy(dir[idata] + "/nablaRhoy.npy", cshape, fortran_order, container);
+            this->loadVector(dir[idata] + "/nablaRhoy.npy", container);
             nablaRho[idata][1] = torch::tensor(container).reshape({fftdim, fftdim, fftdim});
-            npy::LoadArrayFromNumpy(dir[idata] + "/nablaRhoz.npy", cshape, fortran_order, container);
+            this->loadVector(dir[idata] + "/nablaRhoz.npy", container);
             nablaRho[idata][2] = torch::tensor(container).reshape({fftdim, fftdim, fftdim});
         }
         if (this->load_q){
-            this->loadTensor(dir[idata] + "/q.npy", cshape, fortran_order, container, idata, fftdim, q);
+            this->loadTensor(dir[idata] + "/q.npy", idata, fftdim, q);
         }
         if (this->load_tanhp){
-            this->loadTensor(dir[idata] + "/tanhp.npy", cshape, fortran_order, container, idata, fftdim, tanhp);
+            this->loadTensor(dir[idata] + "/tanhp.npy", idata, fftdim, tanhp);
         }
         if (this->load_tanhq){
-            this->loadTensor(dir[idata] + "/tanhq.npy", cshape, fortran_order, container, idata, fftdim, tanhq);
+            this->loadTensor(dir[idata] + "/tanhq.npy", idata, fftdim, tanhq);
         }
 
         for (int ik = 0; ik < input.nkernel; ++ik)
@@ -275,66 +276,79 @@ void Data::load_data_(
             double kscaling = input.kernel_scaling[ik];
 
             if (this->load_gammanl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("gammanl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, gammanl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("gammanl", ktype, kscaling), idata, fftdim, gammanl[ik]);
             }
             if (this->load_pnl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("pnl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, pnl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("pnl", ktype, kscaling), idata, fftdim, pnl[ik]);
             }
             if (this->load_qnl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("qnl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, qnl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("qnl", ktype, kscaling), idata, fftdim, qnl[ik]);
             }
             if (this->load_xi[ik]){
-                this->loadTensor(dir[idata] + this->file_name("xi", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, xi[ik]);
+                this->loadTensor(dir[idata] + this->file_name("xi", ktype, kscaling), idata, fftdim, xi[ik]);
             }
             if (this->load_tanhxi[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanhxi", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanhxi[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanhxi", ktype, kscaling), idata, fftdim, tanhxi[ik]);
             }
             if (this->load_tanhxi_nl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanhxi_nl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanhxi_nl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanhxi_nl", ktype, kscaling), idata, fftdim, tanhxi_nl[ik]);
             }
             if (this->load_tanh_pnl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanh_pnl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanh_pnl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanh_pnl", ktype, kscaling), idata, fftdim, tanh_pnl[ik]);
             }
             if (this->load_tanh_qnl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanh_qnl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanh_qnl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanh_qnl", ktype, kscaling), idata, fftdim, tanh_qnl[ik]);
             }
             if (this->load_tanhp_nl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanhp_nl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanhp_nl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanhp_nl", ktype, kscaling), idata, fftdim, tanhp_nl[ik]);
             }
             if (this->load_tanhq_nl[ik]){
-                this->loadTensor(dir[idata] + this->file_name("tanhq_nl", ktype, kscaling), cshape, fortran_order, container, idata, fftdim, tanhq_nl[ik]);
+                this->loadTensor(dir[idata] + this->file_name("tanhq_nl", ktype, kscaling), idata, fftdim, tanhq_nl[ik]);
             }
         }
 
-        this->loadTensor(dir[idata] + "/enhancement.npy", cshape, fortran_order, container, idata, fftdim, enhancement);
+        this->loadTensor(dir[idata] + "/enhancement.npy", idata, fftdim, enhancement);
         enhancement_mean[idata] = torch::mean(enhancement[idata]);
         tau_mean[idata] = torch::mean(torch::pow(rho[idata], input.exponent/3.) * enhancement[idata]);
 
         if (input.loss == "potential" || input.loss == "both" || input.loss == "both_new")
         {
-            this->loadTensor(dir[idata] + "/pauli.npy", cshape, fortran_order, container, idata, fftdim, pauli);
+            this->loadTensor(dir[idata] + "/pauli.npy", idata, fftdim, pauli);
             pauli_mean[idata] = torch::mean(pauli[idata]);
         }
     }
     enhancement.resize_({this->nx_tot, 1});
     pauli.resize_({nx_tot, 1});
 
-    this->tau_tf = this->cTF * torch::pow(this->rho, 5./3.);
+    if (input.energy_type == "kedf")
+    {
+        this->tau_exp = 5. / 3.;
+        this->tau_lda = this->cTF * torch::pow(this->rho, this->tau_exp);
+    }
+    else if (input.energy_type == "exx")
+    {
+        this->tau_exp = 4. / 3.;
+        this->tau_lda = this->cDirac * torch::pow(this->rho, this->tau_exp);
+    }
     // Input::print("load_data done");
 }
 
 void Data::loadTensor(
     std::string file,
-    std::vector<long unsigned int> cshape,
-    bool fortran_order, 
-    std::vector<double> &container,
     const int index,
     const int fftdim,
     torch::Tensor &data
 )
 {
-    npy::LoadArrayFromNumpy(file, cshape, fortran_order, container);
-    data[index] = torch::tensor(container).reshape({fftdim, fftdim, fftdim});
+    npy::npy_data<double> d = npy::read_npy<double>(file);
+    data[index] = torch::tensor(d.data).reshape({fftdim, fftdim, fftdim});
+}
+
+void Data::loadVector(std::string file,
+                      std::vector<double> &data)
+{
+    npy::npy_data<double> d = npy::read_npy<double>(file);
+    data = d.data;
 }
 
 void Data::dumpTensor(const torch::Tensor &data, std::string filename, int nx)
@@ -343,9 +357,11 @@ void Data::dumpTensor(const torch::Tensor &data, std::string filename, int nx)
     for (int ir = 0; ir < nx; ++ir){
         v[ir] = data[ir].item<double>();
     }
-    // std::vector<double> v(data.data_ptr<float>(), data.data_ptr<float>() + data.numel()); // this works, but only supports float tensor
-    const long unsigned cshape[] = {(long unsigned) nx}; // shape
-    npy::SaveArrayAsNumpy(filename, false, 1, cshape, v);
+    npy::npy_data_ptr<double> d;
+    d.data_ptr = v.data();
+    d.shape = {(long unsigned) nx};
+    d.fortran_order = false;
+    npy::write_npy(filename, d);
     std::cout << "Dumping " << filename << " done" << std::endl;
 }
 

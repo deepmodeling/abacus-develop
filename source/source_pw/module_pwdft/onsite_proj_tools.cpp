@@ -24,7 +24,7 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* n
     : nlpp_(nlpp_in), ucell_(ucell_in), psi_(psi_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in)
 {
     // get the device context
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
     // seems kvec_c never used...
     this->kvec_c = this->wfc_basis_->template get_kvec_c_data<FPTYPE>();
@@ -126,7 +126,7 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
     wfc_basis_ = wfc_basis_in;
     sf_ = sf_in;
 
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
     this->kvec_c = this->wfc_basis_->template get_kvec_c_data<FPTYPE>();
     // skip deeq, qq_nt

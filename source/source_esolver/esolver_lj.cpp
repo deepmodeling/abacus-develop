@@ -2,8 +2,8 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_io/output_log.h"
-#include "source_io/cif_io.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_output/cif_io.h"
 
 
 namespace ModuleESolver
@@ -126,7 +126,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     }
 
-    double ESolver_LJ::LJ_energy(const double& d, const int& i, const int& j)
+    double ESolver_LJ::LJ_energy(const double& d, const int& i, const int& j) const
     {
         assert(d > 1e-6); // avoid atom overlap
         const double r2 = d * d;
@@ -135,7 +135,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         return lj_c12(i, j) / (r6 * r6) - lj_c6(i, j) / r6;
     }
 
-    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j)
+    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const
     {
         const double d = dr.norm();
         assert(d > 1e-6); // avoid atom overlap

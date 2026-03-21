@@ -45,7 +45,7 @@ The CSR format stores a sparse m × n matrix M in row form using three (one-dime
   - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
   - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
 
-For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_interval](../input_files/input-main.md#out_interval) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
+For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 
 ## get_s
 We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_s`.

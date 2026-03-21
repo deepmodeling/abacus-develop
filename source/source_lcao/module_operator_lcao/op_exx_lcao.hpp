@@ -3,11 +3,13 @@
 #ifdef __EXX
 
 #include "op_exx_lcao.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/restart_exx_csr.h"
+#include "source_io/module_restart/restart_exx_csr.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "source_io/module_restart/restart.h"
 
 namespace hamilt
 {
@@ -243,10 +245,9 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     if (!ifs) { all_exist = 0; break; }
                 }
 // Add MPI communication to synchronize all_exist across processes
-#ifdef __MPI
-                // don't read in any files if one of the processes doesn't have it
-                MPI_Allreduce(MPI_IN_PLACE, &all_exist, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-#endif                
+                #ifdef __MPI
+                Parallel_Reduce::reduce_min(all_exist);
+                #endif
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
@@ -263,9 +264,9 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
-#ifdef __MPI                    
-                    MPI_Allreduce(MPI_IN_PLACE, &all_exist_cereal, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-#endif                     
+                    #ifdef __MPI
+                    Parallel_Reduce::reduce_min(all_exist_cereal);
+                    #endif
                     if (!all_exist_cereal)
                     {
                         //no HexxR file in CSR or binary format
@@ -339,7 +340,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 template<typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    ModuleBase::TITLE("OperatorEXX", "constributeHR");
+    ModuleBase::TITLE("OperatorEXX", "constributeHk");
     // Peize Lin add 2016-12-03
     if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
 
@@ -369,26 +370,40 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             }
         }
         // cal H(k) from H(R) normally
-
-        if (GlobalC::exx_info.info_ri.real_number) {
-            RI_2D_Comm::add_Hexx(
-                ucell,
-                this->kv,
-                ik,
-                GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxd,
-                *this->hR->get_paraV(),
-                this->hsk->get_hk());
-        } else {
-            RI_2D_Comm::add_Hexx(
+        if(PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        {
+            RI_2D_Comm::add_Hexx_td(
                 ucell,
                 this->kv,
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
+                TD_info::td_vel_op->cart_At,
                 this->hsk->get_hk());
-}
+        }
+        else
+        {
+            if (GlobalC::exx_info.info_ri.real_number) {
+                RI_2D_Comm::add_Hexx(
+                    ucell,
+                    this->kv,
+                    ik,
+                    GlobalC::exx_info.info_global.hybrid_alpha,
+                    *this->Hexxd,
+                    *this->hR->get_paraV(),
+                    this->hsk->get_hk());
+            } else {
+                RI_2D_Comm::add_Hexx(
+                    ucell,
+                    this->kv,
+                    ik,
+                    GlobalC::exx_info.info_global.hybrid_alpha,
+                    *this->Hexxc,
+                    *this->hR->get_paraV(),
+                    this->hsk->get_hk());
+            }
+        }
     }
 }
 

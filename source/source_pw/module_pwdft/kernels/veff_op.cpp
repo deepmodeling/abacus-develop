@@ -8,7 +8,7 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
     void operator()(const base_device::DEVICE_CPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir = 0; ir < size; ++ir)
         {

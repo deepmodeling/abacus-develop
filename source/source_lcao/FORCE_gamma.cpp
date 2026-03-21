@@ -3,7 +3,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
@@ -12,8 +11,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/pulay_force_stress.h"
-#include "source_io/write_HS.h"
+#include "source_lcao/pulay_fs.h"
+#include "source_io/module_hs/write_HS.h"
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
@@ -110,14 +109,6 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr);
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-        ModuleBase::timer::tick("Forces", "allocate");
-        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
-    }
-
     ModuleBase::timer::tick("Forces", "allocate");
     return;
 }
@@ -158,21 +149,19 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const UnitCell& ucell,
                                 const Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
-                                const elecstate::ElecState* pelec,
-                                ModuleBase::matrix& foverlap,
-                                ModuleBase::matrix& ftvnl_dphi,
+								const elecstate::ElecState* pelec,
+								const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+								ModuleBase::matrix& foverlap,
+								ModuleBase::matrix& ftvnl_dphi,
                                 ModuleBase::matrix& fvnl_dbeta,
                                 ModuleBase::matrix& fvl_dphi,
                                 ModuleBase::matrix& soverlap,
                                 ModuleBase::matrix& stvnl_dphi,
                                 ModuleBase::matrix& svnl_dbeta,
                                 ModuleBase::matrix& svl_dphi,
-#ifdef __MLALGO
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
-                                LCAO_Deepks<double>& ld,
-#endif
-                                TGint<double>::type& gint,
+                                Setup_DeePKS<double>& deepks,
                                 const TwoCenterBundle& two_center_bundle,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
@@ -181,10 +170,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
 {
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::tick("Forces", "ftable");
-
-    // get DM
-    const elecstate::DensityMatrix<double, double>* dm
-        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
 
     this->ParaV = dm->get_paraV_pointer();
 
@@ -222,7 +207,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    *dm,
                                    ucell,
                                    pelec->pot,
-                                   gint,
                                    isforce,
                                    isstress,
                                    false /*reset dm to gint*/);
@@ -232,16 +216,16 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
-        DeePKS_domain::cal_f_delta<double>(ld.dm_r,
+        DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r,
                                            ucell,
                                            orb,
                                            gd,
                                            *this->ParaV,
                                            nks,
+                                           deepks.ld.deepks_param,
                                            kv->kvec_d,
-                                           ld.phialpha,
-                                           ld.gedm,
-                                           ld.inl_index,
+                                           deepks.ld.phialpha,
+                                           deepks.ld.gedm,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);

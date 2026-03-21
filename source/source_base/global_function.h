@@ -182,17 +182,17 @@ inline void DCOPY(const T* a, T* b, const int& dim) {
 }
 
 template <typename T>
-inline void COPYARRAY(const T* a, T* b, const long dim);
+inline void COPYARRAY(const T* a, T* b, const int dim);
 
 template <>
-inline void COPYARRAY(const std::complex<double>* a, std::complex<double>* b, const long dim)
+inline void COPYARRAY(const std::complex<double>* a, std::complex<double>* b, const int dim)
 {
     const int one = 1;
     zcopy_(&dim, a, &one, b, &one);
 }
 
 template <>
-inline void COPYARRAY(const double* a, double* b, const long dim)
+inline void COPYARRAY(const double* a, double* b, const int dim)
 {
     const int one = 1;
     dcopy_(&dim, a, &one, b, &one);

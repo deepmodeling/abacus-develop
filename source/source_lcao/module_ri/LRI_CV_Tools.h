@@ -6,6 +6,7 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
+#include "Inverse_Matrix.h"
 #include "source_base/abfs-vector3_order.h"
 #include "source_lcao/module_ri/abfs.h"
 
@@ -19,9 +20,15 @@
 namespace LRI_CV_Tools
 {
 template <typename Tdata>
-extern RI::Tensor<Tdata> cal_I(const RI::Tensor<Tdata>& m);
+extern RI::Tensor<Tdata> cal_I(const RI::Tensor<Tdata>& m,
+                               const typename Inverse_Matrix<Tdata>::Method method
+                               = Inverse_Matrix<Tdata>::Method::potrf,
+                               const double& threshold_condition_number = 0.);
 template <typename Tdata>
-extern std::vector<std::vector<RI::Tensor<Tdata>>> cal_I(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms);
+extern std::vector<std::vector<RI::Tensor<Tdata>>> cal_I(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms,
+                                                         const typename Inverse_Matrix<Tdata>::Method method
+                                                         = Inverse_Matrix<Tdata>::Method::potrf,
+                                                         const double& threshold_condition_number = 0.);
 
 template <typename Tdata>
 inline RI::Tensor<Tdata> transform_Rm(const RI::Tensor<Tdata>& V);

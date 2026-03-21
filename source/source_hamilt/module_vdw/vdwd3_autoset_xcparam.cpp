@@ -243,6 +243,9 @@ const std::pair<const char*, std::vector<double>> zero_data[] = {
     {"b97_d", {1.0, 0.892, 0.892, 0.909, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"b973c", {1.0, 1.06, 1.06, 1.5, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"pbe", {1.0, 1.217, 1.217, 0.722, 1.0, 1.0, 1.0, 14.0, 0.0}},
+    {"pbesol", {1.0, 1.345, 1.345, 0.612, 1.0, 1.0, 1.0, 14.0, 0.0}}, 
+    // issue#6646, d3 zero-damping support for PBEsol, 
+    // parameters retrived from https://www.chemie.uni-bonn.de/grimme/de/software/dft-d3/zero_damping
     {"rpw86pbe", {1.0, 1.224, 1.224, 0.901, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"b3lyp", {1.0, 1.261, 1.261, 1.703, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"tpss", {1.0, 1.166, 1.166, 1.105, 1.0, 1.0, 1.0, 14.0, 0.0}},

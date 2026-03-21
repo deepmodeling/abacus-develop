@@ -90,7 +90,7 @@ void FIRE::write_restart(const std::string& global_out_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -116,7 +116,7 @@ void FIRE::restart(const std::string& global_readin_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.txt";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -137,7 +137,7 @@ void FIRE::restart(const std::string& global_readin_dir)
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.txt !");
     }
 
 #ifdef __MPI

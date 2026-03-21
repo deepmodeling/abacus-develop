@@ -61,7 +61,7 @@ void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
 
-  cudaCheckOnDebug();
+  CHECK_CUDA_SYNC();
 }
 
 template struct ekinetic_pw_op<float, base_device::DEVICE_GPU>;

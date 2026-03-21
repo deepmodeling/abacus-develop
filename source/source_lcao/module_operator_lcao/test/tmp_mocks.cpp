@@ -20,6 +20,10 @@ pseudo::~pseudo() {}
 // constructor of UnitCell
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 void UnitCell::set_iat2iwt(const int& npol_in) {
     this->iat2iwt.resize(this->nat);
@@ -127,7 +131,8 @@ void TwoCenterIntegrator::calculate(
     const int m2,
     const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
     double* out,
-    double* grad_out) const {
+    double* grad_out,
+    double* hess_out) const {
     out[0] = 1.0;
 }
 
@@ -204,3 +209,12 @@ void Numerical_Orbital::set_orbital_info(const int&,
                                          const int&,
                                          const int*,
                                          const int&) {}
+
+// mock of TD_info
+class TD_info {
+public:
+    TD_info() {}
+    ~TD_info() {}
+    static ModuleBase::Vector3<double> cart_At;
+};
+ModuleBase::Vector3<double> TD_info::cart_At(0.0, 0.0, 0.0);

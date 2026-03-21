@@ -5,8 +5,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 
@@ -32,7 +31,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
 {
     ModuleBase::timer::tick("Sto_Forces", "cal_force");
     ModuleBase::TITLE("Sto_Forces", "init");
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const Charge* chr = elec.charge;
     force.create(this->nat, 3);
@@ -109,7 +108,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        double d1, d2, d3;
+        double d1 = 0.0, d2 = 0.0, d3 = 0.0;
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),

@@ -120,7 +120,7 @@ namespace LR_Util
         ModuleBase::TITLE("LR_Util", "diag_lapack<double>");
         int info = 0;
         char jobz = 'V', uplo = 'U';
-        double work_tmp;
+        double work_tmp = 0.0;
         const int minus_one = -1;
         dsyev_(&jobz, &uplo, &n, mat, &n, eig, &work_tmp, &minus_one, &info);		// get best lwork
         const int lwork = work_tmp;
@@ -149,7 +149,7 @@ namespace LR_Util
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh<double>");
         int info = 0;
         char jobvl = 'N', jobvr = 'V';  //calculate right eigenvectors
-        double work_tmp;
+        double work_tmp = 0.0;
         const int minus_one = -1;
         std::vector<double> eig_real(n);
         std::vector<double> eig_imag(n);

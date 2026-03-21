@@ -171,7 +171,6 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
-
 // Constructor 2-2:
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
@@ -301,7 +300,7 @@ const int* Psi<T, Device>::get_ngk_pointer() const
 }
 
 template <typename T, typename Device>
-const int& Psi<T, Device>::get_psi_bias() const
+const size_t& Psi<T, Device>::get_psi_bias() const
 {
     return this->psi_bias;
 }
@@ -545,6 +544,8 @@ template Psi<double, base_device::DEVICE_CPU>::Psi(const Psi<double, base_device
 template Psi<double, base_device::DEVICE_GPU>::Psi(const Psi<double, base_device::DEVICE_CPU>&);
 template Psi<std::complex<double>, base_device::DEVICE_CPU>::Psi(
     const Psi<std::complex<double>, base_device::DEVICE_GPU>&);
+template Psi<std::complex<double>, base_device::DEVICE_CPU>::Psi(
+    const Psi<std::complex<float>, base_device::DEVICE_GPU>&);
 template Psi<std::complex<double>, base_device::DEVICE_GPU>::Psi(
     const Psi<std::complex<double>, base_device::DEVICE_CPU>&);
 template Psi<std::complex<float>, base_device::DEVICE_GPU>::Psi(

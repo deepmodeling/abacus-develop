@@ -34,7 +34,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     assert(this->gamma_only == false);
     auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int ir = 0; ir < this->nrxx; ++ir)
     {
@@ -53,7 +53,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -64,7 +64,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -103,7 +103,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     // r2c in place
     const int npy = this->ny * this->nplane;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
     for (int ix = 0; ix < this->nx; ++ix)
     {
@@ -126,7 +126,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -137,7 +137,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -176,7 +176,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     const int npwk = this->npwk[ik];
     auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int igl = 0; igl < npwk; ++igl)
     {
@@ -191,7 +191,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     if (add)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
@@ -201,7 +201,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     else
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
@@ -239,7 +239,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     const int npwk = this->npwk[ik];
     auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int igl = 0; igl < npwk; ++igl)
     {
@@ -262,7 +262,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     if (add)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int ix = 0; ix < this->nx; ++ix)
         {
@@ -275,7 +275,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     else
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int ix = 0; ix < this->nx; ++ix)
         {

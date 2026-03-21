@@ -1,5 +1,4 @@
 #include "esolver_of.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
 namespace ModuleESolver

@@ -1,29 +1,10 @@
 #!/bin/bash -e
 
-# TODO: Review and if possible fix shellcheck errors.
+# TODO: Remove this deprecated script in the future.
 # shellcheck disable=all
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
-
-# +---------------------------------------------------------------------------+
-# |   ABACUS: (Atomic-orbital Based Ab-initio Computation at UStc)            |
-# |   -- an open-source package based on density functional theory(DFT)       |
-# |   Copyright 2004-2022 ABACUS developers group                             |
-# |   <https://github.com/deepmodeling/abacus-develop>                        |
-# |                                                                           |
-# |   SPDX-License-Identifier: GPL-2.0-or-later                               |
-# +---------------------------------------------------------------------------+
-#
-#
-# *****************************************************************************
-#> \brief    This script will compile and install or link existing tools and
-#>           libraries ABACUS depends on and generate setup files that
-#>           can be used to compile and use ABACUS
-#> \history  Created on Friday, 2023/08/18
-#            Update for Intel (18.08.2023, MK)
-#> \author   Zhaoqing Liu (Quantum Misaka) quanmisaka@stu.pku.edu.cn
-# *****************************************************************************
 
 # ------------------------------------------------------------------------
 # Work directories and used files
@@ -39,6 +20,29 @@ export SHA256_CHECKSUM="${SCRIPTDIR}/checksums.sha256"
 # Make a copy of all options for $SETUPFILE
 # ------------------------------------------------------------------------
 TOOLCHAIN_OPTIONS="$@"
+
+# ------------------------------------------------------------------------
+# DEPRECATED WARNING
+# ------------------------------------------------------------------------
+echo ""
+echo -e "\033[1;31m╔══════════════════════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[1;31m║                                [DEPRECATED]                                  ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;33m║  This script (install_abacus_toolchain.sh) will be deprecated soon.        ║\033[0m"
+echo -e "\033[1;33m║                                                                              ║\033[0m"
+echo -e "\033[1;32m║  Please migrate to the refactored version:                                  ║\033[0m"
+echo -e "\033[1;32m║    → install_abacus_toolchain_new.sh                                        ║\033[0m"
+echo -e "\033[1;32m║                                                                              ║\033[0m"
+echo -e "\033[1;36m║  Migration Guide:                                                            ║\033[0m"
+echo -e "\033[1;36m║    • Use toolchain_*.sh frontend scripts for easier configuration          ║\033[0m"
+echo -e "\033[1;36m║    • New version supports main/alt package version switch                    ║\033[0m"
+echo -e "\033[1;36m║    • Improved parameter handling and error reporting                        ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;31m╚══════════════════════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "\033[1;33mContinuing with legacy script in 3 seconds...\033[0m"
+sleep 3
+echo ""
 
 # ------------------------------------------------------------------------
 # Load common variables and tools
@@ -106,8 +110,7 @@ OPTIONS:
                           or --with-openblas options will switch --math-mode to the
                           respective modes.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
-                          options are: K20X, K40, K80, P100, V100, Mi50, Mi100, Mi250, 
-                          and no.
+                          options: CUDA architecture number (7.5 / 75, 8.0 / 80, etc) or no
                           This setting determines the value of nvcc's '-arch' flag.
                           Default = no.
 --log-lines               Number of log file lines dumped in case of a non-zero exit code.
@@ -211,6 +214,8 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-libcomm          Enable LibComm for higher-level methods like hybrid functionals, RPA or GW
                           Default = no
+  --with-nep              Enable NEP (CPU version) for machine learning potentials
+                          Default = no
 
 FURTHER INSTRUCTIONS
 
@@ -246,7 +251,7 @@ EOF
 tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl aocl openblas"
-lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
+lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
 
@@ -266,19 +271,8 @@ with_gcc="__SYSTEM__"
 with_fftw="__INSTALL__"
 with_libxc="__INSTALL__"
 with_scalapack="__INSTALL__"
-# default math library settings, MATH_MODE picks the math library
-# to use, and with_* defines the default method of installation if it
-# is picked. For non-CRAY systems defaults to mkl if $MKLROOT is
-# available, otherwise defaults to openblas
-if [ "${MKLROOT}" ]; then
-  export MATH_MODE="mkl"
-  with_mkl="__SYSTEM__"
-elif [ "${AOCLhome}" ]; then
-  export MATH_MODE="aocl"
-  with_aocl="__SYSTEM__"
-else
-  export MATH_MODE="openblas"
-fi
+# default math library setting: openblas
+export MATH_MODE="openblas"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
@@ -596,6 +590,9 @@ while [ $# -ge 1 ]; do
     --with-libcomm*)
       with_libcomm=$(read_with "${1}")
       ;;
+    --with-nep*)
+      with_nep=$(read_with "${1}")
+      ;;
     --help*)
       show_help
       exit 0
@@ -868,7 +865,7 @@ for ii in ${package_list}; do
 done
 
 # ------------------------------------------------------------------------
-# Build packages unless dry-run mode is enabled.
+# Build packages unless dry-run or pack-run mode is enabled.
 # ------------------------------------------------------------------------
 if [ "${dry_run}" = "__TRUE__" ]; then
   echo "Wrote only configuration files (--dry-run)."

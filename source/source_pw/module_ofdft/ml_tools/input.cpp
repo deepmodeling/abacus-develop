@@ -277,6 +277,10 @@ void Input::readInput()
         {
             this->read_value(ifs, this->device_type);
         }
+        else if (strcmp("energy_type", word) == 0)
+        {
+            this->read_value(ifs, this->energy_type);
+        }
     }
 
     std::cout << "Read nnINPUT done" << std::endl;

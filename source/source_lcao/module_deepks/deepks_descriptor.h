@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/intarray.h"
 #include "source_base/timer.h"
 #include "source_cell/unitcell.h"
@@ -29,22 +30,18 @@ namespace DeePKS_domain
 /// Calculates descriptors
 /// which are eigenvalues of pdm in blocks of I_n_l
 void cal_descriptor(const int nat,
-                    const int inlmax,
-                    const std::vector<int>& inl2l,
+                    const DeePKS_Param& deepks_param,
                     const std::vector<torch::Tensor>& pdm,
-                    std::vector<torch::Tensor>& descriptor,
-                    const int des_per_atom);
+                    std::vector<torch::Tensor>& descriptor);
 /// print descriptors based on LCAO basis
-void check_descriptor(const int inlmax,
-                      const int des_per_atom,
-                      const std::vector<int>& inl2l,
+void check_descriptor(const DeePKS_Param& deepks_param,
                       const UnitCell& ucell,
                       const std::string& out_dir,
                       const std::vector<torch::Tensor>& descriptor,
                       const int rank);
 
 void cal_descriptor_equiv(const int nat,
-                          const int des_per_atom,
+                          const DeePKS_Param& deepks_param,
                           const std::vector<torch::Tensor>& pdm,
                           std::vector<torch::Tensor>& descriptor);
 } // namespace DeePKS_domain

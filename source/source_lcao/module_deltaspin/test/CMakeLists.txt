@@ -1,14 +1,14 @@
 if(ENABLE_LCAO)
 
 AddTest(
-  TARGET deltaspin_basic_func_test
+  TARGET MODULE_LCAO_deltaspin_basic_func_test
   LIBS ${math_libs} base device parameter
   SOURCES basic_test.cpp
     ../basic_funcs.cpp
 )
 
 AddTest(
-  TARGET deltaspin_spin_constrain_test
+  TARGET MODULE_LCAO_deltaspin_spin_constrain_test
   LIBS ${math_libs} base device parameter
   SOURCES spin_constrain_test.cpp
     ../spin_constrain.cpp
@@ -16,7 +16,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET deltaspin_template_helpers
+  TARGET MODULE_LCAO_deltaspin_template_helpers
   LIBS ${math_libs} base device parameter
   SOURCES template_helpers_test.cpp
     ../spin_constrain.cpp

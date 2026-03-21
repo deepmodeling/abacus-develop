@@ -18,7 +18,7 @@ namespace base {
 namespace core {
 // Allocate a block of memory with the given size and default alignment on GPU.
 void *GPUAllocator::allocate(size_t size) {
-    void *ptr;
+    void * ptr = nullptr;
     device_result_t result = device_malloc(&ptr, size);
     if (result != device_success) {
         return nullptr;
@@ -29,7 +29,7 @@ void *GPUAllocator::allocate(size_t size) {
 
 // Allocate a block of CPU memory with the given size and alignment.
 void *GPUAllocator::allocate(size_t size, size_t alignment) {
-    void *ptr;
+    void * ptr = nullptr;
     device_result_t result = device_malloc(&ptr, size);
     if (result != device_success) {
         return nullptr;

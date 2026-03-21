@@ -48,16 +48,17 @@ class TwoCenterTable
                         const bool deriv = false //!< [in] if true, return the derivative table
     ) const;
 
-    void lookup(const int itype1,      //!< [in] element index of chi1
-                const int l1,          //!< [in] angular momentum of chi1
-                const int izeta1,      //!< [in] zeta number of chi1
-                const int itype2,      //!< [in] element index of chi2
-                const int l2,          //!< [in] angular momentum of chi2
-                const int izeta2,      //!< [in] zeta number of chi2
-                const int l,           //!< [in] angular momentum of the entry
-                const double R,        //!< [in] distance between the two centers
-                double* val,           //!< [out] interpolated values from table_
-                double* dval = nullptr //!< [out] interpolated values from dtable_
+    void lookup(const int itype1,       //!< [in] element index of chi1
+                const int l1,           //!< [in] angular momentum of chi1
+                const int izeta1,       //!< [in] zeta number of chi1
+                const int itype2,       //!< [in] element index of chi2
+                const int l2,           //!< [in] angular momentum of chi2
+                const int izeta2,       //!< [in] zeta number of chi2
+                const int l,            //!< [in] angular momentum of the entry
+                const double R,         //!< [in] distance between the two centers
+                double* val,            //!< [out] interpolated values from table_
+                double* dval = nullptr, //!< [out] interpolated values from dtable_
+                double* d2val = nullptr //!< [out] interpolated second derivatives
     ) const;
     //!@}
 

@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
@@ -144,23 +144,23 @@ class FS_Nonlocal_tools
 
   private:
     /// pointers to access the data without memory arrangement
-    const Structure_Factor* sf_;
-    const pseudopot_cell_vnl* nlpp_;
-    const UnitCell* ucell_;
-    const K_Vectors* kv_;
-    const ModulePW::PW_Basis_K* wfc_basis_;
+    const Structure_Factor* sf_ = nullptr;
+    const pseudopot_cell_vnl* nlpp_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
+    const K_Vectors* kv_ = nullptr;
+    const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
 
     /// the following variables are used for the calculation
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
-    int nkb;
-    int nbands;
+    int nkb = 0;
+    int nbands = 0;
 
     int max_nh = 0;
     int max_npw = 0;
-    int ntype;
-    bool nondiagonal;
+    int ntype = 0;
+    bool nondiagonal = false;
     int pre_ik_s = -1;
     int pre_ik_f = -1;
 

@@ -8,7 +8,6 @@
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_estate/occupy.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_hsolver/para_linear_transform.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -162,7 +161,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     }
 
     const int norder = p_che->norder;
-    T* pchi;
+    T* pchi = nullptr;
     int ntest = 1;
 
     if (nchip[ik] < ntest)
@@ -204,8 +203,8 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     if (ik == nks - 1)
     {
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        Parallel_Reduce::reduce_max(*p_hamilt_sto->emax);
+        Parallel_Reduce::reduce_min(*p_hamilt_sto->emin);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
         if (change)
@@ -249,7 +248,7 @@ void Stochastic_Iter<T, Device>::check_precision(const double ref, const double 
     }
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &error, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(error);
 #endif
     double relative_error = std::abs(error / ref);
     GlobalV::ofs_running << info << "Relative Chebyshev Precision: " << relative_error * 1e9 << "E-09" << std::endl;
@@ -274,7 +273,7 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
 {
     ModuleBase::TITLE("Stochastic_Iter", "itermu");
     ModuleBase::timer::tick("Stochastic_Iter", "itermu");
-    double dmu;
+    double dmu = 0.0;
     if (iter == 1)
     {
         dmu = 2;
@@ -295,8 +294,8 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
     double ne2 = calne(pes);
     double mu2 = this->stofunc.mu;
     double Dne = th_ne + 1;
-    double ne3;
-    double mu3;
+    double ne3 = 0.0;
+    double mu3 = 0.0;
 
     while (ne1 > targetne)
     {
@@ -385,7 +384,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
             setmem_var_op()(spolyv, 0, norder * norder);
         }
     }
-    T* pchi;
+    T* pchi = nullptr;
     if (PARAM.globalv.nbands_l > 0)
     {
         stowf.chiortho->fix_k(ik);
@@ -441,7 +440,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     double totne = 0;
     KS_ne = 0;
     const int norder = p_che->norder;
-    double sto_ne;
+    double sto_ne = 0.0;
     if (this->method == 1)
     {
         // Note: spolyv contains kv.wk[ik]
@@ -473,7 +472,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     {
         MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
-    MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(sto_ne);
 #endif
 
     totne = KS_ne + sto_ne;
@@ -540,7 +539,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     {
         MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
-    MPI_Allreduce(MPI_IN_PLACE, &stodemet, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(stodemet);
 #endif
     pes->f_en.demet += stodemet;
     this->check_precision(pes->f_en.demet, 1e-4, "TS");
@@ -581,7 +580,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
         }
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &sto_eband, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    Parallel_Reduce::reduce_all(sto_eband);
 #endif
     pes->f_en.eband += sto_eband;
     ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
@@ -695,7 +694,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     sto_ne *= ucell.omega / wfc_basis->nxyz;
 
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    Parallel_Reduce::reduce_pool(sto_ne);
 #endif
     double factor = targetne / (KS_ne + sto_ne);
     if (std::abs(factor - 1) > 1e-10)
@@ -744,7 +743,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
     const int npwx = stowf.npwx;
     stowf.shchi->fix_k(ik);
     T* out = stowf.shchi->get_pointer();
-    T* pchi;
+    T* pchi = nullptr;
     if (PARAM.globalv.nbands_l > 0)
     {
         stowf.chiortho->fix_k(ik);

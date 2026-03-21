@@ -6,10 +6,8 @@
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-
 
 #include <iostream>
 #include <cmath>
@@ -55,9 +53,7 @@ RDMFT<TK, TR>::~RDMFT()
 }
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
-                         Gint_k& GK_in,
-                         Parallel_Orbitals& ParaV_in,
+void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
                          UnitCell& ucell_in,
                          const Grid_Driver& gd_in,
                          K_Vectors& kv_in,
@@ -67,8 +63,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
                          std::string XC_func_rdmft_in,
                          double alpha_power_in)
 {
-    GG = &GG_in;
-    GK = &GK_in;
     ParaV = &ParaV_in;
     ucell = &ucell_in;
     kv = &kv_in;

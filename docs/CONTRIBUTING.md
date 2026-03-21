@@ -10,6 +10,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
 - [Comment style for documentation](#comment-style-for-documentation)
+- [Documenting INPUT parameters](#documenting-input-parameters)
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
@@ -155,6 +156,72 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
             &=& 9.82066032\,\mbox{m/s}^2
     \f}
     ```
+
+## Documenting INPUT Parameters
+
+ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files (`source/source_io/module_parameter/read_input_item_*.cpp`) using `Input_Item` registrations.
+
+A checked-in file `docs/parameters.yaml` contains a YAML dump of all parameter metadata, generated from the binary itself. This file is used by Sphinx to produce the online documentation page `input-main.md`.
+
+### When to Update `docs/parameters.yaml`
+
+You **must** regenerate `docs/parameters.yaml` whenever you:
+
+- Add a new INPUT parameter
+- Remove an existing INPUT parameter
+- Change a parameter's description, type, default value, unit, category, or availability
+
+### How to Regenerate
+
+After building and installing ABACUS, run:
+
+```bash
+abacus --generate-parameters-yaml > docs/parameters.yaml
+```
+
+Then verify the YAML is valid:
+
+```bash
+python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
+```
+
+You can also regenerate the markdown documentation locally:
+
+```bash
+python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
+```
+
+**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes and the `input-main.md` is updated.
+
+### Parameter Documentation Format
+
+When adding or modifying INPUT parameters in C++ source, set the following fields on the `Input_Item`:
+
+```cpp
+{
+    Input_Item item("my_parameter");
+    item.category = "System variables";
+    item.type = "Integer";
+    item.description = "Description of what this parameter does.";
+    item.default_value = "0";
+    item.unit = "Ry";          // Optional, empty string if no unit
+    item.availability = "";    // Optional, empty string if always available
+    // ... read_value, reset_value, check_value functions ...
+    this->add_item(item);
+}
+```
+
+Supported types: `Integer`, `Real`, `String`, `Boolean`
+
+### Format Validation
+
+After regenerating the YAML, you can spot-check a specific parameter:
+
+```bash
+./build/abacus -h my_parameter
+```
+
+This uses the same runtime registry that generates the YAML, so if the help output looks correct, the YAML will be correct too.
 
 ## Code formatting style
 

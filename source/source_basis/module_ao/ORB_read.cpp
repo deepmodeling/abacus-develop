@@ -466,10 +466,10 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
         {
             ofs_in << " " << std::setw(12) << count + 1 << std::setw(3) << L << std::setw(3) << N;
 
-            double* radial; // radial mesh
-            double* psi;    // radial local orbital
+            double* radial = nullptr; // radial mesh
+            double* psi = nullptr;    // radial local orbital
             double* psir;   // psi * r
-            double* rab;    // dr
+            double* rab = nullptr;    // dr
 
             // set the number of mesh and the interval distance.
             ofs_in << std::setw(8) << meshr << std::setw(8) << dr;

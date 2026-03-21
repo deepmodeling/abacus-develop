@@ -226,7 +226,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	if(nspin0==1)
 	{
-		double segno;
+		double segno = 0.0;
 #ifdef _OPENMP
 #pragma omp for
 #endif
@@ -249,7 +249,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 #ifdef USE_LIBXC
 					if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
 					{
-						double v3xc;
+						double v3xc = 0.0;
 						double atau = chr->kin_r[0][ir]/2.0;
 						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
 					}

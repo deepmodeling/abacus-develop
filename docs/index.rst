@@ -41,6 +41,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    advanced/md
    advanced/acceleration/index
    advanced/elec_properties/index
+   advanced/output_files/index
    advanced/interface/index
    advanced/input_files/index
 

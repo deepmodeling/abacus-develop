@@ -1,9 +1,10 @@
 #include "solve_propagation.h"
+#include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
 
 #include <iostream>
-
-#include "source_base/module_external/scalapack_connector.h"
-#include "source_pw/module_pwdft/global.h"
 
 namespace module_rt
 {

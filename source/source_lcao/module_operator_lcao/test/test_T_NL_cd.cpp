@@ -1,12 +1,12 @@
-#include "../ekinetic_new.h"
-#include "../nonlocal_new.h"
+#include "../ekinetic.h"
+#include "../nonlocal.h"
 
 #include "gtest/gtest.h"
 #include <chrono>
 
 //---------------------------------------
-// Unit test of EkineticNew + NonlocalNew class
-// EkineticNew and NonlocalNew are derivative classes of Operator, used to calculate the T+VNL matrix
+// Unit test of EKinetic + Nonlocal class
+// EKinetic and Nonlocal are derivative classes of Operator, used to calculate the T+VNL matrix
 // It use HContainer to store the real space HR matrix
 // In this test, we test the correctness and time consuming of 6 functions in T+VNL class
 // - initialize_HR() called in two constructors
@@ -57,7 +57,7 @@ class TNLTest : public ::testing::Test
             ucell.atoms[0].iw2n[iw] = 0;
         }
         ucell.set_iat2iwt(2);
-        // for NonlocalNew
+        // for Nonlocal
         ucell.infoNL.Beta = new Numerical_Nonlocal[ucell.ntype];
         ucell.atoms[0].ncpp.d_real.create(5, 5);
         ucell.atoms[0].ncpp.d_real.zero_out();
@@ -131,7 +131,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
     Grid_Driver gd(0, 0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::Operator<std::complex<double>>* op
-        = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
+        = new hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
@@ -139,7 +139,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
                                                                                                     &gd,
                                                                                                     &intor_);
     hamilt::Operator<std::complex<double>>* op1
-        = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
+        = new hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
