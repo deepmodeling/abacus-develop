@@ -368,7 +368,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             // }
         }
     }
-    ModuleBase::timer::start("SpinConstrain", "cal_mw_from_lambda");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
 }
 
 template <>

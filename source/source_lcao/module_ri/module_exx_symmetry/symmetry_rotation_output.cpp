@@ -102,6 +102,5 @@ namespace ModuleSymmetry
             ofs << "\n";
         }   // end star
         ofs.close();
-        ModuleBase::timer::start("Symmetry_rotation", "print_symrot_info_k");
     }
 }

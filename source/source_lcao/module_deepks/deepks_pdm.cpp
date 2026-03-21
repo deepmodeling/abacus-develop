@@ -194,6 +194,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
     if (init_pdm)
     {
         init_pdm = false;
+        ModuleBase::timer::end("DeePKS_domain", "cal_pdm");
         return;
     }
 

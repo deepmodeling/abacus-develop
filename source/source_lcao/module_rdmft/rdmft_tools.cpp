@@ -387,6 +387,7 @@ void Veff_rdmft<double, double>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
