@@ -305,7 +305,7 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
             cgp_g += cg_grad0[i] * grad[i];
         }
 
-        assert(g_gp != 0.0);
+        assert(gp_gp != 0.0);
         const double gamma1 = gg / gp_gp; // FR
         // const double gamma2 = -(gg - g_gp)/(cgp_g - cgp_gp);  //CW
         const double gamma2 = (gg - g_gp) / gp_gp; // PRP
