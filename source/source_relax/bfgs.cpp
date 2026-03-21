@@ -128,8 +128,15 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     //! call dysev
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
-    // type of lwork changed to size_t to prevent overflow
-    size_t lwork=3*size*3*size;
+    // overflow checking for lwork added
+    if (size > 0 && 9 > INT_MAX / size) {
+        throw std::runtime_error("Integer overflow detected: 9 * size exceeds INT_MAX");
+    }
+    int intermediate = 9 * size;
+    if (size > 0 && intermediate > INT_MAX / size) {
+        throw std::runtime_error("Integer overflow detected: lwork exceeds INT_MAX");
+    }
+    int lwork = intermediate * size;
     int info=0;
     std::vector<double> H_flat;
     
