@@ -164,7 +164,7 @@ int loadPEXSIOption(MPI_Comm comm,
 
 void splitNProc2NProwNPcol(const int NPROC, int& nprow, int& npcol)
 {
-    int integral_part = (int)sqrt(NPROC);
+    int integral_part = static_cast<int>(sqrt(NPROC));
     if (NPROC % integral_part == 0)
     {
         nprow = integral_part;
@@ -314,11 +314,17 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
 
         // retrieve the results from the plan
         if (DMnzvalLocal != nullptr)
+	{
             delete[] DMnzvalLocal;
+	}
         if (EDMnzvalLocal != nullptr)
-            delete[] EDMnzvalLocal;
+	{
+      	    delete[] EDMnzvalLocal;
+	}
         if (FDMnzvalLocal != nullptr)
+	{
             delete[] FDMnzvalLocal;
+	}
         DMnzvalLocal = new double[DST_Matrix.get_nnzlocal()];
         EDMnzvalLocal = new double[DST_Matrix.get_nnzlocal()];
         FDMnzvalLocal = new double[DST_Matrix.get_nnzlocal()];

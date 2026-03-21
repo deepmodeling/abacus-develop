@@ -347,19 +347,19 @@ void H_Ewald_pw::rgen(
     bg1[1] = G.e12;
     bg1[2] = G.e13;
 
-    nm1 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    nm1 = static_cast<int>(dnrm2(3, bg1, 1) * rmax + 2);
 
     bg1[0] = G.e21;
     bg1[1] = G.e22;
     bg1[2] = G.e23;
 
-    nm2 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    nm2 = static_cast<int>(dnrm2(3, bg1, 1) * rmax + 2);
 
     bg1[0] = G.e31;
     bg1[1] = G.e32;
     bg1[2] = G.e33;
 
-    nm3 = (int)(dnrm2(3, bg1, 1) * rmax + 2);
+    nm3 = static_cast<int>(dnrm2(3, bg1, 1) * rmax + 2);
 
     if (PARAM.inp.test_energy>1)
     {
