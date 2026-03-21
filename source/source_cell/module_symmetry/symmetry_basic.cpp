@@ -865,28 +865,28 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 {
 	static ModuleBase::Matrix3 g;
 	g.e11 = gmatrix.e11;
-	g.e21 = gmatrix.e21 * (double)nr1 / (double)nr2;
-	g.e31 = gmatrix.e31 * (double)nr1 / (double)nr3;
-	g.e12 = gmatrix.e12 * (double)nr2 / (double)nr1;
+	g.e21 = gmatrix.e21 * static_cast<double>(nr1) / static_cast<double>(nr2);
+	g.e31 = gmatrix.e31 * static_cast<double>(nr1) / static_cast<double>(nr3);
+	g.e12 = gmatrix.e12 * static_cast<double>(nr2) / static_cast<double>(nr1);
 	g.e22 = gmatrix.e22;
-	g.e32 = gmatrix.e32 * (double)nr2 / (double)nr3;
-	g.e13 = gmatrix.e13 * (double)nr3 / (double)nr1;
-	g.e23 = gmatrix.e23 * (double)nr3 / (double)nr2;
+	g.e32 = gmatrix.e32 * static_cast<double>(nr2) / static_cast<double>(nr3);
+	g.e13 = gmatrix.e13 * static_cast<double>(nr3) / static_cast<double>(nr1);
+	g.e23 = gmatrix.e23 * static_cast<double>(nr3) / static_cast<double>(nr2);
 	g.e33 = gmatrix.e33;
 
-	ri = int(g.e11 * i + g.e21 * j + g.e31 * k) + (int)(gtrans.x *  nr1);
+	ri = int(g.e11 * i + g.e21 * j + g.e31 * k) + static_cast<int>(gtrans.x *  nr1);
 	if (ri < 0)
 	{
 		ri += 10 * nr1;
 	}
 	ri = ri%nr1;
-	rj = int(g.e12 * i + g.e22 * j + g.e32 * k) + (int)(gtrans.y  * nr2);
+	rj = int(g.e12 * i + g.e22 * j + g.e32 * k) + static_cast<int>(gtrans.y  * nr2);
 	if (rj < 0)
 	{
 		rj += 10 * nr2;
 	}
 	rj = rj%nr2;
-	rk = int(g.e13 * i + g.e23 * j + g.e33 * k) + (int)(gtrans.z  * nr3);
+	rk = int(g.e13 * i + g.e23 * j + g.e33 * k) + static_cast<int>(gtrans.z  * nr3);
 	if (rk < 0)
 	{
 		rk += 10 * nr3;

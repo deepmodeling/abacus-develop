@@ -50,7 +50,7 @@ TEST_F(FoldingTest, folding_HR_cd2cd)
     HR = new hamilt::HContainer<std::complex<double>>(ucell);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    srand((unsigned)time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
     // fill HR with constant value
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -98,7 +98,7 @@ TEST_F(FoldingTest, folding_HR_d2cd)
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
-    srand((unsigned)time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
     // fill HR with constant value
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -160,7 +160,7 @@ TEST_F(FoldingTest, folding_HR_d2d)
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
-    srand((unsigned)time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
     // fill HR with constant value
 #ifdef _OPENMP
 #pragma omp parallel for

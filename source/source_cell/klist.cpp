@@ -463,11 +463,11 @@ double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset
     double coordinate;
     if (k_type == 1)
     {
-        coordinate = (offset + 2.0 * (double)n - (double)dim - 1.0) / (2.0 * (double)dim);
+        coordinate = (offset + 2.0 * static_cast<double>(n) - static_cast<double>(dim - 1.0) / (2.0 * static_cast<double>(dim));
     }
     else
     {
-        coordinate = (offset + (double)n - 1.0) / (double)dim;
+        coordinate = (offset + static_cast<double>(n) - 1.0) / static_cast<double>(dim);
     }
     return coordinate;
 }

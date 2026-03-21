@@ -20,7 +20,7 @@ TEST_F(test_orb, equal_test)
 
 	//test parameters
 	const double rmax = 5; //Ry
-	srand((unsigned)time(NULL));
+	srand(static_cast<unsigned int>(time(NULL)));
     ModuleBase::Vector3<double> R1(0, 0, 0);
 	ModuleBase::Vector3<double> R2(randr(rmax), randr(rmax), randr(rmax));
 	std::cout << "random R2=(" << R2.x << "," << R2.y << "," << R2.z << ")" << std::endl;
