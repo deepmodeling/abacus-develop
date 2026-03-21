@@ -191,4 +191,4 @@ template struct gemv_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
-} // namespace hsolver
+} // namespace ModuleBase
