@@ -128,7 +128,7 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     //! call dysev
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    size_t lwork=static_cast<size_t>(3)*size*(3)*size;//use size_t to avoid integer overflow when size is large
     int info=0;
     std::vector<double> H_flat;
     
