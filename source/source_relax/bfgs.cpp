@@ -4,6 +4,7 @@
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include <climits> // spokening125 add 2026-03-22
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
