@@ -126,12 +126,22 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     this->Update(changedpos, changedforce,H,ucell);
     
     //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    size_t lwork=static_cast<size_t>(3)*size*(3)*size;//use size_t to avoid integer overflow when size is large
+    size_t dim=static_cast<size_t>(3)*size;
+    size_t n=dim*dim;
+    if (n > static_cast<size_t>(std::numeric_limits<int>::max())) {
+	    throw std::overflow_error("bfgs:the size of matrix is too large");
+    }
+	
+    //convert `size_t` to int type
+    int dim_int=static_cast<int>(dim);
+    int n_int=static_cast<int>(n);
+    int lwork=static_cast<int>(n);
+
+    std::vector<double> omega(dim_int);
+    std::vector<double> work(n_int);
     int info=0;
     std::vector<double> H_flat;
-    
+
     for(const auto& row : H)
     {
         H_flat.insert(H_flat.end(), row.begin(), row.end());
