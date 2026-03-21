@@ -184,9 +184,11 @@ template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
 #ifdef __DSP
 template struct gemm_op_mt<float, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<double, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<float, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<double, base_device::DEVICE_CPU>;
 template struct gemv_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemv_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
-} // namespace hsolver
+} // namespace ModuleBase

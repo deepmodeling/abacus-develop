@@ -83,7 +83,7 @@ class Ewald_Vq
     double ccp_rmesh_times;
     LRI_CV<Tdata> cv;
     Gaussian_Abfs gaussian_abfs;
-    const K_Vectors* p_kv;
+    const K_Vectors* p_kv = nullptr;
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     // std::vector<double> wk;
     MPI_Comm mpi_comm;

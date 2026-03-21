@@ -52,7 +52,7 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     if (lr_init_xc_kernel[0] == "from_charge_file")
     {
         assert(lr_init_xc_kernel.size() >= 2);
-        double** rho_for_fxc;
+        double** rho_for_fxc = nullptr;
         LR_Util::_allocate_2order_nested_ptr(rho_for_fxc, nspin, nrxx);
         double ef = 0.0;
         int prenspin = 1;

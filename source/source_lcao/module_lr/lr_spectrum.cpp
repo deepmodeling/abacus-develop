@@ -53,7 +53,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
     for (int is = 0;is < this->nspin_x;++is)
     {
         // 2. transition density
-        double** rho_trans;
+        double** rho_trans = nullptr;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, this->rho_basis.nrxx);
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], this->rho_basis.nrxx);
         ModuleGint::cal_gint_rho({ DM_trans.get_DMR_vector().at(is) }, 1, rho_trans, false);
@@ -90,8 +90,8 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
     for (int is = 0;is < this->nspin_x;++is)
     {
         // 2. transition density
-        double** rho_trans_real;
-        double** rho_trans_imag;
+        double** rho_trans_real = nullptr;
+        double** rho_trans_imag = nullptr;
         LR_Util::_allocate_2order_nested_ptr(rho_trans_real, 1, this->rho_basis.nrxx);
         LR_Util::_allocate_2order_nested_ptr(rho_trans_imag, 1, this->rho_basis.nrxx);
 
