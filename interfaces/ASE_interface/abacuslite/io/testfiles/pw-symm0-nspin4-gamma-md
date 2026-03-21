@@ -1,0 +1,205 @@
+ READING UNITCELL INFORMATION
+                       Number of elements = 2
+                  Lattice constant (Bohr) = 1
+              Lattice constant (Angstrom) = 0.529177
+
+                        TOTAL ATOM NUMBER = 2
+
+ DIRECT COORDINATES
+ atom                  x                  y                  z     mag
+   As     0.250000000000     0.250000000000     0.250000000000  1.7321
+   Ga     0.000000000000     0.000000000000     0.000000000000  1.7321
+
+ ATOMIC VELOCITIES
+ atom                 vx                 vy                 vz
+   As                  0                  0                  0
+   Ga                  0                  0                  0
+
+                     Cell volume (Bohr^3) = 304.884
+                        Cell volume (A^3) = 45.1791
+
+ Lattice vectors: (Cartesian coordinate: in unit of a_0)
+             +5.34197            +5.34197                  +0
+                   +0            +5.34197            +5.34197
+             +5.34197                  +0            +5.34197
+ Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
+           +0.0935984          +0.0935984          -0.0935984
+           -0.0935984          +0.0935984          +0.0935984
+           +0.0935984          -0.0935984          +0.0935984
+
+ #ENERGY SOLVER# ksdft_pw
+
+ SETUP K-POINTS
+                                    nspin = 4
+                   Input type of k points = Monkhorst-Pack(Gamma)
+                                   nkstot = 1
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  1.0000
+
+
+       Number of k-points in this process = 1
+       Minimum distributed k-point number = 1
+
+ K-POINTS CARTESIAN COORDINATES
+ KPOINTS CARTESIAN_X CARTESIAN_Y CARTESIAN_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  1.0000
+
+
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  1.0000
+
+ ================================================================
+ STEP OF MOLECULAR DYNAMICS: 1
+ ================================================================
+ DONE : INIT SCF Time : 0.290857 (SEC)
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         1
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Average iterative diagonalization steps for k-points is 11
+ current threshold of diagonalizaiton is 0.01
+          Total magnetism (Bohr mag/cell) = [ 0, 0, 1.38648 ]
+       Absolute magnetism (Bohr mag/cell) = 1.40875
+ Electron density deviation 0.429273
+                          Diago Threshold = 0.01
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.5782130987      -1939.8761088010     
+  E_Harris       -145.6223677865      -1981.2939581485     
+  E_Fermi        0.5588592724         7.6036704845         
+  E_gap(k)       0.0058317055         0.0793444239         
+ ----------------------------------------------------------
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         2
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Average iterative diagonalization steps for k-points is 2
+ current threshold of diagonalizaiton is 0.00238485
+          Total magnetism (Bohr mag/cell) = [ 0, 0, 1.84938 ]
+       Absolute magnetism (Bohr mag/cell) = 1.86368
+ Electron density deviation 0.140043
+                          Diago Threshold = 0.00238485
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.6160890474      -1940.3914375207     
+  E_Harris       -143.8327593413      -1956.9450861047     
+  E_Fermi        0.5749625181         7.8227663831         
+  E_gap(k)       0.0083010040         0.1129409531         
+ ----------------------------------------------------------
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         3
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Average iterative diagonalization steps for k-points is 2
+ current threshold of diagonalizaiton is 0.000778015
+          Total magnetism (Bohr mag/cell) = [ 0, 0, 1.98288 ]
+       Absolute magnetism (Bohr mag/cell) = 1.9839
+ Electron density deviation 0.0302081
+                          Diago Threshold = 0.000778015
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.6334316878      -1940.6273962477     
+  E_KS(sigma->0) -142.6261228330      -1940.5279541766     
+  E_Harris       -142.2406248908      -1935.2829855950     
+  E_band         -3.4638156295        -47.1276293822       
+  E_one_elec     -81.1661188150       -1104.3217004290     
+  E_Hartree      53.0934884635        722.3739698008       
+  E_xc           -21.5360282956       -293.0126971088      
+  E_Ewald        -93.0101553311       -1265.4680843686     
+  E_entropy(-TS) -0.0146177096        -0.1988841421        
+  E_descf        0.0000000000         0.0000000000         
+  E_localpp      -129.5971604899      -1763.2598272824     
+  E_exx          0.0000000000         0.0000000000         
+  E_Fermi        0.6238150698         8.4874394469         
+  E_gap(k)       0.0108011279         0.1469568840         
+ ----------------------------------------------------------
+
+ #SCF IS CONVERGED#
+ #TOTAL ENERGY# -1940.6273962 eV
+ Write eigenvalues and occupations to file: OUT.ABACUS/eig_occ.txt
+
+
+
+ #TOTAL-FORCE (eV/Angstrom)#
+ -------------------------------------------------------------------------
+     Atoms              Force_x              Force_y              Force_z 
+ -------------------------------------------------------------------------
+       As1        -0.5102760465        -0.5774389693         1.0803355583 
+       Ga1         0.5102760465         0.5774389693        -1.0803355583 
+ -------------------------------------------------------------------------
+ ------------------------------------------------------------------------------------------------
+ Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     
+ -142.63058          -142.63343          0.0028501339        300                 
+ ------------------------------------------------------------------------------------------------
+
+ ================================================================
+ STEP OF MOLECULAR DYNAMICS: 2
+ ================================================================
+ NEW-OLD atomic charge density approx. for the potential !
+ DONE : INIT SCF Time : 1.06374 (SEC)
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         2  #ELEC ITER#         1
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Average iterative diagonalization steps for k-points is 2
+ current threshold of diagonalizaiton is 0.01
+ Notice: Threshold on eigenvalues was too large.
+ hsover_error=0.18 > DRHO=0.00485537
+ Origin diag ethr = 0.01
+ New diag ethr = 2.69743e-05
+ Average iterative diagonalization steps for k-points is 8
+ current threshold of diagonalizaiton is 2.69743e-05
+          Total magnetism (Bohr mag/cell) = [ 0, 0, 1.97579 ]
+       Absolute magnetism (Bohr mag/cell) = 1.97697
+ Electron density deviation 0.0258483
+                          Diago Threshold = 2.69743e-05
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.6337043769      -1940.6311063727     
+  E_KS(sigma->0) -142.6260746147      -1940.5272981334     
+  E_Harris       -141.9732021042      -1931.6445119220     
+  E_band         -2.9318001010        -39.8891867701       
+  E_one_elec     -81.8435686073       -1113.5388777125     
+  E_Hartree      53.8117002024        732.1457418199       
+  E_xc           -21.5787355027       -293.5937584713      
+  E_Ewald        -93.0078409450       -1265.4365955301     
+  E_entropy(-TS) -0.0152595243        -0.2076164786        
+  E_descf        0.0000000000         0.0000000000         
+  E_localpp      -130.0075565406      -1768.8435520088     
+  E_exx          0.0000000000         0.0000000000         
+  E_Fermi        0.6682675820         9.0922469042         
+  E_gap(k)       0.0099089900         0.1348187251         
+ ----------------------------------------------------------
+
+ #SCF IS CONVERGED#
+ #TOTAL ENERGY# -1940.6311064 eV
+ Write eigenvalues and occupations to file: OUT.ABACUS/eig_occ.txt
+
+
+
+ #TOTAL-FORCE (eV/Angstrom)#
+ -------------------------------------------------------------------------
+     Atoms              Force_x              Force_y              Force_z 
+ -------------------------------------------------------------------------
+       As1         0.1191299488         0.2678988387         1.5033416041 
+       Ga1        -0.1191299488        -0.2678988387        -1.5033416041 
+ -------------------------------------------------------------------------
+ ------------------------------------------------------------------------------------------------
+ Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     
+ -142.63112          -142.6337           0.0025856408        272.15993           
+ ------------------------------------------------------------------------------------------------
+
+
+ --------------------------------------------
+ !FINAL_ETOT_IS -1940.631106372724 eV
+ --------------------------------------------

@@ -144,7 +144,6 @@ public:
             dav_ndim, 
             tol, 
             max_iter, 
-            need_subspace, 
             comm_info,
             diag_subspace,
             nb2d

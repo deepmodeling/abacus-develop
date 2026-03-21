@@ -5,7 +5,7 @@
 
 bool TD_info::out_mat_R = false;
 bool TD_info::out_vecpot = false;
-bool TD_info::out_current = false;
+int TD_info::out_current = 0;
 bool TD_info::out_current_k = false;
 bool TD_info::init_vecpot_file = false;
 bool TD_info::evolve_once = false;
@@ -18,7 +18,7 @@ int TD_info::max_istep = -1;
 ModuleBase::Vector3<double> TD_info::cart_At;
 std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
 
-TD_info::TD_info(const UnitCell* ucell_in)
+TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     this->ucell = ucell_in;
     if (init_vecpot_file && istep == -1)
@@ -39,6 +39,10 @@ TD_info::TD_info(const UnitCell* ucell_in)
         //std::cout<<"estep_shift"<<estep_shift<<std::endl;
     }
     this->istep += estep_shift;
+    if(out_current==2||elecstate::H_TDDFT_pw::stype == 2)
+    {
+        r_calculator.init(*ucell, pv, orb);
+    }
     return;
 }
 TD_info::~TD_info()

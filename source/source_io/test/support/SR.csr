@@ -1,11 +1,41 @@
-STEP: 0
-Matrix Dimension of S(R): 4
-Matrix number of S(R): 2
-0 1 1 2
+ --- Ionic Step 1 ---
+ # print overlap matrix in real space S(R)
+ 1 # number of spin directions
+ 1 # spin index
+ 4 # number of localized basis
+ 2 # number of Bravais lattice vector R
+
+ user_defined_lattice
+ 10
+ 0 0.5 0.5
+ 0.5 0 0.5
+ 0.5 0.5 0
+ Si
+ 1
+ Direct
+ 0 0.020 0
+
+ #----------------------------------------------------------------------#
+ #                               CSR Format                             #
+ # The outer loop corresponds to the number of Bravais lattice vectors. #
+ # The first line contains the index of the Bravais lattice vector      #
+ # (Rx, Ry, Rz), followed by the number of non-zero elements.           #
+ # The subsequent lines consist of three blocks of data, which are      #
+ # values, column indices, row pointers.                                #
+ #----------------------------------------------------------------------#
+
+ 0 1 1 2
+ # CSR values
  4.00e+00 7.00e+00
+ # CSR column indices
  3 2
+ # CSR row pointers
  0 1 2 2 2
-0 0 0 3
+
+ 0 0 0 3
+ # CSR values
  5.00e+00 6.00e+00 1.00e+01
+ # CSR column indices
  2 3 3
+ # CSR row pointers
  0 0 0 2 3

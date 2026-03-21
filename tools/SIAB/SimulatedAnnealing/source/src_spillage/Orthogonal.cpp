@@ -42,7 +42,9 @@ void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
         }
 
         inverse.init( step1.data[istr].nwfc2 );
+    #ifdef _OPENMP
 		#pragma omp parallel for			// Peize Lin add 2016-01-18	
+    #endif
         for (int ik=0; ik<nks; ik++)
         {
 //			if(ik==0)

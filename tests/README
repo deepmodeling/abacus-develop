@@ -12,7 +12,7 @@
 01_PW: KSDFT calculations in PW basis with multple k-point setting.
 02_NAO_Gamma: KSDFT calculations in NAO basis with gamma-only k-point setting.
 03_NAO_multik: KSDFT calculations in NAO basis with multiple k-point setting.
-04_LJ_DP: Lennard-Jones potentials and Deep Potentials.
+04_FF: Force fields, including Lennard-Jones potentials, Deep Potentials and Neuroevolution Potential.
 05_rtTDDFT: Real-time TDDFT tests.
 06_SDFT: Stochastic DFT tests.
 07_OFDFT: Orbital-free DFT tests.

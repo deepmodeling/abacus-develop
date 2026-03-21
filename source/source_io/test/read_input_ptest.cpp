@@ -4,7 +4,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_base/tool_quit.h"
-#include "source_io/read_input.h"
+#include "source_io/module_parameter/read_input.h"
 #include "source_io/module_parameter/parameter.h"
 
 // #ifdef __MPI
@@ -41,7 +41,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.pseudo_dir, "../../PP_ORB/");
     EXPECT_EQ(param.inp.orbital_dir, "../../PP_ORB/");
     EXPECT_EQ(param.inp.read_file_dir, "OUT.autotest/");
-    EXPECT_EQ(param.inp.wannier_card, "none");
     EXPECT_EQ(param.inp.latname, "none");
     EXPECT_EQ(param.inp.calculation, "scf");
     EXPECT_EQ(param.inp.esolver_type, "ksdft");
@@ -115,7 +114,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.fixed_axes, "None");
     EXPECT_FALSE(param.inp.fixed_ibrav);
     EXPECT_FALSE(param.inp.fixed_atoms);
-    EXPECT_EQ(param.inp.relax_method, "cg");
+    EXPECT_EQ(param.inp.relax_method[0], "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
@@ -183,18 +182,19 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
     EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
+    EXPECT_EQ(param.inp.out_freq_td, 0);
     EXPECT_EQ(param.inp.out_chg[0], 0);
     EXPECT_EQ(param.inp.out_chg[1], 3);
     EXPECT_EQ(param.inp.out_elf[0], 0);
     EXPECT_EQ(param.inp.out_elf[1], 3);
-    EXPECT_EQ(param.inp.out_dmk, 0);
-    EXPECT_EQ(param.inp.out_dmr, 0);
+    EXPECT_EQ(param.inp.out_dmk[0], 0);
+    EXPECT_EQ(param.inp.out_dmr[0], 0);
     EXPECT_EQ(param.inp.deepks_out_labels, 0);
     EXPECT_EQ(param.inp.deepks_scf, 0);
     EXPECT_EQ(param.inp.deepks_equiv, 0);
     EXPECT_EQ(param.inp.deepks_bandgap, 0);
     EXPECT_EQ(param.inp.deepks_out_unittest, 0);
-    EXPECT_EQ(param.inp.out_pot, 2);
+    EXPECT_EQ(param.inp.out_pot[0], 2);
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
     EXPECT_EQ(param.inp.out_dos, 0);
     EXPECT_EQ(param.inp.out_ldos[0], 1);
@@ -208,7 +208,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.out_mat_xc);
     EXPECT_FALSE(param.inp.out_mat_xc2);
     EXPECT_FALSE(param.inp.out_eband_terms);
-    EXPECT_EQ(param.inp.out_interval, 1);
     EXPECT_EQ(param.inp.out_app_flag, 0);
     EXPECT_EQ(param.inp.out_mat_r, 0);
     EXPECT_FALSE(param.inp.out_wfc_lcao);
@@ -298,6 +297,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_ecut, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_tolerence, 0.0);
+    EXPECT_DOUBLE_EQ(param.inp.shrink_abfs_pca_thr, 0.02);
+    EXPECT_DOUBLE_EQ(param.inp.shrink_LU_inv_thr, 1e-5);
+    EXPECT_TRUE(param.inp.exx_coul_moment);
+    EXPECT_TRUE(param.inp.exx_rotate_abfs);
+    EXPECT_DOUBLE_EQ(param.inp.exx_multip_moments_threshold, 1e-12);
     EXPECT_FALSE(param.inp.noncolin);
     EXPECT_FALSE(param.inp.lspinorb);
     EXPECT_DOUBLE_EQ(param.inp.soc_lambda, 1.0);

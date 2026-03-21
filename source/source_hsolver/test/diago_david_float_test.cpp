@@ -82,7 +82,7 @@ public:
 		//do Diago_David::diag()
 		float* en = new float[npw];		
 		hamilt::Hamilt<std::complex<float>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
@@ -197,7 +197,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 {
 	std::vector<std::complex<float>> hmatrix;
 	std::ifstream ifs;
-	std::string filename = "H-KPoints-Si64.dat";
+	std::string filename = "H-KPoints-Si2.dat";
 	ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

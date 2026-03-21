@@ -170,11 +170,11 @@ template <class T> class Vector3
     }
 
     /**
-     * @brief Get the square of nomr of a Vector3
+     * @brief Get the square of norm of a Vector3
      *
      * @return T
      */
-    T norm2(void) const
+    inline T norm2(void) const
     {
         return x * x + y * y + z * z;
     }
@@ -184,7 +184,7 @@ template <class T> class Vector3
      *
      * @return T
      */
-    T norm(void) const
+    inline T norm(void) const
     {
         return sqrt(norm2());
     }

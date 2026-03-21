@@ -807,7 +807,7 @@ void Pseudopot_upf::read_pseudo_upf201_fullwfc(std::ifstream& ifs)
     std::string word;
     std::string name[50];
     std::string val[50];
-    int nparameter;
+    int nparameter = 0;
     this->aewfc.create(this->nbeta, this->mesh);
     this->pswfc.create(this->nbeta, this->mesh);
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_FULL_WFC");

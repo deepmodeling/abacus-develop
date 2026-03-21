@@ -102,7 +102,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096/sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
         for(int i = 0; i < this->nrxx; ++i)
         {
@@ -160,7 +160,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 	}
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096/sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
     for(int i = 0; i < this->nrxx; ++i)
     {

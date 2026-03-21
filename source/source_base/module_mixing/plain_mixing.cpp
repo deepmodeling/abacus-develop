@@ -30,7 +30,7 @@ void Plain_Mixing::tem_push_data(Mixing_Data& mdata,
     const size_t length = mdata.length;
     std::vector<FPTYPE> F_tmp(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < length; ++i)
     {
@@ -68,7 +68,7 @@ void Plain_Mixing::simple_mix(FPTYPE* data_new,
     if (screen == nullptr)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ig = 0; ig < length; ig++)
         {
@@ -79,7 +79,7 @@ void Plain_Mixing::simple_mix(FPTYPE* data_new,
     {
         std::vector<FPTYPE> F_tmp(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -87,7 +87,7 @@ void Plain_Mixing::simple_mix(FPTYPE* data_new,
         }
         screen(F_tmp.data());
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {

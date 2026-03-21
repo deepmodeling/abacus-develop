@@ -157,7 +157,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;
-                dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv.data(), &N);
+                BlasConnector::gemm(normal, trans, N, N, M, kweight, vec_all, LDA, vec_all, LDA, one, spolyv.data(), N);
             }
         }
     }
@@ -235,12 +235,12 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
+    Parallel_Reduce::reduce_all(sto_dos.data(), ndos);
+    Parallel_Reduce::reduce_all(error.data(), ndos);
+    #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = PARAM.globalv.global_out_dir + "doss1_pw.txt";
+        std::string dosfile = PARAM.globalv.global_out_dir + "dos_sdft.txt";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;

@@ -1,4 +1,5 @@
 /build*
+build_info.h
 bin
 obj
 *.o
@@ -24,3 +25,4 @@ abacus.json
 *.npy
 toolchain/install/
 toolchain/abacus_env.sh
+.trae

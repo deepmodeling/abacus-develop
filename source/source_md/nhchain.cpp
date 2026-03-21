@@ -326,7 +326,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -380,7 +380,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.txt";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -390,7 +390,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            double Mnum;
+            double Mnum = 0.0;
             file >> step_rst_ >> md_tfirst >> Mnum;
 
             if (Mnum != mdp.md_tchain)
@@ -449,7 +449,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("Nose_Hoover", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "no Restart_md.txt !");
     }
     if (!ok2)
     {
@@ -494,7 +494,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// integrate loop
-    double factor;
+    double factor = 0.0;
     double scale = 1.0;
     double KE = kinetic;
     for (int i = 0; i < nc_tchain; ++i)
@@ -583,7 +583,7 @@ void Nose_Hoover::baro_thermo()
     g_peta[0] = (ke_omega - lkt_press) / mass_peta[0];
 
     /// integrate loop
-    double factor;
+    double factor = 0.0;
     double scale = 1.0;
     double kecurrent = ke_omega;
     for (int i = 0; i < nc_pchain; ++i)
@@ -662,7 +662,7 @@ void Nose_Hoover::update_baro()
     }
     term_one /= pdim * ucell.nat;
 
-    double g_omega;
+    double g_omega = 0.0;
     double term_two = 0;
     for (int i = 0; i < 3; ++i)
     {
@@ -689,7 +689,7 @@ void Nose_Hoover::update_baro()
 
 void Nose_Hoover::vel_baro()
 {
-    double factor[3];
+    double factor[3] = {0.0};
     for (int i = 0; i < 3; ++i)
     {
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
@@ -721,7 +721,7 @@ void Nose_Hoover::vel_baro()
 
 void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
-    double factor;
+    double factor = 0.0;
 
     /// tri mode, off-diagonal components, first half
     if (pflag[4])

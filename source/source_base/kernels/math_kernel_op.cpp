@@ -49,6 +49,25 @@ struct gemm_op<T, base_device::DEVICE_CPU>
 
 #ifdef __DSP
 template <typename T>
+struct gemv_op_mt<T, base_device::DEVICE_CPU>
+{
+    void operator()(const char& trans,
+                    const int& m,
+                    const int& n,
+                    const T* alpha,
+                    const T* A,
+                    const int& lda,
+                    const T* X,
+                    const int& incx,
+                    const T* beta,
+                    T* Y,
+                    const int& incy)
+    {
+        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy, base_device::AbacusDevice_t::DspDevice);
+    }
+};
+
+template <typename T>
 struct gemm_op_mt<T, base_device::DEVICE_CPU>
 {
     void operator()(const char& transa,
@@ -81,7 +100,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
         T* temp = nullptr;
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(temp, row * col, "MTransOp");
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int j = 0; j < col; j++)
         {
@@ -91,7 +110,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
             }
         }
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < row * col; i++)
         {
@@ -107,7 +126,7 @@ struct matrixCopy<T, base_device::DEVICE_CPU>
     void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int i = 0; i < n1; i++)
         {
@@ -119,12 +138,35 @@ struct matrixCopy<T, base_device::DEVICE_CPU>
     }
 };
 
+template <typename T>
+struct matrix_mul_vector_op<T, base_device::DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& m, const int &n,
+                  T *a,
+                  const int &lda,
+                  const Real *b,
+                  const Real alpha,
+                  T *c,
+                  const int &ldc){
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
+        for (int j = 0; j < n; j++){
+            for (int i = 0; i < m; i++){
+                c[j * ldc + i] = a[j * lda + i] * b[j] * alpha;
+            }
+        }
+
+    }
+};
+
 template struct gemv_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemv_op<float, base_device::DEVICE_CPU>;
 template struct gemm_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op<float, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct matrixCopy<std::complex<float>, base_device::DEVICE_CPU>;
+template struct matrix_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 
 template struct gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemv_op<double, base_device::DEVICE_CPU>;
@@ -133,12 +175,20 @@ template struct gemm_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct matrixCopy<double, base_device::DEVICE_CPU>;
 template struct matrixCopy<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrix_mul_vector_op<double, base_device::DEVICE_CPU>;
+template struct matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 #ifdef __LCAO
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
 #endif
 #ifdef __DSP
+template struct gemm_op_mt<float, base_device::DEVICE_CPU>;
+template struct gemm_op_mt<double, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<float, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<double, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct gemv_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
-} // namespace hsolver
+} // namespace ModuleBase

@@ -33,6 +33,10 @@ InfoNonlocal::InfoNonlocal() {}
 InfoNonlocal::~InfoNonlocal() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 class SymmetryRotationTest : public testing::Test
 {

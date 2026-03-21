@@ -195,18 +195,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-	if (frozen.x == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.y == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.z == 0)
-	{
-		++frozen_freedom;
-	}
+    if (frozen.x == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.y == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.z == 0)
+    {
+        ++frozen_freedom;
+    }
 
     if (unit_in.init_vel)
     {
@@ -496,7 +496,7 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     if (my_rank == 0)
     {
         std::stringstream ssc;
-        ssc << file_dir << "Restart_md.dat";
+        ssc << file_dir << "Restart_md.txt";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -517,7 +517,7 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.dat!");
+        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.txt!");
     }
 
 #ifdef __MPI

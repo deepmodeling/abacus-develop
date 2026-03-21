@@ -2,6 +2,7 @@
 #define MODULE_HSOLVER_DIAGO_CG_H_
 
 #include <functional>
+#include <vector>
 
 #include <source_base/macros.h>
 #include <source_base/kernels/math_kernel_op.h>
@@ -21,7 +22,9 @@ class DiagoCG final
     using Real = typename GetTypeReal<T>::type;
     using ct_Device = typename ct::PsiToContainer<Device>::type;
   public:
-    using Func = std::function<void(const ct::Tensor&, ct::Tensor&)>;
+        using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+        using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
+        using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
@@ -30,22 +33,26 @@ class DiagoCG final
         const std::string& basis_type,
         const std::string& calculation,
         const bool& need_subspace,
-        const Func& subspace_func,
+        const SubspaceFunc& subspace_func,
         const Real& pw_diag_thr,
         const int& pw_diag_nmax,
         const int& nproc_in_pool);
-    
+
     ~DiagoCG();
 
     // virtual void init(){};
     // refactor hpsi_info
     // this is the diag() function for CG method
-    void diag(const Func& hpsi_func,
-              const Func& spsi_func,
-              ct::Tensor& psi,
-              ct::Tensor& eigen,
-              const std::vector<double>& ethr_band,
-              const ct::Tensor& prec = {});
+    // returns avg_iter
+    double diag(const HPsiFunc& hpsi_func,
+                const SPsiFunc& spsi_func,
+                const int ld_psi,
+                const int nband,
+                const int dim,
+                T* psi_in,
+                Real* eigenvalue_in,
+                const std::vector<double>& ethr_band,
+                const Real* prec = nullptr);
 
   private:
     Device * ctx_ = {};
@@ -58,7 +65,9 @@ class DiagoCG final
     /// col size for input psi matrix
     int n_basis_ = 0;
     /// average iteration steps for cg diagonalization
-    int avg_iter_ = 0;
+    double avg_iter_ = 0;
+    /// std::vector for iter count of each band
+    std::vector<int> iter_band;
     /// threshold for cg diagonalization
     Real pw_diag_thr_ = 1e-5;
     /// maximum iteration steps for cg diagonalization
@@ -72,11 +81,11 @@ class DiagoCG final
 
     bool need_subspace_ = false;
     /// A function object that performs the hPsi calculation.
-    std::function<void(const ct::Tensor&, ct::Tensor&)> hpsi_func_ = nullptr;
+    HPsiFunc hpsi_func_ = nullptr;
     /// A function object that performs the sPsi calculation.
-    std::function<void(const ct::Tensor&, ct::Tensor&)> spsi_func_ = nullptr;
+    SPsiFunc spsi_func_ = nullptr;
     /// A function object that performs the subspace calculation.
-    std::function<void(const ct::Tensor&, ct::Tensor&)> subspace_func_ = nullptr;
+    SubspaceFunc subspace_func_ = nullptr;
 
     void calc_grad(
         const ct::Tensor& prec,
@@ -86,15 +95,15 @@ class DiagoCG final
         ct::Tensor& pphi);
 
     void orth_grad(
-        const ct::Tensor& psi, 
-        const int& m, 
-        ct::Tensor& grad, 
+        const ct::Tensor& psi,
+        const int& m,
+        ct::Tensor& grad,
         ct::Tensor& scg,
         ct::Tensor& lagrange);
 
     void calc_gamma_cg(
         const int& iter,
-        const Real& cg_norm, 
+        const Real& cg_norm,
         const Real& theta,
         const ct::Tensor& prec,
         const ct::Tensor& scg,
@@ -109,8 +118,8 @@ class DiagoCG final
         const ct::Tensor& cg,
         const ct::Tensor& scg,
         const double& ethreshold,
-        Real &cg_norm, 
-        Real &theta, 
+        Real &cg_norm,
+        Real &theta,
         Real &eigen,
         ct::Tensor& phi_m,
         ct::Tensor& sphi,
@@ -119,7 +128,7 @@ class DiagoCG final
     void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(const ct::Tensor& prec,
+    void diag_once(const ct::Tensor& prec,
                    ct::Tensor& psi,
                    ct::Tensor& eigen,
                    const std::vector<double>& ethr_band);

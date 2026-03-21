@@ -41,7 +41,7 @@ class KEDF_Manager
         ModuleBase::matrix& rpot
     );
 
-    double get_energy();
+    double get_energy() const;
 
     void get_energy_density(
         const double* const* prho,

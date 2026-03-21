@@ -8,40 +8,41 @@
 
 #include <cstddef>
 #include <vector>
+
 namespace ModuleBase
 {
 
-class Element_Basis_Index
+namespace Element_Basis_Index
 {
-private:
-	
+  //private:
+
 	struct NM
 	{
 		public:
-		size_t N;
-		size_t M;
+		std::size_t N;
+		std::size_t M;
 	};
-	
-	class Index_TL: public std::vector<std::vector<size_t>>
+
+	class Index_TL: public std::vector<std::vector<std::size_t>>
 	{
 		public:
-		size_t N;
-		size_t M;
+		std::size_t N;
+		std::size_t M;
 	};
-	
+
 	class Index_T: public std::vector<Index_TL>
 	{
 		public:
-		size_t count_size;
-	};	
-	
-public:
-	
-	typedef std::vector<std::vector<NM>> Range; 								// range[T][L]
+		std::size_t count_size;
+	};
+
+  //public:
+
+	typedef std::vector<std::vector<NM>> Range; 						// range[T][L]
 	typedef std::vector<Index_T> IndexLNM;								// index[T][L][N][M]
-	
-	static IndexLNM construct_index( const Range &range );
-};
+
+	extern IndexLNM construct_index( const Range &range );
+}
 
 }
 

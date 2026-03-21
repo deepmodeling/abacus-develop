@@ -75,7 +75,7 @@ void Verlet::apply_thermostat(void)
     {
         if (my_rank == 0)
         {
-            double deviation;
+            double deviation = 0.0;
             for (int i = 0; i < ucell.nat; ++i)
             {
                 if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)

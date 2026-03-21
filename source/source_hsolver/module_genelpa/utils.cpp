@@ -25,7 +25,7 @@ void initBlacsGrid(int loglevel,
     int nprows, npcols;
     int myprow, mypcol;
     int nprocs, myid;
-    int info;
+    int info = 0;
     MPI_Comm_size(comm, &nprocs);
     MPI_Comm_rank(comm, &myid);
     // set blacs parameters
@@ -94,7 +94,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -137,7 +137,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 {
     char FileName[80];
-    int myid;
+    int myid = 0;
     std::ofstream matrixFile;
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -179,7 +179,7 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         matrixFile.width(24);
     }
 
-    double* b; // buffer
+    double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;

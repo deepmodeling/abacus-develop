@@ -282,7 +282,7 @@ for dir in $testdir; do
                     check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
                 fi
             else
-                ../tools/catch_properties.sh result.ref
+                bash -e ../../integrate/tools/catch_properties.sh result.ref
             fi
         fi
 

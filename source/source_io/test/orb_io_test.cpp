@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "source_io/orb_io.h"
+#include "source_io/module_output/orb_io.h"
 
 #ifdef __MPI
 #include <mpi.h>

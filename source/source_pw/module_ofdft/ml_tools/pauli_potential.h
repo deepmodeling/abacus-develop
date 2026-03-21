@@ -69,7 +69,7 @@ private:
         const torch::Tensor &gamma,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient
     );
     torch::Tensor potPPnlTerm(
@@ -78,7 +78,7 @@ private:
         const torch::Tensor &p,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const std::vector<torch::Tensor> &grid
     );
@@ -87,7 +87,7 @@ private:
         const torch::Tensor &q,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const torch::Tensor &gg    
     );
@@ -118,7 +118,7 @@ private:
         const torch::Tensor &rho,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient
     );
     torch::Tensor potTanhxinlTerm(
@@ -126,7 +126,7 @@ private:
         const std::vector<torch::Tensor> &tanhxi,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient
     );
     torch::Tensor potTanhxi_nlTerm(
@@ -135,7 +135,7 @@ private:
         const std::vector<torch::Tensor> &tanhxi,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient
     );
     torch::Tensor potTanhpTanh_pnlTerm(
@@ -146,7 +146,7 @@ private:
         const std::vector<torch::Tensor> &tanh_pnl,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const std::vector<torch::Tensor> &grid
     );
@@ -157,7 +157,7 @@ private:
         const std::vector<torch::Tensor> &tanh_qnl,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const torch::Tensor &gg
     );
@@ -168,7 +168,7 @@ private:
         const torch::Tensor &tanhp,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const std::vector<torch::Tensor> &grid
     );
@@ -178,7 +178,7 @@ private:
         const torch::Tensor &tanhq,
         const Kernel *kernels,
         // const torch::Tensor &kernel,
-        const torch::Tensor &tauTF,
+        const torch::Tensor &tauLDA,
         const torch::Tensor &gradient,
         const torch::Tensor &gg
     );
@@ -198,6 +198,9 @@ private:
     );
 
     const double cTF = 3.0/10.0 * std::pow(3*std::pow(M_PI, 2.0), 2.0/3.0) * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double cDirac = - 3. /4. * std::pow(3. / M_PI, 1./3.) * 2.; // -3/4*(3/pi)^{1/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    double cLDA = cTF;
+    double tau_exp = 5. / 3.;
     const double pqcoef = 1.0 / (4.0 * std::pow(3*std::pow(M_PI, 2.0), 2.0/3.0)); // coefficient of p and q
 };
 #endif

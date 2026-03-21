@@ -104,7 +104,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
 		const ModuleBase::matrix& wg,
 		const ModuleBase::matrix& ekb)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
     if(!this->initialed)
     {
@@ -503,7 +503,7 @@ void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
     {
         if (rank == 0)
         {
-            int l, izeta;
+            int l = 0, izeta = 0;
             ifs >> tmp >> tmp >> tmp;
             ifs >> tmp >> l >> izeta;
             ichi = radial_map_[l][izeta];

@@ -4,16 +4,27 @@
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/module_mixing/pulay_mixing.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 Charge_Mixing::Charge_Mixing()
 {
+    this->mixing = nullptr;
+    this->mixing_highf = nullptr;
 }
 
 Charge_Mixing::~Charge_Mixing()
 {
-    delete this->mixing;
-    delete this->mixing_highf;
+    if(this->mixing != nullptr)
+	{
+		delete this->mixing;
+		this->mixing = nullptr;
+	}
+
+	if(this->mixing_highf != nullptr)
+	{
+		delete this->mixing_highf;
+        this->mixing_highf = nullptr;
+	}
 }
 
 void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
