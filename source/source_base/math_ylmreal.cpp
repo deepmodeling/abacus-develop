@@ -12,234 +12,231 @@
 
 #include <cassert>
 #include <vector>
+#include <cmath>
 
 namespace ModuleBase
 {
 
+// Helper function: calculate Am, Bm.
+static void compute_xy_dependence(int lmax, double x, double y,
+                                  double* Am, double* Bm)
+{
+    double x2 = x * x;
+    double x3 = x2 * x;
+    double x4 = x3 * x;
+    double x5 = x4 * x;
+    double y2 = y * y;
+    double y3 = y2 * y;
+    double y4 = y3 * y;
+    double y5 = y4 * y;
+
+    for (int im = 0; im <= lmax; ++im) {
+        if (im == 0) {
+            Am[im] = 1.0;
+            Bm[im] = 0.0;
+        }
+        else if (im == 1) {
+            Am[im] = x;
+            Bm[im] = y;
+        }
+        else if (im == 2) {
+            Am[im] = x2 - y2;
+            Bm[im] = 2.0 * x * y;
+        }
+        else if (im == 3) {
+            Am[im] = x3 - 3.0 * x * y2;
+            Bm[im] = 3.0 * x2 * y - y3;
+        }
+        else if (im == 4) {
+            Am[im] = x4 - 6.0 * x2 * y2 + y4;
+            Bm[im] = 4.0 * (x3 * y - x * y3);
+        }
+        else if (im == 5) {
+            Am[im] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
+            Bm[im] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
+        }
+        else {
+            for (int ip = 0; ip <= im; ++ip) {
+                double aux = Fact(im) / Fact(ip) / Fact(im - ip);
+                double term = aux * pow(x, ip) * pow(y, im - ip);
+                Am[im] += term * cos((im - ip) * ModuleBase::PI / 2.0);
+                Bm[im] += term * sin((im - ip) * ModuleBase::PI / 2.0);
+            }
+        }
+    }
+}
+
+// Helper function: calculating zdep
+static void compute_z_dependence(int lmax, double x, double y, double z,
+                                 double r, double zdep[][20])
+{
+    double r2 = r * r;
+    double r3 = r2 * r;
+    double r4 = r3 * r;
+    double z2 = z * z;
+    double z3 = z2 * z;
+    double z4 = z3 * z;
+
+    for (int il = 0; il <= lmax; ++il) {
+        if (il == 0) {
+            zdep[il][0] = 1.0;
+        }
+        else if (il == 1) {
+            zdep[il][0] = z;
+            zdep[il][1] = 1.0;
+        }
+        else if (il == 2) {
+            zdep[il][0] = 0.5 * (3.0 * z2 - r2);
+            zdep[il][1] = sqrt(3.0) * z;
+            zdep[il][2] = sqrt(3.0) * 0.5;
+        }
+        else if (il == 3) {
+            zdep[il][0] = 2.5 * z3 - 1.5 * z * r2;
+            zdep[il][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
+            zdep[il][2] = 0.5 * sqrt(15.0) * z;
+            zdep[il][3] = 0.25 * sqrt(10.0);
+        }
+        else if (il == 4) {
+            zdep[il][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
+            zdep[il][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
+            zdep[il][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
+            zdep[il][3] = sqrt(70.0) * 0.25 * z;
+            zdep[il][4] = sqrt(35.0) * 0.125;
+        }
+        else if (il == 5) {
+            zdep[il][0] = 0.125 * z * (63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
+            zdep[il][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
+            zdep[il][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
+            zdep[il][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
+            zdep[il][4] = 0.375 * sqrt(35.0) * z;
+        }
+        else {
+            for (int im = 0; im <= il; ++im) {
+                int kmax = static_cast<int>((il - im) / 2);
+                for (int ik = 0; ik <= kmax; ++ik) {
+                    int twok = 2 * ik;
+                    double gamma = 0.0;
+                    double aux0 = pow(-1.0, ik) * pow(2.0, -il);
+                    double aux1 = Fact(il) / Fact(ik) / Fact(il - ik);
+                    double aux2 = Fact(2 * il - twok) / Fact(il) / Fact(il - twok);
+                    double aux3 = Fact(il - twok) / Fact(il - twok - im);
+                    gamma = aux0 * aux1 * aux2 * aux3;
+                    zdep[il][im] += pow(r, twok) * pow(z, il - twok - im) * gamma;
+                }
+                if (im >= 1) {
+                    zdep[il][im] *= sqrt(2.0 * Fact(il - im) / Fact(il + im));
+                }
+            }
+        }
+    }
+}
+
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
 
-void YlmReal::rlylm
-(
-    const int lmax, 	
-    const double& x,				
-    const double& y,
-	const double& z, // g_cartesian_vec(x,y,z)
-    double* rly 	 // output
-)
+void YlmReal::rlylm(const int lmax,
+                    const double& x,
+                    const double& y,
+                    const double& z,
+                    double* rly)
 {
-	ModuleBase::timer::tick("YlmReal","rlylm");
+    ModuleBase::timer::tick("YlmReal", "rlylm");
+    assert(lmax >= 0);
+    assert(lmax <= 19);
 
-	assert(lmax >= 0);
+    constexpr int MAX_L = 20;           // Maximum l + 1 (since lmax <= 19)
+    constexpr double TINY = 1.0E-10;    // Small value to avoid division by zero
 
-	//get xy_dependence
-	assert(lmax <= 19);
-	
-	double Am[20];
-	double Bm[20];
+    // Arrays for x-y angular part
+    double Am[MAX_L] = {0.0};
+    double Bm[MAX_L] = {0.0};
+    // Array for z-dependent part (zdep[l][m])
+    double zdep[MAX_L][MAX_L] = {{0.0}};
 
-	// mohan add 2021-05-07
-	for(int i=0; i<20; ++i)
-	{
-		Am[i]=0.0;
-		Bm[i]=0.0;
-	}
-	
-	//ZEROS(Am, 20);
-	//ZEROS(Bm, 20);
-	
-	double x2, x3, x4, x5;
-	double y2, y3, y4, y5;
-	
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x3 * x;
-	x5 = x4 * x;
+    // Compute x-y dependence (Am, Bm)
+    compute_xy_dependence(lmax, x, y, Am, Bm);
 
-	y2 = y * y;
-	y3 = y2 * y;
-	y4 = y3 * y;
-	y5 = y4 * y;
-		
-	//x-y dependence
-	//Am
-	//Bm
-	for(int im = 0; im < lmax+1; im++)
-	{
-		if(im == 0)
-		{
-			Am[0] = 1.0; 
-			Bm[0] = 0.0;
-		}
-		else if(im == 1)
-		{
-			Am[1] = x; 
-			Bm[1] = y;
-		}
-		else if(im == 2)
-		{
-			Am[2] = x2- y2; 
-			Bm[2] = 2.0 * x * y;
-		}
-		else if(im == 3)
-		{
-			Am[3] = x3 - 3.0 * x * y2;
-			Bm[3] = 3.0 * x2 * y - y3;
-		}
-		else if(im == 4)
-		{
-			Am[4] = x4 - 6.0 * x2 * y2 + y4;
-			Bm[4] = 4.0 * (x3 * y - x * y3);
-		}
-		else if(im == 5)
-		{
-			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
-			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
-		}
-		else
-		{
-			for(int ip = 0; ip <= im; ip++)
-			{
-				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
-				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
-				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
-			}
-		}
-	}
-			
-	//z dependence
-	double zdep[20][20];
-	
-	for(int il = 0; il < 20; il++)
-	{
-		for(int jl=0; jl < 20; jl++)
-		{
-			zdep[il][jl]=0.0; // mohan add 2021-05-07
-		}
-//		ZEROS(zdep[il], 20);
-	}
+    // Compute radial distance and z dependence
+    double r = std::sqrt(x * x + y * y + z * z);
+    compute_z_dependence(lmax, x, y, z, r, zdep);
 
-	double z2 = z * z;
-	double z3 = z2 * z;
-	double z4 = z3 * z;
-	//double z5 = z4 * z;
-	
-	double r = sqrt(x*x + y*y + z*z);
-	double r2 = r * r;
-	double r3 = r2 * r;
-	double r4 = r3 * r;
-	
-	for(int il = 0; il < lmax + 1; il++)
-	{
-		if(il == 0)
-		{
-			zdep[0][0] = 1.0;
-		}
-		else if(il == 1)
-		{
-			zdep[1][0] = z;
-			zdep[1][1] = 1.0;
-		}
-		else if(il == 2)
-		{
-			zdep[2][0] = 0.5 * (3.0 * z2 - r2);
-			zdep[2][1] = sqrt(3.0) * z;
-			zdep[2][2] = sqrt(3.0) * 0.5;
-		}
-		else if(il == 3)
-		{
-			zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
-			zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
-			zdep[3][2] = 0.5 * sqrt(15.0) * z;
-			zdep[3][3] = 0.25 * sqrt(10.0);
-		}
-		else if(il == 4)
-		{
-			zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
-			zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
-			zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
-			zdep[4][3] = sqrt(70.0) * 0.25 * z;
-			zdep[4][4] = sqrt(35.0) * 0.125;
-		}
-		else if(il == 5)
-		{
-			zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
-			zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
-			zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
-			zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
-			zdep[5][4] = 0.375 * sqrt(35.0) * z;
-			zdep[5][5] = 0.1875 * sqrt(14.0);
-		}
-		else
-		{
-			for(int im = 0; im <= il; im++)
-			{
-				int kmax = static_cast<int>( (il - im) / 2 );
-				for(int ik = 0; ik <= kmax; ik++)
-				{
-					int twok = 2 * ik;
-				
-					double gamma = 0.0;
-					double aux0, aux1, aux2, aux3;
-				
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
-					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
-					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
-					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
-					gamma = aux0 * aux1 * aux2 * aux3;
-					
-					assert(il - twok - im >= 0);
-					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
-				}
+    // Combine results into output array rly
+    int ic = 0;
+    double rpi = r;
+    if (rpi < TINY) rpi += TINY;
 
-				if(im >= 1)
-				{
-					zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
-					
-				}
-			}
-		}			
-	}
+    for (int il = 0; il <= lmax; ++il) {
+        double fac = std::sqrt((2.0 * il + 1.0) / ModuleBase::FOUR_PI);
+        double rl = std::pow(rpi, il);
 
-	//calc
-	int ic = 0;
+        // m = 0
+        rly[ic] = Am[0] * zdep[il][0] * fac / rl;
+        ic++;
 
-	//special case for r=0
-	double rpi = r;
-	const double tiny =  1.0E-10;
-	if (rpi < tiny) rpi += tiny;
-	
-	for(int il = 0; il <= lmax; il++)
-	{
-		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
+        for (int im = 1; im <= il; ++im) {
+            // m > 0
+            rly[ic] = Am[im] * zdep[il][im] * std::pow(-1.0, im) * fac / rl;
+            ic++;
+            // m < 0
+            rly[ic] = Bm[im] * zdep[il][im] * std::pow(-1.0, im) * fac / rl;
+            ic++;
+        }
+    }
 
-		double rl = pow(rpi, il);
-			
-		//m=0
-		rly[ic] = Am[0] * zdep[il][0] * fac / rl;
-		
-		ic++;
-		
-		//m ! = 0
-		for(int im = 1; im <= il; im++)
-		{
-			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-			
-			ic++;
-			
-			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-
-			ic++;
-		}
-	}
-
-	ModuleBase::timer::tick("YlmReal","rlylm");
-	return;
+    ModuleBase::timer::tick("YlmReal", "rlylm");
 }
+	avoid YlmReal::rlylm(const int lmax,
+                    const double& x,
+                    const double& y,
+                    const double& z,
+                    double* rly)
+{
+    ModuleBase::timer::tick("YlmReal", "rlylm");
+    assert(lmax >= 0);
+    assert(lmax <= 19);
 
+    constexpr int MAX_L = 20;           // Maximum l + 1 (since lmax <= 19)
+    constexpr double TINY = 1.0E-10;    // Small value to avoid division by zero
+
+    // Arrays for x-y angular part
+    double Am[MAX_L] = {0.0};
+    double Bm[MAX_L] = {0.0};
+    // Array for z-dependent part (zdep[l][m])
+    double zdep[MAX_L][MAX_L] = {{0.0}};
+
+    // Compute x-y dependence (Am, Bm)
+    compute_xy_dependence(lmax, x, y, Am, Bm);
+
+    // Compute radial distance and z dependence
+    double r = std::sqrt(x * x + y * y + z * z);
+    compute_z_dependence(lmax, x, y, z, r, zdep);
+
+    // Combine results into output array rly
+    int ic = 0;
+    double rpi = r;
+    if (rpi < TINY) rpi += TINY;
+
+    for (int il = 0; il <= lmax; ++il) {
+        double fac = std::sqrt((2.0 * il + 1.0) / ModuleBase::FOUR_PI);
+        double rl = std::pow(rpi, il);
+
+        // m = 0
+        rly[ic] = Am[0] * zdep[il][0] * fac / rl;
+        ic++;
+
+        for (int im = 1; im <= il; ++im) {
+            // m > 0
+            rly[ic] = Am[im] * zdep[il][im] * std::pow(-1.0, im) * fac / rl;
+            ic++;
+            // m < 0
+            rly[ic] = Bm[im] * zdep[il][im] * std::pow(-1.0, im) * fac / rl;
+            ic++;
+        }
+    }
+
+    ModuleBase::timer::tick("YlmReal", "rlylm");
+    return;
+}
 
 void YlmReal::Ylm_Real2
 (
