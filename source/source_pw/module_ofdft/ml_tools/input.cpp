@@ -13,10 +13,10 @@ void Input::readInput()
     int ierr = 0;
 
     ifs.rdstate();
-    while (ifs.good()
+    while (ifs.good())
     {
         ifs >> word;
-        if (ifs.eof()
+        if (ifs.eof())
             break;
 
         if(word=="fftdim")
