@@ -8,6 +8,8 @@
 
 #include "deepks_vdpre.h"
 
+#include <climits>
+
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
 #include "source_base/constants.h"
@@ -254,7 +256,12 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     );
 
 #ifdef __MPI
-    int size = nat * nlmax * nks * nlocal * mmax;
+    const long long size_ll = 1LL * nat * nlmax * nks * nlocal * mmax;
+    if (size_ll < 0 || size_ll > INT_MAX)
+    {
+        ModuleBase::WARNING_QUIT("DeePKS_domain", "phialpha_out size overflow in reduce_all");
+    }
+    int size = static_cast<int>(size_ll);
     TK_tensor* data_tensor_ptr = phialpha_out.data_ptr<TK_tensor>();
     TK* data_ptr = reinterpret_cast<TK*>(data_tensor_ptr);
     Parallel_Reduce::reduce_all(data_ptr, size);

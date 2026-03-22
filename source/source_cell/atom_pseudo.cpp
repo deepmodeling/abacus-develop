@@ -1,6 +1,8 @@
 #include "atom_pseudo.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <climits>
+
 #include "source_io/module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
 {
@@ -261,7 +263,12 @@ void Atom_pseudo::bcast_atom_pseudo()
         {
             qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
         }
-        const int dim = nqlc * nbeta * (nbeta + 1) / 2 * mesh;
+        const long long dim_ll = 1LL * nqlc * nbeta * (nbeta + 1) / 2 * mesh;
+        if (dim_ll < 0 || dim_ll > INT_MAX)
+        {
+            ModuleBase::WARNING_QUIT("Atom_pseudo", "qfuncl size overflow in bcast");
+        }
+        const int dim = static_cast<int>(dim_ll);
         Parallel_Common::bcast_double(qfuncl.ptr, dim);
 
         if (GlobalV::MY_RANK != 0)
