@@ -91,9 +91,13 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
-    if (myid == ROOT_PROC)
-        matrixFile.open(FileName);
-
+    if (myid == ROOT_PROC) {
+    matrixFile.open(FileName);
+    if (!matrixFile.is_open()) {
+        std::cerr << "Error: Failed to open file \"" << FileName << "\"." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+}
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
