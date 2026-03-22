@@ -9,6 +9,7 @@
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
+#include <cstdlib>
 #ifdef __MPI
 void initBlacsGrid(int loglevel,
                    MPI_Comm comm,
@@ -93,6 +94,14 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
+    if (!matrixFile.is_open()) {
+        std::cerr << "Error: Cannot open file " << FileName << " in loadMatrix (process " << myid << ")" << std::endl;
+    #ifdef USE_MPI
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    #else
+        exit(1);
+    #endif
+    }
 
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
