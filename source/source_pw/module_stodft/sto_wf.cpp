@@ -9,6 +9,8 @@
 
 #include "source_base/global_function.h"
 
+#include <random>
+
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
 {
@@ -132,13 +134,16 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_real_distribution<double> dis(0.0, 1.0);
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
     if (seed_in >= 0)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = 2 * ModuleBase::PI * dis(gen);
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
@@ -146,7 +151,7 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            if (dis(gen) < 0.5)
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
