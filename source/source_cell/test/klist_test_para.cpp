@@ -211,6 +211,10 @@ TEST_F(KlistParaTest, Set)
     EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
+    // The full Cartesian k-mesh must remain available on every rank after the
+    // pool redistribution, because EXX/RPA Ewald kernels index it with
+    // `nkstot_full`, not the rank-local `nks`.
+    EXPECT_EQ(static_cast<int>(kv->kvec_c_full.size()), kv->get_nkstot_full());
     if (GlobalV::NPROC == 4)
     {
         if (GlobalV::MY_RANK == 0) {

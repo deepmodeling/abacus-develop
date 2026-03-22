@@ -352,43 +352,6 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Vs_cut_IJR.clear();
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
-    if (this->use_spacegroup_symmetry_)
-    {
-        // Rebuild the full periodic cut Coulomb from the irreducible real-space sector using
-        // the same ABF rotation convention exported in `symrot_abf_k.txt`.
-        this->symmetry_rotation_.set_Cs_rotation(exx_lri_rpa->get_abfs_nchis());
-
-        // In MPI runs, Vs_period is distributed by atom pair. Gather the irreducible-sector
-        // source blocks needed by symmetry restoration before expanding back to the full
-        // periodic operator, then redistribute the restored full-period blocks to the original
-        // rank-local ownership expected by out_coulomb_k().
-        std::size_t n_skipped_irreducible_blocks_local = 0;
-        auto Vs_irreducible = RpaLriDetail::collect_local_irreducible_abf_blocks(
-            this->Vs_period,
-            this->symmetry_rotation_.get_irreducible_sector(),
-            n_skipped_irreducible_blocks_local);
-        if (GlobalV::NPROC > 1)
-        {
-            const std::set<TA> all_atoms_set(atoms.begin(), atoms.end());
-            Vs_irreducible = RI_2D_Comm::comm_map2_first(
-                this->mpi_comm, Vs_irreducible, all_atoms_set, all_atoms_set);
-        }
-        const std::size_t n_skipped_irreducible_blocks
-            = RpaLriDetail::sum_skipped_irreducible_blocks(
-                this->mpi_comm, n_skipped_irreducible_blocks_local);
-        if (n_skipped_irreducible_blocks != 0 && GlobalV::MY_RANK == 0)
-        {
-            std::cout << "Warning: skipped " << n_skipped_irreducible_blocks
-                      << " missing irreducible ABF cut-Coulomb blocks during symmetry restoration"
-                      << std::endl;
-        }
-        this->Vs_period
-            = this->symmetry_rotation_.restore_HR_abf(ucell.symm, ucell.atoms, ucell.st, Vs_irreducible);
-        if (GlobalV::NPROC > 1)
-        {
-            this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
-        }
-    }
     this->out_coulomb_k(ucell, this->Vs_period, "coulomb_cut_", exx_lri_rpa);
     Vs_period.clear();
     Vs_period.swap(tmp);
