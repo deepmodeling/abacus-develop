@@ -3,7 +3,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
-#include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include "source_cell/print_cell.h" // lanshuyue add 2025-06-19
+#include <limits>
+#include <iostream>
+#include <cstdlib>
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
@@ -128,7 +131,13 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     //! call dysev
     std::vector<double> omega(3*size);
     std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    //use size_t to safely compute lwork and avoid integer overflow
+    size_t safe_lwork = static_cast<size_t>(3) * size * 3 * size;
+    if (safe_lwork > static_cast<size_t>(std::numeric_limits<int>::max())) {
+    	std::cerr << "Error: lwork exceeds INT_MAX in BFGS::PrepareStep" << std::endl;
+    	exit(1);
+    }
+    int lwork = static_cast<int>(safe_lwork);
     int info=0;
     std::vector<double> H_flat;
     
