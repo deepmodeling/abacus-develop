@@ -19,7 +19,7 @@ class Stochastic_WF
     void init(K_Vectors* p_kv, const int npwx_in);
 
     // origin stochastic wavefunctions in CPU
-    psi::Psi<T, base_device::DEVICE_CPU>* chi0_cpu = nullptr;
+    psi::Psi<T, Device>* chi0_cpu = nullptr;
     // origin stochastic wavefunctions in GPU or CPU
     psi::Psi<T, Device>* chi0 = nullptr;
     // stochastic wavefunctions after in reciprocal space orthogonalized with KS wavefunctions

@@ -125,7 +125,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     }
     else
     {
-        this->chi0 = reinterpret_cast<psi::Psi<T, Device>*>(this->chi0_cpu);
+        this->chi0 = this->chi0_cpu;
     }
 }
 
