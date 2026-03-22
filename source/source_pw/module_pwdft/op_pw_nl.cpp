@@ -39,7 +39,7 @@ Nonlocal<OperatorPW<T, Device>>::~Nonlocal() {
 template<typename T, typename Device>
 void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 {
-    ModuleBase::timer::tick("Nonlocal", "getvnl");
+    ModuleBase::timer::start("Nonlocal", "getvnl");
     this->ik = ik_in;
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
@@ -52,7 +52,7 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
         this->next_op->init(ik_in);
     }
 
-    ModuleBase::timer::tick("Nonlocal", "getvnl");
+    ModuleBase::timer::end("Nonlocal", "getvnl");
 }
 
 //--------------------------------------------------------------------------
@@ -61,7 +61,7 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 template<typename T, typename Device>
 void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const
 {
-    ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
+    ModuleBase::timer::start("Nonlocal", "add_nonlocal_pp");
 
     // number of projectors
     int nkb = this->ppcell->nkb;
@@ -205,7 +205,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
             this->max_npw
         );
     }
-    ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
+    ModuleBase::timer::end("Nonlocal", "add_nonlocal_pp");
 }
 
 template<typename T, typename Device>
@@ -218,7 +218,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "nonlocal_pw");
+    ModuleBase::timer::start("Operator", "nonlocal_pw");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
@@ -290,7 +290,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
         this->add_nonlocal_pp(tmhpsi, becp, nbands);
     }
 
-    ModuleBase::timer::tick("Operator", "nonlocal_pw");
+    ModuleBase::timer::end("Operator", "nonlocal_pw");
 }
 
 template<typename T, typename Device>

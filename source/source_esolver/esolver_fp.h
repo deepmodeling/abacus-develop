@@ -60,8 +60,8 @@ class ESolver_FP: public ESolver
     //!          charge density and potential are defined on dense grids,
     //!          but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
     ModulePW::PW_Basis* pw_rho = nullptr;
-    ModulePW::PW_Basis* pw_rhod;    //! dense grid for USPP
-    ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
+    ModulePW::PW_Basis* pw_rhod = nullptr;    //! dense grid for USPP
+    ModulePW::PW_Basis_Big* pw_big = nullptr; ///< [temp] pw_basis_big class
 
     //! parallel for rho grid
     Parallel_Grid Pgrid;

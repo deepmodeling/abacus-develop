@@ -29,7 +29,7 @@ namespace PulayForceStress
         Tfunc& stress_func)
     {
         ModuleBase::TITLE("Force_LCAO", "cal_pulay_fs_center2");
-        ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
+        ModuleBase::timer::start("Force_LCAO", "cal_pulay_fs_center2");
 
         const int nspin_DMR = (PARAM.inp.nspin == 2) ? 2 : 1;
         int total_irr = 0;
@@ -129,6 +129,6 @@ namespace PulayForceStress
 
         if (isstress) { StressTools::stress_fill(ucell.lat0, ucell.omega, s); }
 
-        ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
+        ModuleBase::timer::end("Force_LCAO", "cal_pulay_fs_center2");
     }
 }

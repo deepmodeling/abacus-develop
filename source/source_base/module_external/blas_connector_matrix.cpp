@@ -107,7 +107,9 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::cgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        // cgemm_mth_ for raw dsp mth;
+        // cgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -158,7 +160,9 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::zgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        // zgemm_mth_ for raw dsp mth;
+        // zgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -277,7 +281,9 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::cgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        // cgemm_mth_ for raw dsp mth;
+        // cgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
 #endif
 #ifdef __CUDA
@@ -328,7 +334,9 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::zgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        // zgemm_mth_ for raw dsp mth;
+        // zgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
 #endif
 #ifdef __CUDA

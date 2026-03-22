@@ -34,7 +34,7 @@ void ModuleIO::write_libxc_r(
 	const ModulePW::PW_Basis &pw_rhod)
 {
 	ModuleBase::TITLE("ModuleIO","write_libxc_r");
-	ModuleBase::timer::tick("ModuleIO","write_libxc_r");
+	ModuleBase::timer::start("ModuleIO","write_libxc_r");
 
 	const int nspin =
 		(PARAM.inp.nspin == 1 || (
@@ -325,7 +325,7 @@ void ModuleIO::write_libxc_r(
 
 	XC_Functional_Libxc::finish_func(funcs);
 
-	ModuleBase::timer::tick("ModuleIO","write_libxc_r");
+	ModuleBase::timer::end("ModuleIO","write_libxc_r");
 }
 
 

@@ -277,7 +277,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
                           const bool* numeric)
 {
     ModuleBase::TITLE("Charge","set_rho_core");
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    ModuleBase::timer::start("Charge","set_rho_core");
 
     bool bl = false;
     for (int it = 0; it<ucell.ntype; it++)
@@ -292,7 +292,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     if (!bl)
     {
         ModuleBase::GlobalFunc::ZEROS( this->rho_core, this->rhopw->nrxx);
-    	ModuleBase::timer::tick("Charge","set_rho_core");
+    	ModuleBase::timer::end("Charge","set_rho_core");
         return;
     }
 
@@ -369,7 +369,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     // The term was present in previous versions of the code but it shouldn't
     delete [] rhocg;
     delete [] vg;
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    ModuleBase::timer::end("Charge","set_rho_core");
     return;
 } // end subroutine set_rhoc
 

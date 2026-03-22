@@ -54,7 +54,7 @@ void ModuleIO::nscf_bands(
     const K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO","nscf_bands");
-    ModuleBase::timer::tick("ModuleIO", "nscf_bands");
+    ModuleBase::timer::start("ModuleIO", "nscf_bands");
 
     assert(precision>0);
 
@@ -175,6 +175,6 @@ void ModuleIO::nscf_bands(
     ofs.close();
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "nscf_band");
+    ModuleBase::timer::end("ModuleIO", "nscf_bands");
     return;
 }

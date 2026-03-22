@@ -35,7 +35,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                         torch::Tensor& v_delta_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_v_delta_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "cal_v_delta_precalc");
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
 
@@ -165,7 +165,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     //  std::cout<<"calculate v_delta_precalc time:\t"<<(double)(t_end.tv_sec-t_start.tv_sec) +
     //  (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0<<std::endl;
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "cal_v_delta_precalc");
     return;
 }
 
@@ -184,7 +184,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                                      torch::Tensor& phialpha_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_phialpha");
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
     using TK_tensor =
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
@@ -261,7 +261,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
 
 #endif
 
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha");
     return;
 }
 
@@ -272,7 +272,7 @@ void DeePKS_domain::prepare_gevdm(const int nat,
                                   torch::Tensor& gevdm_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_gevdm");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_gevdm");
     int nlmax = deepks_param.inlmax / nat;
     int mmax = 2 * deepks_param.lmaxd + 1;
     gevdm_out = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
@@ -287,7 +287,7 @@ void DeePKS_domain::prepare_gevdm(const int nat,
     }
     gevdm_out = torch::stack(gevdm_out_vector, 1);
 
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_gevdm");
     return;
 }
 

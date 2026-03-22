@@ -88,7 +88,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "runner");
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::start(this->classname, "runner");
 
     //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
@@ -215,7 +215,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         delete velocity_mat;
     }
 
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::end(this->classname, "runner");
     return;
 }
 
@@ -504,7 +504,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_LCAO_TDDFT", "after_scf");
-    ModuleBase::timer::tick(this->classname, "after_scf");
+    ModuleBase::timer::start(this->classname, "after_scf");
 
     ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
 
@@ -530,7 +530,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  this->td_p,
                                  this->exx_nao);
 
-    ModuleBase::timer::tick(this->classname, "after_scf");
+    ModuleBase::timer::end(this->classname, "after_scf");
 }
 
 template <typename TR, typename Device>

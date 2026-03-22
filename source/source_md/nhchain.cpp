@@ -156,7 +156,7 @@ Nose_Hoover::~Nose_Hoover()
 void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
-    ModuleBase::timer::tick("Nose_Hoover", "setup");
+    ModuleBase::timer::start("Nose_Hoover", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
     if (mdp.md_type == "npt")
@@ -207,7 +207,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
         }
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "setup");
+    ModuleBase::timer::end("Nose_Hoover", "setup");
 
     return;
 }
@@ -215,7 +215,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
 void Nose_Hoover::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
-    ModuleBase::timer::tick("Nose_Hoover", "first_half");
+    ModuleBase::timer::start("Nose_Hoover", "first_half");
 
     /// update thermostats coupled with barostat if NPT ensemble
     if (npt_flag && mdp.md_pchain)
@@ -266,7 +266,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
         update_volume(ofs);
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "first_half");
+    ModuleBase::timer::end("Nose_Hoover", "first_half");
 
     return;
 }
@@ -275,7 +275,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
 void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
-    ModuleBase::timer::tick("Nose_Hoover", "second_half");
+    ModuleBase::timer::start("Nose_Hoover", "second_half");
 
     /// perform half-step update of vel due to atomic force
     MD_base::update_vel(force);
@@ -310,7 +310,7 @@ void Nose_Hoover::second_half()
         baro_thermo();
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "second_half");
+    ModuleBase::timer::end("Nose_Hoover", "second_half");
 
     return;
 }

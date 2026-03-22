@@ -48,7 +48,7 @@ private:
     double energy;                          ///< Current system energy
     double alpha_k;                         ///< Step size parameter
 
-    ModuleESolver::ESolver* solver;         ///< Structure solver
+    ModuleESolver::ESolver* solver = nullptr;         ///< Structure solver
     std::vector<double> steplength;//the length of atoms displacement 
     std::vector<std::vector<double>> H;//Hessian matrix
     std::vector<double> force0;//force in previous step

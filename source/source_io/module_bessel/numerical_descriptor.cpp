@@ -257,7 +257,7 @@ void Numerical_Descriptor::jlq3d_overlap(
     const psi::Psi<std::complex<double>> &psi)
 {
     ModuleBase::TITLE("Numerical_Descriptor","jlq3d_overlap");
-    ModuleBase::timer::tick("Numerical_Descriptor","jlq3d_overlap");
+    ModuleBase::timer::start("Numerical_Descriptor","jlq3d_overlap");
 
     GlobalV::ofs_running << " OUTPUT THE OVERLAP BETWEEN SPHERICAL BESSEL FUNCTIONS AND BLOCH WAVE FUNCTIONS" <<
 std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << std::endl;
@@ -329,7 +329,7 @@ normalization 2015-12-29 for (int ie=0; ie < nmax; ie++)
 
     delete[] flq;
     delete[] gk;
-    ModuleBase::timer::tick("Numerical_Descriptor","jlq3d_overlap");
+    ModuleBase::timer::end("Numerical_Descriptor","jlq3d_overlap");
     return;
 }
 */

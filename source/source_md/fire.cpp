@@ -29,13 +29,13 @@ FIRE::~FIRE()
 void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("FIRE", "setup");
-    ModuleBase::timer::tick("FIRE", "setup");
+    ModuleBase::timer::start("FIRE", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
 
     check_force();
 
-    ModuleBase::timer::tick("FIRE", "setup");
+    ModuleBase::timer::end("FIRE", "setup");
 
     return;
 }
@@ -43,7 +43,7 @@ void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 void FIRE::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
-    ModuleBase::timer::tick("FIRE", "first_half");
+    ModuleBase::timer::start("FIRE", "first_half");
 
     MD_base::update_vel(force);
 
@@ -51,7 +51,7 @@ void FIRE::first_half(std::ofstream& ofs)
 
     MD_base::update_pos();
 
-    ModuleBase::timer::tick("FIRE", "first_half");
+    ModuleBase::timer::end("FIRE", "first_half");
 
     return;
 }
@@ -60,13 +60,13 @@ void FIRE::first_half(std::ofstream& ofs)
 void FIRE::second_half(void)
 {
     ModuleBase::TITLE("FIRE", "second_half");
-    ModuleBase::timer::tick("FIRE", "second_half");
+    ModuleBase::timer::start("FIRE", "second_half");
 
     MD_base::update_vel(force);
 
     check_force();
 
-    ModuleBase::timer::tick("FIRE", "second_half");
+    ModuleBase::timer::end("FIRE", "second_half");
 
     return;
 }

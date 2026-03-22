@@ -62,7 +62,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const UnitCell& ucell,
 									  const int ik)
 {
     if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
-	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
+	ModuleBase::timer::start("pp_cell_vnl","getvnl");
 
 	if(lmaxkb < 0) 
 	{
@@ -180,7 +180,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const UnitCell& ucell,
     delete [] dvq;
     delete [] dylm;
 
-	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
+	ModuleBase::timer::end("pp_cell_vnl","getvnl");
 
 	return;
 }

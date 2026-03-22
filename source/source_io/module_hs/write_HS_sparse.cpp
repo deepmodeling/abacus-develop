@@ -15,7 +15,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                                const std::string& HR_filename_up,
                                const std::string& HR_filename_down = "") {
     ModuleBase::TITLE("ModuleIO", "save_HSR_sparse");
-    ModuleBase::timer::tick("ModuleIO", "save_HSR_sparse");
+    ModuleBase::timer::start("ModuleIO", "save_HSR_sparse");
 
     auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
     auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
@@ -324,7 +324,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     delete[] S_nonzero_num;
     S_nonzero_num = nullptr;
 
-    ModuleBase::timer::tick("ModuleIO", "save_HSR_sparse");
+    ModuleBase::timer::end("ModuleIO", "save_HSR_sparse");
     return;
 }
 
@@ -335,7 +335,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const bool& binary,
                               const std::string& fileflag) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
-    ModuleBase::timer::tick("ModuleIO", "save_dH_sparse");
+    ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
 
     auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
     auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
@@ -695,7 +695,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         dHz_nonzero_num[ispin] = nullptr;
     }
 
-    ModuleBase::timer::tick("ModuleIO", "save_dH_sparse");
+    ModuleBase::timer::end("ModuleIO", "save_dH_sparse");
     return;
 }
 
@@ -712,7 +712,7 @@ void ModuleIO::save_sparse(
     const int& istep,
     const bool& reduce) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
-    ModuleBase::timer::tick("ModuleIO", "save_sparse");
+    ModuleBase::timer::start("ModuleIO", "save_sparse");
 
     int total_R_num = all_R_coor.size();
     std::vector<long long> nonzero_num(total_R_num, 0);
@@ -806,7 +806,7 @@ void ModuleIO::save_sparse(
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "save_sparse");
+    ModuleBase::timer::end("ModuleIO", "save_sparse");
 }
 
 template void ModuleIO::save_sparse<double>(

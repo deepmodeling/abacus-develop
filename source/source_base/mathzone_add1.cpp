@@ -61,7 +61,7 @@ void Mathzone_Add1::SplineD2 // modified by pengfei 13-8-8 add second derivative
 	double* y2
 )
 {
-	ModuleBase::timer::tick("Mathzone_Add1","SplineD2");
+	ModuleBase::timer::start("Mathzone_Add1","SplineD2");
 	
 	double dx1, dx2, dy1, dy2, p, qn, sig, un;
 	double * u = nullptr;
@@ -122,7 +122,7 @@ void Mathzone_Add1::SplineD2 // modified by pengfei 13-8-8 add second derivative
 
 	delete[] u;
 
-	ModuleBase::timer::tick("Mathzone_Add1","SplineD2");
+	ModuleBase::timer::end("Mathzone_Add1","SplineD2");
 }
 
 // Peize Lin add openmp 2019-12-13	
@@ -138,7 +138,7 @@ void Mathzone_Add1::Cubic_Spline_Interpolation
 	double * const dy
 )
 {	
-	ModuleBase::timer::tick("Mathzone","cubic_spline");
+	ModuleBase::timer::start("Mathzone","cubic_spline");
 
 #ifdef _OPENMP
 	#pragma omp parallel for schedule(static)
@@ -175,7 +175,7 @@ void Mathzone_Add1::Cubic_Spline_Interpolation
 		//ddy[m] = ddy_tmp;
 	}
 
-	ModuleBase::timer::tick("Mathzone","cubic_spline");
+	ModuleBase::timer::end("Mathzone","cubic_spline");
 }
 
 /// Interpolation for Numerical Orbitals
@@ -270,7 +270,7 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	double *phind
 )
 {
-	ModuleBase::timer::tick("Mathzone_Add1", "Uni_Deriv_Phi");
+	ModuleBase::timer::start("Mathzone_Add1", "Uni_Deriv_Phi");
 	int FFT_NR = 2*mesh-1;  // FFT_NR = 16019
 	// std::cout << "\n mesh=" << mesh << ", radf[8010]=" << radf[8010] <<  ", radf[8009]=" << radf[8009] ;
 	// mesh=8010, radf[8010]=4.396478951532926e-01, radf[8009]=0.000000000000000e+00
@@ -409,7 +409,7 @@ void Mathzone_Add1::Uni_Deriv_Phi
     delete [] fft_ndphik;
     delete [] fft_ndphir;
 	
-	ModuleBase::timer::tick("Mathzone_Add1", "Uni_Deriv_Phi");
+	ModuleBase::timer::end("Mathzone_Add1", "Uni_Deriv_Phi");
 }
 
 }

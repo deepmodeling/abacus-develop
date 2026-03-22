@@ -37,7 +37,7 @@ template <typename TR>
 void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("Velocity_op", "initialize_vcomm_r");
-    ModuleBase::timer::tick("Velocity_op", "initialize_vcomm_r");
+    ModuleBase::timer::start("Velocity_op", "initialize_vcomm_r");
     if(!init_done)
     {
         r_calculator.init_nonlocal(*ucell, *paraV, orb_);
@@ -112,13 +112,13 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
     {
         this->current_term[dir]->allocate(nullptr, true);
     }
-    ModuleBase::timer::tick("Velocity_op", "initialize_vcomm_r");
+    ModuleBase::timer::end("Velocity_op", "initialize_vcomm_r");
 }
 template <typename TR>
 void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("Velocity_op", "initialize_grad_term");
-    ModuleBase::timer::tick("Velocity_op", "initialize_grad_term");
+    ModuleBase::timer::start("Velocity_op", "initialize_grad_term");
     for (int dir=0;dir<3;dir++)
     {
         if (this->current_term[dir] == nullptr)
@@ -175,13 +175,13 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Paral
         this->current_term[dir]->allocate(nullptr, true);
     }
 
-    ModuleBase::timer::tick("Velocity_op", "initialize_grad_term");
+    ModuleBase::timer::end("Velocity_op", "initialize_grad_term");
 }
 template <typename TR>
 void Velocity_op<TR>::calculate_vcomm_r()
 {
     ModuleBase::TITLE("Velocity_op", "calculate_vcomm_r");
-    ModuleBase::timer::tick("Velocity_op", "calculate_vcomm_r");
+    ModuleBase::timer::start("Velocity_op", "calculate_vcomm_r");
 
     const Parallel_Orbitals* paraV = this->current_term[0]->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
@@ -316,7 +316,7 @@ void Velocity_op<TR>::calculate_vcomm_r()
             }
         }
     }
-    ModuleBase::timer::tick("Velocity_op", "calculate_vcomm_r");
+    ModuleBase::timer::end("Velocity_op", "calculate_vcomm_r");
 }
 
 // cal_HR_IJR()
@@ -413,7 +413,7 @@ void Velocity_op<TR>::calculate_grad_term()
     {
         ModuleBase::WARNING_QUIT("Velocity_op::calculate_grad_term", "grad_term is nullptr or empty");
     }
-    ModuleBase::timer::tick("Velocity_op", "calculate_grad_term");
+    ModuleBase::timer::start("Velocity_op", "calculate_grad_term");
 
     const Parallel_Orbitals* paraV = this->current_term[0]->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
@@ -452,7 +452,7 @@ void Velocity_op<TR>::calculate_grad_term()
             }
         }
     }
-    ModuleBase::timer::tick("Velocity_op", "calculate_grad_term");
+    ModuleBase::timer::end("Velocity_op", "calculate_grad_term");
 }
 template <typename TR>
 void Velocity_op<TR>::cal_grad_IJR(const int& iat1,

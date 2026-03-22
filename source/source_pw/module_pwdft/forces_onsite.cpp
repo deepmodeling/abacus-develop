@@ -20,7 +20,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     {
         return;
     }
-    ModuleBase::timer::tick("Forces", "cal_force_onsite");
+    ModuleBase::timer::start("Forces", "cal_force_onsite");
 
     // allocate memory for the force
     FPTYPE* force = nullptr;
@@ -72,7 +72,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     // sum up force_onsite from all processors
     Parallel_Reduce::reduce_all(force_onsite.c, force_onsite.nr * force_onsite.nc);
 
-    ModuleBase::timer::tick("Forces", "cal_force_onsite");
+    ModuleBase::timer::end("Forces", "cal_force_onsite");
 }
 
 template class Forces<double, base_device::DEVICE_CPU>;

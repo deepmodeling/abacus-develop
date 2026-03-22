@@ -44,7 +44,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
                                 const psi::Psi<T>& psi)
 {
     ModuleBase::TITLE("RPA_LRI", "postSCF");
-    ModuleBase::timer::tick("RPA_LRI", "postSCF");
+    ModuleBase::timer::start("RPA_LRI", "postSCF");
 
     this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb);
     this->init(mpi_comm_in, kv, orb.cutoffs());
@@ -72,14 +72,14 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     }
     this->output_ewald_coulomb(ucell, kv, orb);
 
-    ModuleBase::timer::tick("RPA_LRI", "postSCF");
+    ModuleBase::timer::end("RPA_LRI", "postSCF");
 }
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
-    ModuleBase::timer::tick("RPA_LRI", "init");
+    ModuleBase::timer::start("RPA_LRI", "init");
     this->mpi_comm = mpi_comm_in;
     this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_cut_coulomb->lcaos;
@@ -96,7 +96,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     }
     //	this->cv = std::move(exx_lri_rpa.cv);
     //    exx_lri_rpa.cv = exx_lri_rpa.cv;
-    ModuleBase::timer::tick("RPA_LRI", "init");
+    ModuleBase::timer::end("RPA_LRI", "init");
 }
 
 template <typename T, typename Tdata>
@@ -107,7 +107,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
                                         const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("RPA_LRI", "cal_postSCF_exx");
-    ModuleBase::timer::tick("RPA_LRI", "cal_postSCF_exx");
+    ModuleBase::timer::start("RPA_LRI", "cal_postSCF_exx");
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = &kv;
@@ -191,7 +191,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());
     }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
-    ModuleBase::timer::tick("RPA_LRI", "cal_postSCF_exx");
+    ModuleBase::timer::end("RPA_LRI", "cal_postSCF_exx");
 }
 
 // if use shrink, output Coulomb and Cs_data in small abfs
@@ -200,7 +200,7 @@ template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa)
 {
     ModuleBase::TITLE("RPA_LRI", "output_cut_coulomb_cs");
-    ModuleBase::timer::tick("RPA_LRI", "output_cut_coulomb_cs");
+    ModuleBase::timer::start("RPA_LRI", "output_cut_coulomb_cs");
 
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
@@ -247,14 +247,14 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Cs_period.clear();
     Cs_period.swap(tmp);
 
-    ModuleBase::timer::tick("RPA_LRI", "output_cut_coulomb_cs");
+    ModuleBase::timer::end("RPA_LRI", "output_cut_coulomb_cs");
 }
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vectors& kv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("RPA_LRI", "output_ewald_coulomb");
-    ModuleBase::timer::tick("RPA_LRI", "output_ewald_coulomb");
+    ModuleBase::timer::start("RPA_LRI", "output_ewald_coulomb");
 
     GlobalC::exx_info.info_ri.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
@@ -304,14 +304,14 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     exx_full_coulomb = nullptr;
     RpaLriDetail::trim_malloc_cache();
 
-    ModuleBase::timer::tick("RPA_LRI", "output_ewald_coulomb");
+    ModuleBase::timer::end("RPA_LRI", "output_ewald_coulomb");
 }
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv)
 {
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
-    ModuleBase::timer::tick("RPA_LRI", "cal_large_Cs");
+    ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
         exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
@@ -411,7 +411,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     exx_cut_coulomb = nullptr;
     RpaLriDetail::trim_malloc_cache();
 
-    ModuleBase::timer::tick("RPA_LRI", "cal_large_Cs");
+    ModuleBase::timer::end("RPA_LRI", "cal_large_Cs");
 }
 
 template <typename T, typename Tdata>
@@ -581,7 +581,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
                                          const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs)
 {
     ModuleBase::TITLE("RPA_LRI", "out_abfs_overlap");
-    ModuleBase::timer::tick("RPA_LRI", "out_abfs_overlap");
+    ModuleBase::timer::start("RPA_LRI", "out_abfs_overlap");
     const double threshold = 1e-15;
     const auto format = std::scientific;
     int prec = 15;
@@ -729,7 +729,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
         }
     }
     ofs.close();
-    ModuleBase::timer::tick("RPA_LRI", "out_abfs_overlap");
+    ModuleBase::timer::end("RPA_LRI", "out_abfs_overlap");
 }
 
 template <typename T, typename Tdata>
@@ -738,7 +738,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
                                     const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s)
 {
     ModuleBase::TITLE("RPA_LRI", "inverse_olp");
-    ModuleBase::timer::tick("RPA_LRI", "inverse_olp");
+    ModuleBase::timer::start("RPA_LRI", "inverse_olp");
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     size_t all_mu_s = 0;
     std::vector<int> mu_s_shift(ucell.nat);
@@ -826,7 +826,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("RPA_LRI", "inverse_olp");
+    ModuleBase::timer::end("RPA_LRI", "inverse_olp");
 }
 
 // debug function
@@ -1105,7 +1105,7 @@ template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_Cs");
-    ModuleBase::timer::tick("RPA_LRI", "out_Cs");
+    ModuleBase::timer::start("RPA_LRI", "out_Cs");
 
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
@@ -1139,7 +1139,7 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
         }
     }
     ofs.close();
-    ModuleBase::timer::tick("RPA_LRI", "out_Cs");
+    ModuleBase::timer::end("RPA_LRI", "out_Cs");
     return;
 }
 
@@ -1150,7 +1150,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
                                       Exx_LRI<double>* exx_lri)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_coulomb_k");
-    ModuleBase::timer::tick("RPA_LRI", "out_coulomb_k");
+    ModuleBase::timer::start("RPA_LRI", "out_coulomb_k");
 
     int all_mu = 0;
     std::vector<int> mu_shift(ucell.nat);
@@ -1218,7 +1218,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
         }
     }
     ofs.close();
-    ModuleBase::timer::tick("RPA_LRI", "out_coulomb_k");
+    ModuleBase::timer::end("RPA_LRI", "out_coulomb_k");
 }
 
 

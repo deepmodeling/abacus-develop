@@ -472,6 +472,19 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 };
 
 template <typename FPTYPE>
+struct set_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(FPTYPE* arr, const int var, const size_t size)
+    {
+        ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
+            int beg = 0, len = 0;
+            ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096 / sizeof(FPTYPE), beg, len);
+            memset(arr + beg, var, sizeof(FPTYPE) * len);
+        });
+    }
+};
+
+template <typename FPTYPE>
 struct delete_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 {
     void operator()(FPTYPE* arr)
@@ -486,6 +499,12 @@ template struct resize_memory_op_mt<float, base_device::DEVICE_CPU>;
 template struct resize_memory_op_mt<double, base_device::DEVICE_CPU>;
 template struct resize_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
+
+template struct set_memory_op_mt<int, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<float, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<double, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct set_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 
 template struct delete_memory_op_mt<int, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<float, base_device::DEVICE_CPU>;

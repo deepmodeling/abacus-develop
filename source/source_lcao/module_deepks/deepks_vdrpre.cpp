@@ -24,7 +24,7 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
                                             torch::Tensor& iRmat)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_iRmat");
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
+    ModuleBase::timer::start("DeePKS_domain", "prepare_phialpha_iRmat");
     constexpr torch::Dtype dtype = torch::kFloat64;
 
     // get the maximum nnmax
@@ -90,7 +90,7 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
         }
     );
     iRmat = mapping_R(dRmat_tmp.unsqueeze(1) - dRmat_tmp.unsqueeze(2));
-    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha_iRmat");
+    ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha_iRmat");
     return;
 }
 
@@ -109,7 +109,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                     torch::Tensor& vdr_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "calc_vdr_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_vdr_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "calc_vdr_precalc");
 
     torch::Tensor vdr_pdm = torch::zeros({R_size,
                                           R_size,
@@ -230,7 +230,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
 
     vdr_precalc = torch::cat(vdr_vector, -1);
 
-    ModuleBase::timer::tick("DeePKS_domain", "calc_vdr_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "calc_vdr_precalc");
     return;
 }
 

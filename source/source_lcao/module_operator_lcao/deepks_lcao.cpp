@@ -54,7 +54,7 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DeePKS", "initialize_HR");
-    ModuleBase::timer::tick("DeePKS", "initialize_HR");
+    ModuleBase::timer::start("DeePKS", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -136,7 +136,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     this->hR->allocate(nullptr, false);
     // }
 
-    ModuleBase::timer::tick("DeePKS", "initialize_HR");
+    ModuleBase::timer::end("DeePKS", "initialize_HR");
 }
 #endif
 
@@ -150,7 +150,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // this operator should be informed that DM has changed and HR need to recalculate.
     if (this->ld->get_hr_cal())
     {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
+        ModuleBase::timer::start("DeePKS", "contributeHR");
 
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
                                    this->ld->deepks_param,
@@ -198,7 +198,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
         this->ld->set_hr_cal(false);
 
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
+        ModuleBase::timer::end("DeePKS", "contributeHR");
     }
     // save V_delta_R to hR
     this->hR->add(*this->V_delta_R);
@@ -211,9 +211,10 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("DeePKS", "calculate_HR");
-    ModuleBase::timer::tick("DeePKS", "calculate_HR");
+    ModuleBase::timer::start("DeePKS", "calculate_HR");
     if (this->V_delta_R->size_atom_pairs() == 0)
     {
+        ModuleBase::timer::end("DeePKS", "calculate_HR");
         return;
     }
 
@@ -373,7 +374,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
     }
-    ModuleBase::timer::tick("DeePKS", "calculate_HR");
+    ModuleBase::timer::end("DeePKS", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -415,7 +416,7 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("DeePKS", "contributeHk");
-    ModuleBase::timer::tick("DeePKS", "contributeHk");
+    ModuleBase::timer::start("DeePKS", "contributeHk");
 
     TK* h_delta_k = this->ld->V_delta[ik].data();
     // set SK to zero and then calculate SK for each k vector
@@ -431,7 +432,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], ncol, 0);
     }
-    ModuleBase::timer::tick("DeePKS", "contributeHk");
+    ModuleBase::timer::end("DeePKS", "contributeHk");
 }
 
 #endif

@@ -28,11 +28,11 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                                            const bool* numeric,
                                            const UnitCell& ucell_in) {
     ModuleBase::TITLE("Forces", "cal_force_scc");
-    ModuleBase::timer::tick("Forces", "cal_force_scc");
+    ModuleBase::timer::start("Forces", "cal_force_scc");
 
     // for orbital free case
     if (!vnew_exist) {
-        ModuleBase::timer::tick("Forces", "cal_force_scc");
+        ModuleBase::timer::end("Forces", "cal_force_scc");
         return;
     }
 
@@ -135,7 +135,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
 	Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
 
-    ModuleBase::timer::tick("Forces", "cal_force_scc");
+    ModuleBase::timer::end("Forces", "cal_force_scc");
     return;
 }
 

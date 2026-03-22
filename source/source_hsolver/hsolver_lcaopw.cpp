@@ -32,7 +32,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                           const int nat)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
-    ModuleBase::timer::tick("HSolverLIP", "solve");
+    ModuleBase::timer::start("HSolverLIP", "solve");
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -108,12 +108,12 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         {
             reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
         }
-        ModuleBase::timer::tick("HSolverLIP", "solve");
+        ModuleBase::timer::end("HSolverLIP", "solve");
         return;
     }
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
 
-    ModuleBase::timer::tick("HSolverLIP", "solve");
+    ModuleBase::timer::end("HSolverLIP", "solve");
     return;
 }
 

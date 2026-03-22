@@ -155,7 +155,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
                         iproj, 
                         onsite_r);
 
-        ModuleBase::timer::tick("OnsiteProj", "cubspl_tabulate");
+        ModuleBase::timer::start("OnsiteProj", "cubspl_tabulate");
         // STAGE 0 - making the interpolation table
         // CACHE 0 - if cache the irow2it, irow2iproj, irow2m, itiaiprojm2irow, <G+k|p> can be reused for 
         //           SCF, RELAX and CELL-RELAX calculation
@@ -178,7 +178,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         this->fs_tools = new hamilt::Onsite_Proj_tools<T, Device>(
             nproj, lproj, tab, nhtol, this->tab_atomic_, ucell_in, &psi, &kv, &pw_basis, &sf, wg, ekb);      
         
-        ModuleBase::timer::tick("OnsiteProj", "cubspl_tabulate");
+        ModuleBase::timer::end("OnsiteProj", "cubspl_tabulate");
 
         this->initialed = true;
     }
@@ -278,7 +278,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const char grad)
 {
-    ModuleBase::timer::tick("OnsiteProj", "tabulate_atomic");
+    ModuleBase::timer::start("OnsiteProj", "tabulate_atomic");
     // assert(grad == 'n' || grad == 'x' || grad == 'y' || grad == 'z');
     // grad = 'n' means no gradient, grad = 'x' means gradient along x, etc.
 
@@ -333,7 +333,7 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     // q.shrink_to_fit();    // release memory
     // tab_.clear();
     // tab_.shrink_to_fit(); // release memory
-    ModuleBase::timer::tick("OnsiteProj", "tabulate_atomic");
+    ModuleBase::timer::end("OnsiteProj", "tabulate_atomic");
 }
 
 template<typename T, typename Device>
@@ -341,7 +341,7 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
                     const int npm,
                     const std::complex<double>* ppsi)
 {
-    ModuleBase::timer::tick("OnsiteProj", "overlap");
+    ModuleBase::timer::start("OnsiteProj", "overlap");
     // STAGE 3 - cal_becp
     // CACHE 3 - it is no use to cache becp, it will change in each SCF iteration
     // [in] psi, tab_atomic_, npw, becp, ik
@@ -402,7 +402,7 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     {
         syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
-    ModuleBase::timer::tick("OnsiteProj", "overlap");
+    ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
 template<typename T, typename Device>
@@ -525,7 +525,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
 		const psi::Psi<std::complex<T>, Device>* psi_in, 
 		const ModuleBase::matrix& wg_in)
 {
-    ModuleBase::timer::tick("OnsiteProj", "cal_occupation");
+    ModuleBase::timer::start("OnsiteProj", "cal_occupation");
     this->tabulate_atomic(0);
     std::vector<std::complex<double>> occs(this->tot_nproj * 4, 0.0);
 
@@ -639,7 +639,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     GlobalV::ofs_running << table.str() << std::endl;
     
     // print charge
-    ModuleBase::timer::tick("OnsiteProj", "cal_occupation");
+    ModuleBase::timer::end("OnsiteProj", "cal_occupation");
 }
 
 template class projectors::OnsiteProjector<double, base_device::DEVICE_CPU>;

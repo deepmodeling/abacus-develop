@@ -85,7 +85,7 @@ std::vector<double> Vdwd3::atom_kind()
 void Vdwd3::cal_energy()
 {
     ModuleBase::TITLE("Vdwd3", "cal_energy");
-    ModuleBase::timer::tick("Vdwd3", "cal_energy");
+    ModuleBase::timer::start("Vdwd3", "cal_energy");
     init();
 
     int ij = 0;
@@ -258,13 +258,13 @@ void Vdwd3::cal_energy()
         pbc_three_body(iz_, lat_, xyz_, rep_cn_, cc6ab, eabc);
     }
     energy_ = (-para_.s6() * e6 - para_.s18() * e8 - eabc) * 2;
-    ModuleBase::timer::tick("Vdwd3", "cal_energy");
+    ModuleBase::timer::end("Vdwd3", "cal_energy");
 }
 
 void Vdwd3::cal_force()
 {
     ModuleBase::TITLE("Vdwd3", "cal_force");
-    ModuleBase::timer::tick("Vdwd3", "cal_force");
+    ModuleBase::timer::start("Vdwd3", "cal_force");
     init();
 
     force_.clear();
@@ -281,13 +281,13 @@ void Vdwd3::cal_force()
         force_[iat] = -2.0 * g[iat];
 }
 
-    ModuleBase::timer::tick("Vdwd3", "cal_force");
+    ModuleBase::timer::end("Vdwd3", "cal_force");
 }
 
 void Vdwd3::cal_stress()
 {
     ModuleBase::TITLE("Vdwd3", "cal_stress");
-    ModuleBase::timer::tick("Vdwd3", "cal_stress");
+    ModuleBase::timer::start("Vdwd3", "cal_stress");
     init();
 
     std::vector<ModuleBase::Vector3<double>> g;
@@ -301,7 +301,7 @@ void Vdwd3::cal_stress()
                                   2.0 * smearing_sigma(1, 0), 2.0 * smearing_sigma(1, 1), 2.0 * smearing_sigma(1, 2),
                                   2.0 * smearing_sigma(2, 0), 2.0 * smearing_sigma(2, 1), 2.0 * smearing_sigma(2, 2))
               / ucell_.omega;
-    ModuleBase::timer::tick("Vdwd3", "cal_stress");
+    ModuleBase::timer::end("Vdwd3", "cal_stress");
 }
 
 void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)

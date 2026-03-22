@@ -110,7 +110,7 @@ void Driver::print_start_info()
 void Driver::reading()
 {
     ModuleBase::TITLE("Driver", "reading");
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::start("Driver", "reading");
     // temperarily
     GlobalV::MY_RANK = PARAM.globalv.myrank;
     GlobalV::NPROC = PARAM.globalv.nproc;
@@ -163,13 +163,13 @@ void Driver::reading()
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
 #endif
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::end("Driver", "reading");
 }
 
 void Driver::atomic_world()
 {
     ModuleBase::TITLE("Driver", "atomic_world");
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::start("Driver", "atomic_world");
 
     // reading information 
     this->reading();
@@ -177,5 +177,5 @@ void Driver::atomic_world()
     // where the actual stuff is done
     this->driver_run();
 
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::end("Driver", "atomic_world");
 }

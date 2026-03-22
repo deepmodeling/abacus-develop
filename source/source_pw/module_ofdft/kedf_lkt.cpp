@@ -132,7 +132,7 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
  */
 void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
-    ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
+    ModuleBase::timer::start("KEDF_LKT", "LKT_potential");
     this->lkt_energy = 0.;
     double* as = new double[pw_rho->nrxx]; // a*s
     double** nabla_rho = new double*[3];
@@ -193,7 +193,7 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     delete[] nabla_rho;
     delete[] nabla_term;
 
-    ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
+    ModuleBase::timer::end("KEDF_LKT", "LKT_potential");
 }
 
 /**

@@ -67,7 +67,7 @@ void DensityMatrix_Tools::cal_DMR(
     // To check whether DMR has been initialized
     assert(dmR_out.size()==dm._nspin && "DMR has not been initialized!");
 
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
+    ModuleBase::timer::start("DensityMatrix", "cal_DMR");
     const int ld_hk = dm._paraV->nrow;
     for (int is = 1; is <= dm._nspin; ++is)
     {
@@ -192,7 +192,7 @@ void DensityMatrix_Tools::cal_DMR(
             }
         }
     }
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
+    ModuleBase::timer::end("DensityMatrix", "cal_DMR");
 }
 
 template <>
@@ -222,7 +222,7 @@ void DensityMatrix_Tools::cal_DMR_td(
     // To check whether DMR has been initialized
     assert(dmR_out.size()==dm._nspin && "DMR has not been initialized!");
 
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_td");
+    ModuleBase::timer::start("DensityMatrix", "cal_DMR_td");
     const int ld_hk = dm._paraV->nrow;
     for (int is = 1; is <= dm._nspin; ++is)
     {
@@ -350,7 +350,7 @@ void DensityMatrix_Tools::cal_DMR_td(
             }
         }
     }
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_td");
+    ModuleBase::timer::end("DensityMatrix", "cal_DMR_td");
 }
 
 template <>
@@ -376,7 +376,7 @@ void DensityMatrix_Tools::cal_DMR_full(
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR_full");
 
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
+    ModuleBase::timer::start("DensityMatrix", "cal_DMR_full");
     const int ld_hk = dm._paraV->nrow;
     hamilt::HContainer<TR_out>* target_DMR = dmR_out;
     // set zero since this function is called in every scf step
@@ -451,7 +451,7 @@ void DensityMatrix_Tools::cal_DMR_full(
             }
         }
     }
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
+    ModuleBase::timer::end("DensityMatrix", "cal_DMR_full");
 }
 
 template <>
@@ -482,7 +482,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
     // To check whether DMR has been initialized
     assert(this->_DMR.size()==this->_nspin && "DMR has not been initialized!");
 
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
+    ModuleBase::timer::start("DensityMatrix", "cal_DMR");
     const int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)
     {
@@ -537,7 +537,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             }
         }
     }
-    ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
+    ModuleBase::timer::end("DensityMatrix", "cal_DMR");
 }
 
 
@@ -553,7 +553,7 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
     }
     else
     {
-        ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
+        ModuleBase::timer::start("DensityMatrix", "switch_dmr");
         switch(mode)
         {
         case 0:
@@ -615,7 +615,7 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
         default:
             ModuleBase::WARNING_QUIT("density_matrix.cpp", "Unknown mode in switch_dmr");
         }
-        ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
+        ModuleBase::timer::end("DensityMatrix", "switch_dmr");
     }
 }
 

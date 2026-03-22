@@ -18,7 +18,7 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
 /// EXPLAIN : make table of Gaunt Coefficients
 ////////////////////////////////////////
     ModuleBase::TITLE("ORB_gaunt_table", "init_Gaunt");
-    ModuleBase::timer::tick("ORB_gaunt_table", "init_Gaunt");
+    ModuleBase::timer::start("ORB_gaunt_table", "init_Gaunt");
     
 	this->Lmax_Gaunt_Coefficients = lmax;
 	const int nlm = (lmax * 2 + 1) * (lmax * 2 + 1);
@@ -54,7 +54,7 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
         }// m
     }// L
 
-    ModuleBase::timer::tick("ORB_gaunt_table", "init_Gaunt");
+    ModuleBase::timer::end("ORB_gaunt_table", "init_Gaunt");
     return;
 }
 
@@ -73,7 +73,7 @@ double ORB_gaunt_table::Cal_Gaunt_single
 	const double &e2
 )
 {
-	ModuleBase::timer::tick("ORB_gaunt_table", "Cal_Gaunt_single");
+	ModuleBase::timer::start("ORB_gaunt_table", "Cal_Gaunt_single");
 	if ((L1 - L2 - L) % 2 != 0)
 	{
 		return 0.0;
@@ -106,7 +106,7 @@ double ORB_gaunt_table::Cal_Gaunt_single
 	}
 
 	result *= ((e1 - s1) / 2) * ((e2 - s2) / 2);
-	ModuleBase::timer::tick("ORB_gaunt_table", "Cal_Gaunt_single");
+	ModuleBase::timer::end("ORB_gaunt_table", "Cal_Gaunt_single");
 	return result;
 }
 */
@@ -121,7 +121,7 @@ void ORB_gaunt_table::init_Ylm_Gaunt
 )
 {
 	ModuleBase::TITLE("ORB_gaunt_table", "init_Ylm_Gaunt");
-	ModuleBase::timer::tick("ORB_gaunt_table", "inite_Ylm_Gaunt");
+	ModuleBase::timer::start("ORB_gaunt_table", "inite_Ylm_Gaunt");
 
 	const int nlm = (2*lmax+1) * (2*lmax+1);
 
@@ -150,7 +150,7 @@ void ORB_gaunt_table::init_Ylm_Gaunt
 
 	ModuleBase::YlmReal::Ylm_Real(nlm, 256, &g_gaunt[0], this->Ylm_Gaunt);
 
-	ModuleBase::timer::tick("ORB_gaunt_table", "init_Ylm_Gaunt");
+	ModuleBase::timer::start("ORB_gaunt_table", "init_Ylm_Gaunt");
 	return;
 }
 */
@@ -183,7 +183,7 @@ int ORB_gaunt_table::index_func
 void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 {
 	ModuleBase::TITLE("ORB_gaunt_table","init_Gaunt_CH");
-	ModuleBase::timer::tick("ORB_gaunt_table","init_Gaunt_CH");
+	ModuleBase::timer::start("ORB_gaunt_table","init_Gaunt_CH");
 
 	this->Lmax_Gaunt_CH = Lmax;
 	int L = 2*Lmax + 1;
@@ -226,7 +226,7 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 		}// l2
 	} // l1
 
-	ModuleBase::timer::tick("ORB_gaunt_table","init_Gaunt_CH");
+	ModuleBase::timer::end("ORB_gaunt_table","init_Gaunt_CH");
 	return;
 }
 
@@ -242,7 +242,7 @@ double ORB_gaunt_table::Calc_Gaunt_CH
 	const int& m3
 )
 {
-	ModuleBase::timer::tick("ORB_gaunt_table","Calc_Gaunt_CH");
+	ModuleBase::timer::start("ORB_gaunt_table","Calc_Gaunt_CH");
 	
 	double fac = sqrt((2*l1+1) * (2*l2+1) * (2*l3+1) / ModuleBase::FOUR_PI);
 
@@ -269,9 +269,8 @@ double ORB_gaunt_table::Calc_Gaunt_CH
 					/ Fact(l3-l2+m1+k) / Fact(l3-l1+k-m2);
 	}
 
+	ModuleBase::timer::end("ORB_gaunt_table","Calc_Gaunt_CH");
 	return fac * pow(-1.0, l1-l2-m3) * triangle_f * aux1 * aux2;
-
-	ModuleBase::timer::tick("ORB_gaunt_table","Calc_Gaunt_CH");
 }
 	
 

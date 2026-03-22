@@ -56,7 +56,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "orthog");
-    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
+    ModuleBase::timer::start("Stochastic_Iter", "orthog");
     int nbands_l = psi.get_nbands();
     const int nbands = PARAM.inp.nbands;
     // orthogonal part
@@ -130,7 +130,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
 
         delmem_complex_op()(sum);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
+    ModuleBase::timer::end("Stochastic_Iter", "orthog");
 }
 
 template <typename T, typename Device>
@@ -140,7 +140,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
                                           Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "checkemm");
-    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
+    ModuleBase::timer::start("Stochastic_Iter", "checkemm");
     // iter = 1,2,...   istep = 0,1,2,...
     //  if( istep%PARAM.inp.initsto_freq != 0 )    return;
     const int npw = stowf.ngk[ik];
@@ -149,6 +149,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 5)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }
@@ -156,6 +157,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
     {
         if (iter > 1)
         {
+            ModuleBase::timer::end("Stochastic_Iter", "checkemm");
             return;
         }
     }
@@ -214,7 +216,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         }
         change = false;
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
+    ModuleBase::timer::end("Stochastic_Iter", "checkemm");
 }
 
 template <typename T, typename Device>
@@ -272,7 +274,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pes)
 {
     ModuleBase::TITLE("Stochastic_Iter", "itermu");
-    ModuleBase::timer::tick("Stochastic_Iter", "itermu");
+    ModuleBase::timer::start("Stochastic_Iter", "itermu");
     double dmu = 0.0;
     if (iter == 1)
     {
@@ -359,7 +361,7 @@ void Stochastic_Iter<T, Device>::itermu(const int iter, elecstate::ElecState* pe
             }
         }
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "itermu");
+    ModuleBase::timer::end("Stochastic_Iter", "itermu");
     return;
 }
 
@@ -367,7 +369,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calPn");
-    ModuleBase::timer::tick("Stochastic_Iter", "calPn");
+    ModuleBase::timer::start("Stochastic_Iter", "calPn");
 
     const int norder = p_che->norder;
     const int nchip_ik = nchip[ik];
@@ -428,7 +430,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         ModuleBase::gemm_op<Real, Device>()(trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "calPn");
+    ModuleBase::timer::end("Stochastic_Iter", "calPn");
     return;
 }
 
@@ -436,7 +438,7 @@ template <typename T, typename Device>
 double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calne");
-    ModuleBase::timer::tick("Stochastic_Iter", "calne");
+    ModuleBase::timer::start("Stochastic_Iter", "calne");
     double totne = 0;
     KS_ne = 0;
     const int norder = p_che->norder;
@@ -476,7 +478,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 #endif
 
     totne = KS_ne + sto_ne;
-    ModuleBase::timer::tick("Stochastic_Iter", "calne");
+    ModuleBase::timer::end("Stochastic_Iter", "calne");
     return totne;
 }
 
@@ -484,14 +486,14 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "calHsqrtchi");
-    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
+    ModuleBase::timer::start("Stochastic_Iter", "calHsqrtchi");
     auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
     p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         this->calTnchi_ik(ik, stowf);
     }
-    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
+    ModuleBase::timer::end("Stochastic_Iter", "calHsqrtchi");
 }
 
 template <typename T, typename Device>
@@ -501,7 +503,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "sum_stoeband");
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
+    ModuleBase::timer::start("Stochastic_Iter", "sum_stoeband");
     const int npwx = wfc_basis->npwk_max;
     const int norder = p_che->norder;
 
@@ -583,7 +585,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     Parallel_Reduce::reduce_all(sto_eband);
 #endif
     pes->f_en.eband += sto_eband;
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
+    ModuleBase::timer::end("Stochastic_Iter", "sum_stoeband");
 }
 
 template <typename T, typename Device>
@@ -593,7 +595,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "cal_storho");
-    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
+    ModuleBase::timer::start("Stochastic_Iter", "cal_storho");
     //---------------------cal rho-------------------------
     const int nrxx = wfc_basis->nrxx;
     const int npwx = wfc_basis->npwk_max;
@@ -732,7 +734,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         }
     }
 
-    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
+    ModuleBase::timer::end("Stochastic_Iter", "cal_storho");
     return;
 }
 

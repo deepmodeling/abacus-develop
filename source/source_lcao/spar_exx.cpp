@@ -39,7 +39,7 @@ void cal_HR_exx(
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs)
 {
     ModuleBase::TITLE("sparse_format", "cal_HR_exx");
-    ModuleBase::timer::tick("sparse_format", "cal_HR_exx");
+    ModuleBase::timer::start("sparse_format", "cal_HR_exx");
 
     const Tdata frac = GlobalC::exx_info.info_global.hybrid_alpha;
 
@@ -143,7 +143,7 @@ void cal_HR_exx(
         }
     }
 
-    ModuleBase::timer::tick("sparse_format", "cal_HR_exx");
+    ModuleBase::timer::end("sparse_format", "cal_HR_exx");
 }
 
 // --------------------------------------------------------

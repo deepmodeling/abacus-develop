@@ -286,7 +286,7 @@ template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::save_DMR()
 {
     ModuleBase::TITLE("DensityMatrix", "save_DMR");
-    ModuleBase::timer::tick("DensityMatrix", "save_DMR");
+    ModuleBase::timer::start("DensityMatrix", "save_DMR");
 
     const int nnr = this->_DMR[0]->get_nnr();
     // allocate if _DMR_save is empty
@@ -315,7 +315,7 @@ void DensityMatrix<TK, TR>::save_DMR()
         }
     }
 
-    ModuleBase::timer::tick("DensityMatrix", "save_DMR");
+    ModuleBase::timer::end("DensityMatrix", "save_DMR");
 }
 
 // read *.dmk into density matrix dm(k)

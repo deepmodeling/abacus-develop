@@ -133,7 +133,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
 		const ModuleBase::Vector3<double>* delta_lambda)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     // lambda has been updated in the lambda loop
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
@@ -368,14 +368,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             // }
         }
     }
-    ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
 }
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "update_psi_charge");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge");
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
     {
@@ -539,5 +539,5 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
         }
 #endif       
     }
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "update_psi_charge");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "update_psi_charge");
 }

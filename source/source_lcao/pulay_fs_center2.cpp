@@ -16,7 +16,7 @@ void PulayForceStress::cal_pulay_fs(
 		const double& factor_stress)
 {
 	ModuleBase::TITLE("Forces", "cal_pulay_fs");
-	ModuleBase::timer::tick("Forces", "cal_pulay_fs");
+	ModuleBase::timer::start("Forces", "cal_pulay_fs");
 
 	const int nspin = PARAM.inp.nspin;
 	const int nlocal = PARAM.globalv.nlocal;
@@ -66,7 +66,7 @@ void PulayForceStress::cal_pulay_fs(
 		StressTools::stress_fill(ucell.lat0, ucell.omega, stress);
 	}
 
-	ModuleBase::timer::tick("Forces", "cal_pulay_fs");
+	ModuleBase::timer::end("Forces", "cal_pulay_fs");
 }
 
 

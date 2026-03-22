@@ -19,7 +19,7 @@ void DeePKS_domain::cal_gevdm(const int nat,
                               std::vector<torch::Tensor>& gevdm)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gevdm");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gevdm");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gevdm");
     // cal gevdm(d(EigenValue(D))/dD)
     int nlmax = deepks_param.inlmax / nat;
     for (int nl = 0; nl < nlmax; ++nl)
@@ -53,20 +53,20 @@ void DeePKS_domain::cal_gevdm(const int nat,
         gevdm.push_back(avmm);
     }
     assert(gevdm.size() == nlmax);
-    ModuleBase::timer::tick("DeePKS_domain", "cal_gevdm");
+    ModuleBase::timer::end("DeePKS_domain", "cal_gevdm");
     return;
 }
 
 void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script::Module& model)
 {
     ModuleBase::TITLE("DeePKS_domain", "load_model");
-    ModuleBase::timer::tick("DeePKS_domain", "load_model");
+    ModuleBase::timer::start("DeePKS_domain", "load_model");
 
     // check whether file exists
     std::ifstream ifs(model_file.c_str());
     if (!ifs)
     {
-        ModuleBase::timer::tick("DeePKS_domain", "load_model");
+        ModuleBase::timer::end("DeePKS_domain", "load_model");
         ModuleBase::WARNING_QUIT("DeePKS_domain::load_model", "No model file named " + model_file + ", please check!");
         return;
     }
@@ -78,10 +78,10 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     catch (const c10::Error& e)
     {
         std::cerr << "error loading the model" << std::endl;
-        ModuleBase::timer::tick("DeePKS_domain", "load_model");
+        ModuleBase::timer::end("DeePKS_domain", "load_model");
         return;
     }
-    ModuleBase::timer::tick("DeePKS_domain", "load_model");
+    ModuleBase::timer::end("DeePKS_domain", "load_model");
     return;
 }
 
@@ -141,7 +141,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                           const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
+    ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm_equiv");
 
     const std::string file_d = PARAM.globalv.global_out_dir + "deepks_dm_eig.npy";
     LCAO_deepks_io::save_npy_d(nat, PARAM.inp.deepks_equiv, deepks_param, descriptor, file_d,
@@ -162,7 +162,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
     std::string cmd = "rm -f cal_edelta_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
+    ModuleBase::timer::end("DeePKS_domain", "cal_edelta_gedm_equiv");
     return;
 }
 
@@ -177,7 +177,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     double& E_delta)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm");
+    ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm");
 
     // forward
     std::vector<torch::jit::IValue> inputs;
@@ -232,7 +232,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
             }
         }
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm");
+    ModuleBase::timer::end("DeePKS_domain", "cal_edelta_gedm");
     return;
 }
 

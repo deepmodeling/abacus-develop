@@ -13,7 +13,7 @@
 void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO","write_eig_iter");
-	ModuleBase::timer::tick("ModuleIO", "write_eig_iter");
+	ModuleBase::timer::start("ModuleIO", "write_eig_iter");
 
 	GlobalV::ofs_running << "\n PRINT #EIGENVALUES# AND #OCCUPATIONS#" << std::endl;
 
@@ -151,7 +151,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
     }
 
     
-	ModuleBase::timer::tick("ModuleIO", "write_eig_iter");
+	ModuleBase::timer::end("ModuleIO", "write_eig_iter");
 }
 
 void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
@@ -160,7 +160,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 		const int istep)
 {
 	ModuleBase::TITLE("ModuleIO","write_eig_file");
-	ModuleBase::timer::tick("ModuleIO", "write_eig_file");
+	ModuleBase::timer::start("ModuleIO", "write_eig_file");
 
 /*
 	GlobalV::ofs_running << "\n";
@@ -276,6 +276,6 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif
     }
 
-	ModuleBase::timer::tick("ModuleIO", "write_eig_file");
+	ModuleBase::timer::end("ModuleIO", "write_eig_file");
 	return;
 }
