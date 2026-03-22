@@ -1832,6 +1832,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     double short_cal_hs_time = 0.0;
     double long_cal_hs_time = 0.0;
     const int cal_hs_benchmark_repeat = ExxLriDetail::get_cal_hs_benchmark_repeat();
+    const bool h_only_rt_mode = (PARAM.inp.esolver_type == "tddft");
 
 	    auto run_exx_channel =
 	        [&](RI::Exx<TA, Tcell, Ndim, Tdata>& exx_channel,
@@ -1855,11 +1856,25 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	            }
 	        }
 
-	        exx_channel.set_Ds(D_in, this->info.dm_threshold, ds_suffix);
+	        if (h_only_rt_mode)
+	        {
+	            exx_channel.set_Ds_no_post_2d(D_in, this->info.dm_threshold, ds_suffix);
+	        }
+	        else
+	        {
+	            exx_channel.set_Ds(D_in, this->info.dm_threshold, ds_suffix);
+	        }
 	        const auto cal_hs_t0 = std::chrono::steady_clock::now();
 	        for (int irepeat = 0; irepeat < cal_hs_benchmark_repeat; ++irepeat)
 	        {
-	            exx_channel.cal_Hs({cv_suffix, cv_suffix, ds_suffix});
+	            if (h_only_rt_mode)
+	            {
+	                exx_channel.cal_Hs_only({cv_suffix, cv_suffix, ds_suffix});
+	            }
+	            else
+	            {
+	                exx_channel.cal_Hs({cv_suffix, cv_suffix, ds_suffix});
+	            }
 	        }
 	        const auto cal_hs_t1 = std::chrono::steady_clock::now();
         cal_hs_time_acc
@@ -1888,20 +1903,23 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
                     std::move(exx_channel.Hs),
                     std::get<0>(judge[spin_index]),
                     std::get<1>(judge[spin_index])),
-                std::real(exx_channel.energy));
+                h_only_rt_mode ? 0.0 : std::real(exx_channel.energy));
         }
 
 	        auto Hs_a2D = exx_channel.post_2D.set_tensors_map2(exx_channel.Hs);
 	        Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_a2D);
-	        exx_channel.energy = exx_channel.post_2D.cal_energy(exx_channel.post_2D.saves["Ds_" + ds_suffix],
-	                                                            exx_channel.post_2D.set_tensors_map2(Hs_a2D));
+	        if (!h_only_rt_mode)
+	        {
+	            exx_channel.energy = exx_channel.post_2D.cal_energy(exx_channel.post_2D.saves["Ds_" + ds_suffix],
+	                                                                exx_channel.post_2D.set_tensors_map2(Hs_a2D));
+	        }
 	        return std::make_pair(
 	            RI::Communicate_Tensors_Map_Judge::comm_map2_first(
                 this->mpi_comm,
                 std::move(Hs_a2D),
                 std::get<0>(judge[spin_index]),
                 std::get<1>(judge[spin_index])),
-            std::real(exx_channel.energy));
+            h_only_rt_mode ? 0.0 : std::real(exx_channel.energy));
     };
 
 	// (nspin=4) the spinor H(R) rotation mixes the 4 spin channels, so they cannot be rotated
@@ -1941,7 +1959,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
         }
 		post_process_Hexx(this->Hexxs[is]);
 	}
-	this->Eexx = post_process_Eexx(this->Eexx);
+	this->Eexx = h_only_rt_mode ? 0.0 : post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
     if (GlobalV::MY_RANK == 0)
     {
