@@ -93,7 +93,12 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
-
+         if (!matrixFile.is_open()) {
+            std::cerr << "Error: Cannot open file " << FileName << std::endl;
+            Cblacs_abort(blacs_ctxt, 1);
+            return;
+        }
+    }
     double* b; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
@@ -104,6 +109,14 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         b = new double[M * N];
     else
         b = new double[1];
+     if (b == nullptr) {
+        std::cerr << "Error: Memory allocation failed on process " << myid << std::endl;
+        if (myid == ROOT_PROC) {
+            matrixFile.close();
+        }
+        Cblacs_abort(blacs_ctxt, 1);
+        return;
+    }
 
     // set descb, which has all elements in the only block in the root process
     //  block size is M x N, so all elements are in the first process
