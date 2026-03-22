@@ -81,6 +81,29 @@ inline bool debug_parallel_exx_enabled()
     return debug_env != nullptr && std::atoi(debug_env) != 0;
 }
 
+inline bool disable_rotated_n0_long_range()
+{
+    const char* disable_env = std::getenv("ABACUS_EXX_DISABLE_N0_LONG_RANGE");
+    return disable_env != nullptr && std::atoi(disable_env) != 0;
+}
+
+inline bool allow_rt_tddft_ewald_h_only_benchmark()
+{
+    return PARAM.inp.esolver_type == "tddft";
+}
+
+inline void print_rt_tddft_ewald_h_only_warning_once()
+{
+    static bool warning_printed = false;
+    if (!warning_printed && GlobalV::MY_RANK == 0)
+    {
+        std::cout << "RT-TDDFT Ewald moment/split runs in H-only benchmark mode;"
+                  << " long-range EXX force/stress terms are not constructed."
+                  << std::endl;
+        warning_printed = true;
+    }
+}
+
 inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
                                                     const UnitCell& ucell,
                                                     const K_Vectors& kv,
@@ -470,9 +493,14 @@ inline void overwrite_ewald_far_field_with_moment(
     {
         return;
     }
-    if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
+        && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
     {
         throw std::invalid_argument("exx_coul_moment for Ewald currently supports energy/SCF only.");
+    }
+    if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    {
+        ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
     }
 
     Moment_abfs<Tdata> moment_abfs(info);
@@ -643,20 +671,33 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs.clear();
 		this->exx_objs_long.clear();
 	    this->abfs_long_n0.clear();
-		this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-	    this->use_rotated_n0_long_range
-	        = this->info.rotate_abfs
+        this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
+        const bool rotated_n0_requested
+            = this->info.rotate_abfs
           && this->info.coul_moment
           && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end();
+        this->use_rotated_n0_long_range
+            = rotated_n0_requested && !ExxLriDetail::disable_rotated_n0_long_range();
+        if (rotated_n0_requested && !this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0)
+        {
+            std::cout << "Disable rotated ABFS leading-N0 long-range channel by"
+                      << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
+                      << std::endl;
+        }
     ModuleBase::Element_Basis_Index::IndexPermutation abfs_old_to_new_per_type;
     std::vector<std::size_t> abfs_long_prefix_size_per_type;
     if (this->use_rotated_n0_long_range)
     {
-        if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+        if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
+            if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            {
+                ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
+            }
 	        this->abfs_long_n0 = ExxLriDetail::make_leading_radial_channel_copy(this->abfs);
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs);
 	        abfs_old_to_new_per_type = permutation.old_to_new_by_type;
@@ -750,20 +791,33 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs.clear();
 		this->exx_objs_long.clear();
 	    this->abfs_long_n0.clear();
-		this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-	    this->use_rotated_n0_long_range
-	        = this->info.rotate_abfs
+        this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
+        const bool rotated_n0_requested
+            = this->info.rotate_abfs
           && this->info.coul_moment
           && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end();
+        this->use_rotated_n0_long_range
+            = rotated_n0_requested && !ExxLriDetail::disable_rotated_n0_long_range();
+        if (rotated_n0_requested && !this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0)
+        {
+            std::cout << "Disable rotated ABFS leading-N0 long-range channel by"
+                      << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
+                      << std::endl;
+        }
     ModuleBase::Element_Basis_Index::IndexPermutation abfs_old_to_new_per_type;
     std::vector<std::size_t> abfs_long_prefix_size_per_type;
     if (this->use_rotated_n0_long_range)
     {
-        if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+        if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
+            if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            {
+                ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
+            }
 	        this->abfs_long_n0 = ExxLriDetail::make_leading_radial_channel_copy(this->abfs);
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs);
 	        abfs_old_to_new_per_type = permutation.old_to_new_by_type;
@@ -1965,8 +2019,10 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     {
         if (this->use_rotated_n0_long_range)
         {
+            const double total_cal_hs_time = short_cal_hs_time + long_cal_hs_time;
             std::cout << "EXX cal_Hs timing summary: short = " << short_cal_hs_time
                       << " s, long = " << long_cal_hs_time
+                      << " s, total = " << total_cal_hs_time
                       << " s, repeat = " << cal_hs_benchmark_repeat << std::endl;
         }
         else
