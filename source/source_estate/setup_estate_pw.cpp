@@ -100,6 +100,8 @@ void setup_estate_pw_impl(
         vsep_cell->init_vsep(*pw_rhod, ucell.sep_cell);
     }
 
+    locpp.init_vloc(ucell, pw_rhod);
+
     if (pelec->pot == nullptr)
     {
         pelec->pot = new elecstate::Potential(pw_rhod, pw_rho, &ucell);
@@ -148,7 +150,6 @@ void setup_estate_pw_impl(
         pelec->pot->set_components(std::move(components));
     }
 
-    locpp.init_vloc(ucell, pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     ppcell.init(ucell, &sf, pw_wfc);
