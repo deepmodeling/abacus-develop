@@ -307,15 +307,15 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = std::stof(val[ip]);
+            pp.etotps = std::stod(val[ip]);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = std::stof(val[ip]);
+            pp.ecutwfc = std::stod(val[ip]);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = std::stof(val[ip]);
+            pp.ecutrho = std::stod(val[ip]);
         }
         else if (name[ip] == "l_max")
         {
@@ -377,7 +377,7 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
         {
             if (name[ip] == "dx")
             {
-                dx = std::stof(val[ip]);
+                dx = std::stod(val[ip]);
             }
             else if (name[ip] == "mesh")
             {
@@ -392,15 +392,15 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "xmin")
             {
-                xmin = std::stof(val[ip]);
+                xmin = std::stod(val[ip]);
             }
             else if (name[ip] == "rmax")
             {
-                rmax = std::stof(val[ip]);
+                rmax = std::stod(val[ip]);
             }
             else if (name[ip] == "zmesh")
             {
-                zmesh = std::stof(val[ip]);
+                zmesh = std::stod(val[ip]);
             }
             else
             {
@@ -509,11 +509,11 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
             }
             else if (name[ip] == "cutoff_radius")
             {
-                rcut[ib] = std::stof(val[ip]);
+                rcut[ib] = std::stod(val[ip]);
             }
             else if (name[ip] == "ultrasoft_cutoff_radius")
             {
-                rcutus[ib] = std::stof(val[ip]);
+                rcutus[ib] = std::stod(val[ip]);
             }
             else
             {
@@ -760,7 +760,7 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
             }
             else if (name[ip] == "occupation")
             {
-                pp.oc[iw] = std::stof(val[ip]);
+                pp.oc[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "n")
             {
@@ -768,15 +768,15 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
             }
             else if (name[ip] == "pseudo_energy")
             {
-                epseu[iw] = std::stof(val[ip]);
+                epseu[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "cutoff_radius")
             {
-                rcut_chi[iw] = std::stof(val[ip]);
+                rcut_chi[iw] = std::stod(val[ip]);
             }
             else if (name[ip] == "ultrasoft_cutoff_radius")
             {
-                rcutus_chi[iw] = std::stof(val[ip]);
+                rcutus_chi[iw] = std::stod(val[ip]);
             }
             else
             {
@@ -878,11 +878,11 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "jchi")
             {
-                pp.jchi[nw] = std::stof(val[ip]);
+                pp.jchi[nw] = std::stod(val[ip]);
             }
             else if (name[ip] == "oc")
             {
-                pp.oc[nw] = std::stof(val[ip]);
+                pp.oc[nw] = std::stod(val[ip]);
             }
             else
             {
@@ -911,7 +911,7 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
             }
             else if (name[ip] == "jjj")
             {
-                pp.jjj[nb] = std::stof(val[ip]);
+                pp.jjj[nb] = std::stod(val[ip]);
             }
             else
             {
