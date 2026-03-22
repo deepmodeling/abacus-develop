@@ -35,6 +35,93 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 
+#include <atomic>
+#include <complex>
+#include <cstdlib>
+#include <iomanip>
+#include <limits>
+#include <sstream>
+
+namespace
+{
+struct DebugTraceStats
+{
+    double sum_real = 0.0;
+    double sum_imag = 0.0;
+    double sum_abs = 0.0;
+    double max_abs = 0.0;
+};
+
+inline bool debug_hsolver_trace_enabled()
+{
+    static const bool enabled = (std::getenv("ABACUS_DEBUG_HSOLVER_TRACE") != nullptr);
+    return enabled;
+}
+
+inline int debug_hsolver_trace_target_ik()
+{
+    static const int target_ik = []()
+    {
+        const char* const env = std::getenv("ABACUS_DEBUG_HSOLVER_TRACE_IK");
+        return (env == nullptr) ? 0 : std::atoi(env);
+    }();
+    return target_ik;
+}
+
+template <typename T>
+DebugTraceStats calc_debug_trace_stats(const T* data, const std::size_t size)
+{
+    DebugTraceStats stats;
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const std::complex<double> value = static_cast<std::complex<double>>(data[i]);
+        const double abs_value = std::abs(value);
+        stats.sum_real += value.real();
+        stats.sum_imag += value.imag();
+        stats.sum_abs += abs_value;
+        if (abs_value > stats.max_abs)
+        {
+            stats.max_abs = abs_value;
+        }
+    }
+    return stats;
+}
+
+template <>
+DebugTraceStats calc_debug_trace_stats(const double* data, const std::size_t size)
+{
+    DebugTraceStats stats;
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const double value = data[i];
+        const double abs_value = std::abs(value);
+        stats.sum_real += value;
+        stats.sum_abs += abs_value;
+        if (abs_value > stats.max_abs)
+        {
+            stats.max_abs = abs_value;
+        }
+    }
+    return stats;
+}
+
+inline DebugTraceStats calc_debug_trace_stats(const double* data, const int size)
+{
+    return calc_debug_trace_stats(data, static_cast<std::size_t>(size));
+}
+
+inline std::string format_debug_trace_stats(const DebugTraceStats& stats)
+{
+    std::ostringstream oss;
+    oss << std::scientific << std::setprecision(17)
+        << "sum_real=" << stats.sum_real
+        << " sum_imag=" << stats.sum_imag
+        << " sum_abs=" << stats.sum_abs
+        << " max_abs=" << stats.max_abs;
+    return oss.str();
+}
+} // namespace
+
 namespace hsolver
 {
 
@@ -75,11 +162,41 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                 ModuleBase::MatrixBlock<TK> hk, sk;
                 hs.hs_at_k(ik, hk, sk);
 
+                long long debug_trace_seq = -1;
+                if (debug_hsolver_trace_enabled() && ik == debug_hsolver_trace_target_ik())
+                {
+                    static std::atomic<long long> trace_sequence(0);
+                    debug_trace_seq = ++trace_sequence;
+
+                    hamilt::MatrixBlock<TK> h_mat;
+                    hamilt::MatrixBlock<TK> s_mat;
+                    pHamilt->matrix(h_mat, s_mat);
+
+                    const auto hk_stats = calc_debug_trace_stats(h_mat.p, h_mat.row * h_mat.col);
+                    const auto sk_stats = calc_debug_trace_stats(s_mat.p, s_mat.row * s_mat.col);
+                    GlobalV::ofs_running << " DEBUG_HSOLVER_TRACE phase=pre_diag"
+                                         << " seq=" << debug_trace_seq
+                                         << " ik=" << ik
+                                         << " hk{" << format_debug_trace_stats(hk_stats) << "}"
+                                         << " sk{" << format_debug_trace_stats(sk_stats) << "}"
+                                         << std::endl;
+                }
+
                 /// find psi pointer for each k point
                 psi.fix_k(ik);
 
                 /// solve eigenvector and eigenvalue for H(k)
-                this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
+                this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
+
+                if (debug_trace_seq >= 0)
+                {
+                    const auto eig_stats = calc_debug_trace_stats(&(pes->ekb(ik, 0)), psi.get_nbands());
+                    GlobalV::ofs_running << " DEBUG_HSOLVER_TRACE phase=post_diag"
+                                         << " seq=" << debug_trace_seq
+                                         << " ik=" << ik
+                                         << " eig{" << format_debug_trace_stats(eig_stats) << "}"
+                                         << std::endl;
+                }
             }
         }
         else

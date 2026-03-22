@@ -255,21 +255,17 @@ template <typename TkeyA, typename TkeyB, typename Tvalue>
 std::map<TkeyA, std::map<TkeyB, Tvalue>>
     LRI_CV_Tools::add(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
                         std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
-    assert(v1.size() == v2.size());
     using namespace RI::Map_Operator;
     using namespace RI::Array_Operator;
 
-    std::map<TkeyA, std::map<TkeyB, Tvalue>> dv;
-    auto it1 = v1.begin();
-    auto it2 = v2.begin();
-    while (it1 != v1.end() && it2 != v2.end()) {
-        assert(it1->first == it2->first);
-        const TkeyA& keyA = it1->first;
-        const std::map<TkeyB, Tvalue>& map1 = it1->second;
-        const std::map<TkeyB, Tvalue>& map2 = it2->second;
-        dv[keyA] = map1 + map2;
-        ++it1;
-        ++it2;
+    std::map<TkeyA, std::map<TkeyB, Tvalue>> dv = v1;
+    for (const auto& key_map_pair: v2) {
+        const auto dv_it = dv.find(key_map_pair.first);
+        if (dv_it == dv.end()) {
+            dv.emplace(key_map_pair.first, key_map_pair.second);
+        } else {
+            dv_it->second = dv_it->second + key_map_pair.second;
+        }
     }
     return dv;
 }

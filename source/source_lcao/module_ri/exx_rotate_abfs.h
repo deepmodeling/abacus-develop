@@ -2,13 +2,9 @@
 #ifndef EXX_ROTATE_ABFS_H
 #define EXX_ROTATE_ABFS_H
 
-#include "lri_cv.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
-// #include "module_xc/exx_info.h"
-// #include "module_basis/module_ao/orb_atomic_lm.h"
-#include "exx_lri.h"
-// #include "module_ri/exx_lri.h"
-// #include <RI/physics/Exx.h>
+#include "LRI_CV.h"
+#include "source_hamilt/module_xc/exx_info.h"
+#include "source_base/matrix.h"
 #include <RI/ri/RI_Tools.h>
 #include <array>
 #include <map>
@@ -28,7 +24,7 @@ class Moment_abfs
     using TAq = std::pair<TA, Tq>;
 
   public:
-    Moment_abfs(Exx_Info_RI& info_in) : info(info_in) {};
+    Moment_abfs(const Exx_Info::Exx_Info_RI& info_in) : info(info_in) {};
     ~Moment_abfs() {};
     void cal_VR(
         const UnitCell& ucell,
@@ -37,7 +33,11 @@ class Moment_abfs
         const std::vector<double>& orb_cutoff,
         const double Rc,
         LRI_CV<Tdata>& cv,
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+        const bool allow_overwrite = false,
+        const bool apply_cutoff = true,
+        const bool write_vws = true,
+        const bool allow_insert = true);
     void discard0_VR(
         const UnitCell& ucell,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,
@@ -68,9 +68,7 @@ class Moment_abfs
 
   private:
     // std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> VR;
-    // WARNING: reference to Exx_Info_RI.
-    // Must not outlive the Exx_Info_RI passed to the constructor.
-    Exx_Info_RI& info;
+    const Exx_Info::Exx_Info_RI& info;
 };
 #include "exx_rotate_abfs.hpp"
 

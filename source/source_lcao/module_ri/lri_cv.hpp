@@ -15,6 +15,7 @@
 #include "../../source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
+#include <cstdlib>
 #include <omp.h>
 
 template<typename Tdata>
@@ -45,10 +46,19 @@ void LRI_CV<Tdata>::set_orbitals(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 	const double &kmesh_times,
 	std::shared_ptr<ORB_gaunt_table> MGT,
-    const bool& init_C)
+    const bool& init_C,
+	const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
+
+    const bool force_serial_set_orbitals = (std::getenv("ABACUS_EXX_SERIAL_SET_ORBITALS") != nullptr);
+    int omp_threads_saved = 1;
+    if (force_serial_set_orbitals)
+    {
+        omp_threads_saved = omp_get_max_threads();
+        omp_set_num_threads(1);
+    }
 
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
@@ -63,7 +73,7 @@ void LRI_CV<Tdata>::set_orbitals(
 
 	const ModuleBase::Element_Basis_Index::Range
 		range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
-	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
+	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs, abfs_old_to_new );
 
 	this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
     this->m_abfs_abfs.init(
@@ -75,8 +85,13 @@ void LRI_CV<Tdata>::set_orbitals(
 			ucell, orb, kmesh_times);
 
     this->m_abfs_abfs.init_radial_table();
-    if (init_C) {
-        this->m_abfslcaos_lcaos.init_radial_table();
+	    if (init_C) {
+	        this->m_abfslcaos_lcaos.init_radial_table();
+	    }
+
+    if (force_serial_set_orbitals)
+    {
+        omp_set_num_threads(omp_threads_saved);
     }
 
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
@@ -106,39 +121,53 @@ auto LRI_CV<Tdata>::cal_datas(
 	ModuleBase::TITLE("LRI_CV","cal_datas");
 	ModuleBase::timer::tick("LRI_CV", "cal_datas");
 
-	std::map<TA,std::map<TAC,Tresult>> Datas;
-	#pragma omp parallel
-	for(size_t i0=0; i0<list_A0.size(); ++i0)
-	{
-		#pragma omp for schedule(dynamic) nowait
-		for(size_t i1=0; i1<list_A1.size(); ++i1)
-		{
-			const TA iat0 = list_A0[i0];
-			const TA iat1 = list_A1[i1].first;
-			const TC &cell1 = list_A1[i1].second;
-			const int it0 = ucell.iat2it[iat0];
-			const int ia0 = ucell.iat2ia[iat0];
-			const int it1 = ucell.iat2it[iat1];
-			const int ia1 = ucell.iat2ia[iat1];
-			const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
-			const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
-			const double Rcut
-                = std::min(func_cal_Rcut(it0, it1), func_cal_Rcut(it1, it0));
-			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
-			if( R_delta.norm()*ucell.lat0 < Rcut )
-			{
-				const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
-				// if(Data.norm(std::numeric_limits<double>::max()) > threshold)
-				// {
-					#pragma omp critical(LRI_CV_cal_datas)
-					Datas[list_A0[i0]][list_A1[i1]] = Data;
-				// }
-			}
-		}
+			std::map<TA,std::map<TAC,Tresult>> Datas;
+            static const bool serial_cal_datas = (std::getenv("ABACUS_EXX_SERIAL_LRI_CV") != nullptr);
+            auto cal_one = [&](const size_t i0, const size_t i1)
+            {
+                const TA iat0 = list_A0[i0];
+                const TA iat1 = list_A1[i1].first;
+                const TC& cell1 = list_A1[i1].second;
+                const int it0 = ucell.iat2it[iat0];
+                const int ia0 = ucell.iat2ia[iat0];
+                const int it1 = ucell.iat2it[iat1];
+                const int ia1 = ucell.iat2ia[iat1];
+                const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+                const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+                const double Rcut = std::min(func_cal_Rcut(it0, it1), func_cal_Rcut(it1, it0));
+                const Abfs::Vector3_Order<double> R_delta
+                    = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+                if (R_delta.norm() * ucell.lat0 < Rcut)
+                {
+                    const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
+#pragma omp critical(LRI_CV_cal_datas)
+                    Datas[list_A0[i0]][list_A1[i1]] = Data;
+                }
+            };
+            if (serial_cal_datas)
+            {
+                for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
+                {
+                    for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
+                    {
+                        cal_one(i0, i1);
+                    }
+                }
+            }
+            else
+            {
+#pragma omp parallel for collapse(2) schedule(dynamic)
+                for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
+                {
+                    for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
+                    {
+                        cal_one(i0, i1);
+                    }
+                }
+            }
+		ModuleBase::timer::tick("LRI_CV", "cal_datas");
+		return Datas;
 	}
-	ModuleBase::timer::tick("LRI_CV", "cal_datas");
-	return Datas;
-}
 
 
 template<typename Tdata>

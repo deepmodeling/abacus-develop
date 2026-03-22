@@ -57,7 +57,7 @@ class Ewald_Vq
               std::shared_ptr<ORB_gaunt_table> MGT_in,
               const double &ccp_rmesh_times_in,
               const double &kmesh_times_in,
-              const int abfs_Lmax_in);
+              const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
 
     void init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO);
 
@@ -75,10 +75,31 @@ class Ewald_Vq
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs(const UnitCell& ucell,
                                                                  const double& chi,
                                                                  std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs_serial_full(
+        const UnitCell& ucell,
+        const double& chi,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
     inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> cal_dVs(
         const UnitCell& ucell,
         const double& chi,
         std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_short_range_Vs(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_short_range_Vs_serial_full(
+        const UnitCell& ucell,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_long_range_Vs_gauss(
+        const UnitCell& ucell,
+        const double& chi);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_long_range_Vs_gauss_serial_full(
+        const UnitCell& ucell,
+        const double& chi,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
 
   private:
     double ccp_rmesh_times;

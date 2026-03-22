@@ -6,6 +6,7 @@
 #include "exx_rotate_abfs.h"
 
 #include <cmath> // For std::erfc function used in smooth truncation
+#include <stdexcept>
 #include <vector>
 
 template <typename Tdata>
@@ -41,62 +42,9 @@ template <typename Tdata>
 void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
 {
     ModuleBase::TITLE("Rotate_abfs", "rotate_abfs");
-    ModuleBase::timer::start("Rotate_abfs", "rotate_abfs");
-
-    // construct tranformation matrix A
-    for (int T = 0; T != orb_in.size(); ++T)
-    {
-        for (int L = 0; L != orb_in[T].size(); ++L)
-        {
-            for (int N = 0; N != orb_in[T][L].size(); ++N)
-            {
-                Numerical_Orbital_Lm& orb_lm_old = orb_in[T][L][N];
-                Numerical_Orbital_Lm orb_lm_mod = orb_lm_old * 0.0;
-                double square = 0.0;
-                for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
-                {
-                    square += this->multipole[T][L][N2] * this->multipole[T][L][N2];
-                }
-                double norm = std::sqrt(square);
-                // change abfs
-                if (N == 0)
-                {
-                    for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
-                        orb_lm_mod += orb_in[T][L][N2] * this->multipole[T][L][N2] / norm;
-                }
-                else
-                {
-                    for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
-                    {
-                        if (N2 == N)
-                        {
-                            orb_lm_mod += (1.0 - this->multipole[T][L][N] * this->multipole[T][L][N2] / square)
-                                          * orb_in[T][L][N2];
-                        }
-                        else
-                        {
-                            orb_lm_mod
-                                += (-this->multipole[T][L][N] * this->multipole[T][L][N2] / square) * orb_in[T][L][N2];
-                        }
-                    }
-                }
-                orb_lm_old = orb_lm_mod;
-                // change moment
-                if (N == 0)
-                {
-                    this->multipole[T][L][N] = norm;
-                    std::cout << "Atom type " << T << ", L " << L << ", N " << N
-                              << ", multipole after rotation: " << this->multipole[T][L][N] << std::endl;
-                }
-                else
-                {
-                    this->multipole[T][L][N] = 0.0;
-                }
-            }
-        }
-    }
-
-    ModuleBase::timer::end("Rotate_abfs", "rotate_abfs");
+    ModuleBase::timer::tick("Rotate_abfs", "rotate_abfs");
+    ModuleBase::timer::tick("Rotate_abfs", "rotate_abfs");
+    throw std::logic_error("Moment_abfs::rotate_abfs is deprecated. Use ExxLriDetail::rotate_abfs_by_multipole instead.");
 }
 
 template <typename Tdata>
@@ -188,7 +136,11 @@ void Moment_abfs<Tdata>::cal_VR(
     const std::vector<double>& orb_cutoff,
     const double Rc,
     LRI_CV<Tdata>& cv,
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+    const bool allow_overwrite,
+    const bool apply_cutoff,
+    const bool write_vws,
+    const bool allow_insert)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
@@ -238,7 +190,7 @@ void Moment_abfs<Tdata>::cal_VR(
             // Rcut_lcao: bohr, ucell.lat0 = 1.8897 transform angstrom to bohr
             double Rcut_lcao = orb_cutoff[T1] + orb_cutoff[T2];
             // Rcut_coul: bohr
-            double Rcut_coul = std::min(cv.cal_V_Rcut(T1, T2), cv.cal_V_Rcut(T2, T2));
+            double Rcut_coul = std::min(cv.get_V_Rcut(T1, T2), cv.get_V_Rcut(T2, T1));
             if (distance < Rcut_lcao || distance >= Rcut_coul)
                 continue;
             const auto JR = std::make_pair(iat1, R);
@@ -269,12 +221,9 @@ void Moment_abfs<Tdata>::cal_VR(
                             // Determine N1 and N2 loop ranges based on rotate_abfs
                             // When rotate_abfs=true: only N=0 has non-zero moment, calculate only N1=0 and N2=0
                             // When rotate_abfs=false: all moments are non-zero, calculate all N1, N2
-                            const int N1_max = this->info.rotate_abfs ? 1 : orb_in[T1][L1].size();
-                            const int N2_max = this->info.rotate_abfs ? 1 : orb_in[T2][L2].size();
-
-                            for (int N1 = 0; N1 != N1_max; ++N1)
+                            for (int N1 = 0; N1 != orb_in[T1][L1].size(); ++N1)
                             {
-                                for (int N2 = 0; N2 != N2_max; ++N2)
+                                for (int N2 = 0; N2 != orb_in[T2][L2].size(); ++N2)
                                 {
                                     double mom1 = this->multipole[T1][L1][N1];
                                     const double mom2 = this->multipole[T2][L2][N2];
@@ -313,42 +262,35 @@ void Moment_abfs<Tdata>::cal_VR(
                                     // width = 1.03: r = Rc*1.1 gives ~0.5% contribution
                                     // width = 1.02: r = Rc*1.05 gives ~0.08% contribution (nearly hard)
                                     // width = 1.01: essentially hard cutoff at Rc
-                                    const double width = 0.9; // Width factor - tune this for high states!
-
                                     double cutoff_factor = 1.0;
-                                    // Uncomment to test hard cutoff (for debugging)
-                                    // cutoff_factor = (distance < Rc) ? 1.0 : 0.0;
-                                    // tmp_tensor(iA, iB) = value * cutoff_factor;
-                                    // continue;  // Skip the erfc truncation below
-
-                                    if (distance > 0.0 && width > 1.0)
+                                    if (apply_cutoff)
                                     {
-                                        // Log-space erfc truncation (FHI-aims implementation)
-                                        cutoff_factor = 0.5 * std::erfc(std::log(distance / Rc) / std::log(width));
-
-                                        // Debug output for high states (check if truncation is working)
-                                        static int debug_count = 0;
-                                        if (debug_count < 10 && distance > Rc * 0.9 && distance < Rc * 1.2)
+                                        const double width = 0.9; // Width factor - tune this for high states!
+                                        if (distance > 0.0 && width > 1.0)
                                         {
-                                            std::cout << "DEBUG: distance=" << distance << " Rc=" << Rc
-                                                      << " cutoff_factor=" << cutoff_factor << " value=" << value
-                                                      << std::endl;
-                                            debug_count++;
+                                            // Log-space erfc truncation (FHI-aims implementation)
+                                            cutoff_factor = 0.5 * std::erfc(std::log(distance / Rc) / std::log(width));
+
+                                            // Debug output for high states (check if truncation is working)
+                                            static int debug_count = 0;
+                                            if (debug_count < 10 && distance > Rc * 0.9 && distance < Rc * 1.2)
+                                            {
+                                                std::cout << "DEBUG: distance=" << distance << " Rc=" << Rc
+                                                          << " cutoff_factor=" << cutoff_factor << " value=" << value
+                                                          << std::endl;
+                                                debug_count++;
+                                            }
                                         }
-                                    }
-                                    else if (distance <= 0.0)
-                                    {
-                                        // At r = 0, no truncation
-                                        cutoff_factor = 1.0;
-                                    }
-                                    else
-                                    {
-                                        // width <= 1.0: no smooth truncation, use hard cutoff
-                                        cutoff_factor = (distance < Rc) ? 1.0 : 0.0;
-                                        // const double gamma = 5.0 / Rc;
-                                        // double x = gamma * distance;                           
-                                        // cutoff_factor = std::erfc(x);                                       
-                                        // cutoff_factor = (cutoff_factor > 0) ? cutoff_factor : 0.0;
+                                        else if (distance <= 0.0)
+                                        {
+                                            // At r = 0, no truncation
+                                            cutoff_factor = 1.0;
+                                        }
+                                        else
+                                        {
+                                            // width <= 1.0: no smooth truncation, use hard cutoff
+                                            cutoff_factor = (distance < Rc) ? 1.0 : 0.0;
+                                        }
                                     }
 
                                     tmp_tensor(iA, iB) = value * cutoff_factor;
@@ -377,21 +319,30 @@ void Moment_abfs<Tdata>::cal_VR(
                     }
                 }
             }
-            Vws[T1][T2][delta_R] = tmp_tensor;
+            if (write_vws)
+            {
+                Vws[T1][T2][delta_R] = tmp_tensor;
+            }
             // I must contain all atoms in unit cell
-            auto& target_inner = Vs_cut.at(iat0);
+            auto& target_inner = Vs_cut[iat0];
             if (target_inner.find(JR) == target_inner.end())
             {
-                target_inner.emplace(JR, tmp_tensor);
+                if (allow_insert)
+                {
+                    target_inner.emplace(JR, tmp_tensor);
+                }
             }
-            // otherwise, warning
+            // otherwise, overwrite when the exact block already exists
             else
             {
+                if (!allow_overwrite)
+                {
+                    const auto J = JR.first;
+                    const auto R = JR.second;
+                    std::cout << "J=" << J << ", R= " << R[0] << ", " << R[1] << ", " << R[2] << std::endl;
+                    ModuleBase::WARNING_QUIT("merge_VR", "JR already exists in Vs_cut[I], which is unexpected.");
+                }
                 target_inner[JR] = tmp_tensor;
-                const auto J = JR.first;
-                const auto R = JR.second;
-                // std::cout << "J=" << J << ", R= " << R[0] << ", " << R[1] << ", " << R[2] << std::endl;
-                ModuleBase::WARNING_QUIT("merge_VR", "JR already exists in Vs_cut[I], which is unexpected.");
             }
         }
     }
@@ -442,7 +393,7 @@ void Moment_abfs<Tdata>::discard0_VR(
             const double distance = (distance_true >= tiny1) ? distance_true : distance_true + tiny1;
 
             double Rcut_lcao = orb_cutoff[T1] + orb_cutoff[T2];
-            double Rcut_coul = std::min(cv.cal_V_Rcut(T1, T2), cv.cal_V_Rcut(T2, T2));
+            double Rcut_coul = std::min(cv.get_V_Rcut(T1, T2), cv.get_V_Rcut(T2, T1));
 
             // Skip if not in moment method range
             if (distance < Rcut_lcao || distance >= Rcut_coul)
@@ -519,7 +470,7 @@ void Moment_abfs<Tdata>::discard0_VR(
             const double distance = (distance_true >= tiny1) ? distance_true : distance_true + tiny1;
 
             double Rcut_lcao = orb_cutoff[T1] + orb_cutoff[T2];
-            double Rcut_coul = std::min(cv.cal_V_Rcut(T1, T2), cv.cal_V_Rcut(T2, T2));
+            double Rcut_coul = std::min(cv.get_V_Rcut(T1, T2), cv.get_V_Rcut(T2, T1));
 
             // Skip if not in moment method range
             if (distance < Rcut_lcao || distance >= Rcut_coul)

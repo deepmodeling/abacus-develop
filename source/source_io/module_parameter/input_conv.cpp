@@ -205,8 +205,50 @@ void Input_Conv::Convert()
 #endif
         )
     {
-        XC_Functional::set_hybrid_alpha(local_exx_info.info_global.hybrid_alpha);
-        XC_Functional::set_hse_omega(local_exx_info.info_global.hse_omega);
+        // EXX case, convert all EXX related variables
+        XC_Functional::set_hybrid_alpha(GlobalC::exx_info.info_global.hybrid_alpha);
+        if(!PARAM.inp.exx_erfc_omega.empty())
+            { GlobalC::exx_info.info_global.hse_omega = std::stod(PARAM.inp.exx_erfc_omega[0]); }
+        if(!PARAM.inp.exx_fock_lambda.empty())
+            { GlobalC::exx_info.info_lip.lambda = std::stod(PARAM.inp.exx_fock_lambda[0]); }
+        GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
+        GlobalC::exx_info.info_global.hybrid_step = PARAM.inp.exx_hybrid_step;
+        GlobalC::exx_info.info_global.mixing_beta_for_loop1 = PARAM.inp.exx_mixing_beta;
+
+        GlobalC::exx_info.info_ri.real_number = std::stoi(PARAM.inp.exx_real_number);
+        GlobalC::exx_info.info_ri.pca_threshold = PARAM.inp.exx_pca_threshold;
+        GlobalC::exx_info.info_ri.C_threshold = PARAM.inp.exx_c_threshold;
+        GlobalC::exx_info.info_ri.V_threshold = PARAM.inp.exx_v_threshold;
+        GlobalC::exx_info.info_ri.V_threshold_long = PARAM.inp.exx_v_threshold_long;
+        GlobalC::exx_info.info_ri.dm_threshold = PARAM.inp.exx_dm_threshold;
+        GlobalC::exx_info.info_ri.C_grad_threshold = PARAM.inp.exx_c_grad_threshold;
+        GlobalC::exx_info.info_ri.V_grad_threshold = PARAM.inp.exx_v_grad_threshold;
+        GlobalC::exx_info.info_ri.C_grad_R_threshold = PARAM.inp.exx_c_grad_r_threshold;
+        GlobalC::exx_info.info_ri.V_grad_R_threshold = PARAM.inp.exx_v_grad_r_threshold;
+        GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
+        GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
+        GlobalC::exx_info.info_ri.Cs_inv_thr = PARAM.inp.exx_cs_inv_thr;
+        GlobalC::exx_info.info_ri.shrink_abfs_pca_thr = PARAM.inp.shrink_abfs_pca_thr;
+        GlobalC::exx_info.info_ri.shrink_LU_inv_thr = PARAM.inp.shrink_LU_inv_thr;
+        GlobalC::exx_info.info_ri.coul_moment = PARAM.inp.exx_coul_moment;
+        GlobalC::exx_info.info_ri.rotate_abfs = PARAM.inp.exx_rotate_abfs;
+        if (GlobalC::exx_info.info_ri.rotate_abfs)
+        {
+            ModuleBase::WARNING(
+                "Input_Conv",
+                "exx_rotate_abfs currently enables the rotated-basis Ewald split: short-range uses the full rotated ABFS, and the Gaussian long-range channel is reconstructed on the full rotated basis from the leading N=0 multipole contribution of each (type, L).");
+        }
+        GlobalC::exx_info.info_ri.multip_moments_threshold = PARAM.inp.exx_multip_moments_threshold;
+        GlobalC::exx_info.info_opt_abfs.pca_threshold = PARAM.inp.exx_pca_threshold;
+        GlobalC::exx_info.info_opt_abfs.abfs_Lmax = PARAM.inp.exx_opt_orb_lmax;
+        GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
+        GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
+
+        // EXX does not support symmetry for nspin==4
+        if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4 && PARAM.inp.basis_type == "lcao")
+        {
+            ModuleSymmetry::Symmetry::symm_flag = -1;
+        }
     }
 
     // Local aliases: keep this PR's global-state reference budget non-increasing.

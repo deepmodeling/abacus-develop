@@ -290,6 +290,19 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_v_threshold_long");
+        item.annotation = "threshold to screen long-range V matrix in exx";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description
+            = "Threshold used only for the long-range Coulomb channel in the rotated-ABFS moment workflow. Smaller values of the long-range V matrix can be truncated to accelerate calculation. The default is 0, i.e. no truncation, which preserves the current behavior.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.exx_v_threshold_long);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_dm_threshold");
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";
