@@ -231,14 +231,14 @@ void YlmReal::rlylm
 	
 	double Am[20];
 	double Bm[20];
-	 // 计算x-y方向的依赖性
+	 // calculate x-y dependence
     calc_xy_dependence(lmax, x, y, Am, Bm);
     
-    // 计算z方向的依赖性
+    // calculate z dependence
     double zdep[20][20];
     calc_z_dependence(lmax, x, y, z, zdep);
     
-    // 计算最终结果
+    // the final result
     double r = sqrt(x*x + y*y + z*z);
     calc_rlylm(lmax, r, Am, Bm, zdep, rly);
 	ModuleBase::timer::end("YlmReal","rlylm");
