@@ -100,6 +100,19 @@ class YlmReal
     static long double Fact(const int n);
     static int Semi_Fact(const int n);
 
+    // 计算x-y方向的依赖性
+    static void calc_xy_dependence(const int lmax, const double x, const double y, 
+                            double* Am, double* Bm);
+    
+    // 计算z方向的依赖性
+    static void calc_z_dependence(const int lmax, const double x, const double y, const double z,
+                          double zdep[20][20]);
+    
+    // 计算最终结果
+    static void calc_rlylm(const int lmax, const double r, const double* Am, const double* Bm,
+                   const double zdep[20][20], double* rly);
+
+
 };
 
 }

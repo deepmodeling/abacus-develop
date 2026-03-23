@@ -18,6 +18,200 @@ namespace ModuleBase
 
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
+void YlmReal::calc_xy_dependence(const int lmax, const double x, const double y, 
+                                double* Am, double* Bm)
+{
+    // 初始化数组
+    for(int i = 0; i < 20; ++i)
+    {
+        Am[i] = 0.0;
+        Bm[i] = 0.0;
+    }
+    
+    // 计算x和y的幂次
+    double x2 = x * x;
+    double x3 = x2 * x;
+    double x4 = x3 * x;
+    double x5 = x4 * x;
+    
+    double y2 = y * y;
+    double y3 = y2 * y;
+    double y4 = y3 * y;
+    double y5 = y4 * y;
+    
+    // 计算x-y依赖性
+    for(int im = 0; im < lmax + 1; im++)
+    {
+        if(im == 0)
+        {
+            Am[0] = 1.0; 
+            Bm[0] = 0.0;
+        }
+        else if(im == 1)
+        {
+            Am[1] = x; 
+            Bm[1] = y;
+        }
+        else if(im == 2)
+        {
+            Am[2] = x2 - y2; 
+            Bm[2] = 2.0 * x * y;
+        }
+        else if(im == 3)
+        {
+            Am[3] = x3 - 3.0 * x * y2;
+            Bm[3] = 3.0 * x2 * y - y3;
+        }
+        else if(im == 4)
+        {
+            Am[4] = x4 - 6.0 * x2 * y2 + y4;
+            Bm[4] = 4.0 * (x3 * y - x * y3);
+        }
+        else if(im == 5)
+        {
+            Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
+            Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
+        }
+        else
+        {
+            for(int ip = 0; ip <= im; ip++)
+            {
+                double aux = Fact(im) / Fact(ip) / Fact(im - ip);
+                Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos((im-ip) * ModuleBase::PI / 2.0);
+                Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin((im-ip) * ModuleBase::PI / 2.0);
+            }
+        }
+    }
+}
+
+void YlmReal::calc_z_dependence(const int lmax, const double x, const double y, const double z,
+                               double zdep[20][20])
+{
+    // 初始化zdep数组
+    for(int il = 0; il < 20; il++)
+    {
+        for(int jl = 0; jl < 20; jl++)
+        {
+            zdep[il][jl] = 0.0;
+        }
+    }
+    
+    // 计算z和r的幂次
+    double z2 = z * z;
+    double z3 = z2 * z;
+    double z4 = z3 * z;
+    
+    double r = sqrt(x*x + y*y + z*z);
+    double r2 = r * r;
+    double r3 = r2 * r;
+    double r4 = r3 * r;
+    
+    // 计算z依赖性
+    for(int il = 0; il < lmax + 1; il++)
+    {
+        if(il == 0)
+        {
+            zdep[0][0] = 1.0;
+        }
+        else if(il == 1)
+        {
+            zdep[1][0] = z;
+            zdep[1][1] = 1.0;
+        }
+        else if(il == 2)
+        {
+            zdep[2][0] = 0.5 * (3.0 * z2 - r2);
+            zdep[2][1] = sqrt(3.0) * z;
+            zdep[2][2] = sqrt(3.0) * 0.5;
+        }
+        else if(il == 3)
+        {
+            zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
+            zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
+            zdep[3][2] = 0.5 * sqrt(15.0) * z;
+            zdep[3][3] = 0.25 * sqrt(10.0);
+        }
+        else if(il == 4)
+        {
+            zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
+            zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
+            zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
+            zdep[4][3] = sqrt(70.0) * 0.25 * z;
+            zdep[4][4] = sqrt(35.0) * 0.125;
+        }
+        else if(il == 5)
+        {
+            zdep[5][0] = 0.125 * z * (63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
+            zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
+            zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
+            zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
+            zdep[5][4] = 0.375 * sqrt(35.0) * z;
+            zdep[5][5] = 0.1875 * sqrt(14.0);
+        }
+        else
+        {
+            for(int im = 0; im <= il; im++)
+            {
+                int kmax = static_cast<int>((il - im) / 2);
+                for(int ik = 0; ik <= kmax; ik++)
+                {
+                    int twok = 2 * ik;
+                    
+                    double gamma = 0.0;
+                    double aux0, aux1, aux2, aux3;
+                    
+                    aux0 = pow(-1.0, ik) * pow(2.0, -il);
+                    aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
+                    aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
+                    aux3 = Fact(il - twok) / Fact(il - twok - im);
+                    
+                    gamma = aux0 * aux1 * aux2 * aux3;
+                    
+                    assert(il - twok - im >= 0);
+                    zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
+                }
+                
+                if(im >= 1)
+                {
+                    zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
+                }
+            }
+        }
+    }
+}
+
+void YlmReal::calc_rlylm(const int lmax, const double r, const double* Am, const double* Bm,
+                        const double zdep[20][20], double* rly)
+{
+    int ic = 0;
+    
+    // 特殊情况处理：r=0
+    double rpi = r;
+    const double tiny = 1.0E-10;
+    if (rpi < tiny) rpi += tiny;
+    
+    for(int il = 0; il <= lmax; il++)
+    {
+        double fac = sqrt((2.0 * il + 1.0) / ModuleBase::FOUR_PI);
+        double rl = pow(rpi, il);
+        
+        // m=0
+        rly[ic] = Am[0] * zdep[il][0] * fac / rl;
+        ic++;
+        
+        // m != 0
+        for(int im = 1; im <= il; im++)
+        {
+            // m>0
+            rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+            ic++;
+            
+            // m<0
+            rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+            ic++;
+        }
+    }
+}
 
 void YlmReal::rlylm
 (
@@ -37,205 +231,16 @@ void YlmReal::rlylm
 	
 	double Am[20];
 	double Bm[20];
-
-	// mohan add 2021-05-07
-	for(int i=0; i<20; ++i)
-	{
-		Am[i]=0.0;
-		Bm[i]=0.0;
-	}
-	
-	//ZEROS(Am, 20);
-	//ZEROS(Bm, 20);
-	
-	double x2, x3, x4, x5;
-	double y2, y3, y4, y5;
-	
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x3 * x;
-	x5 = x4 * x;
-
-	y2 = y * y;
-	y3 = y2 * y;
-	y4 = y3 * y;
-	y5 = y4 * y;
-		
-	//x-y dependence
-	//Am
-	//Bm
-	for(int im = 0; im < lmax+1; im++)
-	{
-		if(im == 0)
-		{
-			Am[0] = 1.0; 
-			Bm[0] = 0.0;
-		}
-		else if(im == 1)
-		{
-			Am[1] = x; 
-			Bm[1] = y;
-		}
-		else if(im == 2)
-		{
-			Am[2] = x2- y2; 
-			Bm[2] = 2.0 * x * y;
-		}
-		else if(im == 3)
-		{
-			Am[3] = x3 - 3.0 * x * y2;
-			Bm[3] = 3.0 * x2 * y - y3;
-		}
-		else if(im == 4)
-		{
-			Am[4] = x4 - 6.0 * x2 * y2 + y4;
-			Bm[4] = 4.0 * (x3 * y - x * y3);
-		}
-		else if(im == 5)
-		{
-			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
-			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
-		}
-		else
-		{
-			for(int ip = 0; ip <= im; ip++)
-			{
-				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
-				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
-				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
-			}
-		}
-	}
-			
-	//z dependence
-	double zdep[20][20];
-	
-	for(int il = 0; il < 20; il++)
-	{
-		for(int jl=0; jl < 20; jl++)
-		{
-			zdep[il][jl]=0.0; // mohan add 2021-05-07
-		}
-//		ZEROS(zdep[il], 20);
-	}
-
-	double z2 = z * z;
-	double z3 = z2 * z;
-	double z4 = z3 * z;
-	//double z5 = z4 * z;
-	
-	double r = sqrt(x*x + y*y + z*z);
-	double r2 = r * r;
-	double r3 = r2 * r;
-	double r4 = r3 * r;
-	
-	for(int il = 0; il < lmax + 1; il++)
-	{
-		if(il == 0)
-		{
-			zdep[0][0] = 1.0;
-		}
-		else if(il == 1)
-		{
-			zdep[1][0] = z;
-			zdep[1][1] = 1.0;
-		}
-		else if(il == 2)
-		{
-			zdep[2][0] = 0.5 * (3.0 * z2 - r2);
-			zdep[2][1] = sqrt(3.0) * z;
-			zdep[2][2] = sqrt(3.0) * 0.5;
-		}
-		else if(il == 3)
-		{
-			zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
-			zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
-			zdep[3][2] = 0.5 * sqrt(15.0) * z;
-			zdep[3][3] = 0.25 * sqrt(10.0);
-		}
-		else if(il == 4)
-		{
-			zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
-			zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
-			zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
-			zdep[4][3] = sqrt(70.0) * 0.25 * z;
-			zdep[4][4] = sqrt(35.0) * 0.125;
-		}
-		else if(il == 5)
-		{
-			zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
-			zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
-			zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
-			zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
-			zdep[5][4] = 0.375 * sqrt(35.0) * z;
-			zdep[5][5] = 0.1875 * sqrt(14.0);
-		}
-		else
-		{
-			for(int im = 0; im <= il; im++)
-			{
-				int kmax = static_cast<int>( (il - im) / 2 );
-				for(int ik = 0; ik <= kmax; ik++)
-				{
-					int twok = 2 * ik;
-				
-					double gamma = 0.0;
-					double aux0, aux1, aux2, aux3;
-				
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
-					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
-					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
-					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
-					gamma = aux0 * aux1 * aux2 * aux3;
-					
-					assert(il - twok - im >= 0);
-					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
-				}
-
-				if(im >= 1)
-				{
-					zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
-					
-				}
-			}
-		}			
-	}
-
-	//calc
-	int ic = 0;
-
-	//special case for r=0
-	double rpi = r;
-	const double tiny =  1.0E-10;
-	if (rpi < tiny) rpi += tiny;
-	
-	for(int il = 0; il <= lmax; il++)
-	{
-		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
-
-		double rl = pow(rpi, il);
-			
-		//m=0
-		rly[ic] = Am[0] * zdep[il][0] * fac / rl;
-		
-		ic++;
-		
-		//m ! = 0
-		for(int im = 1; im <= il; im++)
-		{
-			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-			
-			ic++;
-			
-			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-
-			ic++;
-		}
-	}
-
+	 // 计算x-y方向的依赖性
+    calc_xy_dependence(lmax, x, y, Am, Bm);
+    
+    // 计算z方向的依赖性
+    double zdep[20][20];
+    calc_z_dependence(lmax, x, y, z, zdep);
+    
+    // 计算最终结果
+    double r = sqrt(x*x + y*y + z*z);
+    calc_rlylm(lmax, r, Am, Bm, zdep, rly);
 	ModuleBase::timer::end("YlmReal","rlylm");
 	return;
 }
