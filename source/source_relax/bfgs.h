@@ -24,6 +24,7 @@ private:
     double maxstep;//every movement smaller than maxstep
     double largest_grad;
     int size;//number of atoms
+    bool is_initialized=false;
 
     std::vector<double> steplength;//the length of atoms displacement 
     std::vector<std::vector<double>> H;//Hessian matrix
