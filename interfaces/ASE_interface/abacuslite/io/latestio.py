@@ -470,7 +470,8 @@ def read_abacus_out(fileobj,
         ind = ind or list(range(len(frame['elem'])))
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=frame['coords'][ind], 
-                      cell=frame['cell'])
+                      cell=frame['cell'],
+                      magmoms=mag[ind])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated
         # in this case, we set them to None
