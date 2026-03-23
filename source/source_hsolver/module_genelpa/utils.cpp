@@ -94,7 +94,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC){
         matrixFile.open(FileName);
     	if (!matrixFile.is_open()) {
-		std::cerr << "Error: Failed to open this file" << FileName << std:::endl;
+		std::cerr << "Error: Failed to open this file" << FileName << std::endl;
 		exit(1);
 	}
     }
