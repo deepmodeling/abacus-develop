@@ -21,14 +21,14 @@ YlmReal::~YlmReal(){}
 void YlmReal::calc_xy_dependence(const int lmax, const double x, const double y, 
                                 double* Am, double* Bm)
 {
-    // 初始化数组
+    //init array
     for(int i = 0; i < 20; ++i)
     {
         Am[i] = 0.0;
         Bm[i] = 0.0;
     }
     
-    // 计算x和y的幂次
+    // cal x and y pow
     double x2 = x * x;
     double x3 = x2 * x;
     double x4 = x3 * x;
@@ -39,7 +39,7 @@ void YlmReal::calc_xy_dependence(const int lmax, const double x, const double y,
     double y4 = y3 * y;
     double y5 = y4 * y;
     
-    // 计算x-y依赖性
+    // cal x-y dependency
     for(int im = 0; im < lmax + 1; im++)
     {
         if(im == 0)
@@ -87,7 +87,7 @@ void YlmReal::calc_xy_dependence(const int lmax, const double x, const double y,
 void YlmReal::calc_z_dependence(const int lmax, const double x, const double y, const double z,
                                double zdep[20][20])
 {
-    // 初始化zdep数组
+    // init zdep array
     for(int il = 0; il < 20; il++)
     {
         for(int jl = 0; jl < 20; jl++)
@@ -96,7 +96,7 @@ void YlmReal::calc_z_dependence(const int lmax, const double x, const double y, 
         }
     }
     
-    // 计算z和r的幂次
+    // cal z and r pow
     double z2 = z * z;
     double z3 = z2 * z;
     double z4 = z3 * z;
@@ -106,7 +106,7 @@ void YlmReal::calc_z_dependence(const int lmax, const double x, const double y, 
     double r3 = r2 * r;
     double r4 = r3 * r;
     
-    // 计算z依赖性
+    // cal z dependency
     for(int il = 0; il < lmax + 1; il++)
     {
         if(il == 0)
@@ -185,7 +185,7 @@ void YlmReal::calc_rlylm(const int lmax, const double r, const double* Am, const
 {
     int ic = 0;
     
-    // 特殊情况处理：r=0
+    // special situation：r=0
     double rpi = r;
     const double tiny = 1.0E-10;
     if (rpi < tiny) rpi += tiny;
