@@ -4,6 +4,7 @@
 
 #include "LRI_CV.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_base/element_basis_index.h"
 #include "source_base/matrix.h"
 #include <RI/ri/RI_Tools.h>
 #include <array>
@@ -34,6 +35,7 @@ class Moment_abfs
         const double Rc,
         LRI_CV<Tdata>& cv,
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+        const ModuleBase::Element_Basis_Index::IndexPermutation& orb_old_to_new = {},
         const bool allow_overwrite = false,
         const bool apply_cutoff = true,
         const bool write_vws = true,
@@ -45,7 +47,8 @@ class Moment_abfs
         const std::vector<double>& orb_cutoff,
         const double Rc,
         LRI_CV<Tdata>& cv,
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+        const ModuleBase::Element_Basis_Index::IndexPermutation& orb_old_to_new = {});
     void cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
     void rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
     double sum_triple_Y_YLM_real(int l1,

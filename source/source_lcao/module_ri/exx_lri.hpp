@@ -81,6 +81,12 @@ inline bool debug_parallel_exx_enabled()
     return debug_env != nullptr && std::atoi(debug_env) != 0;
 }
 
+inline bool compare_split_with_full_enabled()
+{
+    const char* compare_env = std::getenv("ABACUS_EXX_COMPARE_SPLIT_WITH_FULL");
+    return compare_env != nullptr && std::atoi(compare_env) != 0;
+}
+
 inline bool disable_rotated_n0_long_range()
 {
     const char* disable_env = std::getenv("ABACUS_EXX_DISABLE_N0_LONG_RANGE");
@@ -304,28 +310,6 @@ inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numeric
     }
 }
 
-inline void keep_only_leading_radial_channel(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs)
-{
-    for (auto& abfs_T: abfs)
-    {
-        for (auto& abfs_L: abfs_T)
-        {
-            if (abfs_L.size() > 1)
-            {
-                abfs_L.resize(1);
-            }
-        }
-    }
-}
-
-inline std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> make_leading_radial_channel_copy(
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs)
-{
-    auto abfs_n0 = abfs;
-    keep_only_leading_radial_channel(abfs_n0);
-    return abfs_n0;
-}
-
 struct AuxLongPrefixPermutation
 {
     std::vector<std::vector<std::size_t>> old_to_new_by_type;
@@ -333,10 +317,12 @@ struct AuxLongPrefixPermutation
 };
 
 inline AuxLongPrefixPermutation build_long_prefix_permutation(
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs)
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const double multipole_threshold)
 {
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(abfs);
     const ModuleBase::Element_Basis_Index::IndexLNM index = ModuleBase::Element_Basis_Index::construct_index(range);
+    const auto multipoles = Exx_Abfs::Construct_Orbs::get_multipole(abfs);
 
     AuxLongPrefixPermutation permutation;
     permutation.old_to_new_by_type.resize(abfs.size());
@@ -349,6 +335,7 @@ inline AuxLongPrefixPermutation build_long_prefix_permutation(
 
         std::vector<std::size_t> old_order;
         old_order.reserve(full_size);
+        std::vector<bool> pushed(full_size, false);
 
         for (std::size_t L = 0; L != abfs[T].size(); ++L)
         {
@@ -356,21 +343,33 @@ inline AuxLongPrefixPermutation build_long_prefix_permutation(
             {
                 continue;
             }
-            for (std::size_t M = 0; M != 2 * L + 1; ++M)
+            for (std::size_t N = 0; N != abfs[T][L].size(); ++N)
             {
-                const std::size_t old_index = index[T][L][0][M];
-                old_order.push_back(old_index);
+                if (std::abs(multipoles[T][L][N]) <= multipole_threshold)
+                {
+                    continue;
+                }
+                for (std::size_t M = 0; M != 2 * L + 1; ++M)
+                {
+                    const std::size_t old_index = index[T][L][N][M];
+                    old_order.push_back(old_index);
+                    pushed[old_index] = true;
+                }
             }
         }
         permutation.long_prefix_size_by_type[T] = old_order.size();
 
         for (std::size_t L = 0; L != abfs[T].size(); ++L)
         {
-            for (std::size_t N = 1; N != abfs[T][L].size(); ++N)
+            for (std::size_t N = 0; N != abfs[T][L].size(); ++N)
             {
                 for (std::size_t M = 0; M != 2 * L + 1; ++M)
                 {
-                    old_order.push_back(index[T][L][N][M]);
+                    const std::size_t old_index = index[T][L][N][M];
+                    if (!pushed[old_index])
+                    {
+                        old_order.push_back(old_index);
+                    }
                 }
             }
         }
@@ -481,10 +480,104 @@ inline void permute_aux_tensor_map_matrices_by_type(
 }
 
 template<typename Tdata>
+inline RI::Tensor<Tdata> extract_aux_tensor_row_prefix(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::size_t prefix_size)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.empty() || tensor_in.shape[0] < prefix_size)
+    {
+        throw std::runtime_error("Auxiliary-row prefix does not match tensor shape.");
+    }
+
+    auto shape_out = tensor_in.shape;
+    shape_out[0] = prefix_size;
+    RI::Tensor<Tdata> tensor_out(shape_out);
+    const std::size_t slice_size = tensor_in.get_shape_all() / tensor_in.shape[0];
+    std::copy_n(tensor_in.ptr(), prefix_size * slice_size, tensor_out.ptr());
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline RI::Tensor<Tdata> extract_aux_tensor_matrix_prefix(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::size_t row_prefix_size,
+    const std::size_t col_prefix_size)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.size() != 2
+        || tensor_in.shape[0] < row_prefix_size
+        || tensor_in.shape[1] < col_prefix_size)
+    {
+        throw std::runtime_error("Auxiliary-matrix prefix does not match tensor shape.");
+    }
+
+    RI::Tensor<Tdata> tensor_out({row_prefix_size, col_prefix_size});
+    for (std::size_t row = 0; row != row_prefix_size; ++row)
+    {
+        std::copy_n(tensor_in.ptr() + row * tensor_in.shape[1],
+                    col_prefix_size,
+                    tensor_out.ptr() + row * col_prefix_size);
+    }
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+extract_aux_tensor_map_rows_prefix_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::size_t>& prefix_size_per_type,
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_in)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> tensors_out;
+    for (const auto& tensors_I: tensors_in)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const std::size_t prefix_size = prefix_size_per_type.at(type_I);
+        for (const auto& tensors_JR: tensors_I.second)
+        {
+            tensors_out[tensors_I.first][tensors_JR.first]
+                = extract_aux_tensor_row_prefix(tensors_JR.second, prefix_size);
+        }
+    }
+    return tensors_out;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+extract_aux_tensor_map_matrices_prefix_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::size_t>& prefix_size_per_type,
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_in)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> tensors_out;
+    for (const auto& tensors_I: tensors_in)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const std::size_t row_prefix_size = prefix_size_per_type.at(type_I);
+        for (const auto& tensors_JR: tensors_I.second)
+        {
+            const int type_J = ucell.iat2it[tensors_JR.first.first];
+            const std::size_t col_prefix_size = prefix_size_per_type.at(type_J);
+            tensors_out[tensors_I.first][tensors_JR.first]
+                = extract_aux_tensor_matrix_prefix(tensors_JR.second, row_prefix_size, col_prefix_size);
+        }
+    }
+    return tensors_out;
+}
+
+template<typename Tdata>
 inline void overwrite_ewald_far_field_with_moment(
     const Exx_Info::Exx_Info_RI& info,
     const UnitCell& ucell,
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
     const std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>& list_As_Vs,
     LRI_CV<Tdata>& cv,
     std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& Vs_io)
@@ -515,6 +608,7 @@ inline void overwrite_ewald_far_field_with_moment(
                        0.0,
                        cv,
                        Vs_io,
+                       abfs_old_to_new,
                        true,
                        false,
                        false,
@@ -538,6 +632,14 @@ struct TensorMapStats
     std::size_t element_count = 0;
     double sum_abs = 0.0;
     double max_abs = 0.0;
+};
+
+struct AuxMatrixPrefixLeakStats
+{
+    std::size_t outside_element_count = 0;
+    double sum_abs_outside = 0.0;
+    double max_abs_outside = 0.0;
+    double max_abs_total = 0.0;
 };
 
 template<typename Tdata>
@@ -634,6 +736,59 @@ inline std::pair<double, double> max_abs_diff_for_tensor_map(
     update_from_pair(rhs, lhs);
     return {max_diff, max_ref};
 }
+
+template<typename Tdata>
+inline AuxMatrixPrefixLeakStats aux_matrix_prefix_leak_stats(
+    const UnitCell& ucell,
+    const std::vector<std::size_t>& prefix_size_per_type,
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensor_map)
+{
+    AuxMatrixPrefixLeakStats stats;
+    for (const auto& iat_pair: tensor_map)
+    {
+        const int type_i = ucell.iat2it[iat_pair.first];
+        const std::size_t row_prefix = prefix_size_per_type.at(type_i);
+        for (const auto& jr_pair: iat_pair.second)
+        {
+            const RI::Tensor<Tdata>& tensor = jr_pair.second;
+            if (tensor.shape.size() != 2)
+            {
+                continue;
+            }
+            const int type_j = ucell.iat2it[jr_pair.first.first];
+            const std::size_t col_prefix = prefix_size_per_type.at(type_j);
+            for (std::size_t row = 0; row != tensor.shape[0]; ++row)
+            {
+                for (std::size_t col = 0; col != tensor.shape[1]; ++col)
+                {
+                    const double abs_value = std::abs(tensor(row, col));
+                    stats.max_abs_total = std::max(stats.max_abs_total, abs_value);
+                    if (row >= row_prefix || col >= col_prefix)
+                    {
+                        ++stats.outside_element_count;
+                        stats.sum_abs_outside += abs_value;
+                        stats.max_abs_outside = std::max(stats.max_abs_outside, abs_value);
+                    }
+                }
+            }
+        }
+    }
+    return stats;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+filter_tensor_map_by_max_abs_threshold(
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensor_map,
+    const RI::Global_Func::To_Real_t<Tdata>& threshold)
+{
+    typename RI::RI_Tools::T_filter_func<Tdata> filter_func
+        = [](const RI::Tensor<Tdata>& tensor, const RI::Global_Func::To_Real_t<Tdata>& threshold_in) -> bool
+    {
+        return tensor.norm(std::numeric_limits<double>::max()) > threshold_in;
+    };
+    return RI::RI_Tools::filter(tensor_map, filter_func, threshold);
+}
 }
 
 template<typename Tdata>
@@ -669,8 +824,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
 		this->exx_objs.clear();
-		this->exx_objs_long.clear();
-	    this->abfs_long_n0.clear();
+	    this->abfs_old_to_new_per_type.clear();
+	    this->abfs_long_prefix_size_per_type.clear();
         this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
         const bool rotated_n0_requested
             = this->info.rotate_abfs
@@ -684,8 +839,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                       << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
                       << std::endl;
         }
-    ModuleBase::Element_Basis_Index::IndexPermutation abfs_old_to_new_per_type;
-    std::vector<std::size_t> abfs_long_prefix_size_per_type;
     if (this->use_rotated_n0_long_range)
     {
         if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
@@ -698,16 +851,16 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
             {
                 ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
             }
-	        this->abfs_long_n0 = ExxLriDetail::make_leading_radial_channel_copy(this->abfs);
-	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs);
-	        abfs_old_to_new_per_type = permutation.old_to_new_by_type;
-	        abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
+	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
+	                                                                             this->info.multip_moments_threshold);
+	        this->abfs_old_to_new_per_type = permutation.old_to_new_by_type;
+	        this->abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
 	        if (GlobalV::MY_RANK == 0)
 	        {
 	            std::cout << "Rotated ABFS long-prefix sizes by type:";
-	            for (std::size_t T = 0; T != abfs_long_prefix_size_per_type.size(); ++T)
+	            for (std::size_t T = 0; T != this->abfs_long_prefix_size_per_type.size(); ++T)
 	            {
-	                std::cout << " T" << T << "=" << abfs_long_prefix_size_per_type[T];
+	                std::cout << " T" << T << "=" << this->abfs_long_prefix_size_per_type[T];
 	            }
 	            std::cout << std::endl;
 	        }
@@ -720,38 +873,13 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first,
-															abfs_old_to_new_per_type );
+															this->abfs_old_to_new_per_type );
 				if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 				{
 					this->exx_objs[settings_list.first].evq.init(ucell, orb,
 																this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
 																settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
-																abfs_old_to_new_per_type);
-					if (this->use_rotated_n0_long_range)
-					{
-						this->exx_objs_long[settings_list.first].abfs_ccp
-						    = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs_long_n0,
-						                                       settings_list.second.second,
-						                                       this->info.ccp_rmesh_times);
-						this->exx_objs_long[settings_list.first].cv.set_orbitals(ucell,
-						                                                       orb,
-						                                                       this->lcaos,
-						                                                       this->abfs_long_n0,
-						                                                       this->exx_objs_long[settings_list.first].abfs_ccp,
-						                                                       this->info.kmesh_times,
-						                                                       this->MGT,
-						                                                       settings_list.second.first);
-						this->exx_objs_long[settings_list.first].evq.init(ucell,
-						                                                orb,
-						                                                this->mpi_comm,
-						                                                this->p_kv,
-						                                                this->lcaos,
-						                                                this->abfs_long_n0,
-						                                                settings_list.second.second,
-						                                                this->MGT,
-						                                                this->info.ccp_rmesh_times,
-						                                                this->info.kmesh_times);
-					}
+																this->abfs_old_to_new_per_type);
 				}
 			}
 
@@ -789,8 +917,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	}
 
 		this->exx_objs.clear();
-		this->exx_objs_long.clear();
-	    this->abfs_long_n0.clear();
+	    this->abfs_old_to_new_per_type.clear();
+	    this->abfs_long_prefix_size_per_type.clear();
         this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
         const bool rotated_n0_requested
             = this->info.rotate_abfs
@@ -804,8 +932,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                       << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
                       << std::endl;
         }
-    ModuleBase::Element_Basis_Index::IndexPermutation abfs_old_to_new_per_type;
-    std::vector<std::size_t> abfs_long_prefix_size_per_type;
     if (this->use_rotated_n0_long_range)
     {
         if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
@@ -818,16 +944,16 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
             {
                 ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
             }
-	        this->abfs_long_n0 = ExxLriDetail::make_leading_radial_channel_copy(this->abfs);
-	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs);
-	        abfs_old_to_new_per_type = permutation.old_to_new_by_type;
-	        abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
+	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
+	                                                                             this->info.multip_moments_threshold);
+	        this->abfs_old_to_new_per_type = permutation.old_to_new_by_type;
+	        this->abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
 	        if (GlobalV::MY_RANK == 0)
 	        {
 	            std::cout << "Rotated ABFS long-prefix sizes by type:";
-	            for (std::size_t T = 0; T != abfs_long_prefix_size_per_type.size(); ++T)
+	            for (std::size_t T = 0; T != this->abfs_long_prefix_size_per_type.size(); ++T)
 	            {
-	                std::cout << " T" << T << "=" << abfs_long_prefix_size_per_type[T];
+	                std::cout << " T" << T << "=" << this->abfs_long_prefix_size_per_type[T];
 	            }
 	            std::cout << std::endl;
 	        }
@@ -840,38 +966,13 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first,
-															abfs_old_to_new_per_type );
+															this->abfs_old_to_new_per_type );
 				if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 				{
 					this->exx_objs[settings_list.first].evq.init(ucell, orb,
 																this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
 																settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
-																abfs_old_to_new_per_type);
-					if (this->use_rotated_n0_long_range)
-					{
-						this->exx_objs_long[settings_list.first].abfs_ccp
-						    = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs_long_n0,
-						                                       settings_list.second.second,
-						                                       this->info.ccp_rmesh_times);
-						this->exx_objs_long[settings_list.first].cv.set_orbitals(ucell,
-						                                                       orb,
-						                                                       this->lcaos,
-						                                                       this->abfs_long_n0,
-						                                                       this->exx_objs_long[settings_list.first].abfs_ccp,
-						                                                       this->info.kmesh_times,
-						                                                       this->MGT,
-						                                                       settings_list.second.first);
-						this->exx_objs_long[settings_list.first].evq.init(ucell,
-						                                                orb,
-						                                                this->mpi_comm,
-						                                                this->p_kv,
-						                                                this->lcaos,
-						                                                this->abfs_long_n0,
-						                                                settings_list.second.second,
-						                                                this->MGT,
-						                                                this->info.ccp_rmesh_times,
-						                                                this->info.kmesh_times);
-					}
+																this->abfs_old_to_new_per_type);
 				}
 			}
 
@@ -923,8 +1024,8 @@ void Exx_LRI<Tdata>::init_spencer(
 	}
 
 	    this->exx_objs.clear();
-	    this->exx_objs_long.clear();
-	    this->abfs_long_n0.clear();
+	    this->abfs_old_to_new_per_type.clear();
+	    this->abfs_long_prefix_size_per_type.clear();
 	    this->use_rotated_n0_long_range = false;
     this->coulomb_settings.clear();
     this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2]
@@ -988,8 +1089,8 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
     }
 
 	    this->exx_objs.clear();
-	    this->exx_objs_long.clear();
-	    this->abfs_long_n0.clear();
+	    this->abfs_old_to_new_per_type.clear();
+	    this->abfs_long_prefix_size_per_type.clear();
 	    this->use_rotated_n0_long_range = false;
     this->coulomb_settings.clear();
     this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2]
@@ -1041,6 +1142,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         all_atoms.insert(iat);
     }
     const bool debug_parallel_exx = ExxLriDetail::debug_parallel_exx_enabled();
+    const bool compare_split_with_full = ExxLriDetail::compare_split_with_full_enabled();
     int mpi_size = 1;
     MPI_Comm_size(this->mpi_comm, &mpi_size);
 	std::map<TA,TatomR> atoms_pos;
@@ -1061,6 +1163,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long;
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_full_reference_debug;
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_short_debug;
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long_debug;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
 	for (const auto& settings_list : this->coulomb_settings)
 	{
@@ -1091,6 +1196,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 				this->info,
 				ucell,
 				this->abfs,
+				this->abfs_old_to_new_per_type,
 				list_As_Vs,
 				this->exx_objs[settings_list.first].cv,
 				Vs_temp);
@@ -1101,10 +1207,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			}
 
 			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
-			if (this->use_rotated_n0_long_range)
-			{
-				this->exx_objs_long[settings_list.first].evq.init_ions(ucell, period_Vs);
-			}
 
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;
@@ -1119,6 +1221,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 							= this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
 						if (this->use_rotated_n0_long_range)
 						{
+							std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_full_temp;
 							std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long_temp;
 							if (mpi_size > 1)
 							{
@@ -1134,10 +1237,19 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 											Vs_bare_root,
 											period_Vs);
 									Vs_ewald_long_temp
-										= this->exx_objs_long[settings_list.first].evq.cal_long_range_Vs_gauss_serial_full(
+										= this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss_serial_full(
 											ucell,
 											chi,
 											period_Vs);
+									if (compare_split_with_full)
+									{
+										Vs_ewald_full_temp
+											= this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
+												ucell,
+												chi,
+												Vs_bare_root,
+												period_Vs);
+									}
 								}
 							}
 							else
@@ -1148,9 +1260,26 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 									list_As_Vs.second[0],
 									Vs_temp);
 								Vs_ewald_long_temp
-									= this->exx_objs_long[settings_list.first].evq.cal_long_range_Vs_gauss(
+									= this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss(
 										ucell,
 										chi);
+								if (compare_split_with_full)
+								{
+									Vs_ewald_full_temp
+										= this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+								}
+							}
+							if (compare_split_with_full && GlobalV::MY_RANK == 0)
+							{
+								Vs_full_reference_debug = Vs_full_reference_debug.empty()
+									? Vs_ewald_full_temp
+									: LRI_CV_Tools::add(Vs_full_reference_debug, Vs_ewald_full_temp);
+								Vs_short_debug = Vs_short_debug.empty()
+									? Vs_ewald_temp
+									: LRI_CV_Tools::add(Vs_short_debug, Vs_ewald_temp);
+								Vs_long_debug = Vs_long_debug.empty()
+									? Vs_ewald_long_temp
+									: LRI_CV_Tools::add(Vs_long_debug, Vs_ewald_long_temp);
 							}
 							Vs_ewald_long = Vs_ewald_long.empty() ? std::move(Vs_ewald_long_temp)
 																  : LRI_CV_Tools::add(Vs_ewald_long, Vs_ewald_long_temp);
@@ -1220,6 +1349,50 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 	}
 
+	if (compare_split_with_full && this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0
+		&& !Vs_full_reference_debug.empty())
+	{
+		auto Vs_split_sum_debug = Vs_short_debug;
+		auto Vs_long_debug_copy = Vs_long_debug;
+		Vs_split_sum_debug = LRI_CV_Tools::add(Vs_split_sum_debug, Vs_long_debug_copy);
+
+		auto Vs_full_minus_long_debug = Vs_full_reference_debug;
+		auto Vs_long_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), Vs_long_debug);
+		Vs_full_minus_long_debug = LRI_CV_Tools::add(Vs_full_minus_long_debug, Vs_long_negative_debug);
+
+		auto Vs_full_minus_short_debug = Vs_full_reference_debug;
+		auto Vs_short_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), Vs_short_debug);
+		Vs_full_minus_short_debug = LRI_CV_Tools::add(Vs_full_minus_short_debug, Vs_short_negative_debug);
+
+		const auto full_stats = ExxLriDetail::tensor_map_stats(Vs_full_reference_debug);
+		const auto short_stats = ExxLriDetail::tensor_map_stats(Vs_short_debug);
+		const auto long_stats = ExxLriDetail::tensor_map_stats(Vs_long_debug);
+		const auto sum_stats = ExxLriDetail::tensor_map_stats(Vs_split_sum_debug);
+		const auto long_prefix_leak_stats = ExxLriDetail::aux_matrix_prefix_leak_stats(
+			ucell,
+			this->abfs_long_prefix_size_per_type,
+			Vs_long_debug);
+		const auto total_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_reference_debug, Vs_split_sum_debug);
+		const auto short_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_minus_long_debug, Vs_short_debug);
+		const auto long_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_minus_short_debug, Vs_long_debug);
+
+		std::cout << "EXX split/full Vs comparison (full basis)" << std::endl;
+		std::cout << "  full reference : " << ExxLriDetail::format_tensor_map_stats(full_stats) << std::endl;
+		std::cout << "  split short    : " << ExxLriDetail::format_tensor_map_stats(short_stats) << std::endl;
+		std::cout << "  split long     : " << ExxLriDetail::format_tensor_map_stats(long_stats) << std::endl;
+		std::cout << "  short+long     : " << ExxLriDetail::format_tensor_map_stats(sum_stats) << std::endl;
+		std::cout << "  diff(full, short+long): max_abs_diff=" << total_diff.first
+				  << ", max_abs_ref=" << total_diff.second << std::endl;
+		std::cout << "  diff(full-long, short): max_abs_diff=" << short_diff.first
+				  << ", max_abs_ref=" << short_diff.second << std::endl;
+		std::cout << "  diff(full-short, long): max_abs_diff=" << long_diff.first
+				  << ", max_abs_ref=" << long_diff.second << std::endl;
+		std::cout << "  long prefix leak : outside_elements=" << long_prefix_leak_stats.outside_element_count
+				  << ", sum_abs_outside=" << long_prefix_leak_stats.sum_abs_outside
+				  << ", max_abs_outside=" << long_prefix_leak_stats.max_abs_outside
+				  << ", max_abs_total=" << long_prefix_leak_stats.max_abs_total << std::endl;
+	}
+
 	if (write_cv && GlobalV::MY_RANK == 0)
 	{
 		LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs");
@@ -1269,7 +1442,20 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			Vs_long = std::move(Vs_long_root);
 		}
 	}
+	if (this->use_rotated_n0_long_range)
+	{
+		Vs_long = ExxLriDetail::extract_aux_tensor_map_matrices_prefix_by_type(
+			ucell,
+			this->abfs_long_prefix_size_per_type,
+			Vs_long);
+	}
 	const double V_threshold_short = this->info.V_threshold;
+	if (compare_split_with_full && this->use_rotated_n0_long_range)
+	{
+		this->exx_lri.set_Vs(Vs_full_reference_debug, this->info.V_threshold, "debug_full");
+		this->exx_lri.set_Vs(Vs_short_debug, V_threshold_short, "debug_short_full");
+		this->exx_lri.set_Vs(Vs_long_debug, this->info.V_threshold_long, "debug_long_full");
+	}
 	this->exx_lri.set_Vs(std::move(Vs), V_threshold_short, this->use_rotated_n0_long_range ? "short" : "");
 	if (this->use_rotated_n0_long_range)
 	{
@@ -1322,22 +1508,20 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	}
 	if (this->use_rotated_n0_long_range)
 	{
-		const auto long_ewald_it = this->exx_objs_long.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald);
-		if (long_ewald_it == this->exx_objs_long.end())
+		auto Cs_screened_by_full_mask = RI::RI_Tools::cal_period(Cs, period);
+		if (mpi_size > 1)
 		{
-			throw std::runtime_error("Missing reduced-basis Ewald object for rotated-ABFS long-range channel.");
+			Cs_screened_by_full_mask = this->exx_lri.lri.parallel->comm_tensors_map2(
+				{RI::Label::ab::a, RI::Label::ab::b},
+				std::move(Cs_screened_by_full_mask));
 		}
-		auto Cs_long_pair = long_ewald_it->second.cv.cal_Cs_dCs(
+		Cs_screened_by_full_mask = ExxLriDetail::filter_tensor_map_by_max_abs_threshold(
+			Cs_screened_by_full_mask,
+			this->info.C_threshold);
+		Cs_long = ExxLriDetail::extract_aux_tensor_map_rows_prefix_by_type(
 			ucell,
-			list_As_Cs.first,
-			list_As_Cs.second[0],
-			{{"cal_dC", false},
-			 {"writable_Cws", true},
-			 {"writable_dCws", false},
-			 {"writable_Vws", false},
-			 {"writable_dVws", false}});
-		Cs_long = std::get<0>(Cs_long_pair);
-		long_ewald_it->second.cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs_long);
+			this->abfs_long_prefix_size_per_type,
+			Cs_screened_by_full_mask);
 	}
 	if (write_cv && GlobalV::MY_RANK == 0)
 	{
@@ -1355,9 +1539,18 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 					  << ExxLriDetail::format_tensor_map_stats(cs_global_stats) << std::endl;
 		}
 	}
+	if (compare_split_with_full && this->use_rotated_n0_long_range)
+	{
+		this->exx_lri.set_Cs(Cs, this->info.C_threshold, "debug_full");
+	}
 	if (this->use_rotated_n0_long_range)
 	{
-		this->exx_lri.set_Cs(std::move(Cs_long), this->info.C_threshold, "long");
+		this->exx_lri.lri.set_tensors_map2(
+			Cs_long,
+			{RI::Label::ab::a, RI::Label::ab::b},
+			{{"flag_period", false}, {"flag_comm", false}, {"flag_filter", false}},
+			"Cs_long");
+		this->exx_lri.flag_finish.Cs = true;
 	}
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
 
@@ -1818,6 +2011,7 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
                 this->info,
                 ucell,
                 this->abfs,
+                this->abfs_old_to_new_per_type,
                 list_As_Vs,
                 this->exx_objs[settings_list.first].cv,
                 Vs_temp);
@@ -1878,7 +2072,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             this->exx_lri.set_symmetry(true, p_symrot->get_irreducible_sector());
         }
 	else
-		{
+	{
             this->exx_lri.set_symmetry(false, {});
         }
 
@@ -1887,13 +2081,15 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     double long_cal_hs_time = 0.0;
     const int cal_hs_benchmark_repeat = ExxLriDetail::get_cal_hs_benchmark_repeat();
     const bool h_only_rt_mode = (PARAM.inp.esolver_type == "tddft");
+    const bool compare_split_with_full = ExxLriDetail::compare_split_with_full_enabled();
 
 	    auto run_exx_channel =
 	        [&](RI::Exx<TA, Tcell, Ndim, Tdata>& exx_channel,
 	            const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& D_in,
 	            const int spin_index,
 	            const std::string& ds_suffix,
-	            const std::string& cv_suffix,
+	            const std::string& c_suffix,
+	            const std::string& v_suffix,
 	            double& cal_hs_time_acc) -> std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double>
 	    {
 	        if (debug_parallel_exx)
@@ -1923,11 +2119,11 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	        {
 	            if (h_only_rt_mode)
 	            {
-	                exx_channel.cal_Hs_only({cv_suffix, cv_suffix, ds_suffix});
+	                exx_channel.cal_Hs_only({c_suffix, v_suffix, ds_suffix});
 	            }
 	            else
 	            {
-	                exx_channel.cal_Hs({cv_suffix, cv_suffix, ds_suffix});
+	                exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
 	            }
 	        }
 	        const auto cal_hs_t1 = std::chrono::steady_clock::now();
@@ -1991,25 +2187,118 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		const std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
+		std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> full_reference_channel;
+		if (compare_split_with_full && this->use_rotated_n0_long_range)
+		{
+			full_reference_channel = run_exx_channel(this->exx_lri,
+			                                         Ds[is],
+			                                         is,
+			                                         suffix + "_dbgfull",
+			                                         "debug_full",
+			                                         "debug_full",
+			                                         full_cal_hs_time);
+		}
 
 	        auto short_channel = run_exx_channel(this->exx_lri,
 	                                             Ds[is],
 	                                             is,
 	                                             suffix,
 	                                             this->use_rotated_n0_long_range ? "short" : "",
+	                                             this->use_rotated_n0_long_range ? "short" : "",
 	                                             this->use_rotated_n0_long_range ? short_cal_hs_time : full_cal_hs_time);
-	        this->Hexxs[is] = std::move(short_channel.first);
-	        this->Eexx += short_channel.second;
 	        if (this->use_rotated_n0_long_range)
 	        {
+	            std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> short_fullbasis_reference;
+	            std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> long_fullbasis_reference;
+	            if (compare_split_with_full)
+	            {
+	                short_fullbasis_reference = run_exx_channel(this->exx_lri,
+	                                                            Ds[is],
+	                                                            is,
+	                                                            suffix + "_dbgshortfull",
+	                                                            "debug_full",
+	                                                            "debug_short_full",
+	                                                            full_cal_hs_time);
+	                long_fullbasis_reference = run_exx_channel(this->exx_lri,
+	                                                           Ds[is],
+	                                                           is,
+	                                                           suffix + "_dbglongfull",
+	                                                           "debug_full",
+	                                                           "debug_long_full",
+	                                                           full_cal_hs_time);
+	            }
 	            auto long_channel = run_exx_channel(this->exx_lri,
 	                                                Ds[is],
 	                                                is,
 	                                                suffix + "_lr",
 	                                                "long",
+	                                                "long",
 	                                                long_cal_hs_time);
-            this->Hexxs[is] = LRI_CV_Tools::add(this->Hexxs[is], long_channel.first);
-            this->Eexx += long_channel.second;
+            if (compare_split_with_full && GlobalV::MY_RANK == 0)
+            {
+                auto Hs_split_sum_debug = short_channel.first;
+                auto Hs_long_debug_copy = long_channel.first;
+                Hs_split_sum_debug = LRI_CV_Tools::add(Hs_split_sum_debug, Hs_long_debug_copy);
+
+                auto Hs_full_minus_long_debug = full_reference_channel.first;
+                auto Hs_long_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), long_channel.first);
+                Hs_full_minus_long_debug
+                    = LRI_CV_Tools::add(Hs_full_minus_long_debug, Hs_long_negative_debug);
+
+                auto Hs_full_minus_short_debug = full_reference_channel.first;
+                auto Hs_short_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), short_channel.first);
+                Hs_full_minus_short_debug
+                    = LRI_CV_Tools::add(Hs_full_minus_short_debug, Hs_short_negative_debug);
+
+                const auto full_stats = ExxLriDetail::tensor_map_stats(full_reference_channel.first);
+                const auto short_stats = ExxLriDetail::tensor_map_stats(short_channel.first);
+                const auto long_stats = ExxLriDetail::tensor_map_stats(long_channel.first);
+                const auto sum_stats = ExxLriDetail::tensor_map_stats(Hs_split_sum_debug);
+                const auto total_diff = ExxLriDetail::max_abs_diff_for_tensor_map(full_reference_channel.first,
+                                                                                  Hs_split_sum_debug);
+                const auto short_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Hs_full_minus_long_debug,
+                                                                                  short_channel.first);
+                const auto long_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Hs_full_minus_short_debug,
+                                                                                 long_channel.first);
+                const auto short_direct_diff
+                    = ExxLriDetail::max_abs_diff_for_tensor_map(short_fullbasis_reference.first, short_channel.first);
+                const auto long_direct_diff
+                    = ExxLriDetail::max_abs_diff_for_tensor_map(long_fullbasis_reference.first, long_channel.first);
+
+                std::cout << "EXX split/full H comparison (spin " << is << ")" << std::endl;
+                std::cout << "  full reference : " << ExxLriDetail::format_tensor_map_stats(full_stats)
+                          << ", energy=" << full_reference_channel.second << std::endl;
+                std::cout << "  split short    : " << ExxLriDetail::format_tensor_map_stats(short_stats)
+                          << ", energy=" << short_channel.second << std::endl;
+                std::cout << "  split long     : " << ExxLriDetail::format_tensor_map_stats(long_stats)
+                          << ", energy=" << long_channel.second << std::endl;
+                std::cout << "  short+long     : " << ExxLriDetail::format_tensor_map_stats(sum_stats)
+                          << ", energy=" << (short_channel.second + long_channel.second) << std::endl;
+                std::cout << "  diff(full, short+long): max_abs_diff=" << total_diff.first
+                          << ", max_abs_ref=" << total_diff.second
+                          << ", energy_diff=" << std::abs(full_reference_channel.second
+                                                           - (short_channel.second + long_channel.second))
+                          << std::endl;
+                std::cout << "  diff(full-long, short): max_abs_diff=" << short_diff.first
+                          << ", max_abs_ref=" << short_diff.second << std::endl;
+                std::cout << "  diff(full-short, long): max_abs_diff=" << long_diff.first
+                          << ", max_abs_ref=" << long_diff.second << std::endl;
+                std::cout << "  diff(short_fullbasis_ref, short): max_abs_diff=" << short_direct_diff.first
+                          << ", max_abs_ref=" << short_direct_diff.second
+                          << ", energy_diff=" << std::abs(short_fullbasis_reference.second - short_channel.second)
+                          << std::endl;
+                std::cout << "  diff(long_fullbasis_ref, long): max_abs_diff=" << long_direct_diff.first
+                          << ", max_abs_ref=" << long_direct_diff.second
+                          << ", energy_diff=" << std::abs(long_fullbasis_reference.second - long_channel.second)
+                          << std::endl;
+            }
+            this->Hexxs[is] = LRI_CV_Tools::add(short_channel.first, long_channel.first);
+            this->Eexx += short_channel.second + long_channel.second;
+        }
+        else
+        {
+            this->Hexxs[is] = std::move(short_channel.first);
+            this->Eexx += short_channel.second;
         }
 		post_process_Hexx(this->Hexxs[is]);
 	}
@@ -2023,7 +2312,12 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             std::cout << "EXX cal_Hs timing summary: short = " << short_cal_hs_time
                       << " s, long = " << long_cal_hs_time
                       << " s, total = " << total_cal_hs_time
-                      << " s, repeat = " << cal_hs_benchmark_repeat << std::endl;
+                      << " s, repeat = " << cal_hs_benchmark_repeat;
+            if (compare_split_with_full)
+            {
+                std::cout << ", debug_full = " << full_cal_hs_time << " s";
+            }
+            std::cout << std::endl;
         }
         else
         {

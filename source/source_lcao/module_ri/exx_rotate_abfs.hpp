@@ -137,6 +137,7 @@ void Moment_abfs<Tdata>::cal_VR(
     const double Rc,
     LRI_CV<Tdata>& cv,
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& orb_old_to_new,
     const bool allow_overwrite,
     const bool apply_cutoff,
     const bool write_vws,
@@ -148,7 +149,8 @@ void Moment_abfs<Tdata>::cal_VR(
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
     // index: T: type, L: angular momentum, N: radial index, M: magnetic moment
-    const ModuleBase::Element_Basis_Index::IndexLNM index = ModuleBase::Element_Basis_Index::construct_index(range);
+    const ModuleBase::Element_Basis_Index::IndexLNM index
+        = ModuleBase::Element_Basis_Index::construct_index(range, orb_old_to_new);
 
     ORB_gaunt_table MGT0;
     int Lmax = 0;
@@ -357,14 +359,16 @@ void Moment_abfs<Tdata>::discard0_VR(
     const std::vector<double>& orb_cutoff,
     const double Rc,
     LRI_CV<Tdata>& cv,
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& orb_old_to_new)
 {
     ModuleBase::TITLE("Rotate_abfs", "discard0_VR");
     ModuleBase::timer::start("Rotate_abfs", "discard0_VR");
 
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
-    const ModuleBase::Element_Basis_Index::IndexLNM index = ModuleBase::Element_Basis_Index::construct_index(range);
+    const ModuleBase::Element_Basis_Index::IndexLNM index
+        = ModuleBase::Element_Basis_Index::construct_index(range, orb_old_to_new);
 
     const auto list_A0 = list_r.first;
     const auto list_A1 = list_r.second[0];
