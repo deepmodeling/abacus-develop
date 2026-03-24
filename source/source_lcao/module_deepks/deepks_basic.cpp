@@ -9,6 +9,8 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cmath>
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -100,24 +102,37 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
     if (rank == 0)
     {
-        int basis_size = 0;
-        for (int l = 0; l <= deepks_param.lmaxd; ++l)
+        const int basis_size
+            = static_cast<int>(std::llround(std::sqrt(static_cast<double>(deepks_param.des_per_atom))));
+        if (basis_size * basis_size != deepks_param.des_per_atom)
         {
-            basis_size += (2 * l + 1) * deepks_param.nmaxd;
+            ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm_equiv",
+                                     "Invalid des_per_atom for equivariant DeePKS: it must be a perfect square.");
         }
-        assert(deepks_param.des_per_atom == basis_size * basis_size);
 
         torch::Tensor dm_eig = torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom});
         dm_eig = dm_eig.to(torch::kFloat64).requires_grad_(true);
         torch::Tensor dm = dm_eig.reshape({1, nat, basis_size, basis_size});
 
+        if (static_cast<int>(deepks_param.nchi_d_l.size()) != deepks_param.lmaxd + 1)
+        {
+            ModuleBase::WARNING_QUIT(
+                "DeePKS_domain::cal_edelta_gedm_equiv",
+                "Invalid nchi_d_l in DeePKS parameters: expected size lmaxd + 1 for equivariant shell construction.");
+        }
+
         std::vector<torch::Tensor> ovlp_shells;
-        ovlp_shells.reserve((deepks_param.lmaxd + 1) * deepks_param.nmaxd);
+        int total_shells = 0;
+        for (int l = 0; l <= deepks_param.lmaxd; ++l)
+        {
+            total_shells += deepks_param.nchi_d_l[l];
+        }
+        ovlp_shells.reserve(total_shells);
         int offset = 0;
         for (int l = 0; l <= deepks_param.lmaxd; ++l)
         {
             const int nm = 2 * l + 1;
-            for (int n = 0; n < deepks_param.nmaxd; ++n)
+            for (int n = 0; n < deepks_param.nchi_d_l[l]; ++n)
             {
                 torch::Tensor po = torch::zeros({basis_size, 1, nm}, torch::TensorOptions().dtype(torch::kFloat64));
                 auto accessor = po.accessor<double, 3>();
@@ -129,7 +144,11 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                 offset += nm;
             }
         }
-        assert(offset == basis_size);
+        if (offset != basis_size)
+        {
+            ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm_equiv",
+                                     "Invalid shell layout: accumulated shell offset does not match basis size.");
+        }
 
         std::vector<torch::Tensor> dm_flat;
         dm_flat.reserve(ovlp_shells.size());

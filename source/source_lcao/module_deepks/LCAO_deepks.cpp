@@ -76,6 +76,11 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
 
     this->deepks_param.lmaxd = lm;
     this->deepks_param.nmaxd = nm;
+    this->deepks_param.nchi_d_l.assign(lm + 1, 0);
+    for (int l = 0; l <= lm; ++l)
+    {
+        this->deepks_param.nchi_d_l[l] = orb.Alpha[0].getNchi(l);
+    }
 
     ofs << " lmax of descriptor = " << deepks_param.lmaxd << std::endl;
     ofs << " nmax of descriptor = " << deepks_param.nmaxd << std::endl;
