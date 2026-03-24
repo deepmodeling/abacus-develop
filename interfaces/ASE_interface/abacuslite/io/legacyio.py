@@ -1100,11 +1100,12 @@ class TestLegacyIO(unittest.TestCase):
         fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
         magmoms = read_magmom_from_running_log(fn)
         self.assertIsInstance(magmoms, list)
-        self.assertEqual(len(magmoms), 1)
-        self.assertTrue(
-            np.allclose(magmoms[0], 
-                        np.array([[0.        , 0.        , 3.62032142],
-                                  [0.        , 0.        , 3.62032142]])))
+        self.assertEqual(len(magmoms), 2)
+        for magmom in magmoms:
+            self.assertTrue(
+                np.allclose(magmom, 
+                            np.array([[0.        , 0.        , 3.62032142],
+                                      [0.        , 0.        , 3.62032142]])))
 
 if __name__ == '__main__':
     unittest.main()
