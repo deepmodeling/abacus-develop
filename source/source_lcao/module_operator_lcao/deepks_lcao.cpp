@@ -173,6 +173,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
                                                  this->ld->deepks_param,
                                                  descriptor,
+                                                 this->ld->model_deepks,
                                                  this->ld->gedm,
                                                  this->ld->E_delta,
                                                  GlobalV::MY_RANK);

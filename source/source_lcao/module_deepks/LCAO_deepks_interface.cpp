@@ -135,7 +135,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // new gedm is also useful in cal_f_delta, so it should be ld->gedm
             if (PARAM.inp.deepks_equiv)
             {
-                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->gedm, E_delta, rank);
+                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->model_deepks, ld->gedm, E_delta, rank);
             }
             else
             {
