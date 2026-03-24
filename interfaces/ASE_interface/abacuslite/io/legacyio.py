@@ -662,7 +662,7 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
     while istart < len(raw):
         ith = None # index of the table header
         for i, l in enumerate(raw[istart:]):
-            if re.match(r'\s*Total\sMagnetism\s\(uB\)(\s+x\s+y\s+z)?\s*', l, 
+            if re.match(r'\s*Total\sMagnetism\s\(uB\)(\s+x\s+y\s+z)?\s*$', l, 
                         re.IGNORECASE):
                 ith = i
                 break
@@ -695,12 +695,12 @@ def read_magmom_from_running_log(src: str | Path | List[str]) \
         # the second to fourth items are the x, y, z components
         res = list(zip(*[l.split() for l in tb_raw]))[1:]
         assert len(res) in [1, 3] # colinear or non-colinear case
-        mx, my, mz = (0,) * len(res[-1]), (0,) * len(res[-1]), res[-1]
-        if len(res) == 3:
-            mx, my = res[0], res[1]
-        magmom.append(np.array([list(map(float, (mx, my, mz))) 
-                                for mx, my, mz in zip(mx, my, mz)]))
-        
+        if len(res) == 1: # colinear case
+            magmom.append(np.array([list(map(float, res[-1]))]).flatten())
+        else: # non-colinear case
+            mx, my, mz = res
+            magmom.append(np.array([list(map(float, (mx, my, mz))) 
+                                    for mx, my, mz in zip(mx, my, mz)]))
         # update the istart
         istart += ith + itb + jtb + 1
 
@@ -1093,8 +1093,18 @@ class TestLegacyIO(unittest.TestCase):
         self.assertEqual(len(magmoms), 2) # 2 cell-relax steps
         for i, magmom in enumerate(magmoms):
             self.assertIsInstance(magmom, np.ndarray)
-            self.assertEqual(magmom.shape, (4, 3))
+            self.assertEqual(magmom.shape, (4,))
             self.assertAlmostEqual(magmom.sum(), 0.0, delta=1e-3) # AFM
+
+        # non-colinear case
+        fn = self.testfiles / 'pw-symm0-nspin4-gamma-md_'
+        magmoms = read_magmom_from_running_log(fn)
+        self.assertIsInstance(magmoms, list)
+        self.assertEqual(len(magmoms), 1)
+        self.assertTrue(
+            np.allclose(magmoms[0], 
+                        np.array([[0.        , 0.        , 3.62032142],
+                                  [0.        , 0.        , 3.62032142]])))
 
 if __name__ == '__main__':
     unittest.main()
