@@ -1,6 +1,6 @@
 #include "read_pp.h"
 #include <stdexcept>
-#include "module_base/warning_quit.h"
+#include "source_base/tool_quit.h"
 
 namespace {
     inline int safe_stoi(const std::string& val, const std::string& key) {
