@@ -82,6 +82,31 @@ void initBlacsGrid(int loglevel,
 }
 #endif
 
+// open helper function
+template<typename FileStreamType>
+void safe_open_file(FileStreamType& file, const std::string& filename, 
+                    std::ios_base::openmode mode = std::ios_base::in,
+                    int myid = 0, bool is_parallel = true) {
+    file.open(filename, mode);
+    
+    if (!file.is_open()) {
+        std::stringstream ss;
+        ss << "ERROR: Cannot open file '" << filename << "'";
+        if (errno != 0) {
+            ss << " - " << strerror(errno);
+        }
+        
+        std::cerr << ss.str() << std::endl;
+        
+        // handle MPI problem
+        if (is_parallel) {
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        } else {
+            throw std::runtime_error(ss.str());
+        }
+    }
+}
+
 // load matrix from the file
 void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt)
 {
@@ -92,7 +117,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
-        matrixFile.open(FileName);
+        safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
 
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
@@ -146,7 +171,7 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 #endif
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
-    matrixFile.open(FileName);
+    safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -173,7 +198,7 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     std::ofstream matrixFile;
     if (myid == ROOT_PROC) // setup saved matrix format
     {
-        matrixFile.open(FileName);
+        safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
@@ -229,7 +254,7 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
-        matrixFile.open(FileName);
+        safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
 
     std::complex<double>* b; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
@@ -284,7 +309,7 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 #endif
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
-    matrixFile.open(FileName);
+    safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -311,7 +336,7 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     std::ofstream matrixFile;
     if (myid == ROOT_PROC) // setup saved matrix format
     {
-        matrixFile.open(FileName);
+        safe_open_file(matrixFile, FileName, std::ios_base::in, myid, true);
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
