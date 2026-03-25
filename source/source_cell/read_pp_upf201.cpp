@@ -2,15 +2,12 @@
 
 // convert helper function
 template<typename T>
-T safe_convert(const std::string& str, T default_value = T{}) {
+T safe_convert(const std::string& str, T default_value = T{});
+
+template<>
+int safe_convert<int>(const std::string& str, int default_value) {
     try {
-        if constexpr (std::is_same_v<T, int>) {
-            return std::stoi(str);
-        } else if constexpr (std::is_same_v<T, double>) {
-            return std::stod(str);
-        } else if constexpr (std::is_same_v<T, float>) {
-            return std::stof(str);
-        }
+        return std::stoi(str);
     } catch (const std::invalid_argument& e) {
         std::cerr << "Warning: Invalid number format '" << str << "', using default" << std::endl;
         return default_value;
@@ -18,7 +15,32 @@ T safe_convert(const std::string& str, T default_value = T{}) {
         std::cerr << "Warning: Number out of range '" << str << "', using default" << std::endl;
         return default_value;
     }
-    return default_value;
+}
+
+template<>
+double safe_convert<double>(const std::string& str, double default_value) {
+    try {
+        return std::stod(str);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Warning: Invalid number format '" << str << "', using default" << std::endl;
+        return default_value;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Warning: Number out of range '" << str << "', using default" << std::endl;
+        return default_value;
+    }
+}
+
+template<>
+float safe_convert<float>(const std::string& str, float default_value) {
+    try {
+        return std::stof(str);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Warning: Invalid number format '" << str << "', using default" << std::endl;
+        return default_value;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Warning: Number out of range '" << str << "', using default" << std::endl;
+        return default_value;
+    }
 }
 
 // qianrui rewrite it 2021-5-10
