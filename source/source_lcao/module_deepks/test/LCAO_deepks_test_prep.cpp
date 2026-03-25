@@ -56,7 +56,7 @@ void test_deepks<T>::set_parameters()
     PARAM.input.cal_force = 1;
 
     std::ifstream ifs("INPUT");
-    char word[80];
+    std::string word;
     ifs >> word;
     ifs >> PARAM.sys.gamma_only_local;
     ifs.close();

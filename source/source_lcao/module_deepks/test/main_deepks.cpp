@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 int calculate()
 {
     std::ifstream ifs("INPUT");
-    char word[80];
+    std::string word;
     bool gamma_only_local;
     ifs >> word;
     ifs >> gamma_only_local;

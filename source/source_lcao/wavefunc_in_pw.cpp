@@ -53,7 +53,7 @@ void Wavefunc_in_pw::make_table_q(
 				}
 				int meshr=0;
 				double dr=0.0; // only used in uniform grid
-				char word[80];     // pengfei Li add 15-1-31
+				std::string word;     // pengfei Li add 15-1-31
 				while (in.good())
 				{
 					in >> word;

@@ -372,7 +372,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
                                   const int& my_rank)
 {
     ModuleBase::TITLE("LCAO_Orbitals", "read_orb_file");
-    char word[80];
+    std::string word;
     std::string orb_label;
     if (my_rank == 0)
     {
