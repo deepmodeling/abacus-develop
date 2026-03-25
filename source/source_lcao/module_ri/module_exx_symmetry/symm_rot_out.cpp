@@ -1,9 +1,58 @@
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <stdexcept>
+#include <string>
 #include "./symmetry_rotation.h"
 namespace ModuleSymmetry
 {
     namespace
     {
+        int round_near_integer(const double value, const std::string& context)
+        {
+            const double rounded = std::round(value);
+            if (std::abs(value - rounded) > 1e-8)
+            {
+                throw std::runtime_error("Failed to round " + context + " to an integer in symmetry sidecar output.");
+            }
+            return static_cast<int>(rounded);
+        }
+
+        std::array<int, 3> round_near_integer_vec3(const TCdouble& vec, const std::string& context)
+        {
+            return {round_near_integer(vec.x, context + " x"),
+                    round_near_integer(vec.y, context + " y"),
+                    round_near_integer(vec.z, context + " z")};
+        }
+
+        std::string int_vec3_fmt(const std::array<int, 3>& vec)
+        {
+            return "(" + std::to_string(vec[0]) + " " + std::to_string(vec[1]) + " "
+                   + std::to_string(vec[2]) + ")";
+        }
+
+        std::array<int, 3> build_kspace_fold_G(const TCdouble& k_ibz,
+                                               const TCdouble& k_full,
+                                               const int isym,
+                                               const UnitCell& ucell)
+        {
+            const bool trs_conj = isym >= ucell.symm.nrotk;
+            const int isym_space = trs_conj ? isym - ucell.symm.nrotk : isym;
+            TCdouble rotated = k_full * ucell.symm.kgmatrix[isym_space];
+            if (trs_conj)
+            {
+                rotated.x = -rotated.x;
+                rotated.y = -rotated.y;
+                rotated.z = -rotated.z;
+            }
+
+            TCdouble fold_G;
+            fold_G.x = rotated.x - k_ibz.x;
+            fold_G.y = rotated.y - k_ibz.y;
+            fold_G.z = rotated.z - k_ibz.z;
+            return round_near_integer_vec3(fold_G, "k-space fold G");
+        }
+
         int count_basis_size(const std::vector<int>& shell_counts)
         {
             int nao = 0;
@@ -104,8 +153,10 @@ namespace ModuleSymmetry
             ofs << "Number of IBZ k-points (k stars): " << kv.kstars.size() << std::endl;
             ofs << "Format:\n" << "The symmetry operation index to the irreducible k-point. For the irreducible k-points, isym=0.\n\n"
                 << "(The direct coordinate of the original k-point)\n"
+                << "(The reciprocal-lattice fold G satisfying k_full * S = k_ibz + G; TRS members use -k_full * S = k_ibz + G)\n"
                 << "For each atom: \n"
                 << "- Original index->transformed index, type and the Lmax\n"
+                << "- Exact return lattice O used by ABACUS in the Bloch phase\n"
                 << "- Bloch orbital rotation matrix (M) of the given operation and atom, for each angular momentum\n\n";
             for (int istar = 0;istar < kv.kstars.size();++istar)
             {
@@ -121,11 +172,17 @@ namespace ModuleSymmetry
                         ofs << " (TRS * " << isym_space << ")";
                     }
                     ofs << "\n" << vec3_fmt(isym_kvd.second) << "\n";
+                    ofs << "fold_G = " << int_vec3_fmt(build_kspace_fold_G(kv.kstars[istar].at(0),
+                                                                            isym_kvd.second,
+                                                                            isym,
+                                                                            ucell))
+                        << "\n";
                     for (int iat1 =0;iat1 < ucell.nat;++iat1)
                     {
                         const int it = ucell.iat2it[iat1];
                         const int iat2 = ucell.symm.get_rotated_atom(isym_space, iat1);
-                        const double arg = 2 * ModuleBase::PI * isym_kvd.second * symrot.get_return_lattice(iat1, isym_space);
+                        const TCdouble return_lattice = symrot.get_return_lattice(iat1, isym_space);
+                        const double arg = 2 * ModuleBase::PI * isym_kvd.second * return_lattice;
                         const std::complex<double> phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));
 
                         int lmax = ucell.atoms[it].nwl;
@@ -139,6 +196,10 @@ namespace ModuleSymmetry
                         }
 
                         ofs << "atom " << iat1 + 1 << " -> " << iat2 + 1 << " of type " << it + 1 << " with Lmax= " << lmax << "\n";
+                        ofs << "return_lattice = "
+                            << int_vec3_fmt(round_near_integer_vec3(return_lattice,
+                                                                    "atom return lattice"))
+                            << "\n";
                         for (int l = 0;l < lmax + 1;++l)
                         {
                             const int nm = 2 * l + 1;

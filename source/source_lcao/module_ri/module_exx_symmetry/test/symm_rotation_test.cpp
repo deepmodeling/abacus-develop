@@ -1,6 +1,7 @@
 #include "mpi.h"
 #include "../symm_rotation.h"
 #include  "gtest/gtest.h"
+#include <cmath>
 #define DOUBLETHRESHOLD 1e-8
 
 /*
@@ -125,6 +126,25 @@ TEST_F(SymmetryRotationTest, RotMat)
             EXPECT_NEAR(rotmat(i, j).real(), c_dagger_D_c_C41_ref[i * 3 + j].real(), DOUBLETHRESHOLD);
             EXPECT_NEAR(rotmat(i, j).imag(), c_dagger_D_c_C41_ref[i * 3 + j].imag(), DOUBLETHRESHOLD);
         }
+}
+
+TEST_F(SymmetryRotationTest, RotMatHighLIdentityFinite)
+{
+    ModuleBase::Matrix3 identity(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    symrot.cal_rotmat_Slm(&identity, 8);
+    RI::Tensor<std::complex<double>>& rotmat = symrot.get_rotmat_Slm()[0][8];
+    const int dim = 2 * 8 + 1;
+    for (int i = 0; i < dim; ++i)
+    {
+        for (int j = 0; j < dim; ++j)
+        {
+            EXPECT_TRUE(std::isfinite(rotmat(i, j).real()));
+            EXPECT_TRUE(std::isfinite(rotmat(i, j).imag()));
+            const double target = (i == j) ? 1.0 : 0.0;
+            EXPECT_NEAR(rotmat(i, j).real(), target, 1e-8);
+            EXPECT_NEAR(rotmat(i, j).imag(), 0.0, 1e-8);
+        }
+    }
 }
 
 TEST_F(SymmetryRotationTest, GetReturnLattice)
