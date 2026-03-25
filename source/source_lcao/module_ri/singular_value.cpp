@@ -199,7 +199,7 @@ double cal_massidda(const UnitCell& ucell,
             = std::bind(&fq_massidda, ucell.tpiba, gaussian_abfs, qdiv, lambda, lmax);
         double prefactor
             = ModuleBase::TWO_PI * std::pow(lambda, -1.0 / qdiv) * ucell.omega / std::pow(ModuleBase::TWO_PI, 3);
-        double fq_int;
+        double fq_int; 
         if (qdiv == 2)
             fq_int = prefactor * std::sqrt(ModuleBase::PI);
         else if (qdiv == 1)
@@ -213,7 +213,7 @@ double cal_massidda(const UnitCell& ucell,
     double val_extra_old = 0.5 * std::numeric_limits<double>::max();
     double lammda_old = start_lambda;
     double val_old = cal_chi(lammda_old);
-    double val_extra;
+    double val_extra = 0.0;  //Initialize variables to avoid undefined behavior
     for (size_t iter = 0; iter != niter; ++iter)
     {
         double lammda_new = lammda_old * 0.5;

@@ -264,7 +264,7 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
 {
     ModuleBase::TITLE("Ions_Move_CG", "setup_cg_grad");
     assert(Ions_Move_Basic::istep > 0);
-    double gamma;
+    double gamma = 0.0;  //Initialize variables to avoid undefined behavior
     double cg0_cg, cg0_cg0, cg0_g;
 
     if (ncggrad % 10000 == 0 || flag == 2)
@@ -364,11 +364,11 @@ void Ions_Move_CG::Brent(double &fa,
                          double &best_x,
                          double &xpt)
 {
-    double dmove;
-    double tmp;
-    double k2, k1, k0;
-    double xnew1, xnew2;
-    double ecalnew1, ecalnew2;
+    double dmove = 0.0;
+    double tmp = 0.0;
+    double k2 = 0.0, k1 = 0.0, k0 = 0.0;
+    double xnew1 = 0.0, xnew2 = 0.0;
+    double ecalnew1 = 0.0, ecalnew2 = 0.0;  //Initialize variables to avoid undefined behavior
 
     if ((fa * fb) > 0)
     {
