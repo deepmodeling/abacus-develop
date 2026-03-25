@@ -59,6 +59,10 @@ class Stochastic_WF
     void init_com_orbitals();
     // sync chi0 from CPU to GPU
     void sync_chi0();
+    
+  private:
+    // random number generator
+    std::mt19937 rng;
 
   protected:
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;

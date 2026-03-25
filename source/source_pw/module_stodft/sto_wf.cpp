@@ -7,6 +7,8 @@
 #include <cassert>
 #include <ctime>
 
+#include <random>
+
 #include "source_base/global_function.h"
 
 template <typename T, typename Device>
@@ -19,7 +21,7 @@ Stochastic_WF<T, Device>::~Stochastic_WF()
 {
     delete chi0_cpu;
     Device* ctx = {};
-    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         delete chi0;
     }
@@ -60,18 +62,22 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
     delete[] chiallorder;
     chiallorder = nullptr;
 }
+
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
-    const unsigned int rank_seed_offset = 10000;
+    unsigned int final_seed;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
+        final_seed = (unsigned)time(nullptr) + GlobalV::MY_RANK * 10000;
     }
     else
     {
-        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
+        final_seed = (unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000;
     }
+    
+    // initialize the random number generator with the final seed
+    this->rng.seed(final_seed);
 
     this->allocate_chi0();
     this->update_sto_orbitals(seed_in);
@@ -119,7 +125,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -134,11 +140,17 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
+
+    // Uniform distribution to generate random phases between 0 and 2*pi
+    std::uniform_real_distribution<double> dist_phi(0.0, 2.0 * ModuleBase::PI);
+    // Bernoulli distribution to generate +1/sqrt(nchi) or -1/sqrt(nchi) with equal probability
+    std::bernoulli_distribution dist_coin(0.5);
+
     if (seed_in >= 0)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = dist_phi(this->rng); 
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
@@ -146,7 +158,8 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            // use Bernoulli distribution to generate +1/sqrt(nchi) or -1/sqrt(nchi) with equal probability
+            if (dist_coin(this->rng))
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
