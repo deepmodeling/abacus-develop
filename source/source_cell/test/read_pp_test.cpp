@@ -74,6 +74,12 @@ protected:
 	std::unique_ptr<Atom_pseudo> upf{new Atom_pseudo};
 };
 
+// Relative error comparison function, default relative tolerance 1e-6
+inline void EXPECT_DOUBLE_NEAR_REL(double actual, double expected, double rel_tol = 1e-6) {
+    double tolerance = std::max(std::abs(expected) * rel_tol, 1e-12);
+    EXPECT_NEAR(actual, expected, tolerance);
+}
+
 TEST_F(ReadPPTest, ReadUPF100_Coulomb)
 {
 	std::ifstream ifs;
@@ -101,9 +107,9 @@ TEST_F(ReadPPTest, ReadUPF100)
 	EXPECT_FALSE(upf->nlcc); // no Nonlinear core correction
 	EXPECT_EQ(upf->xc_func,"PBE"); // Exchange-Correlation functional
 	EXPECT_EQ(upf->zv,6); // Z valence
-	EXPECT_DOUBLE_EQ(upf->etotps,-15.54533017755); // total energy
-	EXPECT_DOUBLE_EQ(upf->ecutwfc,0.0); // suggested cutoff for wfc
-	EXPECT_DOUBLE_EQ(upf->ecutrho,0.0); // suggested cutoff for rho
+	EXPECT_DOUBLE_NEAR_REL(upf->etotps,-15.54533017755); // total energy
+	EXPECT_DOUBLE_NEAR_REL(upf->ecutwfc,0.0); // suggested cutoff for wfc
+	EXPECT_DOUBLE_NEAR_REL(upf->ecutrho,0.0); // suggested cutoff for rho
 	EXPECT_EQ(upf->lmax,2); // max angular momentum component
 	EXPECT_EQ(upf->mesh,1191); // Number of points in mesh
 	EXPECT_EQ(upf->nchi,3); // Number of wavefunctions
@@ -114,49 +120,49 @@ TEST_F(ReadPPTest, ReadUPF100)
 	EXPECT_EQ(upf->lchi[0],0); // angluar momentum of each atomic orbital
 	EXPECT_EQ(upf->lchi[1],1); // angluar momentum of each atomic orbital
 	EXPECT_EQ(upf->lchi[2],2); // angluar momentum of each atomic orbital
-	EXPECT_DOUBLE_EQ(upf->oc[0],2.0); // occupation of each atomic orbital
-	EXPECT_DOUBLE_EQ(upf->oc[1],3.0); // occupation of each atomic orbital
-	EXPECT_DOUBLE_EQ(upf->oc[2],1.0); // occupation of each atomic orbital
-	EXPECT_DOUBLE_EQ(upf->r[0],1.75361916453E-05); // r
-	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],5.05901190442E+01); // r
-	EXPECT_DOUBLE_EQ(upf->rab[0],2.19202395566E-07); // rab
-	EXPECT_DOUBLE_EQ(upf->rab[upf->mesh-1],6.32376488053E-01); // rab
-	EXPECT_DOUBLE_EQ(upf->vloc_at[0],-5.00890143222E+00); // vloc
-	EXPECT_DOUBLE_EQ(upf->vloc_at[upf->mesh-1],-2.37200471955E-01); // vloc
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[0],2.0); // occupation of each atomic orbital
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[1],3.0); // occupation of each atomic orbital
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[2],1.0); // occupation of each atomic orbital
+	EXPECT_DOUBLE_NEAR_REL(upf->r[0],1.75361916453E-05); // r
+	EXPECT_DOUBLE_NEAR_REL(upf->r[upf->mesh-1],5.05901190442E+01); // r
+	EXPECT_DOUBLE_NEAR_REL(upf->rab[0],2.19202395566E-07); // rab
+	EXPECT_DOUBLE_NEAR_REL(upf->rab[upf->mesh-1],6.32376488053E-01); // rab
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[0],-5.00890143222E+00); // vloc
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[upf->mesh-1],-2.37200471955E-01); // vloc
 	EXPECT_EQ(upf->lll[0],0); // BETA
     EXPECT_EQ(read_pp->kbeta[0], 957);
-    EXPECT_DOUBLE_EQ(upf->betar(0, 0), -1.82560984478E-03);
-    EXPECT_DOUBLE_EQ(upf->betar(0, read_pp->kbeta[0] - 1), -1.61398366674E-03);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, 0), -1.82560984478E-03);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, read_pp->kbeta[0] - 1), -1.61398366674E-03);
     EXPECT_EQ(upf->lll[1], 0); // BETA
     EXPECT_EQ(read_pp->kbeta[1], 957);
-    EXPECT_DOUBLE_EQ(upf->betar(1, 0), 1.51692136792E-03);
-    EXPECT_DOUBLE_EQ(upf->betar(1, read_pp->kbeta[1] - 1), 1.51458412218E-03);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, 0), 1.51692136792E-03);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, read_pp->kbeta[1] - 1), 1.51458412218E-03);
     EXPECT_EQ(upf->lll[2], 2); // BETA
     EXPECT_EQ(read_pp->kbeta[2], 957);
-    EXPECT_DOUBLE_EQ(upf->betar(2, 0), -3.10582746893E-13);
-    EXPECT_DOUBLE_EQ(upf->betar(2, read_pp->kbeta[2] - 1), -4.17131335030E-04);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(2, 0), -3.10582746893E-13);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(2, read_pp->kbeta[2] - 1), -4.17131335030E-04);
     EXPECT_EQ(read_pp->nd,4); // DIJ
-	EXPECT_DOUBLE_EQ(upf->dion(0,0),-1.70394647943E-01);
-	EXPECT_DOUBLE_EQ(upf->dion(0,1),-1.76521654672E-01);
-	EXPECT_DOUBLE_EQ(upf->dion(1,1),-1.80323263809E-01);
-	EXPECT_DOUBLE_EQ(upf->dion(2,2),1.16612440320E-02);
-	EXPECT_DOUBLE_EQ(upf->chi(0,0),1.40252610787E-06);  // PSWFC
-	EXPECT_DOUBLE_EQ(upf->chi(0,upf->mesh-1),6.15962544650E-25);
-	EXPECT_DOUBLE_EQ(upf->chi(1,0),7.65306256201E-11);
-	EXPECT_DOUBLE_EQ(upf->chi(1,upf->mesh-1),1.44320361049E-17);
-	EXPECT_DOUBLE_EQ(upf->chi(2,0),4.37015997370E-16);
-	EXPECT_DOUBLE_EQ(upf->chi(2,upf->mesh-1),6.20093850585E-05);
-	EXPECT_DOUBLE_EQ(upf->rho_at[0],3.93415898407E-12); // RhoAtom
-	EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh-1],3.84516383534E-09);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(0,0),-1.70394647943E-01);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(0,1),-1.76521654672E-01);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(1,1),-1.80323263809E-01);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(2,2),1.16612440320E-02);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(0,0),1.40252610787E-06);  // PSWFC
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(0,upf->mesh-1),6.15962544650E-25);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(1,0),7.65306256201E-11);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(1,upf->mesh-1),1.44320361049E-17);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(2,0),4.37015997370E-16);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(2,upf->mesh-1),6.20093850585E-05);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[0],3.93415898407E-12); // RhoAtom
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[upf->mesh-1],3.84516383534E-09);
 	EXPECT_EQ(upf->nn[0],1); // nn
 	EXPECT_EQ(upf->nn[1],2);
 	EXPECT_EQ(upf->nn[2],3);
-	EXPECT_DOUBLE_EQ(upf->jchi[0],0.0); // jchi
-	EXPECT_DOUBLE_EQ(upf->jchi[1],0.0);
-	EXPECT_DOUBLE_EQ(upf->jchi[2],0.0);
-	EXPECT_DOUBLE_EQ(upf->jjj[0],0.0); // jjj
-	EXPECT_DOUBLE_EQ(upf->jjj[1],0.0);
-	EXPECT_DOUBLE_EQ(upf->jjj[2],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[0],0.0); // jchi
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[1],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[2],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[0],0.0); // jjj
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[1],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[2],0.0);
 	//EXPECT_EQ
 	ifs.close();
 	std::ofstream ofs;
@@ -183,9 +189,9 @@ TEST_F(ReadPPTest, ReadUPF100USPP)
     EXPECT_TRUE(upf->nlcc);                                           // no Nonlinear core correction
     EXPECT_EQ(upf->xc_func, "PBE");                                   // Exchange-Correlation functional
     EXPECT_EQ(upf->zv, 16);                                           // Z valence
-    EXPECT_DOUBLE_EQ(upf->etotps, -248.63387366200);                  // total energy
-    EXPECT_DOUBLE_EQ(upf->ecutwfc, 0.0);                              // suggested cutoff for wfc
-    EXPECT_DOUBLE_EQ(upf->ecutrho, 0.0);                              // suggested cutoff for rho
+    EXPECT_DOUBLE_NEAR_REL(upf->etotps, -248.63387366200);                  // total energy
+    EXPECT_DOUBLE_NEAR_REL(upf->ecutwfc, 0.0);                              // suggested cutoff for wfc
+    EXPECT_DOUBLE_NEAR_REL(upf->ecutrho, 0.0);                              // suggested cutoff for rho
     EXPECT_EQ(upf->lmax, 2);                                          // max angular momentum component
     EXPECT_EQ(upf->mesh, 861);                                        // Number of points in mesh
     EXPECT_EQ(upf->nchi, 5);                                          // Number of wavefunctions
@@ -200,79 +206,79 @@ TEST_F(ReadPPTest, ReadUPF100USPP)
     EXPECT_EQ(upf->lchi[2], 2);                                       // angluar momentum of each atomic orbital
     EXPECT_EQ(upf->lchi[3], 0);                                       // angluar momentum of each atomic orbital
     EXPECT_EQ(upf->lchi[4], 1);                                       // angluar momentum of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->oc[0], 2.0);                                // occupation of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->oc[1], 6.0);                                // occupation of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->oc[2], 5.0);                                // occupation of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->oc[3], 2.0);                                // occupation of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->oc[4], 0.0);                                // occupation of each atomic orbital
-    EXPECT_DOUBLE_EQ(upf->r[0], 0.00000000000E+00);                   // r
-    EXPECT_DOUBLE_EQ(upf->r[upf->mesh - 1], 2.04011054501E+02);       // r
-    EXPECT_DOUBLE_EQ(upf->rab[0], 1.61587495219E-06);                 // rab
-    EXPECT_DOUBLE_EQ(upf->rab[upf->mesh - 1], 3.45781609895E+00);     // rab
-    EXPECT_DOUBLE_EQ(upf->rho_atc[1], 3.48284864470E+00);             // nlcc
-    EXPECT_DOUBLE_EQ(upf->rho_atc[upf->mesh - 1], 0.00000000000E+00); // nlcc
-    EXPECT_DOUBLE_EQ(upf->vloc_at[0], -5.13189996435E+01);               // vloc
-    EXPECT_DOUBLE_EQ(upf->vloc_at[upf->mesh - 1], -1.56854245366E-01);   // vloc
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[0], 2.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[1], 6.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[2], 5.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[3], 2.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[4], 0.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_NEAR_REL(upf->r[0], 0.00000000000E+00);                   // r
+    EXPECT_DOUBLE_NEAR_REL(upf->r[upf->mesh - 1], 2.04011054501E+02);       // r
+    EXPECT_DOUBLE_NEAR_REL(upf->rab[0], 1.61587495219E-06);                 // rab
+    EXPECT_DOUBLE_NEAR_REL(upf->rab[upf->mesh - 1], 3.45781609895E+00);     // rab
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_atc[1], 3.48284864470E+00);             // nlcc
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_atc[upf->mesh - 1], 0.00000000000E+00); // nlcc
+    EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[0], -5.13189996435E+01);               // vloc
+    EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[upf->mesh - 1], -1.56854245366E-01);   // vloc
     EXPECT_EQ(upf->lll[0], 0);                                        // BETA
     EXPECT_EQ(read_pp->kbeta[0], 607);
-    EXPECT_DOUBLE_EQ(upf->betar(0, 0), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->betar(0, read_pp->kbeta[0] - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, 0), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, read_pp->kbeta[0] - 1), 0.00000000000E+00);
     EXPECT_EQ(upf->lll[1], 0); // BETA
     EXPECT_EQ(read_pp->kbeta[1], 607);
-    EXPECT_DOUBLE_EQ(upf->betar(1, 0), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->betar(1, read_pp->kbeta[0] - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, 0), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, read_pp->kbeta[0] - 1), 0.00000000000E+00);
     EXPECT_EQ(upf->lll[2], 1); // BETA
     EXPECT_EQ(read_pp->kbeta[2], 607);
-    EXPECT_DOUBLE_EQ(upf->betar(2, 1), 5.76970159520E-12);
-    EXPECT_DOUBLE_EQ(upf->betar(2, read_pp->kbeta[2] - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(2, 1), 5.76970159520E-12);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(2, read_pp->kbeta[2] - 1), 0.00000000000E+00);
     EXPECT_EQ(upf->lll[5], 2); // BETA
     EXPECT_EQ(read_pp->kbeta[5], 607);
-    EXPECT_DOUBLE_EQ(upf->betar(5, 2), -3.30692076673E-11);
-    EXPECT_DOUBLE_EQ(upf->betar(5, read_pp->kbeta[2] - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(5, 2), -3.30692076673E-11);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(5, read_pp->kbeta[2] - 1), 0.00000000000E+00);
     EXPECT_EQ(read_pp->nd, 9); // DIJ
-    EXPECT_DOUBLE_EQ(upf->dion(0, 0), -2.44502386412E-02);
-    EXPECT_DOUBLE_EQ(upf->dion(0, 1), 1.88646719481E+00);
-    EXPECT_DOUBLE_EQ(upf->dion(1, 1), 2.82162386984E+00);
-    EXPECT_DOUBLE_EQ(upf->dion(2, 2), 9.10650114165E+00);
-    EXPECT_DOUBLE_EQ(upf->dion(2, 3), -1.66542402638E+01);
-    EXPECT_DOUBLE_EQ(upf->dion(3, 3), 2.82741263018E+01);
-    EXPECT_DOUBLE_EQ(upf->dion(4, 4), 5.48893904730E+01);
-    EXPECT_DOUBLE_EQ(upf->dion(4, 5), 6.28094728901E+01);
-    EXPECT_DOUBLE_EQ(upf->dion(5, 5), 7.17648258086E+01);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(0, 0), -2.44502386412E-02);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(0, 1), 1.88646719481E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(1, 1), 2.82162386984E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(2, 2), 9.10650114165E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(2, 3), -1.66542402638E+01);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(3, 3), 2.82741263018E+01);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(4, 4), 5.48893904730E+01);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(4, 5), 6.28094728901E+01);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(5, 5), 7.17648258086E+01);
     EXPECT_EQ(read_pp->nqf, 8);                // QIJ
     EXPECT_EQ(upf->nqlc, 5);               // nqlc
-    EXPECT_DOUBLE_EQ(read_pp->rinner[0], 1.0); // rinner
-    EXPECT_DOUBLE_EQ(read_pp->rinner[1], 1.0);
-    EXPECT_DOUBLE_EQ(read_pp->rinner[2], 1.0);
-    EXPECT_DOUBLE_EQ(read_pp->rinner[3], 1.0);
-    EXPECT_DOUBLE_EQ(read_pp->rinner[4], 1.0);
-    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), 9.61156723771E-02);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, 1), -2.94880294140E-11);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(0, 0, 0, 0), -1.11034753554E+01);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(0, 0, 4, 7), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->qqq(0, 1), 6.30706989525E-02);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(1, 1), -9.73254487126E-12);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(0, 1, 0, 0), -3.66470985929E+00);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(0, 1, 4, 7), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->qqq(5, 5), 4.88172232559E+00);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(20, 1), 1.69461625558E-10);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(5, 5, 0, 0), 6.38093836870E+01);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(5, 5, 4, 7), 8.40128670914E+03);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 1), 4.36429934825E-06); // PSWFC
-    EXPECT_DOUBLE_EQ(upf->chi(0, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 1), 6.46349114028E-12);
-    EXPECT_DOUBLE_EQ(upf->chi(1, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->chi(2, 1), 7.06492930658E-18);
-    EXPECT_DOUBLE_EQ(upf->chi(2, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->chi(3, 1), 1.45872860322E-06);
-    EXPECT_DOUBLE_EQ(upf->chi(3, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->chi(4, 1), 1.27728623256E-12);
-    EXPECT_DOUBLE_EQ(upf->chi(4, upf->mesh - 1), 0.00000000000E+00);
-    EXPECT_DOUBLE_EQ(upf->rho_at[1], 7.94937989763E-11); // RhoAtom
-    EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh - 1], 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[0], 1.0); // rinner
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[1], 1.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[2], 1.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[3], 1.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[4], 1.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qqq(0, 0), 9.61156723771E-02);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, 1), -2.94880294140E-11);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(0, 0, 0, 0), -1.11034753554E+01);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(0, 0, 4, 7), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->qqq(0, 1), 6.30706989525E-02);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(1, 1), -9.73254487126E-12);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(0, 1, 0, 0), -3.66470985929E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(0, 1, 4, 7), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->qqq(5, 5), 4.88172232559E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(20, 1), 1.69461625558E-10);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(5, 5, 0, 0), 6.38093836870E+01);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(5, 5, 4, 7), 8.40128670914E+03);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(0, 1), 4.36429934825E-06); // PSWFC
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(1, 1), 6.46349114028E-12);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(1, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(2, 1), 7.06492930658E-18);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(2, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(3, 1), 1.45872860322E-06);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(3, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(4, 1), 1.27728623256E-12);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(4, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_at[1], 7.94937989763E-11); // RhoAtom
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_at[upf->mesh - 1], 0.00000000000E+00);
     // EXPECT_EQ
     ifs.close();
     std::ofstream ofs;
@@ -309,45 +315,45 @@ TEST_F(ReadPPTest, ReadUPF201)
 	EXPECT_FALSE(upf->nlcc);
 	EXPECT_EQ(upf->xc_func,"PBE");
 	EXPECT_EQ(upf->zv,19);
-	EXPECT_DOUBLE_EQ(upf->etotps,-1.82394100797E+02);
+	EXPECT_DOUBLE_NEAR_REL(upf->etotps,-1.82394100797E+02);
 	EXPECT_EQ(upf->lmax,2);
 	EXPECT_EQ(upf->mesh,601); // mesh -= 1 at line 388 (why? Let's see)
 	EXPECT_EQ(upf->nchi,0);
 	EXPECT_EQ(upf->nbeta,6);
-	EXPECT_DOUBLE_EQ(upf->r[0],0.0);
-	EXPECT_DOUBLE_EQ(upf->r[600],6.00);
-	EXPECT_DOUBLE_EQ(upf->rab[0],0.01);
-	EXPECT_DOUBLE_EQ(upf->rab[600],0.01);
-	EXPECT_DOUBLE_EQ(upf->vloc_at[0],-5.3426582174E+01);
-	EXPECT_DOUBLE_EQ(upf->vloc_at[600],-6.3333339776E+00);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[0],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[600],6.00);
+	EXPECT_DOUBLE_NEAR_REL(upf->rab[0],0.01);
+	EXPECT_DOUBLE_NEAR_REL(upf->rab[600],0.01);
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[0],-5.3426582174E+01);
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[600],-6.3333339776E+00);
 	EXPECT_EQ(upf->lll[0],0);
     EXPECT_EQ(read_pp->kbeta[0], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(0,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(0,600),0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(0,600),0.0);
 	EXPECT_EQ(upf->lll[1],0);
     EXPECT_EQ(read_pp->kbeta[1], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(1,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(1,600),0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(1,600),0.0);
 	EXPECT_EQ(upf->lll[2],1);
     EXPECT_EQ(read_pp->kbeta[2], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(2,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(2,600),0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(2,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(2,600),0.0);
 	EXPECT_EQ(upf->lll[3],1);
     EXPECT_EQ(read_pp->kbeta[3], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(3,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(3,600),0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(3,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(3,600),0.0);
 	EXPECT_EQ(upf->lll[4],2);
     EXPECT_EQ(read_pp->kbeta[4], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(4,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(4,600),0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(4,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(4,600),0.0);
 	EXPECT_EQ(upf->lll[5],2);
     EXPECT_EQ(read_pp->kbeta[5], 196);
-    EXPECT_DOUBLE_EQ(upf->betar(5,0),0.0);
-	EXPECT_DOUBLE_EQ(upf->betar(5,600),0.0);
-	EXPECT_DOUBLE_EQ(upf->dion(0,0),-6.6178420255E+00);
-	EXPECT_DOUBLE_EQ(upf->dion(5,5),-7.0938557228E+00);
-	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.0);
-	EXPECT_DOUBLE_EQ(upf->rho_at[600],3.2115793029E-02);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(5,0),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->betar(5,600),0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(0,0),-6.6178420255E+00);
+	EXPECT_DOUBLE_NEAR_REL(upf->dion(5,5),-7.0938557228E+00);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[0],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[600],3.2115793029E-02);
 	ifs.close();
 }
 
@@ -365,9 +371,9 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_EQ(upf->xc_func, "PBE");
     EXPECT_EQ(upf->zv, 11);
     EXPECT_EQ(upf->nv, 0);
-    EXPECT_DOUBLE_EQ(upf->etotps, -1.596432307730e2);
-    EXPECT_DOUBLE_EQ(upf->ecutwfc, 0.0);
-    EXPECT_DOUBLE_EQ(upf->ecutrho, 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->etotps, -1.596432307730e2);
+    EXPECT_DOUBLE_NEAR_REL(upf->ecutwfc, 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->ecutrho, 0.0);
     EXPECT_EQ(upf->lmax, 2);
     EXPECT_EQ(read_pp->lmax_rho, 0);
     EXPECT_EQ(read_pp->lloc, 0);
@@ -375,53 +381,53 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_EQ(upf->nchi, 4);
     EXPECT_EQ(upf->nbeta, 5);
     EXPECT_EQ(upf->kkbeta, 617);
-    EXPECT_DOUBLE_EQ(read_pp->rmax, 2.006810756590e2);
-    EXPECT_DOUBLE_EQ(read_pp->zmesh, 13.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rmax, 2.006810756590e2);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->zmesh, 13.0);
     EXPECT_FALSE(read_pp->q_with_l);
     EXPECT_EQ(read_pp->nqf, 8);
     EXPECT_EQ(upf->nqlc, 5);
-    EXPECT_DOUBLE_EQ(upf->r[0], 0.0);
-    EXPECT_DOUBLE_EQ(upf->r[892], 2.006810756590000e2);
-    EXPECT_DOUBLE_EQ(upf->rab[0], 1.169079443020000e-6);
-    EXPECT_DOUBLE_EQ(upf->rab[892], 3.344685763390000e0);
-    EXPECT_DOUBLE_EQ(upf->vloc_at[0], 3.456089057550000e0);
-    EXPECT_DOUBLE_EQ(upf->vloc_at[892], -1.096266796840000e-1);
+    EXPECT_DOUBLE_NEAR_REL(upf->r[0], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->r[892], 2.006810756590000e2);
+    EXPECT_DOUBLE_NEAR_REL(upf->rab[0], 1.169079443020000e-6);
+    EXPECT_DOUBLE_NEAR_REL(upf->rab[892], 3.344685763390000e0);
+    EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[0], 3.456089057550000e0);
+    EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[892], -1.096266796840000e-1);
 	EXPECT_TRUE(upf->rho_atc.empty());
     EXPECT_EQ(upf->lll[0], 0);
     EXPECT_EQ(read_pp->kbeta[0], 617);
     EXPECT_EQ(read_pp->els_beta[0], "2S");
-    EXPECT_DOUBLE_EQ(read_pp->rcut[0], 0.0);
-    EXPECT_DOUBLE_EQ(read_pp->rcutus[0], 1.4);
-    EXPECT_DOUBLE_EQ(upf->betar(0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->betar(0, 892), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcut[0], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcutus[0], 1.4);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(0, 892), 0.0);
     EXPECT_EQ(upf->lll[1], 0);
     EXPECT_EQ(read_pp->kbeta[1], 617);
     EXPECT_EQ(read_pp->els_beta[1], "2P");
-    EXPECT_DOUBLE_EQ(read_pp->rcut[1], 0.0);
-    EXPECT_DOUBLE_EQ(read_pp->rcutus[1], 1.42);
-    EXPECT_DOUBLE_EQ(upf->betar(1, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->betar(1, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->dion(0, 0), -2.182408428460000e2);
-    EXPECT_DOUBLE_EQ(upf->dion(4, 4), -3.087562171130000e1);
-    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), 3.896280866700000e0);
-    EXPECT_DOUBLE_EQ(upf->qqq(4, 4), 7.218068659650000e-1);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(0, 0, 0, 0), 8.705252055130002e1);
-    EXPECT_DOUBLE_EQ(read_pp->qfcoef(4, 4, 4, 7), 9.910935792140002e1);
-    EXPECT_DOUBLE_EQ(read_pp->rinner[0], 1.1);
-    EXPECT_DOUBLE_EQ(read_pp->rinner[4], 1.1);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(read_pp->qfunc(0, 892), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcut[1], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcutus[1], 1.42);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->betar(1, 892), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(0, 0), -2.182408428460000e2);
+    EXPECT_DOUBLE_NEAR_REL(upf->dion(4, 4), -3.087562171130000e1);
+    EXPECT_DOUBLE_NEAR_REL(upf->qqq(0, 0), 3.896280866700000e0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qqq(4, 4), 7.218068659650000e-1);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(0, 0, 0, 0), 8.705252055130002e1);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfcoef(4, 4, 4, 7), 9.910935792140002e1);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[0], 1.1);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rinner[4], 1.1);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->qfunc(0, 892), 0.0);
     EXPECT_EQ(upf->els[0], "2S");
     EXPECT_EQ(upf->lchi[0], 0);
     EXPECT_EQ(read_pp->nchi[0], 0);
-    EXPECT_DOUBLE_EQ(upf->oc[0], 2.0);
-    EXPECT_DOUBLE_EQ(read_pp->epseu[0], 0.0);
-    EXPECT_DOUBLE_EQ(read_pp->rcut_chi[0], 0.0);
-    EXPECT_DOUBLE_EQ(read_pp->rcutus_chi[0], 1.4);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->rho_at[0], 0.0);
-    EXPECT_DOUBLE_EQ(upf->rho_at[892], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->oc[0], 2.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->epseu[0], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcut_chi[0], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(read_pp->rcutus_chi[0], 1.4);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_at[0], 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->rho_at[892], 0.0);
     EXPECT_TRUE(upf->jchi.empty());
 	EXPECT_TRUE(upf->jjj.empty());
 	EXPECT_TRUE(upf->nn.empty());
@@ -507,12 +513,12 @@ TEST_F(ReadPPTest, ReadUPF201FR)
 	EXPECT_EQ(upf->lll[3],1);
 	EXPECT_EQ(upf->lll[4],1);
 	EXPECT_EQ(upf->lll[5],1);
-	EXPECT_DOUBLE_EQ(upf->jjj[0],0.5);
-	EXPECT_DOUBLE_EQ(upf->jjj[1],0.5);
-	EXPECT_DOUBLE_EQ(upf->jjj[2],0.5);
-	EXPECT_DOUBLE_EQ(upf->jjj[3],1.5);
-	EXPECT_DOUBLE_EQ(upf->jjj[4],0.5);
-	EXPECT_DOUBLE_EQ(upf->jjj[5],1.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[0],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[1],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[2],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[3],1.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[4],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jjj[5],1.5);
 	//RELWFC
 	EXPECT_EQ(upf->nchi,3);
 	EXPECT_EQ(upf->nn[0],1);
@@ -521,24 +527,24 @@ TEST_F(ReadPPTest, ReadUPF201FR)
 	EXPECT_EQ(upf->lchi[0],0);
 	EXPECT_EQ(upf->lchi[1],1);
 	EXPECT_EQ(upf->lchi[2],1);
-	EXPECT_DOUBLE_EQ(upf->jchi[0],0.5);
-	EXPECT_DOUBLE_EQ(upf->jchi[1],1.5);
-	EXPECT_DOUBLE_EQ(upf->jchi[2],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[0],0.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[1],1.5);
+	EXPECT_DOUBLE_NEAR_REL(upf->jchi[2],0.5);
 	//PSWFC
 	EXPECT_EQ(upf->els[0],"2S");
 	EXPECT_EQ(upf->lchi[0],0);
-	EXPECT_DOUBLE_EQ(upf->oc[0],2.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[0],2.0);
 	EXPECT_EQ(upf->els[1],"2P");
 	EXPECT_EQ(upf->lchi[1],1);
-	EXPECT_DOUBLE_EQ(upf->oc[1],1.333);
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[1],1.333);
 	EXPECT_EQ(upf->els[2],"2P");
 	EXPECT_EQ(upf->lchi[2],1);
-	EXPECT_DOUBLE_EQ(upf->oc[2],0.667);
-	EXPECT_DOUBLE_EQ(upf->chi(0,0),2.0715339166E-12);
-	EXPECT_DOUBLE_EQ(upf->chi(2,upf->mesh-1),1.1201306967E-03);
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[2],0.667);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(0,0),2.0715339166E-12);
+	EXPECT_DOUBLE_NEAR_REL(upf->chi(2,upf->mesh-1),1.1201306967E-03);
 	//NLCC
-	EXPECT_DOUBLE_EQ(upf->rho_atc[0],8.7234550809E-01);
-	EXPECT_DOUBLE_EQ(upf->rho_atc[upf->mesh-1],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_atc[0],8.7234550809E-01);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_atc[upf->mesh-1],0.0);
 	ifs.close();
 }
 
@@ -571,14 +577,14 @@ TEST_F(ReadPPTest, VWR)
 	EXPECT_EQ(read_pp->iTB_p,1);
 	EXPECT_EQ(read_pp->iTB_d,0);
 	EXPECT_EQ(upf->nchi,2);
-	EXPECT_DOUBLE_EQ(upf->oc[0],2);
-	EXPECT_DOUBLE_EQ(upf->oc[1],2);
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[0],2);
+	EXPECT_DOUBLE_NEAR_REL(upf->oc[1],2);
 	EXPECT_EQ(upf->lchi[0],0);
 	EXPECT_EQ(upf->lchi[1],1);
 	EXPECT_EQ(upf->els[0],"S");
 	EXPECT_EQ(upf->els[1],"P");
-	EXPECT_DOUBLE_EQ(upf->r[0],.22270617E-05);
-	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],.11832572E+03);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[0],.22270617E-05);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[upf->mesh-1],.11832572E+03);
 	EXPECT_NEAR(upf->rho_at[0],6.18479e-13,1.0e-17);
 	EXPECT_NEAR(upf->rho_at[upf->mesh-1],3.46232e-56,1.0e-60);
 	EXPECT_EQ(upf->nbeta,1);
@@ -603,12 +609,12 @@ TEST_F(ReadPPTest, BLPS)
 	EXPECT_EQ(upf->lmax,0);
 	EXPECT_EQ(upf->mesh,1601);
 	EXPECT_EQ(upf->xc_func,"PZ");
-	EXPECT_DOUBLE_EQ(upf->r[0],0.0);
-	EXPECT_DOUBLE_EQ(upf->r[upf->mesh-1],16.0);
-	EXPECT_DOUBLE_EQ(upf->vloc_at[0],2.4189229665506291*2.0);
-	EXPECT_DOUBLE_EQ(upf->vloc_at[upf->mesh-1],-0.25*2.0);
-	EXPECT_DOUBLE_EQ(upf->rho_at[0],0.25);
-	EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh-1],0.25);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[0],0.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->r[upf->mesh-1],16.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[0],2.4189229665506291*2.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[upf->mesh-1],-0.25*2.0);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[0],0.25);
+	EXPECT_DOUBLE_NEAR_REL(upf->rho_at[upf->mesh-1],0.25);
 	ifs.close();
 }
 
@@ -643,14 +649,14 @@ TEST_F(ReadPPTest, SetEmptyElement)
 	read_pp->set_empty_element(*upf);
 	for(int ir=0;ir<upf->mesh;++ir)
 	{
-		EXPECT_DOUBLE_EQ(upf->vloc_at[ir],0.0);
-		EXPECT_DOUBLE_EQ(upf->rho_at[ir],0.0);
+		EXPECT_DOUBLE_NEAR_REL(upf->vloc_at[ir],0.0);
+		EXPECT_DOUBLE_NEAR_REL(upf->rho_at[ir],0.0);
 	}
 	for(int i=0;i<upf->nbeta;++i)
 	{
 		for(int j=0;j<upf->nbeta;++j)
 		{
-			EXPECT_DOUBLE_EQ(upf->dion(i,j),0.0);
+			EXPECT_DOUBLE_NEAR_REL(upf->dion(i,j),0.0);
 		}
 	}
 }
@@ -661,18 +667,18 @@ TEST_F(ReadPPTest, SetUpfQ)
     ifs.open("./support/Al.pbe-sp-van.UPF");
     read_pp->read_pseudo_upf201(ifs, *upf);
     read_pp->set_upf_q(*upf);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 100), 7.8994151918886213e-06);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 100), -2.1915710970869145e-05);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 100), 5.9614487166963409e-05);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 100), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 100), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 100), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 0, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 0, 100), 7.8994151918886213e-06);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 1, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 1, 100), -2.1915710970869145e-05);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 2, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(0, 2, 100), 5.9614487166963409e-05);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 0, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 0, 100), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 1, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 1, 100), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 2, 0), 0.0);
+    EXPECT_DOUBLE_NEAR_REL(upf->qfuncl(1, 2, 100), 0.0);
 
     ifs.close();
 }
@@ -707,7 +713,7 @@ TEST_F(ReadPPTest, SetQfNew)
             expectedValue += qfcoef[iq] * pow(rr, iq);
         }
         expectedValue *= pow(r[ir], l + n);
-        EXPECT_DOUBLE_EQ(expectedValue, rho[ir]);
+        EXPECT_DOUBLE_NEAR_REL(expectedValue, rho[ir]);
     }
 }
 
