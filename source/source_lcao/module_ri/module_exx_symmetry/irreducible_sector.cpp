@@ -1,5 +1,8 @@
 #include "source_lcao/module_ri/module_exx_symmetry/irreducible_sector.h"
 #include "source_io/module_parameter/parameter.h"
+#include <fstream>
+#include <stdexcept>
+#include <string>
 namespace ModuleSymmetry
 {
     TC Irreducible_Sector::rotate_R(const Symmetry& symm,
@@ -148,8 +151,12 @@ namespace ModuleSymmetry
         if(GlobalV::MY_RANK == 0)
         {
             std::ofstream ofs;
-            ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.txt");
-            for (auto& irap_irR : this->irreducible_sector_)
+    	    ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.txt");
+    	    if (!ofs.is_open())
+	    {
+	    	throw std::runtime_error("Failed to open file for writing: " + PARAM.globalv.global_out_dir + "irreducible_sector.txt");
+	    }
+    	    for (auto& irap_irR : this->irreducible_sector_)
             {
                 for (auto& irR : irap_irR.second){ofs << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
             }

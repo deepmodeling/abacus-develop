@@ -3,6 +3,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
+#include <fstream>
+#include <stdexcept>
+#include <string>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -26,6 +29,10 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	if(GlobalV::MY_RANK==0)
 	{
 		ofs.open(out_band_dir.c_str());
+		if (!ofs.is_open())
+		{
+    		    throw std::runtime_error("Failed to open file for writing: " + out_band_dir);
+		}
 		ofs << std::setprecision(6);
 		ofs.close();	
 	}

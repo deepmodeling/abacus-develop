@@ -9,6 +9,9 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
+#include <fstream>
+#include <stdexcept>
+#include <string>
 
 #include <functional>
 #include <vector>
@@ -438,11 +441,19 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
         if (istep <= 0)
         {
             ofs.open(filename);
-        }
+            if (!ofs.is_open())
+	    {
+    		throw std::runtime_error("Failed to open file for writing: " + filename);
+	    }
+	}
         else
         {
             ofs.open(filename, std::ios::app);
-        }
+            if (!ofs.is_open())
+	    {
+   		throw std::runtime_error("Failed to open file for writing: " + filename);
+	    }
+	}
 
         // Write header information
         ofs << "IONIC_STEP: " << istep + 1 << std::endl;
