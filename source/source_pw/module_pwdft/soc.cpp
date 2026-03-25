@@ -27,7 +27,9 @@ void Fcoef::create(const int i1, const int i2, const int i3)
     }
     else
     {
-        std::cout << "not allowed!" << std::endl;
+        std::cout << "Fcoef::create received invalid dimensions: "
+		  << "i1=" << i1 << ", i2=" << i2 << ", i3=" << i3
+		  << ". All dimensions must be positive." << std::endl;
     }
 
     return;
