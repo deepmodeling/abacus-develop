@@ -92,10 +92,10 @@ case "${with_openmpi}" in
             #     EXTRA_CONFIGURE_FLAGS=""
             #   fi
             ./configure \
-                CC=gcc \
-                CXX=g++ \
-                FC=gfortran \
-                F77=gfortran \
+                CC="${CC:-gcc}" \
+                CXX="${CXX:-g++}" \
+                FC="${FC:-gfortran}" \
+                F77="${F77:-gfortran}" \
                 CFLAGS="${CFLAGS}" \
                 --prefix=${pkg_install_dir} \
                 --libdir="${pkg_install_dir}/lib" \

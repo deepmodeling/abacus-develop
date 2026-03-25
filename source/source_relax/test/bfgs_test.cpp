@@ -54,6 +54,32 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_EQ(bfgs.largest_grad,0.0);
 }
 
+// Test that relax_step will auto-initialize if not already initialized
+TEST_F(BFGSTest, RelaxStepAutoInitialize)
+{
+    bfgs.is_initialized = false;
+
+    UnitCell ucell;
+    ucell.nat = 2;
+    ucell.ntype = 1;
+    ucell.atoms.resize(1);
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau.resize(2);
+    ucell.atoms[0].taud.resize(2);
+    ucell.atoms[0].mbl.resize(2, {1,1,1});
+    ucell.lat0 = 1.0;
+
+    ModuleBase::matrix force(2, 3);
+    force(0,0) = 0.1; force(0,1) = 0.2; force(0,2) = 0.3;
+    force(1,0) = 0.4; force(1,1) = 0.5; force(1,2) = 0.6;
+
+    // Before relax_step, is_initialized should be false
+    EXPECT_FALSE(bfgs.is_initialized);
+    bfgs.relax_step(force, ucell);
+    // After relax_step, is_initialized should be true
+    EXPECT_TRUE(bfgs.is_initialized);
+}
+
 // Test if a dimension less than or equal to 0 results in an assertion error
 TEST_F(BFGSTest, TestAllocateWithZeroDimension)
 {
