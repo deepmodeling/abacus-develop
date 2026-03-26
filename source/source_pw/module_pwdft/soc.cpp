@@ -28,17 +28,16 @@ void Fcoef::create(const int i1, const int i2, const int i3)
     else
     {
         std::cout << "not allowed!" << std::endl;
-        if (!(i1 * i2 * i3 > 0)){
-            std::cout << "i1*i2*i3 must be positive! i1*i2*i3 is " << i1 * i2 * i3 << std::endl;
-        }
         if (!(i1 > 0)){
             std::cout << "i1 must be positive! i1 is " << i1 << std::endl;
         }
-        if (!(i2 > 0)){
+        else if (!(i2 > 0)){
             std::cout << "i2 must be positive! i2 is " << i2 << std::endl;
         }
-        if (!(i3 > 0)){
+        else if (!(i3 > 0)){
             std::cout << "i3 must be positive! i3 is " << i3 << std::endl;
+        }
+        else{std::cout << "The product of i1, i2, and i3 exceeds the maximum limit of an integer." << std::endl;
         }
 
     }
