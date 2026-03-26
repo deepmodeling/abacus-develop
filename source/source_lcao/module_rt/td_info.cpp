@@ -3,7 +3,6 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include <fstream>
-#include <stdexcept>
 #include <string>
 
 bool TD_info::out_mat_R = false;
@@ -77,7 +76,10 @@ void TD_info::output_cart_At(const std::string& out_dir)
             ofs.open(out_file.c_str(), std::ofstream::out);
             if (!ofs.is_open())
 	    {
-                throw std::runtime_error("Failed to open file for writing: " + out_file);
+                ModuleBase::WARNING_QUIT(
+		    "TD_info::output_cart_At",
+	    	    "Failed to open file for writing: " + out_file
+		);
 	    }
 	    ofs << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y"
                 << std::setw(15) << "A_z" << std::endl;
@@ -87,7 +89,10 @@ void TD_info::output_cart_At(const std::string& out_dir)
             ofs.open(out_file.c_str(), std::ofstream::app);
             if (!ofs.is_open())
 	    {
-    		throw std::runtime_error("Failed to open file for writing: " + out_file);
+    		ModuleBase::WARNING_QUIT(
+		    "TD_info::output_cart_At",
+		    "Failed to open file for writing: " + out_file
+		);
 	    }
 
 	}

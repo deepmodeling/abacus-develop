@@ -10,7 +10,6 @@
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
 #include <fstream>
-#include <stdexcept>
 #include <string>
 
 #include <functional>
@@ -443,7 +442,10 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
             ofs.open(filename);
             if (!ofs.is_open())
 	    {
-    		throw std::runtime_error("Failed to open file for writing: " + filename);
+		    ModuleBase::WARNING_QUIT(
+			"hamilt::Overlap::output_SR_async_csr",
+		        "Failed to open file for writing: " + filename
+		    );
 	    }
 	}
         else
@@ -451,7 +453,10 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
             ofs.open(filename, std::ios::app);
             if (!ofs.is_open())
 	    {
-   		throw std::runtime_error("Failed to open file for writing: " + filename);
+		    ModuleBase::WARNING_QUIT(
+			"hamilt::Overlap::output_SR_async_csr",
+   			"Failed to open file for writing: " + filename
+		    );
 	    }
 	}
 

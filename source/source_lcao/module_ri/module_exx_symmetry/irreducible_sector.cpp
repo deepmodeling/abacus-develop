@@ -1,7 +1,6 @@
 #include "source_lcao/module_ri/module_exx_symmetry/irreducible_sector.h"
 #include "source_io/module_parameter/parameter.h"
 #include <fstream>
-#include <stdexcept>
 #include <string>
 namespace ModuleSymmetry
 {
@@ -154,7 +153,10 @@ namespace ModuleSymmetry
     	    ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.txt");
     	    if (!ofs.is_open())
 	    {
-	    	throw std::runtime_error("Failed to open file for writing: " + PARAM.globalv.global_out_dir + "irreducible_sector.txt");
+	    	ModuleBase::WARNING_QUIT(
+		    "Irreducible_Sector::write_irreducible_sector",
+		    "Failed to open file for writing: " + PARAM.globalv.global_out_dir + "irreducible_sector.txt"
+		);
 	    }
     	    for (auto& irap_irR : this->irreducible_sector_)
             {
