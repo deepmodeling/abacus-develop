@@ -195,6 +195,45 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     return;
 }
 
+namespace//辅助函数用于后续类型替换
+{
+int parse_int(const std::string& s)
+{
+    try
+    {
+        size_t pos = 0;
+        int value = std::stoi(s, &pos);
+        if (pos != s.size())
+        {
+            throw std::runtime_error("extra characters");
+        }
+        return value;
+    }
+    catch (...)
+    {
+        throw std::runtime_error("Invalid integer value: " + s);
+    }
+}
+
+double parse_double(const std::string& s)
+{
+    try
+    {
+        size_t pos = 0;
+        double value = std::stod(s, &pos);
+        if (pos != s.size())
+        {
+            throw std::runtime_error("extra characters");
+        }
+        return value;
+    }
+    catch (...)
+    {
+        throw std::runtime_error("Invalid floating-point value: " + s);
+    }
+}
+}
+
 void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& pp)
 {
 	if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
@@ -303,35 +342,35 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "z_valence")
         {
-            pp.zv = std::stod(val[ip]);
+            pp.zv = parse_double(val[ip]);
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            pp.etotps =  parse_double(val[ip]);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            pp.ecutwfc =  parse_double(val[ip]);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            pp.ecutrho =  parse_double(val[ip]);
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            pp.lmax = parse_int(val[ip]);
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            this->lmax_rho = parse_int(val[ip]);
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            this->lloc = parse_int(val[ip]);
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            pp.mesh = parse_int(val[ip]);
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +380,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            pp.nchi = parse_int(val[ip]);
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            pp.nbeta = parse_int(val[ip]);
         }
         else
         {
