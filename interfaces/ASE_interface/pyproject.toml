@@ -22,3 +22,6 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["abacuslite*"]
+
+[project.scripts]
+abacuslite = "abacuslite.cli:main"

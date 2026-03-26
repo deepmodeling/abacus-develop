@@ -1,0 +1,27 @@
+io: 
+  prefix: 'neb'
+  outdir: './'
+
+aprof:
+  command: 'mpirun -np 8 abacus'
+  pseudo_dir: './'
+  orbital_dir: './'
+  omp_num_threads: 1
+
+neb:
+  nreplica: 7
+  kspring: 0.02
+  
+  optimize:
+    method: 'fire'
+    fmax: 0.05,
+    nmax: 200
+
+  type: 'neb' # neb, cineb, atst-autoneb, atst-autoneb-sella
+  atst:
+    autoneb:
+      placeholder1: 'TBD'
+      placeholder2: 'TBD'
+  
+  parallel-images: true
+  idpp: true
