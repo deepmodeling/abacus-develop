@@ -59,10 +59,33 @@ DESCRIPTION = '''Nudged Elastic Band (NEB) calculation
 
 def add_argument(parser: argparse.ArgumentParser):
     '''add argument for neb calculation'''
-    parser.add_argument('--ini', type=str, help='initial structure file')
-    parser.add_argument('--fin', type=str, help='final structure file')
-    parser.add_argument('--kpts', type=str, help='k-points file')
-    parser.add_argument('--configure', type=str, help='configure file')
+    parser.add_argument('-i', '--input', type=str, 
+                        help='standard ABACUS INPUT file, to define the calculation '
+                             'settings including `basis_type`, and so on. NOTE: '
+                             'if you define the `kspacing` here, you are not '
+                             'required to provide the KPT file via `kpts` flag. This '
+                             'file MUST be provided',
+                        required=True)
+    parser.add_argument('--ini', type=str, 
+                        help='initial structure file in STRU format. '
+                             'This file MUST be provided',
+                        required=True)
+    parser.add_argument('--fin', type=str, 
+                        help='final structure file in STRU format. '
+                             'This file MUST be provided',
+                        required=True)
+    parser.add_argument('--kpts', type=str, 
+                        help='k-points file, in ABACUS KPT format. If you set either '
+                             'the `gamma_only` or `kspacing` in INPUT file, you can '
+                             'ignore this flag',
+                        required=False)
+    parser.add_argument('--configure', type=str, 
+                        help='controls the details of the neb calculation, including '
+                             'the number of images (replica, the initial and the final'
+                             ' structures included), band type (e.g., cineb, neb, '
+                             'atst-autoneb, atst-autoneb-sella, etc.), etc. '
+                             'This file MUST be provided',
+                        required=True)
 
 def check(conf):
     '''
