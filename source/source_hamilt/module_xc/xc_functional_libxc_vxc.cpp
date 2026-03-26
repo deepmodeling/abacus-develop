@@ -289,28 +289,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         assert(func.info->family == XC_FAMILY_MGGA);
 
         ModuleBase::timer::start("Libxc","xc_mgga_exc_vxc");
-        constexpr int nr_batch_size = 1024;
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(static, nr_batch_size)
-        #endif
-        for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
-        {
-            const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
-            const int nrxx_thread = ir_end - ir_start;
-
-            xc_mgga_exc_vxc(
-                &func,
-                nrxx_thread,
-                rho.data() + ir_start,
-                sigma.data() + ir_start * ((1==nspin)?1:3),
-                sigma.data() + ir_start * ((1==nspin)?1:3),
-                kin_r.data() + ir_start * nspin,
-                exc.data() + ir_start,
-                vrho.data() + ir_start * nspin,
-                vsigma.data() + ir_start * ((1==nspin)?1:3),
-                vlapl.data() + ir_start * nspin,
-                vtau.data() + ir_start * nspin);
-        }
+        xc_mgga_exc_vxc(&func, nrxx, rho.data(), sigma.data(), sigma.data(),
+            kin_r.data(), exc.data(), vrho.data(), vsigma.data(), vlapl.data(), vtau.data());
         ModuleBase::timer::end("Libxc","xc_mgga_exc_vxc");
 
         //process etxc
