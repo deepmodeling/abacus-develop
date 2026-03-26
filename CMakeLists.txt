@@ -322,7 +322,7 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS CXX REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)

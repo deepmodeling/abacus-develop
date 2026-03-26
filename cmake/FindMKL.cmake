@@ -22,9 +22,18 @@ else()
   find_library(MKL_THREAD NAMES mkl_gnu_thread HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
   # With GCC we use system-installed GNU OpenMP
 endif()
+
 if(ENABLE_MPI)
+  execute_process(COMMAND ${MPI_CXX_COMPILER} --showme:version
+                  OUTPUT_VARIABLE MPI_VER_OUT
+                  ERROR_VARIABLE MPI_VER_ERR)
+  if(MPI_VER_OUT MATCHES "Open MPI" OR MPI_VER_ERR MATCHES "Open MPI")
+    set(MKL_BLACS_LIB_NAME "mkl_blacs_openmpi_lp64")
+  else()
+    set(MKL_BLACS_LIB_NAME "mkl_blacs_intelmpi_lp64")
+  endif()
   find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  find_library(MKL_BLACS_INTELMPI NAMES mkl_blacs_intelmpi_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
+  find_library(MKL_BLACS NAMES ${MKL_BLACS_LIB_NAME} HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
 endif()
 
 include(FindPackageHandleStandardArgs)
@@ -32,7 +41,7 @@ include(FindPackageHandleStandardArgs)
 # if all listed variables are TRUE
 
 if(ENABLE_MPI)
-  find_package_handle_standard_args(MKL DEFAULT_MSG MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI MKL_INCLUDE)
+  find_package_handle_standard_args(MKL DEFAULT_MSG MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS MKL_INCLUDE)
 else()
   find_package_handle_standard_args(MKL MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_INCLUDE)
 endif()
@@ -62,10 +71,10 @@ if(MKL_FOUND)
       IMPORTED_LOCATION "${MKL_SCALAPACK}"
       INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
   endif()
-  if(NOT TARGET MKL::BLACS_INTELMPI)
-    add_library(MKL::BLACS_INTELMPI UNKNOWN IMPORTED)
-    set_target_properties(MKL::BLACS_INTELMPI PROPERTIES
-      IMPORTED_LOCATION "${MKL_BLACS_INTELMPI}"
+  if(ENABLE_MPI AND NOT TARGET MKL::BLACS)
+    add_library(MKL::BLACS UNKNOWN IMPORTED)
+    set_target_properties(MKL::BLACS PROPERTIES
+      IMPORTED_LOCATION "${MKL_BLACS}"
       INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
   endif()
   if(MKL_IOMP5 AND NOT TARGET MKL::IOMP5)
@@ -78,7 +87,7 @@ if(MKL_FOUND)
     set_property(TARGET MKL::MKL PROPERTY
     INTERFACE_LINK_LIBRARIES
     "-Wl,--start-group"
-    MKL::INTERFACE_LIB MKL::THREAD MKL::CORE MKL::MKL_SCALAPACK MKL::BLACS_INTELMPI
+    MKL::INTERFACE_LIB MKL::THREAD MKL::CORE MKL::MKL_SCALAPACK MKL::BLACS
     "-Wl,--end-group"
     )
   else()
@@ -96,7 +105,7 @@ if(MKL_FOUND)
 endif()
 
 if(ENABLE_MPI)
-  mark_as_advanced(MKL_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI)
+  mark_as_advanced(MKL_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS)
 else()
   mark_as_advanced(MKL_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE)
 endif()
