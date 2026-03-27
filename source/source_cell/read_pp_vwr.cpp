@@ -1,3 +1,4 @@
+#include <string>
 #include "read_pp.h"
 
 //----------------------------------------------------------
@@ -30,7 +31,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	std::string value;
 	size_t length=0;
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	pp.mesh = std::atoi( value.c_str() );
+	pp.mesh = std::stoi(value);
 	//the mesh should be odd, which is forced in Simpson integration
 	this->mesh_changed = false;
 	if(pp.mesh%2==0) 
@@ -42,7 +43,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	GlobalV::ofs_running << std::setw(15) << "MESH" << std::setw(15) << pp.mesh << std::endl;
 	// (2) read in nlcc: nonlinear core correction
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	pp.nlcc = std::atoi( value.c_str() );
+	pp.nlcc = std::stoi(value);
 	GlobalV::ofs_running << std::setw(15) << "NLCC" << std::setw(15) << pp.nlcc << std::endl;
 	// (3) iatom : index for atom 
 	ifs >> value; length = value.find(","); value.erase(length,1);
@@ -54,16 +55,16 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	GlobalV::ofs_running << std::setw(15) << "Z(VALENCE)" << std::setw(15) << pp.zv << std::endl;
 	// (5) spd_loc, which local pseudopotential should I choose
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	spd_loc = std::atoi( value.c_str() );
+	spd_loc = std::stoi(value);
 	GlobalV::ofs_running << std::setw(15) << "LOC(spd)" << std::setw(15) << spd_loc << std::endl;
 	// (6) read in the occupations
 	std::vector<double> tmp_oc(3, 0.0);
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	tmp_oc[0]= std::atoi( value.c_str() );
+	tmp_oc[0]= std::stoi(value);
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	tmp_oc[1]= std::atoi( value.c_str() );
+	tmp_oc[1]= std::stoi(value);
 	ifs >> value; length = value.find(","); value.erase(length,1);
-	tmp_oc[2]= std::atoi( value.c_str() );
+	tmp_oc[2]= std::stoi(value);
 	GlobalV::ofs_running << std::setw(15) << "OCCUPATION" << std::setw(15) << tmp_oc[0] 
 	<< std::setw(15) << tmp_oc[1] << std::setw(15) << tmp_oc[2] << std::endl;
 	// (7) spin orbital
