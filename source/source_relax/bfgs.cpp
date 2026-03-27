@@ -125,13 +125,27 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     std::vector<double> changedpos = ReshapeMToV(pos);
     this->Update(changedpos, changedforce,H,ucell);
     
-    //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
-    int info=0;
+   
+
+// ! call dysev
+    size_t n_val = 3 * (size_t)size;
+    size_t lwork_large = n_val * n_val;
+
+    // 溢出检查：如果超过 int 最大值 (2^31 - 1)，提前报错
+    if (lwork_large > 2147483647) {
+        throw std::runtime_error("Size too large: lwork overflows int.");
+    }
+
+    int lwork = static_cast<int>(lwork_large);
+    int info = 0;
+
+    std::vector<double> omega(n_val);
+    std::vector<double> work(lwork_large);
     std::vector<double> H_flat;
-    
+
+
+
+
     for(const auto& row : H)
     {
         H_flat.insert(H_flat.end(), row.begin(), row.end());
