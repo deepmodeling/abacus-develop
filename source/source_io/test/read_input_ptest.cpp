@@ -91,6 +91,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.kspacing[1], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.kspacing[2], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.min_dist_coef, 0.2);
+    EXPECT_EQ(param.inp.gint_precision, "double");
     EXPECT_EQ(param.inp.dft_functional, "hse");
     EXPECT_DOUBLE_EQ(param.inp.xc_temperature, 0.0);
     EXPECT_EQ(param.inp.nspin, 1);

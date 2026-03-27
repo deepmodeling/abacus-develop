@@ -3,10 +3,14 @@
 
 #include "source_lcao/module_gint/gint_precision.h"
 
+#include <string>
+
 class GintPrecisionController
 {
   public:
     GintPrecisionController() = default;
+
+    void set_mode(const std::string& precision_mode);
 
     void reset_for_new_scf();
 
@@ -15,14 +19,20 @@ class GintPrecisionController
     ModuleGint::GintExecConfig current_config() const;
 
   private:
-    void apply_runtime_override_();
+    enum class PrecisionMode
+    {
+        single,
+        double_precision,
+        mix
+    };
+
+    static PrecisionMode parse_mode_(const std::string& precision_mode);
 
     ModuleGint::GintExecConfig current_cfg_{
-        ModuleGint::GintRealPrecision::fp32
+        ModuleGint::GintRealPrecision::fp64
     };
-    bool locked_fp64_ = false;
-    bool force_precision_enabled_ = false;
-    ModuleGint::GintRealPrecision forced_precision_ = ModuleGint::GintRealPrecision::fp32;
+    PrecisionMode mode_ = PrecisionMode::double_precision;
+    bool locked_fp64_ = true;
 };
 
 #endif

@@ -311,6 +311,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
     if (iter == 1)
     {
+        this->gint_precision_controller_.set_mode(PARAM.inp.gint_precision);
         this->gint_precision_controller_.reset_for_new_scf();
     }
 
