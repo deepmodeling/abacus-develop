@@ -16,7 +16,7 @@ class GintPrecisionController
 
     void update_after_iteration(double drho, double scf_thr);
 
-    ModuleGint::GintExecConfig current_config() const;
+    ModuleGint::GintRealPrecision current_precision() const;
 
   private:
     enum class PrecisionMode
@@ -28,9 +28,7 @@ class GintPrecisionController
 
     static PrecisionMode parse_mode_(const std::string& precision_mode);
 
-    ModuleGint::GintExecConfig current_cfg_{
-        ModuleGint::GintRealPrecision::fp64
-    };
+    ModuleGint::GintRealPrecision current_precision_ = ModuleGint::GintRealPrecision::fp64;
     PrecisionMode mode_ = PrecisionMode::double_precision;
     bool locked_fp64_ = true;
 };

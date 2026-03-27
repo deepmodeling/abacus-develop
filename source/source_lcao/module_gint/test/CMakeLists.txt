@@ -22,7 +22,7 @@ AddTest(
   TARGET MODULE_LCAO_gint_precision_test
   LIBS parameter ${math_libs} base device
   SOURCES test_gint_precision.cpp
-    ../gint_precision.cpp
+    tmp_mocks.cpp
 )
 
 endif()

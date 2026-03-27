@@ -28,15 +28,6 @@ void cal_gint_vl(
     const double* vr_eff,
     HContainer<double>* hR)
 {
-    cal_gint_vl(vr_eff, hR, current_exec_config());
-}
-
-void cal_gint_vl(
-    const double* vr_eff,
-    HContainer<double>* hR,
-    const GintExecConfig& cfg)
-{
-    (void)cfg;
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -45,7 +36,7 @@ void cal_gint_vl(
     } else
 #endif
     {
-        Gint_vl gint_vl(vr_eff, hR, cfg);
+        Gint_vl gint_vl(vr_eff, hR);
         gint_vl.cal_gint();
     }
 }
@@ -111,25 +102,15 @@ void cal_gint_rho(
     double **rho,
     bool is_dm_symm)
 {
-    cal_gint_rho(dm_vec, nspin, rho, is_dm_symm, current_exec_config());
-}
-
-void cal_gint_rho(
-    const std::vector<HContainer<double>*>& dm_vec,
-    const int nspin,
-    double **rho,
-    bool is_dm_symm,
-    const GintExecConfig& cfg)
-{
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
         Gint_rho_gpu gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     } else
-    #endif
+#endif
     {
-        Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm, cfg);
+        Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     }
 }

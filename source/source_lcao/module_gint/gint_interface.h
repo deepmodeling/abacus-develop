@@ -13,11 +13,6 @@ void cal_gint_vl(
     HContainer<double>* hR);
 
 void cal_gint_vl(
-    const double* vr_eff,
-    HContainer<double>* hR,
-    const GintExecConfig& cfg);
-
-void cal_gint_vl(
     std::vector<const double*> vr_eff,
     HContainer<std::complex<double>>* hR);
 
@@ -36,13 +31,6 @@ void cal_gint_rho(
     const int nspin,
     double **rho,
     bool is_dm_symm = true);
-
-void cal_gint_rho(
-    const std::vector<HContainer<double>*>& dm_vec,
-    const int nspin,
-    double **rho,
-    bool is_dm_symm,
-    const GintExecConfig& cfg);
 
 void cal_gint_tau(        
     const std::vector<HContainer<double>*>& dm_vec,

@@ -1,24 +1,15 @@
 #include "gtest/gtest.h"
 
-#include "../gint_precision.h"
+#include "../gint_info.h"
 
-TEST(GintPrecisionTest, ScopedExecConfigRestoresPreviousPrecision)
+TEST(GintPrecisionTest, GintInfoStoresExecPrecision)
 {
-    EXPECT_EQ(ModuleGint::current_exec_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    UnitCell ucell;
+    ModuleGint::GintInfo* info = ModuleGint::GintInfo::make_test_instance_ptr(ucell, {});
 
-    {
-        const ModuleGint::ScopedExecConfig fp32_scope(
-            ModuleGint::GintExecConfig{ModuleGint::GintRealPrecision::fp32});
-        EXPECT_EQ(ModuleGint::current_exec_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
+    ASSERT_NE(info, nullptr);
+    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintRealPrecision::fp64);
 
-        {
-            const ModuleGint::ScopedExecConfig fp64_scope(
-                ModuleGint::GintExecConfig{ModuleGint::GintRealPrecision::fp64});
-            EXPECT_EQ(ModuleGint::current_exec_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
-        }
-
-        EXPECT_EQ(ModuleGint::current_exec_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
-    }
-
-    EXPECT_EQ(ModuleGint::current_exec_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    info->set_exec_precision(ModuleGint::GintRealPrecision::fp32);
+    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintRealPrecision::fp32);
 }

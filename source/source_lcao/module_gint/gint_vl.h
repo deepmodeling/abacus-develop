@@ -5,7 +5,6 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint.h"
 #include "gint_info.h"
-#include "gint_precision.h"
 
 namespace ModuleGint
 {
@@ -15,9 +14,8 @@ class Gint_vl : public Gint
     public:
     Gint_vl(
         const double* vr_eff,
-        HContainer<double>* hR,
-        const GintExecConfig& cfg = {})
-        : vr_eff_(vr_eff), hR_(hR), cfg_(cfg), dr3_(gint_info_->get_mgrid_volume()) {}
+        HContainer<double>* hR)
+        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
     
     void cal_gint();
 
@@ -37,8 +35,6 @@ class Gint_vl : public Gint
 
     // output
     HContainer<double>* hR_;
-
-    GintExecConfig cfg_;
 
     // Intermediate variables
     double dr3_;

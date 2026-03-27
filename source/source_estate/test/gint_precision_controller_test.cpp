@@ -8,10 +8,10 @@ TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSma
 
     controller.set_mode("mix");
     controller.reset_for_new_scf();
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp32);
 
     controller.update_after_iteration(9.0e-5, 1.0e-7);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp64);
 }
 
 TEST(GintPrecisionControllerTest, DefaultModeStartsAndStaysFp64)
@@ -19,10 +19,10 @@ TEST(GintPrecisionControllerTest, DefaultModeStartsAndStaysFp64)
     GintPrecisionController controller;
 
     controller.reset_for_new_scf();
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp64);
 
     controller.update_after_iteration(9.0e-5, 1.0e-7);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp64);
 }
 
 TEST(GintPrecisionControllerTest, SingleModeStartsAndStaysFp32)
@@ -31,10 +31,10 @@ TEST(GintPrecisionControllerTest, SingleModeStartsAndStaysFp32)
 
     controller.set_mode("single");
     controller.reset_for_new_scf();
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp32);
 
     controller.update_after_iteration(9.0e-5, 1.0e-7);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp32);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp32);
 }
 
 TEST(GintPrecisionControllerTest, MixModeLocksFp64AfterSwitch)
@@ -44,8 +44,8 @@ TEST(GintPrecisionControllerTest, MixModeLocksFp64AfterSwitch)
     controller.set_mode("mix");
     controller.reset_for_new_scf();
     controller.update_after_iteration(9.0e-5, 1.0e-6);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp64);
 
     controller.update_after_iteration(1.0, 1.0e-6);
-    EXPECT_EQ(controller.current_config().cpu_internal_real, ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(controller.current_precision(), ModuleGint::GintRealPrecision::fp64);
 }

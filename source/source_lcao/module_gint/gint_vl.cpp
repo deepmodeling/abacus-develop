@@ -13,7 +13,7 @@ void Gint_vl::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
     ModuleBase::timer::start("Gint", "cal_gint_vl");
-    switch (cfg_.cpu_internal_real)
+    switch (gint_info_->get_exec_precision())
     {
     case GintRealPrecision::fp32:
         cal_gint_impl_<float>();

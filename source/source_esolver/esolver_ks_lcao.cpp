@@ -313,6 +313,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         this->gint_precision_controller_.set_mode(PARAM.inp.gint_precision);
         this->gint_precision_controller_.reset_for_new_scf();
+        this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     }
 
     // mohan update 2012-06-05
@@ -378,10 +379,6 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
-    const ModuleGint::GintExecConfig gint_cfg = (PARAM.inp.calculation == "scf")
-        ? this->gint_precision_controller_.current_config()
-        : ModuleGint::GintExecConfig{};
-    const ModuleGint::ScopedExecConfig scoped_gint_cfg(gint_cfg);
 
     // 1) reset energy
     this->pelec->f_en.eband = 0.0;
@@ -454,6 +451,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     if (PARAM.inp.calculation == "scf")
     {
         this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
+        this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
