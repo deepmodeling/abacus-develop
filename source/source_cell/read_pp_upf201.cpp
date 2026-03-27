@@ -195,7 +195,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     return;
 }
 
-namespace//辅助函数用于后续类型替换
+namespace // Helper functions for subsequent type conversion
 {
 int parse_int(const std::string& s)
 {
