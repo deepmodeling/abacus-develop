@@ -714,6 +714,12 @@ Available options are:
                     "ReadInput",
                     "gint_precision = single or mix is currently supported only for CPU LCAO calculations.\n");
             }
+            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
+            }
         };
         this->add_item(item);
     }

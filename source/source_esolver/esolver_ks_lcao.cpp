@@ -445,13 +445,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // eig and occ are printed, magnetization is calculated,
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
-    const bool is_restart_step = (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0);
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
-    if (PARAM.inp.calculation == "scf")
-    {
-        this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
-        this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
-    }
+    this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
+    this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter except the last iter

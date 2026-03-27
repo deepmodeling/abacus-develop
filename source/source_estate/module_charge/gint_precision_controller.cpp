@@ -44,7 +44,14 @@ void GintPrecisionController::update_after_iteration(double drho, double scf_thr
         return;
     }
 
-    const double switch_thr = std::max(1000.0 * scf_thr, 1.0e-5);
+    // Switch from fp32 to fp64 when drho is close enough to the target.
+    // fp32 has ~7 significant digits (~1e-7 relative error), so we switch
+    // well before that limit to let fp64 handle the final convergence.
+    // The floor (kMinSwitchThreshold) prevents switching too early when
+    // scf_thr is extremely tight.
+    constexpr double kSwitchFactor = 1000.0;
+    constexpr double kMinSwitchThreshold = 1.0e-5;
+    const double switch_thr = std::max(kSwitchFactor * scf_thr, kMinSwitchThreshold);
     if (drho <= switch_thr)
     {
         this->current_precision_ = ModuleGint::GintPrecision::fp64;
