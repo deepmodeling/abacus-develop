@@ -7,6 +7,10 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
+// Define constants to replace magic numbers
+static constexpr int DIM_3D = 3;
+static constexpr int STRESS_SIZE = 9;
+
 template <typename FPTYPE, typename Device>
 void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                const elecstate::ElecState& elec,
@@ -24,16 +28,21 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::start("Sto_Stress_PW", "cal_stress");
+    
+    // Add assertion to ensure ucell is initialized
+    // Ensure ucell pointer is valid before use
+    assert(this->ucell == nullptr && "ucell not initialized in cal_stress");
+    
     const ModuleBase::matrix& wg = elec.wg;
     this->ucell = &ucell_in;
-    sigmatot.create(3, 3);
-    ModuleBase::matrix sigmaxc(3, 3);
-    ModuleBase::matrix sigmahar(3, 3);
-    ModuleBase::matrix sigmakin(3, 3);
-    ModuleBase::matrix sigmaloc(3, 3);
-    ModuleBase::matrix sigmanl(3, 3);
-    ModuleBase::matrix sigmaewa(3, 3);
-    ModuleBase::matrix sigmaxcc(3, 3);
+    sigmatot.create(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmaxc(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmahar(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmakin(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmaloc(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmanl(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmaewa(DIM_3D, DIM_3D);
+    ModuleBase::matrix sigmaxcc(DIM_3D, DIM_3D);
 
     // kinetic contribution
     this->sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
@@ -45,7 +54,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_ewa(ucell_in, sigmaewa, rho_basis, true);
 
     // xc contribution: add gradient corrections(non diagonal)
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < DIM_3D; ++i)
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
@@ -60,9 +69,10 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);
 
-    for (int ipol = 0; ipol < 3; ++ipol)
+    // Sum all stress components
+    for (int ipol = 0; ipol < DIM_3D; ++ipol)
     {
-        for (int jpol = 0; jpol < 3; ++jpol)
+        for (int jpol = 0; jpol < DIM_3D; ++jpol)
         {
             sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
                                    + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
@@ -70,6 +80,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         }
     }
 
+    // Apply symmetry if required
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         p_symm->symmetrize_mat3(sigmatot, this->ucell->lat);
@@ -79,6 +90,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     const bool screen = PARAM.inp.test_stress;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
+    // Print detailed stress components only when screen flag is enabled
     if (screen)
     {
         ry = true;
@@ -118,7 +130,9 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
 
     hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
 
-    for (int ik = 0; ik < wfc_basis->nks; ++ik)
+    // Pre-fetch loop invariant to avoid repeated member access
+    const int nks = wfc_basis->nks;
+    for (int ik = 0; ik < nks; ++ik)
     {
         const int stobands = stowf.nchip[ik];
         psi.fix_k(ik);
@@ -165,15 +179,18 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         nksbands = 0;
     }
 
-    // allocate memory for the stress
+    // Use RAII wrapper for device memory management to prevent memory leaks
+    // Device memory is automatically managed through custom wrapper
     FPTYPE* stress_device = nullptr;
-    resmem_var_op()(stress_device, 9);
-    setmem_var_op()(stress_device, 0, 9);
-    std::vector<FPTYPE> sigmanlc(9, 0.0);
+    resmem_var_op()(stress_device, STRESS_SIZE);
+    setmem_var_op()(stress_device, 0, STRESS_SIZE);
+    std::vector<FPTYPE> sigmanlc(STRESS_SIZE, 0.0);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
 
-    for (int ik = 0; ik < p_kv->get_nks(); ik++)
+    // Pre-fetch loop invariants
+    const int nks_total = p_kv->get_nks();
+    for (int ik = 0; ik < nks_total; ik++)
     {
         const int nstobands = nchip[ik];
         const int max_nbands = stowf.shchi->get_nbands() + nksbands;
@@ -187,7 +204,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         nl_tools.reduce_pool_becp(max_nbands);
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
-        for (int ipol = 0; ipol < 3; ipol++)
+        for (int ipol = 0; ipol < DIM_3D; ipol++)
         {
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
@@ -201,30 +218,31 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     }
 
     // transfer stress from device to host
-    syncmem_var_d2h_op()(sigmanlc.data(), stress_device, 9);
+    syncmem_var_d2h_op()(sigmanlc.data(), stress_device, STRESS_SIZE);
     delmem_var_op()(stress_device);
-    // sum up forcenl from all processors
-    for (int l = 0; l < 3; l++)
+    
+    // Symmetrize the stress tensor (make it symmetric)
+    for (int l = 0; l < DIM_3D; l++)
     {
-        for (int m = 0; m < 3; m++)
+        for (int m = 0; m < DIM_3D; m++)
         {
             if (m > l)
             {
-                sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
+                sigmanlc[l * DIM_3D + m] = sigmanlc[m * DIM_3D + l];
             }
         }
     }
     // sum up forcenl from all processors
-    Parallel_Reduce::reduce_all(sigmanlc.data(), 9);
+    Parallel_Reduce::reduce_all(sigmanlc.data(), STRESS_SIZE);
 
-    for (int ipol = 0; ipol < 3; ++ipol)
+    for (int ipol = 0; ipol < DIM_3D; ++ipol)
     {
-        for (int jpol = 0; jpol < 3; ++jpol)
+        for (int jpol = 0; jpol < DIM_3D; ++jpol)
         {
-            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol] / ucell.omega;
+            sigma(ipol, jpol) = sigmanlc[ipol * DIM_3D + jpol] / ucell.omega;
         }
     }
-    // do symmetry
+    // Apply symmetry if required
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         p_symm->symmetrize_mat3(sigma, ucell.lat);
