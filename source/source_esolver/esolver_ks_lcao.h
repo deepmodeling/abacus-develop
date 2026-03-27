@@ -100,6 +100,7 @@ class ESolver_KS_LCAO : public ESolver_KS
     // because it's hard to seperate force and stress calculation in LCAO.
     ModuleBase::matrix scs;
     bool have_force = false;
+    
     GintPrecisionController gint_precision_controller_;
 
 

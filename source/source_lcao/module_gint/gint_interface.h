@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "gint_precision.h"
 #include "gint_type.h"
 #include "gint_dvlocal.h"
 

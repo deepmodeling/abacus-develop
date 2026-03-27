@@ -15,10 +15,10 @@ void Gint_rho::cal_gint()
     ModuleBase::timer::start("Gint", "cal_gint_rho");
     switch (gint_info_->get_exec_precision())
     {
-    case GintRealPrecision::fp32:
+    case GintPrecision::fp32:
         cal_gint_impl_<float>();
         break;
-    case GintRealPrecision::fp64:
+    case GintPrecision::fp64:
     default:
         cal_gint_impl_<double>();
         break;

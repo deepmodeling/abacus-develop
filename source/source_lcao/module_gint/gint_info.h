@@ -7,8 +7,7 @@
 #include "source_cell/atom_spec.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "gint_type.h"
-#include "gint_precision.h"
+#include "gint_helper.h"
 #include "big_grid.h"
 #include "gint_atom.h"
 #include "unitcell_info.h"
@@ -63,8 +62,8 @@ class GintInfo
     const std::vector<int>& get_ijr_info() const {return ijr_info_;}
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
-    GintRealPrecision get_exec_precision() const { return exec_precision_; }
-    void set_exec_precision(const GintRealPrecision precision) { exec_precision_ = precision; }
+    GintPrecision get_exec_precision() const { return exec_precision_; }
+    void set_exec_precision(const GintPrecision precision) { exec_precision_ = precision; }
 
     //=========================================
     // functions about hcontainer
@@ -135,7 +134,7 @@ class GintInfo
     // total num of atomic orbitals on this proc
     int lgd_ = 0;
 
-    GintRealPrecision exec_precision_ = GintRealPrecision::fp64;
+    GintPrecision exec_precision_ = GintPrecision::fp64;
 
     #ifdef __CUDA
     public:

@@ -8,8 +8,8 @@ TEST(GintPrecisionTest, GintInfoStoresExecPrecision)
     ModuleGint::GintInfo* info = ModuleGint::GintInfo::make_test_instance_ptr(ucell, {});
 
     ASSERT_NE(info, nullptr);
-    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintRealPrecision::fp64);
+    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintPrecision::fp64);
 
-    info->set_exec_precision(ModuleGint::GintRealPrecision::fp32);
-    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintRealPrecision::fp32);
+    info->set_exec_precision(ModuleGint::GintPrecision::fp32);
+    EXPECT_EQ(info->get_exec_precision(), ModuleGint::GintPrecision::fp32);
 }

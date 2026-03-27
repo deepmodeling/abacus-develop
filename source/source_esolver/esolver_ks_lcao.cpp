@@ -23,7 +23,6 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
-#include "source_lcao/module_gint/gint_precision.h"
 
 namespace ModuleESolver
 {

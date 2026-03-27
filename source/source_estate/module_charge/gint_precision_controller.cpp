@@ -17,7 +17,7 @@ GintPrecisionController::PrecisionMode GintPrecisionController::parse_mode_(cons
     {
         return PrecisionMode::mix;
     }
-    return PrecisionMode::double_precision;
+    return PrecisionMode::double_mode;
 }
 
 void GintPrecisionController::reset_for_new_scf()
@@ -26,20 +26,20 @@ void GintPrecisionController::reset_for_new_scf()
     {
     case PrecisionMode::single:
     case PrecisionMode::mix:
-        this->current_precision_ = ModuleGint::GintRealPrecision::fp32;
-        this->locked_fp64_ = false;
+        this->current_precision_ = ModuleGint::GintPrecision::fp32;
+        this->locked_double_precision_ = false;
         break;
-    case PrecisionMode::double_precision:
+    case PrecisionMode::double_mode:
     default:
-        this->current_precision_ = ModuleGint::GintRealPrecision::fp64;
-        this->locked_fp64_ = true;
+        this->current_precision_ = ModuleGint::GintPrecision::fp64;
+        this->locked_double_precision_ = true;
         break;
     }
 }
 
 void GintPrecisionController::update_after_iteration(double drho, double scf_thr)
 {
-    if (this->locked_fp64_ || this->mode_ != PrecisionMode::mix)
+    if (this->locked_double_precision_ || this->mode_ != PrecisionMode::mix)
     {
         return;
     }
@@ -47,12 +47,12 @@ void GintPrecisionController::update_after_iteration(double drho, double scf_thr
     const double switch_thr = std::max(1000.0 * scf_thr, 1.0e-5);
     if (drho <= switch_thr)
     {
-        this->current_precision_ = ModuleGint::GintRealPrecision::fp64;
-        this->locked_fp64_ = true;
+        this->current_precision_ = ModuleGint::GintPrecision::fp64;
+        this->locked_double_precision_ = true;
     }
 }
 
-ModuleGint::GintRealPrecision GintPrecisionController::current_precision() const
+ModuleGint::GintPrecision GintPrecisionController::current_precision() const
 {
     return this->current_precision_;
 }

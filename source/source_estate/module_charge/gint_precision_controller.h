@@ -1,7 +1,7 @@
 #ifndef GINT_PRECISION_CONTROLLER_H
 #define GINT_PRECISION_CONTROLLER_H
 
-#include "source_lcao/module_gint/gint_precision.h"
+#include "source_lcao/module_gint/gint_helper.h"
 
 #include <string>
 
@@ -16,21 +16,21 @@ class GintPrecisionController
 
     void update_after_iteration(double drho, double scf_thr);
 
-    ModuleGint::GintRealPrecision current_precision() const;
+    ModuleGint::GintPrecision current_precision() const;
 
   private:
     enum class PrecisionMode
     {
         single,
-        double_precision,
+        double_mode,
         mix
     };
 
     static PrecisionMode parse_mode_(const std::string& precision_mode);
 
-    ModuleGint::GintRealPrecision current_precision_ = ModuleGint::GintRealPrecision::fp64;
-    PrecisionMode mode_ = PrecisionMode::double_precision;
-    bool locked_fp64_ = true;
+    ModuleGint::GintPrecision current_precision_ = ModuleGint::GintPrecision::fp64;
+    PrecisionMode mode_ = PrecisionMode::double_mode;
+    bool locked_double_precision_ = true;
 };
 
 #endif
