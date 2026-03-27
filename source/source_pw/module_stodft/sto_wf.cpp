@@ -5,6 +5,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
+#include <cmath>
 #include <ctime>
 
 #include "source_base/global_function.h"
@@ -35,12 +36,12 @@ void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
     this->nks = p_kv->get_nks();
     this->ngk = p_kv->ngk;
     this->npwx = npwx_in;
-    nchip = new int[nks];
 
     if (nks <= 0)
     {
         ModuleBase::WARNING_QUIT("Stochastic_WF", "nks <=0!");
     }
+    nchip = new int[nks];
 }
 
 template <typename T, typename Device>
@@ -314,6 +315,11 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
     const int nchiper = this->nchip[0];
 #ifdef __MPI
     MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, BP_WORLD);
+#else
+    if (PARAM.inp.bndpar > 0)
+    {
+        nrecv[0] = nchiper;
+    }
 #endif
     int ichi_start = 0;
     for (int i = 0; i < GlobalV::MY_BNDGROUP; ++i)
@@ -364,6 +370,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
     }
     delete[] nrecv;
     delete[] updown;
+    this->sync_chi0();
 }
 
 template <typename T, typename Device>
