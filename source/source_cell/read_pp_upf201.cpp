@@ -199,38 +199,48 @@ namespace // Helper functions for subsequent type conversion
 {
 int parse_int(const std::string& s)
 {
+    size_t pos = 0;
+    int value = 0;
     try
     {
-        size_t pos = 0;
-        int value = std::stoi(s, &pos);
-        if (pos != s.size())
-        {
-            throw std::runtime_error("extra characters");
-        }
-        return value;
+        value = std::stoi(s, &pos);
     }
     catch (...)
     {
-        throw std::runtime_error("Invalid integer value: " + s);
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_int",
+                                 "Invalid integer value: " + s);
     }
+
+    if (pos != s.size())
+    {
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_int",
+                                 "Invalid integer value (extra characters): " + s);
+    }
+
+    return value;
 }
 
 double parse_double(const std::string& s)
 {
+    size_t pos = 0;
+    double value = 0.0;
     try
     {
-        size_t pos = 0;
-        double value = std::stod(s, &pos);
-        if (pos != s.size())
-        {
-            throw std::runtime_error("extra characters");
-        }
-        return value;
+        value = std::stod(s, &pos);
     }
     catch (...)
     {
-        throw std::runtime_error("Invalid floating-point value: " + s);
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_double",
+                                 "Invalid floating-point value: " + s);
     }
+
+    if (pos != s.size())
+    {
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_double",
+                                 "Invalid floating-point value (extra characters): " + s);
+    }
+
+    return value;
 }
 }
 
