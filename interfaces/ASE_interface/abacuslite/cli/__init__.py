@@ -42,7 +42,7 @@ def main():
         # 'gcmc': gcmc_cli,
     }
     # run the task
-    task[args.task](args)
+    task[args.task](*list(vars(args).values())[1:])
 
 if __name__ == '__main__':
     main()

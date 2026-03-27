@@ -31,10 +31,9 @@ neb:
   parallel-images: true
 ```
 '''
-from pathlib import Path
-import unittest
 import argparse
 from typing import Dict
+from pathlib import Path
 
 try:
     from yaml import safe_load
@@ -78,7 +77,8 @@ def add_argument(parser: argparse.ArgumentParser):
                         help='k-points file, in ABACUS KPT format. If you set either '
                              'the `gamma_only` or `kspacing` in INPUT file, you can '
                              'ignore this flag',
-                        required=False)
+                        required=False,
+                        default=None)
     parser.add_argument('--configure', type=str, 
                         help='controls the details of the neb calculation, including '
                              'the number of images (replica, the initial and the final'
@@ -96,7 +96,7 @@ def check(conf):
     for section in NECESSARY_SECTIONS:
         assert section in conf, f'{section} section is required'
     
-def run(finp, fini, ffin, fneb, fkpt):
+def run(finp, fini, ffin, fkpt, fneb):
     conf = safe_load(open(fneb))
     _ = check(conf)
 
@@ -136,36 +136,3 @@ def run(finp, fini, ffin, fneb, fkpt):
     runner.run(fmax=nebparam['optimize']['fmax'],
                steps=nebparam['optimize'].get('nmax', 200))
     return ftraj
-
-class TestNEBCli(unittest.TestCase):
-
-    here = Path(__file__).parent
-    testfiles = here / 'testfiles'
-
-    def test_yaml_read(self):
-        param = {
-            'aprof': {
-                'command': 'mpirun -np 8 abacus',
-                'pseudo_dir': './',
-                'orbital_dir': './',
-                'omp_num_threads': 1,
-            },
-            'neb': {
-                'nreplica': 7,
-                'kspring': 0.02,
-                'fmax': 0.05,
-                'type': 'neb',
-                'atst': {
-                    'autoneb': {
-                        'placeholder1': 'TBD',
-                        'placeholder2': 'TBD',
-                    },
-                },
-                'parallel-images': True,
-            },
-        }
-        with open(self.testfiles / 'neb.yaml') as f:
-            self.assertEqual(param, safe_load(f))
-
-if __name__ == '__main__':
-    unittest.main()

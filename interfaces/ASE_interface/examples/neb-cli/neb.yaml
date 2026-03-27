@@ -3,9 +3,9 @@ io:
   outdir: './'
 
 aprof:
-  command: 'mpirun -np 8 abacus'
-  pseudo_dir: './'
-  orbital_dir: './'
+  command: 'mpirun -np 8 abacus_2p'
+  pseudo_dir: '/root/deepmodeling/abacus-develop/tests/PP_ORB'
+  orbital_dir: '/root/deepmodeling/abacus-develop/tests/PP_ORB'
   omp_num_threads: 1
 
 neb:
