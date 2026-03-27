@@ -84,7 +84,7 @@ HContainer<T> GintInfo::get_hr(int npol) const
 
 void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
 {
-    ModuleBase::timer::tick("GintInfo", "init_atoms");
+    ModuleBase::timer::start("GintInfo", "init_atoms");
     int iat = 0;
     is_atom_in_proc_.resize(ucell_->nat, false);
     atoms_.resize(ucell_->nat);
@@ -159,7 +159,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             iat++;
         }
     }
-    ModuleBase::timer::tick("GintInfo", "init_atoms");
+    ModuleBase::timer::end("GintInfo", "init_atoms");
 }
 
 void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)

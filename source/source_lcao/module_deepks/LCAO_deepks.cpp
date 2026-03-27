@@ -55,7 +55,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
                           std::ofstream& ofs)
 {
     ModuleBase::TITLE("LCAO_Deepks", "init");
-    ModuleBase::timer::tick("LCAO_Deepks", "init");
+    ModuleBase::timer::start("LCAO_Deepks", "init");
 
     ofs << " Initialize the descriptor index for DeePKS (lcao line)" << std::endl;
 
@@ -76,6 +76,11 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
 
     this->deepks_param.lmaxd = lm;
     this->deepks_param.nmaxd = nm;
+    this->deepks_param.nchi_d_l.assign(lm + 1, 0);
+    for (int l = 0; l <= lm; ++l)
+    {
+        this->deepks_param.nchi_d_l[l] = orb.Alpha[0].getNchi(l);
+    }
 
     ofs << " lmax of descriptor = " << deepks_param.lmaxd << std::endl;
     ofs << " nmax of descriptor = " << deepks_param.nmaxd << std::endl;
@@ -126,7 +131,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
 
     this->pv = &pv_in;
 
-    ModuleBase::timer::tick("LCAO_Deepks", "init");
+    ModuleBase::timer::end("LCAO_Deepks", "init");
     return;
 }
 
@@ -174,7 +179,7 @@ template <typename T>
 void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
-    ModuleBase::timer::tick("LCAO_Deepks", "allocate_V_delta");
+    ModuleBase::timer::start("LCAO_Deepks", "allocate_V_delta");
 
     // initialize the H matrix V_delta
     V_delta.resize(nks);
@@ -202,7 +207,7 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
 
-    ModuleBase::timer::tick("LCAO_Deepks", "allocate_V_delta");
+    ModuleBase::timer::end("LCAO_Deepks", "allocate_V_delta");
     return;
 }
 

@@ -55,7 +55,7 @@ PW_Basis:: ~PW_Basis()
 ///
 void PW_Basis::setuptransform()
 {
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g();
     this->getstartgr();
@@ -70,7 +70,7 @@ void PW_Basis::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
 void PW_Basis::getstartgr()

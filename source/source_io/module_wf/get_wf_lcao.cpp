@@ -498,7 +498,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
                                  const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE("Get_wf_lcao", "wfc_2d_to_grid");
-    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
+    ModuleBase::timer::start("Get_wf_lcao", "wfc_2d_to_grid");
 
     // dimension related
     const int nlocal = pv.desc_wfc[2];
@@ -557,7 +557,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
             // this operation will let all processors have the same wfc_grid
         }
     }
-    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
+    ModuleBase::timer::end("Get_wf_lcao", "wfc_2d_to_grid");
 }
 
 template void Get_wf_lcao::wfc_2d_to_grid(const double* lowf_2d,

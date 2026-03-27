@@ -58,7 +58,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
 
     //*****
     // if istep_in = -1, istep will not appear in file name
@@ -89,6 +89,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if (!out_flag)
     {
+        ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
         return;
     }
 
@@ -465,7 +466,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (inp.cal_syns && (istep > 0 || inp.init_vel))
     {
         ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
-        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
+        ModuleBase::timer::start("ModuleIO", "output_namd_async_overlap");
 
         // Create a new Overlap instance specifically for SR_async calculation
         // This allows SR_async to be initialized with velocity-shifted dtau
@@ -490,10 +491,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         delete SR_async;
         delete overlap_async;
 
-        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
+        ModuleBase::timer::end("ModuleIO", "output_namd_async_overlap");
     }
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
 }
 
 // For gamma only

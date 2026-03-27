@@ -25,7 +25,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Forces", "allocate");
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::start("Forces", "allocate");
 
     // need to calculate the derivative in build_ST_new
     bool cal_deri = true;
@@ -109,7 +109,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr);
 
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::end("Forces", "allocate");
     return;
 }
 
@@ -169,7 +169,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 Record_adj* ra)
 {
     ModuleBase::TITLE("Forces", "ftable");
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::start("Forces", "ftable");
 
     this->ParaV = dm->get_paraV_pointer();
 
@@ -271,6 +271,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
     this->finish_ftable(fsr);
 
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::end("Forces", "ftable");
     return;
 }

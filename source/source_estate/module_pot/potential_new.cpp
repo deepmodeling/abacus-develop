@@ -159,7 +159,7 @@ void Potential::allocate()
 void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::start("Potential", "update_from_charge");
 
     if (!this->fixed_done)
     {
@@ -195,13 +195,13 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
 
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::end("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("Potential", "cal_fixed_v");
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::start("Potential", "cal_fixed_v");
 
     this->v_eff_fixed.assign(this->v_eff_fixed.size(), 0.0);
     for (size_t i = 0; i < this->components.size(); i++)
@@ -212,13 +212,13 @@ void Potential::cal_fixed_v(double* vl_pseudo)
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::end("Potential", "cal_fixed_v");
 }
 
 void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::start("Potential", "cal_veff");
 
     const int nspin_current = this->v_eff.nr;
     const int nrxx = this->v_eff.nc;
@@ -245,20 +245,20 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::end("Potential", "cal_veff");
 }
 
 void Potential::init_pot(const Charge*const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::start("Potential", "init_pot");
 
     // fixed components only calculated in the beginning of SCF
     this->fixed_done = false;
 
     this->update_from_charge(chg, this->ucell_);
 
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::end("Potential", "init_pot");
     return;
 }
 
@@ -281,7 +281,7 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
 void Potential::interpolate_vrs(void)
 {
     ModuleBase::TITLE("Potential", "interpolate_vrs");
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::start("Potential", "interpolate_vrs");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
@@ -316,7 +316,7 @@ void Potential::interpolate_vrs(void)
         this->vofk_smooth = this->vofk_eff;
     }
 
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::end("Potential", "interpolate_vrs");
 }
 
 template <>

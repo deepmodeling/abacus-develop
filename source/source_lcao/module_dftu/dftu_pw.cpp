@@ -12,7 +12,7 @@ void Plus_U::cal_occ_pw(const int iter,
 		const UnitCell& cell, 
 		const double& mixing_beta)
 {
-    ModuleBase::timer::tick("Plus_U", "cal_occ_pw");
+    ModuleBase::timer::start("Plus_U", "cal_occ_pw");
     this->copy_locale(cell);
     this->zero_locale(cell);
 
@@ -209,7 +209,7 @@ void Plus_U::cal_occ_pw(const int iter,
         this->mix_locale(cell, mixing_beta);
     }
     // update effective potential
-    ModuleBase::timer::tick("Plus_U", "cal_occ_pw");
+    ModuleBase::timer::end("Plus_U", "cal_occ_pw");
 }
 /// calculate the local DFT+U effective potential matrix for PW base.
 void Plus_U::cal_VU_pot_pw(const int spin)

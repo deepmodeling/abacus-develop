@@ -115,7 +115,7 @@ inline void cutoff_grid_data_spin2(std::vector<Telement>& func, const std::vecto
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
 {
     ModuleBase::TITLE("XC_Functional", "f_xc_libxc");
-    ModuleBase::timer::tick("XC_Functional", "f_xc_libxc");
+    ModuleBase::timer::start("XC_Functional", "f_xc_libxc");
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 
     assert(nspin == 1 || nspin == 2);
@@ -351,6 +351,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         this->drho_gs_ = std::move(gradrho);
     }
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
+        ModuleBase::timer::end("XC_Functional", "f_xc_libxc");
         return;
     // else if (4 == PARAM.inp.nspin)
     } else//NSPIN != 1,2,4 is not supported

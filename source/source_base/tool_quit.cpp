@@ -46,12 +46,9 @@ void QUIT(int ret)
 {
 
 #ifdef __NORMAL
-
 #else
-    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK);
-
+    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK, false);
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
-
     std::cout<<" See output information in : "<<PARAM.globalv.global_out_dir<<std::endl;
 #endif
 

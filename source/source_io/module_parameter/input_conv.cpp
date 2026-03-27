@@ -165,7 +165,7 @@ void Input_Conv::read_td_efield()
 void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
-    ModuleBase::timer::tick("Input_Conv", "Convert");
+    ModuleBase::timer::start("Input_Conv", "Convert");
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
@@ -660,6 +660,6 @@ void Input_Conv::Convert()
     hsolver::DiagoElpaNative<double>::elpa_num_thread = PARAM.inp.elpa_num_thread;
     ;
 #endif
-    ModuleBase::timer::tick("Input_Conv", "Convert");
+    ModuleBase::timer::end("Input_Conv", "Convert");
     return;
 }

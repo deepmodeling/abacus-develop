@@ -250,7 +250,7 @@ void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec,
                                  std::vector<std::complex<double>>& pphi_, 
                                  ModulePW::PW_Basis* pw_rho)
 {
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK4");
+    ModuleBase::timer::start("ESolver_OF_TDDFT", "propagate_psi_RK4");
 
     std::complex<double> imag(0.0,1.0);
     double dt=PARAM.inp.mdp.md_dt / ModuleBase::AU_to_FS;
@@ -322,7 +322,7 @@ void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec,
     }
     this->renormalize_psi(chr, pw_rho, pphi_);
 
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK4");
+    ModuleBase::timer::end("ESolver_OF_TDDFT", "propagate_psi_RK4");
 }
 
 void Evolve_OFDFT::propagate_psi_RK2(elecstate::ElecState* pelec, 
@@ -331,7 +331,7 @@ void Evolve_OFDFT::propagate_psi_RK2(elecstate::ElecState* pelec,
                                  std::vector<std::complex<double>>& pphi_, 
                                  ModulePW::PW_Basis* pw_rho)
 {
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK2");
+    ModuleBase::timer::start("ESolver_OF_TDDFT", "propagate_psi_RK2");
 
     const std::complex<double> imag(0.0, 1.0);
     double dt=PARAM.inp.mdp.md_dt / ModuleBase::AU_to_FS;
@@ -380,5 +380,5 @@ void Evolve_OFDFT::propagate_psi_RK2(elecstate::ElecState* pelec,
 
     this->renormalize_psi(chr, pw_rho, pphi_);
 
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagate_psi_RK2");
+    ModuleBase::timer::end("ESolver_OF_TDDFT", "propagate_psi_RK2");
 }

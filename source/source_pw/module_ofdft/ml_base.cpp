@@ -36,7 +36,7 @@ void ML_Base::set_device(std::string device_inpt)
 
 void ML_Base::updateInput(const double * const * prho, const ModulePW::PW_Basis *pw_rho)
 {
-    ModuleBase::timer::tick("ML_Base", "updateInput");
+    ModuleBase::timer::start("ML_Base", "updateInput");
     if (this->gene_data_label["gamma"][0])
     {   
         this->cal_tool->getGamma(prho, this->gamma);
@@ -92,12 +92,12 @@ void ML_Base::updateInput(const double * const * prho, const ModulePW::PW_Basis 
             this->cal_tool->getTanhQ_nl(ik, this->tanhq, pw_rho, this->tanhq_nl[ik]);
         }
     }
-    ModuleBase::timer::tick("ML_Base", "updateInput");
+    ModuleBase::timer::end("ML_Base", "updateInput");
 }
 
 void ML_Base::NN_forward(const double * const * prho, const ModulePW::PW_Basis *pw_rho, bool cal_grad)
 {
-    ModuleBase::timer::tick("ML_Base", "Forward");
+    ModuleBase::timer::start("ML_Base", "Forward");
 
     this->nn->zero_grad();
     this->nn->inputs.requires_grad_(false);
@@ -122,13 +122,13 @@ void ML_Base::NN_forward(const double * const * prho, const ModulePW::PW_Basis *
     {
         this->nn->F = torch::softplus(this->nn->F - this->feg_net_F + this->feg3_correct);
     }
-    ModuleBase::timer::tick("ML_Base", "Forward");
+    ModuleBase::timer::end("ML_Base", "Forward");
 
     if (cal_grad)
     {
-        ModuleBase::timer::tick("ML_Base", "Backward");
+        ModuleBase::timer::start("ML_Base", "Backward");
         this->nn->F.backward(torch::ones({this->nx, 1}, this->device_type));
-        ModuleBase::timer::tick("ML_Base", "Backward");
+        ModuleBase::timer::end("ML_Base", "Backward");
     }
 }
 
@@ -154,7 +154,7 @@ torch::Tensor ML_Base::get_data(std::string parameter, const int ikernel) const 
 
 void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
-    ModuleBase::timer::tick("ML_Base", "Pauli Potential");
+    ModuleBase::timer::start("ML_Base", "Pauli Potential");
 
     std::vector<double> pauli_potential(this->nx, 0.);
     std::vector<double> tau_lda(this->nx, 0.); // Dummy or calculated inside
@@ -182,7 +182,7 @@ void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Bas
                       + this->potXiTerm1(ir) + this->potTanhxiTerm1(ir) + this->potTanhpTerm1(ir) + this->potTanhqTerm1(ir));
         rpotential(0, ir) += pauli_potential[ir];
     }
-    ModuleBase::timer::tick("ML_Base", "Pauli Potential");
+    ModuleBase::timer::end("ML_Base", "Pauli Potential");
 }
 
 // IO tools

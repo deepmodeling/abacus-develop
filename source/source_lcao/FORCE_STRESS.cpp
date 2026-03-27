@@ -86,11 +86,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
-    ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+    ModuleBase::timer::start("Force_Stress_LCAO", "getForceStress");
 
     if (!isforce && !isstress)
     {
-        ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+        ModuleBase::timer::end("Force_Stress_LCAO", "getForceStress");
         return;
     }
 
@@ -795,7 +795,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
     } // end of stress calculation
 
-    ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+    ModuleBase::timer::end("Force_Stress_LCAO", "getForceStress");
     return;
 }
 

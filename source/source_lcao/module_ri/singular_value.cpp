@@ -112,7 +112,7 @@ double cal_carrier(const UnitCell& ucell,
                   const int& a_rate)
 {
     ModuleBase::TITLE("Singular_Value", "cal_carrier");
-    ModuleBase::timer::tick("Singular_Value", "cal_carrier");
+    ModuleBase::timer::start("Singular_Value", "cal_carrier");
 
     std::vector<ModuleBase::Vector3<double>> avec = {ucell.a1, ucell.a2, ucell.a3};
     std::vector<ModuleBase::Vector3<double>> bvec;
@@ -142,7 +142,7 @@ double cal_carrier(const UnitCell& ucell,
         = std::bind(&fq_carrier, ucell.tpiba, std::placeholders::_1, qdiv, avec, bvec);
 
     double val = solve_chi(ucell.G, kvec_c, func_cal_fq_carrier, nq_arr, niter, eps, a_rate);
-    ModuleBase::timer::tick("Singular_Value", "cal_carrier");
+    ModuleBase::timer::end("Singular_Value", "cal_carrier");
     return val;
 }
 
@@ -172,7 +172,7 @@ double cal_massidda(const UnitCell& ucell,
                   const double& eps)
 {
     ModuleBase::TITLE("Singular_Value", "cal_massidda");
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda");
+    ModuleBase::timer::start("Singular_Value", "cal_massidda");
 
     ModuleBase::Matrix3 bvec;
     bvec.e11 = ucell.G.e11 / nmp[0];
@@ -231,7 +231,7 @@ double cal_massidda(const UnitCell& ucell,
     if (tot_iter == niter)
         ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda", "not converged!");
 
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda");
+    ModuleBase::timer::end("Singular_Value", "cal_massidda");
     return val_extra;
 }
 

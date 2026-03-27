@@ -93,7 +93,7 @@ template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "before_scf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "before_scf");
 
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
@@ -112,7 +112,7 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->stowf.update_sto_orbitals(PARAM.inp.seed_sto);
     }
 
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "before_scf");
 }
 
 template <typename T, typename Device>
@@ -126,19 +126,19 @@ template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "after_scf");
 
     // 1) call after_scf() of ESolver_KS_PW
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "after_scf");
 }
 
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2rho");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "hamilt2rho");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -197,7 +197,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 #ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "hamilt2rho");
 }
 
 template <typename T, typename Device>

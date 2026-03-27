@@ -50,7 +50,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
                                    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
-    ModuleBase::timer::tick("HSolverLCAO", "solve");
+    ModuleBase::timer::start("HSolverLCAO", "solve");
 
     if (this->method != "pexsi")
     {
@@ -129,7 +129,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
 #endif
     }
 
-    ModuleBase::timer::tick("HSolverLCAO", "solve");
+    ModuleBase::timer::end("HSolverLCAO", "solve");
     return;
 }
 
@@ -137,7 +137,7 @@ template <typename T, typename Device>
 void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
 
     if (this->method == "scalapack_gvx")
     {
@@ -185,7 +185,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");
     }
 
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::end("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 template <typename T, typename Device>
@@ -195,7 +195,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                         int kpar)
 {
 #ifdef __MPI
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::start("HSolverLCAO", "parakSolve");
     auto k2d = Parallel_K2D<T>();
     k2d.set_kpar(kpar);
     int nbands = this->ParaV->get_nbands();
@@ -279,7 +279,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);
-        ModuleBase::timer::tick("HSolverLCAO", "collect_psi");
+        ModuleBase::timer::start("HSolverLCAO", "collect_psi");
         for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
         {
             int source = k2d.get_pKpoints()->get_startpro_pool(ipool);
@@ -304,10 +304,10 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                       k2d.get_p2D_global()->blacs_ctxt);
         }
         MPI_Barrier(MPI_COMM_WORLD);
-        ModuleBase::timer::tick("HSolverLCAO", "collect_psi");
+        ModuleBase::timer::end("HSolverLCAO", "collect_psi");
     }
     k2d.unset_para_env();
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::end("HSolverLCAO", "parakSolve");
 #endif
 }
 
@@ -317,7 +317,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
                                             elecstate::ElecState* pes)
 {
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::start("HSolverLCAO", "parakSolve");
     // GPU device is already bound by DeviceContext::init() in read_input.cpp
     auto& dev_ctx = base_device::DeviceContext::instance();
     const int local_rank = dev_ctx.get_local_rank();
@@ -467,7 +467,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     }
 
     MPI_Comm_free(&self_comm);
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::end("HSolverLCAO", "parakSolve");
 }
 #endif
 

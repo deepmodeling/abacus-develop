@@ -69,7 +69,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       std::ostream& ofs_running)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
-    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
+    ModuleBase::timer::start("LCAO_Deepks_Interface", "out_deepks_labels");
 
     // Note: out_deepks_labels does not support equivariant version now!
 
@@ -135,7 +135,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // new gedm is also useful in cal_f_delta, so it should be ld->gedm
             if (PARAM.inp.deepks_equiv)
             {
-                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->gedm, E_delta, rank);
+                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->model_deepks, ld->gedm, E_delta, rank);
             }
             else
             {
@@ -646,7 +646,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
         }
     }
-    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
+    ModuleBase::timer::end("LCAO_Deepks_Interface", "out_deepks_labels");
 }
 
 template class LCAO_Deepks_Interface<double, double>;

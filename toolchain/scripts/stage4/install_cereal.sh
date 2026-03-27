@@ -51,9 +51,9 @@ case "$with_cereal" in
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
         if [[ "${cereal_ver}" =~ ^(master|main|develop)$ ]]; then
-            url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
+            url="https://codeload.github.com/MCresearch/cereal/tar.gz/${cereal_ver}"
         else
-            url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
+            url="https://codeload.github.com/MCresearch/cereal/tar.gz/v${cereal_ver}"
         fi
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."

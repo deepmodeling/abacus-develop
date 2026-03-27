@@ -60,7 +60,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
                                    const std::vector<double>& ethr_band)
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
-    ModuleBase::timer::tick("DiagoCG", "diag_once");
+    ModuleBase::timer::start("DiagoCG", "diag_once");
 
     /// out : record for states of convergence
     this->notconv_ = 0;
@@ -209,7 +209,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     avg /= this->n_band_;
     avg_iter_ += avg;
 
-    ModuleBase::timer::tick("DiagoCG", "diag_once");
+    ModuleBase::timer::end("DiagoCG", "diag_once");
 } // end subroutine ccgdiagg
 
 template <typename T, typename Device>
@@ -445,7 +445,7 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
 
     if (std::abs(eigen - e0) < ethreshold)
     {
-        // ModuleBase::timer::tick("DiagoCG","update");
+        // ModuleBase::timer::start("DiagoCG","update");
         return true;
     }
     else
@@ -477,7 +477,7 @@ template <typename T, typename Device>
 void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m)
 {
     //	ModuleBase::TITLE("DiagoCG","schmit_orth");
-    // ModuleBase::timer::tick("DiagoCG","schmit_orth");
+    // ModuleBase::timer::start("DiagoCG","schmit_orth");
     // orthogonalize starting eigenfunction to those already calculated
     // phi_m orthogonalize to psi(start) ~ psi(m-1)
     // Attention, the orthogonalize here read as
@@ -558,7 +558,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
     // }
     ModuleBase::vector_mul_real_op<T, Device>()(this->n_basis_, phi_m.data<T>(), phi_m.data<T>(), Real(1.0 / psi_norm));
 
-    // ModuleBase::timer::tick("DiagoCG","schmit_orth");
+    // ModuleBase::timer::end("DiagoCG","schmit_orth");
 }
 
 template <typename T, typename Device>

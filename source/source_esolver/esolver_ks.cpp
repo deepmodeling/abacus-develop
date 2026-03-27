@@ -121,7 +121,7 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
 void ESolver_KS::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS", "runner");
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::start(this->classname, "runner");
 
     // 1) before_scf (electronic iteration loops)
     this->before_scf(ucell, istep);
@@ -163,7 +163,7 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep)
     // 7) after scf
     this->after_scf(ucell, istep, conv_esolver);
 
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::end(this->classname, "runner");
     return;
 };
 

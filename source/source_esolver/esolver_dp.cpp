@@ -56,7 +56,7 @@ void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 void ESolver_DP::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_DP", "runner");
-    ModuleBase::timer::tick("ESolver_DP", "runner");
+    ModuleBase::timer::start("ESolver_DP", "runner");
 
     std::vector<double> cell(9, 0.0);
     cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
@@ -117,7 +117,7 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
 #else
     ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
-    ModuleBase::timer::tick("ESolver_DP", "runner");
+    ModuleBase::timer::end("ESolver_DP", "runner");
 }
 
 double ESolver_DP::cal_energy()

@@ -49,7 +49,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("TD_pot_hybrid", "initialize_HR");
-    ModuleBase::timer::tick("TD_pot_hybrid", "initialize_HR");
+    ModuleBase::timer::start("TD_pot_hybrid", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -97,7 +97,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "initialize_HR");
+    ModuleBase::timer::end("TD_pot_hybrid", "initialize_HR");
 }
 
 template <typename TK, typename TR>
@@ -108,7 +108,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     {
         ModuleBase::WARNING_QUIT("hamilt::TD_pot_hybrid::calculate_HR", "HR_fixed is nullptr or empty");
     }
-    ModuleBase::timer::tick("TD_pot_hybrid", "calculate_HR");
+    ModuleBase::timer::start("TD_pot_hybrid", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
@@ -141,7 +141,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
     }
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "calculate_HR");
+    ModuleBase::timer::end("TD_pot_hybrid", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -246,7 +246,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("TD_pot_hybrid", "contributeHR");
-    ModuleBase::timer::tick("TD_pot_hybrid", "contributeHR");
+    ModuleBase::timer::start("TD_pot_hybrid", "contributeHR");
 
     if (!this->HR_fixed_done || TD_info::evolve_once)
     {
@@ -275,7 +275,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->hR->add(*(this->HR_fixed));
     }
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "contributeHR");
+    ModuleBase::timer::end("TD_pot_hybrid", "contributeHR");
     return;
 }
 

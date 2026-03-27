@@ -113,7 +113,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                             Real* eigenvalue_in_hsolver,
                                             const std::vector<double>& ethr_band)
 {
-    ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
+    ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
 
     // the eigenvalues in dav iter
     std::vector<Real> eigenvalue_iter(this->nbase_x, 0.0);
@@ -130,7 +130,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // the number of the unconvergent bands
     this->notconv = this->n_band;
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "first");
+    ModuleBase::timer::start("Diago_DavSubspace", "first");
 
     syncmem_complex_2d_op()(this->psi_in_iter, this->dim, psi_in, psi_in_dmax, this->dim, this->n_band);
     for (int m = 0; m < this->n_band; m++)
@@ -156,7 +156,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
     }
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "first");
+    ModuleBase::timer::end("Diago_DavSubspace", "first");
 
     int dav_iter = 0;
 
@@ -188,7 +188,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
 
         // check convergence and update eigenvalues
-        ModuleBase::timer::tick("Diago_DavSubspace", "check_update");
+        ModuleBase::timer::start("Diago_DavSubspace", "check_update");
 
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
@@ -204,11 +204,11 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
         }
 
-        ModuleBase::timer::tick("Diago_DavSubspace", "check_update");
+        ModuleBase::timer::end("Diago_DavSubspace", "check_update");
 
         if ((this->notconv == 0) || (nbase + this->notconv + 1 > this->nbase_x) || (dav_iter == this->iter_nmax))
         {
-            ModuleBase::timer::tick("Diago_DavSubspace", "last");
+            ModuleBase::timer::start("Diago_DavSubspace", "last");
 
             // updata eigenvectors of Hamiltonian
             setmem_complex_op()(psi_in, 0, n_band * psi_in_dmax);
@@ -237,7 +237,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             {
                 // overall convergence or last iteration: exit the iteration
 
-                ModuleBase::timer::tick("Diago_DavSubspace", "last");
+                ModuleBase::timer::end("Diago_DavSubspace", "last");
                 break;
             }
             else
@@ -260,13 +260,13 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               this->scc,
                               this->vcc);
 
-                ModuleBase::timer::tick("Diago_DavSubspace", "last");
+                ModuleBase::timer::end("Diago_DavSubspace", "last");
             }
         }
 
     } while (true);
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
+    ModuleBase::timer::end("Diago_DavSubspace", "diag_once");
 
     return dav_iter;
 }
@@ -284,7 +284,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             const int* unconv,
                                             std::vector<Real>* eigenvalue_iter)
 {
-    ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
+    ModuleBase::timer::start("Diago_DavSubspace", "cal_grad");
 
     for (size_t i = 0; i < notconv; i++)
     {
@@ -443,7 +443,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     hpsi_func(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
     spsi_func(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
+    ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
     return;
 }
 
@@ -457,7 +457,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                                             T* hcc,
                                             T* scc)
 {
-    ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
+    ModuleBase::timer::start("Diago_DavSubspace", "cal_elem");
 
     if (notconv > 1){
 #ifdef __DSP
@@ -608,7 +608,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     const size_t last_nbase = nbase; // init: last_nbase = 0
     nbase = nbase + notconv;
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
+    ModuleBase::timer::end("Diago_DavSubspace", "cal_elem");
     return;
 }
 
@@ -621,7 +621,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                                                std::vector<Real>* eigenvalue_iter,
                                                T* vcc)
 {
-    ModuleBase::timer::tick("Diago_DavSubspace", "diag_zhegvx");
+    ModuleBase::timer::start("Diago_DavSubspace", "diag_zhegvx");
     assert(nbase_x >= std::max(1, nbase));
 
     if (this->device == base_device::GpuDevice)
@@ -737,7 +737,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
     }
 #endif
 
-    ModuleBase::timer::tick("Diago_DavSubspace", "diag_zhegvx");
+    ModuleBase::timer::end("Diago_DavSubspace", "diag_zhegvx");
     return;
 }
 
@@ -754,7 +754,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                                            T* scc,
                                            T* vcc)
 {
-    ModuleBase::timer::tick("Diago_DavSubspace", "refresh");
+    ModuleBase::timer::start("Diago_DavSubspace", "refresh");
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -820,7 +820,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
             vcc[i * this->nbase_x + i] = this->one[0];
         }
     }
-    ModuleBase::timer::tick("Diago_DavSubspace", "refresh");
+    ModuleBase::timer::end("Diago_DavSubspace", "refresh");
 
     return;
 }

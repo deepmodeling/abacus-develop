@@ -204,7 +204,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                                    const int ngk_ik,
                                    const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
@@ -288,7 +288,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
     }
 
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op");
 
 }
 
@@ -301,7 +301,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                                    const int ngk_ik,
                                    const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_kpar");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
@@ -416,7 +416,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
     }
 
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_kpar");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op_kpar");
 
 }
 
@@ -469,7 +469,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int iq) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
+    ModuleBase::timer::start("OperatorEXXPW", "multiply_potential");
     int npw = rhopw_dev->npw;
     int nks = wfcpw->nks;
     int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -477,7 +477,7 @@ void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int 
 
     mul_potential_op<T, Device>()(pot, density_recip, npw, nks, ik, iq);
 
-    ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
+    ModuleBase::timer::end("OperatorEXXPW", "multiply_potential");
 }
 
 template <typename T, typename Device>

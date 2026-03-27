@@ -52,7 +52,7 @@ namespace LR
     void OperatorLRHxc<double, base_device::DEVICE_CPU>::grid_calculation(const int& nbands) const
     {
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(real)");
-        ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
+        ModuleBase::timer::start("OperatorLRHxc", "grid_calculation");
 
         // 2. transition electron density
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
@@ -69,14 +69,14 @@ namespace LR
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
         this->hR->set_zero();   // clear hR for each bands
         ModuleGint::cal_gint_vl(vr_hxc.c, &*this->hR);
-        ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
+        ModuleBase::timer::end("OperatorLRHxc", "grid_calculation");
     }
 
     template<>
     void OperatorLRHxc<std::complex<double>, base_device::DEVICE_CPU>::grid_calculation(const int& nbands) const
     {
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(complex)");
-        ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
+        ModuleBase::timer::start("OperatorLRHxc", "grid_calculation");
 
         elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&pmat, 1, kv.kvec_d, kv.get_nks() / nspin);
         DM_trans_real_imag.init_DMR(*this->hR);
@@ -114,7 +114,7 @@ namespace LR
         this->hR->set_zero();
         dmR_to_hR('R');   //real
         if (kv.get_nks() / this->nspin > 1) { dmR_to_hR('I'); }   //imag for multi-k
-        ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
+        ModuleBase::timer::end("OperatorLRHxc", "grid_calculation");
     }
 
     template class OperatorLRHxc<double>;

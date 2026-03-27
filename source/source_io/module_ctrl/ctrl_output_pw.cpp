@@ -27,7 +27,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_iter_pw");
+    ModuleBase::timer::start("ModuleIO", "ctrl_iter_pw");
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     // we only print information every few ionic steps
@@ -75,7 +75,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                 GlobalV::ofs_running);
     }
 
-	ModuleBase::timer::tick("ModuleIO", "ctrl_iter_pw");
+	ModuleBase::timer::end("ModuleIO", "ctrl_iter_pw");
 	return;
 }
 
@@ -95,7 +95,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
+    ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
     // Create local ctx for device type deduction
     Device* ctx = nullptr;
@@ -241,7 +241,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                   pelec->wg);
     }
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
+    ModuleBase::timer::end("ModuleIO", "ctrl_scf_pw");
     return;
 }
 
@@ -261,7 +261,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_pw");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_runner_pw");
+    ModuleBase::timer::start("ModuleIO", "ctrl_runner_pw");
 
     // Create local ctx for device type deduction
     Device* ctx = nullptr;
@@ -373,7 +373,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     }
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_runner_pw");
+    ModuleBase::timer::end("ModuleIO", "ctrl_runner_pw");
 }
 
 // complex<float> + CPU

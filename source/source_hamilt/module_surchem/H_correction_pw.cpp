@@ -16,7 +16,7 @@ void surchem::v_correction(const UnitCell& cell,
                            ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "v_cor");
-    ModuleBase::timer::tick("surchem", "v_cor");
+    ModuleBase::timer::start("surchem", "v_cor");
 
     assert(rho_basis->nrxx>0);
    
@@ -63,6 +63,6 @@ void surchem::v_correction(const UnitCell& cell,
     delete[] ps_totn;
     delete[] total_n;
 
-    ModuleBase::timer::tick("surchem", "v_cor");
+    ModuleBase::timer::end("surchem", "v_cor");
     return;
 }

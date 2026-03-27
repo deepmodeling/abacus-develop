@@ -14,7 +14,7 @@ namespace ModulePW
 template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
-    //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+    //ModuleBase::timer::start(this->classname, "gatherp_scatters");
     
     if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
     {
@@ -32,7 +32,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+        //ModuleBase::timer::end(this->classname, "gatherp_scatters");
         return;
     }
 #ifdef __MPI
@@ -84,7 +84,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 		}
 	}
 #endif
-    //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+    //ModuleBase::timer::start(this->classname, "gatherp_scatters");
     return;
 }
 
@@ -98,7 +98,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+    // ModuleBase::timer::start(this->classname, "gathers_scatterp");
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
 #ifdef _OPENMP
@@ -123,7 +123,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+        // ModuleBase::timer::end(this->classname, "gathers_scatterp");
         return;
     }
 #ifdef __MPI
@@ -182,7 +182,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 		}
     }
 #endif
-    // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+    // ModuleBase::timer::start(this->classname, "gathers_scatterp");
     return;
 }
 

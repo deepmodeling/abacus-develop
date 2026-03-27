@@ -10,12 +10,12 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
                                              const Charge* const chr)
 {
     ModuleBase::TITLE("Stress","stress_gga");
-	ModuleBase::timer::tick("Stress","stress_gga");
+	ModuleBase::timer::start("Stress","stress_gga");
      
 	int func_type = XC_Functional::get_func_type();
 	if (func_type == 0 || func_type == 1)
 	{
-		ModuleBase::timer::tick("Stress","stress_gga");
+		ModuleBase::timer::end("Stress","stress_gga");
 		return;
 	}
 
@@ -55,7 +55,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
         }
 	}
 
-	ModuleBase::timer::tick("Stress","stress_gga");
+	ModuleBase::timer::end("Stress","stress_gga");
 	return;
 }
 

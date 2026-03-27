@@ -131,7 +131,7 @@ void ElecState::cal_bandgap_updw()
 /// @brief calculate deband
 double ElecState::cal_delta_eband(const UnitCell& ucell) const
 {
-	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
+	ModuleBase::timer::start("ElecState", "cal_delta_eband");
 	// out potentials from potential mixing
 	// total energy and band energy corrections
     double deband0 = 0.0;
@@ -206,7 +206,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
     deband0 -= 2 * this->f_en.exx; // Peize Lin add 2017-10-16
 
-	ModuleBase::timer::tick("ElecState", "cal_delta_eband");
+	ModuleBase::timer::end("ElecState", "cal_delta_eband");
     return deband0;
 }
 
@@ -214,7 +214,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
 double ElecState::cal_delta_escf() const
 {
     ModuleBase::TITLE("ElecState", "cal_delta_escf");
-	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
+	ModuleBase::timer::start("ElecState", "cal_delta_escf");
     double descf = 0.0;
 
     // now rho1 is "mixed" charge density
@@ -284,7 +284,7 @@ double ElecState::cal_delta_escf() const
 #endif
 
 
-	ModuleBase::timer::tick("ElecState", "cal_delta_escf");
+	ModuleBase::timer::end("ElecState", "cal_delta_escf");
     return descf;
 }
 

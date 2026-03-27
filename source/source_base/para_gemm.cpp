@@ -146,7 +146,7 @@ void PGemmCN<T, Device>::set_dimension(
 template <typename T, typename Device>
 void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C)
 {
-    ModuleBase::timer::tick("PGemmCN", "multiply");
+    ModuleBase::timer::start("PGemmCN", "multiply");
 #ifdef __MPI
     if (this->col_nproc > 1)
     {
@@ -164,7 +164,7 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
     {
         multiply_single(alpha, A, B, beta, C);
     }
-    ModuleBase::timer::tick("PGemmCN", "multiply");
+    ModuleBase::timer::end("PGemmCN", "multiply");
 }
 
 template <typename T, typename Device>

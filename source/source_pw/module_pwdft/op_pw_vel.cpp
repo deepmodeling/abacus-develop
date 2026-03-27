@@ -88,7 +88,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                    std::complex<FPTYPE>* vpsi,
                                    const bool add) const
 {
-    ModuleBase::timer::tick("Operator", "Velocity");
+    ModuleBase::timer::start("Operator", "Velocity");
 
     const int npw = this->wfcpw->npwk[this->ik];
     const int max_npw = this->wfcpw->npwk_max;
@@ -116,7 +116,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     // ---------------------------------------------
     if (this->ppcell->nkb <= 0 || !this->nonlocal)
     {
-        ModuleBase::timer::tick("Operator", "Velocity");
+        ModuleBase::timer::end("Operator", "Velocity");
         return;
     }
 
@@ -323,7 +323,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     delmem_complex_op()(ps2_);
     delmem_complex_op()(becp1_);
     delmem_complex_op()(becp2_);
-    ModuleBase::timer::tick("Operator", "Velocity");
+    ModuleBase::timer::end("Operator", "Velocity");
     return;
 }
 

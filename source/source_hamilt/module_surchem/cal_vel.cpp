@@ -64,7 +64,7 @@ void surchem::cal_vel(const UnitCell& cell,
                       ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
-    ModuleBase::timer::tick("surchem", "cal_vel");
+    ModuleBase::timer::start("surchem", "cal_vel");
 
     rho_basis->recip2real(TOTN, TOTN_real);
 
@@ -162,6 +162,6 @@ void surchem::cal_vel(const UnitCell& cell,
     delete[] phi_tilda_R;
     delete[] phi_tilda_R0;
 
-    ModuleBase::timer::tick("surchem", "cal_vel");
+    ModuleBase::timer::end("surchem", "cal_vel");
     return;
 }

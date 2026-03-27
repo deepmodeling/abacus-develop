@@ -491,7 +491,7 @@ template <typename TK, typename TR>
 void HamiltLCAO<TK, TR>::updateHk(const int ik)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateHk");
-    ModuleBase::timer::tick("HamiltLCAO", "updateHk");
+    ModuleBase::timer::start("HamiltLCAO", "updateHk");
 
     // update global spin index
     if (PARAM.inp.nspin == 2)
@@ -510,7 +510,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
         this->current_spin = this->kv->isk[ik];
     }
     this->getOperator()->init(ik);
-    ModuleBase::timer::tick("HamiltLCAO", "updateHk");
+    ModuleBase::timer::end("HamiltLCAO", "updateHk");
 }
 
 template <typename TK, typename TR>
@@ -558,7 +558,7 @@ void HamiltLCAO<TK, TR>::updateSk(
 		const int hk_type)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateSk");
-    ModuleBase::timer::tick("HamiltLCAO", "updateSk");
+    ModuleBase::timer::start("HamiltLCAO", "updateSk");
 
     ModuleBase::GlobalFunc::ZEROS(this->getSk(), this->get_size_hsk());
 
@@ -577,7 +577,7 @@ void HamiltLCAO<TK, TR>::updateSk(
         ModuleBase::WARNING_QUIT("updateSk","the value of hk_type is incorrect.");
 	}
 
-    ModuleBase::timer::tick("HamiltLCAO", "updateSk");
+    ModuleBase::timer::end("HamiltLCAO", "updateSk");
 }
 
 // case for nspin<4, gamma-only k-point

@@ -131,7 +131,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
 void ESolver_OF::runner(UnitCell& ucell, const int istep)
 {
-    ModuleBase::timer::tick("ESolver_OF", "runner");
+    ModuleBase::timer::start("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
@@ -169,7 +169,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 
     this->after_opt(istep, ucell, conv_esolver);
 
-    ModuleBase::timer::tick("ESolver_OF", "runner");
+    ModuleBase::timer::end("ESolver_OF", "runner");
 }
 
 /**
@@ -183,7 +183,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_OF", "before_opt");
-    ModuleBase::timer::tick("ESolver_OF", "before_opt");
+    ModuleBase::timer::start("ESolver_OF", "before_opt");
 
     //! 1) call before_scf() of ESolver_FP
     ESolver_FP::before_scf(ucell, istep);
@@ -270,7 +270,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         this->theta_[0] = 0.2;
     }
 
-    ModuleBase::timer::tick("ESolver_OF", "before_opt");
+    ModuleBase::timer::end("ESolver_OF", "before_opt");
 }
 
 /**
@@ -457,7 +457,7 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_OF", "after_opt");
-    ModuleBase::timer::tick("ESolver_OF", "after_opt");
+    ModuleBase::timer::start("ESolver_OF", "after_opt");
 
     //------------------------------------------------------------------
     // 1) calculate kinetic energy density and ELF
@@ -503,7 +503,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     }
 #endif
 
-    ModuleBase::timer::tick("ESolver_OF", "after_opt");
+    ModuleBase::timer::end("ESolver_OF", "after_opt");
 }
 
 /**

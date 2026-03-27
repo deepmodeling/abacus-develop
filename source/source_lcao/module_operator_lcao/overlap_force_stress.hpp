@@ -14,7 +14,7 @@ void Overlap<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                           ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("Overlap", "cal_force_stress");
-    ModuleBase::timer::tick("Overlap", "cal_force_stress");
+    ModuleBase::timer::start("Overlap", "cal_force_stress");
 
     // Lambda function to calculate overlap integral and its gradient
     auto integral_calc = [this](int T1, int L1, int N1, int M1,
@@ -30,7 +30,7 @@ void Overlap<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         cal_force, cal_stress, dmR, this->ucell, this->gridD,
         this->orb_cutoff_, dmR->get_paraV(), integral_calc, force, stress);
 
-    ModuleBase::timer::tick("Overlap", "cal_force_stress");
+    ModuleBase::timer::end("Overlap", "cal_force_stress");
 }
 
 // Dummy implementations for cal_force_IJR and cal_stress_IJR

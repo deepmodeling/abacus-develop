@@ -23,7 +23,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     {
         return;
     }
-    ModuleBase::timer::tick("Forces", "cal_force_nl");
+    ModuleBase::timer::start("Forces", "cal_force_nl");
 
     // allocate memory for the force
     FPTYPE* force = nullptr;
@@ -67,7 +67,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 
-    ModuleBase::timer::tick("Forces", "cal_force_nl");
+    ModuleBase::timer::end("Forces", "cal_force_nl");
 }
 
 template class Forces<double, base_device::DEVICE_CPU>;

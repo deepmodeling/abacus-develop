@@ -122,7 +122,7 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
     this->get_potential_(prho_mod, pw_rho, rpotential);
 
     // get energy
-    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+    ModuleBase::timer::start("ML_EXX", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
@@ -131,7 +131,7 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
     energy *= this->dV * this->energy_prefactor;
     this->ml_exx_energy = energy;
     Parallel_Reduce::reduce_pool(this->ml_exx_energy);
-    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+    ModuleBase::timer::end("ML_EXX", "Pauli Energy");
 
     delete[] rho_data;
     delete[] prho_mod;

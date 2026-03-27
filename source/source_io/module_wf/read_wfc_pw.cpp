@@ -21,7 +21,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
 		ModuleBase::ComplexMatrix& wfc)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_pw");
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
+    ModuleBase::timer::start("ModuleIO", "read_wfc_pw");
 
     Binstream rfs;
     std::ifstream ifs;
@@ -337,6 +337,6 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         ifs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
+    ModuleBase::timer::end("ModuleIO", "read_wfc_pw");
     return;
 }
