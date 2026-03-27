@@ -258,6 +258,78 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
 
 
 
+// C++11-compatible helpers for transfer_dm_2d_to_gint:
+// Tag dispatch to select same-type or cross-type code paths at compile time.
+namespace detail
+{
+
+// Same-type path (TGint == TDM): transfer directly
+template<typename T>
+void gather_dm_serial(const HContainer<T>& dm_src, HContainer<T>& dm_gint,
+                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
+{
+#ifdef __MPI
+    hamilt::transferParallels2Serials(dm_src, &dm_gint);
+#else
+    dm_gint.set_zero();
+    dm_gint.add(dm_src);
+#endif
+}
+
+// Cross-type path (TGint != TDM): gather into a temp of TDM, then cast
+template<typename TGint, typename TDM>
+void gather_dm_serial(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_gint,
+                      const GintInfo& gint_info, std::false_type /*same_type*/)
+{
+    HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+#ifdef __MPI
+    hamilt::transferParallels2Serials(dm_src, &dm_tmp);
+#else
+    dm_tmp.set_zero();
+    dm_tmp.add(dm_src);
+#endif
+    cast_hcontainer_values(dm_tmp, dm_gint);
+}
+
+// NSPIN=4: same-type path
+#ifdef __MPI
+template<typename T>
+void gather_dm_nspin4(const HContainer<T>& dm2d_tmp, HContainer<T>& dm_gint,
+                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
+{
+    hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint);
+}
+
+template<typename TGint, typename TDM>
+void gather_dm_nspin4(const HContainer<TDM>& dm2d_tmp, HContainer<TGint>& dm_gint,
+                      const GintInfo& gint_info, std::false_type /*same_type*/)
+{
+    HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+    hamilt::transferParallels2Serials(dm2d_tmp, &dm_tmp);
+    cast_hcontainer_values(dm_tmp, dm_gint);
+}
+#else
+template<typename T>
+void gather_dm_nspin4(const HContainer<T>* dm2d_tmp, HContainer<T>& dm_gint,
+                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
+{
+    dm_gint.set_zero();
+    dm_gint.add(*dm2d_tmp);
+}
+
+template<typename TGint, typename TDM>
+void gather_dm_nspin4(const HContainer<TDM>* dm2d_tmp, HContainer<TGint>& dm_gint,
+                      const GintInfo& gint_info, std::false_type /*same_type*/)
+{
+    HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
+    dm_tmp.set_zero();
+    dm_tmp.add(*dm2d_tmp);
+    cast_hcontainer_values(dm_tmp, dm_gint);
+}
+#endif
+
+} // namespace detail
+
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
 template<typename TGint, typename TDM>
@@ -269,32 +341,16 @@ void transfer_dm_2d_to_gint(
     ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
     ModuleBase::timer::start("Gint", "transfer_dm_2d_to_gint");
 
+    // Compile-time tag for same-type vs cross-type dispatch
+    using same_type_tag = typename std::is_same<TGint, TDM>::type;
+
     if (PARAM.inp.nspin != 4)
     {
         // dm_gint.size() usually equals to PARAM.inp.nspin,
         // but there is exception within source_lcao/module_lr
         for (int is = 0; is < dm_gint.size(); is++)
         {
-            if constexpr (std::is_same_v<TGint, TDM>)
-            {
-#ifdef __MPI
-                hamilt::transferParallels2Serials(*dm[is], &dm_gint[is]);
-#else
-                dm_gint[is].set_zero();
-                dm_gint[is].add(*dm[is]);
-#endif
-            }
-            else
-            {
-                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
-#ifdef __MPI
-                hamilt::transferParallels2Serials(*dm[is], &dm_tmp);
-#else
-                dm_tmp.set_zero();
-                dm_tmp.add(*dm[is]);
-#endif
-                cast_hcontainer_values(dm_tmp, dm_gint[is]);
-            }
+            detail::gather_dm_serial(*dm[is], dm_gint[is], gint_info, same_type_tag{});
         }
     } else  // NSPIN=4 case
     {
@@ -344,31 +400,7 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
-#ifdef __MPI
-            if constexpr (std::is_same_v<TGint, TDM>)
-            {
-                hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint[is]);
-            }
-            else
-            {
-                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
-                hamilt::transferParallels2Serials(dm2d_tmp, &dm_tmp);
-                cast_hcontainer_values(dm_tmp, dm_gint[is]);
-            }
-#else
-            if constexpr (std::is_same_v<TGint, TDM>)
-            {
-                dm_gint[is].set_zero();
-                dm_gint[is].add(*dm2d_tmp);
-            }
-            else
-            {
-                HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
-                dm_tmp.set_zero();
-                dm_tmp.add(*dm2d_tmp);
-                cast_hcontainer_values(dm_tmp, dm_gint[is]);
-            }
-#endif
+            detail::gather_dm_nspin4(dm2d_tmp, dm_gint[is], gint_info, same_type_tag{});
         }//is=4
 #ifndef __MPI
         delete dm2d_tmp;

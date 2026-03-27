@@ -27,9 +27,6 @@ class Gint_vl : public Gint
     template<typename Real>
     HContainer<Real> init_hr_gint_() const;
 
-    template<typename Real>
-    const Real* get_vr_eff_data_(std::vector<Real>& vr_eff_buffer) const;
-
     // input
     const double* vr_eff_ = nullptr;
 

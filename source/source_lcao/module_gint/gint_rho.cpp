@@ -38,7 +38,7 @@ void Gint_rho::cal_gint_impl_()
     }
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
     cal_rho_(dm_gint_vec, rho_data);
-    transfer_rho_cache_(rho_cache);
+    transfer_rho_cache_<Real>(rho_cache);
 }
 
 template<typename Real>
@@ -52,20 +52,57 @@ std::vector<HContainer<Real>> Gint_rho::init_dm_gint_() const
     return dm_gint_vec;
 }
 
-template<typename Real>
-Real* Gint_rho::get_rho_data_(int is, std::vector<std::vector<Real>>& rho_cache) const
+// Overloaded helpers for get_rho_data_ (C++11-compatible alternative to if constexpr)
+namespace detail
 {
-    if constexpr (std::is_same_v<Real, double>)
-    {
-        return rho_[is];
-    }
 
-    const int local_mgrid_num = gint_info_->get_local_mgrid_num();
+inline double* get_rho_dispatch(double* const* rho, int is, int /*local_mgrid_num*/,
+                                std::vector<std::vector<double>>& /*rho_cache*/,
+                                double* /*tag*/)
+{
+    return rho[is];
+}
+
+template<typename Real>
+Real* get_rho_dispatch(double* const* rho, int is, int local_mgrid_num,
+                       std::vector<std::vector<Real>>& rho_cache,
+                       Real* /*tag*/)
+{
     rho_cache[is].resize(local_mgrid_num);
-    std::transform(rho_[is], rho_[is] + local_mgrid_num, rho_cache[is].begin(), [](const double value) {
+    std::transform(rho[is], rho[is] + local_mgrid_num, rho_cache[is].begin(), [](const double value) {
         return static_cast<Real>(value);
     });
     return rho_cache[is].data();
+}
+
+inline void transfer_rho_dispatch(double* const* /*rho*/, int /*nspin*/, int /*local_mgrid_num*/,
+                                   const std::vector<std::vector<double>>& /*rho_cache*/,
+                                   double* /*tag*/)
+{
+    // Nothing to do: double rho was written directly.
+}
+
+template<typename Real>
+void transfer_rho_dispatch(double* const* rho, int nspin, int local_mgrid_num,
+                            const std::vector<std::vector<Real>>& rho_cache,
+                            Real* /*tag*/)
+{
+    for (int is = 0; is < nspin; ++is)
+    {
+        for (int ir = 0; ir < local_mgrid_num; ++ir)
+        {
+            rho[is][ir] = static_cast<double>(rho_cache[is][ir]);
+        }
+    }
+}
+
+} // namespace detail
+
+template<typename Real>
+Real* Gint_rho::get_rho_data_(int is, std::vector<std::vector<Real>>& rho_cache) const
+{
+    return detail::get_rho_dispatch(
+        rho_, is, gint_info_->get_local_mgrid_num(), rho_cache, static_cast<Real*>(nullptr));
 }
 
 template<typename Real>
@@ -103,19 +140,8 @@ void Gint_rho::cal_rho_(
 template<typename Real>
 void Gint_rho::transfer_rho_cache_(const std::vector<std::vector<Real>>& rho_cache) const
 {
-    if constexpr (std::is_same_v<Real, double>)
-    {
-        return;
-    }
-
-    const int local_mgrid_num = gint_info_->get_local_mgrid_num();
-    for (int is = 0; is < nspin_; ++is)
-    {
-        for (int ir = 0; ir < local_mgrid_num; ++ir)
-        {
-            rho_[is][ir] = static_cast<double>(rho_cache[is][ir]);
-        }
-    }
+    detail::transfer_rho_dispatch(
+        rho_, nspin_, gint_info_->get_local_mgrid_num(), rho_cache, static_cast<Real*>(nullptr));
 }
 
 }

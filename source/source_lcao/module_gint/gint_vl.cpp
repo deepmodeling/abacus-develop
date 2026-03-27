@@ -36,20 +36,39 @@ HContainer<Real> Gint_vl::init_hr_gint_() const
     return gint_info_->get_hr<Real>();
 }
 
-template<typename Real>
-const Real* Gint_vl::get_vr_eff_data_(std::vector<Real>& vr_eff_buffer) const
+// Overloaded helpers for get_vr_eff_data_ (C++11-compatible alternative to if constexpr)
+const double* get_vr_eff_data_dispatch_(const double* vr_eff, int /*local_mgrid_num*/,
+                                        std::vector<double>& /*vr_eff_buffer*/,
+                                        const double* /*tag*/)
 {
-    if constexpr (std::is_same_v<Real, double>)
-    {
-        return vr_eff_;
-    }
+    return vr_eff;
+}
 
-    const int local_mgrid_num = gint_info_->get_local_mgrid_num();
+template<typename Real>
+const Real* get_vr_eff_data_dispatch_(const double* vr_eff, int local_mgrid_num,
+                                      std::vector<Real>& vr_eff_buffer,
+                                      const Real* /*tag*/)
+{
     vr_eff_buffer.resize(local_mgrid_num);
-    std::transform(vr_eff_, vr_eff_ + local_mgrid_num, vr_eff_buffer.begin(), [](const double value) {
+    std::transform(vr_eff, vr_eff + local_mgrid_num, vr_eff_buffer.begin(), [](const double value) {
         return static_cast<Real>(value);
     });
     return vr_eff_buffer.data();
+}
+
+// Overloaded helpers for post-processing (C++11-compatible alternative to if constexpr)
+void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
+{
+    compose_hr_gint(hr_gint);
+    transfer_hr_gint_to_hR(hr_gint, *hR);
+}
+
+template<typename Real>
+void finalize_hr_gint_(HContainer<Real>& hr_gint, HContainer<double>* hR)
+{
+    HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
+    compose_hr_gint(hr_gint_dp);
+    transfer_hr_gint_to_hR(hr_gint_dp, *hR);
 }
 
 template<typename Real>
@@ -57,7 +76,8 @@ void Gint_vl::cal_gint_impl_()
 {
     HContainer<Real> hr_gint = init_hr_gint_<Real>();
     std::vector<Real> vr_eff_buffer;
-    const Real* vr_eff = get_vr_eff_data_<Real>(vr_eff_buffer);
+    const Real* vr_eff = get_vr_eff_data_dispatch_(
+        vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer, static_cast<const Real*>(nullptr));
 
 #pragma omp parallel
     {
@@ -82,17 +102,8 @@ void Gint_vl::cal_gint_impl_()
         }
     }
 
-    if constexpr (std::is_same_v<Real, double>)
-    {
-        compose_hr_gint(hr_gint);
-        transfer_hr_gint_to_hR(hr_gint, *hR_);
-    }
-    else
-    {
-        HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
-        compose_hr_gint(hr_gint_dp);
-        transfer_hr_gint_to_hR(hr_gint_dp, *hR_);
-    }
+    finalize_hr_gint_(hr_gint, hR_);
 }
 
 } // namespace ModuleGint
+
