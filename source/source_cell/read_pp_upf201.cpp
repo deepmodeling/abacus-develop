@@ -1,4 +1,6 @@
 #include "read_pp.h"
+#include <string>
+#include <stdexcept>
 
 // qianrui rewrite it 2021-5-10
 // liuyu update 2023-09-17 add uspp support
@@ -197,30 +199,36 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
 
 namespace // Helper functions for subsequent type conversion
 {
-int parse_int(const std::string& s)
+int parse_int(const std::string& s, const std::string& key)
 {
     size_t pos = 0;
     int value = 0;
+
     try
     {
         value = std::stoi(s, &pos);
     }
-    catch (...)
+    catch (const std::invalid_argument&)
     {
         ModuleBase::WARNING_QUIT("read_pp_upf201::parse_int",
-                                 "Invalid integer value: " + s);
+                                 "Invalid integer value for " + key + ": " + s);
+    }
+    catch (const std::out_of_range&)
+    {
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_int",
+                                 "Out-of-range integer value for " + key + ": " + s);
     }
 
     if (pos != s.size())
     {
         ModuleBase::WARNING_QUIT("read_pp_upf201::parse_int",
-                                 "Invalid integer value (extra characters): " + s);
+                                 "Invalid integer value for " + key + " (extra characters): " + s);
     }
 
     return value;
 }
 
-double parse_double(const std::string& s)
+double parse_double(const std::string& s, const std::string& key)
 {
     size_t pos = 0;
     double value = 0.0;
@@ -228,16 +236,21 @@ double parse_double(const std::string& s)
     {
         value = std::stod(s, &pos);
     }
-    catch (...)
+    catch (const std::invalid_argument&)
     {
         ModuleBase::WARNING_QUIT("read_pp_upf201::parse_double",
-                                 "Invalid floating-point value: " + s);
+                                 "Invalid floating-point value for " + key + ": " + s);
+    }
+    catch (const std::out_of_range&)
+    {
+        ModuleBase::WARNING_QUIT("read_pp_upf201::parse_double",
+                                 "Out-of-range floating-point value for " + key + ": " + s);
     }
 
     if (pos != s.size())
     {
         ModuleBase::WARNING_QUIT("read_pp_upf201::parse_double",
-                                 "Invalid floating-point value (extra characters): " + s);
+                                 "Invalid floating-point value for " + key + " (extra characters): " + s);
     }
 
     return value;
@@ -352,35 +365,35 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "z_valence")
         {
-            pp.zv = parse_double(val[ip]);
+            pp.zv = parse_double(val[ip],name[ip]);
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps =  parse_double(val[ip]);
+            pp.etotps =  parse_double(val[ip],name[ip]);
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc =  parse_double(val[ip]);
+            pp.ecutwfc =  parse_double(val[ip],name[ip]);
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho =  parse_double(val[ip]);
+            pp.ecutrho =  parse_double(val[ip],name[ip]);
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = parse_int(val[ip]);
+            pp.lmax = parse_int(val[ip],name[ip]);
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = parse_int(val[ip]);
+            this->lmax_rho = parse_int(val[ip],name[ip]);
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = parse_int(val[ip]);
+            this->lloc = parse_int(val[ip],name[ip]);
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = parse_int(val[ip]);
+            pp.mesh = parse_int(val[ip],name[ip]);
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -390,11 +403,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = parse_int(val[ip]);
+            pp.nchi = parse_int(val[ip],name[ip]);
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = parse_int(val[ip]);
+            pp.nbeta = parse_int(val[ip],name[ip]);
         }
         else
         {
