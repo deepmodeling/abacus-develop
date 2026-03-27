@@ -125,21 +125,32 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     std::vector<double> changedpos = ReshapeMToV(pos);
     this->Update(changedpos, changedforce,H,ucell);
     
-    //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
-    int info=0;
+    //! call dsyev to diagonalize the Hessian matrix H
+    //! lwork = hessian_dim^2 may overflow int when size is large; check before casting
+    int hessian_dim = 3 * size;
+    if (static_cast<long long>(hessian_dim) * static_cast<long long>(hessian_dim)
+        > static_cast<long long>(std::numeric_limits<int>::max()))
+    {
+        throw std::overflow_error(
+            "BFGS::PrepareStep: lwork = (3*size)^2 overflows int, system is too large.");
+    }
+    int lwork = hessian_dim * hessian_dim;
+
+    std::vector<double> omega(hessian_dim);
+    std::vector<double> work(lwork);
+    int info = 0;
+
     std::vector<double> H_flat;
-    
+    H_flat.reserve(hessian_dim * hessian_dim);
     for(const auto& row : H)
     {
         H_flat.insert(H_flat.end(), row.begin(), row.end());
     }
-    
-    int value=3*size;
-    int* ptr=&value;
+
+    int value = hessian_dim;
+    int* ptr = &value;
     dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
+    
     std::vector<std::vector<double>> V(3*size, std::vector<double>(3*size, 0.0));
     for(int i = 0; i < 3*size; i++)
     {
