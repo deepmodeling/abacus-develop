@@ -26,9 +26,9 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
     }
 
     void operator()(const base_device::DEVICE_CPU* ctx,
-                    const bool& DOMAG,
-                    const bool& DOMAG_Z,
-                    const int& nrxx,
+                    const bool DOMAG,
+                    const bool DOMAG_Z,
+                    const int nrxx,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr,
@@ -42,16 +42,15 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
       }
       // In this case, calculate the three components of the magnetization
       if (DOMAG)
-      {
+      {  
+         const FPTYPE w2 = w1 * static_cast<FPTYPE>(2.0);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
           for (int ir = 0; ir < nrxx; ir++) {
-              rho[1][ir] += w1 * 2.0
-                                          * (wfcr[ir].real() * wfcr_another_spin[ir].real()
+              rho[1][ir] += w2 * (wfcr[ir].real() * wfcr_another_spin[ir].real()
                                              + wfcr[ir].imag() * wfcr_another_spin[ir].imag());
-              rho[2][ir] += w1 * 2.0
-                                          * (wfcr[ir].real() * wfcr_another_spin[ir].imag()
+              rho[2][ir] += w2 * (wfcr[ir].real() * wfcr_another_spin[ir].imag()
                                              - wfcr_another_spin[ir].real() * wfcr[ir].imag());
               rho[3][ir] += w1 * (norm(wfcr[ir]) - norm(wfcr_another_spin[ir]));
           }
