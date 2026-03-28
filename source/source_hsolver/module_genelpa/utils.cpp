@@ -91,9 +91,16 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
-    if (myid == ROOT_PROC)
-        matrixFile.open(FileName);
-
+   if (myid == ROOT_PROC) {
+    matrixFile.open(FileName);
+    // 检查是否成功打开
+    if (!matrixFile.is_open()) {
+        std::cerr << "Error: Cannot open file " << FileName << std::endl;
+        // 如果是并行计算，可能需要终止所有进程，或者抛出异常
+        // 简单起见，我们可以直接退出，或者根据项目风格处理
+        exit(EXIT_FAILURE); 
+    }
+}
     double* b; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
