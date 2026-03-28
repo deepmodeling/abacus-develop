@@ -19,6 +19,8 @@ namespace ModuleBase
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
 
+static void xy_dependence(const int lmax, const double x, const double y, double Am[], double Bm[]);
+
 void YlmReal::rlylm
 (
     const int lmax, 	
@@ -48,64 +50,8 @@ void YlmReal::rlylm
 	//ZEROS(Am, 20);
 	//ZEROS(Bm, 20);
 	
-	double x2, x3, x4, x5;
-	double y2, y3, y4, y5;
-	
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x3 * x;
-	x5 = x4 * x;
-
-	y2 = y * y;
-	y3 = y2 * y;
-	y4 = y3 * y;
-	y5 = y4 * y;
-		
-	//x-y dependence
-	//Am
-	//Bm
-	for(int im = 0; im < lmax+1; im++)
-	{
-		if(im == 0)
-		{
-			Am[0] = 1.0; 
-			Bm[0] = 0.0;
-		}
-		else if(im == 1)
-		{
-			Am[1] = x; 
-			Bm[1] = y;
-		}
-		else if(im == 2)
-		{
-			Am[2] = x2- y2; 
-			Bm[2] = 2.0 * x * y;
-		}
-		else if(im == 3)
-		{
-			Am[3] = x3 - 3.0 * x * y2;
-			Bm[3] = 3.0 * x2 * y - y3;
-		}
-		else if(im == 4)
-		{
-			Am[4] = x4 - 6.0 * x2 * y2 + y4;
-			Bm[4] = 4.0 * (x3 * y - x * y3);
-		}
-		else if(im == 5)
-		{
-			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
-			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
-		}
-		else
-		{
-			for(int ip = 0; ip <= im; ip++)
-			{
-				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
-				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
-				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
-			}
-		}
-	}
+	//xy dependence
+	xy_dependence(lmax, x, y, Am, Bm);
 			
 	//z dependence
 	double zdep[20][20];
@@ -719,3 +665,74 @@ template void YlmReal::Ylm_Real<double, base_device::DEVICE_GPU>(base_device::DE
                                                                  double*);
 #endif
 }  // namespace ModuleBase
+
+
+static void xy_dependence
+(
+ 	const int lmax, 
+	const double x,
+       	const double y, 
+	double Am[], 
+	double Bm[]
+){
+	
+	double x2, x3, x4, x5;
+	double y2, y3, y4, y5;
+	
+	x2 = x * x;
+	x3 = x2 * x;
+	x4 = x3 * x;
+	x5 = x4 * x;
+
+	y2 = y * y;
+	y3 = y2 * y;
+	y4 = y3 * y;
+	y5 = y4 * y;
+		
+	//x-y dependence
+	//Am
+	//Bm
+	for(int im = 0; im < lmax+1; im++)
+	{
+		if(im == 0)
+		{
+			Am[0] = 1.0; 
+			Bm[0] = 0.0;
+		}
+		else if(im == 1)
+		{
+			Am[1] = x; 
+			Bm[1] = y;
+		}
+		else if(im == 2)
+		{
+			Am[2] = x2- y2; 
+			Bm[2] = 2.0 * x * y;
+		}
+		else if(im == 3)
+		{
+			Am[3] = x3 - 3.0 * x * y2;
+			Bm[3] = 3.0 * x2 * y - y3;
+		}
+		else if(im == 4)
+		{
+			Am[4] = x4 - 6.0 * x2 * y2 + y4;
+			Bm[4] = 4.0 * (x3 * y - x * y3);
+		}
+		else if(im == 5)
+		{
+			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
+			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
+		}
+		else
+		{
+			for(int ip = 0; ip <= im; ip++)
+			{
+				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
+				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
+				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
+			}
+		}
+	}
+}
+
