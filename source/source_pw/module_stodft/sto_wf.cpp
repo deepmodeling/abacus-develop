@@ -6,6 +6,8 @@
 
 #include <cassert>
 #include <ctime>
+#include <random>
+#include <type_traits>
 
 #include "source_base/global_function.h"
 
@@ -64,14 +66,19 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
     const unsigned int rank_seed_offset = 10000;
+    unsigned int seed = 0;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
+        seed = static_cast<unsigned int>(time(nullptr))
+               + static_cast<unsigned int>(GlobalV::MY_RANK) * rank_seed_offset;
     }
     else
     {
-        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
+        seed = static_cast<unsigned int>(std::abs(seed_in))
+               + static_cast<unsigned int>(GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP)
+                     * rank_seed_offset;
     }
+    this->sto_rng_.seed(seed);
 
     this->allocate_chi0();
     this->update_sto_orbitals(seed_in);
@@ -123,6 +130,10 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
+    else if constexpr (std::is_same_v<Device, base_device::DEVICE_CPU>)
+    {
+        this->chi0 = this->chi0_cpu;
+    }
     else
     {
         this->chi0 = reinterpret_cast<psi::Psi<T, Device>*>(this->chi0_cpu);
@@ -134,11 +145,13 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
 {
     const int nchi = PARAM.inp.nbands_sto;
     this->chi0_cpu->fix_k(0);
+    std::uniform_real_distribution<double> uniform01(0.0, 1.0);
+    std::bernoulli_distribution flip_half(0.5);
     if (seed_in >= 0)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
+            const double phi = 2 * ModuleBase::PI * uniform01(this->sto_rng_);
             this->chi0_cpu->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
         }
     }
@@ -146,7 +159,7 @@ void Stochastic_WF<T, Device>::update_sto_orbitals(const int seed_in)
     {
         for (int i = 0; i < this->chi0_cpu->size(); ++i)
         {
-            if (rand() / double(RAND_MAX) < 0.5)
+            if (flip_half(this->sto_rng_))
             {
                 this->chi0_cpu->get_pointer()[i] = -1.0 / sqrt(double(nchi));
             }
@@ -252,6 +265,10 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
+    else if constexpr (std::is_same_v<Device, base_device::DEVICE_CPU>)
+    {
+        this->chi0 = this->chi0_cpu;
+    }
     else
     {
         this->chi0 = reinterpret_cast<psi::Psi<T, Device>*>(this->chi0_cpu);
@@ -283,6 +300,10 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
+    }
+    else if constexpr (std::is_same_v<Device, base_device::DEVICE_CPU>)
+    {
+        this->chi0 = this->chi0_cpu;
     }
     else
     {
@@ -341,11 +362,12 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
 
         for (int ichi = 0; ichi < nchiper; ++ichi)
         {
-            unsigned int seed = std::abs(seed_in) * (nkstot * nchitot) + iktot * nchitot + ichi_start + ichi;
-            srand(seed);
+            const unsigned int seed = std::abs(seed_in) * (nkstot * nchitot) + iktot * nchitot + ichi_start + ichi;
+            std::mt19937 band_gen(seed);
+            std::bernoulli_distribution flip_half(0.5);
             for (int i = 0; i < nx * ny * nz; ++i)
             {
-                updown[i] = (rand() / double(RAND_MAX) < 0.5);
+                updown[i] = flip_half(band_gen);
             }
 
             for (int ig = 0; ig < npw; ++ig)

@@ -5,6 +5,8 @@
 #include "source_cell/klist.h"
 #include "source_psi/psi.h"
 
+#include <random>
+
 //----------------------------------------------
 // Generate stochastic wave functions
 //----------------------------------------------
@@ -34,6 +36,8 @@ class Stochastic_WF
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
     std::vector<int> ngk;   ///< ngk in klist
+    std::mt19937 sto_rng_{}; ///< RNG for stochastic amplitudes (replaces rand/srand in update_sto_orbitals)
+
   public:
     // Tn(H)|chi>
     psi::Psi<T, Device>* chiallorder = nullptr;
