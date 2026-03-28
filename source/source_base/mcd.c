@@ -585,6 +585,7 @@ int MCD_asprintf(char **ptr,const char *fmt,char *fun, char*file, int line,...)
 		fprintf(RTL,"asprintf failure %s:%s, line %i [id ",
 			file,fun,line);
 		#endif
+		va_end(argptr); //cleanup va_list  
 		return retval;
 	}
 	va_end(argptr);

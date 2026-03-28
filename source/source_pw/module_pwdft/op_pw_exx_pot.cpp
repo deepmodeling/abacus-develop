@@ -41,6 +41,7 @@ void get_exx_potential(const K_Vectors* kv,
 
     if (ik > nks)
     {
+	delete[] pot_cpu;    //release memory
         return;
     }
 

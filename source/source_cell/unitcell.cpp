@@ -498,8 +498,9 @@ void UnitCell::compare_atom_labels(const std::string &label1, const std::string 
 					break;
 				}
 			}
-			stru_label[0] = toupper(stru_label[0]);
-
+			if(!stru_label.empty()){
+				stru_label[0] = toupper(stru_label[0]);
+			}
 			for (int ip = 0; ip < label2.length(); ip++)
 			{
 				if (!(isdigit(label2[ip]) || label2[ip] == '_'))

@@ -195,8 +195,8 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     std::vector<std::string> values;
     // first drop all elements that does not startswith "_" before the first element that startswith "_"
     std::vector<std::string> block_ = block;
-    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
-    if (it != block.begin())
+    auto it = std::find_if(block_.begin(), block_.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    if (it != block_.begin())
     {
         block_.erase(block_.begin(), it);
     }
