@@ -99,7 +99,7 @@ class YlmReal
 
     static long double Fact(const int n);
     static int Semi_Fact(const int n);
-
+    static void xy_dependence(const int lmax, const double x, const double y, double Am[], double Bm[]);
 };
 
 }

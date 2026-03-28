@@ -19,8 +19,6 @@ namespace ModuleBase
 YlmReal::YlmReal(){}
 YlmReal::~YlmReal(){}
 
-static void xy_dependence(const int lmax, const double x, const double y, double Am[], double Bm[]);
-
 void YlmReal::rlylm
 (
     const int lmax, 	
@@ -667,7 +665,7 @@ template void YlmReal::Ylm_Real<double, base_device::DEVICE_GPU>(base_device::DE
 }  // namespace ModuleBase
 
 
-static void xy_dependence
+void YlmReal::xy_dependence
 (
  	const int lmax, 
 	const double x,
