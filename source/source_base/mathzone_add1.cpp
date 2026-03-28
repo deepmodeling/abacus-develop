@@ -63,7 +63,7 @@ void Mathzone_Add1::SplineD2 // modified by pengfei 13-8-8 add second derivative
 {
 	ModuleBase::timer::start("Mathzone_Add1","SplineD2");
 	
-	double dx1, dx2, dy1, dy2, p, qn, sig, un;
+	double dx1 = 0.0, dx2 = 0.0, dy1 = 0.0, dy2 = 0.0, p = 0.0, qn = 0.0, sig = 0.0, un = 0.0;
 	double * u = nullptr;
 	
 	u = new double[mesh-1];
