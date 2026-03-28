@@ -12,6 +12,9 @@
 #include "source_base/parallel_reduce.h"
 #endif
 
+//define the meaning of magic number 1.0
+constexpr Real GK2_DENO_OFFSET = 1.0; 
+
 template <typename T>
 void psi_initializer<T>::initialize(const Structure_Factor* sf,
                                     const ModulePW::PW_Basis_K* pw_wfc,
@@ -44,9 +47,9 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
 #ifdef __MPI
-        srand(unsigned(this->random_seed_ + this->p_kv->ik2iktot[ik]));
+        srand(static_cast<unsigned int>(this->random_seed_ + this->p_kv->ik2iktot[ik]));
 #else
-        srand(unsigned(this->random_seed_ + ik));
+        srand(static_cast<unsigned int>(this->random_seed_ + ik));
 #endif
         const int nxy = this->pw_wfc_->fftnxy;
         const int nz = this->pw_wfc_->nz;
@@ -128,7 +131,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                 const double arg = ModuleBase::TWO_PI * std::rand() / double(RAND_MAX);
                 const double gk2 = this->pw_wfc_->getgk2(ik, ig);
                 psi_slice[ig] = this->template cast_to_T<T>(
-                    std::complex<double>(rr * cos(arg) / (gk2 + 1.0), rr * sin(arg) / (gk2 + 1.0)));
+                    std::complex<double>(rr * cos(arg) / (gk2 + GK2_DENO_OFFSET), rr * sin(arg) / (gk2 + GK2_DENO_OFFSET)));
             }
             if (npol == 2)
             {
@@ -138,7 +141,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                     const double arg = ModuleBase::TWO_PI * std::rand() / double(RAND_MAX);
                     const double gk2 = this->pw_wfc_->getgk2(ik, ig - npwk_max);
                     psi_slice[ig] = this->template cast_to_T<T>(
-                        std::complex<double>(rr * cos(arg) / (gk2 + 1.0), rr * sin(arg) / (gk2 + 1.0)));
+                        std::complex<double>(rr * cos(arg) / (gk2 + GK2_DENO_OFFSET), rr * sin(arg) / (gk2 + GK2_DENO_OFFSET)));
                 }
             }
         }
@@ -156,7 +159,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                 for (int ig = 0; ig < ng; ig++)
                 {
                     const double gk2 = this->pw_wfc_->getgk2(ik, ig);
-                    const Real inv_gk2 = 1.0 / (gk2 + 1.0);
+                    const Real inv_gk2 = 1.0 / (gk2 + GK2_DENO_OFFSET);
                     psi_slice[ig] *= inv_gk2;
                 }
                 psi_slice += npwk_max;
