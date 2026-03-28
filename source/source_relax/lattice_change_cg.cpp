@@ -306,6 +306,12 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
         }
 
         assert(g_gp != 0.0);
+	// Add a check for whether the divisor is zero or too small
+	if (std::abs(gp_gp)<1e-8)
+	{
+		cout<<"Warning: gp_gp(grad_p.grad_p) is too small, so there may be very large errors or a case where the divisor is zero. gp_gp = "<<gp_gp<<endl;
+		assert(std::abs(gp_gp)>=1e-8);
+	}
         const double gamma1 = gg / gp_gp; // FR
         // const double gamma2 = -(gg - g_gp)/(cgp_g - cgp_gp);  //CW
         const double gamma2 = (gg - g_gp) / gp_gp; // PRP
