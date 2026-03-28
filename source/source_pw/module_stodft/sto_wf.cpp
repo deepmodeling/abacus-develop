@@ -1,4 +1,5 @@
 #include "sto_wf.h"
+
 #include "source_base/parallel_comm.h" // use POOL_WORLD
 
 #include "source_base/memory.h"
@@ -8,7 +9,7 @@
 #include <ctime>
 
 #include "source_base/global_function.h"
-
+const unsigned int SEED_OFFSET_PER_RANK = 10000; // 每个Rank间的种子偏移量
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
 {
@@ -64,7 +65,7 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
-    if (seed_in == 0 || seed_in == -1)
+    if (seed_in == 0 || seed_in == -1)srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * SEED_OFFSET_PER_RANK);
     {
         srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
     }
