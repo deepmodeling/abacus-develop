@@ -95,27 +95,38 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         std::vector<double> vsigma( nrxx * ((1==nspin)?1:3) );
 
         ModuleBase::timer::start("Libxc","xc_lda/gga_exc_vxc");
-        constexpr int nr_batch_size = 1024;
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(static, nr_batch_size)
-        #endif
-        for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+        switch( func.info->family )
         {
-            const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
-            const int nrxx_thread = ir_end - ir_start;
-
-            switch( func.info->family )
+            case XC_FAMILY_LDA:
             {
-                case XC_FAMILY_LDA:
+                constexpr int nr_batch_size = 1024;
+                #ifdef _OPENMP
+                #pragma omp parallel for schedule(static, nr_batch_size)
+                #endif
+                for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
                     xc_lda_exc_vxc(
                         &func,
                         nrxx_thread,
                         rho.data() + ir_start,
                         exc.data() + ir_start,
                         vrho.data() + ir_start * nspin );
-                    break;
-                case XC_FAMILY_GGA:
-                case XC_FAMILY_HYB_GGA:
+                }
+                break;
+            }
+            case XC_FAMILY_GGA:
+            case XC_FAMILY_HYB_GGA:
+            {
+                constexpr int nr_batch_size = 1024;
+                #ifdef _OPENMP
+                #pragma omp parallel for schedule(static, nr_batch_size)
+                #endif
+                for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
                     xc_gga_exc_vxc(
                         &func,
                         nrxx_thread,
@@ -124,10 +135,14 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                         exc.data() + ir_start,
                         vrho.data() + ir_start * nspin,
                         vsigma.data() + ir_start * ((1==nspin)?1:3) );
-                    break;
-                default:
-                    throw std::domain_error("func.info->family ="+std::to_string(func.info->family)
-                        +" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
+                }
+                break;
+            }
+            default:
+            {
+                throw std::domain_error("func.info->family ="+std::to_string(func.info->family)
+                    +" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
+        
             }
         }
         ModuleBase::timer::end("Libxc","xc_lda/gga_exc_vxc");
