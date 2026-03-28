@@ -1,7 +1,55 @@
 #include "read_pp.h"
-
+#include <string>
+#include <stdexcept>
 // qianrui rewrite it 2021-5-10
 // liuyu update 2023-09-17 add uspp support
+
+namespace{
+    template<typename T>
+    T safe_cast(const std::string& str, const std::string& name)
+    {   
+        // This function attempts to convert a string to a specified type (int, double, or bool), 
+        // and raises a warning if the conversion fails. 
+        // It returns the converted value or a default value (0 for int and double, false for bool) in case of an error.
+        try
+        {
+            if constexpr (std::is_same_v<T, int>)
+            {
+                return std::stoi(str);
+            }
+            else if constexpr (std::is_same_v<T, double>)
+            {
+                return std::stod(str);
+            }
+            else if constexpr (std::is_same_v<T, bool>)
+            {
+                if (str == "T" || str == "TRUE" || str == "True" || str == "true")
+                {
+                    return true;
+                }
+                else if (str == "F" || str == "FALSE" || str == "False" || str == "false")
+                {
+                    return false;
+                }
+                else
+                {
+                    throw std::invalid_argument("Invalid boolean value: " + str);
+                }
+            }
+            else
+            {
+                static_assert(always_false<T>::value, "Unsupported type for safe_cast");
+            }
+        }
+        catch (const std::exception& e)
+        {
+            ModuleBase::WARNING("safe_cast", "Failed to convert \"" + str + "\" to the required type for parameter \"" + name + "\": " + e.what());
+            return 0;
+        }
+        return 0;
+    }
+}
+
 int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
 {
     //--------------------------------------
@@ -307,31 +355,31 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            pp.etotps = safe_cast<double>(val[ip].c_str(), "etotps");
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            pp.ecutwfc = safe_cast<double>(val[ip].c_str(), "ecutwfc");
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            pp.ecutrho = safe_cast<double>(val[ip].c_str(), "ecutrho");
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            pp.lmax = safe_cast<int>(val[ip].c_str(), "lmax");
         }
         else if (name[ip] == "l_max_rho")
         {
-            this->lmax_rho = atoi(val[ip].c_str());
+            this->lmax_rho = safe_cast<int>(val[ip].c_str(), "lmax_rho");
         }
         else if (name[ip] == "l_local")
         {
-            this->lloc = atoi(val[ip].c_str());
+            this->lloc = safe_cast<int>(val[ip].c_str(), "lloc");
         }
         else if (name[ip] == "mesh_size")
         {
-            pp.mesh = atoi(val[ip].c_str());
+            pp.mesh = safe_cast<int>(val[ip].c_str(), "mesh");
             this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
@@ -341,11 +389,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "number_of_wfc")
         {
-            pp.nchi = atoi(val[ip].c_str());
+            pp.nchi = safe_cast<int>(val[ip].c_str(), "nchi");
         }
         else if (name[ip] == "number_of_proj")
         {
-            pp.nbeta = atoi(val[ip].c_str());
+            pp.nbeta = safe_cast<int>(val[ip].c_str(), "nbeta");
         }
         else
         {
