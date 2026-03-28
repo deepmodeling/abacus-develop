@@ -4,6 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
+#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -145,7 +146,7 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
     myid = 0;
 #endif
 
-    sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
+    std::snprintf(FileName, sizeof(FileName), "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
@@ -283,7 +284,7 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
     myid = 0;
 #endif
 
-    sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
+    std::snprintf(FileName, sizeof(FileName), "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
