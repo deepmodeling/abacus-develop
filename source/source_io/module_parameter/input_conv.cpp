@@ -519,11 +519,6 @@ void Input_Conv::Convert()
         {
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
-
-        if (PARAM.inp.device != "cpu")
-        {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with device=cpu");
-        }
     }
 
     //----------------------------------------------------------
