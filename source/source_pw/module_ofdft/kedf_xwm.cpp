@@ -103,7 +103,7 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     delete[] w1Rho5_6;
     delete[] w2Rho5_6;
 
-    return energy;
+    return this->xwm_energy;
 }
 
 /**
