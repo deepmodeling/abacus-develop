@@ -1,7 +1,15 @@
 #include "read_stru.h"
+#include <cmath>
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_base/mathzone.h"
+
+namespace {
+// Larger than any physically expected pairwise distance (Bohr) used only to initialize the minimum search.
+constexpr double k_pair_distance_init_sentinel = 10000.0;
+// Added to direct coordinates before fmod(..., 1.0) so negative fractional coords map into [0, 1).
+constexpr double k_direct_coord_fold_shift = 10000.0;
+} // namespace
 
 bool unitcell::check_tau(const Atom* atoms,
 		const int& ntype,
@@ -18,7 +26,7 @@ bool unitcell::check_tau(const Atom* atoms,
 	{
 		for(int I1=0; I1< atoms[T1].na; I1++)
 		{    
-			double shortest_norm = 10000.0; // a large number
+			double shortest_norm = k_pair_distance_init_sentinel;
 			for(int T2=0; T2<ntype; T2++)
 			{
 				for(int I2=0; I2<atoms[T2].na; I2++)
@@ -64,12 +72,11 @@ void unitcell::check_dtau(Atom* atoms,
 		Atom* atom1 = &atoms[it];
 		for(int ia=0; ia<atoms[it].na; ia++)
 		{
-			// mohan add 2011-04-07            
-			// fmod(x,1.0) set the result between the [0,1.0),
-			// while the x may be the negtivate value,thus we add 10000.
-			atom1->taud[ia].x=fmod(atom1->taud[ia].x + 10000,1.0);
-			atom1->taud[ia].y=fmod(atom1->taud[ia].y + 10000,1.0);
-			atom1->taud[ia].z=fmod(atom1->taud[ia].z + 10000,1.0);
+			// mohan add 2011-04-07
+			// fmod(x, 1.0) maps into [0, 1.0); negative fractions need a positive offset first.
+			atom1->taud[ia].x = std::fmod(atom1->taud[ia].x + k_direct_coord_fold_shift, 1.0);
+			atom1->taud[ia].y = std::fmod(atom1->taud[ia].y + k_direct_coord_fold_shift, 1.0);
+			atom1->taud[ia].z = std::fmod(atom1->taud[ia].z + k_direct_coord_fold_shift, 1.0);
 
 			double cx2=0.0;
 			double cy2=0.0;
