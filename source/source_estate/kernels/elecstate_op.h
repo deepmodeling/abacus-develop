@@ -23,8 +23,8 @@ struct elecstate_pw_op {
   /// @param rho - electronic densities
   void operator() (
       const Device* ctx,
-      const int& spin,
-      const int& nrxx,
+      const int spin,
+      const int nrxx,
       const FPTYPE& weight,
       FPTYPE** rho,
       const std::complex<FPTYPE>* wfcr);
@@ -44,9 +44,9 @@ struct elecstate_pw_op {
   /// @param rho - electronic densities
   void operator() (
       const Device* ctx,
-      const bool& DOMAG,
-      const bool& DOMAG_Z,
-      const int& nrxx,
+      const bool DOMAG,
+      const bool DOMAG_Z,
+      const int nrxx,
       const FPTYPE& weight,
       FPTYPE** rho,
       const std::complex<FPTYPE>* wfcr,
@@ -58,16 +58,16 @@ template <typename FPTYPE>
 struct elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>
 {
     void operator()(const base_device::DEVICE_GPU* ctx,
-                    const int& spin,
-                    const int& nrxx,
+                    int spin,
+                    int nrxx,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr);
 
     void operator()(const base_device::DEVICE_GPU* ctx,
-                    const bool& DOMAG,
-                    const bool& DOMAG_Z,
-                    const int& nrxx,
+                    bool DOMAG,
+                    bool DOMAG_Z,
+                    int nrxx,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr,
