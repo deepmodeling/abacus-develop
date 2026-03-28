@@ -91,8 +91,20 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
-    if (myid == ROOT_PROC)
+    if (myid == ROOT_PROC){
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+        #ifdef __MPI
+            std::cerr << "LoadError in opening '" << FileName << "'" << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        #else
+            throw std::runtime_error(std::string("LoadError in opening '") + FileName + "'");
+        #endif
+        }
+
+    }
+        
 
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB

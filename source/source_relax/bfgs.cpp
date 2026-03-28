@@ -3,12 +3,18 @@
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
-#include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include "source_cell/print_cell.h" // lanshuyue add 2025-06-19
+#include <limits>
+#include <stdexcept>  
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
 {
     assert(_size > 0);
+    // make sure 3*size doesn't overflow
+    if (_size > std::numeric_limits<int>::max() / 3) {
+        throw std::overflow_error("3*size overflow");
+    }
     alpha=70;//default value in ase is 70
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
@@ -126,9 +132,15 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     this->Update(changedpos, changedforce,H,ucell);
     
     //! call dysev
-    std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
+    int three_size = 3 * size;
+    // ensure three_size*three_size doesn't overflow
+    if (three_size > 0 && three_size > std::numeric_limits<int>::max() / three_size) {
+        throw std::overflow_error("Dimension is too large");
+    }
+    int total_size = three_size * three_size;
+    std::vector<double> omega(three_size);
+    std::vector<double> work(total_size);
+    int lwork = total_size;
     int info=0;
     std::vector<double> H_flat;
     
@@ -137,15 +149,15 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
         H_flat.insert(H_flat.end(), row.begin(), row.end());
     }
     
-    int value=3*size;
-    int* ptr=&value;
+    int value = three_size;
+    int* ptr = &value;
     dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
-    std::vector<std::vector<double>> V(3*size, std::vector<double>(3*size, 0.0));
-    for(int i = 0; i < 3*size; i++)
+    std::vector<std::vector<double>> V(three_size, std::vector<double>(three_size, 0.0));
+    for(int i = 0; i < three_size; i++)
     {
-        for(int j = 0; j < 3*size; j++)
+        for(int j = 0; j < three_size; j++)
         {
-            V[j][i] = H_flat[3*size*i + j];
+            V[j][i] = H_flat[three_size*i + j];
         }
     }
     std::vector<double> a=DotInMAndV2(V, changedforce);
@@ -247,6 +259,13 @@ void BFGS::Update(std::vector<double>& pos,
     H = MSubM(H, term4);
 }
 
+inline int calcsize_first(int size) {
+    if (size > std::numeric_limits<int>::max() / 3) {
+        throw std::overflow_error("3*size overflow");
+    }
+    return 3 * size;
+}
+
 void BFGS::DetermineStep(std::vector<double>& steplength,
                          std::vector<ModuleBase::Vector3<double>>& dpos,
                          double& maxstep)
@@ -269,14 +288,15 @@ void BFGS::DetermineStep(std::vector<double>& steplength,
 
 void BFGS::UpdatePos(UnitCell& ucell)
 {
-    double a[3*size];
+    int three_size = calcsize_first(size);
+    std::vector<double> a(three_size);
     for(int i=0;i<size;i++)
     {
         a[i*3]=(pos[i].x+dpos[i].x)/ModuleBase::BOHR_TO_A;
         a[i*3+1]=(pos[i].y+dpos[i].y)/ModuleBase::BOHR_TO_A;
         a[i*3+2]=(pos[i].z+dpos[i].z)/ModuleBase::BOHR_TO_A;
     }
-    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_tau(ucell.lat,a.data(),ucell.ntype,ucell.nat,ucell.atoms);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);
 
@@ -320,7 +340,8 @@ void BFGS::UpdatePos(UnitCell& ucell)
 
 void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell)
 {
-    std::vector<double> grad= std::vector<double>(3*size, 0.0);
+    int three_size = calcsize_first(size);
+    std::vector<double> grad(three_size, 0.0);
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -338,7 +359,7 @@ void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell
         }
     }
     largest_grad = 0.0;
-    for (int i = 0; i < 3*size; i++)
+    for (int i = 0; i < three_size; i++)
     {
         if (largest_grad < std::abs(grad[i]))
         {
