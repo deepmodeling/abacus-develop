@@ -59,8 +59,8 @@ __global__ void elecstate_pw(
 
 template <typename FPTYPE>
 void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
-                                                                  const int& spin,
-                                                                  const int& nrxx,
+                                                                  int spin,
+                                                                  int nrxx,
                                                                   const FPTYPE& w1,
                                                                   FPTYPE** rho,
                                                                   const std::complex<FPTYPE>* wfcr)
@@ -76,9 +76,9 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 
 template <typename FPTYPE>
 void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
-                                                                  const bool& DOMAG,
-                                                                  const bool& DOMAG_Z,
-                                                                  const int& nrxx,
+                                                                  bool DOMAG,
+                                                                  bool DOMAG_Z,
+                                                                  int nrxx,
                                                                   const FPTYPE& w1,
                                                                   FPTYPE** rho,
                                                                   const std::complex<FPTYPE>* wfcr,
