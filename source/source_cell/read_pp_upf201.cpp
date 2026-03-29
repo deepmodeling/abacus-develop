@@ -307,21 +307,41 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         }
         else if (name[ip] == "total_psenergy")
         {
-            pp.etotps = atof(val[ip].c_str());
+            try {
+                pp.etotps = std::stod(val[ip]);
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing total_psenergy: " << val[ip] << std::endl;
+                exit(1);
+            }
         }
         else if (name[ip] == "wfc_cutoff")
         {
-            pp.ecutwfc = atof(val[ip].c_str());
+            try {
+                pp.ecutwfc = std::stod(val[ip]);
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing wfc_cutoff: " << val[ip] << std::endl;
+                exit(1);
+            }
         }
         else if (name[ip] == "rho_cutoff")
         {
-            pp.ecutrho = atof(val[ip].c_str());
+            try {
+                pp.ecutrho = std::stod(val[ip]);
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing rho_cutoff: " << val[ip] << std::endl;
+                exit(1);
+            }
         }
         else if (name[ip] == "l_max")
         {
-            pp.lmax = atoi(val[ip].c_str());
+            try {
+                pp.lmax = std::stoi(val[ip]);
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing l_max: " << val[ip] << std::endl;
+                exit(1);
+            }
         }
-        else if (name[ip] == "l_max_rho")
+	else if (name[ip] == "l_max_rho")
         {
             this->lmax_rho = atoi(val[ip].c_str());
         }
