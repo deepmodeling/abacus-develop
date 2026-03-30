@@ -108,7 +108,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
     int N = nFull;
     int M
-        = std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
+        = std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(std::complex<double>)))); // at lease 1 row, max size 1GB
     if (myid == ROOT_PROC)
         b = new double[M * N];
     else
