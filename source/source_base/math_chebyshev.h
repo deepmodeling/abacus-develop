@@ -210,7 +210,7 @@ class Chebyshev
     std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
 
     FFTW<REAL> fftw;          // use for fftw
-    REAL* polytrace;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
+    REAL* polytrace = nullptr;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated
@@ -248,7 +248,7 @@ class FFTW<double>
     FFTW(const int norder2_in);
     ~FFTW();
     void execute_fftw();
-    double* dcoef; //[norder2]
+    double* dcoef = nullptr; //[norder2]
     fftw_complex* ccoef = nullptr;
     fftw_plan coef_plan;
 };
@@ -261,7 +261,7 @@ class FFTW<float>
     FFTW(const int norder2_in);
     ~FFTW();
     void execute_fftw();
-    float* dcoef; //[norder2]
+    float* dcoef = nullptr; //[norder2]
     fftwf_complex* ccoef = nullptr;
     fftwf_plan coef_plan;
 };

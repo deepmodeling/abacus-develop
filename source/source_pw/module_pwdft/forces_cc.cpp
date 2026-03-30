@@ -36,7 +36,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 {
     ModuleBase::TITLE("Forces", "cal_force_cc");
     // recalculate the exchange-correlation potential.
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
+    ModuleBase::timer::start("Forces", "cal_force_cc");
 
     int total_works = 0;
     // cal total works for skipping preprocess
@@ -49,7 +49,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     if (total_works == 0)
     {
-        ModuleBase::timer::tick("Forces", "cal_force_cc");
+        ModuleBase::timer::end("Forces", "cal_force_cc");
         return;
     }
 
@@ -234,7 +234,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     delete[] psiv;                                                           // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
+    ModuleBase::timer::end("Forces", "cal_force_cc");
     return;
 }
 

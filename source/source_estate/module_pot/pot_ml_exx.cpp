@@ -65,8 +65,10 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
                 if (this->descriptor_type[i] == "gamma") feg_inpt[i] = 1.;
             }
 
-            if (PARAM.inp.of_ml_feg == 1) 
+            if (PARAM.inp.of_ml_feg == 1)
+            {
                 this->feg_net_F = torch::softplus(this->nn->forward(feg_inpt)).to(this->device_CPU).contiguous().data_ptr<double>()[0];
+            }
             else
             {
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
@@ -122,7 +124,7 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
     this->get_potential_(prho_mod, pw_rho, rpotential);
 
     // get energy
-    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+    ModuleBase::timer::start("ML_EXX", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
@@ -131,7 +133,7 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
     energy *= this->dV * this->energy_prefactor;
     this->ml_exx_energy = energy;
     Parallel_Reduce::reduce_pool(this->ml_exx_energy);
-    ModuleBase::timer::tick("ML_EXX", "Pauli Energy");
+    ModuleBase::timer::end("ML_EXX", "Pauli Energy");
 
     delete[] rho_data;
     delete[] prho_mod;

@@ -122,7 +122,7 @@ public:
             }
 
           private:
-            BFCAllocator* allocator_;  // The parent allocator
+            BFCAllocator* allocator_ = nullptr;  // The parent allocator
         };
 
         using free_chunk_set_t = std::set<ChunkHandle, ChunkComparator>;

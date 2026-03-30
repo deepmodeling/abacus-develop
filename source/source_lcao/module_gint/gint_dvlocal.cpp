@@ -9,10 +9,10 @@ namespace ModuleGint
 void Gint_dvlocal::cal_dvlocal()
 {
     ModuleBase::TITLE("Gint", "cal_gint_dvlocal");
-    ModuleBase::timer::tick("Gint", "cal_gint_dvlocal");
+    ModuleBase::timer::start("Gint", "cal_gint_dvlocal");
     init_hr_gint_();
     cal_hr_gint_();
-    ModuleBase::timer::tick("Gint", "cal_gint_dvlocal");
+    ModuleBase::timer::end("Gint", "cal_gint_dvlocal");
 }
 
 void Gint_dvlocal::init_hr_gint_()
@@ -67,7 +67,7 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     LCAO_HS_Arrays& hs_arrays)
 {
     ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparseMatrix");
-    ModuleBase::timer::tick("Gint", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparseMatrix");
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRz_sparseMatrix;
@@ -126,7 +126,7 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     distribute_pvdpR_sparseMatrix(cspin, 0, nlocal, sparse_thr, pvdpRx_sparseMatrix, pv, hs_arrays);
     distribute_pvdpR_sparseMatrix(cspin, 1, nlocal, sparse_thr, pvdpRy_sparseMatrix, pv, hs_arrays);
     distribute_pvdpR_sparseMatrix(cspin, 2, nlocal, sparse_thr, pvdpRz_sparseMatrix, pv, hs_arrays);
-    ModuleBase::timer::tick("Gint", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparseMatrix");
 }
 
 

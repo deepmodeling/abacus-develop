@@ -16,7 +16,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		const Charge* const chr)
 {
 	ModuleBase::TITLE("Stress","stress_loc");
-	ModuleBase::timer::tick("Stress","stress_loc");
+	ModuleBase::timer::start("Stress","stress_loc");
 
 	std::vector<FPTYPE> dvloc(rho_basis->npw);
 	FPTYPE evloc=0.0;
@@ -159,7 +159,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		}
 	}
 
-	ModuleBase::timer::tick("Stress","stress_loc");
+	ModuleBase::timer::end("Stress","stress_loc");
 	return;
 }
 

@@ -23,7 +23,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    ModuleBase::timer::start("Sto_Stress_PW", "cal_stress");
     const ModuleBase::matrix& wg = elec.wg;
     this->ucell = &ucell_in;
     sigmatot.create(3, 3);
@@ -94,7 +94,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    ModuleBase::timer::end("Sto_Stress_PW", "cal_stress");
     return;
 }
 
@@ -108,7 +108,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
                                                    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "stress_kin");
-    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
+    ModuleBase::timer::start("Sto_Stress_PW", "stress_kin");
 
     int nksbands = psi.get_nbands();
     if (!PARAM.globalv.ks_run)
@@ -131,7 +131,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
     }
 
     kin_tool.symmetrize_stress(p_symm, sigma);
-    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
+    ModuleBase::timer::end("Sto_Stress_PW", "stress_kin");
 
     return;
 }
@@ -155,7 +155,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         return;
     }
 
-    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
+    ModuleBase::timer::start("Sto_Stress_Func", "stres_nl");
 
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
@@ -230,7 +230,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         p_symm->symmetrize_mat3(sigma, ucell.lat);
     }
 
-    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
+    ModuleBase::timer::end("Sto_Stress_Func", "stres_nl");
     return;
 }
 

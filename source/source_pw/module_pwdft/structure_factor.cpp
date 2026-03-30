@@ -56,7 +56,7 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("Structure_Factor","setup");
-    ModuleBase::timer::tick("Structure_Factor","setup");
+    ModuleBase::timer::start("Structure_Factor","setup");
 
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
     this->ucell = Ucell;
@@ -186,7 +186,7 @@ void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, 
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("Structure_Factor","setup");
+    ModuleBase::timer::end("Structure_Factor","setup");
     return;
 }
 

@@ -12,7 +12,7 @@ template <typename T, typename Device>
 void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE(this->classname, "psiToRho");
-    ModuleBase::timer::tick(this->classname, "psiToRho");
+    ModuleBase::timer::start(this->classname, "psiToRho");
     const int nspin = PARAM.inp.nspin;
     for (int is = 0; is < nspin; is++)
     {
@@ -33,7 +33,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
         this->parallelK();
     }
-    ModuleBase::timer::tick(this->classname, "psiToRho");
+    ModuleBase::timer::end(this->classname, "psiToRho");
     return;
 }
 

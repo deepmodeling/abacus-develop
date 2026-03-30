@@ -16,7 +16,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 											 const bool is_pw)
 {
     ModuleBase::TITLE("Stress","stress_ewa");
-    ModuleBase::timer::tick("Stress","stress_ewa");
+    ModuleBase::timer::start("Stress","stress_ewa");
 
     FPTYPE charge=0;
     for(int it=0; it < ucell.ntype; it++)
@@ -108,7 +108,6 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 	}
 
     //R-space sum here (only for the processor that contains G=0) 
-    int mxr = 200;
     int *irr=nullptr;
     ModuleBase::Vector3<FPTYPE> *r;
     FPTYPE *r2=nullptr;
@@ -121,13 +120,14 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 
 	if(ig0 >= 0)
 	{
-		std::vector<ModuleBase::Vector3<FPTYPE>> r(mxr);
-		std::vector<FPTYPE> r2(mxr);
-		std::vector<int> irr(mxr);
-
 		FPTYPE sqa = sqrt(alpha);
 		FPTYPE sq8a_2pi = sqrt(8 * alpha / (ModuleBase::TWO_PI));
 		rmax = 4.0/sqa/ucell.lat0;
+		const int mxr = H_Ewald_pw::estimate_mxr(rmax, ucell.G);
+
+		std::vector<ModuleBase::Vector3<FPTYPE>> r(mxr);
+		std::vector<FPTYPE> r2(mxr);
+		std::vector<int> irr(mxr);
 
 		#pragma omp for
 		for(long long ijat = 0; ijat < ucell.nat * ucell.nat; ijat++)
@@ -142,7 +142,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 				//calculate tau[na]-tau[nb]
 				d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
 				//generates nearest-neighbors shells 
-				H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
+				H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm);
 				for(int nr=0; nr<nrm; nr++)
 				{
 					rr=sqrt(r2[nr]) * ucell.lat0;
@@ -198,7 +198,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 		}
 	}
 
-	ModuleBase::timer::tick("Stress","stress_ewa");
+	ModuleBase::timer::end("Stress","stress_ewa");
 
 	return;
 }

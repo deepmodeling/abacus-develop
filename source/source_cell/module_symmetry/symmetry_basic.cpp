@@ -110,17 +110,17 @@ void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) 
 	return;
 }
 
-// convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
+// convert a set of vectors (va) represented in the basis vectors old1, old2, old3
 // to a set of vectors (vb) represented in the basis vectors new1, new2, new3
 void Symmetry_Basic::veccon(
-		double *carpos, 
-		double *rotpos, 
-		const int num, 
-		const ModuleBase::Vector3<double> &old1, 
-		const ModuleBase::Vector3<double> &old2, 
-		const ModuleBase::Vector3<double> &old3, 
-		const ModuleBase::Vector3<double> &new1, 
-		const ModuleBase::Vector3<double> &new2, 
+		double *carpos,
+		double *rotpos,
+		const int num,
+		const ModuleBase::Vector3<double> &old1,
+		const ModuleBase::Vector3<double> &old2,
+		const ModuleBase::Vector3<double> &old3,
+		const ModuleBase::Vector3<double> &new1,
+		const ModuleBase::Vector3<double> &new2,
 		const ModuleBase::Vector3<double> &new3
 		)
 {
@@ -156,14 +156,14 @@ void Symmetry_Basic::veccon(
 	newlat.e33 = new3.z;
 
 	ModuleBase::Matrix3 GT = newlat.Inverse();
-	
+
 	ModuleBase::Vector3<double> car;
 	ModuleBase::Vector3<double> direct_old;
 	ModuleBase::Vector3<double> direct_new;
 
 	//calculate the reciprocal vectors rb1, rb2, rb3 for the vectors new1, new2, new3
 	//this->recip(1.0, new1, new2, new3, rb1, rb2, rb3);
- 	
+
 	for(int i = 0; i < num; ++i)
 	{
 		direct_old.x = carpos[i * 3 + 0];
@@ -222,8 +222,8 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 		}
 		// otherwise
 
-		// determine the order of the operation: by which power will the operation return 
-		// to the identity operation. 
+		// determine the order of the operation: by which power will the operation return
+		// to the identity operation.
 		temp1 = sig;
 		for (int j = 1; j < 100; ++j)
 		{
@@ -236,7 +236,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 		}
 		now = nop;
 		for (int j = 0; j < nop; ++j)
-		{	
+		{
 			temp1 = symop[j];
 			for (int k = 1; k < order; ++k)
 			{
@@ -282,10 +282,10 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 			for (int k = nop; k < n; ++k)
 			{
 				for (int m = m1; m < m2; ++m)
-				{	
+				{
 					temp1 = symop[k] * symop[m];
 					flag = 1;
-					for (int l = 0; l < now; ++l)	
+					for (int l = 0; l < now; ++l)
 					{
 						if (symop[l] == temp1)
 						{
@@ -293,7 +293,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 							break;
 						}
 					}
-					if (flag == 0)	 
+					if (flag == 0)
 					{
 						continue;	//the new-found element has already existed
 					}
@@ -320,9 +320,9 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 }
 
 //--------------------------------------------------------------
-// set up all possible space group operators 
+// set up all possible space group operators
 // (integer rotation matrices and nontrivial translations
-// given in crystal coordinates) 
+// given in crystal coordinates)
 // of a lattice with some arbitrary basis (atomic arrangement).
 //--------------------------------------------------------------
 void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
@@ -421,7 +421,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 			this->matrigen(symgen, 1, symop, nop);
 		break;
 		default:
-			ModuleBase::WARNING_QUIT("Symmetry_Basic::setgroup", 
+			ModuleBase::WARNING_QUIT("Symmetry_Basic::setgroup",
 				"ibrav = " + std::to_string(ibrav) + " is not supported.");
 		break;
 	}
@@ -439,11 +439,11 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 							 << " ======================================================================\n"
 							 << " MATRIX REPRESENTATION OF SYMMETRY OPERATION\n"
 							 << " ======================================================================\n"
-							 << " There are " << nop << " symmetry operation representation matrices.\n" 
-							 << " For each matrix, the elements are arranged like: \n" 
-							 << " [[e11, e12, e13], [e21, e22, e23], [e31, e32, e33]].reshape(3, 3)\n" 
+							 << " There are " << nop << " symmetry operation representation matrices.\n"
+							 << " For each matrix, the elements are arranged like: \n"
+							 << " [[e11, e12, e13], [e21, e22, e23], [e31, e32, e33]].reshape(3, 3)\n"
 							 << std::endl;
-		
+
 		// control the digits
 		const int precision = PARAM.inp.cal_symm_repr[1];
 		const int width = precision + 4;
@@ -466,7 +466,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	return;
 }
 
-int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, 
+int Symmetry_Basic::subgroup(const int& nrot, const int& ninv,
     const int& nc2, const int& nc3, const int& nc4, const int& nc6,
     const int& ns1, const int& ns3, const int& ns4, const int& ns6)const
 {
@@ -546,7 +546,7 @@ int Symmetry_Basic::subgroup(const int& nrot, const int& ninv,
 }
 
 
-bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, 
+bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
   std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const
 {
 	//-------------------------------------------------------------------------
@@ -568,9 +568,9 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 		ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
 	}
 
-    std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h", 
-    "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h", 
-    "D_4", "C_4v", "D_2d", "D_4h", "C_6", "C_3h", "C_6h", "D_6", "C_6v", "D_3h", "D_6h", 
+    std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h",
+    "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h",
+    "D_4", "C_4v", "D_2d", "D_4h", "C_6", "C_3h", "C_6h", "D_6", "C_6v", "D_3h", "D_6h",
     "T", "T_h", "O", "T_d", "O_h" };
 
 	if(nrot == 1)
@@ -597,7 +597,7 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 		pgname="O_h";
         return true;
 	}
-	
+
 	//-------------------------------------------------------------------------------
 	//all other groups need further investigations and detailed analysis
 	//first determine the type of elements and count them
@@ -663,7 +663,7 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S4", ns4);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S6", ns6);
 	}
-	
+
 	if(nrot == 2)
 	{
 		if(ninv == 1)
@@ -699,7 +699,7 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 			pgname="D_2";
             return true;
 		}
-		if(ns1 == 2) 
+		if(ns1 == 2)
 		{
 			pgnumber = 7;
 			pgname="C_2v";
@@ -858,9 +858,9 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 }
 
 
-void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
+void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans,
 		int i, int j, int k, // FFT grid index.
-		const int nr1, const int nr2, const int nr3, // dimension of FFT grid. 
+		const int nr1, const int nr2, const int nr3, // dimension of FFT grid.
 		int &ri, int &rj, int &rk)
 {
 	static ModuleBase::Matrix3 g;
@@ -880,13 +880,13 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 		ri += 10 * nr1;
 	}
 	ri = ri%nr1;
-	rj = int(g.e12 * i + g.e22 * j + g.e32 * k) + (int)(gtrans.y  * nr2);
+	rj = static_cast<int>(g.e12 * i + g.e22 * j + g.e32 * k) + static_cast<int>(gtrans.y  * nr2);
 	if (rj < 0)
 	{
 		rj += 10 * nr2;
 	}
 	rj = rj%nr2;
-	rk = int(g.e13 * i + g.e23 * j + g.e33 * k) + (int)(gtrans.z  * nr3);
+	rk = static_cast<int>(g.e13 * i + g.e23 * j + g.e33 * k) + static_cast<int>(gtrans.z  * nr3);
 	if (rk < 0)
 	{
 		rk += 10 * nr3;
@@ -895,12 +895,12 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 	return;
 }
 
-// atom ordering for each atom type 
+// atom ordering for each atom type
 // by a "weighted function" f
 // (instead of ordering by x, y, z directly)
 void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subindex) const
 {
-	//order the atomic positions inside a supercell by a unique ordering scheme	
+	//order the atomic positions inside a supercell by a unique ordering scheme
 	subindex[0] = 0;
 
 	if(natom == 1)
@@ -926,7 +926,7 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	double z_min = *min_element(tmpz.begin(),tmpz.end());
 
 	double* weighted_func = new double[natom];
-	
+
 	//the first time: f(x, y, z)
 	for(int i=0; i<natom; i++)
 	{
@@ -941,11 +941,11 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 		tmpz[i] = posi[i*3+2];
 	}
 
-	//the second time: f(y, z) for fixed x	
+	//the second time: f(y, z) for fixed x
 	for(int i=0; i<natom-1;)
 	{
 		int ix_right=i+1;	//right bound is no included
-		while(ix_right<natom && equal(tmpx[ix_right],tmpx[i])) 
+		while(ix_right<natom && equal(tmpx[ix_right],tmpx[i]))
 		{
 			++ix_right;
 		}
@@ -963,7 +963,7 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 		}
 		i=ix_right;
 	}
-	
+
 	delete[] weighted_func;
 	return;
 }

@@ -129,14 +129,14 @@ psi::Psi<std::complex<FPTYPE>, Device>* gatherchi_op<FPTYPE, Device>::operator()
     if (PARAM.inp.bndpar > 1)
     {
         p_chi = &chi_all;
-        ModuleBase::timer::tick("sKG", "bands_gather");
+        ModuleBase::timer::start("sKG", "bands_gather");
         Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(chi.get_pointer(),
                                                                    perbands_sto * npwx,
                                                                    chi_all.get_pointer(),
                                                                    nrecv_sto,
                                                                    displs_sto,
                                                                    BP_WORLD);
-        ModuleBase::timer::tick("sKG", "bands_gather");
+        ModuleBase::timer::end("sKG", "bands_gather");
     }
 #endif
     return p_chi;

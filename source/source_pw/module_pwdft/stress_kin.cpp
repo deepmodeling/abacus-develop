@@ -14,7 +14,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Stress","stress_kin");
-	ModuleBase::timer::tick("Stress","stress_kin");
+	ModuleBase::timer::start("Stress","stress_kin");
 
 	this->ucell = &ucell_in;
 
@@ -36,7 +36,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
     }
     kin_tool.symmetrize_stress(p_symm, sigma);
 		
-	ModuleBase::timer::tick("Stress","stress_kin");
+	ModuleBase::timer::end("Stress","stress_kin");
 	return;
 }
 

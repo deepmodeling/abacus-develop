@@ -23,7 +23,7 @@ void Gatefield::add_gatefield(double *vltot,
                               const bool &quadratic)
 {
     ModuleBase::TITLE("Gatefield", "add_gatefield");
-    ModuleBase::timer::tick("Gatefield", "add_gatefield");
+    ModuleBase::timer::start("Gatefield", "add_gatefield");
 
     //=======================================================
     // preparation for constants
@@ -137,7 +137,7 @@ void Gatefield::add_gatefield(double *vltot,
         vltot[ir] += value;
     }
 
-    ModuleBase::timer::tick("Gatefield", "add_gatefield");
+    ModuleBase::timer::end("Gatefield", "add_gatefield");
 }
 
 double Gatefield::mopopla(double &zgate, double z, bool flag)

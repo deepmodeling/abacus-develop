@@ -24,7 +24,7 @@ template <typename TR, typename TA>
 void ModuleIO::init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer<TA>* aimR)
 {
     ModuleBase::TITLE("ModuleIO", "init_from_hR");
-    ModuleBase::timer::tick("ModuleIO", "init_from_hR");
+    ModuleBase::timer::start("ModuleIO", "init_from_hR");
     for (int i = 0; i < hR->size_atom_pairs(); i++)
     {
         hamilt::AtomPair<TR> atom_ij = hR->get_atom_pair(i);
@@ -39,7 +39,7 @@ void ModuleIO::init_from_hR(const hamilt::HContainer<TR>* hR, hamilt::HContainer
     }
     aimR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("ModuleIO", "init_from_hR");
+    ModuleBase::timer::end("ModuleIO", "init_from_hR");
 }
 void ModuleIO::init_from_adj(const UnitCell& ucell,
                              const Grid_Driver& GridD,
@@ -49,7 +49,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
                              ModuleBase::Vector3<hamilt::HContainer<double>*>& rR)
 {
     ModuleBase::TITLE("ModuleIOTD_mixing_pot", "init_from_adj");
-    ModuleBase::timer::tick("ModuleIO", "init_from_adj");
+    ModuleBase::timer::start("ModuleIO", "init_from_adj");
 
     auto orb_cutoff_ = orb.cutoffs();
     adjs_all.clear();
@@ -103,7 +103,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
     {
         rR[i_alpha]->allocate(nullptr, true);
     }
-    ModuleBase::timer::tick("ModuleIO", "init_from_adj");
+    ModuleBase::timer::end("ModuleIO", "init_from_adj");
 }
 
 void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
@@ -115,7 +115,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
                               ModuleBase::Vector3<hamilt::HContainer<double>*>& rR)
 {
     ModuleBase::TITLE("ModuleIO", "set_rR_from_hR");
-    ModuleBase::timer::tick("ModuleIO", "set_rR_from_hR");
+    ModuleBase::timer::start("ModuleIO", "set_rR_from_hR");
 
     // init
     std::vector<AdjacentAtomInfo> adjs_all;
@@ -193,6 +193,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
             }
         }
     }
+    ModuleBase::timer::end("ModuleIO", "set_rR_from_hR");
     ModuleBase::TITLE("ModuleIO", "set_rR_from_sR");
 }
 template <typename TR>
@@ -206,7 +207,7 @@ void ModuleIO::sum_HR(
 )
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
-    ModuleBase::timer::tick("ModuleIO", "sum_HR");
+    ModuleBase::timer::start("ModuleIO", "sum_HR");
 
     // init complex full_hR
     init_from_hR(hR, full_hR);
@@ -264,14 +265,14 @@ void ModuleIO::sum_HR(
     }
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "sum_HR");
+    ModuleBase::timer::end("ModuleIO", "sum_HR");
 }
 
 template <typename Tadd, typename Tfull>
 void ModuleIO::add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfull>* full_hR)
 {
     ModuleBase::TITLE("ModuleIO", "add_HR");
-    ModuleBase::timer::tick("ModuleIO", "add_HR");
+    ModuleBase::timer::start("ModuleIO", "add_HR");
 
     for (int ipair = 0; ipair < hR->size_atom_pairs(); ++ipair)
     {
@@ -299,7 +300,7 @@ void ModuleIO::add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfu
         }
     }
 
-    ModuleBase::timer::tick("ModuleIO", "add_HR");
+    ModuleBase::timer::end("ModuleIO", "add_HR");
 }
 
 // for molecule, if vacuum size is small, the number of R of Hs is smaller than SR
@@ -315,7 +316,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                     std::vector<ModuleBase::Vector3<std::complex<double>*>>& velocity_basis_k)
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_basis_k");
-    ModuleBase::timer::tick("ModuleIO", "cal_velocity_basis_k");
+    ModuleBase::timer::start("ModuleIO", "cal_velocity_basis_k");
 #ifdef __MPI
     const int nlocal = PARAM.globalv.nlocal;
     const char N_char = 'N';
@@ -646,7 +647,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     delete[] r_is_h;
     delete[] h_is_ps;
 #endif //__MPI
-    ModuleBase::timer::tick("ModuleIO", "cal_velocity_basis_k");
+    ModuleBase::timer::end("ModuleIO", "cal_velocity_basis_k");
 }
 
 void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
@@ -656,7 +657,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
                                    std::vector<std::array<ModuleBase::ComplexMatrix, 3>>& velocity_k)
 {
     ModuleBase::TITLE("ModuleIO", "cal_velocity_matrix");
-    ModuleBase::timer::tick("ModuleIO", "cal_velocity_matrix");
+    ModuleBase::timer::start("ModuleIO", "cal_velocity_matrix");
 #ifdef __MPI
     const char N_char = 'N';
     const char C_char = 'C';
@@ -744,7 +745,7 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     delete[] vk_c;
     delete[] v_c;
 #endif //__MPI
-    ModuleBase::timer::tick("ModuleIO", "cal_velocity_matrix");
+    ModuleBase::timer::end("ModuleIO", "cal_velocity_matrix");
 }
 template <typename TR>
 void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
@@ -760,7 +761,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                                   std::vector<ModuleBase::Vector3<double>>& current_k)
 {
     ModuleBase::TITLE("ModuleIO", "cal_current_exx");
-    ModuleBase::timer::tick("ModuleIO", "cal_current_exx");
+    ModuleBase::timer::start("ModuleIO", "cal_current_exx");
 
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
@@ -801,6 +802,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
             delete[] velocity_basis_k[ik][i_alpha];
     }
 
+    ModuleBase::timer::end("ModuleIO", "cal_current_exx");
     ModuleBase::TITLE("ModuleIO", "cal_current_exx");
 }
 template <typename TR>
@@ -820,7 +822,7 @@ void ModuleIO::write_current(
 )
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::start("ModuleIO", "write_current");
     double omega = ucell.omega;
 
     std::vector<ModuleBase::Vector3<double>> current_k;
@@ -874,7 +876,7 @@ void ModuleIO::write_current(
         fout.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::end("ModuleIO", "write_current");
 }
 template 
 void ModuleIO::write_current<double>(

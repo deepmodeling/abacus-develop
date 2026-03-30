@@ -28,7 +28,7 @@ void YlmReal::rlylm
     double* rly 	 // output
 )
 {
-	ModuleBase::timer::tick("YlmReal","rlylm");
+	ModuleBase::timer::start("YlmReal","rlylm");
 
 	assert(lmax >= 0);
 
@@ -236,7 +236,7 @@ void YlmReal::rlylm
 		}
 	}
 
-	ModuleBase::timer::tick("YlmReal","rlylm");
+	ModuleBase::timer::end("YlmReal","rlylm");
 	return;
 }
 

@@ -14,7 +14,7 @@ namespace elecstate
 void PotLocal::cal_fixed_v(double *vl_pseudo) // store the local pseudopotential
 {
     ModuleBase::TITLE("PotLocal", "cal_fixed_v");
-    ModuleBase::timer::tick("PotLocal", "cal_fixed_v");
+    ModuleBase::timer::start("PotLocal", "cal_fixed_v");
 
     std::complex<double> *vg = new std::complex<double>[this->rho_basis_->npw];
 
@@ -41,7 +41,7 @@ void PotLocal::cal_fixed_v(double *vl_pseudo) // store the local pseudopotential
     delete[] vg;
 
     // GlobalV::ofs_running <<" set local pseudopotential done." << std::endl;
-    ModuleBase::timer::tick("PotLocal", "cal_fixed_v");
+    ModuleBase::timer::end("PotLocal", "cal_fixed_v");
     return;
 }
 

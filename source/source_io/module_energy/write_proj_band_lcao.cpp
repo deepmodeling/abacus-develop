@@ -19,7 +19,7 @@ void ModuleIO::write_proj_band_lcao(
     hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
 
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -178,7 +178,7 @@ void ModuleIO::write_proj_band_lcao(
     } // is
     ModuleIO::write_orb_info(&ucell);
 
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
 }
 
@@ -192,7 +192,7 @@ void ModuleIO::write_proj_band_lcao(
     hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::start("ModuleIO", "write_proj_band_lcao");
 
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -396,6 +396,6 @@ void ModuleIO::write_proj_band_lcao(
     } // is
     ModuleIO::write_orb_info(&ucell);
 
-    ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
+    ModuleBase::timer::end("ModuleIO", "write_proj_band_lcao");
     return;
 }

@@ -17,7 +17,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     ModuleBase::TITLE("Nonlocal", "cal_force_stress");
 
     // begin the calculation of force and stress
-    ModuleBase::timer::tick("Nonlocal", "cal_force_stress");
+    ModuleBase::timer::start("Nonlocal", "cal_force_stress");
 
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     const int npol = this->ucell->get_npol();
@@ -215,7 +215,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         stress.c[3] = stress.c[1]; // stress(1,0)
     }
 
-    ModuleBase::timer::tick("Nonlocal", "cal_force_stress");
+    ModuleBase::timer::end("Nonlocal", "cal_force_stress");
 }
 
 template <>

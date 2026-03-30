@@ -125,18 +125,18 @@ template <typename TK, typename TR>
 void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("OverlapNew", "initialize_SR");
-    ModuleBase::timer::tick("OverlapNew", "initialize_SR");
+    ModuleBase::timer::start("OverlapNew", "initialize_SR");
 
     populate_atom_pairs(this->SR, this->ucell, GridD, this->orb_cutoff_);
 
-    ModuleBase::timer::tick("OverlapNew", "initialize_SR");
+    ModuleBase::timer::end("OverlapNew", "initialize_SR");
 }
 
 template <typename TK, typename TR>
 void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::calculate_SR()
 {
     ModuleBase::TITLE("Overlap", "calculate_SR");
-    ModuleBase::timer::tick("Overlap", "calculate_SR");
+    ModuleBase::timer::start("Overlap", "calculate_SR");
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -161,7 +161,7 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::calculate_SR()
     {
         this->SR->fix_gamma();
     }
-    ModuleBase::timer::tick("Overlap", "calculate_SR");
+    ModuleBase::timer::end("Overlap", "calculate_SR");
 }
 
 // cal_SR_IJR()
@@ -255,7 +255,7 @@ void hamilt::Overlap<hamilt::OperatorLCAO<double, double>>::contributeHk(int ik)
         return;
     }
     ModuleBase::TITLE("Overlap", "contributeHk");
-    ModuleBase::timer::tick("Overlap", "contributeHk");
+    ModuleBase::timer::start("Overlap", "contributeHk");
     
     //! set SK to zero and then calculate SK for each k vector
     this->hsk->set_zero_sk();
@@ -273,13 +273,13 @@ void hamilt::Overlap<hamilt::OperatorLCAO<double, double>>::contributeHk(int ik)
     // update kvec_d_old
     this->kvec_d_old = this->kvec_d[ik];
 
-    ModuleBase::timer::tick("Overlap", "contributeHk");
+    ModuleBase::timer::end("Overlap", "contributeHk");
 }
 template <typename TK, typename TR>
 void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("Overlap", "contributeHk");
-    ModuleBase::timer::tick("Overlap", "contributeHk");
+    ModuleBase::timer::start("Overlap", "contributeHk");
     
     //! set SK to zero and then calculate SK for each k vector
     this->hsk->set_zero_sk();
@@ -311,7 +311,7 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     // update kvec_d_old
     this->kvec_d_old = this->kvec_d[ik];
 
-    ModuleBase::timer::tick("Overlap", "contributeHk");
+    ModuleBase::timer::end("Overlap", "contributeHk");
 }
 template <typename TK, typename TR>
 TK* hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::getSk()
@@ -335,7 +335,7 @@ hamilt::HContainer<TR>* hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::calculate
                                                                                             const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("OverlapNew", "calculate_SR_async");
-    ModuleBase::timer::tick("OverlapNew", "calculate_SR_async");
+    ModuleBase::timer::start("OverlapNew", "calculate_SR_async");
 
     // Initialize SR_async for Hefei-NAMD asynchronous overlap calculation
     // This is done here to use the exact dtau with velocity shifts
@@ -395,7 +395,7 @@ hamilt::HContainer<TR>* hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::calculate
         SR_async->fix_gamma();
     }
 
-    ModuleBase::timer::tick("OverlapNew", "calculate_SR_async");
+    ModuleBase::timer::end("OverlapNew", "calculate_SR_async");
     return SR_async;
 }
 
@@ -410,7 +410,7 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
     }
 
     ModuleBase::TITLE("OverlapNew", "output_SR_async_csr");
-    ModuleBase::timer::tick("OverlapNew", "output_SR_async_csr");
+    ModuleBase::timer::start("OverlapNew", "output_SR_async_csr");
 
 #ifdef __MPI
     // Gather distributed SR_async to rank 0 for serial output
@@ -457,7 +457,7 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
         ofs.close();
     }
 
-    ModuleBase::timer::tick("OverlapNew", "output_SR_async_csr");
+    ModuleBase::timer::end("OverlapNew", "output_SR_async_csr");
 }
 
 // Include force/stress implementation

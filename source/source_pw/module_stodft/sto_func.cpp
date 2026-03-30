@@ -21,7 +21,7 @@ void Sto_Func<REAL>::set_E_range(REAL* Emin_in, REAL* Emax_in)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::root_fd(REAL e)
+REAL Sto_Func<REAL>::root_fd(REAL e) const
 {
     REAL e_mu = (e - mu) / this->tem;
     if (e_mu > 72) {
@@ -32,7 +32,7 @@ REAL Sto_Func<REAL>::root_fd(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nroot_fd(REAL e)
+REAL Sto_Func<REAL>::nroot_fd(REAL e) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -45,7 +45,7 @@ REAL Sto_Func<REAL>::nroot_fd(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::fd(REAL e)
+REAL Sto_Func<REAL>::fd(REAL e) const
 {
     REAL e_mu = (e - mu) / this->tem;
     if (e_mu > 36) {
@@ -56,7 +56,7 @@ REAL Sto_Func<REAL>::fd(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nfd(REAL e)
+REAL Sto_Func<REAL>::nfd(REAL e) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -69,7 +69,7 @@ REAL Sto_Func<REAL>::nfd(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nxfd(REAL rawe)
+REAL Sto_Func<REAL>::nxfd(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -83,7 +83,7 @@ REAL Sto_Func<REAL>::nxfd(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::fdlnfd(REAL e)
+REAL Sto_Func<REAL>::fdlnfd(REAL e) const
 {
     REAL e_mu = (e - mu) / this->tem;
     if (e_mu > 36) {
@@ -102,7 +102,7 @@ REAL Sto_Func<REAL>::fdlnfd(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nfdlnfd(REAL rawe)
+REAL Sto_Func<REAL>::nfdlnfd(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -123,7 +123,7 @@ REAL Sto_Func<REAL>::nfdlnfd(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::n_root_fdlnfd(REAL rawe)
+REAL Sto_Func<REAL>::n_root_fdlnfd(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -144,7 +144,7 @@ REAL Sto_Func<REAL>::n_root_fdlnfd(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nroot_mfd(REAL rawe)
+REAL Sto_Func<REAL>::nroot_mfd(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -157,7 +157,7 @@ REAL Sto_Func<REAL>::nroot_mfd(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::ncos(REAL rawe)
+REAL Sto_Func<REAL>::ncos(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -166,7 +166,7 @@ REAL Sto_Func<REAL>::ncos(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nsin(REAL rawe)
+REAL Sto_Func<REAL>::nsin(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -175,7 +175,7 @@ REAL Sto_Func<REAL>::nsin(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::n_sin(REAL rawe)
+REAL Sto_Func<REAL>::n_sin(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -184,7 +184,7 @@ REAL Sto_Func<REAL>::n_sin(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::gauss(REAL e)
+REAL Sto_Func<REAL>::gauss(REAL e) const
 {
     REAL a = pow((targ_e - e), 2) / 2.0 / pow(sigma, 2);
     if (a > 72) {
@@ -195,7 +195,7 @@ REAL Sto_Func<REAL>::gauss(REAL e)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::ngauss(REAL rawe)
+REAL Sto_Func<REAL>::ngauss(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;
@@ -209,7 +209,7 @@ REAL Sto_Func<REAL>::ngauss(REAL rawe)
 }
 
 template <typename REAL>
-REAL Sto_Func<REAL>::nroot_gauss(REAL rawe)
+REAL Sto_Func<REAL>::nroot_gauss(REAL rawe) const
 {
     REAL Ebar = (*Emin + *Emax) / 2;
     REAL DeltaE = (*Emax - *Emin) / 2;

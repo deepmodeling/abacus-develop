@@ -27,7 +27,7 @@ ESolver_GetS::~ESolver_GetS()
 void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_GetS", "before_all_runners");
-    ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
+    ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
@@ -69,13 +69,13 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
                                  two_center_bundle_,
                                  orb_);
 
-    ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
+    ModuleBase::timer::end("ESolver_GetS", "before_all_runners");
 }
 
 void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
-    ModuleBase::timer::tick("ESolver_GetS", "runner");
+    ModuleBase::timer::start("ESolver_GetS", "runner");
 
     // (1) Find adjacent atoms for each atom.
     double search_radius = -1.0;
@@ -152,7 +152,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              kv);
     }
 
-    ModuleBase::timer::tick("ESolver_GetS", "runner");
+    ModuleBase::timer::end("ESolver_GetS", "runner");
 }
 
 void ESolver_GetS::after_all_runners(UnitCell& ucell) {};

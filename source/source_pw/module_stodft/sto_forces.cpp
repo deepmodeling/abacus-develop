@@ -29,7 +29,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
                                               const psi::Psi<std::complex<FPTYPE>, Device>& psi,
                                               const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
-    ModuleBase::timer::tick("Sto_Forces", "cal_force");
+    ModuleBase::timer::start("Sto_Forces", "cal_force");
     ModuleBase::TITLE("Sto_Forces", "init");
     this->device = base_device::get_device_type(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
@@ -181,7 +181,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
-    ModuleBase::timer::tick("Sto_Forces", "cal_force");
+    ModuleBase::timer::end("Sto_Forces", "cal_force");
     return;
 }
 
@@ -204,7 +204,7 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         return;
     }
 
-    ModuleBase::timer::tick("Sto_Forces", "cal_force_nl");
+    ModuleBase::timer::start("Sto_Forces", "cal_force_nl");
 
     const int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
@@ -255,7 +255,7 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 
     
-    ModuleBase::timer::tick("Sto_Forces", "cal_force_nl");
+    ModuleBase::timer::end("Sto_Forces", "cal_force_nl");
     return;
 }
 

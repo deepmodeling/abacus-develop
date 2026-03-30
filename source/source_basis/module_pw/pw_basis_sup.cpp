@@ -15,7 +15,7 @@ PW_Basis_Sup::~PW_Basis_Sup()
 ///
 void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
 {
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g(pw_rho);
     this->getstartgr();
@@ -47,7 +47,7 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
                           this->xprime);
     }
     this->fft_bundle.setupFFT();
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
 ///
@@ -57,13 +57,13 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
 ///
 void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
 {
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    ModuleBase::timer::start(this->classname, "distributeg");
     this->distribution_method3(pw_rho);
     ModuleBase::CHECK_WARNING_QUIT((this->npw == 0),
                                    "pw_distributeg.cpp",
                                    PARAM.inp.calculation,
                                    "Current core has no plane waves! Please reduce the cores.");
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    ModuleBase::timer::end(this->classname, "distributeg");
     return;
 }
 

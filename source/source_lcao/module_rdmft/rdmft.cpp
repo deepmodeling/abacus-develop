@@ -408,7 +408,7 @@ template <typename TK, typename TR>
 double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
     ModuleBase::TITLE("RDMFT", "E_Egradient");
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::start("RDMFT", "E_Egradient");
 
     // this->cal_V_hartree();
     // this->cal_V_XC();
@@ -423,7 +423,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
 
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::end("RDMFT", "E_Egradient");
     // return E_RDMFT[3];
     return Etotal;
 }

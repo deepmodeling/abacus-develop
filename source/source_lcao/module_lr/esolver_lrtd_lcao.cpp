@@ -414,7 +414,7 @@ template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_LR", "runner");
-    ModuleBase::timer::tick("ESolver_LR", "runner");
+    ModuleBase::timer::start("ESolver_LR", "runner");
     //allocate 2-particle state and setup 2d division
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
@@ -517,7 +517,7 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
             for (int is = 0;is < nspin;++is) { read_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_band, nstates); }
         }
     }
-    ModuleBase::timer::tick("ESolver_LR", "runner");
+    ModuleBase::timer::end("ESolver_LR", "runner");
     return;
 }
 

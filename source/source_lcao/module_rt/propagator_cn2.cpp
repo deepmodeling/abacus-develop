@@ -388,10 +388,10 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
 
     // 5. QR Factorization of A (Denominator)
     int64_t tau_size = m_global + nb;
-    void* d_tau;
+    void* d_tau = nullptr;
     cudaMallocAsync(&d_tau, tau_size * sizeof(std::complex<double>), cublas_res.stream);
 
-    int* d_info;
+    int* d_info = nullptr;
     cudaMallocAsync(&d_info, sizeof(int), cublas_res.stream);
     cudaMemsetAsync(d_info, 0, sizeof(int), cublas_res.stream);
 

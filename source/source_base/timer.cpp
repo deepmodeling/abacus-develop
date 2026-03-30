@@ -10,6 +10,7 @@
 #endif
 
 #include <vector>
+#include <stdexcept>
 
 #include "chrono"
 #include "source_base/formatter.h"
@@ -29,12 +30,12 @@ bool timer::disabled = false;
 size_t timer::n_now = 0;
 std::map<std::string,std::map<std::string,timer::Timer_One>> timer::timer_pool;
 
-void timer::finish(std::ofstream &ofs,const bool print_flag)
+void timer::finish(std::ofstream &ofs, const bool print_flag, const bool check_end)
 {
-	timer::tick("","total");
-	if(print_flag) {
-		print_all( ofs );
-}
+	if(!timer_pool[""]["total"].start_flag)
+		{ timer::end("","total"); }
+	if(print_flag)
+		{ print_all( ofs, check_end ); }
 }
 
 //----------------------------------------------------------
@@ -43,7 +44,8 @@ void timer::finish(std::ofstream &ofs,const bool print_flag)
 void timer::start()
 {
 	// first init ,then we can use tick
-	timer::tick("","total");
+	if(timer_pool[""]["total"].start_flag)
+		{ timer::start("","total"); }
 }
 
 double timer::cpu_time()
@@ -59,20 +61,20 @@ double timer::cpu_time()
 	return double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
 }
 
-void timer::tick(const std::string &class_name,const std::string &name)
+void timer::start(const std::string &class_name,const std::string &name)
 {
 //----------------------------------------------------------
 // EXPLAIN : if timer is disabled , return
 //----------------------------------------------------------
-	if (disabled) {
-		return;
-}
+	if (disabled)
+		{ return; }
 
-#ifdef _OPENMP
-	if(!omp_get_thread_num())
-#endif
-	{
-		Timer_One &timer_one = timer_pool[class_name][name];
+  #ifdef _OPENMP
+	if(omp_get_thread_num())
+		{ return; }
+  #endif
+
+	Timer_One &timer_one = timer_pool[class_name][name];
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -84,55 +86,74 @@ void timer::tick(const std::string &class_name,const std::string &name)
 // if start_flag == false, means it's the end of this counting,
 // so we add the time during this two 'time point'  to the clock time storage.
 //----------------------------------------------------------
-		if(timer_one.start_flag)
-		{
-#ifdef __MPI
-			int is_initialized = 0;
-    		MPI_Initialized(&is_initialized);
-			if(is_initialized)
-			{
-				timer_one.cpu_start = MPI_Wtime();
-			}
-#else
-			timer_one.cpu_start = cpu_time();
-#endif
-			++timer_one.calls;
-			timer_one.start_flag = false;
-#if defined(__CUDA) && defined(__USE_NVTX)
-            if (PARAM.inp.timer_enable_nvtx){
-                std::string label = class_name + ":" + name;
-                nvtxRangePushA(label.data());
-            }
-#endif
-		}
-		else
-		{
-#ifdef __MPI
-			int is_initialized = 0;
-    		MPI_Initialized(&is_initialized);
-			if(is_initialized)
-			{
-				timer_one.cpu_second += MPI_Wtime() - timer_one.cpu_start;
-			}
-#else
-			timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
-#endif
-			timer_one.start_flag = true;
-#if defined(__CUDA) && defined(__USE_NVTX)
-            if (PARAM.inp.timer_enable_nvtx){
-                nvtxRangePop();
-            }
-#endif
-		}
-	} // end if(!omp_get_thread_num())
+	if(!timer_one.start_flag)
+		{ throw std::runtime_error("timer::start " + class_name + "::" + name); }
+  #ifdef __MPI
+	int is_initialized = 0;
+	MPI_Initialized(&is_initialized);
+	if(is_initialized)
+		{ timer_one.cpu_start = MPI_Wtime(); }
+  #else
+	timer_one.cpu_start = cpu_time();
+  #endif
+	++timer_one.calls;
+	timer_one.start_flag = false;
+  #if defined(__CUDA) && defined(__USE_NVTX)
+    if (PARAM.inp.timer_enable_nvtx){
+        std::string label = class_name + ":" + name;
+        nvtxRangePushA(label.data());
+    }
+  #endif
+}
+
+void timer::end(const std::string &class_name,const std::string &name)
+{
+//----------------------------------------------------------
+// EXPLAIN : if timer is disabled , return
+//----------------------------------------------------------
+	if (disabled)
+		{ return; }
+
+  #ifdef _OPENMP
+	if(omp_get_thread_num())
+		{ return; }
+  #endif
+
+	Timer_One &timer_one = timer_pool[class_name][name];
+
+//----------------------------------------------------------
+// CALL MEMBER FUNCTION :
+// NAME : cpu_time
+//
+// EXPLAIN :
+// if start_flag == true,means a new clock counting begin,
+// hence we record the start time of this clock counting.
+// if start_flag == false, means it's the end of this counting,
+// so we add the time during this two 'time point'  to the clock time storage.
+//----------------------------------------------------------
+	if(timer_one.start_flag)
+		{ throw std::runtime_error("timer::end " + class_name + "::" + name); }
+  #ifdef __MPI
+	int is_initialized = 0;
+	MPI_Initialized(&is_initialized);
+	if(is_initialized)
+		{ timer_one.cpu_second += MPI_Wtime() - timer_one.cpu_start; }
+  #else
+	timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
+  #endif
+	timer_one.start_flag = true;
+  #if defined(__CUDA) && defined(__USE_NVTX)
+    if (PARAM.inp.timer_enable_nvtx)
+        { nvtxRangePop(); }
+  #endif
 }
 
 long double timer::print_until_now()
 {
-	// stop the clock
-	timer::tick("","total");
+	if(!timer_pool[""]["total"].start_flag)
+		timer::end("","total");
 	// start again
-	timer::tick("","total");
+	timer::start("","total");
 	return timer_pool[""]["total"].cpu_second;
 }
 
@@ -243,7 +264,7 @@ void timer::write_to_json(std::string file_name)
 	ofs.close();
 }
 
-void timer::print_all(std::ofstream &ofs)
+void timer::print_all(std::ofstream &ofs, const bool check_end)
 {
 	constexpr double small = 0.1; // cpu = 10^6
 	// if want to print > 1s , set small = 10^6
@@ -255,7 +276,9 @@ void timer::print_all(std::ofstream &ofs)
 		for(auto &timer_pool_B : timer_pool_A.second)
 		{
 			const std::string name = timer_pool_B.first;
-			const Timer_One timer_one = timer_pool_B.second;
+			const Timer_One &timer_one = timer_pool_B.second;
+			if(check_end && !timer_one.start_flag)
+				{ throw std::runtime_error("timer::print_all " + class_name + "::" + name); }
 			if(timer_pool_order.size() < timer_one.order+1)
 			{
 				timer_pool_order.resize(timer_one.order+1);

@@ -160,7 +160,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
                                   const int& my_rank)     // mohan add 2021-04-26
 {
     ModuleBase::TITLE("LCAO_Orbitals", "Read_Orbitals");
-    ModuleBase::timer::tick("LCAO_Orbitals", "Read_Orbitals");
+    ModuleBase::timer::start("LCAO_Orbitals", "Read_Orbitals");
 
     ofs_in << "\n\n\n\n";
     ofs_in << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -266,7 +266,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
         this->Read_Descriptor(ofs_in, force_flag, my_rank);
     }
 
-    ModuleBase::timer::tick("LCAO_Orbitals", "Read_Orbitals");
+    ModuleBase::timer::end("LCAO_Orbitals", "Read_Orbitals");
     return;
 }
 
@@ -466,10 +466,10 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
         {
             ofs_in << " " << std::setw(12) << count + 1 << std::setw(3) << L << std::setw(3) << N;
 
-            double* radial; // radial mesh
-            double* psi;    // radial local orbital
+            double* radial = nullptr; // radial mesh
+            double* psi = nullptr;    // radial local orbital
             double* psir;   // psi * r
-            double* rab;    // dr
+            double* rab = nullptr;    // dr
 
             // set the number of mesh and the interval distance.
             ofs_in << std::setw(8) << meshr << std::setw(8) << dr;

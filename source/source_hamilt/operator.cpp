@@ -96,7 +96,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
 		}
     };
 
-    ModuleBase::timer::tick("Operator", "hPsi");
+    ModuleBase::timer::start("Operator", "hPsi");
 
     call_act(this, true); // first node
 
@@ -108,7 +108,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         node = (Operator*)(node->next_op);
     }
 
-    ModuleBase::timer::tick("Operator", "hPsi");
+    ModuleBase::timer::end("Operator", "hPsi");
 
     return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->get_npol()), hpsi_pointer);
 }

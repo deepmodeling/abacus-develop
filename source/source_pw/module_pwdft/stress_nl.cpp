@@ -26,7 +26,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     {
         return;
     }
-    ModuleBase::timer::tick("Stress", "stress_nl");
+    ModuleBase::timer::start("Stress", "stress_nl");
 
     FPTYPE* stress_device = nullptr;
     resmem_var_op()(stress_device, 9);
@@ -97,7 +97,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         p_symm->symmetrize_mat3(sigma, ucell_in.lat);
     } // end symmetry
 
-    ModuleBase::timer::tick("Stress", "stress_nl");
+    ModuleBase::timer::end("Stress", "stress_nl");
 }
 
 template <typename FPTYPE, typename Device>
@@ -237,7 +237,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix& vkb,
 	{
 		ModuleBase::TITLE("Stress", "get_dvnl2");
 	}
-    //	ModuleBase::timer::tick("Stress","get_dvnl2");
+    //	ModuleBase::timer::start("Stress","get_dvnl2");
     const int npw = wfc_basis->npwk[ik];
     const int lmaxkb = nlpp->lmaxkb;
     if (lmaxkb < 0)

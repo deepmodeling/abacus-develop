@@ -9,11 +9,11 @@ namespace ModuleGint
 void Gint_fvl::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_fvl");
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::start("Gint", "cal_gint_fvl");
     init_dm_gint_();
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::end("Gint", "cal_gint_fvl");
 }
 
 void Gint_fvl::init_dm_gint_()

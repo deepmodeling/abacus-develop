@@ -38,7 +38,7 @@ void pseudo::check_betar()
 	}
 }
 
-void pseudo::print_pseudo(std::ofstream& ofs)
+void pseudo::print_pseudo(std::ofstream& ofs) const
 {
 	print_pseudo_vl(ofs);
 	ofs << "\n pseudo : ";
@@ -50,7 +50,7 @@ void pseudo::print_pseudo(std::ofstream& ofs)
 	ofs << "\n ----------------------";
 }
 
-void pseudo::print_pseudo_atom(std::ofstream &ofs)
+void pseudo::print_pseudo_atom(std::ofstream& ofs) const
 {
 	print_pseudo_h(ofs);
 	ofs << "\n pseudo_atom : ";
@@ -66,7 +66,7 @@ void pseudo::print_pseudo_atom(std::ofstream &ofs)
 }
 
 
-void pseudo::print_pseudo_vl(std::ofstream &ofs)
+void pseudo::print_pseudo_vl(std::ofstream& ofs) const
 {
 	ofs << "\n pseudo_vl:";
 	print_pseudo_atom(ofs);
@@ -74,7 +74,7 @@ void pseudo::print_pseudo_vl(std::ofstream &ofs)
 	ofs << "\n ----------------------------------- ";
 }
 
-void pseudo::print_pseudo_h(std::ofstream &ofs)
+void pseudo::print_pseudo_h(std::ofstream& ofs) const
 {
     ofs << "\n pseudo_info :";
     ofs << "\n nv       " << nv;

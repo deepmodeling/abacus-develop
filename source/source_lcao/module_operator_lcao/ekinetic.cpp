@@ -47,7 +47,7 @@ template <typename TK, typename TR>
 void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("EKinetic", "initialize_HR");
-    ModuleBase::timer::tick("EKinetic", "initialize_HR");
+    ModuleBase::timer::start("EKinetic", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -96,7 +96,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("EKinetic", "initialize_HR");
+    ModuleBase::timer::end("EKinetic", "initialize_HR");
 }
 
 template <typename TK, typename TR>
@@ -109,7 +109,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         // This is not an error, just means there are no atom pairs to calculate
         return;
     }
-    ModuleBase::timer::tick("EKinetic", "calculate_HR");
+    ModuleBase::timer::start("EKinetic", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
@@ -142,7 +142,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
     }
 
-    ModuleBase::timer::tick("EKinetic", "calculate_HR");
+    ModuleBase::timer::end("EKinetic", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -227,7 +227,7 @@ template <typename TK, typename TR>
 void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("EKinetic", "contributeHR");
-    ModuleBase::timer::tick("EKinetic", "contributeHR");
+    ModuleBase::timer::start("EKinetic", "contributeHR");
 
     if (!this->HR_fixed_done)
     {
@@ -254,7 +254,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->hR->add(*(this->HR_fixed));
     }
 
-    ModuleBase::timer::tick("EKinetic", "contributeHR");
+    ModuleBase::timer::end("EKinetic", "contributeHR");
     return;
 }
 

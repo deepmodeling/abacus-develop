@@ -9,6 +9,8 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 
+#include <limits>
+
 void ModuleIO::read_wfc_pw(const std::string& filename,
 		const ModulePW::PW_Basis_K* pw_wfc,
 		const int rank_in_pool,
@@ -21,7 +23,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
 		ModuleBase::ComplexMatrix& wfc)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_pw");
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
+    ModuleBase::timer::start("ModuleIO", "read_wfc_pw");
 
     Binstream rfs;
     std::ifstream ifs;
@@ -195,9 +197,18 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
             rfs >> size;
         }
 
+        const size_t nxyz_sz = static_cast<size_t>(nx) * static_cast<size_t>(ny) * static_cast<size_t>(nz);
+        if (nx <= 0 || ny <= 0 || nz <= 0
+            || nxyz_sz > static_cast<size_t>(std::numeric_limits<int>::max()))
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_pw",
+                                     "Invalid FFT grid or nx*ny*nz overflow for glo_order allocation.");
+        }
+        const int nxyz = static_cast<int>(nxyz_sz);
+
         // map global index to read ordering for plane waves
-        glo_order = new int[nx * ny * nz];
-        for (int i = 0; i < nx * ny * nz; i++)
+        glo_order = new int[nxyz];
+        for (int i = 0; i < nxyz; i++)
         {
             glo_order[i] = -1;
         }
@@ -337,6 +348,6 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         ifs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
+    ModuleBase::timer::end("ModuleIO", "read_wfc_pw");
     return;
 }

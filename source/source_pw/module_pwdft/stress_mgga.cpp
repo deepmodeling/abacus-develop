@@ -22,7 +22,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
 		ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
 	}
 
-    ModuleBase::timer::tick("Stress", "stress_mgga");
+    ModuleBase::timer::start("Stress", "stress_mgga");
 
     int current_spin = 0;
     const int nrxx = wfc_basis->nrxx;
@@ -130,7 +130,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
             sigma(i, j) += sigma_mgga[i][j] / wfc_basis->nxyz;
         }
     }
-    ModuleBase::timer::tick("Stress", "stress_mgga");
+    ModuleBase::timer::end("Stress", "stress_mgga");
     return;
 }
 

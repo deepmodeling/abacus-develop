@@ -188,12 +188,13 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_pdm");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::start("DeePKS_domain", "cal_pdm");
 
     // if pdm has been initialized, skip the calculation
     if (init_pdm)
     {
         init_pdm = false;
+        ModuleBase::timer::end("DeePKS_domain", "cal_pdm");
         return;
     }
 
@@ -448,7 +449,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
         Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);
     }
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::end("DeePKS_domain", "cal_pdm");
     return;
 }
 

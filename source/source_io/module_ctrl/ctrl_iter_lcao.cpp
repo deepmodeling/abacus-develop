@@ -29,7 +29,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		const double &scf_ene_thr)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_iter_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
 
     // save charge density
     // Peize Lin add 2020.04.04
@@ -74,7 +74,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 #endif
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_iter_lcao");
+    ModuleBase::timer::end("ModuleIO", "ctrl_iter_lcao");
 }
 
 // TK: double  TR: double 

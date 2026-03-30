@@ -171,7 +171,7 @@ void Write_MLKEDF_Descriptors::generate_descriptor(
 
     // p
     this->cal_tool->getP(prho, pw_rho, nablaRho, container);
-    npy::SaveArrayAsNumpy("p.npy", false, 1, cshape, container);
+    npy::SaveArrayAsNumpy(out_dir + "/p.npy", false, 1, cshape, container);
 
     for (int ik = 0; ik < this->cal_tool->nkernel; ++ik)
     {

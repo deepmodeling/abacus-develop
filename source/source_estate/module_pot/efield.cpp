@@ -37,7 +37,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
                                       const surchem& solvent)
 {
     ModuleBase::TITLE("Efield", "add_efield");
-    ModuleBase::timer::tick("Efield", "add_efield");
+    ModuleBase::timer::start("Efield", "add_efield");
 
     // set the parameters
     if (efield_pos_max == -1 || efield_pos_dec == -1)
@@ -132,7 +132,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
 
     double fac = ModuleBase::e2 * (efield_amp - tot_dipole) * cell.lat0 / bmod;
 
-    ModuleBase::timer::tick("Efield", "add_efield");
+    ModuleBase::timer::end("Efield", "add_efield");
     return v * fac;
 }
 

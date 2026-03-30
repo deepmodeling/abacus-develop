@@ -62,19 +62,21 @@ void zgemm_mt_(const char* transa,
                int cluster_id);
 
 void cgemm_mt_(const char* transa,
-               const char* transb,
-               const int* m,
-               const int* n,
-               const int* k,
-               const std::complex<float>* alpha,
-               const std::complex<float>* a,
-               const int* lda,
-               const std::complex<float>* b,
-               const int* ldb,
-               const std::complex<float>* beta,
-               std::complex<float>* c,
-               const int* ldc,
-               int cluster_id);
+                const char* transb,
+                const int* m,
+                const int* n,
+                const int* k,
+                const std::complex<float>* alpha,
+                const std::complex<float>* a,
+                const int* lda,
+                const std::complex<float>* b,
+                const int* ldb,
+                const std::complex<float>* beta,
+                std::complex<float>* c,
+                const int* ldc,
+                int cluster_id);
+
+
 
 void sgemv_mt_(const char* transa,
                const int* m,
@@ -173,6 +175,21 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id);
 
+void zgemm_pack_mth_(const char* transa,
+                     const char* transb,
+                     const int* m,
+                     const int* n,
+                     const int* k,
+                     const std::complex<double>* alpha,
+                     const std::complex<double>* a,
+                     const int* lda,
+                     const std::complex<double>* b,
+                     const int* ldb,
+                     const std::complex<double>* beta,
+                     std::complex<double>* c,
+                     const int* ldc,
+                     int cluster_id);
+
 void cgemm_mth_(const char* transa,
                 const char* transb,
                 const int* m,
@@ -187,6 +204,21 @@ void cgemm_mth_(const char* transa,
                 std::complex<float>* c,
                 const int* ldc,
                 int cluster_id);
+
+void cgemm_pack_mth_(const char* transa,
+                    const char* transb,
+                    const int* m,
+                    const int* n,
+                    const int* k,
+                    const std::complex<float>* alpha,
+                    const std::complex<float>* a,
+                    const int* lda,
+                    const std::complex<float>* b,
+                    const int* ldb,
+                    const std::complex<float>* beta,
+                    std::complex<float>* c,
+                    const int* ldc,
+                    int cluster_id);
 
 void sgemv_mth_(const char* transa,
                 const int* m,

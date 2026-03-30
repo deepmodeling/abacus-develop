@@ -223,7 +223,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik, const int
                                                         const UnitCell& ucell) const
 {
     ModuleBase::TITLE("Numerical_Basis", "cal_overlap_Q");
-    ModuleBase::timer::tick("Numerical_Basis", "cal_overlap_Q");
+    ModuleBase::timer::start("Numerical_Basis", "cal_overlap_Q");
 
     GlobalV::ofs_running << " OUTPUT THE OVERLAP BETWEEN SPHERICAL BESSEL FUNCTIONS AND BLOCH WAVE FUNCTIONS"
                          << std::endl;
@@ -291,7 +291,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik, const int
         }
     }
 
-    ModuleBase::timer::tick("Numerical_Basis", "cal_overlap_Q");
+    ModuleBase::timer::end("Numerical_Basis", "cal_overlap_Q");
     return overlap_Q;
 }
 
@@ -300,7 +300,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
                                                          const UnitCell& ucell) const
 {
     ModuleBase::TITLE("Numerical_Basis", "cal_overlap_Sq");
-    ModuleBase::timer::tick("Numerical_Basis", "cal_overlap_Sq");
+    ModuleBase::timer::start("Numerical_Basis", "cal_overlap_Sq");
 
     GlobalV::ofs_running << " OUTPUT THE OVERLAP BETWEEN SPHERICAL BESSEL FUNCTIONS" << std::endl;
     GlobalV::ofs_running << " S = < J_mu,q1 | J_nu,q2 >" << std::endl;
@@ -411,7 +411,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik, const in
         }
     }
 
-    ModuleBase::timer::tick("Numerical_Basis", "cal_overlap_Sq");
+    ModuleBase::timer::end("Numerical_Basis", "cal_overlap_Sq");
     return overlap_Sq;
 }
 

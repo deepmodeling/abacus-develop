@@ -138,7 +138,7 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
-    ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
+    ModuleBase::timer::start("ESolver_KS_PW", "before_scf");
 
     ESolver_KS::before_scf(ucell, istep);
 
@@ -172,7 +172,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), PARAM.inp);
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
+    ModuleBase::timer::end("ESolver_KS_PW", "before_scf");
 }
 
 template <typename T, typename Device>
@@ -195,7 +195,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
+    ModuleBase::timer::start("ESolver_KS_PW", "hamilt2rho_single");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -231,7 +231,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     // symmetrize the charge density
     Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
+    ModuleBase::timer::end("ESolver_KS_PW", "hamilt2rho_single");
 }
 
 
@@ -274,7 +274,7 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
-    ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
+    ModuleBase::timer::start("ESolver_KS_PW", "after_scf");
 
     // Calculate kinetic energy density tau for ELF if needed
     if (PARAM.inp.out_elf[0] > 0)
@@ -289,7 +289,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
               this->pw_rho, this->pw_rhod, this->pw_big, this->stp,
               this->Pgrid, PARAM.inp);
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
+    ModuleBase::timer::end("ESolver_KS_PW", "after_scf");
 }
 
 template <typename T, typename Device>

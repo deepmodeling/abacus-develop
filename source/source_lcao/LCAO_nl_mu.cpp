@@ -19,7 +19,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("LCAO_domain", "vnl_mu_new");
-    ModuleBase::timer::tick("LCAO_domain", "vnl_mu_new");
+    ModuleBase::timer::start("LCAO_domain", "vnl_mu_new");
 
     const int nspin = PARAM.inp.nspin;
     const int npol = PARAM.globalv.npol;
@@ -578,7 +578,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
         }
     }
 
-    ModuleBase::timer::tick("LCAO_domain", "vnl_mu_new");
+    ModuleBase::timer::end("LCAO_domain", "vnl_mu_new");
     return;
 }
 

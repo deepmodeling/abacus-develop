@@ -172,7 +172,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                               const std::complex<lowTYPE>& factor,
                                               const int bandinfo[6])
 {
-    ModuleBase::timer::tick("Sto_EleCond", "cal_jmatrix");
+    ModuleBase::timer::start("Sto_EleCond", "cal_jmatrix");
     const std::complex<lowTYPE> float_factor = factor;
     const std::complex<lowTYPE> conjfactor = std::conj(float_factor);
     const lowTYPE mu = static_cast<lowTYPE>(this->p_elec->eferm.ef);
@@ -468,7 +468,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
         Parallel_Common::reduce_data(j2, ndim * dim_jmatrix, POOL_WORLD);
     }
 #endif
-    ModuleBase::timer::tick("Sto_EleCond", "cal_jmatrix");
+    ModuleBase::timer::end("Sto_EleCond", "cal_jmatrix");
 
     return;
 }
@@ -483,7 +483,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                                       const int& npart_sto)
 {
     ModuleBase::TITLE("Sto_EleCond", "sKG");
-    ModuleBase::timer::tick("Sto_EleCond", "sKG");
+    ModuleBase::timer::start("Sto_EleCond", "sKG");
     std::cout << "Calculating conductivity...." << std::endl;
     // if (PARAM.inp.bndpar > 1)
     // {
@@ -613,7 +613,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
     }
 
     // ik loop
-    ModuleBase::timer::tick("Sto_EleCond", "kloop");
+    ModuleBase::timer::start("Sto_EleCond", "kloop");
     hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
     hamilt::Velocity<lowTYPE, Device> low_velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
     for (int ik = 0; ik < nk; ++ik)
@@ -854,7 +854,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
 
             // time evolution exp(-iHt)|\psi_ks>
             // KS
-            ModuleBase::timer::tick("Sto_EleCond", "evolution");
+            ModuleBase::timer::start("Sto_EleCond", "evolution");
             for (int ib = 0; ib < perbands_ks; ++ib)
             {
                 double eigen = en[ib];
@@ -961,7 +961,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                                                         stoexpmtsmfchi,
                                                         inc);
             }
-            ModuleBase::timer::tick("Sto_EleCond", "evolution");
+            ModuleBase::timer::end("Sto_EleCond", "evolution");
 
             // calculate i<\psi|sqrt(f) exp(-iHt/2)*J*exp(iHt/2) sqrt(1-f)|\psi>^+
             //         = i<\psi|sqrt(1-f) exp(-iHt/2)*J*exp(iHt/2) sqrt(f)|\psi>
@@ -1028,7 +1028,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
             // Re(i<psi|sqrt(f)j(1-f) exp(iHt)|psi><psi|j exp(-iHt)\sqrt(f)|psi>)
             // Im(l_ij*r_ji) = Re(-il_ij * r_ji) = Re( ((il)^+_ji)^* * r_ji)=Re(((il)^+_i)^* * r^+_i)
             // ddot_real = real(A_i^* * B_i)
-            ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
+            ModuleBase::timer::start("Sto_EleCond", "ddot_real");
             ct11[it] += static_cast<double>(ModuleBase::dot_real_op<lcomplex, Device>()(num_per,
                                                                                         j1l.data<lcomplex>() + st_per,
                                                                                         j1r.data<lcomplex>() + st_per,
@@ -1053,11 +1053,11 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                                                                                         j2r.data<lcomplex>() + st_per,
                                                                                         false)
                                             * this->p_kv->wk[ik] / 2.0);
-            ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
+            ModuleBase::timer::end("Sto_EleCond", "ddot_real");
         }
         std::cout << std::endl;
     } // ik loop
-    ModuleBase::timer::tick("Sto_EleCond", "kloop");
+    ModuleBase::timer::end("Sto_EleCond", "kloop");
 #ifdef __MPI
     Parallel_Reduce::reduce_all(ct11.data(), nt);
     Parallel_Reduce::reduce_all(ct12.data(), nt);
@@ -1071,7 +1071,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
     {
         this->calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11.data(), ct12.data(), ct22.data());
     }
-    ModuleBase::timer::tick("Sto_EleCond", "sKG");
+    ModuleBase::timer::end("Sto_EleCond", "sKG");
 }
 
 template class Sto_EleCond<double, base_device::DEVICE_CPU>;

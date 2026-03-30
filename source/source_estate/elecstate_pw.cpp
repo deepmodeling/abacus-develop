@@ -110,7 +110,7 @@ template<typename T, typename Device>
 void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::start("ElecStatePW", "psiToRho");
 
     this->init_rho_data();
 
@@ -150,7 +150,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
     }
     this->parallelK();
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::end("ElecStatePW", "psiToRho");
 }
 
 template<typename T, typename Device>

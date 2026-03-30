@@ -279,7 +279,7 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
 {
     ModuleBase::TITLE("Lattice_Change_CG", "setup_cg_grad");
     assert(Lattice_Change_Basic::stress_step > 0);
-    double gamma;
+    double gamma = 0.0;
     double cg0_cg, cg0_cg0, cg0_g;
 
     if (ncggrad % 10000 == 0 || flag == 2)

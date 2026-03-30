@@ -35,7 +35,7 @@ class Gint_rho : public Gint
     const bool is_dm_symm_;
 
     // output
-    double **rho_;
+    double ** rho_ = nullptr;
 
     // Intermediate variables
     std::vector<HContainer<double>> dm_gint_vec_;

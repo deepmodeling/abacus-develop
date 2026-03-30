@@ -132,7 +132,7 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k");
-    ModuleBase::timer::tick("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::start("Plus_U", "folding_matrix_k");
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr = nullptr;
@@ -273,7 +273,7 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
             } // ad
         } // I1
     } // T1
-    ModuleBase::timer::tick("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::end("Plus_U", "folding_matrix_k");
 
     return;
 }
@@ -282,7 +282,7 @@ void Plus_U::folding_matrix_k_new(const int ik,
     hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k_new");
-    ModuleBase::timer::tick("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::start("Plus_U", "folding_matrix_k_new");
 
     int hk_type = 0;
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -310,7 +310,7 @@ void Plus_U::folding_matrix_k_new(const int ik,
         }
     }
 
-    ModuleBase::timer::tick("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::end("Plus_U", "folding_matrix_k_new");
 }
 
 #endif // __LCAO

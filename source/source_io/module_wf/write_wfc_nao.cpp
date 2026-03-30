@@ -24,7 +24,7 @@ void wfc_nao_write2file(const std::string& name,
                         const bool& append_flag)
 {
     ModuleBase::TITLE("ModuleIO", "wfc_nao_write2file");
-    ModuleBase::timer::tick("ModuleIO", "wfc_nao_write2file");
+    ModuleBase::timer::start("ModuleIO", "wfc_nao_write2file");
 
     int nbands = ekb.nc;
 
@@ -100,7 +100,7 @@ void wfc_nao_write2file(const std::string& name,
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "wfc_nao_write2file");
+    ModuleBase::timer::end("ModuleIO", "wfc_nao_write2file");
     return;
 }
 
@@ -115,7 +115,7 @@ void wfc_nao_write2file_complex(const std::string& name,
                                 const bool& append_flag)
 {
     ModuleBase::TITLE("ModuleIO","wfc_nao_write2file_complex");
-    ModuleBase::timer::tick("ModuleIO","wfc_nao_write2file_complex");
+    ModuleBase::timer::start("ModuleIO","wfc_nao_write2file_complex");
 
     int nbands = ekb.nc;
 
@@ -196,7 +196,7 @@ void wfc_nao_write2file_complex(const std::string& name,
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO","wfc_nao_write2file_complex");
+    ModuleBase::timer::end("ModuleIO","wfc_nao_write2file_complex");
     return;
 }
 
@@ -218,7 +218,7 @@ void write_wfc_nao(const int out_type,
         return;
     }
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
-    ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
+    ModuleBase::timer::start("ModuleIO", "write_wfc_nao");
     int myid = 0;
     int nbands = 0;
     int nlocal = 0;
@@ -307,7 +307,7 @@ void write_wfc_nao(const int out_type,
             }
         }
     }
-    ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
+    ModuleBase::timer::end("ModuleIO", "write_wfc_nao");
 }
 
 template void write_wfc_nao<double>(const int out_type,

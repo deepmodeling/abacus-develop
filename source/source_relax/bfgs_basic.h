@@ -26,12 +26,12 @@ class BFGS_Basic
     void reset_hessian(void);
     void save_bfgs(void);
 
-    double* pos;  // std::vector containing 3N coordinates of the system ( x )
-    double* grad; // std::vector containing 3N components of ( grad( V(x) ) )
-    double* move; // pos = pos_p + move.
+    double* pos = nullptr;  // std::vector containing 3N coordinates of the system ( x )
+    double* grad = nullptr; // std::vector containing 3N components of ( grad( V(x) ) )
+    double* move = nullptr; // pos = pos_p + move.
 
-    double* pos_p;  // p: previous
-    double* grad_p; // p: previous
+    double* pos_p = nullptr;  // p: previous
+    double* grad_p = nullptr; // p: previous
     double* move_p = nullptr;
 
   public:                        // mohan update 2011-06-12

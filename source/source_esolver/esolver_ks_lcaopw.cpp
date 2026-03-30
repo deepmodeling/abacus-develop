@@ -133,7 +133,7 @@ namespace ModuleESolver
     void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
     {
         ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2rho_single");
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2rho_single");
+        ModuleBase::timer::start("ESolver_KS_LIP", "hamilt2rho_single");
 
         // reset energy
         this->pelec->f_en.eband = 0.0;
@@ -166,7 +166,7 @@ namespace ModuleESolver
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2rho_single");
+        ModuleBase::timer::end("ESolver_KS_LIP", "hamilt2rho_single");
     }
 
     template <typename T>

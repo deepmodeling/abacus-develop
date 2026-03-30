@@ -53,7 +53,7 @@ void ModuleIO::output_dSR(const int& istep,
                           const double& sparse_thr)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
-    ModuleBase::timer::tick("ModuleIO", "output_dSR");
+    ModuleBase::timer::start("ModuleIO", "output_dSR");
 
     sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
 
@@ -62,7 +62,7 @@ void ModuleIO::output_dSR(const int& istep,
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
-    ModuleBase::timer::tick("ModuleIO", "output_dSR");
+    ModuleBase::timer::end("ModuleIO", "output_dSR");
     return;
 }
 
@@ -79,7 +79,7 @@ void ModuleIO::output_dHR(const int& istep,
                           const double& sparse_thr)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
-    ModuleBase::timer::tick("ModuleIO", "output_dHR");
+    ModuleBase::timer::start("ModuleIO", "output_dHR");
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -108,7 +108,7 @@ void ModuleIO::output_dHR(const int& istep,
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
-    ModuleBase::timer::tick("ModuleIO", "output_dHR");
+    ModuleBase::timer::end("ModuleIO", "output_dHR");
     return;
 }
 
@@ -121,7 +121,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          const double& sparse_thr)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
-    ModuleBase::timer::tick("ModuleIO", "output_SR");
+    ModuleBase::timer::start("ModuleIO", "output_SR");
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -169,7 +169,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
 
-    ModuleBase::timer::tick("ModuleIO", "output_SR");
+    ModuleBase::timer::end("ModuleIO", "output_SR");
     return;
 }
 
@@ -185,7 +185,7 @@ void ModuleIO::output_TR(const int istep,
                          const double& sparse_thr)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
-    ModuleBase::timer::tick("ModuleIO", "output_TR");
+    ModuleBase::timer::start("ModuleIO", "output_TR");
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -218,7 +218,7 @@ void ModuleIO::output_TR(const int istep,
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 
-    ModuleBase::timer::tick("ModuleIO", "output_TR");
+    ModuleBase::timer::end("ModuleIO", "output_TR");
     return;
 }
 

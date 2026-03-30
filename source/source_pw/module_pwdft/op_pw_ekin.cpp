@@ -38,7 +38,7 @@ void Ekinetic<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "EkineticPW");
+    ModuleBase::timer::start("Operator", "EkineticPW");
     int max_npw = nbasis / npol;
 
   const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
@@ -53,7 +53,7 @@ void Ekinetic<OperatorPW<T, Device>>::act(
   //     tmhpsi += max_npw;
   //     tmpsi_in += max_npw;
   // }
-  ModuleBase::timer::tick("Operator", "EkineticPW");
+  ModuleBase::timer::end("Operator", "EkineticPW");
 }
 
 // copy construct added by denghui at 20221105
