@@ -443,11 +443,14 @@ Available options are:
             }
             if (para.input.calculation == "nscf" || para.input.calculation == "get_s")
             {
-                if (para.input.init_chg != "file")
+                // dm and hr are valid options for nscf calculation (e.g., band structure, wannier90)
+                if (para.input.init_chg != "file" && 
+                    para.input.init_chg != "dm" && 
+                    para.input.init_chg != "hr")
                 {
                     ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
+                    para.input.init_chg = "file";
                 }
-                para.input.init_chg = "file";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {

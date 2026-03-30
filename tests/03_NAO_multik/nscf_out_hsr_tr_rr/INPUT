@@ -1,9 +1,8 @@
-INPUT_PARAMETERS 
+INPUT_PARAMETERS
 #Parameters (1.General)
 suffix            autotest
 calculation       nscf
 
-nbands            6
 symmetry          0
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
@@ -15,8 +14,7 @@ ecutwfc           20
 scf_thr           1e-8
 scf_nmax          100
 
-#out_chg      1
-init_chg          hr #file
+init_chg          hr 
 out_mat_hs2       1
 out_mat_r         1
 out_mat_t         1
@@ -30,7 +28,7 @@ smearing_sigma    0.002
 
 #Parameters (5.Mixing)
 mixing_type       broyden
-mixing_beta       0.7
+mixing_beta       0.4
 mixing_gg0        1.5
 
 ks_solver         scalapack_gvx

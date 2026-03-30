@@ -44,10 +44,41 @@ void csrFileReader<T>::parseFile()
     readLine();
     ss >> numberOfR;
     // std::cout << " number of R is " << numberOfR << std::endl;
-    readLine();
 
     // Read cell
-    read_ucell();
+    // Skip empty line before ucell info if present
+    readLine();
+    std::string line = ss.str();
+    if (line.empty() || line.find_first_not_of(" \t\n\r") == std::string::npos)
+    {
+        // Empty line, read next line for latName
+        readLine();
+    }
+    // Now ss contains latName (or the line after empty line)
+    // We don't need to use latName, just continue reading
+    
+    // Read lat0, latvec (3 lines), atom labels (6 lines total including latName)
+    readLine(); // lat0
+    readLine(); // latvec e1
+    readLine(); // latvec e2
+    readLine(); // latvec e3
+    readLine(); // atom labels
+    
+    // Read atom numbers
+    readLine();
+    std::istringstream iss(ss.str());
+    int natom = 0;
+    int total_natom = 0;
+    while (iss >> natom)
+    {
+        total_natom += natom;
+    }
+    
+    // Read "Direct" line and atom coordinates
+    for (int i = 0; i < total_natom + 1; i++)
+    {
+        readLine(); // Direct + atom coordinates
+    }
 
     // Read CSR format
     readLine();
