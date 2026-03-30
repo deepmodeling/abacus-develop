@@ -91,8 +91,7 @@ case "${with_openmpi}" in
             #   else
             #     EXTRA_CONFIGURE_FLAGS=""
             #   fi
-            ./configure
-                CFLAGS="${CFLAGS}" \
+            ./configure CFLAGS="${CFLAGS}" \
                 --prefix=${pkg_install_dir} \
                 --libdir="${pkg_install_dir}/lib" \
                 --with-libevent=internal \
