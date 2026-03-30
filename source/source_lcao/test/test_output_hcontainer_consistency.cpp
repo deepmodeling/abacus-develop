@@ -198,21 +198,10 @@ TEST_F(OutputHContainerTest, SparseThresholdFiltering)
     }
     ifs.close();
 
-    // The CSR format comment block ends with "#---...---#"
-    // After that, there should be no R-block data lines
-    // (no line matching "Rx Ry Rz nonZero" pattern)
-    // This means the file ends right after the comment block
-    auto last_hash = file_content.rfind("#---");
-    ASSERT_NE(last_hash, std::string::npos);
-    std::string after_header = file_content.substr(last_hash);
-    // After the last "#---...---#" line, only whitespace should remain
-    auto newline_pos = after_header.find('\n');
-    std::string remainder = after_header.substr(newline_pos + 1);
-    // Trim whitespace
-    bool only_whitespace = (remainder.find_first_not_of(" \t\n\r") == std::string::npos);
-    EXPECT_TRUE(only_whitespace)
-        << "Expected no R-block data when all values below sparse threshold, but found:\n"
-        << remainder;
+    // After the fix, nonZero=0 R-blocks are also written to keep
+    // nR consistent. Verify the file contains "0 0 0 0" (R=(0,0,0) with 0 nonzero).
+    EXPECT_NE(file_content.find("0 0 0 0"), std::string::npos)
+        << "Expected R=(0,0,0) block with 0 nonzero elements";
 
     delete hc;
     std::remove("./test_ohc_dir/hrs1_nao.csr");
