@@ -259,27 +259,27 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
 
 
 // C++11-compatible helpers for transfer_dm_2d_to_gint:
-// Tag dispatch to select same-type or cross-type code paths at compile time.
-namespace detail
-{
+// SFINAE (enable_if) to select same-type vs cross-type code paths at compile time.
 
 // Same-type path (TGint == TDM): transfer directly
-template<typename T>
-void gather_dm_serial(const HContainer<T>& dm_src, HContainer<T>& dm_gint,
-                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
+template<typename TGint, typename TDM>
+typename std::enable_if<std::is_same<TGint, TDM>::value>::type
+gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
+          const GintInfo& /*gint_info*/)
 {
 #ifdef __MPI
-    hamilt::transferParallels2Serials(dm_src, &dm_gint);
+    hamilt::transferParallels2Serials(dm_src, &dm_dst);
 #else
-    dm_gint.set_zero();
-    dm_gint.add(dm_src);
+    dm_dst.set_zero();
+    dm_dst.add(dm_src);
 #endif
 }
 
 // Cross-type path (TGint != TDM): gather into a temp of TDM, then cast
 template<typename TGint, typename TDM>
-void gather_dm_serial(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_gint,
-                      const GintInfo& gint_info, std::false_type /*same_type*/)
+typename std::enable_if<!std::is_same<TGint, TDM>::value>::type
+gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
+          const GintInfo& gint_info)
 {
     HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
 #ifdef __MPI
@@ -288,47 +288,8 @@ void gather_dm_serial(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_gint,
     dm_tmp.set_zero();
     dm_tmp.add(dm_src);
 #endif
-    cast_hcontainer_values(dm_tmp, dm_gint);
+    cast_hcontainer_values(dm_tmp, dm_dst);
 }
-
-// NSPIN=4: same-type path
-#ifdef __MPI
-template<typename T>
-void gather_dm_nspin4(const HContainer<T>& dm2d_tmp, HContainer<T>& dm_gint,
-                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
-{
-    hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint);
-}
-
-template<typename TGint, typename TDM>
-void gather_dm_nspin4(const HContainer<TDM>& dm2d_tmp, HContainer<TGint>& dm_gint,
-                      const GintInfo& gint_info, std::false_type /*same_type*/)
-{
-    HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
-    hamilt::transferParallels2Serials(dm2d_tmp, &dm_tmp);
-    cast_hcontainer_values(dm_tmp, dm_gint);
-}
-#else
-template<typename T>
-void gather_dm_nspin4(const HContainer<T>* dm2d_tmp, HContainer<T>& dm_gint,
-                      const GintInfo& /*gint_info*/, std::true_type /*same_type*/)
-{
-    dm_gint.set_zero();
-    dm_gint.add(*dm2d_tmp);
-}
-
-template<typename TGint, typename TDM>
-void gather_dm_nspin4(const HContainer<TDM>* dm2d_tmp, HContainer<TGint>& dm_gint,
-                      const GintInfo& gint_info, std::false_type /*same_type*/)
-{
-    HContainer<TDM> dm_tmp = gint_info.get_hr<TDM>();
-    dm_tmp.set_zero();
-    dm_tmp.add(*dm2d_tmp);
-    cast_hcontainer_values(dm_tmp, dm_gint);
-}
-#endif
-
-} // namespace detail
 
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
@@ -341,16 +302,13 @@ void transfer_dm_2d_to_gint(
     ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
     ModuleBase::timer::start("Gint", "transfer_dm_2d_to_gint");
 
-    // Compile-time tag for same-type vs cross-type dispatch
-    using same_type_tag = typename std::is_same<TGint, TDM>::type;
-
     if (PARAM.inp.nspin != 4)
     {
         // dm_gint.size() usually equals to PARAM.inp.nspin,
         // but there is exception within source_lcao/module_lr
         for (int is = 0; is < dm_gint.size(); is++)
         {
-            detail::gather_dm_serial(*dm[is], dm_gint[is], gint_info, same_type_tag{});
+            gather_dm(*dm[is], dm_gint[is], gint_info);
         }
     } else  // NSPIN=4 case
     {
@@ -400,7 +358,11 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
-            detail::gather_dm_nspin4(dm2d_tmp, dm_gint[is], gint_info, same_type_tag{});
+#ifdef __MPI
+            gather_dm(dm2d_tmp, dm_gint[is], gint_info);
+#else
+            gather_dm(*dm2d_tmp, dm_gint[is], gint_info);
+#endif
         }//is=4
 #ifndef __MPI
         delete dm2d_tmp;

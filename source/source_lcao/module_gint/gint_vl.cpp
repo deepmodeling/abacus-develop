@@ -36,18 +36,19 @@ HContainer<Real> Gint_vl::init_hr_gint_() const
     return gint_info_->get_hr<Real>();
 }
 
-// Overloaded helpers for get_vr_eff_data_ (C++11-compatible alternative to if constexpr)
-const double* get_vr_eff_data_dispatch_(const double* vr_eff, int /*local_mgrid_num*/,
-                                        std::vector<double>& /*vr_eff_buffer*/,
-                                        const double* /*tag*/)
+// Overloaded helpers (C++11-compatible alternative to if constexpr).
+// The double overload is preferred by overload resolution when Real=double;
+// the template overload handles all other types (e.g. float).
+
+inline const double* get_vr_eff_data_(const double* vr_eff, int /*local_mgrid_num*/,
+                                      std::vector<double>& /*vr_eff_buffer*/)
 {
     return vr_eff;
 }
 
 template<typename Real>
-const Real* get_vr_eff_data_dispatch_(const double* vr_eff, int local_mgrid_num,
-                                      std::vector<Real>& vr_eff_buffer,
-                                      const Real* /*tag*/)
+const Real* get_vr_eff_data_(const double* vr_eff, int local_mgrid_num,
+                             std::vector<Real>& vr_eff_buffer)
 {
     vr_eff_buffer.resize(local_mgrid_num);
     std::transform(vr_eff, vr_eff + local_mgrid_num, vr_eff_buffer.begin(), [](const double value) {
@@ -56,8 +57,7 @@ const Real* get_vr_eff_data_dispatch_(const double* vr_eff, int local_mgrid_num,
     return vr_eff_buffer.data();
 }
 
-// Overloaded helpers for post-processing (C++11-compatible alternative to if constexpr)
-void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
+inline void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
 {
     compose_hr_gint(hr_gint);
     transfer_hr_gint_to_hR(hr_gint, *hR);
@@ -76,8 +76,8 @@ void Gint_vl::cal_gint_impl_()
 {
     HContainer<Real> hr_gint = init_hr_gint_<Real>();
     std::vector<Real> vr_eff_buffer;
-    const Real* vr_eff = get_vr_eff_data_dispatch_(
-        vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer, static_cast<const Real*>(nullptr));
+    const Real* vr_eff = get_vr_eff_data_(
+        vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer);
 
 #pragma omp parallel
     {
