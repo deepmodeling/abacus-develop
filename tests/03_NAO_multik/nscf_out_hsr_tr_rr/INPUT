@@ -14,7 +14,7 @@ ecutwfc           20
 scf_thr           1e-8
 scf_nmax          100
 
-init_chg          hr 
+init_chg          hr
 out_mat_hs2       1
 out_mat_r         1
 out_mat_t         1

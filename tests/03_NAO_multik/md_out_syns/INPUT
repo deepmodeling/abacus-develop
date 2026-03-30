@@ -2,7 +2,6 @@ INPUT_PARAMETERS
 #Parameters    (General)
 suffix            autotest
     
-nbands            8
 calculation       md
 
 #Parameters (Accuracy)
