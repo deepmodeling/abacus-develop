@@ -31,7 +31,7 @@ ENABLE_LCAO_FLAG="${ENABLE_LCAO_FLAG:-ON}"
 USE_SW_FLAG="${USE_SW_FLAG:-ON}"
 SW_MATH_PATH="${SW_MATH_PATH:-/usr/sw/yyzlib/xMath-SACA}"
 SW_FFT_PATH="${SW_FFT_PATH:-/usr/sw/yyzlib/fftw-3.3.8}"
-CEREAL_INCLUDE_DIR="${CEREAL_INCLUDE_DIR:-/home/export/online1/mdt00/shisuan/swhnu/liu/abacus1/3.9.0.19/abacus-develop-3.9.0.19/cereal/include}"
+CEREAL_INCLUDE_DIR="${CEREAL_INCLUDE_DIR:-}"
 CXX_FLAGS_EXTRA="${CXX_FLAGS_EXTRA:--I/usr/sw/yyzlib/xMath-SACA/include}"
 
 POSITIONAL_ARGS=()
