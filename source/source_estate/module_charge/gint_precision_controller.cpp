@@ -37,11 +37,11 @@ void GintPrecisionController::reset_for_new_scf()
     }
 }
 
-void GintPrecisionController::update_after_iteration(double drho, double scf_thr)
+bool GintPrecisionController::update_after_iteration(double drho, double scf_thr)
 {
     if (this->locked_double_precision_ || this->mode_ != PrecisionMode::mix)
     {
-        return;
+        return false;
     }
 
     // Switch from fp32 to fp64 when drho is close enough to the target.
@@ -56,7 +56,9 @@ void GintPrecisionController::update_after_iteration(double drho, double scf_thr
     {
         this->current_precision_ = ModuleGint::GintPrecision::fp64;
         this->locked_double_precision_ = true;
+        return true;
     }
+    return false;
 }
 
 ModuleGint::GintPrecision GintPrecisionController::current_precision() const

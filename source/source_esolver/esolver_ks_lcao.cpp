@@ -313,6 +313,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         this->gint_precision_controller_.set_mode(PARAM.inp.gint_precision);
         this->gint_precision_controller_.reset_for_new_scf();
         this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
+        if (PARAM.inp.gint_precision == "mix")
+        {
+            GlobalV::ofs_running << "\n >> Gint mixed-precision mode: starting SCF with fp32"
+                                 << " (will switch to fp64 when drho is small enough)" << std::endl;
+            std::cout << " >> NOTICE: Gint grid-integration starts with fp32 (mixed-precision mode)" << std::endl;
+        }
+        else if (PARAM.inp.gint_precision == "single")
+        {
+            GlobalV::ofs_running << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
+            std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)" << std::endl;
+        }
     }
 
     // mohan update 2012-06-05
@@ -446,8 +457,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
-    this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
+    const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
+    if (precision_switched)
+    {
+        GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = "
+                             << this->drho << ")" << std::endl;
+        std::cout << " >> NOTICE: Gint grid-integration precision switched from fp32 to fp64" << std::endl;
+    }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter except the last iter

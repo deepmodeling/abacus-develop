@@ -14,7 +14,8 @@ class GintPrecisionController
 
     void reset_for_new_scf();
 
-    void update_after_iteration(double drho, double scf_thr);
+    /// Returns true if precision switched from fp32 to fp64 in this call.
+    bool update_after_iteration(double drho, double scf_thr);
 
     ModuleGint::GintPrecision current_precision() const;
 
