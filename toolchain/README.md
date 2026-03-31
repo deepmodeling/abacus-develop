@@ -57,8 +57,9 @@ For new users, start with one of these pre-configured toolchains:
 # GNU toolchain (GCC + OpenMPI + OpenBLAS)
 ./toolchain_gnu.sh
 
-# Intel toolchain (Intel compilers + Intel MPI + MKL)
-./toolchain_intel.sh
+# Intel toolchain
+./toolchain_gcc-mkl.sh # GCC + OpenMPI + MKL
+./toolchain_intel.sh # Intel compilers + Intel MPI + MKL
 
 # AMD toolchain options
 ./toolchain_gcc-aocl.sh    # GCC + AMD AOCL
@@ -341,10 +342,6 @@ Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/i
 ```
 
 Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI are not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
-
-#### Gcc-MKL Issues
-
-You cannot use gcc as compiler while using MKL as math library for compile ABACUS, there will be lots of error in the lask linking step. See [#3198](https://github.com/deepmodeling/abacus-develop/issues/3198)
 
 #### AMD AOCC-AOCL problem
 
