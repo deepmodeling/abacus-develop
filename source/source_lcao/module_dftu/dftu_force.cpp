@@ -8,6 +8,7 @@
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
@@ -23,52 +24,6 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
-
-extern "C"
-{
-    // I'm not sure what's happenig here, but the interface in scalapack_connecter.h
-    // does not seem to work, so I'll use this one here
-    void pzgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const std::complex<double>* alpha,
-                 const std::complex<double>* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const std::complex<double>* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const std::complex<double>* beta,
-                 std::complex<double>* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
-
-    void pdgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const double* alpha,
-                 const double* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const double* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const double* beta,
-                 double* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
-}
-
 namespace ModuleDFTU
 {
 
@@ -118,24 +73,24 @@ void DFTU::force_stress(const UnitCell& ucell,
                 = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
 
 #ifdef __MPI
-            pdgemm_(&transT,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &alpha,
+            ScalapackConnector::gemm(transT,
+                    transN,
+                    nlocal,
+                    nlocal,
+                    nlocal,
+                    alpha,
                     dmk[spin].data(),
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
                     VU,
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
-                    &beta,
+                    beta,
                     &rho_VU[0],
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc);
 #endif
 
@@ -313,24 +268,24 @@ void DFTU::cal_force_k(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pzgemm_(&transN,
-                &transN,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transN,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 &dSm_k[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -483,24 +438,24 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -521,24 +476,24 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
