@@ -5,13 +5,13 @@ set -euo pipefail
 # 1) no-tests mode (default): preserve original build flow without GTest
 # 2) with-tests mode: build and use local/offline GoogleTest
 # Usage:
-#   bash tools/build_abacus_with_local_gtest.sh --no-tests [abacus_root]
-#   bash tools/build_abacus_with_local_gtest.sh --with-tests [abacus_root] /path/to/googletest
-#   GTEST_SRC=/path/to/googletest bash tools/build_abacus_with_local_gtest.sh --with-tests [abacus_root]
-#   CC=mpicc CXX=mpic++ bash tools/build_abacus_with_local_gtest.sh --with-tests /path/to/googletest
-#   bash tools/build_abacus_with_local_gtest.sh --with-tests --cc mpicc --cxx mpic++ /path/to/googletest
-#   bash tools/build_abacus_with_local_gtest.sh --with-tests --install /path/to/googletest
-#   bash tools/build_abacus_with_local_gtest.sh --with-tests --use-elpa /path/to/googletest
+#   bash tools/gtest_on_sunway/gtest_on_sunway.sh --no-tests [abacus_root]
+#   bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests [abacus_root] /path/to/googletest
+#   GTEST_SRC=/path/to/googletest bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests [abacus_root]
+#   CC=mpicc CXX=mpic++ bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests /path/to/googletest
+#   bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests --cc mpicc --cxx mpic++ /path/to/googletest
+#   bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests --install /path/to/googletest
+#   bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests --use-elpa /path/to/googletest
 # Defaults are aligned with your known-good build command and can be overridden
 # by environment variables: USE_OPENMP_FLAG, ENABLE_LCAO_FLAG, USE_SW_FLAG,
 # SW_MATH_PATH, SW_FFT_PATH, CEREAL_INCLUDE_DIR, CXX_FLAGS_EXTRA.
