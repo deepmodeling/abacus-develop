@@ -133,10 +133,8 @@ TEST_F(BFGSTest, GetPosAndPostaud)
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
 
     // set coordinates
-    ucell.atoms[0].tau[0].x = 1.0; ucell.atoms[0].tau[0].y = 2.0; ucell.atoms[0].tau[0].z = 3.0;
-    ucell.atoms[0].tau[1].x = 2.0; ucell.atoms[0].tau[1].y = 3.0; ucell.atoms[0].tau[1].z = 4.0;
-    ucell.atoms[0].taud[0].x = 0.1; ucell.atoms[0].taud[0].y = 0.2; ucell.atoms[0].taud[0].z = 0.3;
-    ucell.atoms[0].taud[1].x = 0.4; ucell.atoms[0].taud[1].y = 0.5; ucell.atoms[0].taud[1].z = 0.6;
+    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
 
     // allocate mapping arrays 
     ucell.iat2it = new int[ucell.nat];
