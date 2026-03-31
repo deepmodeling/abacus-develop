@@ -842,66 +842,63 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs(const UnitCell& ucell,
     const double cfrac = 1.0 / this->nks0;
     std::map<TA, std::map<TAC, Tout>> datas;
 
-    // auto start = std::chrono::system_clock::now();
-#pragma omp parallel
+    // Accumulate one (iat0, iat1, R) block at a time so OpenMP threads do
+    // not each retain a near-complete output map on dense k meshes.
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (size_t i0 = 0; i0 < list_A0_pair_R.size(); ++i0)
     {
-        std::map<TA, std::map<TAC, Tout>> local_datas;
-
-#pragma omp for schedule(dynamic) nowait
-        for (size_t ik = 0; ik != this->nks0; ++ik)
+        for (size_t i1 = 0; i1 < list_A1_pair_R.size(); ++i1)
         {
-            for (size_t i0 = 0; i0 < list_A0_pair_R.size(); ++i0)
+            const TA iat0 = list_A0_pair_R[i0];
+            const auto it_outer = Vq.find(iat0);
+            if (it_outer == Vq.end())
             {
-                for (size_t i1 = 0; i1 < list_A1_pair_R.size(); ++i1)
+                continue;
+            }
+
+            const TA iat1 = list_A1_pair_R[i1].first;
+            const TC& cell1 = list_A1_pair_R[i1].second;
+
+            bool has_value = false;
+            Tout data;
+
+            for (size_t ik = 0; ik != this->nks0; ++ik)
+            {
+                const std::complex<double> frac
+                    = std::exp(-ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT
+                               * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * ucell.latvec)))
+                      * cfrac;
+
+                const TAK index = std::make_pair(iat1, std::array<int, 1>{static_cast<int>(ik)});
+
+                // check the Fourier transformed V(q)
+                // whether ccp_rmesh_times * Rcut >= rIJ
+                // skip some IJ pairs
+                const auto it_inner = it_outer->second.find(index);
+                if (it_inner == it_outer->second.end())
                 {
-                    const TA iat0 = list_A0_pair_R[i0];
-                    const TA iat1 = list_A1_pair_R[i1].first;
-                    const TC& cell1 = list_A1_pair_R[i1].second;
-                    const std::complex<double> frac
-                        = std::exp(-ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT
-                                   * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * ucell.latvec)))
-                          * cfrac;
+                    continue;
+                }
 
-                    const TAK index = std::make_pair(iat1, std::array<int, 1>{static_cast<int>(ik)});
-
-                    // check the Fourier transformed V(q)
-                    // whether ccp_rmesh_times * Rcut >= rIJ
-                    // skip some IJ pairs
-                    auto it_outer = Vq.find(iat0);
-                    if (it_outer == Vq.end())
-                        continue;
-
-                    auto it_inner = it_outer->second.find(index);
-                    if (it_inner == it_outer->second.end())
-                        continue;
-                        
-                    if (LRI_CV_Tools::exist(Vq.at(iat0).at(index)))
+                if (LRI_CV_Tools::exist(it_inner->second))
+                {
+                    Tout Vq_tmp = LRI_CV_Tools::convert<Tin_convert>(LRI_CV_Tools::mul2(frac, it_inner->second));
+                    if (!has_value)
                     {
-                        Tout Vq_tmp = LRI_CV_Tools::convert<Tin_convert>(LRI_CV_Tools::mul2(frac, Vq.at(iat0).at(index)));
-
-                        if (!LRI_CV_Tools::exist(local_datas[iat0][list_A1_pair_R[i1]]))
-                            local_datas[iat0][list_A1_pair_R[i1]] = Vq_tmp;
-                        else
-                            local_datas[iat0][list_A1_pair_R[i1]]
-                                = local_datas.at(iat0).at(list_A1_pair_R[i1]) + Vq_tmp;
+                        data = std::move(Vq_tmp);
+                        has_value = true;
+                    }
+                    else
+                    {
+                        data = data + Vq_tmp;
                     }
                 }
             }
-        }
-#pragma omp critical(Ewald_Vq_set_Vs_dVs)
-        {
-            for (auto& outer_pair: local_datas)
+
+            if (has_value)
             {
-                TA key0 = outer_pair.first;
-                for (auto& inner_pair: outer_pair.second)
-                {
-                    TAC key1 = inner_pair.first;
-                    Tout& value = inner_pair.second;
-                    if (!LRI_CV_Tools::exist(datas[key0][key1]))
-                        datas[key0][key1] = value;
-                    else
-                        datas[key0][key1] = datas.at(key0).at(key1) + value;
-                }
+#pragma omp critical(Ewald_Vq_set_Vs_dVs)
+                { datas[iat0][list_A1_pair_R[i1]] = std::move(data); }
             }
         }
     }
