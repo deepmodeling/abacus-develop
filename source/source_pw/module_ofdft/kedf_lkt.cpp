@@ -52,7 +52,7 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
 }
     delete[] nabla_rho;
 
-    return energy;
+    return this->lkt_energy;
 }
 
 /**
