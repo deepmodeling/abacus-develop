@@ -17,8 +17,7 @@ set -euo pipefail
 # SW_MATH_PATH, SW_FFT_PATH, CEREAL_INCLUDE_DIR, CXX_FLAGS_EXTRA.
 
 # Recommended usage for SW platform:
-# CC=mpicc CXX=mpic++ bash install.sh --with-tests 
-# /path/to/googletest/googletest/
+# CC=mpicc CXX=mpic++ bash tools/gtest_on_sunway/gtest_on_sunway.sh --with-tests /path/to/googletest/googletest/
 
 ABACUS_ROOT="$PWD"
 GTEST_SRC="${GTEST_SRC:-}"
