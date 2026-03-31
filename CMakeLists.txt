@@ -824,10 +824,6 @@ if(ENABLE_RAPIDJSON)
   target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
-if (USE_SW)
-  # SW math libraries are already appended to math_libs above.
-endif()
-
 list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
