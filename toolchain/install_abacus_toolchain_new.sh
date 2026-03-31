@@ -201,6 +201,7 @@ EOF
     ui_print_color "${UI_GREEN}${UI_BOLD}" "🚀 Build ABACUS with your preferred toolchain:"
     ui_print_color "${UI_WHITE}" "   ./build_abacus_gnu.sh        # GNU toolchain (GCC + OpenBLAS)"
     ui_print_color "${UI_WHITE}" "   ./build_abacus_intel.sh      # Intel toolchain (ICC + MKL)"
+    ui_print_color "${UI_WHITE}" "   ./build_abacus_gcc-mkl.sh    # GCC + MKL"
     ui_print_color "${UI_WHITE}" "   ./build_abacus_gcc-aocl.sh   # AMD GCC + AOCL"
     ui_print_color "${UI_WHITE}" "   ./build_abacus_aocc-aocl.sh  # AMD AOCC + AOCL"
     echo ""

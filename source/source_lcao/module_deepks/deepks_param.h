@@ -14,6 +14,7 @@ struct DeePKS_Param
     int inlmax = 0;
     int n_descriptor = 0;
     int des_per_atom = 0;
+    std::vector<int> nchi_d_l;
     std::vector<int> inl2l;
     ModuleBase::IntArray* inl_index = nullptr;
 };

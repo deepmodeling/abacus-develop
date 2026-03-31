@@ -69,7 +69,7 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
     delete[] tempPhi;
     delete[] LapPhi;
 
-    return energy;
+    return this->vw_energy;
 }
 
 /**
