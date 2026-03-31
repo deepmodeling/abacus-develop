@@ -23,3 +23,5 @@ opt_orb_pytorch_dpsi: related to generating NAO basis set.
 qo: generate quasiatomic orbital (qo).
 
 selective_dynamics: used to do selective dynamics with ABACUS + Phonopy.
+
+gtest_on_sunway: install gtest on sunway

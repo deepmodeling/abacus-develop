@@ -8,6 +8,9 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base device MPI::MPI_CXX
     SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
   )
+  if (USE_SW)
+    message(WARNING "Skip MODULE_HSOLVER_parak2d_test on USE_SW due to LAPACK symbol issues.")
+  else()
   AddTest(
     TARGET MODULE_HSOLVER_bpcg
     LIBS parameter  ${math_libs} base psi device container
@@ -16,6 +19,7 @@ if (ENABLE_MPI)
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
   )
+  endif()
   AddTest(
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  ${math_libs} base psi device container

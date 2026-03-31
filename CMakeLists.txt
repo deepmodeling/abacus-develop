@@ -344,6 +344,24 @@ if (USE_SW)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
 
+  # Keep test and main target link dependencies consistent in USE_SW mode.
+  list(APPEND math_libs
+       ${SW_MATH}/libswfft.a
+       ${SW_MATH}/libswscalapack.a
+       ${SW_MATH}/libswlapack.a
+       ${SW_MATH}/libswblas.a
+       gfortran)
+
+  # Provide a unified ScaLAPACK target for unit tests and modules.
+  # In USE_SW mode, map it to SW math libraries instead of find_package(ScaLAPACK).
+  if(NOT TARGET ScaLAPACK::ScaLAPACK)
+    add_library(ScaLAPACK::ScaLAPACK INTERFACE IMPORTED GLOBAL)
+    set_target_properties(
+      ScaLAPACK::ScaLAPACK
+      PROPERTIES INTERFACE_LINK_LIBRARIES
+                 "${SW_MATH}/libswscalapack.a;${SW_MATH}/libswlapack.a;${SW_MATH}/libswblas.a")
+  endif()
+
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
 endif()
 
@@ -807,11 +825,7 @@ if(ENABLE_RAPIDJSON)
 endif()
 
 if (USE_SW)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
-  list(APPEND math_libs gfortran)
+  # SW math libraries are already appended to math_libs above.
 endif()
 
 list(APPEND math_libs m)
