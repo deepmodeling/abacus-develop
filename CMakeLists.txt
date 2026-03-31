@@ -69,10 +69,8 @@ if(ENABLE_RAPIDJSON)
     include(FetchContent)
     FetchContent_Declare(
       rapidjson
-      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-      GIT_TAG "origin/master"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
+      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+    )
     set(RAPIDJSON_BUILD_TESTS
         OFF
         CACHE INTERNAL "")
