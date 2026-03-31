@@ -123,7 +123,7 @@ class STM:
         # Returing scan with axes in Angstrom.
         return x, y, current
 
-    
+
     def linescan(self, bias, current, p1, p2, npoints=50, z0=None):
         """Constant current line scan.
 
@@ -223,6 +223,30 @@ class STM:
             dIdV[i, :] = np.gradient(current[i, :], biasstep)
 
         return biases, np.linspace(0, s, npoints), current, dIdV
+
+
+    def line_sts_ave(self, bias0, bias1, biasstep, npoints=50):
+
+        biases = np.arange(bias0, bias1 + biasstep, biasstep)
+        current = np.zeros((npoints, len(biases)))
+
+        for b in np.arange(len(biases)):
+            print(b, biases[b])
+            self.read_ldos(biases[b])
+            nz = self.ldos.shape[2]
+
+            for i in range(npoints):
+                z = i / (npoints - 1) * nz
+                dz = z - np.floor(z)
+                z = int(z) % nz
+                current[i, b] = ((1 - dz) * self.ldos[:, :, z].mean() +
+                    dz * self.ldos[:, :, (z + 1) % nz].mean())
+            
+        dIdV = np.zeros((npoints, len(biases)))
+        for i in range(npoints):
+            dIdV[i, :] = np.gradient(current[i, :], biasstep)
+
+        return biases, np.linspace(0, 1, npoints), current, dIdV
 
 
     def find_current(self, ldos, z):

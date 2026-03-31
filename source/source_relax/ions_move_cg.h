@@ -17,10 +17,10 @@ class Ions_Move_CG
     int cg_step=0;
 
   private:
-    double *pos0;
-    double *grad0;
-    double *cg_grad0;
-    double *move0;
+    double * pos0 = nullptr;
+    double * grad0 = nullptr;
+    double * cg_grad0 = nullptr;
+    double * move0 = nullptr;
     double e0=0.0;
     // setup gradients.
     void setup_cg_grad(double *grad,
@@ -38,6 +38,7 @@ class Ions_Move_CG
                      const double &fb,
                      const double x,
                      double &best_x);
+    void normalize(double *cg_gradn, const double *cg_grad, int dim);
 };
 
 #endif

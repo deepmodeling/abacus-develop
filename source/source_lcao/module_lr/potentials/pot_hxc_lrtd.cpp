@@ -6,7 +6,6 @@
 #include <set>
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
-#include "source_pw/module_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {
@@ -26,7 +25,7 @@ namespace LR
     void PotHxcLR::cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op)
     {
         ModuleBase::TITLE("PotHxcLR", "cal_v_eff");
-        ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
+        ModuleBase::timer::start("PotHxcLR", "cal_v_eff");
         auto& fxc = this->xc_kernel_components_;
 
         // Hartree
@@ -42,14 +41,17 @@ namespace LR
             break;
         }
         // XC
-        if (this->xc_kernel_ == "rpa" || this->xc_kernel_ == "hf") { return; }    // no xc
+        if (this->xc_kernel_ == "rpa" || this->xc_kernel_ == "hf") { 
+            ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
+            return; 
+        }    // no xc
 #ifdef USE_LIBXC
         this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else
         throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())
             + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 #endif
-        ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
+        ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
     }
 
     void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)

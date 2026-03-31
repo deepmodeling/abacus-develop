@@ -9,7 +9,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     const double MULT_EPS = 2.0;
 
     ModuleBase::TITLE("Symmetry","analy_sys");
-	ModuleBase::timer::tick("Symmetry","analy_sys");
+	ModuleBase::timer::start("Symmetry","analy_sys");
 
 	ofs_running << "\n\n";
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -305,7 +305,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     delete[] rotpos;
     delete[] index;
     delete[] istart;
-    ModuleBase::timer::tick("Symmetry","analy_sys");
+    ModuleBase::timer::end("Symmetry","analy_sys");
     return;
 }
 

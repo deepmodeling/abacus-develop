@@ -172,7 +172,7 @@ using UcellDeathTest = UcellTest;
 TEST_F(UcellTest, Constructor)
 {
     EXPECT_EQ(ucell->Coordinate, "Direct");
-    EXPECT_EQ(ucell->latName, "none");
+    EXPECT_EQ(ucell->latName, "user_defined_lattice");
     EXPECT_DOUBLE_EQ(ucell->lat0, 0.0);
     EXPECT_DOUBLE_EQ(ucell->lat0_angstrom, 0.0);
     EXPECT_EQ(ucell->ntype, 0);
@@ -263,39 +263,9 @@ TEST_F(UcellTest, Setup)
     }
 }
 
-TEST_F(UcellDeathTest, SetupWarningQuit1)
-{
-    std::string latname_in = "bcc";
-    int ntype_in = 1;
-    int lmaxmax_in = 2;
-    bool init_vel_in = false;
-    PARAM.input.relax_new = false;
-    std::string fixed_axes_in = "volume";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(1),
-                "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,
-                testing::HasSubstr(
-                    "there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation"));
-}
-
-TEST_F(UcellDeathTest, SetupWarningQuit2)
-{
-    std::string latname_in = "bcc";
-    int ntype_in = 1;
-    int lmaxmax_in = 2;
-    bool init_vel_in = false;
-    PARAM.input.relax_new = false;
-    std::string fixed_axes_in = "shape";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(1),
-                "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("set relax_new to be 1 for fixed_shape relaxation"));
-}
+// These tests are removed because fixed_axes="volume" and fixed_axes="shape"
+// are now supported with relax_new=false (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
+// The old implementation now properly handles these constraints via post-update enforcement
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {
@@ -577,7 +547,7 @@ TEST_F(UcellTest, RemakeCell)
 
 TEST_F(UcellDeathTest, RemakeCellWarnings)
 {
-    std::vector<std::string> latname_in = {"none", "trigonal", "bacm", "triclinic", "arbitrary"};
+    std::vector<std::string> latname_in = {"user_defined_lattice", "trigonal", "bacm", "triclinic", "arbitrary"};
     for (int i = 0; i < latname_in.size(); ++i)
     {
         ucell->latvec.e11 = 10.0;
@@ -593,7 +563,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         testing::internal::CaptureStdout();
         EXPECT_EXIT(unitcell::remake_cell(ucell->lat), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
-        if (latname_in[i] == "none")
+        if (latname_in[i] == "user_defined_lattice")
         {
             EXPECT_THAT(output, testing::HasSubstr("to use fixed_ibrav, latname must be provided"));
         }
@@ -1120,27 +1090,14 @@ TEST_F(UcellTest, ReadOrbFile)
     std::string orb_file = "./support/C.orb";
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
-    elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    bool result = elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    ofs_running << " result=" << result << std::endl;
+    EXPECT_TRUE(result);
     ofs_running.close();
     EXPECT_EQ(ucell->atoms[0].nw, 25);
     remove("tmp_readorbfile");
 }
 
-TEST_F(UcellDeathTest, ReadOrbFileWarning)
-{
-    UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
-    PARAM.input.relax_new = utp.relax_new;
-    ucell = utp.SetUcellInfo();
-    std::string orb_file = "./support/CC.orb";
-    std::ofstream ofs_running;
-    ofs_running.open("tmp_readorbfile");
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0])), ::testing::ExitedWithCode(1), "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("ABACUS Cannot find the ORBITAL file"));
-    ofs_running.close();
-    remove("tmp_readorbfile");
-}
 class UcellTestReadStru : public ::testing::Test
 {
   protected:
@@ -1917,3 +1874,21 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     remove("read_atom_positions.warn");
 }
 #endif
+TEST_F(UcellTest, ReadOrbFileWarning)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
+    PARAM.input.relax_new = utp.relax_new;
+    ucell = utp.SetUcellInfo();
+    std::string orb_file = "./support/CC.orb";
+    std::ofstream ofs_running;
+    ofs_running.open("tmp_readorbfilewarning");
+    testing::internal::CaptureStdout();
+    bool result = elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    output = testing::internal::GetCapturedStdout();
+    ofs_running << output << std::endl;
+    EXPECT_FALSE(result);
+    EXPECT_THAT(output, testing::HasSubstr("Element index 1"));
+    EXPECT_THAT(output, testing::HasSubstr("orbital file: ./support/CC.orb"));
+    ofs_running.close();
+    remove("tmp_readorbfilewarning");
+}

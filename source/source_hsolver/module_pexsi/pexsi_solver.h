@@ -130,10 +130,10 @@ class PEXSI_Solver
     int nb;
     int nrow;
     int ncol;
-    double* h;
-    double* s;
-    double* DM;
-    double* EDM;
+    double* h = nullptr;
+    double* s = nullptr;
+    double* DM = nullptr;
+    double* EDM = nullptr;
     double totalEnergyH;
     double totalEnergyS;
     double totalFreeEnergy;

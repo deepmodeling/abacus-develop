@@ -57,15 +57,15 @@ class TwoCenterIntegrator
     );
 
     /*!
-     * @brief Compute the two-center integrals.
+     * @brief Compute the two-center integrals and optionally their derivatives.
      *
      * This function calculates the two-center integral
      *
-     *                     /    
+     *                     /
      *              I(R) = | dr phi1(r) (op_) phi2(r - R)
-     *                     /               
+     *                     /
      *
-     * or its gradient by using the tabulated radial part and real Gaunt coefficients.
+     * and optionally its gradient and/or Hessian.
      *
      * @param[in] itype1       Element index of orbital 1.
      * @param[in] l1           Angular momentum of orbital 1.
@@ -81,20 +81,26 @@ class TwoCenterIntegrator
      * @param[out] grad_out    Gradient of the integral. grad_out[0], grad_out[1] and
      *                         grad_out[2] are the x, y, z components of the gradient.
      *                         The gradient will not be computed if grad_out is nullptr.
+     * @param[out] hess_out    Hessian of the integral. hess_out is a 9-element array
+     *                         in row-major order: [H_xx, H_xy, H_xz, H_yx, H_yy, H_yz,
+     *                         H_zx, H_zy, H_zz]. The Hessian will not be computed if
+     *                         hess_out is nullptr.
      *
-     * @note out and grad_out cannot be both nullptr.
+     * @note At least one of out, grad_out, or hess_out must be non-nullptr.
+     * @note Hessian computation requires l1 + l2 <= 6 (limitation of hes_rl_sph_harm).
      *                                                                                  */
-    void calculate(const int itype1, 
-                   const int l1, 
-                   const int izeta1, 
-                   const int m1, 
+    void calculate(const int itype1,
+                   const int l1,
+                   const int izeta1,
+                   const int m1,
                    const int itype2,
                    const int l2,
                    const int izeta2,
                    const int m2,
 	                 const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
                    double* out = nullptr,
-                   double* grad_out = nullptr
+                   double* grad_out = nullptr,
+                   double* hess_out = nullptr
     ) const;
 
     /*!

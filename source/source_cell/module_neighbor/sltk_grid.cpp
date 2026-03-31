@@ -17,7 +17,7 @@ Grid::~Grid()
 void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius_in, const bool boundary)
 {
     ModuleBase::TITLE("Grid", "init");
-    ModuleBase::timer::tick("Grid", "init");
+    ModuleBase::timer::start("Grid", "init");
     this->pbc = boundary;
     this->sradius2 = radius_in * radius_in;
     this->sradius = radius_in;
@@ -31,7 +31,7 @@ void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radiu
 
     this->setMemberVariables(ofs_in, ucell);
     this->Construct_Adjacent(ucell);
-    ModuleBase::timer::tick("Grid", "init");
+    ModuleBase::timer::end("Grid", "init");
 }
 
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
@@ -267,7 +267,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 
 void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
-    ModuleBase::timer::tick("Grid", "constru_adj");
+    ModuleBase::timer::start("Grid", "constru_adj");
 
     for  (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
@@ -284,12 +284,12 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
             this->Construct_Adjacent_near_box(atom);
         }
     }
-    ModuleBase::timer::tick("Grid", "constru_adj");
+    ModuleBase::timer::end("Grid", "constru_adj");
 }
 
 void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
 {
-    ModuleBase::timer::tick("Grid", "adj_near_box");
+    ModuleBase::timer::start("Grid", "adj_near_box");
     int box_i_x=0;
     int box_i_y=0;
     int box_i_z=0;
@@ -308,7 +308,7 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
             }
         }
     }
-    ModuleBase::timer::tick("Grid", "adj_near_box");
+    ModuleBase::timer::end("Grid", "adj_near_box");
 }
 
 void Grid::Construct_Adjacent_final(const FAtom& fatom1,

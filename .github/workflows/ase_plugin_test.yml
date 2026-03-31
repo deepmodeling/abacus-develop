@@ -1,0 +1,66 @@
+name: Atomic Simulation Environment (ASE) Plugin Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: abacuslite
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: 'latest'
+          activate-environment: abacuslite
+          python-version: '3.10'
+
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
+          conda install -y pip
+          pip install numpy scipy matplotlib
+
+      - name: Install abacuslite
+        shell: bash -l {0}
+        run: |
+          cd interfaces/ASE_interface
+          pip install .
+
+      - name: Configure & Build ABACUS (GNU)
+        run: |
+          git config --global --add safe.directory `pwd`
+          export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${METIS32_ROOT}/lib:${PARMETIS32_ROOT}/lib:${SUPERLU32_DIST_ROOT}/lib:${PEXSI32_ROOT}/lib:${LD_LIBRARY_PATH}
+          export PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
+          export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH}
+          export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
+          rm -rf build
+          cmake -B build
+          cmake --build build -j2
+      
+      - name: Install and Soft Link ABACUS
+        run: |
+          cmake --install build
+          if [ -f /usr/local/bin/abacus_2p ]; then
+            ln -sf /usr/local/bin/abacus_2p /usr/local/bin/abacus
+          fi
+
+      - name: Run unit tests
+        shell: bash -l {0}
+        run: |
+          cd interfaces/ASE_interface/abacuslite
+          chmod +x xtest.sh
+          ./xtest.sh
+
+      - name: Run integration tests
+        shell: bash -l {0}
+        run: |
+          cd interfaces/ASE_interface/tests
+          chmod +x xtest.sh
+          ./xtest.sh

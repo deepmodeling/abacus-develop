@@ -20,6 +20,8 @@ class H_Ewald_pw
                                 const ModuleBase::ComplexMatrix& strucFac);
 
   public:
+    static int estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg);
+
     static void rgen(
         const ModuleBase::Vector3<double> &dtau,
         const double &rmax,
@@ -28,6 +30,7 @@ class H_Ewald_pw
         const ModuleBase::Matrix3 &bg,
         ModuleBase::Vector3<double> *r,
         double *r2,
+      const int mxr,
         int  &nrm
     );
 

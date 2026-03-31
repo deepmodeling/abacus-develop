@@ -17,16 +17,16 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 const Grid_Driver& GridD,
                                 const Parallel_Orbitals& pv,
                                 const int nks,
+                                const DeePKS_Param& deepks_param,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
                                 double** gedm,
-                                ModuleBase::IntArray* inl_index,
                                 ModuleBase::matrix& f_delta,
                                 const bool isstress,
                                 ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
+    ModuleBase::timer::start("DeePKS_domain", "cal_f_delta");
     f_delta.zero_out();
 
     const int lmaxd = orb.get_lmax_d();
@@ -139,7 +139,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                             {
                                 for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                                 {
-                                    const int inl = inl_index[T0](I0, L0, N0);
+                                    const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                                     const int nm = 2 * L0 + 1;
                                     for (int m1 = 0; m1 < nm; ++m1)
                                     {
@@ -259,7 +259,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
             }
         }
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
+    ModuleBase::timer::end("DeePKS_domain", "cal_f_delta");
     return;
 }
 
@@ -269,10 +269,10 @@ template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double
                                                  const Grid_Driver& GridD,
                                                  const Parallel_Orbitals& pv,
                                                  const int nks,
+                                                 const DeePKS_Param& deepks_param,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
                                                  double** gedm,
-                                                 ModuleBase::IntArray* inl_index,
                                                  ModuleBase::matrix& f_delta,
                                                  const bool isstress,
                                                  ModuleBase::matrix& svnl_dalpha);
@@ -283,10 +283,10 @@ template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HCo
                                                                const Grid_Driver& GridD,
                                                                const Parallel_Orbitals& pv,
                                                                const int nks,
+                                                               const DeePKS_Param& deepks_param,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
                                                                double** gedm,
-                                                               ModuleBase::IntArray* inl_index,
                                                                ModuleBase::matrix& f_delta,
                                                                const bool isstress,
                                                                ModuleBase::matrix& svnl_dalpha);

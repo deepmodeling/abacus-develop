@@ -14,7 +14,7 @@ if (ENABLE_MPI)
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg
@@ -22,7 +22,7 @@ if (ENABLE_MPI)
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg_float
@@ -30,7 +30,7 @@ if (ENABLE_MPI)
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav
@@ -38,7 +38,7 @@ if (ENABLE_MPI)
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_float
@@ -46,7 +46,7 @@ if (ENABLE_MPI)
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   if(ENABLE_LCAO)
   AddTest(
@@ -55,7 +55,7 @@ if (ENABLE_MPI)
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_real
@@ -63,7 +63,7 @@ if (ENABLE_MPI)
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   endif()
 
@@ -77,14 +77,14 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_pw
     LIBS parameter  ${math_libs} psi device base container
     SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
-    ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp 
+    ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
   )
 
   AddTest(
     TARGET MODULE_HSOLVER_sdft
     LIBS parameter  ${math_libs} psi device base container
     SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
-                ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp 
+                ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
     )
 
   if(ENABLE_LCAO)
@@ -92,13 +92,13 @@ if (ENABLE_MPI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ${math_libs} ELPA::ELPA base genelpa psi device
-      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter  ${math_libs} base psi device
-        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp 
+        SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
       )
     endif()
 
@@ -113,19 +113,12 @@ if (ENABLE_MPI)
   if (USE_CUDA)
   AddTest(
     TARGET MODULE_HSOLVER_LCAO_cusolver
-    LIBS parameter  ${math_libs}  base psi device 
-    SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp 
-    ../kernels/dngvd_op.cpp
+    LIBS parameter  ${math_libs}  base psi device
+    SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp
+    ../kernels/hegvd_op.cpp
     ../kernels/cuda/diag_cusolver.cu
   )
-  endif()
-else()
-  if(ENABLE_LCAO)
-  AddTest(
-        TARGET MODULE_HSOLVER_Lapack
-        LIBS parameter  ${math_libs} base psi device
-        SOURCES diago_lapack_test.cpp ../diago_lapack.cpp 
-      )
+  target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -153,12 +146,19 @@ install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DI
 install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
-
-AddTest(
-  TARGET MODULE_HSOLVER_diago_hs_parallel
-  LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
-  SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
-)
+if (USE_ELPA)
+  AddTest(
+    TARGET MODULE_HSOLVER_diago_hs_parallel
+    LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+    SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+  )
+else()
+  AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
+    )
+endif()
 
 AddTest(
   TARGET MODULE_HSOLVER_linear_trans

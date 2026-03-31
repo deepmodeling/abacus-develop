@@ -2,8 +2,7 @@
 
 #include "source_base/timer.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
 // input variable.
@@ -16,7 +15,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               K_Vectors* p_kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
+    ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
 
     // total stress
     sigmatot.create(3, 3);
@@ -117,7 +116,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
+    ModuleBase::timer::end("OF_Stress_PW", "cal_stress");
     return;
 }
 

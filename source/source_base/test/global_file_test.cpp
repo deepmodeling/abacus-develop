@@ -26,13 +26,24 @@
 
 class GlobalFile : public testing::Test
 {
-
+	protected:
+		void SetUp() override
+		{
+				const std::string suffix = "Si";
+				PARAM.sys.global_out_dir = "OUT." + suffix + "/";
+				PARAM.sys.global_stru_dir = PARAM.sys.global_out_dir + "STRU/";
+				PARAM.sys.global_matrix_dir = PARAM.sys.global_out_dir + "matrix/";
+				PARAM.sys.global_wfc_dir = PARAM.sys.global_out_dir + "WFC/";
+				PARAM.sys.global_mlkedf_descriptor_dir = PARAM.sys.global_out_dir + "MLKEDF_Descriptors/";
+				PARAM.sys.global_deepks_label_elec_dir = PARAM.sys.global_out_dir + "DeePKS_Labels_Elec/";
+		}
 };
 
 TEST_F(GlobalFile,mkdirout)
 {
 	    std::string output;
 	    testing::internal::CaptureStdout();
+	    PARAM.sys.log_file = "running_m_1.log";
 	    ModuleBase::Global_File::make_dir_out("Si","m",false,false,0,true,true);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE DIR"));
@@ -43,6 +54,7 @@ TEST_F(GlobalFile,mkdirout)
         remove(dd.c_str());
 
 	    testing::internal::CaptureStdout();
+	    PARAM.sys.log_file = "running_md.log";
 	    ModuleBase::Global_File::make_dir_out("Si","md",false,false,0,true,false);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE STRU DIR"));
@@ -53,6 +65,7 @@ TEST_F(GlobalFile,mkdirout)
         remove(bb.c_str());
 
 	    testing::internal::CaptureStdout();
+	    PARAM.sys.log_file = "running_md_1.log";
 	    ModuleBase::Global_File::make_dir_out("Si","md",true,false,0,true,true);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE MATRIX DIR"));
@@ -79,6 +92,7 @@ TEST_F(GlobalFile,mkdiratom)
 
 TEST_F(GlobalFile,openlog)
 {
+	    PARAM.sys.global_out_dir = "./";
         std::ofstream ofs;
         ModuleBase::Global_File::open_log(ofs,"Si.log","md",true);
         EXPECT_TRUE(ofs.is_open());

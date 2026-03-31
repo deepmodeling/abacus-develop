@@ -35,25 +35,25 @@ public:
 
 	void zero_out(void);
 
-	const int getSize() const
+	int getSize() const
 	{ return size;}
 
-	const int getDim() const
+	int getDim() const
 	{ return dim;}
 
-	const int getBound1() const
+	int getBound1() const
 	{ return bound1;}
 
-	const int getBound2() const
+	int getBound2() const
 	{ return bound2;}
 
-	const int getBound3() const
+	int getBound3() const
 	{ return bound3;}
 
-	const int getBound4() const
+	int getBound4() const
 	{ return bound4;}
 
-	static const int getArrayCount(void)
+	int getArrayCount(void)
 	{ return arrayCount;}
 
 private:

@@ -9,6 +9,9 @@
 #include <mpi.h>
 #endif
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cerrno>
 #include <sstream>
 #include "global_function.h"
 #include "source_io/module_parameter/parameter.h"
@@ -40,14 +43,15 @@ void ModuleBase::Global_File::make_dir_out(
 #endif
     int make_dir = 0;
 	// mohan update 2011-05-03
-    std::string command0 =  "test -d " + PARAM.globalv.global_out_dir + " || mkdir " + PARAM.globalv.global_out_dir;
+    //std::string command0 =  "test -d " + PARAM.globalv.global_out_dir + " || mkdir " + PARAM.globalv.global_out_dir;
 
 	int times = 0;
 	while(times<GlobalV::NPROC)
 	{
 		if(rank==times)
 		{
-			if ( system( command0.c_str() ) == 0 )
+            int ret = mkdir(PARAM.globalv.global_out_dir.c_str(), 0755);
+			if ( ret == 0 || errno == EEXIST )
 			{
 				std::cout << " MAKE THE DIR         : " << PARAM.globalv.global_out_dir << std::endl;
 				make_dir = 1;
@@ -78,14 +82,15 @@ void ModuleBase::Global_File::make_dir_out(
     if(calculation == "md")
     {
         int make_dir_stru = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.globalv.global_stru_dir;
+        //std::string command1 =  "test -d " + PARAM.globalv.global_stru_dir + " || mkdir " + PARAM.globalv.global_stru_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
         {
             if(rank==times)
             {
-                if ( system( command1.c_str() ) == 0 )
+                int ret = mkdir(PARAM.globalv.global_stru_dir.c_str(), 0755);
+                if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE STRU DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
                     make_dir_stru = 1;
@@ -118,16 +123,17 @@ void ModuleBase::Global_File::make_dir_out(
     if((out_dir) && calculation == "md")
     {
         int make_dir_matrix = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_matrix_dir + " || mkdir " + PARAM.globalv.global_matrix_dir;
+        //std::string command1 =  "test -d " + PARAM.globalv.global_matrix_dir + " || mkdir " + PARAM.globalv.global_matrix_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
         {
             if(rank==times)
             {
-                if ( system( command1.c_str() ) == 0 )
+                int ret = mkdir(PARAM.globalv.global_matrix_dir.c_str(), 0755);
+                if ( ret == 0 || errno == EEXIST )
                 {
-                    std::cout << " MAKE THE MATRIX DIR    : " << PARAM.globalv.global_stru_dir << std::endl;
+                    std::cout << " MAKE THE MATRIX DIR    : " << PARAM.globalv.global_matrix_dir << std::endl;
                     make_dir_matrix = 1;
                 }
                 else
@@ -157,14 +163,15 @@ void ModuleBase::Global_File::make_dir_out(
     if(out_wfc_dir)
     {
         int make_dir_wfc = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_wfc_dir + " || mkdir " + PARAM.globalv.global_wfc_dir;
+        //std::string command1 =  "test -d " + PARAM.globalv.global_wfc_dir + " || mkdir " + PARAM.globalv.global_wfc_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
         {
             if(rank==times)
             {
-                if ( system( command1.c_str() ) == 0 )
+                int ret = mkdir(PARAM.globalv.global_wfc_dir.c_str(), 0755);
+                if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE WFC DIR    : " << PARAM.globalv.global_wfc_dir << std::endl;
                     make_dir_wfc = 1;
@@ -196,14 +203,15 @@ void ModuleBase::Global_File::make_dir_out(
     if(PARAM.inp.of_ml_gene_data == 1)
     {
         int make_dir_descrip = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_mlkedf_descriptor_dir + " || mkdir " + PARAM.globalv.global_mlkedf_descriptor_dir;
+        //std::string command1 =  "test -d " + PARAM.globalv.global_mlkedf_descriptor_dir + " || mkdir " + PARAM.globalv.global_mlkedf_descriptor_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
         {
             if(rank==times)
             {
-                if ( system( command1.c_str() ) == 0 )
+                int ret = mkdir(PARAM.globalv.global_mlkedf_descriptor_dir.c_str(), 0755);
+                if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE MLKEDF DESCRIPTOR DIR    : " << PARAM.globalv.global_mlkedf_descriptor_dir << std::endl;
                     make_dir_descrip = 1;
@@ -237,14 +245,15 @@ void ModuleBase::Global_File::make_dir_out(
     if(PARAM.inp.deepks_out_freq_elec > 0)
     {
         int make_dir_deepks_elec = 0;
-        std::string command1 =  "test -d " + PARAM.globalv.global_deepks_label_elec_dir + " || mkdir " + PARAM.globalv.global_deepks_label_elec_dir;
+        //std::string command1 =  "test -d " + PARAM.globalv.global_deepks_label_elec_dir + " || mkdir " + PARAM.globalv.global_deepks_label_elec_dir;
 
         times = 0;
         while(times<GlobalV::NPROC)
         {
             if(rank==times)
             {
-                if ( system( command1.c_str() ) == 0 )
+                int ret = mkdir(PARAM.globalv.global_deepks_label_elec_dir.c_str(), 0755);
+                if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE DEEPKS LABELS (ELEC) DIR    : " << PARAM.globalv.global_deepks_label_elec_dir << std::endl;
                     make_dir_deepks_elec = 1;

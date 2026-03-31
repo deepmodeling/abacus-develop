@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/intarray.h"
 #include "source_base/matrix.h"
@@ -30,12 +31,10 @@ namespace DeePKS_domain
 // calculate the gradient of pdm with regard to atomic positions
 // d/dX D_{Inl,mm'}
 template <typename TK>
-void cal_gdmx(const int lmaxd,
-              const int inlmax,
-              const int nks,
+void cal_gdmx(const int nks,
+              const DeePKS_Param& deepks_param,
               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
               std::vector<hamilt::HContainer<double>*> phialpha,
-              const ModuleBase::IntArray* inl_index,
               const hamilt::HContainer<double>* dmr,
               const UnitCell& ucell,
               const LCAO_Orbitals& orb,
@@ -53,9 +52,7 @@ void cal_gdmx(const int lmaxd,
 /// gevdm*gdmx->gvx
 ///----------------------------------------------------
 void cal_gvx(const int nat,
-             const int inlmax,
-             const int des_per_atom,
-             const std::vector<int>& inl2l,
+             const DeePKS_Param& deepks_param,
              const std::vector<torch::Tensor>& gevdm,
              const torch::Tensor& gdmx,
              torch::Tensor& gvx,

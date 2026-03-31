@@ -149,6 +149,36 @@ struct cal_force_nl_op
                     FPTYPE* force);
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_force_loc_op{
+    void operator()(
+        const int nat,
+        const int npw,
+        const FPTYPE tpiba_omega,
+        const int* iat2it,
+        const int* ig2igg,
+        const FPTYPE* gcar,
+        const FPTYPE* tau,
+        const std::complex<FPTYPE>* aux,
+        const FPTYPE* vloc,
+        const int vloc_nr,
+        FPTYPE* forcelc) {};
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_ew_op{
+    void operator()(
+        const int nat,
+        const int npw,
+        const int ig_gge0,
+        const int* iat2it,
+        const FPTYPE* gcar,
+        const FPTYPE* tau,
+        const FPTYPE* it_fact,
+        const std::complex<FPTYPE>* aux,
+        FPTYPE* forceion
+    ) {};
+};
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
@@ -275,6 +305,36 @@ void saveVkbValues(const int* gcar_zero_ptrs,
                    int ipol,
                    int npwx);
 
+template <typename FPTYPE>
+struct cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(
+        const int nat,
+        const int npw,
+        const FPTYPE tpiba_omega,
+        const int* iat2it,
+        const int* ig2igg,
+        const FPTYPE* gcar,
+        const FPTYPE* tau,
+        const std::complex<FPTYPE>* aux,
+        const FPTYPE* vloc,
+        const int vloc_nr,
+        FPTYPE* forcelc);
+};
+
+template <typename FPTYPE>
+struct cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(
+        const int nat,
+        const int npw,
+        const int ig_gge0,
+        const int* iat2it,
+        const FPTYPE* gcar,
+        const FPTYPE* tau,
+        const FPTYPE* it_fact,
+        const std::complex<FPTYPE>* aux,
+        FPTYPE* forceion
+    );
+};
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt
 #endif // W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H

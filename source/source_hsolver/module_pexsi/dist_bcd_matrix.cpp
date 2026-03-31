@@ -48,7 +48,7 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
     }
 
     // synchronize matrix parameters to all processes, including those are not in bcd group
-    int myid_in_comm_world;
+    int myid_in_comm_world = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myid_in_comm_world);
     if (myid_in_comm_world == 0)
     {

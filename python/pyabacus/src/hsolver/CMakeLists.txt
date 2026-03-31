@@ -9,15 +9,16 @@ list(APPEND _diago
     ${HSOLVER_PATH}/diago_pxxxgvx.cpp
 
 
-    ${HSOLVER_PATH}/kernels/dngvd_op.cpp
+    ${HSOLVER_PATH}/kernels/hegvd_op.cpp
     ${HSOLVER_PATH}/kernels/bpcg_kernel_op.cpp
     # dependency
     ${BASE_PATH}/kernels/math_kernel_op.cpp
     ${BASE_PATH}/kernels/math_kernel_op_vec.cpp
     ${BASE_PATH}/kernels/math_ylm_op.cpp
     ${BASE_PATH}/module_device/device.cpp
+    ${BASE_PATH}/module_device/device_helpers.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
-    
+
     ${PSI_PATH}/psi.cpp
   )
 add_library(diagopack SHARED 

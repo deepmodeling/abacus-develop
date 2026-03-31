@@ -1249,9 +1249,9 @@ TIME STATISTICS
  Grid_Driver           Find_atom                  0.03   792      0.00   0.01   
  LCAO_domain           grid_prepare               0.00   1        0.00   0.00   
  Veff                  initialize_HR              0.00   1        0.00   0.00   
- OverlapNew            initialize_SR              0.00   1        0.00   0.00   
- EkineticNew           initialize_HR              0.00   1        0.00   0.00   
- NonlocalNew           initialize_HR              0.00   1        0.00   0.00   
+ Overlap               initialize_SR              0.00   1        0.00   0.00   
+ Ekinetic              initialize_HR              0.00   1        0.00   0.00   
+ Nonlocal              initialize_HR              0.00   1        0.00   0.00   
  Charge                set_rho_core               0.14   1        0.14   0.03   
  PW_Basis_Sup          recip2real                 3.44   122      0.03   0.69   
  PW_Basis_Sup          gathers_scatterp           1.72   122      0.01   0.34   
@@ -1279,12 +1279,12 @@ TIME STATISTICS
  Gint_interface        cal_gint_vlocal            114.33 17       6.73   22.83  
  Gint_Tools            cal_psir_ylm               82.79  272000   0.00   16.53  
  Gint_k                transfer_pvpR              3.98   17       0.23   0.79   
- OverlapNew            calculate_SR               0.67   1        0.67   0.13   
- OverlapNew            contributeHk               0.06   17       0.00   0.01   
- EkineticNew           contributeHR               0.67   17       0.04   0.13   
- EkineticNew           calculate_HR               0.67   1        0.67   0.13   
- NonlocalNew           contributeHR               0.49   17       0.03   0.10   
- NonlocalNew           calculate_HR               0.45   1        0.45   0.09   
+ Overlap               calculate_SR               0.67   1        0.67   0.13   
+ Overlap               contributeHk               0.06   17       0.00   0.01   
+ Ekinetic              contributeHR               0.67   17       0.04   0.13   
+ Ekinetic              calculate_HR               0.67   1        0.67   0.13   
+ Nonlocal           contributeHR               0.49   17       0.03   0.10   
+ Nonlocal           calculate_HR               0.45   1        0.45   0.09   
  OperatorLCAO          contributeHk               0.09   17       0.01   0.02   
  HSolverLCAO           hamiltSolvePsiK            90.50  17       5.32   18.07  
  ElecStateLCAO         psiToRho                   132.45 17       7.79   26.45  

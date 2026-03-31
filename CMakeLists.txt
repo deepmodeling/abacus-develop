@@ -52,6 +52,12 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 
+if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
+  set(NVHPC_ROOT_DIR
+      "$ENV{NVHPC_ROOT}"
+      CACHE PATH "Path to NVIDIA HPC SDK root directory.")
+endif()
+
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON)
@@ -74,8 +80,8 @@ if(ENABLE_RAPIDJSON)
         OFF
         CACHE INTERNAL "")
     FetchContent_MakeAvailable(rapidjson)
-    set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
   endif()
+  set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
   add_compile_definitions(__RAPIDJSON)
   add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
   include_directories(${RapidJSON_INCLUDE_PATH})
@@ -123,20 +129,66 @@ if(NOT ENABLE_MPI)
 endif()
 
 # Different exe files of ABACUS
-if(ENABLE_LCAO AND ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus)
-elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_pw)
-elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_pw_serial)
-elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
-  set(ABACUS_BIN_NAME abacus_serial)
+unset(ABACUS_BIN_NAME CACHE)
+
+# Case : LCAO or PW
+if(ENABLE_LCAO)
+  # Case: CUDA is enabled (suffix with 'g' for GPU)
+  if(USE_CUDA)
+    if(ENABLE_MPI)
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2g)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3g)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4g)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5g)
+      endif()
+    endif()
+  # Case: CPU is enabled (suffix with 'p' for parallel) 
+  else()
+    if(ENABLE_MPI)
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2p)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3p)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4p)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5p)
+      endif()
+    else()
+      if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_2s)
+      elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_3s)
+      elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_4s)
+      elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+        set(ABACUS_BIN_NAME abacus_5s)
+      endif()
+    endif()
+  endif()
+# Case : PW only
+else()
+  if(USE_CUDA)
+    if(ENABLE_MPI)
+      set(ABACUS_BIN_NAME abacus_1g)
+    endif()
+  else()
+    if(ENABLE_MPI)
+      set(ABACUS_BIN_NAME abacus_1p)
+    else()
+      set(ABACUS_BIN_NAME abacus_1s)
+    endif()
+  endif()
 endif()
+
 
 # Use DSP hardware
 if (USE_DSP)
   set(USE_ELPA OFF)
-  set(ENABLE_LCAO OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -156,10 +208,14 @@ if(ENABLE_COVERAGE)
     include(FetchContent)
     FetchContent_Declare(
       cmakecodecov
-      URL https://github.com/baixiaokuang/CMake-codecov/archive/refs/heads/master.zip
+      GIT_REPOSITORY https://github.com/RWTH-HPC/CMake-codecov.git
+      GIT_TAG master
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
     )
     FetchContent_Populate(cmakecodecov)
     list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
+    set(CMAKE_MODULE_PATH "${cmakecodecov_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
     find_package(codecov REQUIRED)
   endif()
 endif()
@@ -170,13 +226,16 @@ set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
 include_directories(${ABACUS_SOURCE_DIR}/source_base/module_container)
 
-set(CMAKE_CXX_STANDARD 11)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${ABACUS_BIN_NAME} source/source_main/main.cpp)
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
+
 
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
@@ -253,9 +312,6 @@ if(ENABLE_LCAO)
     add_compile_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
-  if(OLD_GINT)
-    add_compile_definitions(__OLD_GINT)
-  endif()
 else()
   set(ENABLE_MLALGO OFF)
   set(ENABLE_LIBRI OFF)
@@ -266,7 +322,7 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS CXX REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)
@@ -287,12 +343,8 @@ if (USE_SW)
   set(SW ON)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
-  
+
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
 endif()
 
 find_package(Threads REQUIRED)
@@ -331,22 +383,38 @@ endif()
 
 if(USE_CUDA)
   cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
+  
+  # Always find CUDAToolkit to get CUDAToolkit_VERSION
+  find_package(CUDAToolkit REQUIRED)
+  
   set_if_higher(CMAKE_CXX_STANDARD 14)
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL "13.0")
+    message(STATUS "CUDA ${CUDAToolkit_VERSION} detected. Setting CMAKE_CUDA_STANDARD to 17.")
+    set_if_higher(CMAKE_CXX_STANDARD 17)
+  endif()
   set(CMAKE_CXX_EXTENSIONS ON)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    find_package(CUDAToolkit REQUIRED)
     # check
     # https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
-    # for available architechures in different CUDA versions
-    set(CMAKE_CUDA_ARCHITECTURES
-        60 # P100
-        70 # V100
-        # Add your CUDA arch here Check the Compute Capability version of your
-        # GPU at: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
-    )
+    # for available architectures in different CUDA versions
+    
+    # CUDA 13.0+ dropped support for architectures below 75
+    if(CUDAToolkit_VERSION VERSION_LESS "13.0")
+      set(CMAKE_CUDA_ARCHITECTURES
+          60 # P100
+          70 # V100
+      )
+    else()
+      # Start with empty list; architectures 75+ will be added below
+      set(CMAKE_CUDA_ARCHITECTURES)
+    endif()
+    
+    # Add your CUDA arch here Check the Compute Capability version of your
+    # GPU at: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
+    
     if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
     endif()
@@ -370,9 +438,15 @@ if(USE_CUDA)
     target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
   endif ()
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 13.0)
+    if(EXISTS "${CUDAToolkit_ROOT}/include/cccl")
+      include_directories("${CUDAToolkit_ROOT}/include/cccl")
+    endif()
+  endif()
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
+    target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
@@ -380,21 +454,27 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_CUSOLVERMP)
-      add_compile_definitions(__CUSOLVERMP)
-      find_library(CAL_LIBRARY
-          NAMES cal
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      find_library(CUSOLVERMP_LIBRARY
-          NAMES cusolverMp
-          PATHS ${CAL_CUSOLVERMP_PATH}
-          NO_DEFAULT_PATH
-      )
-      target_link_libraries(${ABACUS_BIN_NAME}
-          ${CAL_LIBRARY}
-          ${CUSOLVERMP_LIBRARY}
-      )
+      # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
+      include(cmake/SetupCuSolverMp.cmake)
+      abacus_setup_cusolvermp(${ABACUS_BIN_NAME})
+    endif()
+    if (ENABLE_CUBLASMP)
+      # Enforcement 1: cuBLASMp requires cuSOLVERMp to be enabled
+      if (NOT ENABLE_CUSOLVERMP)
+        message(FATAL_ERROR 
+          "ENABLE_CUBLASMP is set to ON, but ENABLE_CUSOLVERMP is OFF."
+          "In ABACUS, cuBLASMp support requires cuSOLVERMp to be enabled simultaneously."
+          "Please set -DENABLE_CUSOLVERMP=ON.")
+      endif()
+      # Enforcement 2: cuBLASMp 0.8.0+ is incompatible with CAL backend
+      # Note: _use_cal is defined inside abacus_setup_cusolvermp
+      if (_use_cal)
+        message(FATAL_ERROR 
+          "cuBLASMp 0.8.0+ requires NCCL Symmetric Memory, but cuSOLVERMp is using CAL backend."
+          "Please upgrade cuSOLVERMp to >= 0.7.0 to use NCCL for both.")
+      endif()
+      include(cmake/SetupCuBlasMp.cmake)
+      abacus_setup_cublasmp(${ABACUS_BIN_NAME})
     endif()
   endif()
 endif()
@@ -468,20 +548,21 @@ if(MKLROOT)
   find_package(MKL REQUIRED)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
-  list(APPEND math_libs MKL::MKL MKL::MKL_SCALAPACK)
+  list(APPEND math_libs MKL::MKL)
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs ifcore)
   endif()
-elseif(USE_SW)
-   list(APPEND math_libs gfortran)
-  # SW architecture can only use its own math library
-else()
+elseif(NOT USE_SW)
   find_package(FFTW3 REQUIRED)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  find_package(ScaLAPACK REQUIRED)
-  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  if(USE_DSP)
+    target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
+  else()
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -520,7 +601,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  
+
   add_compile_definitions(__MLALGO)
 endif()
 
@@ -560,7 +641,7 @@ if (ENABLE_CNPY)
     include_directories(${cnpy_INCLUDE_DIR})
   endif()
   include_directories(${cnpy_SOURCE_DIR})
-  
+
   # find ZLIB and link
   find_package(ZLIB REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} cnpy ZLIB::ZLIB)
@@ -617,10 +698,6 @@ if(ENABLE_LIBCOMM)
 endif()
 
 
-
-list(APPEND math_libs m)
-target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
-
 if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
@@ -649,6 +726,15 @@ if(DEFINED DeePMD_DIR)
   endif()
 endif()
 
+if(DEFINED NEP_DIR)
+  find_package(NEP REQUIRED)
+
+  if(NEP_FOUND)
+    add_compile_definitions(__NEP)
+    target_link_libraries(${ABACUS_BIN_NAME} NEP::nep)
+  endif()
+endif()
+
 if(DEFINED TensorFlow_DIR)
   find_package(TensorFlow REQUIRED)
   include_directories(${TensorFlow_DIR}/include)
@@ -665,72 +751,12 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
-# Add performance test in abacus
-if(ENABLE_GOOGLEBENCH)
-  set(BUILD_TESTING ON)
-  find_package(benchmark HINTS ${BENCHMARK_DIR})
-  if(NOT ${benchmark_FOUND})
-    set(BENCHMARK_USE_BUNDLED_GTEST OFF)
-    include(FetchContent)
-    FetchContent_Declare(
-      benchmark
-      GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG "origin/main"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    set(BENCHMARK_ENABLE_TESTING OFF)
-    FetchContent_MakeAvailable(benchmark)
-  endif()
-endif()
-
-if(BUILD_TESTING)
-  set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
-  include(CTest)
-  enable_testing()
-  find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
-  if(NOT ${GTest_FOUND})
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG "origin/main"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(googletest)
-  endif()
-  # TODO: Try the GoogleTest module.
-  # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
-
-  function(AddTest) # function for UT
-    cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
-    add_executable(${UT_TARGET} ${UT_SOURCES})
-
-    if(ENABLE_COVERAGE)
-      add_coverage(${UT_TARGET})
-    endif()
-
-    # dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
-    if(ENABLE_GOOGLEBENCH)
-      target_link_libraries(
-        ${UT_TARGET} benchmark::benchmark)
-    endif()
-
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
-    endif()
-    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    add_test(
-      NAME ${UT_TARGET}
-      COMMAND ${UT_TARGET}
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-  endfunction(AddTest)
-endif()
+include(cmake/Testing.cmake)
 
 add_subdirectory(source)
+
+include(cmake/BuildInfo.cmake)
+setup_build_info()
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}
@@ -778,17 +804,31 @@ if(ENABLE_LCAO)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()
   if(USE_CUDA)
-    target_link_libraries(diag_cusolver)
+    target_link_libraries(${ABACUS_BIN_NAME} diag_cusolver)
   endif()
 endif()
 if(ENABLE_RAPIDJSON)
   target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
+if (USE_SW)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
+  list(APPEND math_libs gfortran)
+endif()
+
+list(APPEND math_libs m)
+target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
+
 install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Create a symbolic link 'abacus' pointing to the actual executable
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()

@@ -3,17 +3,9 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/read_wfc_nao.h"
+#include "source_io/module_wf/read_wfc_nao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_io/write_wfc_nao.h"
-
-//define a mock derived class of class ElecState
-
-namespace elecstate
-{
-      const double* ElecState::getRho(int spin) const{return &(this->eferm.ef);}//just for mock
-}
-
+#include "source_io/module_wf/write_wfc_nao.h"
 
 namespace ModuleIO
 {
@@ -29,7 +21,8 @@ std::string filename_output(
             const int out_type,
             const bool out_app_flag,
             const bool gamma_only,
-            const int istep)
+            const int istep,
+            const int iter)
 {
       return "./support/wfs1_nao.txt";
 }
@@ -77,19 +70,20 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
 #endif 
 
       psi::Psi<double> psid;
-      elecstate::ElecState pelec;
-      pelec.ekb.create(nks,nbands);
-      pelec.wg.create(nks,nbands);
+      ModuleBase::matrix ekb;
+      ModuleBase::matrix wg;
+      ekb.create(nks,nbands);
+      wg.create(nks,nbands);
 
       std::vector<int> ik2iktot = {0};
       const int nkstot = 1;
 
       // Act
 	  ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			  &(pelec), ik2iktot, nkstot, nspin);
+			  ekb, wg, ik2iktot, nkstot, nspin);
       // Assert
-      EXPECT_NEAR(pelec.ekb(0,1),0.31482195194888534794941393,1e-5);
-      EXPECT_NEAR(pelec.wg(0,1),0.0,1e-5);
+      EXPECT_NEAR(ekb(0,1),0.31482195194888534794941393,1e-5);
+      EXPECT_NEAR(wg(0,1),0.0,1e-5);
       if (my_rank == 0)
       {
             EXPECT_NEAR(psid(0,0,0),5.3759239842e-01,1e-5);
@@ -122,19 +116,20 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 #endif 
 
     psi::Psi<double> psid;
-    elecstate::ElecState pelec;
-    pelec.ekb.create(nks, nbands);
-    pelec.wg.create(nks, nbands);
+    ModuleBase::matrix ekb;
+    ModuleBase::matrix wg;
+    ekb.create(nks, nbands);
+    wg.create(nks, nbands);
 
 	std::vector<int> ik2iktot = {0};
 	const int nkstot = 1;
 
 	// Act
 	ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			&(pelec), ik2iktot, nkstot, nspin, skip_band, nstep);
+			ekb, wg, ik2iktot, nkstot, nspin, skip_band, nstep);
 
     // Assert
-    EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
+    EXPECT_NEAR(ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
     if (my_rank == 0)
     {
         EXPECT_NEAR(psid(0, 0, 0), 1.8587183851, 1e-5);

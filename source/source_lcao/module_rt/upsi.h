@@ -9,6 +9,7 @@
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
 
@@ -42,7 +43,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  const ct::Tensor& psi_k_laststep,
                  ct::Tensor& psi_k,
                  std::ofstream& ofs_running,
-                 const int print_matrix);
+                 const int print_matrix,
+                 CublasMpResources& cublas_res);
 
 template <typename Device>
 void upsi_tensor_lapack(const Parallel_Orbitals* pv,

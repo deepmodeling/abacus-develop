@@ -4,15 +4,15 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/cal_test.h"
-#include "source_io/input_conv.h"
-#include "source_io/para_json.h"
-#include "source_io/print_info.h"
-#include "source_io/read_input.h"
-#include "source_io/winput.h"
+#include "source_io/module_output/cal_test.h"
+#include "source_io/module_parameter/input_conv.h"
+#include "source_io/module_json/para_json.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_parameter/read_input.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
+#include "source_base/parallel_global.h"
+
 Driver::Driver()
 {
 }
@@ -110,23 +110,23 @@ void Driver::print_start_info()
 void Driver::reading()
 {
     ModuleBase::TITLE("Driver", "reading");
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::start("Driver", "reading");
     // temperarily
     GlobalV::MY_RANK = PARAM.globalv.myrank;
     GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
-    ModuleIO::ReadInput read_input(PARAM.globalv.myrank);
-    read_input.read_parameters(PARAM,  PARAM.globalv.global_in_card);
+    ModuleIO::ReadInput input(PARAM.globalv.myrank);
+    input.read_parameters(PARAM, PARAM.globalv.global_in_card);
 
     // (2) create the output directory, running_*.log and print info
-    read_input.create_directory(PARAM);
+    input.create_directory(PARAM);
     this->print_start_info();
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card;
-    read_input.write_parameters(PARAM, ss1.str());
+    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card << ".info";
+    input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
     Input_Conv::Convert();
@@ -163,17 +163,13 @@ void Driver::reading()
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
 #endif
-
-    // (6) Read in parameters about wannier functions.
-    winput::Init(PARAM.inp.wannier_card);
-
-    ModuleBase::timer::tick("Driver", "reading");
+    ModuleBase::timer::end("Driver", "reading");
 }
 
 void Driver::atomic_world()
 {
     ModuleBase::TITLE("Driver", "atomic_world");
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::start("Driver", "atomic_world");
 
     // reading information 
     this->reading();
@@ -181,5 +177,5 @@ void Driver::atomic_world()
     // where the actual stuff is done
     this->driver_run();
 
-    ModuleBase::timer::tick("Driver", "atomic_world");
+    ModuleBase::timer::end("Driver", "atomic_world");
 }

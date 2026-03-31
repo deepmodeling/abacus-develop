@@ -49,16 +49,16 @@ public:
 
 	void zero_out(void);
 
-	const int getSize() const{ return size;}
-	const int getDim() const{ return dim;}
-	const int getBound1() const{ return bound1;}
-	const int getBound2() const{ return bound2;}
-	const int getBound3() const{ return bound3;}
-	const int getBound4() const { return bound4;}
-	const int getBound5() const { return bound5;}
-	const int getBound6() const { return bound6;}
+	int getSize() const{ return size;}
+	int getDim() const{ return dim;}
+	int getBound1() const{ return bound1;}
+	int getBound2() const{ return bound2;}
+	int getBound3() const{ return bound3;}
+	int getBound4() const { return bound4;}
+	int getBound5() const { return bound5;}
+	int getBound6() const { return bound6;}
 
-	static const int getArrayCount(void)
+	int getArrayCount(void)
 	{ return arrayCount;}
 
 private:

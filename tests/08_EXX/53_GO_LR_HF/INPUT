@@ -1,4 +1,4 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
 suffix            autotest
 pseudo_dir        ../../../tests/PP_ORB
@@ -12,10 +12,10 @@ nspin             2
 ecutwfc           10
 scf_thr           1e-7
 scf_nmax          20
-exx_hybrid_step 1
+exx_hybrid_step   1
 
 #Parameters (3.Basis)
-basis_type        lcao 
+basis_type        lcao
 gamma_only        1
 
 #Parameters (4.Smearing)
@@ -28,21 +28,21 @@ mixing_beta       0.4
 mixing_gg0        0
 
 # DFT Funcitonal Hartree-Fock
-dft_functional      hf
-exx_real_number     1
-exx_ccp_rmesh_times 1
+dft_functional    hf
+exx_real_number   1
+exx_ccp_rmesh_times  1
 
 # Parameters of Linear Response TDDFT
-lr_nstates   2
-xc_kernel    hf
-lr_solver    dav
-lr_thr       1e-2
-pw_diag_ndim 2
+lr_nstates        2
+xc_kernel         hf
+lr_solver         dav
+lr_thr            1e-2
+pw_diag_ndim      2
 
 # energy solver for LR-TDDFT
-esolver_type ks-lr
+esolver_type      ks-lr
 
-nocc  4
-nvirt 2
+nocc              4
+nvirt             2
 abs_wavelen_range  40 180
-abs_broadening     0.01
+abs_broadening    0.01

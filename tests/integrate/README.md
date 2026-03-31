@@ -1,4 +1,4 @@
-1. Modify the file general_info
+1. Modify the file general_info to include the EXEC address
 
 2. try this script for autotest:
 ./Autotest.sh > check.txt
@@ -21,50 +21,7 @@ NOTES:
 
 #######################
 
-"simple" scripts
-
----
-
-0-99 Structure Tests (Bravis Lattices, symmetry analysis)
-
----
-
-100-200 PW basic properties
-
-100-110: pseudopotentials
-(1) Semiconductor (Si), UPF1.0 (s,p,d,f)
-(2) UPF2.0 (s,p,d,f)
-(3) dojo (s,p,d)
-
-110-120: smearing methods
-(1) Metals
-(2)
-
-120-130: charge mixing
-(1) Metals, Charge Mixing Methods,
-(2) Surfaces, Charge Mixing Methods
-
-130-140: diagonalization methods
-(1) CG (number of bands/trial wave functions)
-(2) Davidson
-
-140-150: force tests
-
-* test every components of forces
-* small displacements .vs. large displacements
-
-150-160: stress tests
-
-160-170: ion relaxatoin
-
-170-180: cell relaxation
-
-180-190: md simulations
-
----
-
-200-300 LCAO basic properties
-300-400 LCAO basic Gamma Only properties
+ABBREVIATIONS USED IN NAMING THE INTEGRATE TESTS
 
 _PW    plain wave bases
 _NO    numerical atoms orbitals bases
@@ -102,7 +59,8 @@ _MD    molecular dynamics
 _TD    real time TDDFT
 _LR    linear response TDDFT
 
-_OH    output Halmitonian matrix
+_OHK   output Hamiltonian and Overlap matrices for each k point
+_OHR   output Hamiltonian and Overlap matrices with Bravais lattice vectors
 _OB    output bands file
 _OD    output DOS file
 _OW    output wave functions
@@ -137,11 +95,7 @@ _MB    move ions method: bfgs
 _1O    first-order charge extrapolation
 _2O    second-order charge extrapolation
 
----
-
-900-1000 Orbital free DFT properties
-
 _OF    orbital free density functional theory (OFDFT)
 _OP    optimization method used in OFDFT
-_KE     kinetic energy functional used in OFDFT
+_KE    kinetic energy functional used in OFDFT
 _CO    convergence check

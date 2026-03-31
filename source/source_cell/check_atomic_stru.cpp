@@ -8,7 +8,7 @@ namespace unitcell
 
 void check_atomic_stru(UnitCell& ucell, const double& factor)
 {
-    ModuleBase::timer::tick("unitcell", "check_atomic_stru");
+    ModuleBase::timer::start("unitcell", "check_atomic_stru");
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
     // if there has bond length is shorter than covalent_bond_length * factor,
@@ -168,7 +168,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
         }
     }
 
-    ModuleBase::timer::tick("unitcell", "check_atomic_stru");
+    ModuleBase::timer::end("unitcell", "check_atomic_stru");
 }
 
 }

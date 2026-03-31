@@ -29,12 +29,12 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
                             const bool add,
                             const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real2recip");
+    ModuleBase::timer::start(this->classname, "real2recip");
 
     assert(this->gamma_only == false);
     auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int ir = 0; ir < this->nrxx; ++ir)
     {
@@ -53,7 +53,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -64,14 +64,14 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
             out[igl] = tmpfac * auxg[this->igl2isz_k[igl + startig]];
         }
     }
-    ModuleBase::timer::tick(this->classname, "real2recip");
+    ModuleBase::timer::end(this->classname, "real2recip");
 }
 
 /**
@@ -94,7 +94,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
                             const bool add,
                             const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real2recip");
+    ModuleBase::timer::start(this->classname, "real2recip");
     assert(this->gamma_only == true);
     // for(int ir = 0 ; ir < this->nrxx ; ++ir)
     // {
@@ -103,7 +103,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     // r2c in place
     const int npy = this->ny * this->nplane;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
     for (int ix = 0; ix < this->nx; ++ix)
     {
@@ -126,7 +126,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
@@ -137,14 +137,14 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int igl = 0; igl < npwk; ++igl)
         {
             out[igl] = tmpfac * auxg[this->igl2isz_k[igl + startig]];
         }
     }
-    ModuleBase::timer::tick(this->classname, "real2recip");
+    ModuleBase::timer::end(this->classname, "real2recip");
     return;
 }
 
@@ -168,7 +168,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
                             const bool add,
                             const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip2real");
+    ModuleBase::timer::start(this->classname, "recip2real");
     assert(this->gamma_only == false);
     ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<FPTYPE>(), this->nst * this->nz);
 
@@ -176,7 +176,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     const int npwk = this->npwk[ik];
     auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int igl = 0; igl < npwk; ++igl)
     {
@@ -191,7 +191,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     if (add)
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
@@ -201,14 +201,14 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     else
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir = 0; ir < this->nrxx; ++ir)
         {
             out[ir] = auxr[ir];
         }
     }
-    ModuleBase::timer::tick(this->classname, "recip2real");
+    ModuleBase::timer::end(this->classname, "recip2real");
 }
 
 /**
@@ -231,7 +231,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
                             const bool add,
                             const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip2real");
+    ModuleBase::timer::start(this->classname, "recip2real");
     assert(this->gamma_only == true);
     ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<FPTYPE>(), this->nst * this->nz);
 
@@ -239,7 +239,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     const int npwk = this->npwk[ik];
     auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int igl = 0; igl < npwk; ++igl)
     {
@@ -262,7 +262,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     if (add)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int ix = 0; ix < this->nx; ++ix)
         {
@@ -275,7 +275,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     else
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int ix = 0; ix < this->nx; ++ix)
         {
@@ -285,7 +285,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
             }
         }
     }
-    ModuleBase::timer::tick(this->classname, "recip2real");
+    ModuleBase::timer::end(this->classname, "recip2real");
 }
 
 template <>
@@ -347,7 +347,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                const bool add,
                                const float factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -367,7 +367,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                                                   this->ig2ixyz_k + startig,
                                                                   this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::end(this->classname, "real_to_recip gpu");
 }
 template <>
 void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
@@ -377,7 +377,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                const bool add,
                                const double factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -398,7 +398,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                                                    this->ig2ixyz_k + startig,
                                                                    this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::end(this->classname, "real_to_recip gpu");
 }
 
 template <>
@@ -409,7 +409,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                const bool add,
                                const float factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<float>(), this->nxyz);
@@ -433,7 +433,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                                   this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
 template <>
 void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
@@ -443,7 +443,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                const bool add,
                                const double factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
@@ -467,7 +467,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                                    this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
 
 template <typename FPTYPE>
@@ -477,7 +477,7 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
                                const bool add,
                                const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -498,7 +498,7 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
                                                                    this->ig2ixyz_k + startig,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::end(this->classname, "real_to_recip gpu");
 }
 template <typename FPTYPE>
 void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
@@ -507,7 +507,7 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
                                const bool add,
                                const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
@@ -531,7 +531,7 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::end(this->classname, "recip_to_real gpu");
 }
 
 template void PW_Basis_K::real2recip_gpu<float>(const std::complex<float>*,

@@ -1,0 +1,28 @@
+ATOMIC_SPECIES
+As 1 As_dojo_nsoc.upf upf201
+Ga 1 Ga_dojo_nsoc.upf upf201
+
+LATTICE_CONSTANT
+12 
+
+NUMERICAL_ORBITAL
+As_dojo_6au.orb
+Ga_dojo_6au.orb
+
+LATTICE_VECTORS
+1 0 0
+0 1 0
+0 0 1
+
+ATOMIC_POSITIONS
+Direct //Cartesian or Direct coordinate.
+
+As
+0
+1
+0.12500000 0.12500000 0.125000000 0 0 0
+
+Ga
+0
+1
+0.00000 0.00000 0.000000 0 0 0

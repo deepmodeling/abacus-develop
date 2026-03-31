@@ -287,7 +287,7 @@ TEST_F(Verlet_test, write_restart)
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
 
-    std::ifstream ifs("Restart_md.dat");
+    std::ifstream ifs("Restart_md.txt");
     std::string output_str;
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("3"));
@@ -297,7 +297,7 @@ TEST_F(Verlet_test, write_restart)
 TEST_F(Verlet_test, restart)
 {
     mdrun->restart(PARAM.sys.global_readin_dir);
-    remove("Restart_md.dat");
+    remove("Restart_md.txt");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }

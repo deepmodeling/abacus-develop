@@ -53,8 +53,8 @@ struct parallel_distribution
         this->start = st_per;
         this->num_per = num_per;
     }
-    int start;
-    int num_per;
+    int start = 0;
+    int num_per = 0;
 };
 
 #ifdef __MPI

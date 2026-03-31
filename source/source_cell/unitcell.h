@@ -3,8 +3,9 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
-#include "source_io/output.h"
+#include "source_io/module_output/output.h"
 #include "module_symmetry/symmetry.h"
 
 #ifdef __LCAO
@@ -16,6 +17,7 @@
 class UnitCell {
   public:
     Atom* atoms = nullptr;
+    Sep_Cell sep_cell;
 
     bool set_atom_flag = false;                     // added on 2009-3-8 by mohan
     Magnetism magnet;                               // magnetism Yu Liu 2021-07-03
@@ -233,7 +235,7 @@ class UnitCell {
 
     /// @brief check consistency between two atom labels from STRU and pseudo or
     /// orb file
-    void compare_atom_labels(const std::string &label1, const std::string &label2);
+    void compare_atom_labels(const std::string& label1, const std::string& label2) const;
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atom_Counts() const;
     /// @brief get orbitalCounts, which is a map from element type to orbital

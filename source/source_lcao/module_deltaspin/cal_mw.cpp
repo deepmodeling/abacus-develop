@@ -16,17 +16,19 @@ template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_lcao");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // calculate MW from lambda in real space projection method
     this->zero_Mi();
-    const hamilt::HContainer<double>* dmr
-        = static_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMR_pointer(1);
+    const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
     std::vector<double> moments;
     if(PARAM.inp.nspin==2)
     {
-        static_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->switch_dmr(2);
+        this->dm_->switch_dmr(2);
+
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
-        static_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->switch_dmr(0);
+
+        this->dm_->switch_dmr(0);
+
         for(int iat=0;iat<this->Mi_.size();iat++)
         {
             this->Mi_[iat].x = 0.0;
@@ -45,7 +47,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
         }
     }
 
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_lcao");
 }
 
 #endif
@@ -54,7 +56,7 @@ template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_pw");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_pw");
 
     this->zero_Mi();
     if(PARAM.inp.device == "cpu")
@@ -152,7 +154,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
     // reduce mag from all k-pools
     Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }
 
 template <>

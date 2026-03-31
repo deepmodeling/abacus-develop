@@ -1,13 +1,16 @@
 #include "stress_pw.h"
 
 #include "source_base/timer.h"
+#include "source_base/global_variable.h" // use GlobalC
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
+                                           Plus_U &dftu, // mhan add 2025-11-07 
                                            const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
@@ -18,7 +21,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("Stress_PW", "cal_stress");
+    ModuleBase::timer::start("Stress_PW", "cal_stress");
 
     // total stress
     sigmatot.create(3, 3);
@@ -91,7 +94,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         this->stress_mgga(ucell,
                           sigmaxc,
                           this->pelec->wg,
-                          this->pelec->pot->get_effective_vofk(),
+                          this->pelec->pot->get_eff_vofk(),
                           pelec->charge,
                           p_kv,
                           wfc_basis,
@@ -119,7 +122,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // DFT+U and DeltaSpin stress
     if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
     {
-        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
+        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, dftu, d_psi_in, p_symm);
     }
 
     // EXX PW stress
@@ -172,7 +175,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         }
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("Stress_PW", "cal_stress");
+    ModuleBase::timer::end("Stress_PW", "cal_stress");
     return;
 }
 
