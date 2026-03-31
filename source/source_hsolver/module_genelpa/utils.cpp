@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include "source_base/module_external/blacs_connector.h"
+#include "source_base/tool_quit.h"
 #include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
@@ -9,6 +10,7 @@
 #include <iostream>
 #include <mpi.h>
 #include <sstream>
+#include <string>
 #ifdef __MPI
 void initBlacsGrid(int loglevel,
                    MPI_Comm comm,
@@ -92,7 +94,14 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
+    {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
+                                     std::string("Failed to open matrix file: ") + FileName);
+        }
+    }
 
     double* b = nullptr; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
@@ -147,6 +156,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
+    if (!matrixFile.is_open())
+    {
+        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
+                                 std::string("Failed to open matrix file for write: ") + FileName);
+    }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -174,6 +188,11 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC) // setup saved matrix format
     {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
+                                     std::string("Failed to open matrix file for write: ") + FileName);
+        }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
@@ -229,7 +248,14 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     const int ROOT_PROC = 0;
     std::ifstream matrixFile;
     if (myid == ROOT_PROC)
+    {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
+                                     std::string("Failed to open matrix file: ") + FileName);
+        }
+    }
 
     std::complex<double>* b; // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
@@ -285,6 +311,11 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 
     sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
     matrixFile.open(FileName);
+    if (!matrixFile.is_open())
+    {
+        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
+                                 std::string("Failed to open matrix file for write: ") + FileName);
+    }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
     matrixFile.width(24);
@@ -312,6 +343,11 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     if (myid == ROOT_PROC) // setup saved matrix format
     {
         matrixFile.open(FileName);
+        if (!matrixFile.is_open())
+        {
+            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
+                                     std::string("Failed to open matrix file for write: ") + FileName);
+        }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
