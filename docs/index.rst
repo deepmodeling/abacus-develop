@@ -56,6 +56,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    :caption: Developing Team
 
    DevelopingTeam
+   developers_guide/index
 
 .. toctree::
    :maxdepth: 2
