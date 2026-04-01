@@ -119,4 +119,4 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                      const std::complex<lowTYPE>& factor,
                      const int bandinfo[6]);
 };
-#endif // ELECOND_H
+#endif // STOELECOND_H
