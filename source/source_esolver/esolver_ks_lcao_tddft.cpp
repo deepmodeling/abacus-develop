@@ -94,6 +94,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
+    if (PARAM.inp.td_stype == 2)
+    {
+        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+    }
+    else
+    {
+        this->dmat.dm->cal_DMR();
+    }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // Initialize velocity operator for current calculation
