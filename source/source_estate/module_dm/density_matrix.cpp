@@ -352,7 +352,11 @@ void DensityMatrix_Tools::cal_DMR_td(
     }
     ModuleBase::timer::end("DensityMatrix", "cal_DMR_td");
 }
-
+template <>
+void DensityMatrix<double, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
+{
+    return;
+}
 template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
 {

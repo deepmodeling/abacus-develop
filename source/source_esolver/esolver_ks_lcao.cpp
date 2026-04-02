@@ -185,7 +185,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                 this->chr, PARAM.inp.ks_solver);
         }
     }
-    else //if not, use the DMR calculated from last step
+    else if(PARAM.inp.esolver_type!="tddft")//if not, use the DMR calculated from last step
     {
         // 13.1.2) two cases are considered:
         // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
