@@ -108,7 +108,7 @@ void cal_gint_rho(
         Gint_rho_gpu gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     } else
-    #endif
+#endif
     {
         Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();

@@ -256,6 +256,17 @@ parameters:
     default_value: double
     unit: ""
     availability: Used only for plane wave basis set.
+  - name: gint_precision
+    category: System variables
+    type: String
+    description: |
+      Specifies the precision when performing grid integral in LCAO calculations.
+      * single: single precision
+      * double: double precision
+      * mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough
+    default_value: double
+    unit: ""
+    availability: Used only for LCAO basis set on CPU.
   - name: timer_enable_nvtx
     category: System variables
     type: Boolean

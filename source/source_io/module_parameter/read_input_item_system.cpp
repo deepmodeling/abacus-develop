@@ -689,6 +689,41 @@ Available options are:
         this->add_item(item);
     }
     {
+        Input_Item item("gint_precision");
+        item.annotation = "the computing precision for LCAO grid integral";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(Specifies the precision when performing grid integral in LCAO calculations.
+* single: single precision
+* double: double precision
+* mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough)";
+        item.default_value = "double";
+        item.availability = "Used only for LCAO basis set on CPU.";
+        read_sync_string(input.gint_precision);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"single", "double", "mix"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "gint_precision");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+            if (para.inp.gint_precision != "double"
+                && (para.inp.basis_type != "lcao" || para.inp.device != "cpu"))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "gint_precision = single or mix is currently supported only for CPU LCAO calculations.\n");
+            }
+            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("timer_enable_nvtx");
         item.annotation = "enable NVTX labeling for profiling or not";
         item.category = "System variables";
