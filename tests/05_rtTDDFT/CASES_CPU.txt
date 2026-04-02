@@ -16,4 +16,3 @@
 16_NO_vel_TDDFT
 17_NO_vel_TDDFT
 18_NO_hyb_TDDFT
-19_NO_hyb_exx_TDDFT
