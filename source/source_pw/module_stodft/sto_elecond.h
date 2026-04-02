@@ -6,7 +6,7 @@
 #include "source_pw/module_stodft/sto_wf.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
 
-template <typename FPTYPE, typename Device> 
+template <typename FPTYPE, typename Device>
 class Sto_EleCond : protected EleCond<FPTYPE, Device>
 {
   public:
@@ -16,8 +16,13 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     using lowTYPE = double;
 #endif
     using lcomplex = std::complex<lowTYPE>;
-    using resmem_lcomplex_op = base_device::memory::resize_memory_op<std::complex<lowTYPE>, Device>; 
+#ifdef __DSP
+    using resmem_lcomplex_op = base_device::memory::resize_memory_op_mt<std::complex<lowTYPE>, Device>;
+    using delmem_lcomplex_op = base_device::memory::delete_memory_op_mt<std::complex<lowTYPE>, Device>;
+#else
+    using resmem_lcomplex_op = base_device::memory::resize_memory_op<std::complex<lowTYPE>, Device>;
     using delmem_lcomplex_op = base_device::memory::delete_memory_op<std::complex<lowTYPE>, Device>;
+#endif
     using cpymem_lcomplex_op = base_device::memory::synchronize_memory_op<std::complex<lowTYPE>, Device, Device>;
     using castmem_lcomplex_op = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
     using cpymem_complex_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
@@ -114,4 +119,4 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                      const std::complex<lowTYPE>& factor,
                      const int bandinfo[6]);
 };
-#endif // ELECOND_H
+#endif // STOELECOND_H

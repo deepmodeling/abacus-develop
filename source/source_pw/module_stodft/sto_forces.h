@@ -44,9 +44,13 @@ class Sto_Forces : public Forces<FPTYPE, Device>
                           const UnitCell& ucell,
                           const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
                           const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
-
+#ifdef __DSP
+    using resmem_var_op = base_device::memory::resize_memory_op_mt<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op_mt<FPTYPE, Device>;
+#else
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+#endif
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 };

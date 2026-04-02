@@ -219,6 +219,22 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.mem_saver, 0);
     }
+    { // gint_precision
+        auto it = find_label("gint_precision", readinput.input_lists);
+        param.input.gint_precision = "invalid";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.gint_precision = "mix";
+        param.input.basis_type = "pw";
+        param.input.device = "cpu";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // diag_proc
         auto it = find_label("diago_proc", readinput.input_lists);
         param.input.diago_proc = 0;

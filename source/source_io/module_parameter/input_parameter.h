@@ -68,6 +68,7 @@ struct Input_para
 
     std::string device = "auto";
     std::string precision = "double";
+    std::string gint_precision = "double";
     bool timer_enable_nvtx = false;
 
     // ==============   #Parameters (2.Electronic structure) ===========================

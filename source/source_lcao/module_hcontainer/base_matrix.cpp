@@ -198,7 +198,8 @@ void BaseMatrix<T>::set_size(const int& nrow, const int& ncol)
     this->ncol_local = ncol;
 }
 
-// T of BaseMatrix can be double or std::complex<double>
+// T of BaseMatrix can be double, float, or std::complex<double>
+template class BaseMatrix<float>;
 template class BaseMatrix<double>;
 template class BaseMatrix<std::complex<double>>;
 

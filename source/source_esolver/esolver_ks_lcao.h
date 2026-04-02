@@ -6,6 +6,7 @@
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_lcao/module_gint/gint.h" // gint
 #include "source_lcao/module_gint/gint_info.h"
+#include "source_estate/module_charge/gint_precision_controller.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
@@ -99,6 +100,8 @@ class ESolver_KS_LCAO : public ESolver_KS
     // because it's hard to seperate force and stress calculation in LCAO.
     ModuleBase::matrix scs;
     bool have_force = false;
+    
+    GintPrecisionController gint_precision_controller_;
 
 
   public:
