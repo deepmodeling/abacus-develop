@@ -475,7 +475,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 18) Calculate and output asynchronous overlap matrix for Hefei-NAMD
     //------------------------------------------------------------------
-    if (inp.cal_syns && (istep > 0 || inp.init_vel))
+    if (inp.cal_syns[0] > 0 && (istep > 0 || inp.init_vel))
     {
         ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
         ModuleBase::timer::start("ModuleIO", "output_namd_async_overlap");
@@ -493,8 +493,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 &gd,
                 two_center_bundle.overlap_orb.get());
 
-        // Use same precision as DMR output (default 8 if not specified)
-        const int precision = inp.out_dmr[0] > 0 ? inp.out_dmr[1] : 8;
+        // Use precision from cal_syns[1] (default 8 if not specified)
+        const int precision = inp.cal_syns[1];
         const Parallel_Orbitals* paraV = p_hamilt->getSR()->get_paraV();
         hamilt::HContainer<TR>* SR_async = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, paraV);
         overlap_async->output_SR_async_csr(istep, SR_async, precision);

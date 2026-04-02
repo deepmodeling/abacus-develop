@@ -179,7 +179,7 @@ struct Input_para
     MD_para mdp;
     double ref_cell_factor = 1; ///< construct a reference cell bigger than the
                                 ///< initial cell liuyu 2023-03-21
-    bool cal_syns = false;      ///< calculate asynchronous S matrix to output
+    std::vector<int> cal_syns = {0, 8};  ///< calculate asynchronous S matrix to output {enable, precision}
     double dmax = 0.01;         ///< maximum displacement of all atoms in one step (bohr)
 
     // ==============   #Parameters (6.OFDFT) ===========================
