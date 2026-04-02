@@ -711,12 +711,6 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
             catch (const std::invalid_argument&) { /* do nothing */ }
             catch (const std::out_of_range&) {/* do nothing */}
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.cal_syns[0])
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "cal_syns is only valid for multi-k calculation");
-            }
-        };
 
         sync_intvec(input.cal_syns, 2, 0);
         this->add_item(item);
