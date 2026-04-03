@@ -7,6 +7,7 @@
 namespace ModuleGint
 {
 
+template<typename Real>
 __global__ void set_phi_kernel(
     const int nwmax,
     const int mgrids_num,
@@ -26,7 +27,7 @@ __global__ void set_phi_kernel(
     const int2* __restrict__ atoms_num_info,
     const int* __restrict__ atoms_phi_start,
     const int* __restrict__ bgrids_phi_len,
-    double* __restrict__ phi)
+    Real* __restrict__ phi)
 {
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
@@ -75,7 +76,7 @@ __global__ void set_phi_kernel(
                     psi = c1 * psi_u[iw_nr] + c2 * dpsi_u[iw_nr]
                           + c3 * psi_u[iw_nr + 1] + c4 * dpsi_u[iw_nr + 1];
                 }
-                phi[phi_idx + iw] = psi * ylma[atom_iw2_ylm[it_nw + iw]];
+                phi[phi_idx + iw] = static_cast<Real>(psi * ylma[atom_iw2_ylm[it_nw + iw]]);
             }
         }
         else
@@ -84,11 +85,25 @@ __global__ void set_phi_kernel(
                           bgrids_phi_len[bgrid_id] * mgrid_id;
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
             {
-                phi[phi_idx + iw] = 0.0;
+                phi[phi_idx + iw] = Real(0.0);
             }
         }
     }
 }
+
+// Explicit instantiations for set_phi_kernel
+template __global__ void set_phi_kernel<double>(
+    const int, const int, const int, const double,
+    const int*, const bool*, const int*, const int*, const int*,
+    const double*, const double*, const double*, const double3*,
+    const int*, const double3*, const int2*, const int*, const int*,
+    double*);
+template __global__ void set_phi_kernel<float>(
+    const int, const int, const int, const double,
+    const int*, const bool*, const int*, const int*, const int*,
+    const double*, const double*, const double*, const double3*,
+    const int*, const double3*, const int2*, const int*, const int*,
+    float*);
 
 __global__ void set_phi_dphi_kernel(
     const int nwmax,
@@ -341,52 +356,62 @@ __global__ void set_ddphi_kernel(
     }
 }
 
+template<typename Real>
 __global__ void phi_mul_vldr3_kernel(
-    const double* __restrict__ vl,
-    const double dr3,
-    const double* __restrict__ phi,
+    const Real* __restrict__ vl,
+    const Real dr3,
+    const Real* __restrict__ phi,
     const int mgrids_per_bgrid,
     const int* __restrict__ mgrids_local_idx,
     const int* __restrict__ bgrids_phi_len,
     const int* __restrict__ bgrids_phi_start,
-    double* __restrict__ result)
+    Real* __restrict__ result)
 {
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
     const int phi_len = bgrids_phi_len[bgrid_id];
     const int phi_start = bgrids_phi_start[bgrid_id] + mgrid_id * phi_len;
     const int mgrid_id_in_batch = bgrid_id * mgrids_per_bgrid + mgrid_id;
-    const double vldr3 =  vl[mgrids_local_idx[mgrid_id_in_batch]] * dr3;
+    const Real vldr3 =  vl[mgrids_local_idx[mgrid_id_in_batch]] * dr3;
     for(int i = threadIdx.x; i < phi_len; i += blockDim.x)
     {
         result[phi_start + i] = phi[phi_start + i] * vldr3;
     }
 }
 
+// Explicit instantiations for phi_mul_vldr3_kernel
+template __global__ void phi_mul_vldr3_kernel<double>(
+    const double*, const double, const double*, const int,
+    const int*, const int*, const int*, double*);
+template __global__ void phi_mul_vldr3_kernel<float>(
+    const float*, const float, const float*, const int,
+    const int*, const int*, const int*, float*);
+
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
 // each block calculate the dot product of phi_i and phi_j of a meshgrid
+template<typename Real>
 __global__ void phi_dot_phi_kernel(
-    const double* __restrict__ phi_i,
-    const double* __restrict__ phi_j,
+    const Real* __restrict__ phi_i,
+    const Real* __restrict__ phi_j,
     const int mgrids_per_bgrid,
     const int* __restrict__ mgrids_local_idx,
     const int* __restrict__ bgrids_phi_len,
     const int* __restrict__ bgrids_phi_start,
-    double* __restrict__ rho)
+    Real* __restrict__ rho)
 {
-    __shared__ double s_data[32];    // the length of s_data equals the max warp num of a block
+    __shared__ Real s_data[32];    // the length of s_data equals the max warp num of a block
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
     const int phi_len = bgrids_phi_len[bgrid_id];
     const int phi_start = bgrids_phi_start[bgrid_id] + mgrid_id * phi_len;
-    const double* phi_i_mgrid = phi_i + phi_start;
-    const double* phi_j_mgrid = phi_j + phi_start;
+    const Real* phi_i_mgrid = phi_i + phi_start;
+    const Real* phi_j_mgrid = phi_j + phi_start;
     const int mgrid_id_in_batch = bgrid_id * mgrids_per_bgrid + mgrid_id;
     const int mgrid_local_idx = mgrids_local_idx[mgrid_id_in_batch];
     const int tid = threadIdx.x;
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
-    double tmp_sum = 0;
+    Real tmp_sum = Real(0.0);
 
     for (int i = tid; i < phi_len; i += blockDim.x)
     {
@@ -401,7 +426,7 @@ __global__ void phi_dot_phi_kernel(
     }
     __syncthreads();
 
-    tmp_sum = (tid < blockDim.x / 32) ? s_data[tid] : 0;
+    tmp_sum = (tid < blockDim.x / 32) ? s_data[tid] : Real(0.0);
     if(warp_id == 0)
     {
         tmp_sum = warpReduceSum(tmp_sum);
@@ -409,9 +434,17 @@ __global__ void phi_dot_phi_kernel(
 
     if(tid == 0)
     {
-        rho[mgrid_local_idx] += tmp_sum;
+        atomicAdd(&rho[mgrid_local_idx], tmp_sum);
     }
 }
+
+// Explicit instantiations for phi_dot_phi_kernel
+template __global__ void phi_dot_phi_kernel<double>(
+    const double*, const double*, const int,
+    const int*, const int*, const int*, double*);
+template __global__ void phi_dot_phi_kernel<float>(
+    const float*, const float*, const int,
+    const int*, const int*, const int*, float*);
 
 __global__ void phi_dot_dphi_kernel(
     const double* __restrict__ phi,

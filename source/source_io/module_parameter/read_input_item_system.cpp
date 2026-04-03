@@ -698,7 +698,7 @@ Available options are:
 * double: double precision
 * mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough)";
         item.default_value = "double";
-        item.availability = "Used only for LCAO basis set on CPU.";
+        item.availability = "Used only for LCAO basis set.";
         read_sync_string(input.gint_precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"single", "double", "mix"};
@@ -707,12 +707,11 @@ Available options are:
                 const std::string warningstr = nofound_str(avail_list, "gint_precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (para.inp.gint_precision != "double"
-                && (para.inp.basis_type != "lcao" || para.inp.device != "cpu"))
+            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao")
             {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
-                    "gint_precision = single or mix is currently supported only for CPU LCAO calculations.\n");
+                    "gint_precision = single or mix is currently supported only for LCAO calculations.\n");
             }
             if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
             {
