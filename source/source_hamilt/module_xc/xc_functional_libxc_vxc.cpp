@@ -110,7 +110,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                     xc_lda_exc_vxc(
                         &func,
                         nrxx_thread,
-                        rho.data() + ir_start,
+                        rho.data() + ir_start * nspin,
                         exc.data() + ir_start,
                         vrho.data() + ir_start * nspin );
                 }
@@ -130,7 +130,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                     xc_gga_exc_vxc(
                         &func,
                         nrxx_thread,
-                        rho.data() + ir_start,
+                        rho.data() + ir_start * nspin,
                         sigma.data() + ir_start * ((1==nspin)?1:3),
                         exc.data() + ir_start,
                         vrho.data() + ir_start * nspin,
@@ -290,12 +290,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th) {
-                sgn[ir*2] = 0.0;
-}
-            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th) {
-                sgn[ir*2+1] = 0.0;
-}
+            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
+                { sgn[ir*2] = 0.0; }
+            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
+                { sgn[ir*2+1] = 0.0; }
         }
     }
 
@@ -304,8 +302,27 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         assert(func.info->family == XC_FAMILY_MGGA);
 
         ModuleBase::timer::start("Libxc","xc_mgga_exc_vxc");
-        xc_mgga_exc_vxc(&func, nrxx, rho.data(), sigma.data(), sigma.data(),
-            kin_r.data(), exc.data(), vrho.data(), vsigma.data(), vlapl.data(), vtau.data());
+        constexpr int nr_batch_size = 1024;
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(static, nr_batch_size)
+        #endif
+        for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+        {
+            const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+            const int nrxx_thread = ir_end - ir_start;
+            xc_mgga_exc_vxc(
+                &func,
+                nrxx_thread,
+                rho.data() + ir_start * nspin,
+                sigma.data() + ir_start * ((1==nspin)?1:3),
+                sigma.data() + ir_start * ((1==nspin)?1:3),
+                kin_r.data() + ir_start * nspin,
+                exc.data() + ir_start,
+                vrho.data() + ir_start * nspin,
+                vsigma.data() + ir_start * ((1==nspin)?1:3),
+                vlapl.data() + ir_start * nspin,
+                vtau.data() + ir_start * nspin);
+        }
         ModuleBase::timer::end("Libxc","xc_mgga_exc_vxc");
 
         //process etxc
