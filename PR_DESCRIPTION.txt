@@ -1,0 +1,18 @@
+Title: Add gtest support for Sunway builds
+
+Summary:
+- Add a Sunway-specific gtest build script and documentation under tools.
+- Update CMake test definitions to better handle Sunway constraints and selective test enabling.
+- Register additional unit test CMakeLists for hsolver and LCAO RT modules.
+
+Files Changed:
+- CMakeLists.txt
+- source/source_base/module_container/ATen/kernels/test/CMakeLists.txt
+- source/source_base/module_container/test/CMakeLists.txt
+- source/source_hsolver/test/CMakeLists.txt
+- source/source_lcao/module_rt/test/CMakeLists.txt
+- tools/README.md
+- tools/gtest_on_sunway/gtest_on_sunway.sh
+
+Testing:
+- Not run (please confirm if you ran any tests)
