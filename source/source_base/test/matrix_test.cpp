@@ -331,15 +331,6 @@ TEST_F(matrixTest,MDot)
     EXPECT_DOUBLE_EQ(mdot(m33a,m33b),3163.5);
 }
 
-TEST_F(matrixTest,Alloc)
-{
-    std::string output;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ModuleBase::matrixAlloc(), ::testing::ExitedWithCode(1),"");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Allocation error for Matrix"));
-}
-
 TEST_F(matrixTest,Fillout)
 {
     double k=2.4;

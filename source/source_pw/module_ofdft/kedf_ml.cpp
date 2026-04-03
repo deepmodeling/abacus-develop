@@ -87,8 +87,10 @@ void KEDF_ML::set_para(
                 if (this->descriptor_type[i] == "gamma") feg_inpt[i] = 1.;
             }
 
-            if (PARAM.inp.of_ml_feg == 1) 
+            if (PARAM.inp.of_ml_feg == 1)
+            {
                 this->feg_net_F = torch::softplus(this->nn->forward(feg_inpt)).to(this->device_CPU).contiguous().data_ptr<double>()[0];
+            }
             else
             {
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];

@@ -21,15 +21,26 @@ GintAtom::GintAtom(
     p_psi_uniform_.resize(atom_->nw);
     p_dpsi_uniform_.resize(atom_->nw);
     p_ddpsi_uniform_.resize(atom_->nw);
+    radial_blocks_.reserve(atom_->nw);
     for (int iw=0; iw < atom_->nw; ++iw)
     {
         if ( atom_->iw2_new[iw] )
         {
             int l = atom_->iw2l[iw];
             int n = atom_->iw2n[iw];
-            p_psi_uniform_[iw] = orb_->PhiLN(l, n).psi_uniform.data();
-            p_dpsi_uniform_[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-            p_ddpsi_uniform_[iw] = orb_->PhiLN(l, n).ddpsi_uniform.data();
+            const auto& phi_ln = orb_->PhiLN(l, n);
+            p_psi_uniform_[iw] = phi_ln.psi_uniform.data();
+            p_dpsi_uniform_[iw] = phi_ln.dpsi_uniform.data();
+            p_ddpsi_uniform_[iw] = phi_ln.ddpsi_uniform.data();
+
+            RadialBlock block;
+            block.begin_iw = iw;
+            block.size = 2 * l + 1;
+            // The first orbital in each radial block always starts from m = 0.
+            block.ylm_begin = atom_->iw2_ylm[iw];
+            block.psi_uniform = p_psi_uniform_[iw];
+            block.dpsi_uniform = p_dpsi_uniform_[iw];
+            radial_blocks_.push_back(block);
         }
     }
 }
@@ -45,6 +56,8 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
     // store the spherical harmonics
     // it's outside the loop to reduce the vector allocation overhead
     std::vector<double> ylma;
+    const auto* blocks = radial_blocks_.data();
+    const int num_blocks = radial_blocks_.size();
 
     for(int im = 0; im < num_mgrids; im++)
     {
@@ -80,19 +93,25 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
             const double c2 = (dx - 2.0 * dx2 + dx3) * dr_uniform;
             const double c4 = (dx3 - dx2) * dr_uniform;
 
-            // I'm not sure if the variable name 'psi' is appropriate
-            double psi = 0;
-            
-            for(int iw = 0; iw < atom_->nw; iw++)
+            T* phi_row = phi + im * stride;
+            for (int ib = 0; ib < num_blocks; ++ib)
             {
-                if(atom_->iw2_new[iw])
+                const auto& block = blocks[ib];
+                const double* psi_uniform = block.psi_uniform;
+                const double* dpsi_uniform = block.dpsi_uniform;
+                const double psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
+                    + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
+
+                const int begin_iw = block.begin_iw;
+                const int end_iw = begin_iw + block.size;
+                // Within one (L, N) block, m runs consecutively, so we can walk
+                // the Ylm buffer linearly instead of reading atom_->iw2_ylm[iw]
+                // for every orbital in the hot loop.
+                int idx_lm = block.ylm_begin;
+                for (int iw = begin_iw; iw < end_iw; ++iw, ++idx_lm)
                 {
-                    auto psi_uniform = p_psi_uniform_[iw];
-                    auto dpsi_uniform = p_dpsi_uniform_[iw];
-                    psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
-                        + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
+                    phi_row[iw] = psi * ylma[idx_lm];
                 }
-                phi[im * stride + iw] = psi * ylma[atom_->iw2_ylm[iw]];
             }
         }
     }
@@ -191,7 +210,9 @@ void GintAtom::set_phi_dphi(
 }
 
 // explicit instantiation
+template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, float* phi) const;
 template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, double* phi) const;
 template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, std::complex<double>* phi) const;
+template void GintAtom::set_phi_dphi(const std::vector<Vec3d>& coords, const int stride, float* phi, float* dphi_x, float* dphi_y, float* dphi_z) const;
 template void GintAtom::set_phi_dphi(const std::vector<Vec3d>& coords, const int stride, double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const;
 }

@@ -73,11 +73,11 @@ class PhiOperator
         const Triangular_Matrix triangular_matrix) const;
 
     // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
-    template<typename T>
+    template<typename Tin, typename Tout = Tin>
     void phi_dot_phi(
-        const T*const phi_i,                // phi_i(ir,iwt)
-        const T*const phi_j,                // phi_j(ir,iwt)
-        T*const rho) const;                 // rho(ir)
+        const Tin*const phi_i,              // phi_i(ir,iwt)
+        const Tin*const phi_j,              // phi_j(ir,iwt)
+        Tout*const rho) const;              // rho(ir)
 
     void phi_dot_dphi(
         const double* phi,

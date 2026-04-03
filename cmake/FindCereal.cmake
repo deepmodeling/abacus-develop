@@ -15,7 +15,7 @@ if(NOT CEREAL_INCLUDE_DIR)
     include(FetchContent)
     FetchContent_Declare(
         cereal
-        URL https://codeload.github.com/MCresearch/cereal/tar.gz/master
+        URL https://codeload.github.com/USCiLab/cereal/tar.gz/22a1b369f39be918ca79206a83c4facd759f9105
     )
     FetchContent_Populate(cereal)
     set(CEREAL_INCLUDE_DIR ${cereal_SOURCE_DIR}/include)

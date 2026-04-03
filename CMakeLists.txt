@@ -69,10 +69,8 @@ if(ENABLE_RAPIDJSON)
     include(FetchContent)
     FetchContent_Declare(
       rapidjson
-      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-      GIT_TAG "origin/master"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
+      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+    )
     set(RAPIDJSON_BUILD_TESTS
         OFF
         CACHE INTERNAL "")
@@ -322,7 +320,7 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS CXX REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)
@@ -438,6 +436,11 @@ if(USE_CUDA)
     target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
   endif ()
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 13.0)
+    if(EXISTS "${CUDAToolkit_ROOT}/include/cccl")
+      include_directories("${CUDAToolkit_ROOT}/include/cccl")
+    endif()
+  endif()
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)

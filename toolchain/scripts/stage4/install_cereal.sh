@@ -50,10 +50,10 @@ case "$with_cereal" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${cereal_ver}" =~ ^(master|main|develop)$ ]]; then
-            url="https://codeload.github.com/MCresearch/cereal/tar.gz/${cereal_ver}"
+        if [[ "${cereal_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+            url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
         else
-            url="https://codeload.github.com/MCresearch/cereal/tar.gz/v${cereal_ver}"
+            url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
         fi
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
@@ -72,10 +72,6 @@ case "$with_cereal" in
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d $dirname ] && rm -rf $dirname
             tar -xzf $filename
-            #unzip -q $filename
-            # apply patch files for libri installation in issue #6190, Kai Luo
-            # echo ${SCRIPT_DIR}
-            cd $dirname && pwd && patch -p1 < ${SCRIPT_DIR}/patches/6190.patch
             cd "${BUILDDIR}"
             # 
             mkdir -p "${pkg_install_dir}"

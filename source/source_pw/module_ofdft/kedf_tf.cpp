@@ -43,7 +43,7 @@ double KEDF_TF::get_energy(const double* const* prho)
     }
     this->tf_energy = energy;
     Parallel_Reduce::reduce_all(this->tf_energy);
-    return energy;
+    return this->tf_energy;
 }
 
 /**

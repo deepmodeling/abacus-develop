@@ -28,6 +28,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [gint\_precision](#gint_precision)
     - [timer\_enable\_nvtx](#timer_enable_nvtx)
     - [cell\_factor](#cell_factor)
     - [dm\_to\_rho](#dm_to_rho)
@@ -757,6 +758,16 @@
 - **Description**: Specifies the precision when performing scf calculation.
   - single: single precision
   - double: double precision
+- **Default**: double
+
+### gint_precision
+
+- **Type**: String
+- **Availability**: *Used only for LCAO basis set on CPU.*
+- **Description**: Specifies the precision when performing grid integral in LCAO calculations.
+  - single: single precision
+  - double: double precision
+  - mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough
 - **Default**: double
 
 ### timer_enable_nvtx

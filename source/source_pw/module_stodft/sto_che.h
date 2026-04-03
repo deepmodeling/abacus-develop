@@ -26,9 +26,14 @@ class StoChe
 
   private:
     Device* ctx = {};
+#ifdef __DSP
+    using resmem_var_op = base_device::memory::resize_memory_op_mt<REAL, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op_mt<REAL, Device>;
+#else
     using resmem_var_op = base_device::memory::resize_memory_op<REAL, Device>;
-    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<REAL, Device>;
+#endif
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>;
 };
 
 /**

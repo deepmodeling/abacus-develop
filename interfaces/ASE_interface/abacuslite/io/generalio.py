@@ -220,6 +220,12 @@ def write_stru(stru: Atoms,
     ind = np.argsort(elem)
     coords = stru.get_positions()[ind]
     elem = [elem[i] for i in ind]
+
+    # handle the atomic magnetic moment (issue #6516)
+    magmoms = np.array([stru[i].magmom for i in ind]).reshape(len(stru), -1) # ncol in [1, 3]
+    magmoms = [{} if abs(np.linalg.norm(m)) <= 1e-10 
+               else {'mag': m[0] if len(m) == 1 else ('Cartesian', m.tolist())}
+               for m in magmoms]
     elem_uniq, nat = np.unique(elem, return_counts=True)
     stru_dict = {
         'coord_type': 'Cartesian',
@@ -236,10 +242,10 @@ def write_stru(stru: Atoms,
                 'natom': n,
                 'mag_each': 0.0,
                 'atom': [
-                    {
-                        'coord': coords[j].tolist(),
-                        'm': [1, 1, 1],
-                        'v': [0.0, 0.0, 0.0]
+                    magmoms[j] | {
+                        'coord': coords[j].tolist(), # coordinate
+                        'm': [1, 1, 1], # mobility
+                        'v': [0.0, 0.0, 0.0], # velocity
                     } for j in range(np.sum(nat[:i]), np.sum(nat[:i+1]))
                 ]
             }
@@ -744,6 +750,72 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
         self.assertEqual(orbital_map['O'],  'O_gga_6au_100Ry_2s2p1d.orb')
         self.assertEqual(orbital_map['Si'], 'Si_gga_7au_100Ry_2s2p1d.orb')
         self.assertEqual(orbital_map['In'], 'In_gga_8au_100Ry_2s2p2d1f.orb')
+
+    def test_write_stru_with_magmom(self):
+        # from issue #6516: https://github.com/deepmodeling/abacus-develop/issues/6516
+        atoms = Atoms(
+            symbols=['Co', 'Cr', 'Ni', 'Co'],
+            cell=np.eye(3),
+            magmoms=[1, 2, 3, 1]
+        )
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            write_stru(
+                stru=atoms,
+                outdir=self.testfiles,
+                pp_file={ # as if we have some pseudopotentials
+                    'Co': 'Co.upf', 'Cr': 'Cr.upf', 'Ni': 'Ni.upf', 'Co': 'Co.upf',
+                },
+                orb_file={ # as if we have some orbitals
+                    'Co': 'Co.orb', 'Cr': 'Cr.orb', 'Ni': 'Ni.orb', 'Co': 'Co.orb',
+                },
+                fname=f.name,
+            )
+            stru = read_stru(f.name)
+        # Co
+        self.assertEqual(stru['species'][0]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][0]['atom'][0]['mag'], 1.0)
+        self.assertEqual(stru['species'][0]['atom'][1]['mag'], 1.0)
+        # Cr
+        self.assertEqual(stru['species'][1]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][1]['atom'][0]['mag'], 2.0)
+        # Ni
+        self.assertEqual(stru['species'][2]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][2]['atom'][0]['mag'], 3.0)
+
+        # then the non-colinear case
+        atoms = Atoms(
+            symbols=['Co', 'Cr', 'Ni', 'Co'],
+            cell=np.eye(3),
+            magmoms=np.array([
+                [1, 0, 0],
+                [0, 2, 0],
+                [0, 0, 3],
+                [1, 0, 0],
+            ])
+        )
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            write_stru(
+                stru=atoms,
+                outdir=self.testfiles,
+                pp_file={ # as if we have some pseudopotentials
+                    'Co': 'Co.upf', 'Cr': 'Cr.upf', 'Ni': 'Ni.upf', 'Co': 'Co.upf',
+                },
+                orb_file={ # as if we have some orbitals
+                    'Co': 'Co.orb', 'Cr': 'Cr.orb', 'Ni': 'Ni.orb', 'Co': 'Co.orb',
+                },
+                fname=f.name,
+            )
+            stru = read_stru(f.name)
+        # Co
+        self.assertEqual(stru['species'][0]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][0]['atom'][0]['mag'], ('Cartesian', [1.0, 0.0, 0.0]))
+        self.assertEqual(stru['species'][0]['atom'][1]['mag'], ('Cartesian', [1.0, 0.0, 0.0]))
+        # Cr
+        self.assertEqual(stru['species'][1]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][1]['atom'][0]['mag'], ('Cartesian', [0.0, 2.0, 0.0]))
+        # Ni
+        self.assertEqual(stru['species'][2]['mag_each'], 0.0)
+        self.assertEqual(stru['species'][2]['atom'][0]['mag'], ('Cartesian', [0.0, 0.0, 3.0]))
 
 if __name__ == '__main__':
     unittest.main()
