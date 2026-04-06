@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Advanced Example: Customized Workflow and Step-by-Step Execution
+Advanced Example: Step-by-Step Control & Error Handling
 
-This script demonstrates:
-1. Executing steps manually (Step 1 -> Step 2 -> Step 3 -> Step 4).
-2. Customizing advanced input parameters.
-3. Handling specific file dependencies.
+Demonstrates:
+- Manual execution of steps (step1 -> step2 -> step3 -> step4)
+- Customizing advanced input parameters (iter nums, mixings)
+- Post-processing checks
 """
 
 import os
@@ -58,6 +58,7 @@ def main():
     ]
     job.set_structure(lattice, atoms)
     job.pp_orbitals = {"Bi": "Bi.oncvpsp.upf", "Se": "Se.oncvpsp.upf"}
+    job.orbital_files = ["Bi.orb", "Se.orb"]
 
     # ------------------------------------------------------------------
     # 2. Advanced Parameter Configuration
