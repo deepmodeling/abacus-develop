@@ -3,6 +3,70 @@
 
 namespace ModuleIO
 {
+namespace
+{
+bool is_blank_line(const std::string& line)
+{
+    return line.find_first_not_of(" \t\r") == std::string::npos;
+}
+
+bool is_comment_line(const std::string& line)
+{
+    const std::size_t first = line.find_first_not_of(" \t\r");
+    return first != std::string::npos && line[first] == '#';
+}
+
+bool contains_token(const std::string& line, const std::string& token)
+{
+    return line.find(token) != std::string::npos;
+}
+
+int parse_last_integer(const std::string& line, const std::string& context)
+{
+    std::stringstream parser(line);
+    int value = 0;
+    bool found = false;
+    while (!parser.eof())
+    {
+        if (parser >> value)
+        {
+            found = true;
+            continue;
+        }
+        parser.clear();
+        std::string dummy;
+        parser >> dummy;
+    }
+    if (!found)
+    {
+        ModuleBase::WARNING_QUIT(context, "Failed to parse integer from line: " + line);
+    }
+    return value;
+}
+
+void read_next_payload_line(FileReader& reader)
+{
+    do
+    {
+        reader.readLine();
+    } while (is_blank_line(reader.ss.str()) || is_comment_line(reader.ss.str()));
+}
+
+template <typename Tvalue>
+void read_numeric_block(FileReader& reader, std::vector<Tvalue>& buffer)
+{
+    std::size_t count = 0;
+    while (count < buffer.size())
+    {
+        read_next_payload_line(reader);
+        while (count < buffer.size() && (reader.ss >> buffer[count]))
+        {
+            ++count;
+        }
+    }
+}
+} // namespace
+
 
 // constructor
 template <typename T>
@@ -21,104 +85,41 @@ void csrFileReader<T>::parseFile()
         ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "File is not open");
     }
 
-    std::string tmp_string;
+    readLine();
+    step = parse_last_integer(ss.str(), "csrFileReader::parseFile");
 
-    // Read the step
+    // Support both the legacy verbose CSR header and the compact
+    // Matrix-Dimension/Matrix-number header produced by save_sparse().
     readLine();
-    ss >> tmp_string >> tmp_string >> tmp_string >> step;
-
-    //std::cout << " step is " << step << std::endl; 
-    // Read the title
-    readLine();
-    // Read the total spin
-    readLine();
-    // Read the spin index
-    readLine();
-
-    // Read the matrix dimension
-    readLine();
-    ss >> matrixDimension;
-    // std::cout << " mat dim is " << matrixDimension << std::endl; 
-
-    // Read the number of R
-    readLine();
-    ss >> numberOfR;
-
-    // Read cell
-    // Skip empty line before ucell info if present
-    readLine();
-    std::string line = ss.str();
-    if (line.empty() || line.find_first_not_of(" \t\n\r") == std::string::npos)
+    const std::string second_line = ss.str();
+    if (contains_token(second_line, "Matrix Dimension of"))
     {
-        // Empty line, read next line for latName
+        matrixDimension = parse_last_integer(second_line, "csrFileReader::parseFile");
         readLine();
+        numberOfR = parse_last_integer(ss.str(), "csrFileReader::parseFile");
     }
-    // Now ss contains latName (or the line after empty line)
-    // We don't need to use latName, just continue reading
-    
-    // Read lat0, latvec (3 lines), atom labels (6 lines total including latName)
-    readLine(); // lat0
-    readLine(); // latvec e1
-    readLine(); // latvec e2
-    readLine(); // latvec e3
-    readLine(); // atom labels
-    
-    // Read atom numbers
-    readLine();
-    std::istringstream iss(ss.str());
-    int natom = 0;
-    int total_natom = 0;
-    while (iss >> natom)
+    else
     {
-        total_natom += natom;
-    }
-    
-    // Read "Direct" line and atom coordinates
-    for (int i = 0; i < total_natom + 1; i++)
-    {
-        readLine(); // Direct + atom coordinates
-    }
-
-    // Skip empty lines and CSR format comment block
-    // (lines starting with '#' or containing only whitespace)
-    // Use readLine() since ifs is private in FileReader
-    bool found_data = false;
-    while (!found_data)
-    {
+        // Legacy verbose header:
+        // title -> total spin -> spin index -> matrix dimension -> number of R
         readLine();
-        std::string line = ss.str();
-        size_t start = line.find_first_not_of(" \t");
-        if (start != std::string::npos && line[start] != '#')
-        {
-            // This is a data line (first R-block), ss already holds it
-            found_data = true;
-        }
+        readLine();
+        readLine();
+        matrixDimension = parse_last_integer(ss.str(), "csrFileReader::parseFile");
+        readLine();
+        numberOfR = parse_last_integer(ss.str(), "csrFileReader::parseFile");
+        readLine();
+        read_ucell();
     }
 
     // Read the matrices
     // Note: ss already contains the first R-block line from the skip loop above
     for (int i = 0; i < numberOfR; i++)
     {
-        // std::cout << " read R " << i+1 << std::endl;
-
         std::vector<int> RCoord(3);
         int nonZero = 0;
 
-        if (i > 0)
-        {
-            // For subsequent R-blocks, skip empty lines to find next R-coordinate line
-            bool found = false;
-            while (!found)
-            {
-                readLine();
-                std::string line = ss.str();
-                size_t start = line.find_first_not_of(" \t");
-                if (start != std::string::npos && line[start] != '#')
-                {
-                    found = true;
-                }
-            }
-        }
+        read_next_payload_line(*this);
         ss >> RCoord[0] >> RCoord[1] >> RCoord[2] >> nonZero;
         RCoordinates.push_back(RCoord);
 
@@ -126,60 +127,9 @@ void csrFileReader<T>::parseFile()
         std::vector<int> csr_col_ind(nonZero);
         std::vector<int> csr_row_ptr(matrixDimension + 1);
 
-        // read CSR values
-        readLine();
-        // std::cout << " ss1: " << ss.str() << std::endl;
-
-        readLine();
-	size_t count1 = 0;
-        while (count1 < nonZero)
-        {
-            if (ss.eof() || ss.fail())
-            {
-                readLine();
-	    }
-            if (ss >> csr_values[count1])
-            {
-                count1++;
-            }
-	}
-        // std::cout << "count1=" << count1 << std::endl;
-
-        // read CSR column indices
-        readLine();
-        // std::cout << " ss2: " << ss.str() << std::endl;
-
-	size_t count2 = 0;
-        while (count2 < nonZero)
-        {
-            if (ss.eof() || ss.fail())
-            {
-                readLine();
-	    }
-            if (ss >> csr_col_ind[count2])
-            {
-                count2++;
-            }
-	}
-        // std::cout << "count2=" << count2 << std::endl;
-
-        // read row pointers
-        readLine();
-        // std::cout << " ss3: " << ss.str() << std::endl;
-
-	size_t count3 = 0;
-        while (count3 < matrixDimension + 1)
-        {
-            if (ss.eof() || ss.fail())
-            {
-                readLine();
-	    }
-            if (ss >> csr_row_ptr[count3])
-            {
-                count3++;
-            }
-	}
-        // std::cout << "count3=" << count3 << std::endl;
+        read_numeric_block(*this, csr_values);
+        read_numeric_block(*this, csr_col_ind);
+        read_numeric_block(*this, csr_row_ptr);
 
         // create sparse matrix
         SparseMatrix<T> matrix(matrixDimension, matrixDimension);

@@ -14,7 +14,25 @@
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/td_folding.h"
 
+#include <cstdlib>
+#include <string>
+
 namespace hamilt {
+
+namespace
+{
+bool operator_lcao_debug_dump_exx_ao_enabled()
+{
+    const char* env = std::getenv("ABACUS_DUMP_EXX_AO");
+    if (env == nullptr)
+    {
+        return false;
+    }
+    const std::string value(env);
+    return !(value.empty() || value == "0" || value == "f" || value == "F"
+             || value == "false" || value == "FALSE");
+}
+}
 
 template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
@@ -191,6 +209,12 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             if (!this->hr_done)
             {
                 this->contributeHR();
+            }
+            if(PARAM.inp.esolver_type == "tddft"
+               || (PARAM.inp.calculation == "nscf"
+                   && operator_lcao_debug_dump_exx_ao_enabled()))
+            {
+                this->contributeHk(ik_in);
             }
 
             break;

@@ -102,29 +102,21 @@ TEST_F(csrFileReaderTest, CsrReader)
     EXPECT_DOUBLE_EQ(sparse_matrix(0, 0), 0.0);
 }
 
-TEST_F(csrFileReaderTest, ComplexCsrReader)
+TEST_F(csrFileReaderTest, CsrReaderCompactHeader)
 {
-    ModuleIO::csrFileReader<std::complex<double>> csr(filename);
-
+    ModuleIO::csrFileReader<double> csr("./support/SR_compact.csr");
     EXPECT_TRUE(csr.isOpen());
-    EXPECT_EQ(csr.getStep(), 1);
+    EXPECT_EQ(csr.getStep(), 0);
     EXPECT_EQ(csr.getMatrixDimension(), 4);
     EXPECT_EQ(csr.getNumberOfR(), 2);
-    EXPECT_EQ(csr.getRCoordinate(0), std::vector<int>({0, 1, 1}));
-    EXPECT_EQ(csr.getRCoordinate(1), std::vector<int>({0, 0, 0}));
 
-    const ModuleIO::SparseMatrix<std::complex<double>> first_by_index = csr.getMatrix(0);
-    const ModuleIO::SparseMatrix<std::complex<double>> first_by_coordinate = csr.getMatrix(0, 1, 1);
-    EXPECT_EQ(first_by_index.getElements(), first_by_coordinate.getElements());
-    EXPECT_EQ(first_by_index(0, 3), std::complex<double>(4.0, 0.0));
-    EXPECT_EQ(first_by_index(1, 2), std::complex<double>(7.0, 0.0));
-    EXPECT_EQ(first_by_index(0, 0), std::complex<double>(0.0, 0.0));
+    std::vector<int> rcoord = csr.getRCoordinate(0);
+    EXPECT_EQ(rcoord[0], 0);
+    EXPECT_EQ(rcoord[1], 1);
+    EXPECT_EQ(rcoord[2], 1);
 
-    const ModuleIO::SparseMatrix<std::complex<double>> second_by_index = csr.getMatrix(1);
-    const ModuleIO::SparseMatrix<std::complex<double>> second_by_coordinate = csr.getMatrix(0, 0, 0);
-    EXPECT_EQ(second_by_index.getElements(), second_by_coordinate.getElements());
-    EXPECT_EQ(second_by_index(2, 2), std::complex<double>(5.0, 0.0));
-    EXPECT_EQ(second_by_index(2, 3), std::complex<double>(6.0, 0.0));
-    EXPECT_EQ(second_by_index(3, 3), std::complex<double>(10.0, 0.0));
-    EXPECT_EQ(second_by_index(0, 0), std::complex<double>(0.0, 0.0));
+    ModuleIO::SparseMatrix<double> sparse_matrix = csr.getMatrix(0, 0, 0);
+    EXPECT_DOUBLE_EQ(sparse_matrix(2, 2), 5.0);
+    EXPECT_DOUBLE_EQ(sparse_matrix(2, 3), 6.0);
+    EXPECT_DOUBLE_EQ(sparse_matrix(3, 3), 10.0);
 }
