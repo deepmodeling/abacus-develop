@@ -49,7 +49,6 @@ class ESolver_KS_PW : public ESolver_KS
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt(const UnitCell& ucell);
-    virtual void deallocate_hamilt();
 
     // Electronic wave function psi
     Setup_Psi_pw stp;

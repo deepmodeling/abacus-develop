@@ -56,7 +56,11 @@ namespace ModuleESolver
         //****************************************************
         delete this->psi_local;
         // delete Hamilt
-        this->deallocate_hamilt();
+        if (this->p_hamilt != nullptr)
+        {
+            delete this->p_hamilt;
+            this->p_hamilt = nullptr;
+        }
     }
 
     template <typename T>
@@ -68,15 +72,7 @@ namespace ModuleESolver
 #endif
         );
     }
-    template <typename T>
-    void ESolver_KS_LIP<T>::deallocate_hamilt()
-    {
-        if (this->p_hamilt != nullptr)
-        {
-            delete reinterpret_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt);
-            this->p_hamilt = nullptr;
-        }
-    }
+
     template <typename T>
     void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
     {
