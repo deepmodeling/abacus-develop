@@ -273,7 +273,7 @@ static __global__ void vbatched_gemm_nn_kernel(const int* M,
                                               const int* global_ldc,
                                               const T* alpha)
 {
-    extern __shared__ __align__(sizeof(T)) unsigned char smem[];
+    extern __shared__ __align__(sizeof(double)) unsigned char smem[];
     T* shared_mem = reinterpret_cast<T*>(smem);
 
     int batchid = blockIdx.z;
