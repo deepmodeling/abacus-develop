@@ -7,7 +7,7 @@ symmetry        1
 pseudo_dir      ../../PP_ORB
 orbital_dir     .
 basis_type      pw
-ecutwfc         335
+ecutwfc         500
 cal_stress      1
 cal_force       1
 kpar            1
