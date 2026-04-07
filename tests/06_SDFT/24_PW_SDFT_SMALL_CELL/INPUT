@@ -15,7 +15,7 @@ bndpar          1
 
 #Parameters (2. SCF iterations)
 scf_nmax        12
-scf_thr         1e-4
+scf_thr         1e-6
 
 #Parameters (3. Solve KS equation)
 nbands          0
