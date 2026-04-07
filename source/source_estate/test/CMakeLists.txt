@@ -101,4 +101,11 @@ AddTest(
   ../../source_io/module_output/output.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
+AddTest(
+  TARGET MODULE_ESTATE_gint_precision_controller
+  LIBS parameter ${math_libs} base device
+  SOURCES gint_precision_controller_test.cpp
+    ../module_charge/gint_precision_controller.cpp
+)
+
 endif()

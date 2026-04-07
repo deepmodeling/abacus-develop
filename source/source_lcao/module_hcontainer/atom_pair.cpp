@@ -866,7 +866,8 @@ size_t AtomPair<T>::get_memory_size() const
     return memory_size;
 }
 
-// T of AtomPair can be double or std::complex<double>
+// T of AtomPair can be double, float, or std::complex<double>
+template class AtomPair<float>;
 template class AtomPair<double>;
 template class AtomPair<std::complex<double>>;
 

@@ -290,7 +290,7 @@ static __global__ void vbatched_gemm_nt_kernel(const int* M,
     int shared_ldb = BLK_K + 1;
     T* shared_A = (T*)shared_mem;
     T* shared_B = shared_A + shared_lda * BLK_K;
-    double alpha_tmp = 1.0;
+    T alpha_tmp = T(1.0);
     if (alpha != nullptr)
     {
         alpha_tmp = alpha[batchid];

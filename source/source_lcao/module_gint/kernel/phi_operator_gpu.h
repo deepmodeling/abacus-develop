@@ -10,6 +10,7 @@
 namespace ModuleGint
 {
 
+template<typename Real = double>
 class PhiOperatorGpu
 {
 
@@ -19,37 +20,39 @@ public:
 
     void set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch);
 
-    void set_phi(double* phi_d) const;
+    void set_phi(Real* phi_d) const;
 
+    // These remain double-only (for force/stress paths)
     void set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const;
 
     void set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
                    double* ddphi_yy_d, double* ddphi_yz_d, double* ddphi_zz_d) const;
 
     void phi_mul_vldr3(
-        const double* vl_d,
-        const double dr3,
-        const double* phi_d,
-        double* result_d) const;
+        const Real* vl_d,
+        const Real dr3,
+        const Real* phi_d,
+        Real* result_d) const;
     
     void phi_mul_phi(
-        const double* phi_d,
-        const double* phi_vldr3_d,
-        HContainer<double>& hRGint,
-        double* hr_d) const;
+        const Real* phi_d,
+        const Real* phi_vldr3_d,
+        HContainer<Real>& hRGint,
+        Real* hr_d) const;
     
     void phi_mul_dm(
-        const double* phi_d,
-        const double* dm_d,
-        const HContainer<double>& dm,
+        const Real* phi_d,
+        const Real* dm_d,
+        const HContainer<Real>& dm,
         const bool is_symm,
-        double* phi_dm_d);
+        Real* phi_dm_d);
 
     void phi_dot_phi(
-        const double* phi_i_d,
-        const double* phi_j_d,
-        double* rho_d) const;
+        const Real* phi_i_d,
+        const Real* phi_j_d,
+        Real* rho_d) const;
     
+    // These remain double-only (for force/stress paths)
     void phi_dot_dphi(
         const double* phi_d,
         const double* dphi_x_d,
@@ -101,10 +104,10 @@ private:
     mutable CudaMemWrapper<int> gemm_lda_;
     mutable CudaMemWrapper<int> gemm_ldb_;
     mutable CudaMemWrapper<int> gemm_ldc_;
-    mutable CudaMemWrapper<const double*> gemm_A_;
-    mutable CudaMemWrapper<const double*> gemm_B_;
-    mutable CudaMemWrapper<double*> gemm_C_; 
-    mutable CudaMemWrapper<double> gemm_alpha_;
+    mutable CudaMemWrapper<const Real*> gemm_A_;
+    mutable CudaMemWrapper<const Real*> gemm_B_;
+    mutable CudaMemWrapper<Real*> gemm_C_; 
+    mutable CudaMemWrapper<Real> gemm_alpha_;
 };
 
 }

@@ -7,6 +7,12 @@
 
 namespace ModuleGint
 {
+enum class GintPrecision
+{
+    fp64,
+    fp32
+};
+
 inline int index3Dto1D(const int id_x, const int id_y, const int id_z,
                         const int dim_x, const int dim_y, const int dim_z)
 {

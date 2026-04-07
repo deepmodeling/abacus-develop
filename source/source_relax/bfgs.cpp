@@ -29,11 +29,16 @@ void BFGS::allocate(const int _size)
     force0 = std::vector<double>(3*size, 0.0);
     force = std::vector<ModuleBase::Vector3<double>>(size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     steplength = std::vector<double>(size, 0.0);  
+    is_initialized = true;
 }
 
 
 void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
 {
+    if(!is_initialized)
+    {
+        allocate(ucell.nat);
+    }
     GetPos(ucell,pos);  
     GetPostaud(ucell,pos_taud);
     ucell.ionic_position_updated = true;
