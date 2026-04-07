@@ -555,8 +555,29 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  if(USE_DSP)
-    target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
+  if(SCALAPACK_LIBRARY_DIR)
+    if(IS_DIRECTORY "${SCALAPACK_LIBRARY_DIR}")
+      find_library(
+        USER_SCALAPACK_LIBRARY
+        NAMES scalapack
+        HINTS ${SCALAPACK_LIBRARY_DIR}
+        NO_DEFAULT_PATH
+      )
+      if(NOT USER_SCALAPACK_LIBRARY)
+        message(
+          FATAL_ERROR
+            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but libscalapack was not found in this directory."
+        )
+      endif()
+      list(APPEND math_libs ${USER_SCALAPACK_LIBRARY})
+    else()
+      list(APPEND math_libs ${SCALAPACK_LIBRARY_DIR})
+    endif()
+  elseif(USE_DSP)
+    message(
+      FATAL_ERROR
+        "USE_DSP is enabled, but SCALAPACK_LIBRARY_DIR is not set. Please provide -DSCALAPACK_LIBRARY_DIR=<scalapack dir or full library path>."
+    )
   else()
     find_package(ScaLAPACK REQUIRED)
     list(APPEND math_libs ScaLAPACK::ScaLAPACK)
