@@ -28,10 +28,10 @@ void ReadInput::item_others()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_mag_switch)
             {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "This feature is not stable yet and might lead to "
-                                         "erroneous results.\n"
-                                         " Please wait for the official release version.");
+//                ModuleBase::WARNING_QUIT("ReadInput",
+//                                         "This feature is not stable yet and might lead to "
+//                                         "erroneous results.\n"
+//                                         " Please wait for the official release version.");
                 // if (para.input.nspin != 4 && para.input.nspin != 2)
                 // {
                 //     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or
