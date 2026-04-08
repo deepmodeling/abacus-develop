@@ -4,6 +4,7 @@ suffix            autotest
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
 basis_type            lcao
+gamma_only            1
 
 ecutwfc               8
 
