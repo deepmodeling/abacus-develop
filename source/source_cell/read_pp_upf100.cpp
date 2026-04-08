@@ -338,11 +338,12 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
             ifs >> nb >> mb >> swap;
             nb--;
             mb--;
-            assert(nb >= 0); // mohan add 2011-03-10
-            assert(mb >= 0);
-            if (nb >= pp.nbeta || mb >= pp.nbeta)
+            if (nb < 0 || mb < 0 || nb >= pp.nbeta || mb >= pp.nbeta)
             {
-                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_nl", "PP_DIJ index out of range");
+                ModuleBase::WARNING_QUIT(
+                    "Pseudopot_upf::read_pseudo_nl",
+                    "PP_DIJ index out of range: nb=" + std::to_string(nb) + ", mb=" + std::to_string(mb)
+                        + ", nbeta=" + std::to_string(pp.nbeta));
             }
             pp.dion(mb, nb) = swap; // nl_5
             pp.dion(nb, mb) = swap;
