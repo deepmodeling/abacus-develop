@@ -438,7 +438,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
                     }
                 }
             }
-                ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QIJ>");
+            ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QIJ>");
         }
         else // not tvanp
         {
