@@ -758,8 +758,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_tool.o\
     sto_elecond.o\
     sto_dos.o\
-    onsite_projector.o\
+    onsite_proj.o\
     onsite_proj_tools.o\
+    onsite_proj_print.o\
     vsep_pw.o
 
 OBJS_VDW=vdw.o\

@@ -1632,10 +1632,8 @@ TEST_F(InputTest, Item_test2)
     { // sc_mag_switch
         auto it = find_label("sc_mag_switch", readinput.input_lists);
         param.input.sc_mag_switch = true;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        // Since sc_mag_switch check is disabled, just call the function without expecting exit
+        it->second.check_value(it->second, param);
     }
     { // sc_thr
         auto it = find_label("sc_thr", readinput.input_lists);
