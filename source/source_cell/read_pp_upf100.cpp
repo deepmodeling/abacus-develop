@@ -8,6 +8,8 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream& ifs, Atom_pseudo& pp)
     pp.has_so = false;
     this->q_with_l = false;
     this->mesh_changed = false;
+    this->nqf = 0;
+    this->nd = 0;
 
     // addinfo_loop
     ifs.rdstate();
@@ -217,6 +219,12 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream& ifs, Atom_pseudo& pp)
         pp.lmax = 0;
         this->lloc = 0;
     }
+    else if (pp.nbeta == 0 && pp.lmax < 0)
+    {
+        // Some legacy UPF100 files use lmax = -1 when no projectors exist.
+        // Normalize to 0 to avoid negative-size propagation in downstream code.
+        pp.lmax = 0;
+    }
     return;
 }
 
@@ -332,6 +340,10 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
             mb--;
             assert(nb >= 0); // mohan add 2011-03-10
             assert(mb >= 0);
+            if (nb >= pp.nbeta || mb >= pp.nbeta)
+            {
+                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_nl", "PP_DIJ index out of range");
+            }
             pp.dion(mb, nb) = swap; // nl_5
             pp.dion(nb, mb) = swap;
         }
@@ -426,7 +438,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
                     }
                 }
             }
-            ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QIJ>");
+                ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QIJ>");
         }
         else // not tvanp
         {
