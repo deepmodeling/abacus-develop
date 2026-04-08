@@ -15,13 +15,18 @@ md_nstep          2
 cal_stress        1
 cal_force         1
 
+init_chg          hr
+read_file_dir     ./
+#out_mat_hs2        1
+
 smearing_method   gaussian
 smearing_sigma    0.002
 mixing_type       broyden
-mixing_beta       0.4
+mixing_beta       0.2
 
 md_tfirst         10
 md_tfreq          0.1
+md_dt             0.01
 init_vel          1
 cal_syns          1 5
 
@@ -31,3 +36,5 @@ pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
 
 ks_solver         scalapack_gvx
+
+symmetry          0
