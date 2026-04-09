@@ -62,8 +62,6 @@ void ctrl_output_fp(UnitCell& ucell,
     {
         for (int is = 0; is < nspin; ++is)
         {
-            pw_rhod->real2recip(chr.rho_save[is], chr.rhog_save[is]);
-
             std::string fn = PARAM.globalv.global_out_dir + "chg";
 
             std::string spin_block;
