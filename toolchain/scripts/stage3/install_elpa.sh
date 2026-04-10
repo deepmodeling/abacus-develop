@@ -57,7 +57,7 @@ case "$with_elpa" in
         echo "==================== Installing ELPA ===================="
         pkg_install_dir="${INSTALLDIR}/elpa-${elpa_ver}"
         #pkg_install_dir="${HOME}/lib/elpa/${elpa_ver}-gcc8"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         enable_openmp="yes"
 
         # specific settings needed on CRAY Linux Environment
@@ -250,18 +250,18 @@ prepend_path CPATH "$elpa_include"
 EOF
     if [ "$with_elpa" != "__SYSTEM__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_elpa"
-prepend_path PATH "$pkg_install_dir/bin"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
+prepend_path PATH "${pkg_install_dir}/bin"
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
         cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_elpa"
-export ELPA_ROOT="$pkg_install_dir"
+export ELPA_ROOT="${pkg_install_dir}"
 export ELPA_CFLAGS="${ELPA_CFLAGS}"
 export ELPA_LDFLAGS="${ELPA_LDFLAGS}"
 export ELPA_LIBS="${ELPA_LIBS}"

@@ -48,7 +48,7 @@ case "${with_mpich}" in
         echo "==================== Installing MPICH ===================="
         pkg_install_dir="${INSTALLDIR}/mpich-${mpich_ver}"
         #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-intel"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://www.mpich.org/static/downloads/${mpich_ver}/${mpich_pkg}"
         if verify_checksums "${install_lock_file}"; then
             echo "mpich-${mpich_ver} is already installed, skipping it."

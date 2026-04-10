@@ -44,7 +44,7 @@ case "${with_scalapack}" in
     __INSTALL__)
         echo "==================== Installing ScaLAPACK ===================="
         pkg_install_dir="${INSTALLDIR}/scalapack-${scalapack_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "scalapack-${scalapack_ver} is already installed, skipping it."
         else

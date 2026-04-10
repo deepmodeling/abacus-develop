@@ -47,7 +47,7 @@ case "${with_openmpi}" in
     __INSTALL__)
         echo "==================== Installing OpenMPI ===================="
         pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver%.*}/${openmpi_pkg}"
         if verify_checksums "${install_lock_file}"; then
             echo "openmpi-${openmpi_ver} is already installed, skipping it."

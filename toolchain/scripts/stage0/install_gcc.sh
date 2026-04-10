@@ -49,7 +49,7 @@ case "${with_gcc}" in
         repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
         repkg_install_dir="${INSTALLDIR}/${repack_filename}"
         #pkg_install_dir="${HOME}/apps/gcc/${gcc_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "gcc-${gcc_ver} is already installed, skipping it."
         else

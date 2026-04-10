@@ -50,7 +50,7 @@ case "$with_libcomm" in
         echo "==================== Installing LIBCOMM ===================="
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libcomm/${libcomm_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         # url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
@@ -96,7 +96,7 @@ case "$with_libcomm" in
             # Comm/Comm_Tools.h -> remove /Comm/Comm_Tools.h -> get include dir -> get parent dir
             libcomm_include_dir="$(dirname "$(dirname "$libcomm_header_path")")"
             pkg_install_dir="$(dirname "$libcomm_include_dir")"
-            echo "Found libcomm at: $pkg_install_dir"
+            echo "Found libcomm at: ${pkg_install_dir}"
             LIBCOMM_CFLAGS="-I'${libcomm_include_dir}'"
         else
             report_error "Cannot find Comm/Comm_Tools.h in system paths"
@@ -115,13 +115,13 @@ esac
 if [ "$with_libcomm" != "__DONTUSE__" ]; then
     if [ "$with_libcomm" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libcomm"
-prepend_path CPATH "$pkg_install_dir/include"
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libcomm"
 export LIBCOMM_CFLAGS="${libcomm_CFLAGS}"
-export LIBCOMM_ROOT="$pkg_install_dir"
+export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
 fi
 
