@@ -122,10 +122,6 @@ if [ "$with_rapidjson" != "__DONTUSE__" ]; then
 prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-    else
-        cat << EOF > "${BUILDDIR}/setup_rapidjson"
-export RAPIDJSON_ROOT="${pkg_install_dir}"
-EOF
     fi
     cat "${BUILDDIR}/setup_rapidjson" >> $SETUPFILE
     cat << EOF >> "${BUILDDIR}/setup_rapidjson"

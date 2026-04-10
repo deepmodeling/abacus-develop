@@ -41,7 +41,6 @@ source "${INSTALLDIR}"/toolchain.env
 
 [ -f "${BUILDDIR}/setup_libcomm" ] && rm "${BUILDDIR}/setup_libcomm"
 
-libcomm_CFLAGS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -120,7 +119,7 @@ EOF
         cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libcomm"
-export LIBCOMM_CFLAGS="${libcomm_CFLAGS}"
+export LIBCOMM_CFLAGS="${LIBCOMM_CFLAGS}"
 export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
 fi

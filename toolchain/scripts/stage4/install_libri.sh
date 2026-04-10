@@ -39,7 +39,6 @@ source "${INSTALLDIR}"/toolchain.env
 
 [ -f "${BUILDDIR}/setup_libri" ] && rm "${BUILDDIR}/setup_libri"
 
-libri_CFLAGS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -119,7 +118,7 @@ EOF
         cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libri"
-export LIBRI_CFLAGS="${libri_CFLAGS}"
+export LIBRI_CFLAGS="${LIBRI_CFLAGS}"
 export LIBRI_ROOT="${pkg_install_dir}"
 EOF
 fi
