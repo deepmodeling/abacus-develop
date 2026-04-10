@@ -24,6 +24,7 @@ class KEDF_Manager
         delete this->vw_;
         delete this->wt_;
         delete this->extwt_;
+        delete this->xwm_;
 #ifdef __MLALGO
         delete this->ml_;
 #endif
