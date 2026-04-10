@@ -116,7 +116,6 @@ if [ "$with_libcomm" != "__DONTUSE__" ]; then
     if [ "$with_libcomm" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libcomm"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
     fi

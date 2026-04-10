@@ -119,16 +119,11 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="${pkg_install_dir}":\${CMAKE_PREFIX_PATH}
-export SCALAPACK_ROOT="${pkg_install_dir}"
 EOF
         cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_scalapack"
+export SCALAPACK_ROOT="${pkg_install_dir}"
 export SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}"
 export SCALAPACK_LIBS="${SCALAPACK_LIBS}"
 export SCALAPACK_ROOT="${pkg_install_dir}"

@@ -257,18 +257,11 @@ prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
 prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export PATH="$pkg_install_dir/bin":\${PATH}
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include":\${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
-export ELPA_ROOT="$pkg_install_dir"
 EOF
         cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_elpa"
+export ELPA_ROOT="$pkg_install_dir"
 export ELPA_CFLAGS="${ELPA_CFLAGS}"
 export ELPA_LDFLAGS="${ELPA_LDFLAGS}"
 export ELPA_LIBS="${ELPA_LIBS}"
@@ -276,7 +269,6 @@ export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__ELPA IF_CUDA(-D__ELPA_NVIDIA_GPU|)|)"
 export CP_CFLAGS="\${CP_CFLAGS} IF_MPI(${ELPA_CFLAGS}|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${ELPA_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(${ELPA_LIBS}|) \${CP_LIBS}"
-export ELPA_ROOT="$pkg_install_dir"
 export ELPA_VERSION="${elpa_ver}"
 EOF
 

@@ -115,7 +115,6 @@ if [ "$with_libri" != "__DONTUSE__" ]; then
     if [ "$with_libri" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi

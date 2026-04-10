@@ -176,11 +176,10 @@ EOF
     if [ "${with_mpich}" != "__SYSTEM__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_mpich"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin":\${PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+prepend_path LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+prepend_path LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+prepend_path CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
     fi
     cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}
