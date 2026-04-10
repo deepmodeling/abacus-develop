@@ -196,6 +196,9 @@ struct Input_para
     double of_vw_weight = 1.0;                   ///< weight of vW KEDF
     double of_wt_alpha = 5. / 6.;                ///< parameter alpha of WT KEDF
     double of_wt_beta = 5. / 6.;                 ///< parameter beta of WT KEDF
+    double of_extwt_kappa = 1.0
+                            / (2.0 * std::pow(4. / 3., 1. / 3.) - 1.0);
+                                                 ///< parameter kappa of EXT-WT KEDF
     double of_wt_rho0 = 0.0;                     ///< set the average density of system, in Bohr^-3
     bool of_hold_rho0 = false;                   ///< If set to 1, the rho0 will be fixed even if the volume of
                                                  ///< system has changed, it will be set to 1 automatically if
