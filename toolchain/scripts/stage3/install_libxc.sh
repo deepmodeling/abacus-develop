@@ -77,6 +77,7 @@ case "$with_libxc" in
                 -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DENABLE_FORTRAN=ON \
                 -DENABLE_PYTHON=OFF \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
                 -DBUILD_TESTING=OFF .. \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
