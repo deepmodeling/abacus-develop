@@ -11,8 +11,8 @@
 
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
- * See Wang L W, Teter M P. Physical Review B, 1992, 45(23): 13196.
- * @author sunliang on 2022-06
+ * See Sun L, Chen M. arXiv preprint arXiv:2507.08442, 2025.
+ * @author sunliang on 2026-04
  */
 class KEDF_ExtWT
 {
@@ -54,8 +54,6 @@ class KEDF_ExtWT
     ModuleBase::matrix stress;
 
     double rho0_ = 0.; // average rho
-    double f_rho0_ = 0.; // f(rho0) = \int{elf(r) [rho(r) - rho0] dr}
-    double df_drho0_ = 0.;
 
   private:
     double extwt_kernel(double eta, double tf_weight, double vw_weight);
@@ -77,8 +75,6 @@ class KEDF_ExtWT
     double* dkernel_deta_ = nullptr; // \partial w/ \partial rho0 = coef * ((alpha + beta - 5/3)F(eta) + 1/3 eta F'(eta))
     double sum_rho_kappa_ = 0.;
     double sum_rho_kappa_plus_one_ = 0.;
-    // double** zeta_ = nullptr; // zeta = 2 * elf^2 * chi / tau_TF * (rho - rho0)
-    // double coef_numerator_ = 0.; // df_drho0 = - coef_numerator - sum_elf_
     double kappa_ = 1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0);
 };
 #endif

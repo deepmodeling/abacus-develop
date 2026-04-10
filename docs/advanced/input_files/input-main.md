@@ -2397,7 +2397,7 @@
   - tf+: TF + vW functional
   - wt: Wang-Teter (WT) functional
   - ext-wt: Extended Wang-Teter (ext-WT) functional
-  - xwm: XWM functional
+  - xwm: Xu-Wang-Ma (XWM) functional
   - lkt: Luo-Karasiev-Trickey (LKT) functional
   - ml: Machine learning KEDF
   - mpn: MPN KEDF (automatically sets ml parameters)

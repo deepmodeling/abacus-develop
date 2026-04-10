@@ -7,7 +7,7 @@
 #include "source_base/parallel_reduce.h"
 
 /**
- * @brief Set the parameters of WT KEDF, and initialize kernel
+ * @brief Set the parameters of ext-WT KEDF, and initialize kernel
  *
  * @param dV the volume of one grid point in real space, omega/nxyz
  * @param alpha
@@ -115,12 +115,11 @@ void KEDF_ExtWT::update_dkernel_deta(const double &vw_weight, ModulePW::PW_Basis
 }
 
 /**
- * @brief Get the energy of WT KEDF
- * \f[ E_{WT} = c_{TF} * \int{\rho^\alpha * W(r - r') * \rho^\beta drdr'} \f]
+ * @brief Get the energy of ext-WT KEDF
  *
  * @param prho charge density
  * @param pw_rho pw basis
- * @return the energy of WT KEDF
+ * @return the energy of ext-WT KEDF
  */
 double KEDF_ExtWT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
@@ -163,14 +162,13 @@ double KEDF_ExtWT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_
 }
 
 /**
- * @brief Get the energy density of WT KEDF
- * \f[ \tau_{WT} = c_{TF} * \rho^\alpha * \int{W(r - r') * \rho^\beta dr'} \f]
+ * @brief Get the energy density of ext-WT KEDF
  *
  * @param prho charge density
  * @param is the index of spin
  * @param ir the index of real space grid
  * @param pw_rho pw basis
- * @return the energy density of WT KEDF
+ * @return the energy density of ext-WT KEDF
  */
 double KEDF_ExtWT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
 {
@@ -191,12 +189,11 @@ double KEDF_ExtWT::get_energy_density(const double* const* prho, int is, int ir,
 }
 
 /**
- * @brief Get the kinetic energy of WT KEDF, and add it onto rtau_wt
- * \f[ \tau_{WT} = c_{TF} * \rho^\alpha * \int{W(r - r') * \rho^\beta dr'} \f]
+ * @brief Get the kinetic energy of ext-WT KEDF, and add it onto rtau_extwt
  * 
  * @param prho charge density
  * @param pw_rho pw basis
- * @param rtau_wt rtau_wt => rtau_wt + tau_extwt
+ * @param rtau_extwt rtau_extwt => rtau_extwt + tau_extwt
  */
 void KEDF_ExtWT::tau_extwt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_extwt)
 {
@@ -226,14 +223,13 @@ void KEDF_ExtWT::tau_extwt(const double* const* prho, ModulePW::PW_Basis* pw_rho
 }
 
 /**
- * @brief Get the potential of WT KEDF, and add it into rpotential,
- * and the WT energy will be calculated and stored in this->extwt_energy
- * \f[ V_{WT} = c_{TF} * [\alpha \rho^{\alpha-1} \int{W(r - r')\rho^{\beta}(r') dr'} + \beta \rho^{\beta-1} \int{W(r' -
+ * @brief Get the potential of ext-WT KEDF, and add it into rpotential,
+ * and the ext-WT energy will be calculated and stored in this->extwt_energy
  * r)\rho^{\alpha}(r') dr'}] \f]
  *
  * @param prho charge density
  * @param pw_rho pw basis
- * @param rpotential rpotential => rpotential * 2 * phi + V_{WT} * 2 * phi
+ * @param rpotential rpotential => rpotential * 2 * phi + V_{extWT} * 2 * phi
  */
 void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
@@ -353,7 +349,7 @@ void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* 
 }
 
 /**
- * @brief Get the stress of WT KEDF, and store it into this->stress
+ * @brief Get the stress of ext-WT KEDF, and store it into this->stress
  *
  * @param prho charge density
  * @param pw_rho pw basis
