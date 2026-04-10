@@ -10,7 +10,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 /**
- * @brief A class which calculates the kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
+ * @brief A class which calculates the kinetic energy, potential, and stress with extended Wang-Teter (ext-WT) KEDF.
  * See Sun L, Chen M. arXiv preprint arXiv:2507.08442, 2025.
  * @author sunliang on 2026-04
  */

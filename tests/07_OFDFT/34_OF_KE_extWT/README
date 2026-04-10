@@ -1,1 +1,1 @@
-Test the energy of extended Wang-Teter (ext-WT) kinetic energy functional (of_method = wt) in OFDFT, symmetry=on
+Test the energy of extended Wang-Teter (ext-WT) kinetic energy functional (of_method = ext-wt) in OFDFT, symmetry=on

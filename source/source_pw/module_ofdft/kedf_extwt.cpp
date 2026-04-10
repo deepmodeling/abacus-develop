@@ -5,6 +5,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
 
 /**
  * @brief Set the parameters of ext-WT KEDF, and initialize kernel
@@ -32,7 +33,7 @@ void KEDF_ExtWT::set_para(double dV,
     this->alpha_ = alpha;
     this->beta_ = beta;
     this->kappa_ = of_extwt_kappa;
-    std::cout << "kappa: " << this->kappa_ << std::endl;
+    // std::cout << "kappa: " << this->kappa_ << std::endl;
 
     this->rho0_ = 1. / (pw_rho->nxyz * dV) * nelec;
 
@@ -55,6 +56,7 @@ void KEDF_ExtWT::set_para(double dV,
 void KEDF_ExtWT::update_rho0(const double* const* prho,
                             ModulePW::PW_Basis* pw_rho)
 {
+    // Only for spin unpolarized case, need to be updated for spin polarized case
     int nspin = 1;
 
     this->sum_rho_kappa_ = 0.;
@@ -88,9 +90,6 @@ void KEDF_ExtWT::cal_kernel(double tf_weight,
 
     this->wt_coef_
         = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
-
-    delete[] this->kernel_;
-    this->kernel_ = new double[pw_rho->npw];
 
     this->fill_kernel(tf_weight, vw_weight, pw_rho);
 }
@@ -357,7 +356,7 @@ void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* 
  */
 void KEDF_ExtWT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight)
 {
-    std::cout << "ext-WT stress is not implemented yet!" << std::endl;
+    ModuleBase::WARNING_QUIT("KEDF_ExtWT", "ext-WT stress is not implemented yet!");
 }
 
 /**
