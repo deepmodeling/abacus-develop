@@ -34,7 +34,6 @@ class KEDF_ExtWT
                   double tf_weight,
                   double vw_weight,
                   double of_extwt_kappa,
-                  double of_wt_rho0,
                   ModulePW::PW_Basis* pw_rho);
 
     void update_rho0(const double* const* prho,

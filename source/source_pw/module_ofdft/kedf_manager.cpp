@@ -79,7 +79,6 @@ void KEDF_Manager::init(
                                inp.of_tf_weight,
                                inp.of_vw_weight,
                                inp.of_extwt_kappa,
-                               inp.of_wt_rho0,
                                pw_rho);
     }
 

@@ -237,7 +237,7 @@ void ReadInput::item_ofdft()
         item.description = "The average density of system.";
         item.default_value = "0.0";
         item.unit = "Bohr^-3";
-        item.availability = "OFDFT with of_kinetic=wt, ext-wt";
+        item.availability = "OFDFT with of_kinetic=wt";
         read_sync_double(input.of_wt_rho0);
         this->add_item(item);
     }

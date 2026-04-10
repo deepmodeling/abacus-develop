@@ -16,7 +16,6 @@
  * @param tf_weight
  * @param vw_weight
  * @param of_extwt_kappa
- * @param of_wt_rho0
  * @param pw_rho pw_basis
  */
 void KEDF_ExtWT::set_para(double dV,
@@ -26,7 +25,6 @@ void KEDF_ExtWT::set_para(double dV,
                        double tf_weight,
                        double vw_weight,
                        double of_extwt_kappa,
-                       double of_wt_rho0,
                        ModulePW::PW_Basis* pw_rho)
 {
     this->dV_ = dV;
@@ -36,14 +34,7 @@ void KEDF_ExtWT::set_para(double dV,
     this->kappa_ = of_extwt_kappa;
     std::cout << "kappa: " << this->kappa_ << std::endl;
 
-    if (of_wt_rho0 != 0)
-    {
-        this->rho0_ = of_wt_rho0;
-    }
-    else
-    {
-        this->rho0_ = 1. / (pw_rho->nxyz * dV) * nelec;
-    }
+    this->rho0_ = 1. / (pw_rho->nxyz * dV) * nelec;
 
     this->kf_ = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0_, 1. / 3.);
     this->tkf_ = 2. * this->kf_;
