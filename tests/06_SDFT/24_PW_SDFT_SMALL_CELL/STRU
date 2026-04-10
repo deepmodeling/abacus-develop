@@ -1,0 +1,23 @@
+#This is the atom file containing all the information
+#about the lattice structure.
+
+ATOMIC_SPECIES
+D 2.0141017778 H.SG15.PBE.UPF	#Element, Mass, Pseudopotential
+
+LATTICE_CONSTANT
+0.3838341862  			#Lattice constant
+
+LATTICE_VECTORS
+1.0 0.0 0.0 		#Lattice vector 1
+0.0 1.0 0.0		    #Lattice vector 2
+0.0 0.0 1.0 		#Lattice vector 3
+
+ATOMIC_POSITIONS
+Direct
+D			#Name of element
+0.0
+4
+0.000   0.000   0.000   1       1       1
+0.000   0.500   0.500   1       1       1
+0.500   0.000   0.500   1       1       1
+0.500   0.500   0.000   1       1       1

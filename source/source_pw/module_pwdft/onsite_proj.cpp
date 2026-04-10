@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <map>
 #include <tuple>
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_pwdft/onsite_proj_print.h"
 
 #include "source_base/projgen.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -226,9 +227,9 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
     {
         const int nproj_it = nproj[it];
         this->it2iproj[it].resize(nproj_it);
+        print::print_proj_status(it, nproj_it);
         if(nproj_it == 0)
         {
-            std::cout << "BECP_PW >> No projectors defined for type " << it << std::endl;
             continue;
         }
         std::ifstream ifs(orbital_dir + orb_files[it]);
@@ -573,70 +574,9 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
     Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
     // occ has been reduced and calculate mag
-    // parameters for orbital charge output
-    FmtCore fmt_of_chg("%15.4f");
-    FmtCore fmt_of_label("%-15s");
-    GlobalV::ofs_running << std::endl;
-    GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
-    GlobalV::ofs_running << "Orbital Charge Analysis      Charge         Mag(x)         Mag(y)         Mag(z)" << std::endl;
-    GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
-
-    // parameters for orbital charge output
-    // parameters for mag output
-    std::vector<double> mag_x(this->ucell->nat, 0.0);
-    std::vector<double> mag_y(this->ucell->nat, 0.0);
-    std::vector<double> mag_z(this->ucell->nat,0.0);
-    auto atomLabels = this->ucell->get_atomLabels();
-    const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
-    const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-    const std::vector<std::string> orb_names = {"s", "p", "d", "f", "g"};
-    FmtTable table(/*titles=*/title, 
-                   /*nrows=*/this->ucell->nat, 
-                   /*formats=*/fmts, 
-                   /*indent=*/0, 
-                   /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-    // parameters for mag output
-    int occ_index = 0;
-    for(int iat=0;iat<this->ucell->nat;iat++)
-    {
-        const int it = this->ucell->iat2it[iat];
-        std::string atom_label = atomLabels[it];
-        int ia = this->ucell->iat2ia[iat];
-        GlobalV::ofs_running << FmtCore::format("%-20s", atom_label+std::to_string(ia+1)) << std::endl;
-        std::vector<double> sum(4, 0.0);
-        int current_l = 1;
-        std::vector<double> charge_mag(4, 0.0);
-        for(int ih=0;ih<this->iat_nh[iat];ih++)
-        {
-            charge_mag[3] += (occs[occ_index] - occs[occ_index + 3]).real();
-            charge_mag[1] += (occs[occ_index + 1] + occs[occ_index + 2]).real();
-            charge_mag[2] += (occs[occ_index + 1] - occs[occ_index + 2]).imag();
-            charge_mag[0] += (occs[occ_index] + occs[occ_index + 3]).real();
-            if(ih == current_l * current_l - 1)
-            {
-                sum[0] += charge_mag[0];
-                sum[1] += charge_mag[1];
-                sum[2] += charge_mag[2];
-                sum[3] += charge_mag[3];
-                GlobalV::ofs_running << FmtCore::format("%20s", orb_names[current_l-1])
-                    << fmt_of_chg.format(charge_mag[0]) << fmt_of_chg.format(charge_mag[1])
-                    << fmt_of_chg.format(charge_mag[2]) << fmt_of_chg.format(charge_mag[3]) << std::endl;
-                current_l++;
-                charge_mag.assign(4, 0.0);
-            }
-            occ_index += 4;
-        }
-        mag_x[iat] = sum[1];
-        mag_y[iat] = sum[2];
-        mag_z[iat] = sum[3];
-        GlobalV::ofs_running << FmtCore::format("%20s", std::string("Sum")) << ""
-                    << fmt_of_chg.format(sum[0]) << fmt_of_chg.format(sum[1])
-                    << fmt_of_chg.format(sum[2]) << fmt_of_chg.format(sum[3]) << std::endl;
-    }
-    GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::endl;
-    table << atomLabels << mag_x << mag_y << mag_z;
-    GlobalV::ofs_running << table.str() << std::endl;
+    // Print orbital charge analysis
+    auto atom_labels = this->ucell->get_atomLabels();
+    print::print_orb_chg(this->ucell, occs, this->iat_nh, atom_labels);
     
     // print charge
     ModuleBase::timer::end("OnsiteProj", "cal_occupation");
