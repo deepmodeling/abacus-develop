@@ -555,56 +555,8 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  if(SCALAPACK_LIBRARY_DIR)
-    if(IS_DIRECTORY "${SCALAPACK_LIBRARY_DIR}")
-      find_library(
-        USER_SCALAPACK_LIBRARY
-        NAMES scalapack scalapack-openmpi scalapack-mpi scalapack-mpich
-        HINTS ${SCALAPACK_LIBRARY_DIR}
-        PATH_SUFFIXES lib lib64
-        NO_DEFAULT_PATH
-      )
-      if(USER_SCALAPACK_LIBRARY)
-        list(APPEND math_libs ${USER_SCALAPACK_LIBRARY})
-      else()
-        find_package(ScaLAPACK QUIET)
-        if(ScaLAPACK_FOUND)
-          list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-        else()
-          message(
-            FATAL_ERROR
-              "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but no compatible ScaLAPACK library was found there and find_package(ScaLAPACK) also failed."
-          )
-        endif()
-      endif()
-    else()
-      if(NOT IS_ABSOLUTE "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this is not an absolute library path. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      elseif(NOT EXISTS "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this path does not exist. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      elseif(IS_DIRECTORY "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this value resolved to a directory in the full-library-path branch. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      endif()
-      list(APPEND math_libs ${SCALAPACK_LIBRARY_DIR})
-    endif()
-  elseif(USE_DSP)
-    message(
-      FATAL_ERROR
-        "USE_DSP is enabled, but SCALAPACK_LIBRARY_DIR is not set. Please provide -DSCALAPACK_LIBRARY_DIR=<scalapack dir or full library path>."
-    )
-  else()
-    find_package(ScaLAPACK REQUIRED)
-    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-  endif()
+  find_package(ScaLAPACK REQUIRED)
+  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()

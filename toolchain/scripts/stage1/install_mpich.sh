@@ -48,7 +48,7 @@ case "${with_mpich}" in
         echo "==================== Installing MPICH ===================="
         pkg_install_dir="${INSTALLDIR}/mpich-${mpich_ver}"
         #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-intel"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://www.mpich.org/static/downloads/${mpich_ver}/${mpich_pkg}"
         if verify_checksums "${install_lock_file}"; then
             echo "mpich-${mpich_ver} is already installed, skipping it."
@@ -176,11 +176,10 @@ EOF
     if [ "${with_mpich}" != "__SYSTEM__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_mpich"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin":\${PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
     fi
     cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}

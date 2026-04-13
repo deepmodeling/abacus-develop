@@ -71,8 +71,19 @@ void ReadInput::item_output()
                           ", second parameter controls the precision, default is 3.";
         item.category = "Output information";
         item.type = R"(Integer \[Integer\](optional))";
-        item.description = R"(The first integer controls whether to output the charge density on real space grids:
-* 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder OUT.{suffix} too, which can be read in NSCF calculation.
+                item.description = R"(The first integer controls whether to output the charge density on real space grids:
+    - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+        - nspin = 1: `chg.cube`;
+        - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
+        - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
+        - When using the Meta-GGA functional, additional files containing the kinetic energy density are also output:
+            - nspin = 1: `tau.cube`;
+            - nspin = 2: `taus1.cube`, and `taus2.cube`;
+            - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
+    - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
+    - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
+
+The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
 
 In molecular dynamics simulations, the output frequency is controlled by out_freq_ion.
 
