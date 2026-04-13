@@ -46,7 +46,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
             else
             {
                 std::stringstream mess;
-                mess << "Notice: symbol '" << symbol1 << "' is not an element symbol!!!! ";
+                mess << " Notice: symbol '" << symbol1 << "' is not an element symbol!!!! ";
                 mess << "set the covalent radius to be 0." << std::endl;
                 GlobalV::ofs_running << mess.str();
                 std::cout << mess.str();

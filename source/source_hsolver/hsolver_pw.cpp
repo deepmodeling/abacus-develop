@@ -248,6 +248,22 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 #endif
 
     const int cur_nbasis = psi.get_current_nbas();
+    const int dim = psi.get_current_ngk();
+    const int nband = psi.get_nbands();
+
+    // Guard against under-complete PW basis at current k-point.
+    // This case is common in highly compressed cells with low ecutwfc,
+    // and can otherwise fail later with obscure solver-specific messages.
+    if (dim < nband)
+    {
+        std::cout << "\n ERROR in HSolverPW::hamiltSolvePsiK" << std::endl;
+        std::cout << "   solver       = " << this->method << std::endl;
+        std::cout << "   ik (1-based) = " << nk_nums + 1 << std::endl;
+        std::cout << "   npw(dim)     = " << dim << std::endl;
+        std::cout << "   nbands       = " << nband << std::endl;
+        std::cout << "   Suggestion   : increase ecutwfc, reduce nbands, or adjust k-mesh." << std::endl;
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", "insufficient plane-wave basis dimension for requested nbands");
+    }
 
     // Shared matrix-blockvector operators used by all iterative solvers.
     auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
@@ -288,8 +304,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             cg.diag(hpsi_func,
                     spsi_func,
                     psi.get_nbasis(),
-                    psi.get_nbands(),
-                    psi.get_current_ngk(),
+                          nband,
+                          dim,
                     psi.get_pointer(),
                     eigenvalue,
                     this->ethr_band,
