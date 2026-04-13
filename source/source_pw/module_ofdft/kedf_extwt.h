@@ -11,7 +11,7 @@
 
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with extended Wang-Teter (ext-WT) KEDF.
- * See Sun L, Chen M. arXiv preprint arXiv:2507.08442, 2025.
+ * See Sun L, Chen M. Physical Review B, 2026, 113(16): L161107.
  * @author sunliang on 2026-04
  */
 class KEDF_ExtWT

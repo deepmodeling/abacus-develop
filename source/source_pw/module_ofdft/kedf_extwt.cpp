@@ -7,6 +7,11 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 
+namespace
+{
+constexpr double kDenomEps = 1e-14;
+}
+
 /**
  * @brief Set the parameters of ext-WT KEDF, and initialize kernel
  *
@@ -35,13 +40,23 @@ void KEDF_ExtWT::set_para(double dV,
     this->kappa_ = of_extwt_kappa;
     // std::cout << "kappa: " << this->kappa_ << std::endl;
 
-    this->rho0_ = 1. / (pw_rho->nxyz * dV) * nelec;
+    const double rho0_den = pw_rho->nxyz * dV;
+    if (std::abs(rho0_den) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in rho0 initialization (nxyz * dV)");
+    }
+    this->rho0_ = nelec / rho0_den;
 
     this->kf_ = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0_, 1. / 3.);
     this->tkf_ = 2. * this->kf_;
 
-    this->wt_coef_
-        = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
+    const double wt_coef_den
+        = 9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.);
+    if (std::abs(wt_coef_den) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in wt_coef calculation (set_para)");
+    }
+    this->wt_coef_ = 5. / wt_coef_den;
 
     delete[] this->kernel_;
     this->kernel_ = new double[pw_rho->npw];
@@ -74,6 +89,10 @@ void KEDF_ExtWT::update_rho0(const double* const* prho,
     this->sum_rho_kappa_ *= this->dV_;
     this->sum_rho_kappa_plus_one_ *= this->dV_;
 
+    if (std::abs(this->sum_rho_kappa_) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in rho0 update (sum_rho_kappa)");
+    }
     this->rho0_ = this->sum_rho_kappa_plus_one_ / this->sum_rho_kappa_;
     // std::cout << "rho0: " << this->rho0_ << std::endl;
 }
@@ -85,11 +104,21 @@ void KEDF_ExtWT::cal_kernel(double tf_weight,
 {
     this->rho0_ = rho0;
 
+    if (this->rho0_ <= 0.0)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "rho0 must be positive in cal_kernel");
+    }
+
     this->kf_ = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0_, 1. / 3.);
     this->tkf_ = 2. * this->kf_;
 
-    this->wt_coef_
-        = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
+    const double wt_coef_den
+        = 9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.);
+    if (std::abs(wt_coef_den) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in wt_coef calculation (cal_kernel)");
+    }
+    this->wt_coef_ = 5. / wt_coef_den;
 
     this->fill_kernel(tf_weight, vw_weight, pw_rho);
 }
@@ -104,6 +133,10 @@ void KEDF_ExtWT::cal_kernel(double tf_weight,
  */
 void KEDF_ExtWT::update_dkernel_deta(const double &vw_weight, ModulePW::PW_Basis* pw_rho)
 {
+    if (std::abs(this->rho0_) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in dkernel update (rho0)");
+    }
     double eta = 0.;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
     {
@@ -288,6 +321,10 @@ void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* 
     coef *= this->dV_ * this->c_tf_;
 
     // 3) calculate the total potential
+    if (std::abs(this->sum_rho_kappa_) < kDenomEps)
+    {
+        ModuleBase::WARNING_QUIT("KEDF_ExtWT", "Zero denominator in extwt_potential (sum_rho_kappa)");
+    }
     int count = 0;
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
