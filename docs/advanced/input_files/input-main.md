@@ -232,6 +232,7 @@
     - [of\_vw\_weight](#of_vw_weight)
     - [of\_wt\_alpha](#of_wt_alpha)
     - [of\_wt\_beta](#of_wt_beta)
+    - [of\_extwt\_kappa](#of_extwt_kappa)
     - [of\_wt\_rho0](#of_wt_rho0)
     - [of\_hold\_rho0](#of_hold_rho0)
     - [of\_lkt\_a](#of_lkt_a)
@@ -2396,7 +2397,8 @@
   - vw: von Weizsacker (vW) functional
   - tf+: TF + vW functional
   - wt: Wang-Teter (WT) functional
-  - xwm: XWM functional
+  - ext-wt: Extended Wang-Teter (ext-WT) functional
+  - xwm: Xu-Wang-Ma (XWM) functional
   - lkt: Luo-Karasiev-Trickey (LKT) functional
   - ml: Machine learning KEDF
   - mpn: MPN KEDF (automatically sets ml parameters)
@@ -2442,28 +2444,35 @@
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, xwm*
+- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, ext-wt, xwm*
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, lkt, xwm*
+- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, ext-wt, lkt, xwm*
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 
 ### of_wt_beta
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
+
+### of_extwt_kappa
+
+- **Type**: Real
+- **Availability**: *OFDFT with of_kinetic=ext-wt*
+- **Description**: Parameter kappa for EXT-WT KEDF.
+- **Default**: $\dfrac{1}{2(4/3)^{1/3}-1} \approx 0.832$
 
 ### of_wt_rho0
 

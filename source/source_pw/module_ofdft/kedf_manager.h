@@ -8,6 +8,7 @@
 #include "kedf_tf.h"
 #include "kedf_vw.h"
 #include "kedf_wt.h"
+#include "kedf_extwt.h"
 #include "kedf_xwm.h"
 #include "kedf_ml.h"
 
@@ -22,6 +23,8 @@ class KEDF_Manager
         delete this->tf_;
         delete this->vw_;
         delete this->wt_;
+        delete this->extwt_;
+        delete this->xwm_;
 #ifdef __MLALGO
         delete this->ml_;
 #endif
@@ -75,6 +78,7 @@ private:
     KEDF_TF* tf_ = nullptr;   // Thomas-Fermi KEDF
     KEDF_vW* vw_ = nullptr;   // von Weizsäcker KEDF
     KEDF_WT* wt_ = nullptr;   // Wang-Teter KEDF
+    KEDF_ExtWT* extwt_ = nullptr; // Extended Wang-Teter KEDF
     KEDF_XWM* xwm_ = nullptr; // Xu-Wang-Ma KEDF
 #ifdef __MLALGO
     KEDF_ML* ml_ = nullptr;   // Machine Learning KEDF

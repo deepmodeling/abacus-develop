@@ -20,6 +20,7 @@ void ReadInput::item_ofdft()
 * vw: von Weizsacker (vW) functional
 * tf+: TF + vW functional
 * wt: Wang-Teter (WT) functional
+* ext-wt: Extended Wang-Teter functional
 * xwm: XWM functional
 * lkt: Luo-Karasiev-Trickey (LKT) functional
 * ml: Machine learning KEDF
@@ -37,10 +38,11 @@ void ReadInput::item_ofdft()
             }
 #endif
             if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt"
+                && para.input.of_kinetic != "ext-wt"
                 && para.input.of_kinetic != "xwm" && para.input.of_kinetic != "lkt" && para.input.of_kinetic != "tf+" 
                 && para.input.of_kinetic != "ml" && para.input.of_kinetic != "mpn" && para.input.of_kinetic != "cpn5")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, xwm, lkt, ml, mpn, or cpn5");
+                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, ext-wt, xwm, lkt, ml, mpn, or cpn5");
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -175,7 +177,7 @@ void ReadInput::item_ofdft()
         item.description = "Weight of TF KEDF (kinetic energy density functional).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=tf, tf+, wt, xwm";
+        item.availability = "OFDFT with of_kinetic=tf, tf+, wt, ext-wt, xwm";
         read_sync_double(input.of_tf_weight);
         this->add_item(item);
     }
@@ -187,7 +189,7 @@ void ReadInput::item_ofdft()
         item.description = "Weight of vW KEDF (kinetic energy density functional).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=vw, tf+, wt, lkt, xwm";
+        item.availability = "OFDFT with of_kinetic=vw, tf+, wt, ext-wt, lkt, xwm";
         read_sync_double(input.of_vw_weight);
         this->add_item(item);
     }
@@ -199,7 +201,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter alpha of WT KEDF (kinetic energy density functional).";
         item.default_value = "";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt";
+        item.availability = "OFDFT with of_kinetic=wt, ext-wt";
         read_sync_double(input.of_wt_alpha);
         this->add_item(item);
     }
@@ -211,8 +213,20 @@ void ReadInput::item_ofdft()
         item.description = "Parameter beta of WT KEDF (kinetic energy density functional).";
         item.default_value = "";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt";
+        item.availability = "OFDFT with of_kinetic=wt, ext-wt";
         read_sync_double(input.of_wt_beta);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("of_extwt_kappa");
+        item.annotation = "parameter kappa of EXT-WT KEDF";
+        item.category = "OFDFT: orbital free density functional theory";
+        item.type = "Real";
+        item.description = "Parameter kappa for EXT-WT KEDF.";
+        item.default_value = "1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0)";
+        item.unit = "";
+        item.availability = "OFDFT with of_kinetic=ext-wt";
+        read_sync_double(input.of_extwt_kappa);
         this->add_item(item);
     }
     {
