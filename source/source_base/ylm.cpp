@@ -6,7 +6,6 @@
 #include "constants.h"
 #include "timer.h"
 #include "tool_quit.h"
-#include "array_pool.h"
 #include "ylmcoef.h"
 
 namespace ModuleBase
@@ -775,9 +774,13 @@ void Ylm::grad_rl_sph_harm
 	const double y,
 	const double z,
 	double* rly,
-	double** grly
+	double* grly_flat
 )
 {
+	// Alias the flat buffer as a pointer-to-array-of-3-doubles so the body
+	// below can continue to use the natural grly[lm][xyz] indexing without
+	// any performance penalty — the memory layout is unchanged.
+	double (*grly)[3] = reinterpret_cast<double(*)[3]>(grly_flat);
 	double radius2 = x*x+y*y+z*z;
 	double tx = 2.0*x;
 	double ty = 2.0*y;

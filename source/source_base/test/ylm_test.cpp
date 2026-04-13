@@ -77,33 +77,20 @@ TEST_F(ylmTest, HessianFiniteDifferenceL5)
     ModuleBase::Ylm::hes_rl_sph_harm(l, x, y, z, hrly);
 
     // Allocate gradient arrays for central difference
-    std::vector<double> rly_xp((l+1)*(l+1));
-    std::vector<std::vector<double>> grly_xp((l+1)*(l+1), std::vector<double>(3));
-    double** grly_xp_ptr = new double*[(l+1)*(l+1)];
-    for (int i = 0; i < (l+1)*(l+1); i++) {
-        grly_xp_ptr[i] = grly_xp[i].data();
-    }
-
-    std::vector<double> rly_xm((l+1)*(l+1));
-    std::vector<std::vector<double>> grly_xm((l+1)*(l+1), std::vector<double>(3));
-    double** grly_xm_ptr = new double*[(l+1)*(l+1)];
-    for (int i = 0; i < (l+1)*(l+1); i++) {
-        grly_xm_ptr[i] = grly_xm[i].data();
-    }
+    const int nylm = (l+1)*(l+1);
+    std::vector<double> rly_xp(nylm), rly_xm(nylm);
+    std::vector<double> grly_xp(nylm * 3), grly_xm(nylm * 3);
 
     // Compute gradient at (x+h, y, z) and (x-h, y, z)
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm_ptr);
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm.data());
 
     // Test H_xx for m=0 (index 25) using central difference
     int idx = 25;
-    double H_xx_fd = (grly_xp[idx][0] - grly_xm[idx][0]) / (2.0 * h);
+    double H_xx_fd = (grly_xp[idx*3] - grly_xm[idx*3]) / (2.0 * h);
     double H_xx_analytic = hrly[idx][0];
 
     EXPECT_NEAR(H_xx_fd, H_xx_analytic, tol);
-
-    delete[] grly_xp_ptr;
-    delete[] grly_xm_ptr;
 }
 
 // Test Hessian finite difference for l=6 using central difference
@@ -118,33 +105,20 @@ TEST_F(ylmTest, HessianFiniteDifferenceL6)
     ModuleBase::Ylm::hes_rl_sph_harm(l, x, y, z, hrly);
 
     // Allocate gradient arrays for central difference
-    std::vector<double> rly_xp((l+1)*(l+1));
-    std::vector<std::vector<double>> grly_xp((l+1)*(l+1), std::vector<double>(3));
-    double** grly_xp_ptr = new double*[(l+1)*(l+1)];
-    for (int i = 0; i < (l+1)*(l+1); i++) {
-        grly_xp_ptr[i] = grly_xp[i].data();
-    }
-
-    std::vector<double> rly_xm((l+1)*(l+1));
-    std::vector<std::vector<double>> grly_xm((l+1)*(l+1), std::vector<double>(3));
-    double** grly_xm_ptr = new double*[(l+1)*(l+1)];
-    for (int i = 0; i < (l+1)*(l+1); i++) {
-        grly_xm_ptr[i] = grly_xm[i].data();
-    }
+    const int nylm = (l+1)*(l+1);
+    std::vector<double> rly_xp(nylm), rly_xm(nylm);
+    std::vector<double> grly_xp(nylm * 3), grly_xm(nylm * 3);
 
     // Compute gradient at (x+h, y, z) and (x-h, y, z)
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm_ptr);
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm.data());
 
     // Test H_xx for m=0 (index 36) using central difference
     int idx = 36;
-    double H_xx_fd = (grly_xp[idx][0] - grly_xm[idx][0]) / (2.0 * h);
+    double H_xx_fd = (grly_xp[idx*3] - grly_xm[idx*3]) / (2.0 * h);
     double H_xx_analytic = hrly[idx][0];
 
     EXPECT_NEAR(H_xx_fd, H_xx_analytic, tol);
-
-    delete[] grly_xp_ptr;
-    delete[] grly_xm_ptr;
 }
 
 // Test that l>6 triggers error
@@ -174,71 +148,46 @@ TEST_F(ylmTest, HessianAllComponentsL2)
     int idx = 4;
 
     // Allocate gradient arrays
-    std::vector<double> rly_xp((l+1)*(l+1)), rly_xm((l+1)*(l+1));
-    std::vector<double> rly_yp((l+1)*(l+1)), rly_ym((l+1)*(l+1));
-    std::vector<double> rly_zp((l+1)*(l+1)), rly_zm((l+1)*(l+1));
+    const int nylm = (l+1)*(l+1);
+    std::vector<double> rly_xp(nylm), rly_xm(nylm);
+    std::vector<double> rly_yp(nylm), rly_ym(nylm);
+    std::vector<double> rly_zp(nylm), rly_zm(nylm);
 
-    std::vector<std::vector<double>> grly_xp((l+1)*(l+1), std::vector<double>(3));
-    std::vector<std::vector<double>> grly_xm((l+1)*(l+1), std::vector<double>(3));
-    std::vector<std::vector<double>> grly_yp((l+1)*(l+1), std::vector<double>(3));
-    std::vector<std::vector<double>> grly_ym((l+1)*(l+1), std::vector<double>(3));
-    std::vector<std::vector<double>> grly_zp((l+1)*(l+1), std::vector<double>(3));
-    std::vector<std::vector<double>> grly_zm((l+1)*(l+1), std::vector<double>(3));
-
-    double** grly_xp_ptr = new double*[(l+1)*(l+1)];
-    double** grly_xm_ptr = new double*[(l+1)*(l+1)];
-    double** grly_yp_ptr = new double*[(l+1)*(l+1)];
-    double** grly_ym_ptr = new double*[(l+1)*(l+1)];
-    double** grly_zp_ptr = new double*[(l+1)*(l+1)];
-    double** grly_zm_ptr = new double*[(l+1)*(l+1)];
-
-    for (int i = 0; i < (l+1)*(l+1); i++) {
-        grly_xp_ptr[i] = grly_xp[i].data();
-        grly_xm_ptr[i] = grly_xm[i].data();
-        grly_yp_ptr[i] = grly_yp[i].data();
-        grly_ym_ptr[i] = grly_ym[i].data();
-        grly_zp_ptr[i] = grly_zp[i].data();
-        grly_zm_ptr[i] = grly_zm[i].data();
-    }
+    std::vector<double> grly_xp(nylm * 3), grly_xm(nylm * 3);
+    std::vector<double> grly_yp(nylm * 3), grly_ym(nylm * 3);
+    std::vector<double> grly_zp(nylm * 3), grly_zm(nylm * 3);
 
     // Compute gradients at perturbed points
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y+h, z, rly_yp.data(), grly_yp_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y-h, z, rly_ym.data(), grly_ym_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y, z+h, rly_zp.data(), grly_zp_ptr);
-    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y, z-h, rly_zm.data(), grly_zm_ptr);
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y+h, z, rly_yp.data(), grly_yp.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y-h, z, rly_ym.data(), grly_ym.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y, z+h, rly_zp.data(), grly_zp.data());
+    ModuleBase::Ylm::grad_rl_sph_harm(l, x, y, z-h, rly_zm.data(), grly_zm.data());
 
     // Test H_xx (index 0)
-    double H_xx_fd = (grly_xp[idx][0] - grly_xm[idx][0]) / (2.0 * h);
+    double H_xx_fd = (grly_xp[idx*3]     - grly_xm[idx*3])     / (2.0 * h);
     EXPECT_NEAR(H_xx_fd, hrly[idx][0], tol);
 
     // Test H_xy (index 1)
-    double H_xy_fd = (grly_xp[idx][1] - grly_xm[idx][1]) / (2.0 * h);
+    double H_xy_fd = (grly_xp[idx*3 + 1] - grly_xm[idx*3 + 1]) / (2.0 * h);
     EXPECT_NEAR(H_xy_fd, hrly[idx][1], tol);
 
     // Test H_xz (index 2)
-    double H_xz_fd = (grly_xp[idx][2] - grly_xm[idx][2]) / (2.0 * h);
+    double H_xz_fd = (grly_xp[idx*3 + 2] - grly_xm[idx*3 + 2]) / (2.0 * h);
     EXPECT_NEAR(H_xz_fd, hrly[idx][2], tol);
 
     // Test H_yy (index 3)
-    double H_yy_fd = (grly_yp[idx][1] - grly_ym[idx][1]) / (2.0 * h);
+    double H_yy_fd = (grly_yp[idx*3 + 1] - grly_ym[idx*3 + 1]) / (2.0 * h);
     EXPECT_NEAR(H_yy_fd, hrly[idx][3], tol);
 
     // Test H_yz (index 4)
-    double H_yz_fd = (grly_yp[idx][2] - grly_ym[idx][2]) / (2.0 * h);
+    double H_yz_fd = (grly_yp[idx*3 + 2] - grly_ym[idx*3 + 2]) / (2.0 * h);
     EXPECT_NEAR(H_yz_fd, hrly[idx][4], tol);
 
     // Test H_zz (index 5)
-    double H_zz_fd = (grly_zp[idx][2] - grly_zm[idx][2]) / (2.0 * h);
+    double H_zz_fd = (grly_zp[idx*3 + 2] - grly_zm[idx*3 + 2]) / (2.0 * h);
     EXPECT_NEAR(H_zz_fd, hrly[idx][5], tol);
-
-    delete[] grly_xp_ptr;
-    delete[] grly_xm_ptr;
-    delete[] grly_yp_ptr;
-    delete[] grly_ym_ptr;
-    delete[] grly_zp_ptr;
-    delete[] grly_zm_ptr;
 }
 
 // Test Hessian for m=0 values across different l
@@ -256,28 +205,17 @@ TEST_F(ylmTest, HessianM0DifferentL)
         ModuleBase::Ylm::hes_rl_sph_harm(l, x, y, z, hrly);
 
         // Allocate gradient arrays
-        std::vector<double> rly_xp((l+1)*(l+1)), rly_xm((l+1)*(l+1));
-        std::vector<std::vector<double>> grly_xp((l+1)*(l+1), std::vector<double>(3));
-        std::vector<std::vector<double>> grly_xm((l+1)*(l+1), std::vector<double>(3));
+        const int nylm = (l+1)*(l+1);
+        std::vector<double> rly_xp(nylm), rly_xm(nylm);
+        std::vector<double> grly_xp(nylm * 3), grly_xm(nylm * 3);
 
-        double** grly_xp_ptr = new double*[(l+1)*(l+1)];
-        double** grly_xm_ptr = new double*[(l+1)*(l+1)];
-
-        for (int i = 0; i < (l+1)*(l+1); i++) {
-            grly_xp_ptr[i] = grly_xp[i].data();
-            grly_xm_ptr[i] = grly_xm[i].data();
-        }
-
-        ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp_ptr);
-        ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm_ptr);
+        ModuleBase::Ylm::grad_rl_sph_harm(l, x+h, y, z, rly_xp.data(), grly_xp.data());
+        ModuleBase::Ylm::grad_rl_sph_harm(l, x-h, y, z, rly_xm.data(), grly_xm.data());
 
         // Test H_xx for m=0 (index l*l)
         int idx = l * l;
-        double H_xx_fd = (grly_xp[idx][0] - grly_xm[idx][0]) / (2.0 * h);
+        double H_xx_fd = (grly_xp[idx*3] - grly_xm[idx*3]) / (2.0 * h);
         EXPECT_NEAR(H_xx_fd, hrly[idx][0], tol) << "Failed for l=" << l << " m=0";
-
-        delete[] grly_xp_ptr;
-        delete[] grly_xm_ptr;
     }
 }
 

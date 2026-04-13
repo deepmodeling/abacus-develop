@@ -47,7 +47,7 @@ case "${with_openmpi}" in
     __INSTALL__)
         echo "==================== Installing OpenMPI ===================="
         pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver%.*}/${openmpi_pkg}"
         if verify_checksums "${install_lock_file}"; then
             echo "openmpi-${openmpi_ver} is already installed, skipping it."
@@ -205,12 +205,10 @@ EOF
         if [ "${with_openmpi}" != "__SYSTEM__" ]; then
             cat << EOF >> "${BUILDDIR}/setup_openmpi"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin":\${PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
-
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         fi
         cat "${BUILDDIR}/setup_openmpi" >> ${SETUPFILE}
