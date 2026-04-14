@@ -4,14 +4,110 @@
 /
 /*******************************************************************************/
 
-These examples show how to use Berry phase method.
-It requires two steps of calculation:
-1. Do the scf calculation and output the information of charge:
-    - set 'calculation' to 'scf'
-    - set 'out_chg' to '1'
-2. Do the nscf calculation:
-    - set 'calculation' to 'nscf'
-    - set 'init_chg' to 'file'
-    - set 'berry_phase' to '1'
-    - set 'gdir' to '1' (or '2', or '3')
-    - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
+# Berry Phase Examples
+
+This directory contains examples for performing Berry phase calculations in ABACUS. The Berry phase method is used to calculate polarization, orbital magnetization, and other topological properties of materials.
+
+## What is Berry Phase?
+
+The Berry phase is a geometric phase acquired by a quantum system as it evolves adiabatically around a closed path in parameter space. In condensed matter physics, it is used to calculate:
+
+- **Polarization**: Electric polarization of crystals
+- **Orbital magnetization**: Magnetization due to orbital motion of electrons
+- **Topological invariants**: Such as Chern numbers and Z₂ invariants
+- **Anomalous Hall effect**: Hall conductivity in topological materials
+- **Piezoelectric response**: Relationship between stress and electric polarization
+
+## Berry Phase Calculations in ABACUS
+
+ABACUS implements the Berry phase method for calculating electric polarization. The calculation requires two steps:
+
+1. **Self-consistent field (SCF) calculation**:
+   - Set `calculation` to `scf`
+   - Set `out_chg` to `1` to output charge density information
+
+2. **Non-self-consistent field (NSCF) calculation**:
+   - Set `calculation` to `nscf`
+   - Set `init_chg` to `file` to read the charge density from the SCF calculation
+   - Set `berry_phase` to `1` to enable Berry phase calculation
+   - Set `gdir` to `1`, `2`, or `3` to specify the direction of polarization (x, y, or z)
+   - For plane wave basis, set `pw_diag_thr` to a suitable value for better convergence
+
+## Examples Included
+
+### 1. 01_pw_PbTiO3
+- **System**: Lead titanate (PbTiO3)
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates Berry phase calculation for polarization using plane wave basis
+- **Input Files**:
+  - `INPUT-scf`: SCF calculation to generate charge density
+  - `INPUT-nscf-a`: NSCF calculation for polarization along direction 1 (x)
+  - `INPUT-nscf-b`: NSCF calculation for polarization along direction 2 (y)
+  - `INPUT-nscf-c`: NSCF calculation for polarization along direction 3 (z)
+  - Corresponding KPT files for each calculation
+
+### 2. 02_lcao_PbTiO3
+- **System**: Lead titanate (PbTiO3)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates Berry phase calculation for polarization using LCAO basis
+- **Input Files**:
+  - `INPUT-scf`: SCF calculation to generate charge density
+  - `INPUT-nscf-a`: NSCF calculation for polarization along direction 1 (x)
+  - `INPUT-nscf-b`: NSCF calculation for polarization along direction 2 (y)
+  - `INPUT-nscf-c`: NSCF calculation for polarization along direction 3 (z)
+  - Corresponding KPT files for each calculation
+
+## Key Parameters in INPUT
+
+### For SCF Calculation:
+- `calculation`: Set to `scf`
+- `out_chg`: Set to `1` to output charge density
+- `basis_type`: Set to `pw` or `lcao` depending on the basis set
+
+### For NSCF Calculation:
+- `calculation`: Set to `nscf`
+- `init_chg`: Set to `file` to read charge density from SCF calculation
+- `berry_phase`: Set to `1` to enable Berry phase calculation
+- `gdir`: Set to `1`, `2`, or `3` to specify the polarization direction
+- `pw_diag_thr`: Set to a small value (e.g., 1e-10) for plane wave basis
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/26_berryphase/01_pw_PbTiO3
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. The script will automatically run the SCF calculation followed by the NSCF calculations for all three directions.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `berryphase.out`: Contains the Berry phase and polarization results
+- `running_scf.log`: Log file for the SCF calculation
+- `running_nscf.log`: Log file for the NSCF calculation
+
+## Interpreting Results
+
+The polarization is calculated as:
+
+ P = rac{e}{(2i)^3} um_{n,k} angle u_{n,k} | i 
+abla_k | u_{n,k} 
+angle 
+
+where  u_{n,k}  are the periodic parts of the Bloch wavefunctions. The result is typically reported in units of  e/	ext{Å}^2  or  u	ext{C}/	ext{cm}^2 .
+
+## Notes
+
+- Berry phase calculations require a well-converged charge density, so ensure that the SCF calculation is properly converged
+- For accurate results, use a sufficiently dense k-point mesh in both SCF and NSCF calculations
+- The choice of basis set (PW or LCAO) affects the accuracy and computational cost of the calculation
+- Polarization is a bulk property, so ensure that the unit cell is properly defined
+- The examples use PbTiO₃, which is a ferroelectric material with spontaneous polarization
+- For systems with symmetry, you can use symmetry operations to reduce the number of k-points needed
