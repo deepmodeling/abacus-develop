@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <cassert>
+#include <cctype>
 #include <limits>
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
@@ -522,7 +523,7 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
             {
                 break;
             }
-            else if (!temp.empty() && isalpha(temp[0]))
+            else if (!temp.empty() && std::isalpha(static_cast<unsigned char>(temp[0])))
             {
                 ntype_stru += 1;
             }
@@ -531,17 +532,17 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
 
     if (ntype_stru <= 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput",
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "Failed to detect valid ntype from STRU: no valid ATOMIC_SPECIES entries were found.");
     }
 
     if (param_ntype < 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput", "The ntype in INPUT should not be less than 0.");
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "The ntype in INPUT should not be less than 0.");
     }
     else if (param_ntype != 0 && param_ntype != ntype_stru)
     {
-        ModuleBase::WARNING_QUIT("ReadInput",
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "The ntype in INPUT is not equal to the ntype "
                                  "counted in STRU, check it.");
     }
