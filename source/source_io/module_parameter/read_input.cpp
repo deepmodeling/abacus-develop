@@ -522,32 +522,32 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
             {
                 break;
             }
-            else if (isalpha(temp[0]))
+            else if (!temp.empty() && isalpha(temp[0]))
             {
                 ntype_stru += 1;
             }
         }
     }
 
-    if (param_ntype == 0)
+    if (ntype_stru <= 0)
     {
-        param_ntype = ntype_stru;
-        GlobalV::ofs_running << " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored. "
-                             << std::endl;
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "Failed to detect valid ntype from STRU: no valid ATOMIC_SPECIES entries were found.");
     }
-    else if (param_ntype != ntype_stru)
+
+    if (param_ntype < 0)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "The ntype in INPUT should not be less than 0.");
+    }
+    else if (param_ntype != 0 && param_ntype != ntype_stru)
     {
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "The ntype in INPUT is not equal to the ntype "
                                  "counted in STRU, check it.");
     }
-    if (param_ntype <= 0)
+    else if (param_ntype == 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
-    }
-    else
-    {
+        param_ntype = ntype_stru;
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
     }
 }
