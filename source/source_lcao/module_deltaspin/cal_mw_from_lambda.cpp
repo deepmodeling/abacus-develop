@@ -3,7 +3,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -133,7 +133,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
 		const ModuleBase::Vector3<double>* delta_lambda)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     // lambda has been updated in the lambda loop
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
@@ -368,14 +368,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             // }
         }
     }
-    ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
 }
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "update_psi_charge");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge");
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
     {
@@ -539,5 +539,5 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
         }
 #endif       
     }
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "update_psi_charge");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "update_psi_charge");
 }

@@ -44,7 +44,23 @@ Non-periodic systems such as liquid systems can be calculated by using supercell
 
 **6. How to perform spin-orbital coupling (SOC) calculations in ABACUS?**
 
-Apart from setting relavant keys (`lspinorb` to 1) in the `INPUT` file, SOC calculations can only be performed with fully-relativistic pseudopotentials. Users are suggested to download fully-relativistic versions of SG15_ONCV pseudopotential files from a [website](http://quantum-simulation.org/potentials/sg15_oncv/upf/). The numerical orbital files generated from the corresponding scalar-relativistic pseudoptential files by ABACUS ([here](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used in collaboration with the fully-relativistic pseudopotentials.
+To perform SOC calculations in ABACUS, follow these steps:
+
+1. **Set `lspinorb=1` in the INPUT file**: This enables spin-orbit coupling effects
+2. **Use full-relativistic pseudopotentials**: SOC calculations require pseudopotentials with `has_so=true` in the UPF header
+   - Download full-relativistic versions of SG15_ONCV pseudopotentials from [quantum-simulation.org](http://quantum-simulation.org/potentials/sg15_oncv/upf/)
+   - Check the UPF file header for `relativistic="full"` and `has_so="T"`
+3. **Verify automatic settings**: When `lspinorb=1` is set, `nspin` is automatically set to 4 and symmetry is automatically disabled
+
+**Basis set support**: Both `basis_type=pw` (plane wave) and `basis_type=lcao` (numerical atomic orbitals) support SOC calculations for both SCF and NSCF.
+
+**Force and stress calculations**: Atomic forces and cell stresses can be calculated with SOC (supported since ABACUS v3.9.0).
+
+**Numerical atomic orbitals**: The numerical orbital files generated from scalar-relativistic pseudopotentials (available at [abacus.ustc.edu.cn](http://abacus.ustc.edu.cn/pseudo/list.htm)) can be used with full-relativistic pseudopotentials, as orbitals are spin-independent.
+
+**Common error**: If you see "no soc upf used for lspinorb calculation", ensure you are using full-relativistic pseudopotentials with `has_so=true`.
+
+For detailed information, examples, and troubleshooting, see [Spin-polarization and SOC](../advanced/scf/spin.md#soc-effects).
 
 **7. How to restart jobs in abacus?**
 

@@ -31,7 +31,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                                         torch::Tensor& orbital_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_orbital_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "calc_orbital_precalc");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -213,19 +213,19 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         gemm_alpha = 2.0;
                     }
 
-                    dgemm_(&transa,
-                           &transb,
-                           &row_size_nks,
-                           &trace_alpha_size,
-                           &col_size,
-                           &gemm_alpha,
-                           dm_array.data(),
-                           &col_size,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           trace_alpha_size,
+                           row_size_nks,
+                           col_size,
+                           gemm_alpha,
                            s_2t.data(),
-                           &col_size,
-                           &gemm_beta,
+                           col_size,
+                           dm_array.data(),
+                           col_size,
+                           gemm_beta,
                            g_1dmt.data(),
-                           &row_size_nks);
+                           row_size_nks);
                 } // ad2
 
                 for (int ik = 0; ik < nks; ik++)
@@ -247,11 +247,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    accessor[ik][inl][m1][m2] += ddot_(&row_size,
+                                    accessor[ik][inl][m1][m2] += BlasConnector::dot(row_size,
                                                                        p_g1dmt + index * row_size * nks,
-                                                                       &inc,
+                                                                       inc,
                                                                        s_1t.data() + index * row_size,
-                                                                       &inc);
+                                                                       inc);
                                     index++;
                                 }
                             }
@@ -289,7 +289,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "calc_orbital_precalc");
     return;
 }
 

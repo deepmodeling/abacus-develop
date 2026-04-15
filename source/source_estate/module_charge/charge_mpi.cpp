@@ -27,7 +27,7 @@ void Charge::init_chgmpi()
 void Charge::reduce_diff_pools(double* array_rho) const
 {
     ModuleBase::TITLE("Charge", "reduce_diff_pools");
-    ModuleBase::timer::tick("Charge", "reduce_diff_pools");
+    ModuleBase::timer::start("Charge", "reduce_diff_pools");
     if (KP_WORLD != MPI_COMM_NULL)
     {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
@@ -113,7 +113,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
     {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
-    ModuleBase::timer::tick("Charge", "reduce_diff_pools");
+    ModuleBase::timer::end("Charge", "reduce_diff_pools");
 }
 
 void Charge::rho_mpi()
@@ -123,7 +123,7 @@ void Charge::rho_mpi()
 	{
 		return;
 	}
-    ModuleBase::timer::tick("Charge", "rho_mpi");
+    ModuleBase::timer::start("Charge", "rho_mpi");
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -134,7 +134,7 @@ void Charge::rho_mpi()
         }
     }
 
-    ModuleBase::timer::tick("Charge", "rho_mpi");
+    ModuleBase::timer::end("Charge", "rho_mpi");
     return;
 }
 #endif

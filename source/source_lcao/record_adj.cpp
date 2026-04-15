@@ -1,9 +1,8 @@
 #include "record_adj.h"
-
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
+
 Record_adj::Record_adj()
 {
 }
@@ -49,7 +48,7 @@ void Record_adj::for_2d(const UnitCell& ucell,
                         const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("Record_adj", "for_2d");
-    ModuleBase::timer::tick("Record_adj", "for_2d");
+    ModuleBase::timer::start("Record_adj", "for_2d");
 
     assert(ucell.nat > 0);
     if (!gamma_only)
@@ -278,7 +277,7 @@ void Record_adj::for_2d(const UnitCell& ucell,
 #ifdef _OPENMP
     }
 #endif
-    ModuleBase::timer::tick("Record_adj", "for_2d");
+    ModuleBase::timer::end("Record_adj", "for_2d");
     info_modified = true;
     return;
 }

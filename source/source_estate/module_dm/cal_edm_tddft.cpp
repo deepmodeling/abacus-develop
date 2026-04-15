@@ -60,7 +60,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft");
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -303,7 +303,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 #endif
     } // end ik
 
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft
 
@@ -313,7 +313,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
                           hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor");
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -532,7 +532,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
         ModuleBase::WARNING_QUIT("elecstate::cal_edm_tddft_tensor", "MPI is required for this function!");
 #endif
     } // end ik
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft_tensor
 
@@ -544,7 +544,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
                                  hamilt::Hamilt<std::complex<double>>* p_hamilt)
 {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor_lapack");
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor_lapack");
+    ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
@@ -554,6 +554,12 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
+
+    // Memory operations
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (ct_device_type == ct::DeviceType::GpuDevice)
@@ -573,209 +579,214 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
 #ifdef __MPI
         int myid = 0;
         const int root_proc = 0;
+        int num_procs = 1;
         MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+        MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-        // Gather local H, S, and DMK matrices to global matrices on root process
+        // 1. Prepare Data Source Pointers (Host)
+        // If np = 1, point directly to local data to avoid copy
+        // If np > 1, gather data and point to the gathered buffer
+        std::complex<double>* h_src = nullptr;
+        std::complex<double>* s_src = nullptr;
+        std::complex<double>* dmk_src = nullptr;
+
+        // Global containers (Used only when num_procs > 1)
+        module_rt::Matrix_g<std::complex<double>> h_mat_global, s_mat_global, dmk_global, edm_global;
+
+        // Get Local Matrices
         hamilt::MatrixBlock<std::complex<double>> h_mat_local, s_mat_local;
         p_hamilt->matrix(h_mat_local, s_mat_local);
 
-        module_rt::Matrix_g<std::complex<double>> h_mat_global, s_mat_global, dmk_global;
-        module_rt::gatherMatrix(myid, root_proc, h_mat_local, h_mat_global);
-        module_rt::gatherMatrix(myid, root_proc, s_mat_local, s_mat_global);
-
-        // Create a temporary MatrixBlock for local DMK
-        hamilt::MatrixBlock<std::complex<double>> dmk_local_block;
-        dmk_local_block.p = tmp_dmk_local;
-        dmk_local_block.desc = pv.desc;
-        module_rt::gatherMatrix(myid, root_proc, dmk_local_block, dmk_global);
-
-        // Declare and allocate global EDM matrix on ALL processes, prepare for distribution in the end
-        module_rt::Matrix_g<std::complex<double>> edm_global;
-        edm_global.p.reset(new std::complex<double>[nlocal * nlocal]);
-        edm_global.row = nlocal;
-        edm_global.col = nlocal;
-        // Set the descriptor of the global EDM matrix
-        edm_global.desc.reset(new int[9]{1, pv.desc[1], nlocal, nlocal, nlocal, nlocal, 0, 0, nlocal});
-
-        // Only root process performs the global calculation
-        if (myid == root_proc)
+        if (num_procs == 1)
         {
-            ct::Tensor Htmp_global(ct::DataType::DT_COMPLEX_DOUBLE,
-                                   ct::DeviceType::CpuDevice,
-                                   ct::TensorShape({nlocal, nlocal}));
-            ct::Tensor S_global(ct::DataType::DT_COMPLEX_DOUBLE,
-                                ct::DeviceType::CpuDevice,
-                                ct::TensorShape({nlocal, nlocal}));
-            ct::Tensor DMK_global(ct::DataType::DT_COMPLEX_DOUBLE,
-                                  ct::DeviceType::CpuDevice,
-                                  ct::TensorShape({nlocal, nlocal}));
+            // Optimization: Direct access for single process
+            h_src = h_mat_local.p;
+            s_src = s_mat_local.p;
+            dmk_src = tmp_dmk_local;
+        }
+        else
+        {
+            // Standard Gather Logic for multi-process
+            module_rt::gatherMatrix(myid, root_proc, h_mat_local, h_mat_global);
+            module_rt::gatherMatrix(myid, root_proc, s_mat_local, s_mat_global);
 
-            // Copy gathered data into tensors
-            BlasConnector::copy(nlocal * nlocal,
-                                h_mat_global.p.get(),
-                                1,
-                                Htmp_global.template data<std::complex<double>>(),
-                                1);
-            BlasConnector::copy(nlocal * nlocal,
-                                s_mat_global.p.get(),
-                                1,
-                                S_global.template data<std::complex<double>>(),
-                                1);
-            BlasConnector::copy(nlocal * nlocal,
-                                dmk_global.p.get(),
-                                1,
-                                DMK_global.template data<std::complex<double>>(),
-                                1);
+            hamilt::MatrixBlock<std::complex<double>> dmk_local_block;
+            dmk_local_block.p = tmp_dmk_local;
+            dmk_local_block.desc = pv.desc;
+            module_rt::gatherMatrix(myid, root_proc, dmk_local_block, dmk_global);
 
-            // Move tensors to the target device (CPU or GPU)
-            ct::Tensor Htmp_global_dev = Htmp_global.to_device<ct_Device>();
-            ct::Tensor S_global_dev = S_global.to_device<ct_Device>();
-            ct::Tensor DMK_global_dev = DMK_global.to_device<ct_Device>();
-
-            // --- Calculate S^-1 using getrf + getrs ---
-            ct::Tensor ipiv(ct::DataType::DT_INT, ct_device_type, ct::TensorShape({nlocal}));
-            ipiv.zero();
-
-            // 1. LU decomposition S = P * L * U
-            ct::kernels::lapack_getrf<std::complex<double>, ct_Device>()(
-                nlocal,
-                nlocal,
-                S_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                ipiv.template data<int>());
-
-            // 2. Solve S * Sinv = I for Sinv using the LU decomposition
-            // Create identity matrix as RHS
-            auto Sinv_global = module_rt::create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
-
-            ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()(
-                'N',
-                nlocal,
-                nlocal,
-                S_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                ipiv.template data<int>(),
-                Sinv_global.template data<std::complex<double>>(),
-                nlocal);
-
-            // --- EDM Calculation using BLAS on global tensors ---
-            // tmp1 = Htmp * Sinv
-            ct::Tensor tmp1_global_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                          ct_device_type,
-                                          ct::TensorShape({nlocal, nlocal}));
-            tmp1_global_tensor.zero();
-            std::complex<double> one_complex = {1.0, 0.0};
-            std::complex<double> zero_complex = {0.0, 0.0};
-            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()(
-                'N',
-                'N',
-                nlocal,
-                nlocal,
-                nlocal,
-                &one_complex,
-                Htmp_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                Sinv_global.template data<std::complex<double>>(),
-                nlocal,
-                &zero_complex,
-                tmp1_global_tensor.template data<std::complex<double>>(),
-                nlocal);
-
-            // tmp2 = tmp1^T * tmp_dmk
-            ct::Tensor tmp2_global_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                          ct_device_type,
-                                          ct::TensorShape({nlocal, nlocal}));
-            tmp2_global_tensor.zero();
-            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()(
-                'T',
-                'N',
-                nlocal,
-                nlocal,
-                nlocal,
-                &one_complex,
-                tmp1_global_tensor.template data<std::complex<double>>(),
-                nlocal,
-                DMK_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                &zero_complex,
-                tmp2_global_tensor.template data<std::complex<double>>(),
-                nlocal);
-
-            // tmp3 = Sinv * Htmp
-            ct::Tensor tmp3_global_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                          ct_device_type,
-                                          ct::TensorShape({nlocal, nlocal}));
-            tmp3_global_tensor.zero();
-            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()(
-                'N',
-                'N',
-                nlocal,
-                nlocal,
-                nlocal,
-                &one_complex,
-                Sinv_global.template data<std::complex<double>>(),
-                nlocal,
-                Htmp_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                &zero_complex,
-                tmp3_global_tensor.template data<std::complex<double>>(),
-                nlocal);
-
-            // tmp4 = tmp_dmk * tmp3^T
-            ct::Tensor tmp4_global_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                          ct_device_type,
-                                          ct::TensorShape({nlocal, nlocal}));
-            tmp4_global_tensor.zero();
-            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()(
-                'N',
-                'T',
-                nlocal,
-                nlocal,
-                nlocal,
-                &one_complex,
-                DMK_global_dev.template data<std::complex<double>>(),
-                nlocal,
-                tmp3_global_tensor.template data<std::complex<double>>(),
-                nlocal,
-                &zero_complex,
-                tmp4_global_tensor.template data<std::complex<double>>(),
-                nlocal);
-
-            // tmp4 = tmp2 + tmp4
-            ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(
-                nlocal * nlocal,
-                &one_complex,
-                tmp2_global_tensor.template data<std::complex<double>>(),
-                1,
-                tmp4_global_tensor.template data<std::complex<double>>(),
-                1);
-
-            // tmp4 = 0.5 * tmp4
-            std::complex<double> half_complex = {0.5, 0.0};
-            ct::kernels::blas_scal<std::complex<double>, ct_Device>()(
-                nlocal * nlocal,
-                &half_complex,
-                tmp4_global_tensor.template data<std::complex<double>>(),
-                1);
-
-            // Copy result from device tensor back to CPU buffer for distribution
-            ct::Tensor tmp4_global_tensor_cpu = tmp4_global_tensor.to_device<ct::DEVICE_CPU>();
-            BlasConnector::copy(nlocal * nlocal,
-                                tmp4_global_tensor_cpu.template data<std::complex<double>>(),
-                                1,
-                                edm_global.p.get(),
-                                1);
+            if (myid == root_proc)
+            {
+                h_src = h_mat_global.p.get();
+                s_src = s_mat_global.p.get();
+                dmk_src = dmk_global.p.get();
+            }
         }
 
-        // --- Distribute the globally computed EDM matrix back to distributed form ---
-        tmp_edmk.create(pv.ncol, pv.nrow);
+        // 2. GPU Calculation (on Rank 0)
+        if (myid == root_proc)
+        {
+            ct::Tensor H_dev, S_dev, DMK_dev, ipiv_dev;
 
-        hamilt::MatrixBlock<std::complex<double>> edm_local_block;
-        edm_local_block.p = tmp_edmk.c;
-        edm_local_block.desc = pv.desc;
+            // Allocate and Copy (H2D)
+            H_dev = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            syncmem_complex_h2d_op()(H_dev.template data<std::complex<double>>(), h_src, nlocal * nlocal);
 
-        // Distribute edm_global to all processes' local blocks
-        module_rt::distributeMatrix(edm_local_block, edm_global);
+            S_dev = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            syncmem_complex_h2d_op()(S_dev.template data<std::complex<double>>(), s_src, nlocal * nlocal);
+
+            DMK_dev = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            syncmem_complex_h2d_op()(DMK_dev.template data<std::complex<double>>(), dmk_src, nlocal * nlocal);
+
+            ipiv_dev = ct::Tensor(ct::DataType::DT_INT, ct_device_type, ct::TensorShape({nlocal}));
+            ipiv_dev.zero();
+
+            // --- Calculate S^-1 using getrf + getrs ---
+            // 1. LU decomposition S = P * L * U
+            ct::kernels::lapack_getrf<std::complex<double>, ct_Device>()(nlocal,
+                                                                         nlocal,
+                                                                         S_dev.template data<std::complex<double>>(),
+                                                                         nlocal,
+                                                                         ipiv_dev.template data<int>());
+
+            // 2. Solve S * Sinv = I
+            auto Sinv_dev = module_rt::create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
+
+            ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()('N',
+                                                                         nlocal,
+                                                                         nlocal,
+                                                                         S_dev.template data<std::complex<double>>(),
+                                                                         nlocal,
+                                                                         ipiv_dev.template data<int>(),
+                                                                         Sinv_dev.template data<std::complex<double>>(),
+                                                                         nlocal);
+
+            // --- EDM Calculation ---
+            std::complex<double> one = {1.0, 0.0};
+            std::complex<double> zero = {0.0, 0.0};
+
+            // tmp1 = H * Sinv
+            ct::Tensor tmp1_dev(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                                      'N',
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      &one,
+                                                                      H_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      Sinv_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      &zero,
+                                                                      tmp1_dev.template data<std::complex<double>>(),
+                                                                      nlocal);
+
+            // tmp2 = tmp1^T * DMK
+            ct::Tensor tmp2_dev(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('T',
+                                                                      'N',
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      &one,
+                                                                      tmp1_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      DMK_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      &zero,
+                                                                      tmp2_dev.template data<std::complex<double>>(),
+                                                                      nlocal);
+
+            // tmp3 = Sinv * H
+            ct::Tensor tmp3_dev(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                                      'N',
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      &one,
+                                                                      Sinv_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      H_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      &zero,
+                                                                      tmp3_dev.template data<std::complex<double>>(),
+                                                                      nlocal);
+
+            // tmp4 = DMK * tmp3^T
+            ct::Tensor tmp4_dev(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal, nlocal}));
+            ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                                      'T',
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      nlocal,
+                                                                      &one,
+                                                                      DMK_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      tmp3_dev.template data<std::complex<double>>(),
+                                                                      nlocal,
+                                                                      &zero,
+                                                                      tmp4_dev.template data<std::complex<double>>(),
+                                                                      nlocal);
+
+            // tmp4 = tmp2 + tmp4
+            ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                                      &one,
+                                                                      tmp2_dev.template data<std::complex<double>>(),
+                                                                      1,
+                                                                      tmp4_dev.template data<std::complex<double>>(),
+                                                                      1);
+
+            // tmp4 = 0.5 * tmp4
+            std::complex<double> half = {0.5, 0.0};
+            ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                                      &half,
+                                                                      tmp4_dev.template data<std::complex<double>>(),
+                                                                      1);
+
+            // 3. Retrieve Result (D2H)
+            std::complex<double>* edm_dest = nullptr;
+
+            if (num_procs == 1)
+            {
+                // Directly copy to target local matrix
+                tmp_edmk.create(pv.ncol, pv.nrow);
+                edm_dest = tmp_edmk.c;
+            }
+            else
+            {
+                // Wait to set up edm_dest after allocating global buffer
+                if (myid == root_proc && edm_global.p == nullptr)
+                {
+                    edm_global.p.reset(new std::complex<double>[nlocal * nlocal]);
+                }
+                edm_dest = edm_global.p.get();
+            }
+
+            if (num_procs == 1 || myid == root_proc)
+            {
+                syncmem_complex_d2h_op()(edm_dest, tmp4_dev.template data<std::complex<double>>(), nlocal * nlocal);
+            }
+        }
+
+        // 4. Distribute (Only needed if num_procs > 1)
+        if (num_procs > 1)
+        {
+            if (edm_global.p == nullptr)
+            {
+                edm_global.p.reset(new std::complex<double>[nlocal * nlocal]);
+            }
+
+            edm_global.row = nlocal;
+            edm_global.col = nlocal;
+            edm_global.desc.reset(new int[9]{1, pv.desc[1], nlocal, nlocal, nlocal, nlocal, 0, 0, nlocal});
+
+            tmp_edmk.create(pv.ncol, pv.nrow);
+            hamilt::MatrixBlock<std::complex<double>> edm_local_block;
+            edm_local_block.p = tmp_edmk.c;
+            edm_local_block.desc = pv.desc;
+            module_rt::distributeMatrix(edm_local_block, edm_global);
+        }
 #else
         ModuleBase::WARNING_QUIT("elecstate::cal_edm_tddft_tensor_lapack", "MPI is required for this function!");
 #endif // __MPI
@@ -790,7 +801,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
     }
 #endif // __CUDA
 
-    ModuleBase::timer::tick("elecstate", "cal_edm_tddft_tensor_lapack");
+    ModuleBase::timer::end("TD_Efficiency", "cal_edm_tddft");
     return;
 } // cal_edm_tddft_tensor_lapack
 

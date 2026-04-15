@@ -1,46 +1,46 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     nscf
-esolver_type    sdft
-method_sto      2
+suffix            autotest
+calculation       nscf
+esolver_type      sdft
+method_sto        2
 
-nbands			10
-nbands_sto		10
-nche_sto		120
-emax_sto		0
-emin_sto		0
-seed_sto        20000
-pseudo_dir	../../PP_ORB
-pw_seed         1
-symmetry	    1
-kpar            2
-bndpar          2
-out_chg         0
-init_chg        file
-read_file_dir 		./
+nbands            10
+nbands_sto        10
+nche_sto          120
+emax_sto          0
+emin_sto          0
+seed_sto          20000
+pseudo_dir        ../../PP_ORB
+pw_seed           1
+symmetry          1
+kpar              2
+bndpar            2
+out_chg           0
+init_chg          file
+read_file_dir     ./
 
 #Parameters (2.Iteration)
-ecutwfc			20
+ecutwfc           20
 
 
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #Parameters (4.Smearing)
-smearing_method		fd
-smearing_sigma			0.6
+smearing_method   fd
+smearing_sigma    0.6
 
 #Parameters (5.Mixing)
-mixing_type		broyden
-mixing_beta		0.4
-mixing_gg0      0.0
+mixing_type       broyden
+mixing_beta       0.4
+mixing_gg0        0.0
 
-cal_cond      1
-cond_fwhm   8
-cond_wcut        20
-cond_dw          0.02
-cond_dt          0.237464
-cond_dtbatch     1
-cond_nonlocal    0
-symmetry_prec 1e-5
+cal_cond          1
+cond_fwhm         8
+cond_wcut         20
+cond_dw           0.02
+cond_dt           0.237464
+cond_dtbatch      1
+cond_nonlocal     0
+symmetry_prec     1e-5

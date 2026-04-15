@@ -7,13 +7,15 @@
 These examples show how to output the H/S matrix.
 For the H/S matrix in K-space:
 	- set 'out_mat_hs' to '1'
-After finishing the job, the H (S) matrix file 'data-${index_K}-H' (data-${index_K}-S) 
-are outputed in OUT.${suffix}
+After finishing the job, the H (S) matrix files are outputed in OUT.${suffix}
+More information can be found here:
+https://abacus.deepmodeling.com/en/latest/advanced/elec_properties/hs_matrix.html#out-mat-hs
 
-While, for H/S matrix in real space:
+While, for printing H(R)/S(R) matrices in real space:
 	- set 'out_mat_hs2' to '1'
-After finishing the job, the H (S) matrix file 'data-HR-sparse_SPIN0.csr' ('data-SR-sparse_SPIN0.csr') 
-are outputed in OUT.${suffix}
+After finishing the job, the H (S) matrix files are outputed in OUT.${suffix}
+More information can be found here:
+https://abacus.deepmodeling.com/en/latest/advanced/elec_properties/hs_matrix.html#out-mat-hs2
 
 Besides, one can directly output the S matrix without SCF calculation by:
 	- set 'calculation' to 'get_s'

@@ -73,10 +73,10 @@ class Nose_Hoover : public MD_base
 
     int tdof;           ///< particle degree of freedom
     double t_target=0.0;///< target temperature
-    double* mass_eta;   ///< mass of thermostats coupled with particles
-    double* eta;        ///< position of thermostats coupled with particles
-    double* v_eta;      ///< velocity of thermostats coupled with particles
-    double* g_eta;      ///< acceleration of thermostats coupled with particles
+    double* mass_eta = nullptr;   ///< mass of thermostats coupled with particles
+    double* eta = nullptr;        ///< position of thermostats coupled with particles
+    double* v_eta = nullptr;      ///< velocity of thermostats coupled with particles
+    double* g_eta = nullptr;      ///< acceleration of thermostats coupled with particles
 
     int npt_flag;                ///< whether NPT ensemble
     double mass_omega[6];        ///< mass of lattice component
@@ -89,10 +89,10 @@ class Nose_Hoover : public MD_base
     double p_target[6];          ///< target stress components
     double p_hydro = 0.0;        ///< target hydrostatic target pressure
     double p_current[6] = {0.0}; ///< current stress after coupled
-    double* mass_peta;           ///< mass of thermostats coupled with barostat
-    double* peta;                ///< position of thermostats coupled with barostat
-    double* v_peta;              ///< velocity of thermostats coupled with barostat
-    double* g_peta;              ///< acceleration of thermostats coupled with barostat
+    double* mass_peta = nullptr;           ///< mass of thermostats coupled with barostat
+    double* peta = nullptr;                ///< position of thermostats coupled with barostat
+    double* v_peta = nullptr;              ///< velocity of thermostats coupled with barostat
+    double* g_peta = nullptr;              ///< acceleration of thermostats coupled with barostat
     double mtk_term=0;           ///< mtk correction
     double md_tfreq;             ///< Oscillation frequency, used to determine qmass of thermostats coupled with particles
     double md_pfirst;            ///< Initial pressure

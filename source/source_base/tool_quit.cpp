@@ -46,12 +46,9 @@ void QUIT(int ret)
 {
 
 #ifdef __NORMAL
-
 #else
-    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK);
-
+    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK, false);
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
-
     std::cout<<" See output information in : "<<PARAM.globalv.global_out_dir<<std::endl;
 #endif
 
@@ -65,7 +62,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 
 	#ifdef __MPI /* if it is MPI run, finalize first, then exit */
 	std::cout << "Detecting if MPI has been initialized..." << std::endl;
-	int is_initialized;
+	int is_initialized = 0;
     MPI_Initialized(&is_initialized);
 	if (is_initialized) {
 		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;

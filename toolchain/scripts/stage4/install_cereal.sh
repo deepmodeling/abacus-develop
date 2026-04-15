@@ -46,11 +46,11 @@ case "$with_cereal" in
         echo "==================== Installing CEREAL ===================="
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${cereal_ver}" =~ ^(master|main|develop)$ ]]; then
+        if [[ "${cereal_ver}" =~ ^[0-9a-f]{40}$ ]]; then
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
         else
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
@@ -72,10 +72,6 @@ case "$with_cereal" in
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d $dirname ] && rm -rf $dirname
             tar -xzf $filename
-            #unzip -q $filename
-            # apply patch files for libri installation in issue #6190, Kai Luo
-            # echo ${SCRIPT_DIR}
-            cd $dirname && pwd && patch -p1 < ${SCRIPT_DIR}/patches/6190.patch
             cd "${BUILDDIR}"
             # 
             mkdir -p "${pkg_install_dir}"
@@ -97,7 +93,7 @@ case "$with_cereal" in
             # cereal/cereal.hpp -> remove /cereal/cereal.hpp -> get include dir -> get parent dir
             cereal_include_dir="$(dirname "$(dirname "$cereal_header_path")")"
             pkg_install_dir="$(dirname "$cereal_include_dir")"
-            echo "Found cereal at: $pkg_install_dir"
+            echo "Found cereal at: ${pkg_install_dir}"
             CEREAL_CFLAGS="-I'${cereal_include_dir}'"
         else
             report_error "Cannot find cereal/cereal.hpp in system paths"
@@ -116,19 +112,13 @@ esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
     if [ "$with_cereal" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_cereal"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
-export CMAKE_PREFIX_PATH="${pkg_install_dir}/include":\${CMAKE_PREFIX_PATH}
-export CEREAL_ROOT="$pkg_install_dir"
-EOF
-    else
-        cat << EOF > "${BUILDDIR}/setup_cereal"
-export CEREAL_ROOT="$pkg_install_dir"
+prepend_path CPATH "${pkg_install_dir}/include"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     fi
     cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
     cat << EOF >> "${BUILDDIR}/setup_cereal"
+export CEREAL_ROOT="${pkg_install_dir}"
 export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
 export CP_DFLAGS="\${CP_DFLAGS} -D__CEREAL"
 export CP_CFLAGS="\${CP_CFLAGS} ${CEREAL_CFLAGS}"

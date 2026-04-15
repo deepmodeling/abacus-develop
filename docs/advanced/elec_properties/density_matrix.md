@@ -38,3 +38,15 @@ The following line is dimension of the density matrix, and the rest lines are th
 The examples can be found in [examples/density_matrix](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/density_matrix)
 
 - Note: now this function is valid only for LCAO gamma only calcualtion.
+
+## Real-space Density Matrix (CSR format)
+
+ABACUS can also output the real-space density matrix DM(R) in CSR (Compressed Sparse Row) format by setting:
+```
+out_dmr    1
+```
+After the calculation, the density matrix files are written to `OUT.${suffix}/`:
+- `nspin=1`: `dmrs1_nao.csr`
+- `nspin=2` (spin-polarized): `dmrs1_nao.csr` (spin-up) and `dmrs2_nao.csr` (spin-down)
+
+These files can be used to restart calculations by setting `init_chg dm` in the INPUT file together with `read_file_dir` pointing to the directory containing the CSR files. This is supported for both `nspin=1` and `nspin=2`.

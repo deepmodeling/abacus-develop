@@ -14,14 +14,16 @@ if(ENABLE_LCAO)
         module_operator_lcao/op_dftu_lcao.cpp
         module_operator_lcao/deepks_lcao.cpp
         module_operator_lcao/op_exx_lcao.cpp
-        module_operator_lcao/overlap_new.cpp
-        module_operator_lcao/ekinetic_new.cpp
-        module_operator_lcao/nonlocal_new.cpp
+        module_operator_lcao/overlap.cpp
+        module_operator_lcao/ekinetic.cpp
+        module_operator_lcao/nonlocal.cpp
         module_operator_lcao/td_ekinetic_lcao.cpp
         module_operator_lcao/td_nonlocal_lcao.cpp
         module_operator_lcao/td_pot_hybrid.cpp
         module_operator_lcao/dspin_lcao.cpp
         module_operator_lcao/dftu_lcao.cpp
+        module_operator_lcao/operator_force_stress_utils.cpp
+        dftu_lcao.cpp
         pulay_fs_center2.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
@@ -61,6 +63,10 @@ if(ENABLE_LCAO)
 
     if(ENABLE_COVERAGE)
     add_coverage(hamilt_lcao)
+    endif()
+
+    IF (BUILD_TESTING)
+        add_subdirectory(test)
     endif()
 
 endif()

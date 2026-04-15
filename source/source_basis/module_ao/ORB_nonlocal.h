@@ -42,7 +42,7 @@ public:
 			const int& nproj_in,
 			const Numerical_Nonlocal_Lm* ps_orbital_in);
 
-	Numerical_Nonlocal_Lm* Proj; ///< length: nproj(only store radial function )
+	Numerical_Nonlocal_Lm* Proj = nullptr; ///< length: nproj(only store radial function )
 
 	const double& get_rcut_max() const { return rcut_max; }
     const int& get_nproj() const { return nproj; }

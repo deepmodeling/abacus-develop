@@ -20,7 +20,7 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const diag_comm_info& diag_comm_in)
     : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
     this->one = &one_;
@@ -129,7 +129,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     {
         ModuleBase::TITLE("DiagoDavid", "diag_once");
     }
-    ModuleBase::timer::tick("DiagoDavid", "diag_once");
+    ModuleBase::timer::start("DiagoDavid", "diag_once");
 
     // convflag[m] = true if the m th band is converged
     std::vector<bool> convflag(nband, false);
@@ -144,7 +144,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         unconv[m] = m;
     }
 
-    ModuleBase::timer::tick("DiagoDavid", "first");
+    ModuleBase::timer::start("DiagoDavid", "first");
 
     // orthogonalise the initial trial psi(0~nband-1)
 
@@ -194,7 +194,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         eigenvalue_in[m] = this->eigenvalue[m];
     }
 
-    ModuleBase::timer::tick("DiagoDavid", "first");
+    ModuleBase::timer::end("DiagoDavid", "first");
 
     int dav_iter = 0;
     do
@@ -218,7 +218,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
 
         // check convergence and update eigenvalues
-        ModuleBase::timer::tick("DiagoDavid", "check_update");
+        ModuleBase::timer::start("DiagoDavid", "check_update");
 
         this->notconv = 0;
         for (int m = 0; m < nband; m++)
@@ -232,11 +232,11 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             eigenvalue_in[m] = this->eigenvalue[m];
         }
 
-        ModuleBase::timer::tick("DiagoDavid", "check_update");
+        ModuleBase::timer::end("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > nbase_x)
             || (dav_iter == david_maxiter))
         {
-            ModuleBase::timer::tick("DiagoDavid", "last");
+            ModuleBase::timer::start("DiagoDavid", "last");
 
             // update eigenvectors of Hamiltonian
 
@@ -259,7 +259,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             if (!this->notconv || (dav_iter == david_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
-                ModuleBase::timer::tick("DiagoDavid", "last");
+                ModuleBase::timer::end("DiagoDavid", "last");
                 break;
             }
             else
@@ -278,14 +278,14 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               this->spsi,
                               this->hcc,
                               this->vcc);
-                ModuleBase::timer::tick("DiagoDavid", "last");
+                ModuleBase::timer::end("DiagoDavid", "last");
             }
 
         } // end of if
 
     } while (true);
 
-    ModuleBase::timer::tick("DiagoDavid", "diag_once");
+    ModuleBase::timer::end("DiagoDavid", "diag_once");
 
     return dav_iter;
 }
@@ -311,7 +311,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     if (notconv == 0) {
         return;
     }
-    ModuleBase::timer::tick("DiagoDavid", "cal_grad");
+    ModuleBase::timer::start("DiagoDavid", "cal_grad");
 
     // use template pointer for accelerate
     // std::complex<double>* spsi;
@@ -351,7 +351,24 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = hpsi * vc_ev_vector = hpsi*vcc
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
-    ModuleBase::gemm_op<T, Device>()('N',
+    if (notconv == 1){
+        //Reuse gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('N',
+                                     dim,                 // m: row of A
+                                     nbase,               // n: col of A
+                                     this->one,           // alpha
+                                     hpsi,                // A dim * nbase
+                                     dim,                 // LDA: if(N) max(1,m)
+                                     vc_ev_vector,        // X nbase
+                                     1,                   // incx
+                                     this->zero,          // beta
+                                     basis + dim * nbase, // Y dim
+                                     1                    // incy
+        );
+
+    }else
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -364,7 +381,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                      this->zero,          // belta
                                      basis + dim * nbase, // C dim * notconv
                                      dim                  // LDC: if(N) max(1, m)
-    );
+        );
+    }
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // for (int m = 0; m < notconv; m++)
@@ -411,20 +429,37 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //              = (H - lambda * S) * psi * vcc
     //              = (H - lambda * S) * psi_new
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     dim,                 // m: row of A,C
-                                     notconv,             // n: col of B,C
-                                     nbase,               // k: col of A, row of B
-                                     this->one,           // alpha
-                                     spsi,                // A
-                                     dim,                 // LDA: if(N) max(1,m) if(T) max(1,k)
-                                     vc_ev_vector,        // B
-                                     nbase,               // LDB: if(N) max(1,k) if(T) max(1,n)
-                                     this->one,           // belta
-                                     basis + dim * nbase, // C dim * notconv
-                                     dim                  // LDC: if(N) max(1, m)
-    );
+    if (notconv == 1){
+        //Use gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('N',
+                                        dim,                  // m: row of A
+                                        nbase,                // n: col of A
+                                        this->one,            // alpha
+                                        spsi,                 // A dim * nbase
+                                        dim,                  // LDA: if(N) max(1,m)
+                                        vc_ev_vector,         // X nbase
+                                        1,                    // incx
+                                        this->one,            // beta
+                                        basis + dim * nbase,  // Y dim
+                                        1                     //incy
+        );
+    } else 
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
+                                        'N',
+                                        dim,                 // m: row of A,C
+                                        notconv,             // n: col of B,C
+                                        nbase,               // k: col of A, row of B
+                                        this->one,           // alpha
+                                        spsi,                // A
+                                        dim,                 // LDA: if(N) max(1,m) if(T) max(1,k)
+                                        vc_ev_vector,        // B
+                                        nbase,               // LDB: if(N) max(1,k) if(T) max(1,n)
+                                        this->one,           // beta
+                                        basis + dim * nbase, // C dim * notconv
+                                        dim                  // LDC: if(N) max(1, m)
+        );
+    }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // Preconditioning
@@ -478,20 +513,37 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
     // calculate the square matrix for future lagranges
-    ModuleBase::gemm_op<T, Device>()('C',
-                                     'N',
-                                     nbase,              // m: row of A,C
-                                     notconv,            // n: col of B,C
-                                     dim,                // k: col of A, row of B
-                                     this->one,          // alpha
-                                     basis,              // A
-                                     dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
-                                     &spsi[nbase * dim], // B
-                                     dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
-                                     this->zero,         // belta
-                                     lagrange,           // C
-                                     nbase + notconv     // LDC: if(N) max(1, m)
-    );
+    if (notconv == 1){
+        //Use gemv for vector case to avoid potential bug using gemm call with n=1
+        ModuleBase::gemv_op<T, Device>()('C',
+                                     dim,                 // m: row of A
+                                     nbase,               // n: col of A
+                                     this->one,           // alpha
+                                     basis,               // A dim * nbase
+                                     dim,                 // LDA: if(N) max(1,m)
+                                     &spsi[nbase * dim], // X dim
+                                     1,           // incx
+                                     this->zero,          // beta
+                                     lagrange,           // Y nbase
+                                     1
+        );
+    } else
+    {
+        ModuleBase::gemm_op<T, Device>()('C',
+                                        'N',
+                                        nbase,              // m: row of A,C
+                                        notconv,            // n: col of B,C
+                                        dim,                // k: col of A, row of B
+                                        this->one,          // alpha
+                                        basis,              // A
+                                        dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
+                                        &spsi[nbase * dim], // B
+                                        dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
+                                        this->zero,         // belta
+                                        lagrange,           // C
+                                        nbase + notconv     // LDC: if(N) max(1, m)
+        );
+    }
 
     for (int m = 0; m < notconv; m++)
     {
@@ -518,7 +570,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     delmem_complex_op()(lagrange);
     delmem_complex_op()(vc_ev_vector);
 
-    ModuleBase::timer::tick("DiagoDavid", "cal_grad");
+    ModuleBase::timer::end("DiagoDavid", "cal_grad");
     return;
 }
 
@@ -539,7 +591,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     if (notconv == 0) {
         return;
     }
-    ModuleBase::timer::tick("DiagoDavid", "cal_elem");
+    ModuleBase::timer::start("DiagoDavid", "cal_elem");
 
     // hcc[nbase](notconv, nbase + notconv)= basis[nbase]' * hpsi
     ModuleBase::gemm_op<T, Device>()('C',
@@ -587,7 +639,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #endif
 
     nbase += notconv;
-    ModuleBase::timer::tick("DiagoDavid", "cal_elem");
+    ModuleBase::timer::end("DiagoDavid", "cal_elem");
     return;
 }
 
@@ -610,7 +662,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
                                              Real* eigenvalue, // in CPU
                                              T* vcc)
 {
-    ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
+    ModuleBase::timer::start("DiagoDavid", "diag_zhegvx");
     if (diag_comm.rank == 0)
     {
         assert(nbase_x >= std::max(1, nbase));
@@ -648,7 +700,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
     }
 #endif
 
-    ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
+    ModuleBase::timer::end("DiagoDavid", "diag_zhegvx");
     return;
 }
 
@@ -669,7 +721,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "refresh");
     }
-    ModuleBase::timer::tick("DiagoDavid", "refresh");
+    ModuleBase::timer::start("DiagoDavid", "refresh");
 
     // update hp,sp
     setmem_complex_op()(basis , 0, nbase_x * dim);
@@ -770,7 +822,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
             vcc[i * nbase_x + i] = this->one[0];
         }
     }
-    ModuleBase::timer::tick("DiagoDavid", "refresh");
+    ModuleBase::timer::end("DiagoDavid", "refresh");
     return;
 }
 
@@ -785,7 +837,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                             const int mv_size)
 {
     //	if(test_david == 1) ModuleBase::TITLE("DiagoDavid","SchmidtOrth");
-    ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
+    ModuleBase::timer::start("DiagoDavid", "SchmidtOrth");
 
     // orthogonalize starting eigenfunction to those already calculated
     // psi_m orthogonalize to psi(0) ~ psi(m-1)
@@ -896,7 +948,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     }
 
     // delete[] lagrange;
-    ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
+    ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
     return;
 }
 

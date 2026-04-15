@@ -4,7 +4,6 @@
 
 #include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
-#include "../../source_pw/module_pwdft/global.h"
 #include "../../source_basis/module_ao/ORB_read.h"
 #include "../../source_base/global_function.h"
 #include "../../source_base/math_integral.h" // mohan add 2021-04-03
@@ -15,6 +14,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::constr
 	const std::vector<std::string> &files_abfs,
 	const double kmesh_times )
 {
+	ModuleBase::TITLE("Exx_Abfs::IO::construct_abfs");
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs( files_abfs.size() );
 	for( size_t T=0; T!=files_abfs.size(); ++T )
 		abfs[T] = construct_abfs_T( 
@@ -62,7 +62,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	size_t L_size;
 	std::map<size_t,size_t> N_size;
 	size_t meshr;
-	double dr;
+	double dr = 0.0;
 	std::map<size_t,std::map<size_t,std::vector<double>>> psis;
 	
 	/*----------------------

@@ -3,10 +3,9 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_io/input_conv.h"
+#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/evolve_elec.h"
-#include "source_pw/module_pwdft/global.h"
 
 namespace elecstate
 {
@@ -117,7 +116,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         return;
     }
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
+    ModuleBase::timer::start("H_TDDFT_pw", "cal_fixed_v");
 
     int count = 0;
     gauss_count = 0;
@@ -152,14 +151,14 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         count++;
     }
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
+    ModuleBase::timer::end("H_TDDFT_pw", "cal_fixed_v");
     return;
 }
 
 void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space");
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
+    ModuleBase::timer::start("H_TDDFT_pw", "cal_v_space");
 
     switch (stype)
     {
@@ -171,14 +170,14 @@ void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
         break;
     }
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
+    ModuleBase::timer::end("H_TDDFT_pw", "cal_v_space");
     return;
 }
 
 void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
+    ModuleBase::timer::start("H_TDDFT_pw", "cal_v_space_length");
 
     for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
     {
@@ -215,7 +214,7 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
         }
     }
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
+    ModuleBase::timer::end("H_TDDFT_pw", "cal_v_space_length");
     return;
 }
 
@@ -280,7 +279,7 @@ void H_TDDFT_pw::update_At()
         return;
     }
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
+    ModuleBase::timer::start("H_TDDFT_pw", "update_At");
 
     int count = 0;
     gauss_count = 0;
@@ -345,7 +344,7 @@ void H_TDDFT_pw::update_At()
     }
     At = At + At_laststep / 2.0;
 
-    ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
+    ModuleBase::timer::end("H_TDDFT_pw", "update_At");
     return;
 }
 

@@ -55,7 +55,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
                                    MPI_Comm& comm)
 {
 
-    ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpaNative", "elpa_solve");
 
     int nev = PARAM.inp.nbands;
     int narows = h_mat.row;
@@ -77,7 +77,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     }
 
     // elpa_init(20210430);
-    int success;
+    int success = 0;
     elpa_t handle = elpa_allocate(&success);
 #ifdef _OPENMP
     int num_threads = omp_get_max_threads();
@@ -123,7 +123,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     elpa_deallocate(handle, &success);
     elpa_uninit(&success);
 
-    ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpaNative", "elpa_solve");
     if (std::is_same<T, double>::value)
     {
         // for gamma only, the decomposed s_mat will be reused

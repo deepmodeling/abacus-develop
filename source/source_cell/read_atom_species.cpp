@@ -3,9 +3,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
 #ifdef __EXX
-#include "source_pw/module_pwdft/global.h"
 #include "source_lcao/module_ri/serialization_cereal.h"
 #endif
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
 namespace unitcell
 {
 bool read_atom_species(std::ifstream& ifa,
@@ -161,7 +162,7 @@ bool read_lattice_constant(std::ifstream& ifa,
     // Read in latticies vector
     //===========================
 
-    if(latName=="none")
+    if(latName=="user_defined_lattice")
     {
         // check the existence of keyword "LATTICE_PARAMETERS"
         if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,

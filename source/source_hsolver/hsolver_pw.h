@@ -71,7 +71,7 @@ class HSolverPW
 
     void output_iterInfo();
 
-    ModulePW::PW_Basis_K* wfc_basis;
+    ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;
     const std::string basis_type;

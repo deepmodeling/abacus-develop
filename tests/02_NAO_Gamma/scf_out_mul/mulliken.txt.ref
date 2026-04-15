@@ -1,0 +1,41 @@
+ --- Ionic Step 1 ---
+ Total charge 2
+ Decomposed Mulliken population analysis for each atom
+ l and m from Ylm, z stands for zeta orbital
+
+ ------------------
+ Atom 1 is H
+ ------------------
+          zeta     spin1
+           s 1    0.9980
+           s 2   -0.0052
+        sum mz    0.9928
+
+          pz 1    0.0072
+          px 1    0.0000
+          py 1    0.0000
+         sum m    0.0072
+        sum mz    0.0072
+
+       sum lmz    1.0000
+
+ total charge    on atom 1     1.0000
+
+ ------------------
+ Atom 2 is H
+ ------------------
+          zeta     spin1
+           s 1    0.9980
+           s 2   -0.0052
+        sum mz    0.9928
+
+          pz 1    0.0072
+          px 1    0.0000
+          py 1    0.0000
+         sum m    0.0072
+        sum mz    0.0072
+
+       sum lmz    1.0000
+
+ total charge    on atom 2     1.0000
+

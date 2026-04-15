@@ -8,7 +8,6 @@
 
 #include "Matrix_Orbs22.h"
 #include "RI_Util.h"
-#include "source_pw/module_pwdft/global.h"
 
 template<typename Tdata>
 RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(

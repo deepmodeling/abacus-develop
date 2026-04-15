@@ -3,6 +3,7 @@
 #include "gint_helper.h"
 #include "batch_biggrid.h"
 #include "kernel/phi_operator_gpu.h"
+#include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
 {
@@ -10,11 +11,11 @@ namespace ModuleGint
 void Gint_tau_gpu::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_tau");
-    ModuleBase::timer::tick("Gint", "cal_gint_tau");
+    ModuleBase::timer::start("Gint", "cal_gint_tau");
     init_dm_gint_();
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_tau_();
-    ModuleBase::timer::tick("Gint", "cal_gint_tau");
+    ModuleBase::timer::end("Gint", "cal_gint_tau");
 }
 
 void Gint_tau_gpu::init_dm_gint_()
@@ -34,7 +35,7 @@ void Gint_tau_gpu::transfer_cpu_to_gpu_()
     {
         dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is].get_nnr(), 0, false);
         kin_d_vec_[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
-        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
+        CHECK_CUDA(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
             dm_gint_vec_[is].get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
     }
 }
@@ -43,7 +44,7 @@ void Gint_tau_gpu::transfer_gpu_to_cpu_()
 {
     for (int is = 0; is < nspin_; is++)
     {
-        checkCuda(cudaMemcpy(kin_[is], kin_d_vec_[is].get_device_ptr(), 
+        CHECK_CUDA(cudaMemcpy(kin_[is], kin_d_vec_[is].get_device_ptr(), 
             gint_info_->get_local_mgrid_num() * sizeof(double), cudaMemcpyDeviceToHost));
     }
 }
@@ -55,10 +56,10 @@ void Gint_tau_gpu::cal_tau_()
     {
         // 20240620 Note that it must be set again here because 
         // cuda's device is not safe in a multi-threaded environment.
-        checkCuda(cudaSetDevice(gint_info_->get_dev_id()));
+        CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
-        checkCuda(cudaStreamCreate(&stream));
-        PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
+        CHECK_CUDA(cudaStreamCreate(&stream));
+        PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> dphi_x(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_y(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_z(BatchBigGrid::get_max_phi_len(), stream, false);
@@ -66,8 +67,9 @@ void Gint_tau_gpu::cal_tau_()
         CudaMemWrapper<double> dphi_y_dm(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_z_dm(BatchBigGrid::get_max_phi_len(), stream, false);
         #pragma omp for schedule(dynamic)
-        for(const auto& bgrid_batch: gint_info_->get_bgrid_batches())
+        for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
+            const auto& bgrid_batch = gint_info_->get_bgrid_batches()[i];
             if(bgrid_batch->empty())
             {
                 continue;
@@ -89,8 +91,8 @@ void Gint_tau_gpu::cal_tau_()
                 phi_op.phi_dot_phi(dphi_z.get_device_ptr(), dphi_z_dm.get_device_ptr(), kin_d_vec_[is].get_device_ptr());
             }
        }
-       checkCuda(cudaStreamSynchronize(stream));
-       checkCuda(cudaStreamDestroy(stream));
+       CHECK_CUDA(cudaStreamSynchronize(stream));
+       CHECK_CUDA(cudaStreamDestroy(stream));
     }
     transfer_gpu_to_cpu_();
 }

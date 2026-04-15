@@ -10,6 +10,8 @@
 #include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 namespace module_rt
 {
@@ -39,7 +41,8 @@ void evolve_psi_tensor(const int nband,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
-                       const bool use_lapack);
+                       const bool use_lapack,
+                       CublasMpResources& cublas_res);
 } // namespace module_rt
 
 #endif

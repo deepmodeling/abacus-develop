@@ -3,9 +3,9 @@
 #ifdef __MPI
 #include "diago_scalapack.h"
 #include "source_base/module_external/scalapack_connector.h"
-#else
-#include "diago_lapack.h"
 #endif
+
+#include "diago_lapack.h"
 
 #ifdef __CUSOLVERMP
 #include "diago_cusolvermp.h"
@@ -25,6 +25,7 @@
 #endif
 
 #include "source_base/global_variable.h"
+#include "source_base/module_device/device.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
@@ -49,7 +50,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
                                    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
-    ModuleBase::timer::tick("HSolverLCAO", "solve");
+    ModuleBase::timer::start("HSolverLCAO", "solve");
 
     if (this->method != "pexsi")
     {
@@ -61,7 +62,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
         }else 
     #endif
         if (PARAM.globalv.kpar_lcao > 1
-            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
+            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
         {
             this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
         } else
@@ -128,7 +129,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
 #endif
     }
 
-    ModuleBase::timer::tick("HSolverLCAO", "solve");
+    ModuleBase::timer::end("HSolverLCAO", "solve");
     return;
 }
 
@@ -136,7 +137,7 @@ template <typename T, typename Device>
 void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
 
     if (this->method == "scalapack_gvx")
     {
@@ -174,19 +175,17 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     }
 #endif
 #endif
-#ifndef __MPI
     else if (this->method == "lapack") // only for single core
     {
         DiagoLapack<T> la;
         la.diag(hm, psi, eigenvalue);
     }
-#endif
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");
     }
 
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
+    ModuleBase::timer::end("HSolverLCAO", "hamiltSolvePsiK");
 }
 
 template <typename T, typename Device>
@@ -196,7 +195,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                         int kpar)
 {
 #ifdef __MPI
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::start("HSolverLCAO", "parakSolve");
     auto k2d = Parallel_K2D<T>();
     k2d.set_kpar(kpar);
     int nbands = this->ParaV->get_nbands();
@@ -256,6 +255,11 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                 DiagoScalapack<T> sa;
                 sa.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
+            else if (this->method == "lapack")
+            {
+                DiagoLapack<T> la;
+                la.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            }
 #ifdef __ELPA
             else if (this->method == "genelpa")
             {
@@ -275,7 +279,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);
-        ModuleBase::timer::tick("HSolverLCAO", "collect_psi");
+        ModuleBase::timer::start("HSolverLCAO", "collect_psi");
         for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
         {
             int source = k2d.get_pKpoints()->get_startpro_pool(ipool);
@@ -300,10 +304,10 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                       k2d.get_p2D_global()->blacs_ctxt);
         }
         MPI_Barrier(MPI_COMM_WORLD);
-        ModuleBase::timer::tick("HSolverLCAO", "collect_psi");
+        ModuleBase::timer::end("HSolverLCAO", "collect_psi");
     }
     k2d.unset_para_env();
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::end("HSolverLCAO", "parakSolve");
 #endif
 }
 
@@ -313,58 +317,35 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
                                             elecstate::ElecState* pes)
 {
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
-    const int dev_id = base_device::information::set_device_by_rank();
+    ModuleBase::timer::start("HSolverLCAO", "parakSolve");
+    // GPU device is already bound by DeviceContext::init() in read_input.cpp
+    auto& dev_ctx = base_device::DeviceContext::instance();
+    const int local_rank = dev_ctx.get_local_rank();
+    const int device_count = dev_ctx.get_device_count();
 
     int world_rank, world_size;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // Split communicator by shared memory node
-    MPI_Comm nodeComm;
-    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &nodeComm);
+    // Determine if this process is active (assigned a dedicated GPU)
+    // We enforce 1 process per GPU by checking local_rank < device_count.
+    bool is_active = (local_rank < device_count);
+    int is_active_int = is_active ? 1 : 0;
 
-    int local_rank, local_size;
-    MPI_Comm_rank(nodeComm, &local_rank);
-    MPI_Comm_size(nodeComm, &local_size);
-
-    // Get number of CUDA devices on this node
-    int device_count = 0;
-    cudaError_t cuda_err = cudaGetDeviceCount(&device_count);
-    if (cuda_err != cudaSuccess) {
-        device_count = 0; // Treat as no GPU available
-    }
-
-    if(local_rank >= device_count) {
-        local_rank = -1; // Mark as inactive for GPU work
-    }
-
-    // Determine the number of MPI processes on this node that can actively use a GPU.
-    // This is the minimum of:
-    //   - The number of available MPI processes on the node (local_size)
-    //   - The number of available CUDA-capable GPUs on the node (device_count)
-    // Each GPU is assumed to be used by one dedicated MPI process.
-    // Thus, only the first 'min(local_size, device_count)' ranks on this node
-    // will be assigned GPU work; the rest will be inactive or used for communication-only roles.
-    int active_procs_per_node = std::min(local_size, device_count);
-
-    std::vector<int> all_active_procs(world_size);
     std::vector<int> all_local_ranks(world_size);
+    std::vector<int> all_is_active(world_size);
 
-    MPI_Allgather(&active_procs_per_node, 1, MPI_INT, 
-                  all_active_procs.data(), 1, MPI_INT, MPI_COMM_WORLD);
     MPI_Allgather(&local_rank, 1, MPI_INT, 
                   all_local_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    
-    int total_active_ranks = 0;
-    int total_nodes = 0;
-    int highest_active_rank = 0;
+    MPI_Allgather(&is_active_int, 1, MPI_INT, 
+                  all_is_active.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
+    int total_active_ranks = 0;
+    int max_local_rank = 0;
     for (int i = 0; i < world_size; ++i) {
-        if (all_local_ranks[i] == 0) {  // new node
-            total_nodes++;
-            total_active_ranks += all_active_procs[i];
-            highest_active_rank = std::max(highest_active_rank, all_active_procs[i] - 1);
+        if (all_is_active[i]) {
+            total_active_ranks++;
+            if(all_local_ranks[i] > max_local_rank) max_local_rank = all_local_ranks[i];
         }
     }
 
@@ -373,11 +354,11 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     // The k-points will be distributed among these ranks in a round-robin fashion.
     // The purpose of setting the order is to ensure load balancing among nodes as much as possible
     std::vector<int> active_ranks;
-    for(int i = 0; i <= highest_active_rank; i++)
+    for(int r = 0; r <= max_local_rank; r++)
     {
         for(int j = 0; j < world_size; j++)
         {
-            if(all_local_ranks[j] == i)
+            if(all_is_active[j] && all_local_ranks[j] == r)
             {
                 active_ranks.push_back(j);
             }
@@ -486,8 +467,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     }
 
     MPI_Comm_free(&self_comm);
-    MPI_Comm_free(&nodeComm);
-    ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+    ModuleBase::timer::end("HSolverLCAO", "parakSolve");
 }
 #endif
 

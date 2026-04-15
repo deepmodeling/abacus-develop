@@ -1,7 +1,7 @@
 #ifndef ATOM_H
 #define ATOM_H
 
-#include "../source_io/output.h"
+#include "../source_io/module_output/output.h"
 #include "atom_pseudo.h"
 class Atom
 {

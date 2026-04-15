@@ -85,13 +85,13 @@ void DiagoElpa<std::complex<double>>::diag(
                    (const int*)h_mat.desc);
     this->DecomposedState
         = 0; // for k pointer, the decomposed s_mat can not be reused
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
                                this->DecomposedState,
                                eigen.data(),
                                psi.get_pointer());
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
@@ -123,13 +123,13 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
                                this->DecomposedState,
                                eigen.data(),
                                psi.get_pointer());
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
@@ -159,13 +159,13 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
                    (const int*)h_mat.desc);
     this->DecomposedState
         = 0; // for k pointer, the decomposed s_mat can not be reused
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
                                this->DecomposedState,
                                eigen.data(),
                                psi.get_pointer());
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
@@ -189,13 +189,13 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::start("DiagoElpa", "elpa_solve");
     es.generalized_eigenvector(h_mat.p,
                                s_mat.p,
                                this->DecomposedState,
                                eigen.data(),
                                psi.get_pointer());
-    ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
+    ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
@@ -211,7 +211,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
 
 #ifdef __MPI
 template <typename T>
-bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF) {
+bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const {
     int doHandle = false;
     if (newIteration) {
         doHandle = true;

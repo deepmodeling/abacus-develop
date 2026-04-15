@@ -7,6 +7,7 @@ add_executable(
     ../../../source_cell/atom_spec.cpp
     ../../../source_cell/atom_pseudo.cpp
     ../../../source_cell/read_atoms.cpp
+    ../../../source_cell/read_atoms_helper.cpp
     ../../../source_cell/read_stru.cpp
     ../../../source_cell/print_cell.cpp
     ../../../source_cell/read_atom_species.cpp
@@ -21,8 +22,8 @@ add_executable(
     ../../../source_cell/sep.cpp
     ../../../source_cell/sep_cell.cpp
     ../../../source_pw/module_pwdft/soc.cpp
-    ../../../source_io/output.cpp
-    ../../../source_io/sparse_matrix.cpp
+    ../../../source_io/module_output/output.cpp
+    ../../../source_io/module_output/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
     ../../../source_estate/cal_wfc.cpp
     ../../../source_estate/read_orb.cpp
@@ -39,9 +40,8 @@ add_executable(
     ../../module_operator_lcao/deepks_lcao.cpp
     ../../module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
-    ../../module_rt/td_info.cpp
     ../../module_rt/td_folding.cpp
-    ../../../source_estate/module_pot/H_TDDFT_pw.cpp
+    mock_tdinfo.cpp
 )
 
 target_link_libraries(

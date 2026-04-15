@@ -85,10 +85,10 @@ std::vector<double> Vdwd3::atom_kind()
 void Vdwd3::cal_energy()
 {
     ModuleBase::TITLE("Vdwd3", "cal_energy");
-    ModuleBase::timer::tick("Vdwd3", "cal_energy");
+    ModuleBase::timer::start("Vdwd3", "cal_energy");
     init();
 
-    int ij;
+    int ij = 0;
     double c6 = 0.0, c8 = 0.0, r2 = 0.0, r6 = 0.0, r8 = 0.0, rr = 0.0, damp6 = 0.0, damp8 = 0.0;
     double e6 = 0.0, e8 = 0.0, eabc = 0.0;
     std::vector<double> cc6ab(ucell_.nat * ucell_.nat), cn(ucell_.nat);
@@ -96,7 +96,7 @@ void Vdwd3::cal_energy()
     ModuleBase::Vector3<double> tau;
     if (para_.version() == "d3_0") // DFT-D3(zero-damping)
     {
-        double tmp;
+        double tmp = 0.0;
         for (int iat = 0; iat != ucell_.nat - 1; iat++) {
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
             {
@@ -178,7 +178,7 @@ void Vdwd3::cal_energy()
     } // end d3_0
     else if (para_.version() == "d3_bj") // DFT-D3(BJ-damping)
     {
-        double r42;
+        double r42 = 0.0;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
@@ -258,13 +258,13 @@ void Vdwd3::cal_energy()
         pbc_three_body(iz_, lat_, xyz_, rep_cn_, cc6ab, eabc);
     }
     energy_ = (-para_.s6() * e6 - para_.s18() * e8 - eabc) * 2;
-    ModuleBase::timer::tick("Vdwd3", "cal_energy");
+    ModuleBase::timer::end("Vdwd3", "cal_energy");
 }
 
 void Vdwd3::cal_force()
 {
     ModuleBase::TITLE("Vdwd3", "cal_force");
-    ModuleBase::timer::tick("Vdwd3", "cal_force");
+    ModuleBase::timer::start("Vdwd3", "cal_force");
     init();
 
     force_.clear();
@@ -281,13 +281,13 @@ void Vdwd3::cal_force()
         force_[iat] = -2.0 * g[iat];
 }
 
-    ModuleBase::timer::tick("Vdwd3", "cal_force");
+    ModuleBase::timer::end("Vdwd3", "cal_force");
 }
 
 void Vdwd3::cal_stress()
 {
     ModuleBase::TITLE("Vdwd3", "cal_stress");
-    ModuleBase::timer::tick("Vdwd3", "cal_stress");
+    ModuleBase::timer::start("Vdwd3", "cal_stress");
     init();
 
     std::vector<ModuleBase::Vector3<double>> g;
@@ -301,7 +301,7 @@ void Vdwd3::cal_stress()
                                   2.0 * smearing_sigma(1, 0), 2.0 * smearing_sigma(1, 1), 2.0 * smearing_sigma(1, 2),
                                   2.0 * smearing_sigma(2, 0), 2.0 * smearing_sigma(2, 1), 2.0 * smearing_sigma(2, 2))
               / ucell_.omega;
-    ModuleBase::timer::tick("Vdwd3", "cal_stress");
+    ModuleBase::timer::end("Vdwd3", "cal_stress");
 }
 
 void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)
@@ -860,7 +860,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
     } // end d3_0
     else if (para_.version() == "d3_bj")
     {
-        double r4;
+        double r4 = 0.0;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
             get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],

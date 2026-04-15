@@ -8,7 +8,6 @@
 #include "source_base/timer.h"
 #include "source_estate/magnetism.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/module_pwdft/global.h"
 
 #include <cmath>
 #include <complex>
@@ -240,10 +239,10 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                  const int istep)
 {
     ModuleBase::TITLE("Plus_U", "cal_energy_correction");
-    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+    ModuleBase::timer::start("Plus_U", "cal_energy_correction");
     if (!initialed_locale)
     {
-        ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+        ModuleBase::timer::end("Plus_U", "cal_energy_correction");
         return;
     }
 
@@ -386,7 +385,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
     // substract the double counting energy_dc included in band energy eband
     Plus_U::energy_u -= energy_dc;
 
-    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+    ModuleBase::timer::end("Plus_U", "cal_energy_correction");
     return;
 }
 

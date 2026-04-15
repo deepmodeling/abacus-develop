@@ -12,8 +12,8 @@
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
-#include "source_lcao/module_operator_lcao/ekinetic_new.h"
-#include "source_lcao/module_operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/ekinetic.h"
+#include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 
 namespace rdmft
@@ -51,7 +51,7 @@ void RDMFT<TK, TR>::cal_V_TV()
 {
     HR_TV->set_zero();
 
-    V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
+    V_ekinetic_potential = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                                  kv->kvec_d,
                                                                                  HR_TV,
                                                                                  this->ucell,
@@ -59,7 +59,7 @@ void RDMFT<TK, TR>::cal_V_TV()
                                                                                  this->gd,
                                                                                  two_center_bundle->kinetic_orb.get());
 
-    V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
+    V_nonlocal = new hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                        kv->kvec_d,
                                                                        HR_TV,
                                                                        this->ucell,

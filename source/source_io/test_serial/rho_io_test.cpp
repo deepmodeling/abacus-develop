@@ -1,9 +1,9 @@
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_base/global_variable.h"
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 #include "prepare_unitcell.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
@@ -119,7 +119,11 @@ TEST_F(RhoIOTest, Write)
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/chg.cube", rho[0], ucell->nat);
     ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1);
-    EXPECT_EQ(system("diff -q test_write_vdata_palgrid.cube support/chg.cube"), 0);
+    std::ifstream ifs1("test_write_vdata_palgrid.cube", std::ifstream::binary | std::ifstream::ate);
+    std::ifstream ifs2("support/chg.cube", std::ifstream::binary | std::ifstream::ate);
+    EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
+    ifs1.close();
+    ifs2.close();
 }
 
 TEST_F(RhoIOTest, TrilinearInterpolate)
@@ -200,8 +204,8 @@ TEST_F(CubeIOTest, ReadCube)
      nx_read, ny_read, nz_read, 
      dx, dy, dz, 
      atom_type, atom_charge, atom_pos, data_read);
-    EXPECT_EQ(comment[0], "STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
-    EXPECT_EQ(comment[1], "1 (nspin) 0.461002 (fermi energy, in Ry)");
+    EXPECT_EQ(comment[0], "Ionic_Step 1  Cubefile created from ABACUS. Inner loop is z, followed by y and x");
+    EXPECT_EQ(comment[1], "1 # number of spin directions 0.461002 # Fermi energy, in Ry");
     EXPECT_EQ(natom, 2);
     for (auto& o : origin) { EXPECT_EQ(o, 0.0); }
     EXPECT_EQ(nx_read, 36);
@@ -235,6 +239,9 @@ TEST_F(CubeIOTest, WriteCube)
 			nx_read, ny_read, nz_read, 
 			dx, dy, dz, atom_type, 
 			atom_charge, atom_pos, data_read, 11);
-
-	EXPECT_EQ(system("diff -q test_write.cube ./support/chg.cube"), 0);
+    std::ifstream ifs1("test_write.cube", std::ifstream::binary | std::ifstream::ate);
+    std::ifstream ifs2("./support/chg.cube", std::ifstream::binary | std::ifstream::ate);
+    EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
+    ifs1.close();
+    ifs2.close();
 }

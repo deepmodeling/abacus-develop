@@ -23,13 +23,8 @@ class Gint_rho_gpu: public Gint
     void cal_gint();
 
     private:
-    void init_dm_gint_();
-
-    void cal_rho_();
-
-    void transfer_cpu_to_gpu_();
-
-    void transfer_gpu_to_cpu_();
+    template<typename Real>
+    void cal_gint_impl_();
 
     // input
     const std::vector<HContainer<double>*> dm_vec_;
@@ -40,13 +35,7 @@ class Gint_rho_gpu: public Gint
     const bool is_dm_symm_;
 
     // output
-    double **rho_;
-
-    // Intermediate variables
-    std::vector<HContainer<double>> dm_gint_vec_;
-
-    std::vector<CudaMemWrapper<double>> dm_gint_d_vec_;
-    std::vector<CudaMemWrapper<double>> rho_d_vec_;
+    double ** rho_ = nullptr;
 };
 
 }

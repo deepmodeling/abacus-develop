@@ -10,8 +10,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/pulay_fs.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/write_HS.h"
+#include "source_io/module_hs/write_HS.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <map>
@@ -36,7 +35,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Forces", "allocate");
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::start("Forces", "allocate");
 
     const int nnr = pv.nnr;
 
@@ -133,34 +132,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr); // delete lm.Hloc_fixedR
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-
-        ModuleBase::WARNING_QUIT("cal_syns", "This function has been broken and will be fixed later.");
-
-        LCAO_domain::build_ST_new(fsr,
-                                  'S',
-                                  cal_deri,
-                                  PARAM.inp.cal_stress,
-                                  ucell,
-                                  orb,
-                                  pv,
-                                  two_center_bundle,
-                                  &(gd),
-                                  nullptr, // delete lm.SlocR
-                                  PARAM.inp.cal_syns,
-                                  PARAM.inp.dmax);
-
-        for (int ik = 0; ik < nks; ik++)
-        {
-
-            bool bit = false; // LiuXh, 2017-03-21
-        }
-    }
-
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::end("Forces", "allocate");
     return;
 }
 
@@ -215,7 +187,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 		Record_adj* ra)
 {
     ModuleBase::TITLE("Forces", "ftable");
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::start("Forces", "ftable");
 
     this->allocate(ucell,
                    gd,
@@ -305,6 +277,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     }
 #endif
 
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::end("Forces", "ftable");
     return;
 }

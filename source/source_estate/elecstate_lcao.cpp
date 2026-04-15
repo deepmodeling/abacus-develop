@@ -4,7 +4,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_lcao/module_gint/gint_interface.h"
@@ -35,7 +34,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
 		std::vector<double*> pexsi_EDM,
 		DensityMatrix<double, double>* dm)
 {
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
+    ModuleBase::timer::start("ElecStateLCAO", "dm2rho");
 
     int nspin = PARAM.inp.nspin;
     if (PARAM.inp.nspin == 4)
@@ -72,7 +71,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
 
     this->charge->renormalize_rho();
 
-    ModuleBase::timer::tick("ElecStateLCAO", "dm2rho");
+    ModuleBase::timer::end("ElecStateLCAO", "dm2rho");
     return;
 }
 

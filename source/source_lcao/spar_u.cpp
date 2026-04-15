@@ -1,7 +1,6 @@
 #include "spar_u.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/timer.h"
 
 void sparse_format::cal_HR_dftu(
@@ -14,7 +13,7 @@ void sparse_format::cal_HR_dftu(
 		const double &sparse_thr)
 {
     ModuleBase::TITLE("sparse_format","cal_HR_dftu");
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu");
+    ModuleBase::timer::start("sparse_format","cal_HR_dftu");
 
     int total_R_num = all_R_coor.size();
     int *nonzero_num = new int[total_R_num]();
@@ -121,9 +120,7 @@ void sparse_format::cal_HR_dftu(
     HR_tmp = nullptr;
     SR_tmp = nullptr;
 
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu_sparse");
-
-    return;
+    ModuleBase::timer::end("sparse_format","cal_HR_dftu");
 }
 
 
@@ -137,7 +134,7 @@ void sparse_format::cal_HR_dftu_soc(
 		const double &sparse_thr)
 {
     ModuleBase::TITLE("sparse_format","cal_HR_dftu_soc");
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu_soc");
+    ModuleBase::timer::start("sparse_format","cal_HR_dftu_soc");
 
     int total_R_num = all_R_coor.size();
     int *nonzero_num = new int[total_R_num]();
@@ -242,7 +239,5 @@ void sparse_format::cal_HR_dftu_soc(
     HR_soc_tmp = nullptr;
     SR_soc_tmp = nullptr;
 
-    ModuleBase::timer::tick("sparse_format","calculat_HR_dftu_soc");
-
-    return;
+    ModuleBase::timer::end("sparse_format","cal_HR_dftu_soc");
 }

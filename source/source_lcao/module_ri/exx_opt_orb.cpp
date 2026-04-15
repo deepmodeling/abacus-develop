@@ -1,5 +1,4 @@
 #include "exx_opt_orb.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "exx_abfs.h"
 #include "exx_abfs-construct_orbs.h"
@@ -66,7 +65,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
-		m_lcaoslcaos_lcaoslcaos.init( lcaos, lcaos, lcaos, lcaos, ucell,orb, info.kmesh_times, orb.get_Rmax() );
+		m_lcaoslcaos_lcaoslcaos.init( lcaos, lcaos, lcaos, lcaos, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_lcaoslcaos_lcaoslcaos.init_radial_table(radial_R);
 		#else
@@ -81,7 +80,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs21 m_jyslcaos_lcaos;
-		m_jyslcaos_lcaos.init( jle, lcaos, lcaos, ucell , orb, info.kmesh_times, orb.get_Rmax() );
+		m_jyslcaos_lcaos.init( jle, lcaos, lcaos, ucell , orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jyslcaos_lcaos.init_radial_table( radial_R);
 		#else
@@ -95,7 +94,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs11 m_jys_jys;
-		m_jys_jys.init( jle, jle, ucell,orb, info.kmesh_times, orb.get_Rmax() );
+		m_jys_jys.init( jle, jle, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_jys.init_radial_table(radial_R);
 		#else
@@ -109,7 +108,7 @@ void Exx_Opt_Orb::generate_matrix(
 	{
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_abfs_abfs;
-		m_abfs_abfs.init( abfs, abfs, ucell, orb, info.kmesh_times, orb.get_Rmax() );
+		m_abfs_abfs.init( abfs, abfs, ucell, orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_abfs_abfs.init_radial_table(radial_R);
 		#else
@@ -124,7 +123,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(lcaos))	{ return {}; }
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs21 m_abfslcaos_lcaos;
-		m_abfslcaos_lcaos.init( abfs, lcaos, lcaos, ucell , orb, info.kmesh_times, orb.get_Rmax() );
+		m_abfslcaos_lcaos.init( abfs, lcaos, lcaos, ucell , orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_abfslcaos_lcaos.init_radial_table(radial_R);
 		#else
@@ -139,7 +138,7 @@ void Exx_Opt_Orb::generate_matrix(
 		if(judge_orbs_empty(jle))	{ return {}; }
 		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_jys_abfs;
-		m_jys_abfs.init( jle, abfs, ucell,orb, info.kmesh_times, orb.get_Rmax() );
+		m_jys_abfs.init( jle, abfs, ucell,orb, info.kmesh_times );
 		#if TEST_EXX_RADIAL>=1
 		m_jys_abfs.init_radial_table(radial_R);
 		#else

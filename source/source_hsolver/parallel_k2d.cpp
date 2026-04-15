@@ -39,7 +39,7 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
                                       const std::vector<int>& ik_kpar,
                                       const int& nw) {
 #ifdef __MPI
-    ModuleBase::timer::tick("Parallel_K2D", "distribute_hsk");
+    ModuleBase::timer::start("Parallel_K2D", "distribute_hsk");
     for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
     {
         pHamilt->updateHk(ik_kpar[ipool]);
@@ -78,7 +78,7 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
                   this->P2D_global->blacs_ctxt);
     }
     ModuleBase::Memory::record("Parallel_K2D::hsk_pool", this->P2D_pool->get_local_size() * 2 * sizeof(TK));
-    ModuleBase::timer::tick("Parallel_K2D", "distribute_hsk");
+    ModuleBase::timer::end("Parallel_K2D", "distribute_hsk");
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }

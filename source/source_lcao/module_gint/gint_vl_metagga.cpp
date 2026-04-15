@@ -9,12 +9,12 @@ namespace ModuleGint
 void Gint_vl_metagga::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
     compose_hr_gint(hr_gint_);
     transfer_hr_gint_to_hR(hr_gint_, *hR_);
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
 //========================
@@ -40,8 +40,9 @@ void Gint_vl_metagga::cal_hr_gint_()
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
+            const auto& biggrid = gint_info_->get_biggrids()[i];
             if(biggrid->get_atoms().size() == 0)
             {
                 continue;

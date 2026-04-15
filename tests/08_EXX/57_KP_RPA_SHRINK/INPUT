@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+calculation       scf
+ntype             1
+nbands            2
+ecutwfc           20
+smearing_method   gaussian
+smearing_sigma    1e-4
+basis_type        lcao
+ks_solver         genelpa
+dft_functional    pbe
+rpa               1
+symmetry          -1
+exx_separate_loop 1
+exx_pca_threshold 1e-3
+shrink_abfs_pca_thr 1e-1
+shrink_lu_inv_thr 1e-3
+exx_singularity_correction massidda
+exx_ccp_rmesh_times 1
+rpa_ccp_rmesh_times 1
+exx_real_number   1

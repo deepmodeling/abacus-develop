@@ -8,7 +8,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     bool skip_normalize)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2rho");
-    ModuleBase::timer::tick("LCAO_domain", "dm2rho");
+    ModuleBase::timer::start("LCAO_domain", "dm2rho");
 
     for (int is = 0; is < nspin; is++)
     {
@@ -27,7 +27,7 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 
     // symmetrize of charge density should be here, mohan 20251023
 
-    ModuleBase::timer::tick("LCAO_domain", "dm2rho");
+    ModuleBase::timer::end("LCAO_domain", "dm2rho");
     return;
 }
 
@@ -37,7 +37,7 @@ void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
     Charge* chr)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2tau");
-    ModuleBase::timer::tick("LCAO_domain", "dm2tau");
+    ModuleBase::timer::start("LCAO_domain", "dm2tau");
 
 	for (int is = 0; is < nspin; is++)
 	{
@@ -45,5 +45,5 @@ void LCAO_domain::dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
 	}
 	ModuleGint::cal_gint_tau(dmr, nspin, chr->kin_r);
 
-    ModuleBase::timer::tick("LCAO_domain", "dm2tau");
+    ModuleBase::timer::end("LCAO_domain", "dm2tau");
 }

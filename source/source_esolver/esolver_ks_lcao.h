@@ -6,6 +6,7 @@
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_lcao/module_gint/gint.h" // gint
 #include "source_lcao/module_gint/gint_info.h"
+#include "source_estate/module_charge/gint_precision_controller.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
@@ -28,7 +29,7 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS<TK>
+class ESolver_KS_LCAO : public ESolver_KS
 {
   public:
     ESolver_KS_LCAO();
@@ -56,6 +57,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     virtual void others(UnitCell& ucell, const int istep) override;
+
+    //! Electronic wave functions (moved from base class)
+    psi::Psi<TK>* psi = nullptr;
 
     //! Store information about Adjacent Atoms 
     Record_adj RA;
@@ -96,6 +100,8 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     // because it's hard to seperate force and stress calculation in LCAO.
     ModuleBase::matrix scs;
     bool have_force = false;
+    
+    GintPrecisionController gint_precision_controller_;
 
 
   public:

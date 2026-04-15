@@ -5,8 +5,9 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/atom_spec.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "gint_type.h"
+#include "gint_helper.h"
 #include "big_grid.h"
 #include "gint_atom.h"
 #include "unitcell_info.h"
@@ -33,8 +34,27 @@ class GintInfo
         const Numerical_Orbital* Phi,
         const UnitCell& ucell, Grid_Driver& gd);
 
+    ~GintInfo();
+
+    static GintInfo make_test_instance(const UnitCell& ucell, std::vector<int> ijr_info)
+    {
+        GintInfo info;
+        info.ucell_ = &ucell;
+        info.ijr_info_ = std::move(ijr_info);
+        return info;
+    }
+
+    static GintInfo* make_test_instance_ptr(const UnitCell& ucell, std::vector<int> ijr_info)
+    {
+        GintInfo* info = new GintInfo();
+        info->ucell_ = &ucell;
+        info->ijr_info_ = std::move(ijr_info);
+        return info;
+    }
+
     // getter functions
     const std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; }
+    int get_bgrids_num() const { return static_cast<int>(biggrids_.size()); }
     const std::vector<int>& get_trace_lo() const{ return trace_lo_; }
     int get_lgd() const { return lgd_; }
     int get_nat() const { return ucell_->nat; }        // return the number of atoms in the unitcell
@@ -42,14 +62,28 @@ class GintInfo
     const std::vector<int>& get_ijr_info() const {return ijr_info_;}
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
+    GintPrecision get_exec_precision() const { return exec_precision_; }
+    void set_exec_precision(const GintPrecision precision) { exec_precision_ = precision; }
 
     //=========================================
     // functions about hcontainer
     //=========================================
     template <typename T>
-    HContainer<T> get_hr(int npol = 1) const;
+    HContainer<T> get_hr(int npol = 1) const
+    {
+        auto hr = HContainer<T>(ucell_->nat);
+        if(PARAM.inp.gamma_only)
+        {
+            hr.fix_gamma();
+        }
+        hr.insert_ijrs(&ijr_info_, *ucell_, npol);
+        hr.allocate(nullptr, true);
+        return hr;
+    }
     
     private:
+    GintInfo() = default;
+
     // initialize the atoms
     void init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi);
 
@@ -59,7 +93,7 @@ class GintInfo
     // initialize the ijr_info
     void init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd);
 
-    const UnitCell* ucell_;
+    const UnitCell* ucell_ = nullptr;
 
     // the unitcell information
     std::shared_ptr<const UnitCellInfo> unitcell_info_;
@@ -100,9 +134,12 @@ class GintInfo
     // total num of atomic orbitals on this proc
     int lgd_ = 0;
 
+    GintPrecision exec_precision_ = GintPrecision::fp64;
+
     #ifdef __CUDA
     public:
     std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() { return bgrid_batches_; };
+    int get_bgrid_batches_num() const { return static_cast<int>(bgrid_batches_.size()); };
     std::shared_ptr<const GintGpuVars> get_gpu_vars() const { return gpu_vars_; };
     int get_dev_id() const { return gpu_vars_->dev_id_; };
     int get_streams_num() const { return streams_num_; };

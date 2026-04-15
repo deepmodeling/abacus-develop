@@ -8,6 +8,7 @@
 #include "source_pw/module_stodft/sto_forces.h"
 #include "source_pw/module_stodft/sto_stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
@@ -92,7 +93,7 @@ template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "before_scf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "before_scf");
 
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
@@ -111,51 +112,42 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->stowf.update_sto_orbitals(PARAM.inp.seed_sto);
     }
 
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "before_scf");
 }
 
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "after_scf");
 
     // 1) call after_scf() of ESolver_KS_PW
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "after_scf");
 }
 
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2rho");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::start("ESolver_SDFT_PW", "hamilt2rho");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
-    // choose if psi should be diag in subspace
-    // be careful that istep start from 0 and iter start from 1
-    if (istep == 0 && iter == 1 || PARAM.inp.calculation == "nscf")
-    {
-        hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
-    }
-    else
-    {
-        hsolver::DiagoIterAssist<T, Device>::need_subspace = true;
-    }
+
+    // setup diagonalization parameters for SDFT
+    hsolver::setup_diago_params_sdft<T, Device>(istep, iter, ethr, PARAM.inp);
 
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
-    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
     hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
@@ -175,8 +167,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
     hsolver_pw_sdft_obj.solve(ucell,
-                              this->p_hamilt,
-                              this->stp.psi_t[0],
+                              static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+                              *this->stp.template get_psi_t<T, Device>(),
                               this->stp.psi_cpu[0],
                               this->pelec,
                               this->pw_wfc,
@@ -190,11 +182,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 
     if (PARAM.globalv.ks_run)
     {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
     else
@@ -209,7 +197,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 #ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::end("ESolver_SDFT_PW", "hamilt2rho");
 }
 
 template <typename T, typename Device>
@@ -233,7 +221,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& 
                     this->locpp,
                     this->ppcell,
                     ucell,
-                    *this->stp.psi_t,
+                    *this->stp.template get_psi_t<T, Device>(),
                     this->stowf);
 }
 
@@ -248,7 +236,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  *this->stp.psi_t,
+                  *this->stp.template get_psi_t<T, Device>(),
                   this->stowf,
                   &this->chr,
                   &this->locpp,
@@ -301,9 +289,9 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
                                               &this->kv,
                                               this->pelec,
                                               this->pw_wfc,
-                                              this->stp.psi_t,
+                                              this->stp.template get_psi_t<T, Device>(),
                                               &this->ppcell,
-                                              this->p_hamilt,
+                                              static_cast<hamilt::Hamilt<std::complex<double>, Device>*>(this->p_hamilt),
                                               this->stoche,
                                               &stowf);
         sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);

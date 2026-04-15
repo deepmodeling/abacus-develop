@@ -21,6 +21,7 @@ list(APPEND cell_simple_srcs
     ../read_stru.cpp
     ../read_atom_species.cpp
     ../read_atoms.cpp
+    ../read_atoms_helper.cpp
     ../atom_spec.cpp
     ../atom_pseudo.cpp
     ../pseudo.cpp
@@ -45,40 +46,40 @@ AddTest(
   TARGET MODULE_CELL_read_pp
   LIBS parameter  ${math_libs} base device
   SOURCES read_pp_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp
-  ../../source_io/output.cpp
+  ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_pseudo_nc
   LIBS parameter  ${math_libs} base device
   SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../atom_pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp
-  	../read_pp_blps.cpp ../../source_io/output.cpp
+  	../read_pp_blps.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_atom_pseudo
   LIBS parameter  ${math_libs} base device
   SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
-  	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../source_io/output.cpp
+  	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_atom_spec
   LIBS parameter ${math_libs} base device
   SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp
-  	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../source_io/output.cpp
+  	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_klist_test
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../source_io/output.cpp ../k_vector_utils.cpp
+  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../source_io/module_output/output.cpp ../k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_klist_test_para1
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../source_io/output.cpp ../k_vector_utils.cpp
+  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../source_io/module_output/output.cpp ../k_vector_utils.cpp
 )
 
 add_test(NAME MODULE_CELL_klist_test_para4
@@ -91,6 +92,31 @@ AddTest(
   LIBS parameter  MPI::MPI_CXX
   SOURCES parallel_kpoints_test.cpp ../../source_base/global_variable.cpp ../../source_base/parallel_global.cpp
   	../../source_base/parallel_common.cpp ../../source_base/parallel_comm.cpp ../parallel_kpoints.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory.cpp ../../source_base/timer.cpp ../../source_base/parallel_reduce.cpp
+)
+
+# Add unit test for read_atoms_helper
+AddTest(
+  TARGET MODULE_CELL_read_atoms_helper_test
+  LIBS parameter ${math_libs} base device
+  SOURCES read_atoms_helper_test.cpp
+    ../read_atoms_helper.cpp
+    ../read_stru.cpp
+    ../print_cell.cpp
+    ../atom_spec.cpp
+    ../unitcell.cpp
+    ../update_cell.cpp
+    ../bcast_cell.cpp
+    ../atom_pseudo.cpp
+    ../pseudo.cpp
+    ../read_pp.cpp
+    ../read_pp_complete.cpp
+    ../read_pp_upf201.cpp
+    ../read_pp_upf100.cpp
+    ../read_pp_vwr.cpp
+    ../read_pp_blps.cpp
+    ../read_atom_species.cpp
+    ../sep.cpp
+    ../sep_cell.cpp
 )
 
 find_program(BASH bash)
@@ -113,26 +139,26 @@ add_test(NAME MODULE_CELL_parallel_kpoints_test
 AddTest(
   TARGET MODULE_CELL_unitcell_test
   LIBS parameter  ${math_libs} base device cell_info  symmetry
-  SOURCES unitcell_test.cpp ../../source_io/output.cpp ../../source_estate/cal_ux.cpp
+  SOURCES unitcell_test.cpp ../../source_io/module_output/output.cpp ../../source_estate/cal_ux.cpp
 
 )
 
 AddTest(
   TARGET MODULE_CELL_unitcell_test_readpp
   LIBS parameter  ${math_libs} base device cell_info
-  SOURCES unitcell_test_readpp.cpp ../../source_io/output.cpp
+  SOURCES unitcell_test_readpp.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_unitcell_test_para
   LIBS parameter  ${math_libs} base device cell_info
-  SOURCES unitcell_test_para.cpp ../../source_io/output.cpp
+  SOURCES unitcell_test_para.cpp ../../source_io/module_output/output.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_unitcell_test_setupcell
   LIBS parameter  ${math_libs} base device cell_info
-  SOURCES unitcell_test_setupcell.cpp ../../source_io/output.cpp
+  SOURCES unitcell_test_setupcell.cpp ../../source_io/module_output/output.cpp
 )
 
 add_test(NAME MODULE_CELL_unitcell_test_parallel

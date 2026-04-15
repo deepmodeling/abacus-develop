@@ -31,6 +31,40 @@ struct ShiftRealComplex<std::complex<double>>
 	using type = double;
 };
 
+
+    template <typename TK, typename TR> class DensityMatrix;
+
+// DensityMatrix<complex<double>,TR>::cal_DMR() is illegal in C++, so DensityMatrix_Tools is used instead.
+namespace DensityMatrix_Tools
+{
+    template <typename TK, typename TR_in, typename TR_out>
+    extern void cal_DMR(
+        const DensityMatrix<TK, TR_in> &dm,
+        std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
+        const int ik_in);
+
+    template <typename TK, typename TR_in, typename TR_out>
+    extern void cal_DMR_td(
+        const DensityMatrix<TK, TR_in> &dm,
+        std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
+        const UnitCell& ucell,
+        const ModuleBase::Vector3<double> At,
+        const int ik_in);
+
+    template <typename TK, typename TR_in, typename TR_out>
+    extern void cal_DMR_full(
+        const DensityMatrix<TK, TR_in> &dm, 
+        hamilt::HContainer<TR_out>* dmR_out,
+        const int ik_in);
+
+    template <typename TR>
+    extern void func_exp_mul_dmk(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, TR* target_DMR_mat);
+
+    template <typename TR>
+    extern void func_xyz_to_updown(const std::complex<double> tmp[4], const int icol, const int step_trace[4], TR* target_DMR_mat);
+}
+
+
 template <typename TK, typename TR>
 class DensityMatrix
 {
@@ -179,6 +213,7 @@ class DensityMatrix
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
+     * @param ik_in
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
@@ -186,6 +221,7 @@ class DensityMatrix
 
     /**
      * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
+     * @param ik_in
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
@@ -195,8 +231,11 @@ class DensityMatrix
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
      * the stored dm(k) has been used to calculate the passin DMR
      * @param dmR_out pointer of HContainer object to store the calculated complex DMR
+     * @param ik_in
+     * if ik_in < 0, calculate all k-points
+     * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const;
+    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in = -1) const;
 
     /**
      * @brief (Only nspin=2) switch DMR to total density matrix or magnetization density matrix
@@ -287,6 +326,9 @@ class DensityMatrix
     std::vector<TR> dmr_origin_;
     TR* dmr_tmp_ = nullptr;
 
+    friend void DensityMatrix_Tools::cal_DMR<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR_td<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR_full<TK,TR>(const DensityMatrix<TK, TR> &dm, hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in);
 };
 
 } // namespace elecstate

@@ -1,20 +1,21 @@
 #include "esolver_of_tddft.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/cube_io.h"
-#include "source_io/output_log.h"
-#include "source_io/write_elecstat_pot.h"
+#include "source_io/module_output/cube_io.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "source_estate/cal_ux.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------
 #include "source_pw/module_ofdft/of_stress_pw.h"
+
+#include <iostream>
 
 namespace ModuleESolver
 {
@@ -33,24 +34,21 @@ ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 
 void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
 {
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "runner");
+    ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
-#ifdef __MPI
-    this->iter_time = MPI_Wtime();
-#else
-    this->iter_time = std::chrono::system_clock::now();
-#endif
+    this->iter_time = ModuleBase::get_time();
 
-    if (istep==0)
+    if (this->phi_td.empty())
     {
-        this->phi_td.resize(PARAM.inp.nspin*this->pw_rho->nrxx);
+        const int size = PARAM.inp.nspin * this->pw_rho->nrxx;
+        this->phi_td.resize(size, std::complex<double>(0.0, 0.0));
     }
 
-    if ((istep<1) && PARAM.inp.init_chg != "file")
+    if ((istep==0) && PARAM.inp.init_chg != "file")
     {
         while (true)
         {
@@ -91,7 +89,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
             }
         }
     }
-    else if ((istep<1) && PARAM.inp.init_chg == "file")
+    else if ((istep==0) && PARAM.inp.init_chg == "file")
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -107,7 +105,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     }
     else
     {
-        this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
+        this->evolve_ofdft->propagate_psi_RK4(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
@@ -123,7 +121,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
 
     this->after_opt(istep, ucell, conv_esolver);
 
-    ModuleBase::timer::tick("ESolver_OF_TDDFT", "runner");
+    ModuleBase::timer::end("ESolver_OF_TDDFT", "runner");
 }
 
 } // namespace ModuleESolver

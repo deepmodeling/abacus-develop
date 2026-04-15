@@ -90,7 +90,7 @@ class LCAO_Deepks
     std::vector<torch::Tensor> pdm;
 
     /// dE/dD, autograd from loaded model(E: Ry)
-    double** gedm; //[tot_Inl][(2l+1)*(2l+1)]
+    double** gedm = nullptr; //[tot_Inl][(2l+1)*(2l+1)]
 
     // functions for hr status: 1. get value; 2. set value;
     int get_hr_cal()
@@ -156,7 +156,7 @@ class LCAO_Deepks
                     const LCAO_Orbitals& orb,
                     std::ofstream& ofs);
 
-    const Parallel_Orbitals* pv;
+    const Parallel_Orbitals* pv = nullptr;
 };
 
 #endif

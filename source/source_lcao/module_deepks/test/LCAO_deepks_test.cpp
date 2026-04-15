@@ -320,6 +320,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
         DeePKS_domain::cal_edelta_gedm_equiv(ucell.nat,
                                              this->ld.deepks_param,
                                              descriptor,
+                                             this->ld.model_deepks,
                                              this->ld.gedm,
                                              this->ld.E_delta,
                                              0); // 0 for rank

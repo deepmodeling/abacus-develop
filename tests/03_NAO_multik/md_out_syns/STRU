@@ -1,0 +1,29 @@
+ATOMIC_SPECIES
+H 1.008 H_ONCV_PBE-1.0.upf upf201
+O 16.00 O_ONCV_PBE-1.0.upf upf201
+
+NUMERICAL_ORBITAL
+H_gga_6au_60Ry_1s.orb
+O_gga_6au_60Ry_1s1p.orb
+
+LATTICE_CONSTANT
+10.0  // add lattice constant (Bohr, ~5.3 Angstrom)
+
+LATTICE_VECTORS
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+
+ATOMIC_POSITIONS
+Direct
+
+H	// Element type
+0.0	// magnetism
+2
+0.24 0.76 0.50 1 1 1 v 0.0005 0.0005 -0.0005
+0.76 0.24 0.50 1 1 1 v -0.0005 -0.0005 0.0005
+
+O	// Element type
+0.0	// magnetism
+1
+0.50 0.50 0.50 1 1 1 v 0.0005 0.0005 -0.0005

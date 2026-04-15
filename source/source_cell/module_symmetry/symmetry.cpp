@@ -85,8 +85,8 @@ void Symmetry::set_atom_map(const Atom* atoms)
 void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
 {
     ModuleBase::TITLE("Symmetry", "symmetrize_vec3_nat");
-    double* vtot;
-    int* n;
+    double* vtot = nullptr;
+    int* n = nullptr;
     vtot = new double[nat * 3]; ModuleBase::GlobalFunc::ZEROS(vtot, nat * 3);
     n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
 

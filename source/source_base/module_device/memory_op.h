@@ -235,6 +235,20 @@ struct resize_memory_op_mt
 };
 
 template <typename FPTYPE, typename Device>
+struct set_memory_op_mt
+{
+    /// @brief memset for DSP memory allocated by mt allocator.
+    ///
+    /// Input Parameters
+    /// \param var : the specified constant byte value
+    /// \param size : array size
+    ///
+    /// Output Parameters
+    /// \param arr : output array initialized by the input value
+    void operator()(FPTYPE* arr, const int var, const size_t size);
+};
+
+template <typename FPTYPE, typename Device>
 struct delete_memory_op_mt
 {
     /// @brief free memory for multi-device

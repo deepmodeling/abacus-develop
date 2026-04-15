@@ -9,11 +9,11 @@ namespace ModuleGint
 void Gint_fvl_meta::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_fvl");
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::start("Gint", "cal_gint_fvl");
     init_dm_gint_();
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::end("Gint", "cal_gint_fvl");
 }
 
 void Gint_fvl_meta::init_dm_gint_()
@@ -61,8 +61,9 @@ void Gint_fvl_meta::cal_fvl_svl_()
             svl_thread->zero_out();
         }
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
+            const auto& biggrid = gint_info_->get_biggrids()[i];
             if(biggrid->get_atoms().size() == 0)
             {
                 continue;

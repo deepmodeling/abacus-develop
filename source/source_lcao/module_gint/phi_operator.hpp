@@ -172,16 +172,17 @@ void PhiOperator::phi_mul_phi(
 }
 
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
-template<typename T>
+template<typename Tin, typename Tout>
 void PhiOperator::phi_dot_phi(
-    const T*const phi_i,           // phi_i(ir,iwt)
-    const T*const phi_j,           // phi_j(ir,iwt)
-    T*const rho) const             // rho(ir)
+    const Tin*const phi_i,         // phi_i(ir,iwt)
+    const Tin*const phi_j,         // phi_j(ir,iwt)
+    Tout*const rho) const          // rho(ir)
 {
     constexpr int inc = 1;
     for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
     {
-        rho[meshgrids_local_idx_[i]] += BlasConnector::dotc(cols_, phi_j+i*cols_, inc, phi_i+i*cols_, inc);
+        rho[meshgrids_local_idx_[i]] += static_cast<Tout>(
+            BlasConnector::dotc(cols_, phi_j + i * cols_, inc, phi_i + i * cols_, inc));
     }
 }
 

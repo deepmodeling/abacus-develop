@@ -14,7 +14,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                            const size_t len_hs)
 {
     ModuleBase::TITLE("module_rt", "reset_matrix_boundary");
-    ModuleBase::timer::tick("module_rt", "reset_matrix_boundary");
+    ModuleBase::timer::start("module_rt", "reset_matrix_boundary");
     const ModuleBase::Vector3<int> zero = {0, 0, 0};
     for(size_t iat = 0; iat < ucell.nat; iat++)
     {
@@ -33,7 +33,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                 //skip unrelevent ik
                 if(arg==0)continue;
                 //calculate correction phase
-                double sinp, cosp;
+                double sinp = 0.0, cosp = 0.0;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 const std::complex<double> phase = std::complex<double>(cosp, sinp);
                 //phase correction for Hamiltionian, overlap matrix and c vec.
@@ -44,7 +44,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("module_rt", "reset_matrix_boundary");
+    ModuleBase::timer::end("module_rt", "reset_matrix_boundary");
     return;
 }
 

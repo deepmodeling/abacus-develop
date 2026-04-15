@@ -1,13 +1,13 @@
 #include "esolver_ks_pw.h"
 #include "source_base/memory.h"
 #include "source_base/module_device/device.h"
-#include "source_io/numerical_basis.h"
-#include "source_io/numerical_descriptor.h"
+#include "source_io/module_bessel/numerical_basis.h"
+#include "source_io/module_bessel/numerical_descriptor.h"
 
 #include "source_base/formatter.h"
 
 // mohan add 2025-03-06
-#include "source_io/cal_test.h"
+#include "source_io/module_output/cal_test.h"
 
 namespace ModuleESolver {
 
@@ -32,7 +32,7 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
     {
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
-                             this->psi[0],
+                             *(this->stp.psi_cpu),
                              PARAM.inp.bessel_descriptor_lmax,
                              PARAM.inp.bessel_descriptor_rcut,
                              PARAM.inp.bessel_descriptor_tolerence,

@@ -3,7 +3,7 @@ namespace ModuleSymmetry
 {
     std::string mat3_fmt(const ModuleBase::Matrix3& m)
     {
-        auto s = [](auto x) { return std::to_string(x); };
+        auto s = [](double x) { return std::to_string(x); };
         return s(m.e11) + " " + s(m.e12) + " " + s(m.e13) + "\n" +
                s(m.e21) + " " + s(m.e22) + " " + s(m.e23) + "\n" +
                s(m.e31) + " " + s(m.e32) + " " + s(m.e33);
@@ -67,19 +67,26 @@ namespace ModuleSymmetry
             for (const auto& isym_kvd : kv.kstars[istar])
             {
                 const int& isym = isym_kvd.first;
-                ofs << isym << "\n" << vec3_fmt(isym_kvd.second) << "\n";
+                const bool trs_conj = isym >= ucell.symm.nrotk;
+                const int isym_space = trs_conj ? isym - ucell.symm.nrotk : isym;
+                ofs << isym;
+                if (trs_conj)
+                {
+                    ofs << " (TRS * " << isym_space << ")";
+                }
+                ofs << "\n" << vec3_fmt(isym_kvd.second) << "\n";
                 for (int iat1 =0;iat1 < ucell.nat;++iat1)
                 {
                     const int it = ucell.iat2it[iat1];  // it1=it2
                     const int lmax = ucell.atoms[it].nwl;
-                    const int iat2 = ucell.symm.get_rotated_atom(isym, iat1);
-                    const double arg = 2 * ModuleBase::PI * isym_kvd.second * symrot.get_return_lattice(iat1,isym);
+                    const int iat2 = ucell.symm.get_rotated_atom(isym_space, iat1);
+                    const double arg = 2 * ModuleBase::PI * isym_kvd.second * symrot.get_return_lattice(iat1, isym_space);
                     std::complex<double>phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));
                     ofs << "atom " << iat1 + 1 << " -> " << iat2 + 1 << " of type " << it + 1 << " with Lmax= " << lmax << "\n";
                     for (int l = 0;l < lmax + 1;++l)
                     {
                         const int nm = 2 * l + 1;
-                        const auto& m_block = symrot.rotmat_Slm[isym][l];
+                        const auto& m_block = symrot.rotmat_Slm[isym_space][l];
                         for (int m1 = 0;m1 < nm;++m1)
                         {
                             // const int m1_start = m2 * nm;
@@ -95,6 +102,5 @@ namespace ModuleSymmetry
             ofs << "\n";
         }   // end star
         ofs.close();
-        ModuleBase::timer::tick("Symmetry_rotation", "print_symrot_info_k");
     }
 }

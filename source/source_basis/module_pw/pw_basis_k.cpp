@@ -197,7 +197,7 @@ void PW_Basis_K::setupIndGk()
 ///
 void PW_Basis_K::setuptransform()
 {
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g();
     this->getstartgr();
@@ -235,7 +235,7 @@ void PW_Basis_K::setuptransform()
                                  this->xprime);
     }
     this->fft_bundle.setupFFT();
-    ModuleBase::timer::tick(this->classname, "setuptransform");
+    ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
 void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)

@@ -196,7 +196,7 @@ struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>
                   const T &one)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(1) schedule(static, 8192 / sizeof(T))
+#pragma omp parallel for collapse(1) schedule(static)
 #endif
         for (int i = 0; i < n; i++)
         {

@@ -3,7 +3,6 @@
 // DATE : 2024-03-11
 //==========================================================
 #include "source_lcao/module_rdmft/rdmft_tools.h"
-#include "source_pw/module_pwdft/global.h"
 // used by class Veff_rdmft
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
@@ -44,8 +43,8 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    pdgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
-        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->desc,
+        &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
 }
@@ -71,8 +70,8 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
-    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
 #endif
 }
 
@@ -192,7 +191,7 @@ template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
@@ -232,7 +231,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::end("Veff", "initialize_HR");
 }
 
 
@@ -242,7 +241,7 @@ template<>
 void Veff_rdmft<std::complex<double>, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
     double* vr_eff_rdmft = nullptr;
 
@@ -307,7 +306,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         this->current_spin = 1 - this->current_spin; 
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
@@ -323,7 +322,7 @@ template<>
 void Veff_rdmft<double, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
 
     double* vr_eff_rdmft = nullptr;
@@ -388,6 +387,7 @@ void Veff_rdmft<double, double>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 

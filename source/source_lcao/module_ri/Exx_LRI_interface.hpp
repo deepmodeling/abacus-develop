@@ -8,9 +8,11 @@
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
-#include "source_io/csr_reader.h"
-#include "source_io/write_HS_sparse.h"
+#include "source_io/module_output/csr_reader.h"
+#include "source_io/module_hs/write_HS_sparse.h"
 #include "source_estate/elecstate_lcao.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_io/module_restart/restart.h"
 
 #include <sys/time.h>
 #include <stdexcept>
@@ -111,7 +113,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
         this->symrot_.find_irreducible_sector(
             ucell.symm, ucell.atoms, ucell.st,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-        this->symrot_.set_abfs_Lmax(Exx_Abfs::get_Lmax(this->exx_ptr->abfs));
+        this->symrot_.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(this->exx_ptr->abfs));
         this->symrot_.cal_Ms(kv, ucell, pv);
     }
 }

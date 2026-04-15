@@ -12,11 +12,13 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_io/cube_io.h"
-#include "source_io/rhog_io.h"
-#include "source_io/read_wf2rho_pw.h"
+#include "source_io/module_output/cube_io.h"
+#include "source_io/module_chgpot/rhog_io.h"
+#include "source_io/module_wf/read_wf2rho_pw.h"
+#include "source_io/module_restart/restart.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_cell/klist.h"
 
 void Charge::init_rho(const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
@@ -58,14 +60,14 @@ void Charge::init_rho(const UnitCell& ucell,
         {
             for (int is = 0; is < nspin; ++is)
             {
-				std::stringstream ssc; 
+				std::stringstream ssc;
 
 				if(nspin==1)
 				{
                     ssc << PARAM.globalv.global_readin_dir << "chg.cube";
 				}
 				else
-				{               
+				{
 					ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
 				}
 
@@ -116,7 +118,7 @@ void Charge::init_rho(const UnitCell& ucell,
         {
             const std::string warn_msg
                 = " WARNING: \"init_chg\" is enabled but ABACUS failed to read\n charge density from file.\n"
-                  " Please check if there is chgsx.cube (x=1,2,etc.) or\n {suffix}-CHARGE-DENSITY.restart in the "
+                  " Please check if there is chg.cube (for nspin=1) or chgsx.cube (x=1,2,etc.) or\n {suffix}-CHARGE-DENSITY.restart in the "
                   "directory.\n";
             std::cout << warn_msg;
             if (PARAM.inp.init_chg == "file")
@@ -228,7 +230,7 @@ void Charge::init_rho(const UnitCell& ucell,
             }
             catch (const std::exception& e)
             {
-                // try to load from the output of `out_chg` 
+                // try to load from the output of `out_chg`
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
                 if (ModuleIO::read_vdata_palgrid(pgrid,
@@ -260,7 +262,7 @@ void Charge::init_rho(const UnitCell& ucell,
 
 		ModuleIO::read_wf2rho_pw(pw_wfc, symm, *this,
                 PARAM.globalv.global_readin_dir,
-				GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+				GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK,
                 GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
 				PARAM.inp.nbands, nspin, PARAM.globalv.npol,
 				kv->get_nkstot(),kv->ik2iktot,kv->isk,GlobalV::ofs_running);
@@ -271,11 +273,11 @@ void Charge::init_rho(const UnitCell& ucell,
 // computes the core charge on the real space 3D mesh.
 //==========================================================
 void Charge::set_rho_core(const UnitCell& ucell,
-                          const ModuleBase::ComplexMatrix& structure_factor, 
+                          const ModuleBase::ComplexMatrix& structure_factor,
                           const bool* numeric)
 {
     ModuleBase::TITLE("Charge","set_rho_core");
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    ModuleBase::timer::start("Charge","set_rho_core");
 
     bool bl = false;
     for (int it = 0; it<ucell.ntype; it++)
@@ -290,7 +292,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     if (!bl)
     {
         ModuleBase::GlobalFunc::ZEROS( this->rho_core, this->rhopw->nrxx);
-    	ModuleBase::timer::tick("Charge","set_rho_core");
+    	ModuleBase::timer::end("Charge","set_rho_core");
         return;
     }
 
@@ -298,7 +300,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(rhocg, this->rhopw->ngg );
 
 	// three dimension.
-    std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];	
+    std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];
 
     for (int it = 0; it < ucell.ntype;it++)
     {
@@ -367,7 +369,7 @@ void Charge::set_rho_core(const UnitCell& ucell,
     // The term was present in previous versions of the code but it shouldn't
     delete [] rhocg;
     delete [] vg;
-    ModuleBase::timer::tick("Charge","set_rho_core");
+    ModuleBase::timer::end("Charge","set_rho_core");
     return;
 } // end subroutine set_rhoc
 
@@ -423,11 +425,11 @@ void Charge::non_linear_core_correction
 		igl_end += igl_beg;
 
         // G <> 0 term
-        for (int igl = igl_beg; igl < igl_end;igl++) 
+        for (int igl = igl_beg; igl < igl_end;igl++)
         {
             gx = sqrt(this->rhopw->gg_uniq[igl] * tpiba2);
             ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
-            for (int ir = 0;ir < mesh; ir++) 
+            for (int ir = 0;ir < mesh; ir++)
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
             } //  enddo
@@ -445,7 +447,7 @@ void Charge::non_linear_core_correction
 	}; // end kernel
 
 	// do not use omp parallel when this function is already in parallel block
-	// 
+	//
 	// it is called in parallel block in Forces::cal_force_cc,
 	// but not in other funtcion such as Stress_Func::stress_cc.
 	ModuleBase::TRY_OMP_PARALLEL(kernel);

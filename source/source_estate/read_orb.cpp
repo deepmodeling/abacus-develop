@@ -2,7 +2,7 @@
 #include "source_base/formatter.h"
 
 namespace elecstate {
-    void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
+    bool read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
     {
     // the maximum L is 9 like cc-pV9Z, according to the 
     // basissetexchange https://www.basissetexchange.org/
@@ -14,8 +14,9 @@ namespace elecstate {
     {
         std::cout << " Element index " << it+1 << std::endl;
         std::cout << " orbital file: " << orb_file << std::endl;
-        ModuleBase::WARNING_QUIT("UnitCell::read_orb_file", 
-                                "ABACUS Cannot find the ORBITAL file (basis sets)");
+        ModuleBase::WARNING("elecstate::read_orb_file", 
+                                "cannot open the ORBITAL file (NAO basis sets)");
+        return false;
     }
     std::string word;
     atom->nw = 0;
@@ -54,17 +55,20 @@ namespace elecstate {
             }
             if (!valid)
             {
-                ModuleBase::WARNING_QUIT("UnitCell::read_orb_file", 
-                                         "ABACUS does not support numerical atomic orbital with L > 9, "
+                ModuleBase::WARNING("elecstate::read_orb_file", 
+                                         "ABACUS does not support NAO with L > 9, "
                                          "or an invalid orbital label is found in the ORBITAL file.");
+                return false;
             }
         }
     }
     ifs.close();
     if(!atom->nw)
     {
-        ModuleBase::WARNING_QUIT("UnitCell::read_orb_file","get nw = 0");
+		ModuleBase::WARNING("elecstate::read_orb_file","get nw = 0, check the ORBITAL file");
+		return false;
     }
+    return true;
 }
 
 }

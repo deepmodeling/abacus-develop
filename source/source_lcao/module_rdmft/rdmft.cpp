@@ -6,10 +6,8 @@
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-
 
 #include <iostream>
 #include <cmath>
@@ -410,7 +408,7 @@ template <typename TK, typename TR>
 double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
     ModuleBase::TITLE("RDMFT", "E_Egradient");
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::start("RDMFT", "E_Egradient");
 
     // this->cal_V_hartree();
     // this->cal_V_XC();
@@ -425,7 +423,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
 
-    ModuleBase::timer::tick("RDMFT", "E_Egradient");
+    ModuleBase::timer::end("RDMFT", "E_Egradient");
     // return E_RDMFT[3];
     return Etotal;
 }

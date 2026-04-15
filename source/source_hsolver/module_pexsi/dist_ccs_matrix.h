@@ -86,8 +86,8 @@ class DistCCSMatrix
     int firstCol=0;
 
     // Array stores the indices to the nonzero row indices in rowptrLocal and nzvalLocal
-    int* colptrLocal;
-    int* rowindLocal;
+    int* colptrLocal = nullptr;
+    int* rowindLocal = nullptr;
 
     // friend class DistMatrixTransformer;
 };

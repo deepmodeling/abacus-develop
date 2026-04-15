@@ -1,0 +1,75 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# LR-TDDFT Examples
+
+This directory contains examples for performing Linear Response Time-Dependent Density Functional Theory (LR-TDDFT) calculations in ABACUS.
+
+## What is LR-TDDFT?
+
+Linear Response Time-Dependent Density Functional Theory (LR-TDDFT) is a computational method used to study the excited electronic states of molecules and solids. It is based on the linear response of the electron density to a time-dependent external perturbation, such as an electric field.
+
+### Key Features:
+- Calculates electronic excitation energies (excitation spectra)
+- Computes oscillator strengths for electronic transitions
+- Provides insights into electronic structure and optical properties
+- Can be used to study absorption spectra, emission spectra, and other optical phenomena
+
+## Examples Included
+
+### 1. 01_lcao_Si2
+- **System**: Silicon dimer (Si₂)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates LR-TDDFT calculation for a simple semiconductor system
+
+### 2. 02_lcao_H2O
+- **System**: Water molecule (H₂O)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates LR-TDDFT calculation for a small molecule
+
+## Input Files
+
+Each example directory contains the following files:
+
+- `INPUT`: Contains the LR-TDDFT calculation parameters
+- `KPT`: Defines the k-point sampling
+- `STRU`: Describes the atomic structure
+- `OUT.abacus`: Directory containing calculation outputs
+
+## Key Parameters in INPUT
+
+The INPUT files include specific parameters for LR-TDDFT calculations:
+
+- `tddft`: Set to 1 to enable TDDFT calculation
+- `tddft_nstates`: Number of excited states to calculate
+- `tddft_ngridk`: Number of k-points for TDDFT calculation
+- `tddft_scf_thr`: Convergence threshold for TDDFT iterations
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /home/510Group/2_abacus/abacus-mc/examples/24_lr-tddft/01_lcao_Si2
+   ```
+
+2. Run ABACUS:
+   ```bash
+   abacus
+   ```
+
+3. Check the output in the `OUT.abacus` directory, particularly the TDDFT results in `TDDFT.dat`.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.abacus` directory:
+
+- `running_tddft.log`: Log file for the TDDFT calculation
+
+## Notes
+
+- The provided examples are for demonstration purposes. For research calculations, you should carefully converge parameters such as energy cutoff, basis set, and k-point sampling.
+- LR-TDDFT calculations can be computationally intensive, especially for larger systems.
+- The accuracy of LR-TDDFT results depends on the choice of exchange-correlation functional. Different functionals may yield different excitation energies.

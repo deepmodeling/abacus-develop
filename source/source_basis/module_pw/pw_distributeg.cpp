@@ -12,7 +12,7 @@ namespace ModulePW
  */
 void PW_Basis::distribute_g()
 {
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    ModuleBase::timer::start(this->classname, "distributeg");
     if(this->distribution_type == 1)
     {
         this->distribution_method1();
@@ -27,7 +27,7 @@ void PW_Basis::distribute_g()
     }
     ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", PARAM.inp.calculation,
     "Current core has no plane waves! Please reduce the cores.");
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    ModuleBase::timer::end(this->classname, "distributeg");
     return;
 }
 

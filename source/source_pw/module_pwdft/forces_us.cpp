@@ -21,7 +21,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                                           const UnitCell& ucell)
 {
     ModuleBase::TITLE("Forces", "cal_force_us");
-    ModuleBase::timer::tick("Forces", "cal_force_us");
+    ModuleBase::timer::start("Forces", "cal_force_us");
 
     const int npw = rho_basis->npw;
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
@@ -98,19 +98,19 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const double zero = 0;
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
-                    dgemm_(&transa,
-                           &transb,
-                           &nij,
-                           &atom->na,
-                           &dim,
-                           &(ucell.omega),
-                           qgm_data,
-                           &dim,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           atom->na,
+                           nij,
+                           dim,
+                           ucell.omega,
                            &aux1_data[ipol * dim * atom->na],
-                           &dim,
-                           &zero,
+                           dim,
+                           qgm_data,
+                           dim,
+                           zero,
                            &ddeeq(is, ipol, 0, 0),
-                           &nij);
+                           nij);
                 }
             }
 
@@ -137,7 +137,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     delete[] qnorm;
 
-    ModuleBase::timer::tick("Forces", "cal_force_us");
+    ModuleBase::timer::end("Forces", "cal_force_us");
 }
 
 template class Forces<double, base_device::DEVICE_CPU>;

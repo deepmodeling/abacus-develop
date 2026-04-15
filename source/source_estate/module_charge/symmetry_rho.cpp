@@ -10,6 +10,18 @@ Symmetry_rho::~Symmetry_rho()
 {
 }
 
+void Symmetry_rho::symmetrize_rho(const int nspin,
+                                   const Charge& chr,
+                                   const ModulePW::PW_Basis* pw,
+                                   ModuleSymmetry::Symmetry& symm)
+{
+    Symmetry_rho srho;
+    for (int is = 0; is < nspin; is++)
+    {
+        srho.begin(is, chr, pw, symm);
+    }
+}
+
 void Symmetry_rho::begin(const int& spin_now,
                          const Charge& chr,
                          const ModulePW::PW_Basis* rho_basis,
@@ -23,7 +35,7 @@ void Symmetry_rho::begin(const int& spin_now,
 	}
 
     ModuleBase::TITLE("Symmetry_rho", "begin");
-    ModuleBase::timer::tick("Symmetry_rho","begin");
+    ModuleBase::timer::start("Symmetry_rho","begin");
 
 // both parallel and serial
 // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
@@ -49,7 +61,7 @@ void Symmetry_rho::begin(const int& spin_now,
         rho_basis->recip2real(kin_g.data(), chr.kin_r[spin_now]);
     }
 
-    ModuleBase::timer::tick("Symmetry_rho","begin");
+    ModuleBase::timer::end("Symmetry_rho","begin");
     return;
 }
 
@@ -69,7 +81,7 @@ void Symmetry_rho::begin(const int& spin_now,
     }
 
     ModuleBase::TITLE("Symmetry_rho", "begin");
-    ModuleBase::timer::tick("Symmetry_rho","begin");
+    ModuleBase::timer::start("Symmetry_rho","begin");
 
     // both parallel and serial
     // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
@@ -94,7 +106,7 @@ void Symmetry_rho::begin(const int& spin_now,
         }
     }
 
-    ModuleBase::timer::tick("Symmetry_rho","begin");
+    ModuleBase::timer::end("Symmetry_rho","begin");
     return;
 }
 
@@ -104,7 +116,7 @@ void Symmetry_rho::psymm(double* rho_part,
                          ModuleSymmetry::Symmetry& symm) const
 {
     ModuleBase::TITLE("Symmetry_rho", "psymm");
-    ModuleBase::timer::tick("Symmetry_rho","psymm");
+    ModuleBase::timer::start("Symmetry_rho","psymm");
 
 #ifdef __MPI
     // reduce all rho from the first pool.
@@ -145,6 +157,6 @@ void Symmetry_rho::psymm(double* rho_part,
 	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK);
 #endif
 
-    ModuleBase::timer::tick("Symmetry_rho","psymm");
+    ModuleBase::timer::end("Symmetry_rho","psymm");
     return;
 }

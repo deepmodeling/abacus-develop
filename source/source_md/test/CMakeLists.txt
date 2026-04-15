@@ -12,6 +12,7 @@ list(APPEND depend_files
   ../../source_cell/read_atom_species.cpp
   ../../source_cell/atom_pseudo.cpp
   ../../source_cell/read_atoms.cpp
+  ../../source_cell/read_atoms_helper.cpp
   ../../source_cell/pseudo.cpp
   ../../source_cell/read_pp.cpp
   ../../source_cell/read_pp_complete.cpp
@@ -44,10 +45,10 @@ list(APPEND depend_files
   ../../source_cell/module_neighbor/sltk_atom.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp
   ../../source_cell/module_neighbor/sltk_grid_driver.cpp
-  ../../source_io/output.cpp
-  ../../source_io/output_log.cpp
-  ../../source_io/print_info.cpp
-  ../../source_io/cif_io.cpp
+  ../../source_io/module_output/output.cpp
+  ../../source_io/module_output/output_log.cpp
+  ../../source_io/module_output/print_info.cpp
+  ../../source_io/module_output/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
@@ -98,7 +99,7 @@ AddTest(
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
-  ../../source_io/output.cpp
+  ../../source_io/module_output/output.cpp
   ${depend_files}
 )
 
@@ -109,7 +110,7 @@ AddTest(
   ../md_base.cpp
   ../msst.cpp
   ../../source_cell/update_cell.cpp
-  ../../source_io/output.cpp
+  ../../source_io/module_output/output.cpp
   ${depend_files}
 )
 

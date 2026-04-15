@@ -1,7 +1,6 @@
 #include "dftu.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #ifdef __LCAO
 #include "source_lcao/hamilt_lcao.h"
 #endif
@@ -10,7 +9,7 @@
 void Plus_U::copy_locale(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Plus_U", "copy_locale");
-    ModuleBase::timer::tick("Plus_U", "copy_locale");
+    ModuleBase::timer::start("Plus_U", "copy_locale");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -42,13 +41,13 @@ void Plus_U::copy_locale(const UnitCell& ucell)
             }
         }
     }
-    ModuleBase::timer::tick("Plus_U", "copy_locale");
+    ModuleBase::timer::end("Plus_U", "copy_locale");
 }
 
 void Plus_U::zero_locale(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Plus_U", "zero_locale");
-    ModuleBase::timer::tick("Plus_U", "zero_locale");
+    ModuleBase::timer::start("Plus_U", "zero_locale");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -80,14 +79,14 @@ void Plus_U::zero_locale(const UnitCell& ucell)
             }
         }
     }
-    ModuleBase::timer::tick("Plus_U", "zero_locale");
+    ModuleBase::timer::end("Plus_U", "zero_locale");
 }
 
 void Plus_U::mix_locale(const UnitCell& ucell,
                       const double& mixing_beta)
 {
     ModuleBase::TITLE("Plus_U", "mix_locale");
-    ModuleBase::timer::tick("Plus_U", "mix_locale");
+    ModuleBase::timer::start("Plus_U", "mix_locale");
 
     double beta = mixing_beta;
 
@@ -121,7 +120,7 @@ void Plus_U::mix_locale(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("Plus_U", "mix_locale");
+    ModuleBase::timer::end("Plus_U", "mix_locale");
 }
 
 #ifdef __LCAO
@@ -134,7 +133,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                          hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "cal_occup_m_k");
-    ModuleBase::timer::tick("Plus_U", "cal_occup_m_k");
+    ModuleBase::timer::start("Plus_U", "cal_occup_m_k");
 
     this->copy_locale(ucell);
     this->zero_locale(ucell);
@@ -378,7 +377,7 @@ void Plus_U::cal_occup_m_k(const int iter,
     }
 
     this->initialed_locale = true;
-    ModuleBase::timer::tick("Plus_U", "cal_occup_m_k");
+    ModuleBase::timer::end("Plus_U", "cal_occup_m_k");
     return;
 }
 
@@ -389,7 +388,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
                              hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "cal_occup_m_gamma");
-    ModuleBase::timer::tick("Plus_U", "cal_occup_m_gamma");
+    ModuleBase::timer::start("Plus_U", "cal_occup_m_gamma");
     this->copy_locale(ucell);
     this->zero_locale(ucell);
 
@@ -536,7 +535,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
     }
 
     this->initialed_locale = true;
-    ModuleBase::timer::tick("Plus_U", "cal_occup_m_gamma");
+    ModuleBase::timer::end("Plus_U", "cal_occup_m_gamma");
     return;
 }
 #endif

@@ -67,7 +67,7 @@ void atom_arrange::search(const bool pbc_flag,
                           const bool test_only)
 {
     ModuleBase::TITLE("atom_arrange", "search");
-    ModuleBase::timer::tick("atom_arrange", "search");
+    ModuleBase::timer::start("atom_arrange", "search");
 
     if (search_radius_bohr < 0.0)
     {
@@ -95,7 +95,7 @@ void atom_arrange::search(const bool pbc_flag,
     grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
 
 	// The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
-    ModuleBase::timer::tick("atom_arrange", "search");
+    ModuleBase::timer::end("atom_arrange", "search");
 
     if (test_only)
     {

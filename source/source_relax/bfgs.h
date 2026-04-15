@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <tuple> 
-#include<algorithm>
-#include<cmath>
+#include <algorithm>
+#include <cmath>
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
@@ -24,6 +24,7 @@ private:
     double maxstep;//every movement smaller than maxstep
     double largest_grad;
     int size;//number of atoms
+    bool is_initialized=false;
 
     std::vector<double> steplength;//the length of atoms displacement 
     std::vector<std::vector<double>> H;//Hessian matrix

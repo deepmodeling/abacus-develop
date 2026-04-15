@@ -428,18 +428,7 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!PARAM.inp.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "there are bugs in the old implementation; set relax_new to be "
-                "1 for fixed_volume relaxation");
-        }
     } else if (fixed_axes_in == "shape") {
-        if (!PARAM.inp.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "set relax_new to be 1 for fixed_shape relaxation");
-        }
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
@@ -480,7 +469,7 @@ void UnitCell::setup(const std::string& latname_in,
 }
 
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2)
+void UnitCell::compare_atom_labels(const std::string& label1, const std::string& label2) const
 {
     if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {

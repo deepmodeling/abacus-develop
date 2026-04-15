@@ -6,7 +6,7 @@
 #include "source_base/formatter.h"
 
 #ifdef __EXX
-#include "source_pw/module_pwdft/global.h"		// just for GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #endif
 
 #include <xc.h>
@@ -287,7 +287,7 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 
 void XC_Functional_Libxc::finish_func(std::vector<xc_func_type> &funcs)
 {
-	for(xc_func_type func : funcs)
+	for(xc_func_type& func : funcs)
 	{
 		xc_func_end(&func);
 	}

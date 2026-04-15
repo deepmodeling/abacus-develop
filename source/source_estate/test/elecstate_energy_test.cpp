@@ -1,4 +1,3 @@
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -241,4 +240,49 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
     elecstate->cal_bandgap_updw();
     EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 1.0);
     EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 0.5);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgapBoundaryConditions)
+{
+    K_Vectors* klist = new K_Vectors;
+    klist->set_nks(1);
+    elecstate->klist = klist;
+    elecstate->ekb.create(1, 1);
+
+    // Case 1: Only VBM found (all bands below Fermi level)
+    elecstate->ekb(0, 0) = -5.0;
+    elecstate->eferm.ef = 0.0;
+    elecstate->cal_bandgap();
+    // Only VBM found, CBM is set to eferm.ef, so bandgap should be eferm.ef - vbm
+    EXPECT_DOUBLE_EQ(elecstate->bandgap, 5.0);
+
+    // Case 2: Only CBM found (all bands above Fermi level)
+    elecstate->ekb(0, 0) = 5.0;
+    elecstate->eferm.ef = 0.0;
+    elecstate->cal_bandgap();
+    // Only CBM found, VBM is set to eferm.ef, so bandgap should be cbm - eferm.ef
+    EXPECT_DOUBLE_EQ(elecstate->bandgap, 5.0);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgapUpDwBoundaryConditions)
+{
+    K_Vectors* klist = new K_Vectors;
+    klist->set_nks(2);
+    klist->isk.resize(2);
+    klist->isk[0] = 0; // spin up
+    klist->isk[1] = 1; // spin down
+    elecstate->klist = klist;
+    elecstate->ekb.create(2, 1); // 2 k-points, 1 band
+
+    // Spin UP: Only VBM (band < ef)
+    elecstate->ekb(0, 0) = -5.0; 
+    elecstate->eferm.ef_up = 0.0;
+    // Spin DW: Only CBM (band > ef)
+    elecstate->ekb(1, 0) = 5.0;
+    elecstate->eferm.ef_dw = 0.0;
+    elecstate->cal_bandgap_updw();
+    // up: Only VBM found, CBM is set to eferm.ef_up, so gap should be eferm.ef_up - vbm_up
+    // dw: Only CBM found, VBM is set to eferm.ef_dw, so gap should be cbm_dw - eferm.ef_dw
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 5.0);
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 5.0);
 }

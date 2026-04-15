@@ -11,7 +11,7 @@
 #include "source_cell/parallel_kpoints.h"
 #include "mpi.h"
 #endif
-#include "../write_eig_occ.h"
+#include "../module_energy/write_eig_occ.h"
 #include "for_testing_klist.h"
 
 /************************************************

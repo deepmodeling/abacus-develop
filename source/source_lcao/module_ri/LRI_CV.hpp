@@ -13,7 +13,7 @@
 #include "../../source_basis/module_ao/element_basis_index-ORB.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
-#include "../../source_pw/module_pwdft/global.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
@@ -48,7 +48,7 @@ void LRI_CV<Tdata>::set_orbitals(
     const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
-	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
+	ModuleBase::timer::start("LRI_CV", "set_orbitals");
 
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
@@ -56,9 +56,6 @@ void LRI_CV<Tdata>::set_orbitals(
 
 	this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos);
     this->abfs_ccp_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs_ccp);
-    const double lcaos_rmax = Exx_Abfs::Construct_Orbs::get_Rmax(this->lcaos);
-    const double abfs_ccp_rmax
-        = Exx_Abfs::Construct_Orbs::get_Rmax(this->abfs_ccp);
 
 	const ModuleBase::Element_Basis_Index::Range
 		range_lcaos = ModuleBase::Element_Basis_Index::construct_range( lcaos );
@@ -71,18 +68,18 @@ void LRI_CV<Tdata>::set_orbitals(
 	this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
     this->m_abfs_abfs.init(
 		this->abfs_ccp, this->abfs,
-		ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax);
+		ucell, orb, kmesh_times);
     if (init_C)
         this->m_abfslcaos_lcaos.init(
 			this->abfs_ccp, this->lcaos, this->lcaos,
-			ucell, orb, kmesh_times, lcaos_rmax);
+			ucell, orb, kmesh_times);
 
     this->m_abfs_abfs.init_radial_table();
     if (init_C) {
         this->m_abfslcaos_lcaos.init_radial_table();
     }
 
-	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
+	ModuleBase::timer::end("LRI_CV", "set_orbitals");
 }
 
 template <typename Tdata>
@@ -107,7 +104,7 @@ auto LRI_CV<Tdata>::cal_datas(
 -> std::map<TA,std::map<TAC,Tresult>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_datas");
-	ModuleBase::timer::tick("LRI_CV", "cal_datas");
+	ModuleBase::timer::start("LRI_CV", "cal_datas");
 
 	std::map<TA,std::map<TAC,Tresult>> Datas;
 	#pragma omp parallel
@@ -139,7 +136,7 @@ auto LRI_CV<Tdata>::cal_datas(
 			}
 		}
 	}
-	ModuleBase::timer::tick("LRI_CV", "cal_datas");
+	ModuleBase::timer::end("LRI_CV", "cal_datas");
 	return Datas;
 }
 

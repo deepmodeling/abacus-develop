@@ -9,10 +9,10 @@ namespace ModuleGint
 void Gint_dvlocal::cal_dvlocal()
 {
     ModuleBase::TITLE("Gint", "cal_gint_dvlocal");
-    ModuleBase::timer::tick("Gint", "cal_gint_dvlocal");
+    ModuleBase::timer::start("Gint", "cal_gint_dvlocal");
     init_hr_gint_();
     cal_hr_gint_();
-    ModuleBase::timer::tick("Gint", "cal_gint_dvlocal");
+    ModuleBase::timer::end("Gint", "cal_gint_dvlocal");
 }
 
 void Gint_dvlocal::init_hr_gint_()
@@ -33,9 +33,10 @@ void Gint_dvlocal::cal_hr_gint_()
         std::vector<double> dphi_y;
         std::vector<double> dphi_z;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
         {
-            if(biggrid->get_atoms().empty())
+            const auto& biggrid = gint_info_->get_biggrids()[i];
+            if(biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -66,12 +67,12 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     LCAO_HS_Arrays& hs_arrays)
 {
     ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparseMatrix");
-    ModuleBase::timer::tick("Gint", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparseMatrix");
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRz_sparseMatrix;
     
-    double temp_value_double;
+    double temp_value_double = 0.0;
 
     Vec3d tau1, dtau;
     for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
@@ -125,7 +126,7 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     distribute_pvdpR_sparseMatrix(cspin, 0, nlocal, sparse_thr, pvdpRx_sparseMatrix, pv, hs_arrays);
     distribute_pvdpR_sparseMatrix(cspin, 1, nlocal, sparse_thr, pvdpRy_sparseMatrix, pv, hs_arrays);
     distribute_pvdpR_sparseMatrix(cspin, 2, nlocal, sparse_thr, pvdpRz_sparseMatrix, pv, hs_arrays);
-    ModuleBase::timer::tick("Gint", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparseMatrix");
 }
 
 

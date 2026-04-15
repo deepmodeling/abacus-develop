@@ -9,6 +9,8 @@
 #include "gint_helper.cuh"
 #include <functional>
 #include "source_base/module_device/device.h"
+#include "source_base/module_device/device_check.h"
+#include "source_base/module_device/kernel_compat.h"
 
 #define sA(i, j) sA[(j)*slda + (i)]
 #define sB(i, j) sB[(j)*sldb + (i)]
@@ -271,7 +273,7 @@ static __global__ void vbatched_gemm_nn_kernel(const int* M,
                                               const int* global_ldc,
                                               const T* alpha)
 {
-    extern __shared__ __align__(sizeof(T)) unsigned char smem[];
+    extern __shared__ __align__(sizeof(double)) unsigned char smem[];
     T* shared_mem = reinterpret_cast<T*>(smem);
 
     int batchid = blockIdx.z;
@@ -288,7 +290,7 @@ static __global__ void vbatched_gemm_nn_kernel(const int* M,
     int shared_ldb = BLK_K + 1;
     T* shared_A = (T*)shared_mem;
     T* shared_B = shared_A + shared_lda * BLK_K;
-    double alpha_tmp = 1.0;
+    T alpha_tmp = T(1.0);
     if (alpha != nullptr)
     {
         alpha_tmp = alpha[batchid];
@@ -420,7 +422,7 @@ void vbatched_gemm_nn_impl(int max_m,
                 global_A_array + i, global_lda + i,
                 global_C_array + i, global_ldc + i,
                 alpha_tmp);
-        checkCudaLastError();
+        CHECK_LAST_CUDA_ERROR("kernel launch");
     }
 }
 

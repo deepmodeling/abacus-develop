@@ -56,7 +56,7 @@ void Inverse_Matrix_Complex::init(const int &dim_in)
 
 void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, ModuleBase::ComplexMatrix &Sout)
 {
-	ModuleBase::timer::tick("Inverse","using_zheev");
+	ModuleBase::timer::start("Inverse","using_zheev");
 	this->A = Sin;
 
     LapackConnector::zheev('V', 'U', dim, this->A, dim, e, work2, lwork, rwork, &info);
@@ -70,7 +70,7 @@ void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, 
 	}
 
     Sout = this->A * this->EA;
-	ModuleBase::timer::tick("Inverse","using_zheev");
+	ModuleBase::timer::end("Inverse","using_zheev");
     return;
 }
 

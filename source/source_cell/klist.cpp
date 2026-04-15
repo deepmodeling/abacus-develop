@@ -7,8 +7,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/berryphase.h"
+#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 
 void K_Vectors::cal_ik_global()
@@ -87,6 +86,18 @@ void K_Vectors::set(const UnitCell& ucell,
     // output kpoints file
     std::string skpt1;
     std::string skpt2;
+
+    if (!this->kc_done && this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+    }
+    else if (this->kc_done && !this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_c[ik];
+    }
+
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -183,6 +194,7 @@ void K_Vectors::renew(const int& kpoint_number)
 {
     kvec_c.resize(kpoint_number);
     kvec_d.resize(kpoint_number);
+    kvec_c_full.resize(kpoint_number);
     wk.resize(kpoint_number);
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);
@@ -467,7 +479,7 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
 
 double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim)
 {
-    double coordinate;
+    double coordinate = 0.0;
     if (k_type == 1)
     {
         coordinate = (offset + 2.0 * (double)n - (double)dim - 1.0) / (2.0 * (double)dim);
@@ -566,7 +578,19 @@ void K_Vectors::normalize_wk(const int& degspin)
     {
         sum += this->wk[ik];
     }
-    assert(sum > 0.0);
+
+    // If sum of weights is zero or very small, set equal weights
+    if (sum < 1e-10)
+    {
+        ModuleBase::WARNING("K_Vectors::normalize_wk",
+                            "Sum of k-point weights is zero or very small. "
+                            "Setting equal weights for all k-points.");
+        for (int ik = 0; ik < nkstot; ik++)
+        {
+            this->wk[ik] = 1.0 / double(nkstot);
+        }
+        sum = 1.0;
+    }
 
     for (int ik = 0; ik < nkstot; ik++)
     {

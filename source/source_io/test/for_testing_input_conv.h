@@ -13,12 +13,11 @@
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_rt/evolve_elec.h"
-#include "source_lcao/module_rt/td_velocity.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "source_io/berryphase.h"
-#include "source_io/restart.h"
+#include "source_io/module_unk/berryphase.h"
+#include "source_io/module_restart/restart.h"
 #include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_basic.h"
@@ -29,11 +28,6 @@
 #endif
 #undef private
 bool berryphase::berry_phase_flag = false;
-
-bool TD_Velocity::out_current;
-bool TD_Velocity::out_current_k;
-bool TD_Velocity::out_vecpot;
-bool TD_Velocity::init_vecpot_file;
 double elecstate::Gatefield::zgate = 0.5;
 bool elecstate::Gatefield::relax = false;
 bool elecstate::Gatefield::block = false;
@@ -58,9 +52,6 @@ double elecstate::H_TDDFT_pw::dt_int;
 
 double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
-
-bool TD_Velocity::tddft_velocity;
-bool TD_Velocity::out_mat_R;
 
 // Gaussian
 int elecstate::H_TDDFT_pw::gauss_count;
@@ -186,18 +177,11 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "there are bugs in the old implementation; set relax_new to be "
-                "1 for fixed_volume relaxation");
-        }
+        // Note: fixed_axes="volume" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
     } else if (fixed_axes_in == "shape") {
-        if (!PARAM.input.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "set relax_new to be 1 for fixed_shape relaxation");
-        }
+        // Note: fixed_axes="shape" is now supported with relax_new=false
+        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;

@@ -6,6 +6,7 @@
 #include "source_base/module_device/memory_op.h"              // memory operations
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
@@ -252,249 +253,304 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
                                                const ct::Tensor& Htmp,
                                                ct::Tensor& U_operator,
                                                std::ofstream& ofs_running,
-                                               const int print_matrix) const
+                                               const int print_matrix,
+                                               CublasMpResources& cublas_res) const
 {
-    // (1) copy Htmp to Numerator & Denominator
-    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE,
-                         ct::DeviceType::CpuDevice,
-                         ct::TensorShape({this->ParaV->nloc}));
-    Numerator.zero();
-    BlasConnector::copy(this->ParaV->nloc,
-                        Htmp.data<std::complex<double>>(),
-                        1,
-                        Numerator.data<std::complex<double>>(),
-                        1);
-
-    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE,
-                           ct::DeviceType::CpuDevice,
-                           ct::TensorShape({this->ParaV->nloc}));
-    Denominator.zero();
-    BlasConnector::copy(this->ParaV->nloc,
-                        Htmp.data<std::complex<double>>(),
-                        1,
-                        Denominator.data<std::complex<double>>(),
-                        1);
-
-    if (print_matrix)
+#ifdef __CUBLASMP
+    // 1. Resource Validation
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr || cublas_res.cusolvermp_grid == nullptr)
     {
-        ofs_running << std::endl;
-        ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                ofs_running << Stmp.data<std::complex<double>>()[in + j].real() << "+"
-                            << Stmp.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                ofs_running << Numerator.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        return;
     }
 
-    // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
-    std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta1 = {0.0, -0.25 * this->dt};
-    std::complex<double> beta2 = {0.0, 0.25 * this->dt};
+    assert(Stmp.device_type() == ct::DeviceType::GpuDevice);
+    assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
+    assert(U_operator.device_type() == ct::DeviceType::GpuDevice);
 
-    ScalapackConnector::geadd('N',
-                              nlocal,
-                              nlocal,
-                              alpha,
-                              Stmp.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc,
-                              beta1,
-                              Numerator.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc);
-    ScalapackConnector::geadd('N',
-                              nlocal,
-                              nlocal,
-                              alpha,
-                              Stmp.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc,
-                              beta2,
-                              Denominator.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc);
+    // 2. Extract Pointers
+    void* d_S = static_cast<void*>(Stmp.data<std::complex<double>>());
+    void* d_H = static_cast<void*>(Htmp.data<std::complex<double>>());
+    void* d_Num = static_cast<void*>(U_operator.data<std::complex<double>>());
 
-    if (print_matrix)
+    int64_t len_loc = this->ParaV->nloc;
+
+    // Allocate temporary tensor for denominator matrix
+    ct::Tensor Denominator_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({len_loc}));
+    void* d_Den = static_cast<void*>(Denominator_gpu.data<std::complex<double>>());
+
+    // 3. Matrix Descriptors Creation
+    int64_t m_global = this->ParaV->desc[2];
+    int64_t n_global = this->ParaV->desc[3];
+    int64_t mb = this->ParaV->desc[4];
+    int64_t nb = this->ParaV->desc[5];
+    int64_t rsrc = this->ParaV->desc[6];
+    int64_t csrc = this->ParaV->desc[7];
+    int64_t lld = this->ParaV->desc[8];
+
+    // 3.1 cuBLASMp Descriptor
+    cublasMpMatrixDescriptor_t desc_blas;
+    cublasMpMatrixDescriptorCreate(m_global,
+                                   n_global,
+                                   mb,
+                                   nb,
+                                   rsrc,
+                                   csrc,
+                                   lld,
+                                   CUDA_C_64F,
+                                   cublas_res.cublasmp_grid,
+                                   &desc_blas);
+
+    // 3.2 cuSOLVERMp Descriptor
+    cusolverMpMatrixDescriptor_t desc_solver;
+    cusolverMpCreateMatrixDesc(&desc_solver,
+                               cublas_res.cusolvermp_grid,
+                               CUDA_C_64F,
+                               m_global,
+                               n_global,
+                               mb,
+                               nb,
+                               rsrc,
+                               csrc,
+                               lld);
+
+    // 4. Construct A (Denominator) and B (Numerator) using Geadd
+    std::complex<double> one = {1.0, 0.0};
+    std::complex<double> coef_neg_i = {0.0, -0.25 * this->dt};
+    std::complex<double> coef_pos_i = {0.0, 0.25 * this->dt};
+
+    cudaMemcpyAsync(d_Num, d_S, len_loc * sizeof(std::complex<double>), cudaMemcpyDeviceToDevice, cublas_res.stream);
+    cudaMemcpyAsync(d_Den, d_S, len_loc * sizeof(std::complex<double>), cudaMemcpyDeviceToDevice, cublas_res.stream);
+
+    size_t ws_geadd_dev = 0, ws_geadd_host = 0;
+    cublasMpGeadd_bufferSize(cublas_res.cublasmp_handle,
+                             CUBLAS_OP_N,
+                             m_global,
+                             n_global,
+                             &coef_neg_i,
+                             d_H,
+                             1,
+                             1,
+                             desc_blas,
+                             &one,
+                             d_Num,
+                             1,
+                             1,
+                             desc_blas,
+                             &ws_geadd_dev,
+                             &ws_geadd_host);
+
+    void *d_work_geadd = nullptr, *h_work_geadd = nullptr;
+    cudaMallocAsync(&d_work_geadd, ws_geadd_dev, cublas_res.stream);
+    h_work_geadd = malloc(ws_geadd_host);
+
+    // B = S - i * (dt/4) * H
+    cublasMpGeadd(cublas_res.cublasmp_handle,
+                  CUBLAS_OP_N,
+                  m_global,
+                  n_global,
+                  &coef_neg_i,
+                  d_H,
+                  1,
+                  1,
+                  desc_blas,
+                  &one,
+                  d_Num,
+                  1,
+                  1,
+                  desc_blas,
+                  d_work_geadd,
+                  ws_geadd_dev,
+                  h_work_geadd,
+                  ws_geadd_host);
+
+    // A = S + i * (dt/4) * H
+    cublasMpGeadd(cublas_res.cublasmp_handle,
+                  CUBLAS_OP_N,
+                  m_global,
+                  n_global,
+                  &coef_pos_i,
+                  d_H,
+                  1,
+                  1,
+                  desc_blas,
+                  &one,
+                  d_Den,
+                  1,
+                  1,
+                  desc_blas,
+                  d_work_geadd,
+                  ws_geadd_dev,
+                  h_work_geadd,
+                  ws_geadd_host);
+
+    cudaFreeAsync(d_work_geadd, cublas_res.stream);
+    free(h_work_geadd);
+
+    // 5. QR Factorization of A (Denominator)
+    int64_t tau_size = m_global + nb;
+    void* d_tau = nullptr;
+    cudaMallocAsync(&d_tau, tau_size * sizeof(std::complex<double>), cublas_res.stream);
+
+    int* d_info = nullptr;
+    cudaMallocAsync(&d_info, sizeof(int), cublas_res.stream);
+    cudaMemsetAsync(d_info, 0, sizeof(int), cublas_res.stream);
+
+    size_t ws_geqrf_dev = 0, ws_geqrf_host = 0;
+    cusolverMpGeqrf_bufferSize(cublas_res.cusolvermp_handle,
+                               m_global,
+                               n_global,
+                               d_Den,
+                               1,
+                               1,
+                               desc_solver,
+                               CUDA_C_64F,
+                               &ws_geqrf_dev,
+                               &ws_geqrf_host);
+
+    void *d_work_geqrf = nullptr, *h_work_geqrf = nullptr;
+    cudaMallocAsync(&d_work_geqrf, ws_geqrf_dev, cublas_res.stream);
+    h_work_geqrf = malloc(ws_geqrf_host);
+
+    cusolverMpGeqrf(cublas_res.cusolvermp_handle,
+                    m_global,
+                    n_global,
+                    d_Den,
+                    1,
+                    1,
+                    desc_solver,
+                    d_tau,
+                    CUDA_C_64F,
+                    d_work_geqrf,
+                    ws_geqrf_dev,
+                    h_work_geqrf,
+                    ws_geqrf_host,
+                    d_info);
+
+    cudaFreeAsync(d_work_geqrf, cublas_res.stream);
+    free(h_work_geqrf);
+
+    // Check QR Info
+    int h_info = 0;
+    cudaMemcpyAsync(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost, cublas_res.stream);
+    cudaStreamSynchronize(cublas_res.stream);
+    if (h_info != 0)
     {
-        ofs_running << " beta=" << beta1 << std::endl;
-        ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                ofs_running << Denominator.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        std::cerr << "CRITICAL: cusolverMpGeqrf failed with Info: " << h_info << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (3) Next, invert Denominator
-    ct::Tensor ipiv(ct::DataType::DT_INT,
-                    ct::DeviceType::CpuDevice,
-                    ct::TensorShape({this->ParaV->nrow + this->ParaV->nb}));
-    ipiv.zero();
-    int info = 0;
-    // (3.1) compute ipiv
-    ScalapackConnector::getrf(nlocal,
-                              nlocal,
-                              Denominator.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc,
-                              ipiv.data<int>(),
-                              &info);
+    // 6. Apply Q^H to B (Numerator)
+    size_t ws_ormqr_dev = 0, ws_ormqr_host = 0;
+    cusolverMpOrmqr_bufferSize(cublas_res.cusolvermp_handle,
+                               CUBLAS_SIDE_LEFT,
+                               CUBLAS_OP_C,
+                               m_global,
+                               n_global,
+                               n_global,
+                               d_Den,
+                               1,
+                               1,
+                               desc_solver,
+                               d_tau,
+                               d_Num,
+                               1,
+                               1,
+                               desc_solver,
+                               CUDA_C_64F,
+                               &ws_ormqr_dev,
+                               &ws_ormqr_host);
 
-    // Print ipiv
-    if (print_matrix)
-    {
-        ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
-        ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
-        ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
-        ofs_running << " this->ParaV->nb = " << this->ParaV->nb << std::endl;
-        ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->get_block_size() << std::endl;
-        ofs_running << " nlocal = " << nlocal << std::endl;
-        ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < this->ParaV->nloc; i++)
-        {
-            ofs_running << ipiv.data<int>()[i] << " ";
-        }
-        ofs_running << std::endl;
-    }
+    void *d_work_ormqr = nullptr, *h_work_ormqr = nullptr;
+    cudaMallocAsync(&d_work_ormqr, ws_ormqr_dev, cublas_res.stream);
+    h_work_ormqr = malloc(ws_ormqr_host);
 
-    int lwork = -1;
-    int liwotk = -1;
-    ct::Tensor work(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({1}));
-    ct::Tensor iwork(ct::DataType::DT_INT, ct::DeviceType::CpuDevice, ct::TensorShape({1}));
-    // (3.2) compute work
-    ScalapackConnector::getri(nlocal,
-                              Denominator.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc,
-                              ipiv.data<int>(),
-                              work.data<std::complex<double>>(),
-                              &lwork,
-                              iwork.data<int>(),
-                              &liwotk,
-                              &info);
-    lwork = work.data<std::complex<double>>()[0].real();
-    work.resize(ct::TensorShape({lwork}));
-    liwotk = iwork.data<int>()[0];
-    iwork.resize(ct::TensorShape({liwotk}));
-    // (3.3) compute inverse matrix of Denominator
-    ScalapackConnector::getri(nlocal,
-                              Denominator.data<std::complex<double>>(),
-                              1,
-                              1,
-                              this->ParaV->desc,
-                              ipiv.data<int>(),
-                              work.data<std::complex<double>>(),
-                              &lwork,
-                              iwork.data<int>(),
-                              &liwotk,
-                              &info);
-    assert(0 == info);
+    cusolverMpOrmqr(cublas_res.cusolvermp_handle,
+                    CUBLAS_SIDE_LEFT,
+                    CUBLAS_OP_C,
+                    m_global,
+                    n_global,
+                    n_global,
+                    d_Den,
+                    1,
+                    1,
+                    desc_solver,
+                    d_tau,
+                    d_Num,
+                    1,
+                    1,
+                    desc_solver,
+                    CUDA_C_64F,
+                    d_work_ormqr,
+                    ws_ormqr_dev,
+                    h_work_ormqr,
+                    ws_ormqr_host,
+                    d_info);
 
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    cudaFreeAsync(d_work_ormqr, cublas_res.stream);
+    free(h_work_ormqr);
 
-    // (4) U_operator = Denominator * Numerator;
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nlocal,
-                             nlocal,
-                             1.0,
-                             Denominator.data<std::complex<double>>(),
-                             1,
-                             1,
-                             this->ParaV->desc,
-                             Numerator.data<std::complex<double>>(),
-                             1,
-                             1,
-                             this->ParaV->desc,
-                             0.0,
-                             U_operator.data<std::complex<double>>(),
-                             1,
-                             1,
-                             this->ParaV->desc);
+    // 7. Solve Triangular System (TRSM)
+    size_t ws_trsm_dev = 0, ws_trsm_host = 0;
+    std::complex<double> alpha_trsm = {1.0, 0.0};
 
-    if (print_matrix)
-    {
-        ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                ofs_running << Denominator.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                ofs_running << Numerator.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
-            const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
-                double aa = U_operator.data<std::complex<double>>()[in + j].real();
-                double bb = U_operator.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-    }
+    cublasMpTrsm_bufferSize(cublas_res.cublasmp_handle,
+                            CUBLAS_SIDE_LEFT,
+                            CUBLAS_FILL_MODE_UPPER,
+                            CUBLAS_OP_N,
+                            CUBLAS_DIAG_NON_UNIT,
+                            m_global,
+                            n_global,
+                            &alpha_trsm,
+                            d_Den,
+                            1,
+                            1,
+                            desc_blas,
+                            d_Num,
+                            1,
+                            1,
+                            desc_blas,
+                            CUBLAS_COMPUTE_64F,
+                            &ws_trsm_dev,
+                            &ws_trsm_host);
+
+    void *d_work_trsm = nullptr, *h_work_trsm = nullptr;
+    cudaMallocAsync(&d_work_trsm, ws_trsm_dev, cublas_res.stream);
+    h_work_trsm = malloc(ws_trsm_host);
+
+    cublasMpTrsm(cublas_res.cublasmp_handle,
+                 CUBLAS_SIDE_LEFT,
+                 CUBLAS_FILL_MODE_UPPER,
+                 CUBLAS_OP_N,
+                 CUBLAS_DIAG_NON_UNIT,
+                 m_global,
+                 n_global,
+                 &alpha_trsm,
+                 d_Den,
+                 1,
+                 1,
+                 desc_blas,
+                 d_Num,
+                 1,
+                 1,
+                 desc_blas,
+                 CUBLAS_COMPUTE_64F,
+                 d_work_trsm,
+                 ws_trsm_dev,
+                 h_work_trsm,
+                 ws_trsm_host);
+
+    cudaFreeAsync(d_work_trsm, cublas_res.stream);
+    free(h_work_trsm);
+
+    // 8. Cleanup and Final Synchronization
+    cudaStreamSynchronize(cublas_res.stream);
+
+    cublasMpMatrixDescriptorDestroy(desc_blas);
+    cusolverMpDestroyMatrixDesc(desc_solver);
+
+    cudaFreeAsync(d_tau, cublas_res.stream);
+    cudaFreeAsync(d_info, cublas_res.stream);
+#endif // __CUBLASMP
 }
 
 template <typename Device>
@@ -510,211 +566,73 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-    // (1) copy Htmp to Numerator & Denominator
-    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
-    Numerator.zero();
-    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        Numerator.data<std::complex<double>>(),
-        Htmp.data<std::complex<double>>(),
-        nlocal * nlocal);
-
-    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
-    Denominator.zero();
-    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        Denominator.data<std::complex<double>>(),
-        Htmp.data<std::complex<double>>(),
-        nlocal * nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor Stmp_cpu = Stmp.to_device<ct::DEVICE_CPU>();
-        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::endl;
-        ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Stmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Stmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << std::endl;
-        ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
-    // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
-    std::complex<double> one = {1.0, 0.0};
+    // Define coefficients
+    // beta1 = -i * dt/4 (for Numerator)
+    // beta2 = +i * dt/4 (for Denominator)
     std::complex<double> beta1 = {0.0, -0.25 * this->dt};
     std::complex<double> beta2 = {0.0, 0.25 * this->dt};
 
-    // Numerator = -i*para * Htmp
-    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+    // ========================================================================
+    // Numerator = Stmp + beta1 * Htmp
+    // ========================================================================
+
+    // 1. Copy Stmp to U_operator
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        U_operator.data<std::complex<double>>(),
+        Stmp.data<std::complex<double>>(),
+        nlocal * nlocal);
+
+    // 2. U_operator = beta1 * Htmp + U_operator
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
                                                               &beta1,
-                                                              Numerator.data<std::complex<double>>(),
-                                                              1);
-    // Numerator = Stmp + (-i*para * Htmp)
-    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
-                                                              &one,
-                                                              Stmp.data<std::complex<double>>(),
+                                                              Htmp.data<std::complex<double>>(),
                                                               1,
-                                                              Numerator.data<std::complex<double>>(),
+                                                              U_operator.data<std::complex<double>>(),
                                                               1);
-    // Denominator = i*para * Htmp
-    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+
+    // ========================================================================
+    // Denominator = Stmp + beta2 * Htmp
+    // ========================================================================
+
+    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
+
+    // 1. Copy Stmp to Denominator
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        Denominator.data<std::complex<double>>(),
+        Stmp.data<std::complex<double>>(),
+        nlocal * nlocal);
+
+    // 2. Denominator = beta2 * Htmp + Denominator
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
                                                               &beta2,
-                                                              Denominator.data<std::complex<double>>(),
-                                                              1);
-    // Denominator = Stmp + (i*para * Htmp)
-    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
-                                                              &one,
-                                                              Stmp.data<std::complex<double>>(),
+                                                              Htmp.data<std::complex<double>>(),
                                                               1,
                                                               Denominator.data<std::complex<double>>(),
                                                               1);
 
-    if (print_matrix)
-    {
-        ct::Tensor Denominator_cpu = Denominator.to_device<ct::DEVICE_CPU>();
+    // ========================================================================
+    // Solve D * U = N, result overwrites N (which is U_operator)
+    // ========================================================================
 
-        ofs_running << " beta=" << beta1 << std::endl;
-        ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Denominator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // (3) Next, invert Denominator
     ct::Tensor ipiv(ct::DataType::DT_INT, ct_device_type, ct::TensorShape({nlocal}));
-    ipiv.zero();
-    // (3.1) compute ipiv
+    // No need to zero ipiv, it is output only.
+
+    // 1. LU Factorization of Denominator (In-place)
     ct::kernels::lapack_getrf<std::complex<double>, ct_Device>()(nlocal,
                                                                  nlocal,
                                                                  Denominator.data<std::complex<double>>(),
                                                                  nlocal,
                                                                  ipiv.data<int>());
 
-    // Print ipiv
-    if (print_matrix)
-    {
-        ct::Tensor ipiv_cpu = ipiv.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            ofs_running << ipiv_cpu.data<int>()[i] << " ";
-        }
-        ofs_running << std::endl;
-    }
-
-    // (3.2) compute inverse matrix of Denominator
-    ct::Tensor Denominator_inv = create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
+    // 2. Solve D * X = B
     ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()('N',
                                                                  nlocal,
                                                                  nlocal,
                                                                  Denominator.data<std::complex<double>>(),
                                                                  nlocal,
                                                                  ipiv.data<int>(),
-                                                                 Denominator_inv.data<std::complex<double>>(),
+                                                                 U_operator.data<std::complex<double>>(),
                                                                  nlocal);
-
-    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    // (4) U_operator = Denominator_inv * Numerator;
-    std::complex<double> one_gemm = {1.0, 0.0};
-    std::complex<double> zero_gemm = {0.0, 0.0};
-    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
-                                                              'N',
-                                                              nlocal,
-                                                              nlocal,
-                                                              nlocal,
-                                                              &one_gemm,
-                                                              Denominator_inv.data<std::complex<double>>(),
-                                                              nlocal,
-                                                              Numerator.data<std::complex<double>>(),
-                                                              nlocal,
-                                                              &zero_gemm,
-                                                              U_operator.data<std::complex<double>>(),
-                                                              nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor Denominator_inv_cpu = Denominator_inv.to_device<ct::DEVICE_CPU>();
-        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
-        ct::Tensor U_operator_cpu = U_operator.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Denominator_inv_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Denominator_inv_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = U_operator_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = U_operator_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-    }
 }
 
 // Explicit instantiation of template functions

@@ -3,8 +3,8 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
-#include "source_pw/module_pwdft/VSep_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"
 
@@ -186,6 +186,10 @@ class Potential : public PotBase
     {
         return this->vl_of_0;
     }
+
+    /// @brief  get the ML-EXX energy, avoiding static variable
+    /// @return E_ML-EXX
+    double get_ml_exx_energy() const;
 
   private:
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;

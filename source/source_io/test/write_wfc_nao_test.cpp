@@ -1,10 +1,10 @@
-#include "../write_wfc_nao.h"
-#include "../filename.h"
+#include "../module_wf/write_wfc_nao.h"
+#include "../module_output/filename.h"
 
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "../binstream.h"
+#include "../module_output/binstream.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_external/scalapack_connector.h"
 

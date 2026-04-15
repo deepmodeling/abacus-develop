@@ -3,7 +3,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
@@ -13,7 +12,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/pulay_fs.h"
-#include "source_io/write_HS.h"
+#include "source_io/module_hs/write_HS.h"
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
@@ -26,7 +25,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Forces", "allocate");
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::start("Forces", "allocate");
 
     // need to calculate the derivative in build_ST_new
     bool cal_deri = true;
@@ -110,15 +109,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr);
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (PARAM.inp.cal_syns)
-    {
-        cal_deri = false;
-        ModuleBase::timer::tick("Forces", "allocate");
-        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
-    }
-
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::end("Forces", "allocate");
     return;
 }
 
@@ -178,7 +169,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 Record_adj* ra)
 {
     ModuleBase::TITLE("Forces", "ftable");
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::start("Forces", "ftable");
 
     this->ParaV = dm->get_paraV_pointer();
 
@@ -280,6 +271,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
     this->finish_ftable(fsr);
 
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::end("Forces", "ftable");
     return;
 }

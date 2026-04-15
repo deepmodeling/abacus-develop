@@ -10,7 +10,6 @@
 #include "source_base/math_polyint.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/ylm.h"
-#include "source_base/array_pool.h"
 
 #include <cmath>
 
@@ -24,6 +23,8 @@ Center2_Orb::Orb11::Orb11(const Numerical_Orbital_Lm& nA_in,
 
 void Center2_Orb::Orb11::init_radial_table()
 {
+    const int rmesh = Center2_Orb::get_rmesh(this->nA.getRcut(), this->nB.getRcut(), dr_);
+
     const int LA = this->nA.getL();
     const int LB = this->nB.getL();
     for (int LAB = std::abs(LA - LB); LAB <= LA + LB; ++LAB)
@@ -33,8 +34,6 @@ void Center2_Orb::Orb11::init_radial_table()
             continue;
         }
 
-        const int rmesh = Center2_Orb::get_rmesh(this->nA.getRcut(), this->nB.getRcut(), dr_);
-
         this->Table_r[LAB].resize(rmesh, 0);
         this->Table_dr[LAB].resize(rmesh, 0);
 
@@ -43,8 +42,8 @@ void Center2_Orb::Orb11::init_radial_table()
                                     this->nA,
                                     this->nB,
                                     rmesh,
-                                    this->Table_r[LAB].data(),
-                                    this->Table_dr[LAB].data(),
+                                    this->Table_r[LAB],
+                                    this->Table_dr[LAB],
                                     psb_);
     }
     return;
@@ -81,8 +80,8 @@ void Center2_Orb::Orb11::init_radial_table(const std::set<size_t>& radials)
                                     this->nA,
                                     this->nB,
                                     radials_used,
-                                    this->Table_r[LAB].data(),
-                                    this->Table_dr[LAB].data(),
+                                    this->Table_r[LAB],
+                                    this->Table_dr[LAB],
                                     psb_);
     }
 }
@@ -188,12 +187,12 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
     const int LAB2 = (LA + LB + 1) * (LA + LB + 1);
     std::vector<double> rly(LAB2);
     std::vector<ModuleBase::Vector3<double>> grly;
-    ModuleBase::Array_Pool<double> tmp_grly(LAB2, 3);
-    ModuleBase::Ylm::grad_rl_sph_harm(LA + LB, delta_R.x, delta_R.y, delta_R.z, rly.data(), tmp_grly.get_ptr_2D());
+    std::vector<double> tmp_grly(LAB2 * 3);
+    ModuleBase::Ylm::grad_rl_sph_harm(LA + LB, delta_R.x, delta_R.y, delta_R.z, rly.data(), tmp_grly.data());
+    grly.reserve(LAB2);
     for (int i=0; i<LAB2; ++i)
     {
-        ModuleBase::Vector3<double> ele(tmp_grly[i][0], tmp_grly[i][1], tmp_grly[i][2]);
-        grly.push_back(ele);
+        grly.emplace_back(tmp_grly[i*3], tmp_grly[i*3+1], tmp_grly[i*3+2]);
     }
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);

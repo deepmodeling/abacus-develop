@@ -195,18 +195,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-	if (frozen.x == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.y == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.z == 0)
-	{
-		++frozen_freedom;
-	}
+    if (frozen.x == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.y == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.z == 0)
+    {
+        ++frozen_freedom;
+    }
 
     if (unit_in.init_vel)
     {
@@ -253,7 +253,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
-    ModuleBase::timer::tick("MD_func", "force_virial");
+    ModuleBase::timer::start("MD_func", "force_virial");
 
     p_esolver->runner(unit_in, istep);
 
@@ -280,7 +280,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         }
     }
 
-    ModuleBase::timer::tick("MD_func", "force_virial");
+    ModuleBase::timer::end("MD_func", "force_virial");
 
     return;
 }
