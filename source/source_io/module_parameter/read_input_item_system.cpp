@@ -649,7 +649,7 @@ Available options are:
                            para.input.kmesh_type.begin(),
                            ::tolower);
         };
-        read_sync_string(input.kmesh_type);
+        sync_string(input.kmesh_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"gamma", "mp"};
             if (std::find(avail_list.begin(), avail_list.end(), para.input.kmesh_type) == avail_list.end())
