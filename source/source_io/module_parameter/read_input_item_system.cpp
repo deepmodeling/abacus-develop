@@ -4,8 +4,8 @@
 #include "read_input_tool.h"
 #include "source_base/module_device/device.h"
 
-#include <fstream>
 #include <unistd.h>
+#include <algorithm>
 
 namespace ModuleIO
 {
