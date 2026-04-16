@@ -14,7 +14,6 @@ Usage:
 """
 
 import argparse
-import pathlib
 from typing import List, Tuple, Optional
 import numpy as np
 import scipy.constants as sc
