@@ -1,0 +1,2 @@
+fast integration case for kspacing-generated shifted Gamma mesh
+covers new INPUT parameters: koffset and kmesh_type
