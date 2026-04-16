@@ -283,7 +283,7 @@ def main():
     parser.add_argument("--dipolefile", type=str, default="./OUT.ABACUS/dipole_s1.txt")
     # parser.add_argument("--dipolefile", type=str, default="./OUT.ABACUS/dipole_s1.txt")
     parser.add_argument("--material_name", type=str,
-                        default=r"CH\textsubscript{3}COOH", help="Name for plot title")
+                        default=r"CH$_3$COOH", help="Name for plot title")
     parser.add_argument("--step_start", type=int, default=0)
     parser.add_argument("--step_end", type=int, default=8000)
     parser.add_argument("--system_type", choices=["dipole_epsilon", "dipole_sigma", "current_epsilon", "current_sigma"],
