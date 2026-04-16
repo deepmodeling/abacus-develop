@@ -64,6 +64,8 @@ struct Input_para
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
     int nbspline = -1;                              ///< the order of B-spline basis(>=0) if it is -1 (default)
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
+    std::vector<double> koffset = {0.0, 0.0, 0.0};  ///< koffset for kspacing-generated k-point mesh
+    std::string kmesh_type = "gamma";               ///< k-point mesh type for kspacing-generated k-point mesh: gamma or mp
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
     std::string device = "auto";

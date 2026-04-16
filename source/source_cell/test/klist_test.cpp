@@ -313,6 +313,10 @@ TEST_F(KlistTest, ReadKpointsKspacing)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(ucell,k_file);
@@ -328,6 +332,10 @@ TEST_F(KlistTest, ReadKpointsKspacing3values)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.06;     // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(ucell,k_file);
@@ -343,6 +351,10 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0;        // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(kv->read_kpoints(ucell,k_file), ::testing::ExitedWithCode(1), "");
@@ -350,6 +362,72 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
     PARAM.input.kspacing[2] = 0.0;
+}
+
+TEST_F(KlistTest, ReadKpointsKspacingShiftedGamma)
+{
+    kv->nspin = 1;
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.052918;
+    PARAM.input.kspacing[2] = 0.052918;
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.5;
+    PARAM.input.koffset[1] = 0.5;
+    PARAM.input.koffset[2] = 0.5;
+    setucell();
+
+    std::string k_file = "./support/KPT3";
+    kv->read_kpoints(ucell, k_file);
+
+    EXPECT_EQ(kv->get_nkstot(), 343);
+    EXPECT_EQ(kv->get_k_kword(), "Gamma");
+    EXPECT_DOUBLE_EQ(kv->get_koffset(0), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(1), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(2), 0.5);
+    EXPECT_NEAR(kv->kvec_d[0].x, 1.0 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].y, 1.0 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].z, 1.0 / 14.0, 1e-12);
+
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
+    PARAM.input.kmesh_type = "gamma";
+}
+
+TEST_F(KlistTest, ReadKpointsKspacingShiftedMP)
+{
+    kv->nspin = 1;
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.052918;
+    PARAM.input.kspacing[2] = 0.052918;
+    PARAM.input.kmesh_type = "mp";
+    PARAM.input.koffset[0] = 0.5;
+    PARAM.input.koffset[1] = 0.5;
+    PARAM.input.koffset[2] = 0.5;
+    setucell();
+
+    std::string k_file = "./support/KPT3";
+    kv->read_kpoints(ucell, k_file);
+
+    EXPECT_EQ(kv->get_nkstot(), 343);
+    EXPECT_EQ(kv->get_k_kword(), "Monkhorst-Pack");
+    EXPECT_DOUBLE_EQ(kv->get_koffset(0), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(1), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(2), 0.5);
+    EXPECT_NEAR(kv->kvec_d[0].x, -5.5 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].y, -5.5 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].z, -5.5 / 14.0, 1e-12);
+
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
+    PARAM.input.kmesh_type = "gamma";
 }
 
 TEST_F(KlistTest, ReadKpointsGamma)

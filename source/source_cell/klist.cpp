@@ -247,8 +247,16 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         std::ofstream ofs(fn.c_str());
         ofs << "K_POINTS" << std::endl;
         ofs << "0" << std::endl;
-        ofs << "Gamma" << std::endl;
-        ofs << nk1 << " " << nk2 << " " << nk3 << " 0 0 0" << std::endl;
+        if (PARAM.inp.kmesh_type == "mp")
+        {
+            ofs << "Monkhorst-Pack" << std::endl;
+        }
+        else
+        {
+            ofs << "Gamma" << std::endl;
+        }
+        ofs << nk1 << " " << nk2 << " " << nk3 << " " << PARAM.inp.koffset[0] << " " << PARAM.inp.koffset[1] << " "
+            << PARAM.inp.koffset[2] << std::endl;
         ofs.close();
     }
 
