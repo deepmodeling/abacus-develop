@@ -478,6 +478,22 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     return;
 }
 
+template <typename TK, typename TR>
+std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
+{
+    if (PARAM.inp.nspin == 2)
+    {
+        const int nnr = this->hRS2.size() / 2;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, this->hRS2.data()));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, this->hRS2.data() + nnr));
+        return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
+    }
+    else
+    {
+        return {this->hR};
+    }
+}
+
 // case for multi-k-points
 template <typename TK, typename TR>
 void HamiltLCAO<TK, TR>::matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in)

@@ -5,6 +5,8 @@
 namespace ModuleGint
 {
 
+// Templated version: internal computation in double, output cast to Real
+template<typename Real>
 __global__ void set_phi_kernel(
     const int nwmax,
     const int mgrids_num,
@@ -24,7 +26,7 @@ __global__ void set_phi_kernel(
     const int2* __restrict__ atoms_num_info,
     const int* __restrict__ atoms_phi_start,
     const int* __restrict__ bgrids_phi_len,
-    double* __restrict__ phi);
+    Real* __restrict__ phi);
 
 __global__ void set_phi_dphi_kernel(
     const int nwmax,
@@ -78,26 +80,28 @@ __global__ void set_ddphi_kernel(
     double* __restrict__ ddphi_yz,
     double* __restrict__ ddphi_zz);
 
+template<typename Real>
 __global__ void phi_mul_vldr3_kernel(
-    const double* __restrict__ vl,
-    const double dr3,
-    const double* __restrict__ phi,
+    const Real* __restrict__ vl,
+    const Real dr3,
+    const Real* __restrict__ phi,
     const int mgrids_per_bgrid,
     const int* __restrict__ mgrids_local_idx,
     const int* __restrict__ bgrids_phi_len,
     const int* __restrict__ bgrids_phi_start,
-    double* __restrict__ result);
+    Real* __restrict__ result);
 
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
 // each block calculate the dot product of phi_i and phi_j of a meshgrid
+template<typename Real>
 __global__ void phi_dot_phi_kernel(
-    const double* __restrict__ phi_i,           // phi_i(ir,iwt)
-    const double* __restrict__ phi_j,           // phi_j(ir,iwt)
+    const Real* __restrict__ phi_i,           // phi_i(ir,iwt)
+    const Real* __restrict__ phi_j,           // phi_j(ir,iwt)
     const int mgrids_per_bgrid,                 // the number of mgrids of each biggrid
     const int* __restrict__ mgrids_local_idx,   // the idx of mgrid in local cell
     const int* __restrict__ bgrids_phi_len,     // the length of phi on a mgrid of a biggrid
     const int* __restrict__ bgrids_phi_start,   // the start idx in phi of each biggrid
-    double* __restrict__ rho);                  // rho(ir)
+    Real* __restrict__ rho);                  // rho(ir)
 
 __global__ void phi_dot_dphi_kernel(
     const double* __restrict__ phi,

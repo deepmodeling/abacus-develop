@@ -15,26 +15,6 @@
 
 namespace ModuleIO
 {
-using TAC = std::pair<int, std::array<int, 3>>;
-template <typename TK>
-void output_HSR(const UnitCell& ucell,
-                const int& istep,
-                const Parallel_Orbitals& pv,
-                LCAO_HS_Arrays& HS_Arrays,
-                const Grid_Driver& grid, // mohan add 2024-04-06
-                const K_Vectors& kv,
-		        Plus_U &dftu, // mohan add 20251107
-                hamilt::Hamilt<TK>* p_ham,
-#ifdef __EXX
-                const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-                const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr,
-#endif
-                const std::string& SR_filename = "srs1_nao.csr",
-                const std::string& HR_filename_up = "hrs1_nao.csr",
-                const std::string HR_filename_down = "hrs2_nao.csr",
-                const bool& binary = false,
-                const double& sparse_threshold = 1e-10); // LiuXh add 2019-07-15, modify in 2021-12-3
-
 void output_dHR(const int& istep,
                 const ModuleBase::matrix& v_eff,
                 const UnitCell& ucell,
@@ -76,6 +56,55 @@ void output_SR(Parallel_Orbitals& pv,
                const std::string& SR_filename = "srs1_nao.csr",
                const bool& binary = false,
                const double& sparse_threshold = 1e-10);
+
+/// Generate filename for HR/SR CSR output.
+std::string hsr_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const bool append,
+                          const int istep);
+
+/// Generate filename for derivative matrices (dH/dR, dS/dR).
+std::string dhr_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const bool append,
+                          const int istep);
+
+/// Write a single HContainer to CSR file with header.
+template <typename TR>
+void write_hcontainer_csr(const std::string& fname,
+                          const UnitCell* ucell,
+                          const int precision,
+                          hamilt::HContainer<TR>* mat_serial,
+                          const int istep,
+                          const int ispin,
+                          const int nspin,
+                          const std::string& label);
+
+/// Write H(R) and S(R) in CSR format, unified with write_dmr interface.
+template <typename TR>
+void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
+               const hamilt::HContainer<TR>* sr,
+               const UnitCell* ucell,
+               const int precision,
+               const Parallel_2D& paraV,
+               const bool append,
+               const int* iat2iwt,
+               const int nat,
+               const int istep);
+
+/// Write real-space matrix in CSR format (generic interface).
+template <typename TR>
+void write_matrix_r(const std::string& matrix_label,
+                    const std::string& description,
+                    const std::vector<hamilt::HContainer<TR>*>& matrices,
+                    const UnitCell* ucell,
+                    const int precision,
+                    const Parallel_2D& paraV,
+                    const bool append,
+                    const int* iat2iwt,
+                    const int nat,
+                    const int istep);
+
 } // namespace ModuleIO
 
 #endif

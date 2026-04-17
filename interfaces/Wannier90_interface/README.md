@@ -1,10 +1,67 @@
-# ABACUS Wannier90 Interface
-This package provides a user-friendly Python interface to bridge **ABACUS** (Atomic-scale Simulation Package) with **Wannier90**. It automates the workflow of generating Maximally Localized Wannier Functions (MLWFs) and tight-binding models from ABACUS calculations.
-## Features
+# A Brief Introduction to ABACUS Wannier90 Interface
+This package provides a user-friendly Python interface: abacusw90 to bridge **ABACUS** (Atomic-scale Simulation Package) with **Wannier90**. It automates the workflow of generating Maximally Localized Wannier Functions (MLWFs) and tight-binding models from ABACUS calculations.
+
+## What is Wannier90?
+
+Wannier90 is an open-source code that calculates maximally localized Wannier functions (MLWFs) from first-principles calculations. It is designed to:
+
+- Generate maximally localized Wannier functions
+- Calculate band structures and density of states
+- Compute Berry phases and orbital magnetization
+- Provide a basis for tight-binding models
+- Support various first-principles calculation codes through interfaces
+
+Wannier functions are particularly useful for:
+- Electronic structure calculations
+- Transport properties
+- Spectroscopy calculations
+- Model Hamiltonian construction
+
+## ABACUS-Wannier90 Interface: abacusw90
+
+The abacusw90 package allows ABACUS to generate the necessary files for Wannier90, including:
+
+- `*.amn` files: Overlap matrix between Bloch functions and Wannier functions
+- `*.mmn` files: Overlap matrix between Bloch functions at neighboring k-points
+- `UNK*` files: Bloch wavefunctions
+
+## Key features
+- **Various Basis Sets**: Support for both plane wave (PW) and LCAO basis sets.
 - **Automated Workflow**: Handles the core coupling pipeline (Steps 3-5 of the standard tutorial workflow).
 - **Input Generation**: Automatically generates `wannier90.win`, `INPUT`, `KPT`, and `STRU` files.
 - **Method Support**: Supports the recommended `wannier_method = 2` for efficient overlap matrix calculation.
 - **Spin-Orbit Coupling**: Full support for SOC calculations (`nspin=4`, `lspinorb=1`).
+
+## Examples
+
+This directory contains three examples demonstrating different use cases of the ABACUS-Wannier90 interface:
+
+### 1. 01_lcao
+- **System**: Diamond (C)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates Wannier90 calculation using LCAO basis set
+- **Input Files**:
+  - `INPUT-scf`: ABACUS input file for SCF calculation
+  - `INPUT-nscf`: ABACUS input file for NSCF calculation
+  - `KPT-scf`: k-point sampling file for SCF calculation
+  - `KPT-nscf`: k-point sampling file for NSCF calculation
+  - `STRU`: Crystal structure file for diamond
+  - `diamond.win`: Wannier90 input file
+  - `diamond.nnkp`: Wannier90 preprocessing file
+
+### 2. 02_pw
+- **System**: Diamond (C)
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates Wannier90 calculation using plane wave basis set
+- **Input Files**: Similar to 01_lcao, but configured for plane wave basis
+
+### 3. 03_lcao_in_pw
+- **System**: Diamond (C)
+- **Basis**: LCAO in plane wave mode
+- **Purpose**: Demonstrates Wannier90 calculation using LCAO basis set in plane wave mode
+- **Input Files**: Similar to 01_lcao, but configured for LCAO in plane wave mode
+
+# How to Use abacusw90
 ## Installation
 ```bash
 pip install .
@@ -68,3 +125,20 @@ The `run()` method executes the following automated sequence:
 - **Python**: 3.8+
 ```
 
+## Important Notes
+
+- The k-point grid in the ABACUS NSCF calculation must match the one in the Wannier90 input file
+- Set `wvfn_formatted = .true.` in the Wannier90 input file to ensure compatibility with ABACUS output
+- For LCAO calculations, ensure that the orbital basis set is appropriate for the Wannier functions you want to generate
+
+# Troubleshooting
+
+- **Files not found**: Ensure ABACUS is generating `*.amn`, `*.mmn`, and `UNK*` files in the OUT.* directory
+- **Wannier90 cannot read ABACUS output**: Check that `wvfn_formatted = .true.` is set in the Wannier90 input file
+- **Convergence issues**: Ensure the SCF and NSCF calculations are properly converged
+
+# References
+
+- **Wannier90 website**: [http://www.wannier.org/](http://www.wannier.org/)
+- **Wannier90 paper**: A. A. Mostofi et al., *Comput. Phys. Commun.* **185**, 2309 (2014)
+- **ABACUS documentation**: Refer to the ABACUS user manual for more details on input parameters

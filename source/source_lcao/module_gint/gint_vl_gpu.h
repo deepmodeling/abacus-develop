@@ -21,14 +21,8 @@ class Gint_vl_gpu : public Gint
     void cal_gint();
 
     private:
-
-    void init_hr_gint_();
-
-    void transfer_cpu_to_gpu_();
-
-    void transfer_gpu_to_cpu_();
-
-    void cal_hr_gint_();
+    template<typename Real>
+    void cal_gint_impl_();
 
     // input
     const double* vr_eff_ = nullptr;
@@ -39,11 +33,6 @@ class Gint_vl_gpu : public Gint
 
     // Intermediate variables
     double dr3_;
-
-    HContainer<double> hr_gint_;
-    
-    CudaMemWrapper<double> hr_gint_d_;
-    CudaMemWrapper<double> vr_eff_d_;
 };
 
 }

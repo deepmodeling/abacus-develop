@@ -416,8 +416,8 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    #python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
-    #echo "CompareHR_pass $?" >>$1
+    python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
+    echo "CompareHR_pass $?" >>$1
     python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi

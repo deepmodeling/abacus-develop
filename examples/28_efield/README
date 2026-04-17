@@ -4,21 +4,100 @@
 /
 /*******************************************************************************/
 
-ABACUS supports adding a saw-like potential simulating an electric field
-can to the bare ionic potential, which is a simplified simulation to the field-effect measurements, in which the system is separated from the gate electrode by a dielectric such as silicon oxide.
+# External Electric Field Examples
 
-An external electric field can be added with the following 
-parameters in INPUT file, 
+This directory contains examples for performing calculations with external electric field in ABACUS. The external electric field is implemented as a saw-like potential, which simulates the effect of a gate electrode separated by a dielectric.
+
+## What is External Electric Field Calculation?
+
+External electric field calculations are used to study how materials respond to an applied electric field. This is particularly important for:
+
+- Field-effect devices
+- Catalysis under electric field
+- Ferroelectric materials
+- Electronic structure changes under electric field
+- Polarization and dielectric properties
+
+ABACUS implements the external electric field as a saw-like potential, which is a simplified model of field-effect measurements where the system is separated from a gate electrode by a dielectric layer (e.g., silicon oxide).
+
+## External Electric Field in ABACUS
+
+To enable external electric field in ABACUS, set the following parameters in the INPUT file:
 
 ```
 INPUT_PARAMETERS
-efield_flag        1
-efield_dir         2
-efield_pos_max     0.5
-efield_pos_dec     0.1
-efield_amp         0.001
+efield_flag        1    # Enable external electric field
+efield_dir         2    # Direction of the electric field (1, 2, or 3 for x, y, or z)
+efield_pos_max     0.5  # Position of the maximum field (fraction of cell length)
+efield_pos_dec     0.1  # Decay length of the field (fraction of cell length)
+efield_amp         0.001  # Amplitude of the electric field (Ha/bohr)
 ```
 
-Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction). The energy contribution from the added external field is given as `E_efield` in the output file. See `running_scf.ref` for the output of this example. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
+### Key Parameters:
 
+- `efield_flag`: Set to 1 to enable external electric field
+- `efield_dir`: Direction of the electric field (1 for x, 2 for y, 3 for z)
+- `efield_pos_max`: Position of the maximum field strength as a fraction of the cell length (0 to 1)
+- `efield_pos_dec`: Decay length of the field as a fraction of the cell length
+- `efield_amp`: Amplitude of the electric field in Hartree/bohr (1 Ha/bohr ≈ 51.42 V/Å)
 
+Both plane wave (PW) and LCAO basis sets are supported for external electric field calculations.
+
+## Examples Included
+
+### 1. 01_Pt_slab
+- **System**: Platinum slab under external electric field
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates external electric field calculation for a metal slab
+- **Input Files**:
+  - `INPUT`: Contains the external electric field parameters
+  - `STRU`: Describes the platinum slab structure
+  - `run.sh`: Script to run the calculation
+  - `running_scf.ref`: Reference output for comparison
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/28_efield/01_Pt_slab
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- Energy output file: Contains energy and convergence information, including the electric field energy contribution
+- `running_scf.log`: Log file for the SCF calculation, includes details about the electric field setup
+- `forces.dat`: Contains atomic forces, which include contributions from the electric field
+
+### Energy Contribution
+
+The energy contribution from the external electric field is given as `E_efield` in the output files. This term represents the interaction energy between the system and the applied electric field.
+
+## Notes
+
+- The electric field strength is specified in atomic units (Ha/bohr). To convert to V/Å, use the conversion factor: 1 Ha/bohr ≈ 51.42 V/Å
+- The saw-like potential is a simplified model that approximates the field from a gate electrode
+- For accurate results, ensure that the unit cell is sufficiently large in the direction of the electric field to avoid interactions between periodic images
+- The choice of `efield_pos_max` and `efield_pos_dec` affects the shape of the potential; adjust these parameters based on your system geometry
+- External electric field calculations can be combined with other features like spin-orbit coupling and vdW corrections
+- The computational cost of external electric field calculations is similar to standard DFT calculations
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set, k-point sampling, and electric field parameters
+
+## Applications
+
+External electric field calculations in ABACUS can be used to study:
+
+- Field-induced phase transitions
+- Electric field effects on catalytic activity
+- Band bending at interfaces
+- Field-emission properties
+- Ferroelectric switching
+- Dielectric response of materials

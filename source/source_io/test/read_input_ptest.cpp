@@ -205,12 +205,15 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_proj_band, 0);
     EXPECT_EQ(param.inp.out_mat_hs[0], 0);
     EXPECT_EQ(param.inp.out_mat_hs[1], 8);
-    EXPECT_EQ(param.inp.out_mat_hs2, 0);
+    EXPECT_EQ(param.inp.out_mat_hs2[0], 0);
+    EXPECT_EQ(param.inp.out_mat_hs2[1], 8);
     EXPECT_FALSE(param.inp.out_mat_xc);
-    EXPECT_FALSE(param.inp.out_mat_xc2);
+    EXPECT_EQ(param.inp.out_mat_xc2[0], 0);
+    EXPECT_EQ(param.inp.out_mat_xc2[1], 8);
     EXPECT_FALSE(param.inp.out_eband_terms);
     EXPECT_EQ(param.inp.out_app_flag, 0);
-    EXPECT_EQ(param.inp.out_mat_r, 0);
+    EXPECT_EQ(param.inp.out_mat_r[0], 0);
+    EXPECT_EQ(param.inp.out_mat_r[1], 8);
     EXPECT_FALSE(param.inp.out_wfc_lcao);
     EXPECT_FALSE(param.inp.out_alllog);
     EXPECT_DOUBLE_EQ(param.inp.dos_emin_ev, -15);
@@ -385,7 +388,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
     EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
-    EXPECT_EQ(param.inp.cal_syns, 0);
+    EXPECT_EQ(param.inp.cal_syns[0], 0);
+    EXPECT_EQ(param.inp.cal_syns[1], 8);
     EXPECT_EQ(param.inp.dmax, 0.01);
     EXPECT_EQ(param.inp.mdp.md_nstep, 10);
     EXPECT_EQ(param.inp.mdp.md_pchain, 1);

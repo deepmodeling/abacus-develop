@@ -16,6 +16,7 @@ class PSIPrepareBase
   public:
     PSIPrepareBase() = default;
     virtual ~PSIPrepareBase() = default;
+    virtual void prepare_init(const int& random_seed) = 0;
 };
 
 } // namespace psi

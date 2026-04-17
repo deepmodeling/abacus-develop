@@ -59,7 +59,7 @@ void Gint_tau_gpu::cal_tau_()
         CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
         CHECK_CUDA(cudaStreamCreate(&stream));
-        PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
+        PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> dphi_x(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_y(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_z(BatchBigGrid::get_max_phi_len(), stream, false);

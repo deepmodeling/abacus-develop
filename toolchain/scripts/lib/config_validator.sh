@@ -523,8 +523,8 @@ validate_configuration() {
 # Check if validation should be skipped
 # Usage: should_skip_validation
 should_skip_validation() {
-    if [[ "${CONFIG_CACHE[SKIP_SYSTEM_CHECKS]}" == "true" ]]; then
-        echo "Skipping configuration validation (SKIP_SYSTEM_CHECKS=true)"
+    if [[ "${CONFIG_CACHE[skip_system_checks]}" == "__TRUE__" ]]; then
+        echo "Skipping configuration validation (--skip-system-checks)"
         return 0
     fi
     return 1
