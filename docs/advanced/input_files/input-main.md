@@ -1803,15 +1803,20 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
-- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
   - For gamma only case:
-   - nspin = 1 and 4: dm_nao.csr;
-   - nspin = 2: dms1_nao.csr and dms2_nao.csr for the two spin channels.
+   - nspin = 1 and 4: dmg1_nao.txt;
+   - nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
   - For multi-k points case:
-   - nspin = 1 and 4: dmk1_nao.csr, dmk2_nao.csr, ...;
-   - nspin = 2: dmk1s1_nao.csr... and dmk1s2_nao.csr... for the two spin channels.
+   - nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+   - nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-  > Note: In the 3.10-LTS version, the parameter is named out_dm and the file names are SPIN1_DM and SPIN2_DM, etc.
+  Here, g{istep} denotes the geometry/step index in the output file name.
+
+  > Note: Version difference (develop vs 3.10-LTS):
+  >
+  > - In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+  > - In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
 - **Default**: False
 
 ### out_dmr
