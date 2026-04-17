@@ -2,9 +2,7 @@
 Input/Output utilities for ABACUS and Wannier90 files.
 """
 
-import numpy as np
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 class Wannier90Input:
     """Helper class to construct wannier90.win file."""
@@ -15,16 +13,19 @@ class Wannier90Input:
         with open(filename, 'w') as f:
             f.write(f"num_wann = {self.params['num_wann']}\n")
             f.write(f"num_bands = {self.params['num_bands']}\n")
-            f.write(f"dis_num_iter = 200\n")
+            if self.params.get('dis_num_iter'):
+                f.write(f"dis_num_iter = {self.params['dis_num_iter']}\n")
+            else:
+                f.write("dis_num_iter = 200\n")
             
-            f.write(f"! outer window\n")
+            f.write("! outer window\n")
             f.write(f"dis_win_min = {self.params['dis_win_min']}\n")
             f.write(f"dis_win_max = {self.params['dis_win_max']}\n")
-            f.write(f"! inner window\n")
+            f.write("! inner window\n")
             f.write(f"dis_froz_min = {self.params['dis_froz_min']}\n")
             f.write(f"dis_froz_max = {self.params['dis_froz_max']}\n")
             
-            f.write(f"write_hr = .true.\n")
+            f.write("write_hr = .true.\n")
             f.write(f"spinors = {'.true.' if self.params.get('spinors', True) else '.false.'}\n")
             
             f.write("begin projections\n")
