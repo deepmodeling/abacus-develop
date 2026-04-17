@@ -79,7 +79,24 @@ std::string determine_type()
         }
         else if (PARAM.inp.esolver_type == "ks-lr")
         {
-            esolver_type = "ksdft_lr_lcao";
+            // [FSSH修改说明] 当计算类型为MD且MD类型为FSSH时，
+            // 不使用标准的ks-lr流程(创建KS→SCF→移动到LR→返回LR)，
+            // 而是仅创建ESolver_KS_LCAO。LR-TDDFT计算将在每个MD步的
+            // execute_hopping中通过借用构造函数按需创建。
+            // 原因: FSSH需要KS求解器在整个MD模拟中持续存在，
+            //   以便每步执行SCF和提取KS波函数；标准ks-lr流程会将KS
+            //   移动到LR中并删除KS，导致:
+            //   1. force_virial调用ESolver_LR::runner而非KS SCF
+            //   2. execute_hopping中dynamic_cast<ESolver_KS_LCAO*>失败
+            //   3. 后续MD步无法执行SCF，最终导致段错误
+            if (PARAM.inp.calculation == "md" && PARAM.mdp.md_type == "fssh")
+            {
+                esolver_type = "ksdft_lcao";
+            }
+            else
+            {
+                esolver_type = "ksdft_lr_lcao";
+            }
         }
         else if (PARAM.inp.esolver_type == "lr")
         {

@@ -22,6 +22,8 @@ class Grid
     virtual ~Grid();
 
     Grid& operator=(Grid&&) = default;
+    // FSSH needs copy constructor 
+    Grid& operator=(const Grid&) = default;
 
     void init(std::ofstream& ofs, const UnitCell& ucell, const double radius_in, const bool boundary = true);
 

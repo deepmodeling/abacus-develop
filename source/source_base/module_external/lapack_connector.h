@@ -301,6 +301,14 @@ void dsysv_(const char* uplo, const int* n, const int* nrhs,
             double* b, const int* ldb,
             double* work, const int* lwork,
             int* info);
+// === Singular Value Decomposition ===
+// [FSSH修改说明] 新增 dgesvd_ 声明，用于 FSSH 模块中虚轨道子空间的 SVD 分解
+// 用途: Maximum Overlap Method (MOM) 解决虚轨道混洗问题
+void dgesvd_(const char* jobu, const char* jobvt, const int* m, const int* n,
+             double* a, const int* lda, double* s,
+             double* u, const int* ldu, double* vt, const int* ldvt,
+             double* work, const int* lwork, int* info);
+
 }  // extern "C"
 
 #ifdef GATHER_INFO

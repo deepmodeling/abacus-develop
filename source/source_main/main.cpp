@@ -11,9 +11,27 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+// #include "source_lcao/module_operator_lcao/fssh_driver.h"
 
 int main(int argc, char** argv)
 {
+    // ========================================================
+    // FSSH 测试截断点 (测试完记得删掉这段或注释掉)
+    // ========================================================
+    // FsshDriver test_driver;
+    // test_driver.test_math_1(); // 运行测试
+    // test_driver.test_math_2(); // 运行测试
+    // test_driver.test_math_3(); // 运行测试
+    // test_driver.test_math_4(); // 运行测试
+    // test_driver.test_math_5(); // 运行测试
+    // test_driver.test_tully_model_1();
+    // test_driver.test_tully_model_1_scan();
+    // test_driver.test_tully_model_2();
+    // test_driver.test_tully_model_2_scan();
+    // test_driver.test_tully_model_3();
+    // test_driver.test_tully_model_3_scan();
+    // return 0;                // 直接退出程序，不跑后面的庞大DFT代码了
+    // ========================================================
     /*
     read the arguement in the command-line,
     with "abacus -v", the program exit and returns version info,
@@ -41,7 +59,8 @@ int main(int argc, char** argv)
     */
     Driver DD;
     DD.init();
-
+    // FsshDriver lowdin_validator;
+    // lowdin_validator.run_lowdin_validation_suite_8_5("/home/shane/ABACUS/test/lowdin_validation_4/lowdin_validation_8_5");
     /*
     After running mpi version of abacus, release the mpi resources.
     */

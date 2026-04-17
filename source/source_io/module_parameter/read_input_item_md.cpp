@@ -713,5 +713,44 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         read_sync_double(input.dmax);
         this->add_item(item);
     }
+    {
+        Input_Item item("fssh_nstate");
+        item.annotation = "number of states in FSSH simulation";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The number of electronic states (adiabatic surfaces) included in the Fewest Switches Surface Hopping (FSSH) simulation. "
+                           "This parameter is only used when md_type = fssh.";
+        item.default_value = "2";
+        item.unit = "";
+        item.availability = "md_type = fssh";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mdp.fssh_nstate < 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "fssh_nstate must be >= 2");
+            }
+        };
+        read_sync_int(input.mdp.fssh_nstate);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("fssh_init_state");
+        item.annotation = "initial active state in FSSH simulation (0-indexed)";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The initial active electronic state (0-indexed) for the Fewest Switches Surface Hopping (FSSH) simulation. "
+                           "State 0 is the ground state and state 1 is the first excited state, etc. "
+                           "This parameter is only used when md_type = fssh.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "md_type = fssh";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mdp.fssh_init_state < 0 || para.input.mdp.fssh_init_state >= para.input.mdp.fssh_nstate)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "fssh_init_state must be >= 0 and < fssh_nstate");
+            }
+        };
+        read_sync_int(input.mdp.fssh_init_state);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

@@ -278,6 +278,163 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     }
 }
 
+// =====================================================================
+// [FSSH修改] 新增：借用构造函数 (Borrowing Constructor)
+// 与右值引用构造函数(&&)的核心区别：
+//   - 值类型(gd, kv, paraMat_字段, eig_ks): 拷贝而非移动
+//   - psi_ks: 深拷贝(LR拥有独立副本)，而非指针窃取
+//   - pw_rho: 借用指针(pw_rho_flag=false，析构时不delete)，而非窃取所有权
+//   - gint_info_: 不转移(保持nullptr，依赖KS已设置的全局静态指针)
+//   - two_center_bundle_: 拷贝而非移动
+//   - pelec->ekb: 拷贝而非移动
+// 调用后KS对象完全保持原状，可继续用于后续MD步。
+// =====================================================================
+template <typename T, typename TR>
+LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol,
+    const Input_para& inp, UnitCell& ucell)
+    : input(inp), ucell(ucell)
+#ifdef __EXX
+    , exx_info(GlobalC::exx_info)
+#endif
+{
+    ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS_borrow)");
+
+    if (this->input.lr_solver == "spectrum")
+    {
+        throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be `lr` to skip KS calculation.");
+    }
+
+    // [FSSH修改] 原代码: this->gd = std::move(ks_sol.gd);
+    // 修改原因: std::move会清空ks_sol.gd，改用拷贝以保留KS的Grid_Driver
+    this->gd = ks_sol.gd;
+
+    // xc kernel
+    this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
+
+    // [FSSH修改] 原代码: this->kv = std::move(ks_sol.kv);
+    // 修改原因: 保留KS的K_Vectors数据
+    this->kv = ks_sol.kv;
+
+    this->parameter_check();
+
+    this->set_dimension();
+
+    LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
+
+    // [FSSH修改] 原代码: this->paraMat_.atom_begin_row = std::move(ks_sol.pv.atom_begin_row);
+    // 修改原因: 保留KS的Parallel_Orbitals数据
+    this->paraMat_.atom_begin_row = ks_sol.pv.atom_begin_row;
+    this->paraMat_.atom_begin_col = ks_sol.pv.atom_begin_col;
+    this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
+
+    LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
+#ifdef __MPI
+        , this->paraMat_.blacs_ctxt
+#endif
+    );
+
+    // [FSSH修改] 原代码中move_gs会执行: this->psi_ks = ks_sol.psi; ks_sol.psi = nullptr;
+    //   以及: this->eig_ks = std::move(ks_sol.pelec->ekb);
+    // 修改原因: 指针窃取和move会破坏KS对象
+    // 修改后: psi采用深拷贝(new Psi拷贝构造)，ekb采用拷贝赋值
+    auto borrow_gs = [&, this]() -> void
+        {
+            this->psi_ks = new psi::Psi<T>(*ks_sol.psi);  // 深拷贝，不窃取KS的psi指针
+            this->eig_ks = ks_sol.pelec->ekb;              // 拷贝，不move KS的ekb
+        };
+#ifdef __MPI
+    if (this->nbands == PARAM.inp.nbands)
+    {
+        borrow_gs();
+    }
+    else
+    {
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
+                                       this->paraC_.get_col_size(),
+                                       this->paraC_.get_row_size(),
+                                       this->kv.ngk,
+                                       true);
+        this->eig_ks.create(this->kv.get_nks(), this->nbands);
+        const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
+        {
+            Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
+                &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
+            for (int ib = 0; ib < this->nbands; ++ib) { this->eig_ks(ik, ib) = ks_sol.pelec->ekb(ik, start_band + ib); }
+        }
+    }
+#else
+    borrow_gs();
+#endif
+    if (nspin == 2)
+    {
+        this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
+        reset_dim_spin2();
+    }
+
+    // [FSSH修改] 原代码: this->gint_info_ = std::move(ks_sol.gint_info_);
+    // 修改原因: unique_ptr的move会将KS的gint_info_置空，导致KS后续崩溃
+    // 修改后: 不转移gint_info_所有权(保持nullptr)，依赖KS初始化时已通过
+    //   Gint::set_gint_info()设置的全局静态指针。KS必须在LR之前初始化，且在LR
+    //   生命周期内保持存活(FSSH场景满足此条件)。
+    // this->gint_info_ 保持默认值 nullptr
+
+    // [FSSH修改] 原代码: this->pw_rho = ks_sol.pw_rho; ks_sol.pw_rho = nullptr;
+    // 修改原因: 指针窃取导致KS失去pw_rho，后续KS运算和析构会崩溃
+    // 修改后: 借用pw_rho指针(不取得所有权)，将pw_rho_flag设为false
+    //   使得~ESolver_FP()中的teardown_pwrho不会delete这个借用的指针
+    if (this->pw_rho_flag)
+    {
+        delete this->pw_rho;
+    }
+    this->pw_rho = ks_sol.pw_rho;       // 借用，不置空ks_sol.pw_rho
+    this->pw_rhod = nullptr;            // [FSSH修改] 将pw_rhod设为nullptr以防止~ESolver_FP中
+                                         // teardown_pwrho误删。注意teardown_pwrho对pw_rhod的
+                                         // 删除不受pw_rho_flag保护(当double_grid==true时无条件
+                                         // delete pw_rhod)，而delete nullptr是安全的空操作。
+                                         // LR计算中不需要pw_rhod (dense grid仅用于USPP增强电荷密度)
+    this->pw_rho_flag = false;           // 标记为非拥有，析构时不delete pw_rho
+
+    //init potential and calculate kernels using ground state charge
+    init_pot(*ks_sol.pelec->charge);
+
+#ifdef __EXX
+    if (xc_kernel == "hf" || xc_kernel == "hse")
+    {
+        // [FSSH修改] 原代码: this->move_exx_lri(ks_sol.exx_nao.exd->exx_ptr);
+        // 修改原因: move_exx_lri会将KS的exx_ptr置空
+        // 修改后: 直接共享shared_ptr(引用计数+1)，两者共同拥有
+        std::string dft_functional = LR_Util::tolower(input.dft_functional);
+        if (ks_sol.exx_nao.exd && std::is_same<T, double>::value && xc_kernel == dft_functional) {
+            this->exx_lri = std::reinterpret_pointer_cast<Exx_LRI<T>>(ks_sol.exx_nao.exd->exx_ptr);
+        } else if (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
+            this->exx_lri = std::reinterpret_pointer_cast<Exx_LRI<T>>(ks_sol.exx_nao.exc->exx_ptr);
+        } else
+        {
+            if (xc_kernel == "hf") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
+            else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
+            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+            this->exx_lri->init(MPI_COMM_WORLD, ucell, this->kv, ks_sol.orb_);
+            this->exx_lri->cal_exx_ions(ucell, input.out_ri_cv);
+        }
+    }
+#endif
+    this->pelec = new elecstate::ElecStateLCAO<T>();
+    orb_cutoff_ = ks_sol.orb_.cutoffs();
+
+    // [FSSH修改] 原代码: this->two_center_bundle_ = std::move(ks_sol.two_center_bundle_);
+    // 修改原因: TwoCenterBundle含有unique_ptr成员，既不能move(会清空KS)也不能拷贝(拷贝赋值被删除)
+    // 修改后: 当需要velocity gauge时，从头独立构建TwoCenterBundle，
+    //   与from-scratch构造函数(line 456-464)采用相同的初始化流程
+    if (LR_Util::tolower(input.abs_gauge) == "velocity")
+    {
+        this->two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data());
+        LCAO_Orbitals orb;
+        this->two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+        setup_2center_table(this->two_center_bundle_, orb, ucell);
+    }
+}
+
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : input(inp), ucell(ucell)
 #ifdef __EXX

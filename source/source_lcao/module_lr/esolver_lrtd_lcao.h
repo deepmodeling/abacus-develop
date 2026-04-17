@@ -27,11 +27,23 @@ namespace LR
     {
     public:
         /// @brief  a move constructor from ESolver_KS_LCAO
+        /// [FSSH修改说明] 保留原有右值引用构造函数，用于非FSSH场景（如ks-lr流程中KS不再需要）
         ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol, const Input_para& inp, UnitCell& ucell);
+
+        /// @brief a borrowing constructor from ESolver_KS_LCAO (KS object remains valid after construction)
+        /// [FSSH修改说明] 新增左值引用构造函数，通过拷贝/借用而非移动来获取KS资源，
+        /// 解决FSSH场景中LR构造后KS对象被销毁的问题，避免使用memcpy等未定义行为。
+        /// 关键区别: 值类型采用拷贝，指针资源(pw_rho等)采用借用(不取得所有权)，
+        /// psi采用深拷贝(LR独立拥有副本)。
+        ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol, const Input_para& inp, UnitCell& ucell);
+
         /// @brief a from-scratch constructor
         ESolver_LR(const Input_para& inp, UnitCell& ucell);
         ~ESolver_LR() {
             delete this->psi_ks;
+            // [FSSH修改说明] 借用模式下不删除pw_rho，由原始KS对象负责生命周期管理
+            // 原代码: (无此逻辑，~ESolver_FP中pw_rho_flag为true时会delete pw_rho)
+            // 修改后: 借用构造函数将pw_rho_flag设为false，~ESolver_FP不会删除借用的pw_rho
         }
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate

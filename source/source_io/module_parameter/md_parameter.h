@@ -67,6 +67,10 @@ struct MD_para
                              ///< not. liuyu 2023-03-01
     bool dump_virial = true; ///< output lattice virial into the file MD_dump or
                              ///< not. liuyu 2023-03-01
+
+    // FSSH parameters
+    int fssh_nstate = 2;     ///< number of states in FSSH simulation
+    int fssh_init_state = 0; ///< initial active state in FSSH simulation (0-indexed)
 };
 
 #endif // MD_PARA_H

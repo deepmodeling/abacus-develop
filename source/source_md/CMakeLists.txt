@@ -9,6 +9,7 @@ add_library(
     nhchain.cpp
     run_md.cpp
     verlet.cpp
+    fssh.cpp
 )
 
 if(ENABLE_COVERAGE)

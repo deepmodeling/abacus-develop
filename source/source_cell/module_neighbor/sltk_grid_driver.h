@@ -55,6 +55,10 @@ class Grid_Driver : public Grid
     ~Grid_Driver();
 
     Grid_Driver& operator=(Grid_Driver&&) = default;
+    // [FSSH修改] 原代码: 无拷贝赋值运算符（因显式定义了移动赋值，拷贝赋值被隐式删除）
+    // 修改原因: FSSH借用构造函数中需要拷贝Grid_Driver以保留KS对象的完整性，
+    //   Grid_Driver及其父类Grid的所有成员均为可拷贝类型，default即可正确工作
+    Grid_Driver& operator=(const Grid_Driver&) = default;
 
     //==========================================================
     // EXPLAIN FOR default parameter `adjs = nullptr`
