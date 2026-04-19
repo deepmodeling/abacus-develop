@@ -762,6 +762,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  neighbor_search
   io_input
   io_basic
   io_advanced
