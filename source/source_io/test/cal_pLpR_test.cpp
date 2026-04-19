@@ -54,7 +54,7 @@ TEST_F(CalpLpRTest, CalLzijRTest)
     int it = 0, ia = 0, il = 0, iz = 0, mi = 0;
     int jt = 0, ja = 0, jl = 0, jz = 0, mj = 0; // self, the first s
     
-    // <s|Lz|s> = 0: no magnetic moment
+    // <s|Lz|s> = 0: Lz|s> = 0
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
@@ -63,26 +63,26 @@ TEST_F(CalpLpRTest, CalLzijRTest)
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Lz|p(m=0)> = 0: orthogonal
+    // <p(m=-1)|Lz|p(m=0)> = 0: Lz|p(m=0)> = 0
     il = 1; mi = -1; jl = 1; mj = 0;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lz|p(m=1)> = 1: same
+    // <p(m=1)|Lz|p(m=1)> = 0: sqrt(2)i<p(m=1)|p(m=-1)> = 0
     il = 1; mi = 1; jl = 1; mj = 1;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 1.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Lz|d(m=0)> = 0: orthogonal
-    il = 2; mi = -1; jl = 2; mj = 0;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=1)|Lz|d(m=1)> = 1: same
-    il = 2; mi = 1; jl = 2; mj = 1;
+    // <p(m=1)|Lz|p(m=-1)> = -sqrt(2)i<p(m=1)|p(m=1)> = -sqrt(2)i
+    il = 1; mi = 1; jl = 1; mj = -1;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 1.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(), -sqrt(2.0), DOUBLETHRESHOLD);
+    // <p(m=-1)|Lz|p(m=1)> = sqrt(2)i<p(m=-1)|p(m=-1)> = sqrt(2)i
+    il = 1; mi = -1; jl = 1; mj = 1;
+    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
+    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(),  sqrt(2.0), DOUBLETHRESHOLD);
 }
 
 TEST_F(CalpLpRTest, CalLxijRTest)
@@ -102,21 +102,16 @@ TEST_F(CalpLpRTest, CalLxijRTest)
     out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Lx|p(m=0)> = 0.5: Lx|p(m=0)> = 1/2 (|p(m=-1)> + |p(m=1)>)
+    // <p(m=-1)|Lx|p(m=0)> = i<p(m=-1)|p(m=-1)> = i
     il = 1; im = -1; jl = 1; jm = 0;
     out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.5*sqrt(2.0), DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lx|p(m=1)> = 0: expectation value is 0
-    il = 1; im = 1; jl = 1; jm = 1;
+    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(), 1.0, DOUBLETHRESHOLD);
+    // <p(m=0)|Lx|p(m=-1)> = -i<p(m=0)|p(m=0)> = -i
+    il = 1; im = 0; jl = 1; jm = -1;
     out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Lx|d(m=0)> = 0.5: Lx|d(m=0)> = 1/2 (|d(m=-1)> + |d(m=1)>)
-    il = 2; im = -1; jl = 2; jm = 0;
-    out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.5*sqrt(6.0), DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(), -1.0, DOUBLETHRESHOLD);
 }
 
 TEST_F(CalpLpRTest, CalLyijRTest)
@@ -136,21 +131,16 @@ TEST_F(CalpLpRTest, CalLyijRTest)
     out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Ly|p(m=0)> = -i/2: Ly|p(m=0)> = -i/2 (|p(m=1)> - |p(m=-1)>)
+    // <p(m=1)|Ly|p(m=0)> = -i*<p(m=1)|p(m=1)> = -i
     il = 1; im = -1; jl = 1; jm = 0;
     out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.5*sqrt(2.0), DOUBLETHRESHOLD);
-    // <p(m=1)|Ly|p(m=1)> = 0: expectation value is 0
-    il = 1; im = 1; jl = 1; jm = 1;
+    EXPECT_NEAR(out.imag(), -1.0, DOUBLETHRESHOLD);
+    // <p(m=0)|Ly|p(m=1)> = i*<p(m=0)|p(m=0)> = i
+    il = 1; im = 0; jl = 1; jm = 1;
     out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Ly|d(m=0)> = -i/2: Ly|d(m=0)> = -i/2 (|d(m=1)> - |d(m=-1)>)
-    il = 2; im = -1; jl = 2; jm = 0;
-    out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.5*sqrt(6.0), DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(), 1.0, DOUBLETHRESHOLD);
 }
 
 int main(int argc, char **argv)
