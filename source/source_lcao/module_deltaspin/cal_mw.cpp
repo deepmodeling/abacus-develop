@@ -4,7 +4,7 @@
 #include "source_base/name_angular.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "spin_constrain.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO

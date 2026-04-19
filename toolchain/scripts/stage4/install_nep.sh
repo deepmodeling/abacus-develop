@@ -30,7 +30,7 @@ case "$with_nep" in
     echo "==================== Installing NEP (CPU version) ===================="
     dirname="NEP_CPU-${nep_ver}"
     pkg_install_dir="${INSTALLDIR}/${dirname}"
-    install_lock_file="$pkg_install_dir/install_successful"
+    install_lock_file="${pkg_install_dir}/install_successful"
     filename="nep-${nep_ver}.tar.gz"
     url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
 
@@ -125,16 +125,11 @@ if [ "$with_nep" != "__DONTUSE__" ]; then
   NEP_LIBS="-lnep"
   if [ "$with_nep" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_nep"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include":\${CPATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     cat "${BUILDDIR}/setup_nep" >> $SETUPFILE
   fi
@@ -146,7 +141,7 @@ export CP_DFLAGS="\${CP_DFLAGS} -D__NEP"
 export CP_CFLAGS="\${CP_CFLAGS} \${NEP_CFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} \${NEP_LDFLAGS}"
 export CP_LIBS="\${NEP_LIBS} \${CP_LIBS}"
-export NEP_ROOT="$pkg_install_dir"
+export NEP_ROOT="${pkg_install_dir}"
 EOF
 fi
 

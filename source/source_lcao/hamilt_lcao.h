@@ -10,6 +10,7 @@
 #include "source_lcao/hs_matrix_k.hpp"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <memory>
 #include <vector>
 
 #include "source_lcao/setup_deepks.h" // mohan add 20251008
@@ -126,6 +127,11 @@ class HamiltLCAO : public Hamilt<TK>
     /// get hRS2 buffer for NSPIN=2 case (spin-up in first half, spin-down in second half)
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
+    /// Get HR as a vector of HContainer pointers (one per spin).
+    /// For nspin=2, returns pointers to internally managed per-spin wrappers over hRS2.
+    /// Returned pointers are owned by this class; caller must NOT delete them.
+    std::vector<HContainer<TR>*> getHR_vector();
+
     /// refresh the status of HR
     void refresh(bool yes) override;
 
@@ -166,6 +172,11 @@ class HamiltLCAO : public Hamilt<TK>
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;
+
+    /// Per-spin HContainer wrappers for nspin=2 (owned by this class).
+    /// Rebuilt by getHR_vector() whenever hRS2 is resized.
+    std::unique_ptr<HContainer<TR>> hr_spin_up_;
+    std::unique_ptr<HContainer<TR>> hr_spin_dn_;
 
     int refresh_times = 1;
 

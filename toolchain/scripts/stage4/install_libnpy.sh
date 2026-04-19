@@ -49,7 +49,7 @@ case "$with_libnpy" in
         echo "==================== Installing LIBNPY ===================="
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
@@ -87,7 +87,7 @@ case "$with_libnpy" in
             # npy.hpp -> get include dir -> get parent dir
             libnpy_include_dir="$(dirname "$libnpy_header_path")"
             pkg_install_dir="$(dirname "$libnpy_include_dir")"
-            echo "Found libnpy at: $pkg_install_dir"
+            echo "Found libnpy at: ${pkg_install_dir}"
             LIBNPY_CFLAGS="-I'${libnpy_include_dir}'"
         else
             report_error "Cannot find npy.hpp in system paths"
@@ -106,14 +106,13 @@ esac
 if [ "$with_libnpy" != "__DONTUSE__" ]; then
     if [ "$with_libnpy" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
-prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libnpy"
 export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
-export LIBNPY_ROOT="$pkg_install_dir"
+export LIBNPY_ROOT="${pkg_install_dir}"
 EOF
 fi
 

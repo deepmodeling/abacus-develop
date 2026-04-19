@@ -64,6 +64,8 @@ struct Input_para
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
     int nbspline = -1;                              ///< the order of B-spline basis(>=0) if it is -1 (default)
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
+    std::vector<double> koffset = {0.0, 0.0, 0.0};  ///< koffset for kspacing-generated k-point mesh
+    std::string kmesh_type = "gamma";               ///< k-point mesh type for kspacing-generated k-point mesh: gamma or mp
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
     std::string device = "auto";
@@ -179,7 +181,7 @@ struct Input_para
     MD_para mdp;
     double ref_cell_factor = 1; ///< construct a reference cell bigger than the
                                 ///< initial cell liuyu 2023-03-21
-    bool cal_syns = false;      ///< calculate asynchronous S matrix to output
+    std::vector<int> cal_syns = {0, 8};  ///< calculate asynchronous S matrix to output {enable, precision}
     double dmax = 0.01;         ///< maximum displacement of all atoms in one step (bohr)
 
     // ==============   #Parameters (6.OFDFT) ===========================
@@ -196,6 +198,9 @@ struct Input_para
     double of_vw_weight = 1.0;                   ///< weight of vW KEDF
     double of_wt_alpha = 5. / 6.;                ///< parameter alpha of WT KEDF
     double of_wt_beta = 5. / 6.;                 ///< parameter beta of WT KEDF
+    double of_extwt_kappa = 1.0
+                            / (2.0 * std::pow(4. / 3., 1. / 3.) - 1.0);
+                                                 ///< parameter kappa of EXT-WT KEDF
     double of_wt_rho0 = 0.0;                     ///< set the average density of system, in Bohr^-3
     bool of_hold_rho0 = false;                   ///< If set to 1, the rho0 will be fixed even if the volume of
                                                  ///< system has changed, it will be set to 1 automatically if
@@ -388,21 +393,20 @@ struct Input_para
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
-    bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
-                                          ///< S(R) matrix in local basis.
-    bool out_mat_dh = false;
-    bool out_mat_ds = false;
+    std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
+    std::vector<int> out_mat_dh = {0, 8};   ///< output dH/dR matrices with precision
+    std::vector<int> out_mat_ds = {0, 8};   ///< output dS/dR matrices with precision
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
-    bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
+    std::vector<int> out_mat_xc2 = {0, 8};  ///< output Vxc(R) matrix with precision
     bool out_eband_terms = false; ///< output the band energy terms separately
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output
-    bool out_mat_t = false;
+    std::vector<int> out_mat_t = {0, 8};    ///< output T(R) matrix with precision
     bool out_element_info = false;        ///< output information of all elements
-    bool out_mat_r = false;               ///< jingan add 2019-8-14, output r(R) matrix.
+    std::vector<int> out_mat_r = {0, 8};    ///< output r(R) matrix with precision
     int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
     bool out_dipole = false;              ///< output the dipole or not
     bool out_efield = false;              ///< output the efield or not

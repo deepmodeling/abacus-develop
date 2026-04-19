@@ -261,6 +261,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
     {
+//	std::cout << " DFT+U kernel called " << std::endl;
         FPTYPE local_stress = 0;
         int iat = 0, sum = 0;
         for (int it = 0; it < ntype; it++)

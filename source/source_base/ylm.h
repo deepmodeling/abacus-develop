@@ -119,8 +119,9 @@ class Ylm
 	 * @param y [in] y/r
 	 * @param z [in] z/r
 	 * @param rly [in] calculated Ylm, Y00, Y10, Y11, Y1-1, Y20, Y21, Y2-1, Y22, Y2-2...
-	 * @param grly [out] gradient of Ylm, [dY00/dx, dY00/dy, dY00/dz], [dY10/dx, dY10/dy, dY10/dz], [dY11/dx, dY11/dy, dY11/dz],...
-	 *             grly should be a memory-contiguous two-dimensional array for better performance.
+	 * @param grly [out] gradient of Ylm, stored as a contiguous flat array of
+	 *             size (Lmax+1)^2 * 3 in row-major order:
+	 *             [dY00/dx, dY00/dy, dY00/dz, dY10/dx, dY10/dy, dY10/dz, ...]
 	 */
 	static void grad_rl_sph_harm(
 			const int Lmax,
@@ -128,7 +129,7 @@ class Ylm
 			const double y,
 			const double z,
 			double* rly,
-			double** grly);
+			double* grly);
 
 	/**
 	 * @brief Get the hessian of r^l Ylm (used in getting derivative of overlap)

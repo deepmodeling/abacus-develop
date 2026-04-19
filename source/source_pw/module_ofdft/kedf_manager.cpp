@@ -22,6 +22,7 @@ void KEDF_Manager::init(
     if (this->of_kinetic_ == "tf"
      || this->of_kinetic_ == "tf+"
      || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
      || this->of_kinetic_ == "ml"
      || this->of_kinetic_ == "xwm")
     {
@@ -34,6 +35,7 @@ void KEDF_Manager::init(
 
     //! vW, TF+, WT, XWM, and LKT KEDFs
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         if (this->vw_ == nullptr)
@@ -61,6 +63,23 @@ void KEDF_Manager::init(
                             inp.of_read_kernel,
                             inp.of_kernel_file,
                             pw_rho);
+    }
+
+    //! Extended Wang-Teter KEDF
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        if (this->extwt_ == nullptr)
+        {
+            this->extwt_ = new KEDF_ExtWT();
+        }
+        this->extwt_->set_para(dV,
+                               inp.of_wt_alpha,
+                               inp.of_wt_beta,
+                               nelec,
+                               inp.of_tf_weight,
+                               inp.of_vw_weight,
+                               inp.of_extwt_kappa,
+                               pw_rho);
     }
 
     //! Xu-Wang-Ma KEDF
@@ -120,7 +139,8 @@ void KEDF_Manager::get_potential(
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(prho, pw_rho);
 #endif
 
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->tf_potential(prho, rpot);
     }
@@ -154,9 +174,18 @@ void KEDF_Manager::get_potential(
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         this->vw_->vw_potential(pphi, pw_rho, rpot);
+    }
+
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        this->extwt_->update_rho0(prho, pw_rho);
+        this->extwt_->cal_kernel(PARAM.inp.of_tf_weight, PARAM.inp.of_vw_weight, this->extwt_->rho0_, pw_rho);
+        this->extwt_->update_dkernel_deta(PARAM.inp.of_vw_weight, pw_rho);
+        this->extwt_->extwt_potential(prho, pw_rho, rpot);
     }
 }
 
@@ -170,12 +199,14 @@ double KEDF_Manager::get_energy() const
 {
     double kinetic_energy = 0.0;
 
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"|| this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         kinetic_energy += this->tf_->tf_energy;
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         kinetic_energy += this->vw_->vw_energy;
@@ -184,6 +215,11 @@ double KEDF_Manager::get_energy() const
     if (this->of_kinetic_ == "wt")
     {
         kinetic_energy += this->wt_->wt_energy;
+    }
+
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        kinetic_energy += this->extwt_->extwt_energy;
     }
 
     if (this->of_kinetic_ == "xwm")
@@ -231,11 +267,13 @@ void KEDF_Manager::get_energy_density(
         rtau[0][ir] = 0.0;
     }
 
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->tau_tf(prho, rtau[0]);
     }
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt")
     {
         this->vw_->tau_vw(pphi, pw_rho, rtau[0]);
@@ -243,6 +281,10 @@ void KEDF_Manager::get_energy_density(
     if (this->of_kinetic_ == "wt")
     {
         this->wt_->tau_wt(prho, pw_rho, rtau[0]);
+    }
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        this->extwt_->tau_extwt(prho, pw_rho, rtau[0]);
     }
     if (this->of_kinetic_ == "xwm")
     {
@@ -280,13 +322,15 @@ void KEDF_Manager::get_stress(
         }
     }
 
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         this->tf_->get_stress(omega);
         kinetic_stress_ += this->tf_->stress;
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt")
     {
         this->vw_->get_stress(pphi, pw_rho);
@@ -297,6 +341,12 @@ void KEDF_Manager::get_stress(
     {
         this->wt_->get_stress(prho, pw_rho, PARAM.inp.of_vw_weight);
         kinetic_stress_ += this->wt_->stress;
+    }
+
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        this->extwt_->get_stress(prho, pw_rho, PARAM.inp.of_vw_weight);
+        kinetic_stress_ += this->extwt_->stress;
     }
 
     if (this->of_kinetic_ == "xwm")
@@ -321,12 +371,14 @@ void KEDF_Manager::record_energy(
     std::vector<double> &energies_Ry
 )
 {
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt" || this->of_kinetic_ == "xwm")
+    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt" || this->of_kinetic_ == "xwm")
     {
         titles.push_back("TF KEDF");
         energies_Ry.push_back(this->tf_->tf_energy);
     }
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+        || this->of_kinetic_ == "ext-wt"
         || this->of_kinetic_ == "xwm" || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         titles.push_back("vW KEDF");
@@ -336,6 +388,11 @@ void KEDF_Manager::record_energy(
     {
         titles.push_back("WT KEDF");
         energies_Ry.push_back(this->wt_->wt_energy);
+    }
+    if (this->of_kinetic_ == "ext-wt")
+    {
+        titles.push_back("EXT-WT KEDF");
+        energies_Ry.push_back(this->extwt_->extwt_energy);
     }
     if (this->of_kinetic_ == "xwm")
     {

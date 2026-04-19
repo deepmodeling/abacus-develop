@@ -397,9 +397,9 @@ class Abacus(GenericFileIOCalculator):
         # not recommended :(
         profile = AbacusProfile('abacus') if profile is None else profile
 
-        # does not support ABACUS version series v3.9.0.x
+        # does not support ABACUS version series v3.9.0.x and v3.11.0-beta.x
         version = profile.version()
-        if re.match(r'v3\.9\.0\.\d+', version):
+        if re.match(r'v3\.9\.0\.\d+', version) or re.match(r'v3\.11\.0-beta\.\d+', version):
             global __LEGACYIO__
             __LEGACYIO__ = False
 

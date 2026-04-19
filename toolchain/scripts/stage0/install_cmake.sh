@@ -91,7 +91,7 @@ case "${with_cmake}" in
         fi
         pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
         #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.${cmake_ext}"
         if verify_checksums "${install_lock_file}"; then
             echo "cmake-${cmake_ver} is already installed, skipping it."
@@ -138,7 +138,6 @@ if [ "${with_cmake}" != "__DONTUSE__" ]; then
     if [ "${with_cmake}" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_cmake"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin":\${PATH}
 EOF
         cat "${BUILDDIR}/setup_cmake" >> $SETUPFILE
     fi

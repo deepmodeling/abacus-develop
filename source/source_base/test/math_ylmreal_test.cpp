@@ -5,7 +5,6 @@
 #include"gtest/gtest.h"
 #include<math.h>
 #include "source_psi/psi.h"
-#include "source_base/array_pool.h"
 
 #define doublethreshold 1e-12
 
@@ -51,7 +50,7 @@ class YlmRealTest : public testing::Test
     double *rly;        //Ylm
     double (*rlgy)[3];  //the gradient of Ylm
     std::vector<double> rlyvector; //Ylm
-    ModuleBase::Array_Pool<double> rlgyvector; //the gradient of Ylm
+    std::vector<double> rlgyvector; //the gradient of Ylm (flat, size nylm*3)
 
     //Ylm function
     inline double norm(const double &x, const double &y, const double &z) {return sqrt(x*x + y*y + z*z);}
@@ -195,7 +194,7 @@ class YlmRealTest : public testing::Test
         rly = new double[nylm];
         rlyvector.resize(nylm);
         rlgy = new double[nylm][3];
-        rlgyvector = ModuleBase::Array_Pool<double>(nylm,3);
+        rlgyvector.assign(nylm * 3, 0.0);
         ref = new double[64*4]{
             y00(g[0].x, g[0].y, g[0].z),  y00(g[1].x, g[1].y, g[1].z),  y00(g[2].x, g[2].y, g[2].z),  y00(g[3].x, g[3].y, g[3].z),
             y10(g[0].x, g[0].y, g[0].z),  y10(g[1].x, g[1].y, g[1].z),  y10(g[2].x, g[2].y, g[2].z),  y10(g[3].x, g[3].y, g[3].z),
@@ -412,11 +411,11 @@ TEST_F(YlmRealTest,YlmGradRlSphHarm)
     for(int j=0;j<ng;++j)
     {
         double r = sqrt(g[j].x * g[j].x + g[j].y * g[j].y + g[j].z * g[j].z);
-        ModuleBase::Ylm::grad_rl_sph_harm(lmax,g[j].x/r,g[j].y/r,g[j].z/r,rlyvector.data(),rlgyvector.get_ptr_2D());
+        ModuleBase::Ylm::grad_rl_sph_harm(lmax,g[j].x/r,g[j].y/r,g[j].z/r,rlyvector.data(),rlgyvector.data());
         for(int i=0;i<nylm;++i)
         {
             EXPECT_NEAR(rlyvector[i],ref[i*ng+j],doublethreshold)  << "Ylm[" << i << "], example " << j << " not pass";
-            for(int k=0;k<3;++k) {EXPECT_NEAR(rlgyvector[i][k],rlgyref[j][i][k],1e-5);}
+            for(int k=0;k<3;++k) {EXPECT_NEAR(rlgyvector[i*3+k],rlgyref[j][i][k],1e-5);}
 
         }
     }
@@ -467,15 +466,15 @@ TEST_F(YlmRealTest, equality_gradient_test)
 	double rlya[100];
 	double rlyb[400];
 
-	ModuleBase::Array_Pool<double> grlya(100, 3);
+	std::vector<double> grlya(100 * 3);
 	double grlyb[400][3];
 
-	ModuleBase::Ylm::grad_rl_sph_harm (9, R.x, R.y, R.z, rlya, grlya.get_ptr_2D());
+	ModuleBase::Ylm::grad_rl_sph_harm (9, R.x, R.y, R.z, rlya, grlya.data());
 	ModuleBase::Ylm::rlylm (10, R.x, R.y, R.z, rlyb, grlyb);
 
 	for (int i = 0; i < 100; i++)
 	{
-		double diffx = fabs(grlya[i][2]-grlyb[i][2]);
+		double diffx = fabs(grlya[i*3 + 2]-grlyb[i][2]);
         EXPECT_LT(diffx,1e-8);
 	}
 

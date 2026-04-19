@@ -39,6 +39,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CXX_COMPILER=g++ \
         -DMPI_CXX_COMPILER=mpicxx \
         -DMKLROOT=$MKLROOT \
+        -DENABLE_FLOAT_FFTW=ON \
         -DELPA_DIR=$ELPA \
         -DCEREAL_INCLUDE_DIR=$CEREAL \
         -DLibxc_DIR=$LIBXC \

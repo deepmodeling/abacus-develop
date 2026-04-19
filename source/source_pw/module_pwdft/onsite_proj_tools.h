@@ -30,28 +30,32 @@ template <typename FPTYPE, typename Device>
 class Onsite_Proj_tools
 {
   public:
-    Onsite_Proj_tools(const pseudopot_cell_vnl* nlpp_in,
-                      const UnitCell* ucell_in,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                      const K_Vectors* kv_in,
-                      const ModulePW::PW_Basis_K* wfc_basis_in,
-                      const Structure_Factor* sf_in,
-                      const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& ekb);
+    Onsite_Proj_tools(
+        const pseudopot_cell_vnl* nlpp_in,
+        const UnitCell* ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+        const K_Vectors* kv_in,
+        const ModulePW::PW_Basis_K* wfc_basis_in,
+        const Structure_Factor* sf_in,
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb
+    );
 
     // a more general constructor is in the following
-    Onsite_Proj_tools(const std::vector<int>& nproj,     // number of projectors for each atom type
-                      const std::vector<int>& lproj,
-                      const ModuleBase::realArray& tab,  // radials' spherical bessel transform
-                      const ModuleBase::matrix& nhtol,
-                      std::complex<FPTYPE>* vkb_buf,
-                      const UnitCell* ucell_in,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                      const K_Vectors* kv_in,
-                      const ModulePW::PW_Basis_K* wfc_basis_in,
-                      const Structure_Factor* sf_in,
-                      const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& ekb);
+    Onsite_Proj_tools(
+        const std::vector<int>& nproj,     // number of projectors for each atom type
+        const std::vector<int>& lproj,
+        const ModuleBase::realArray& tab,  // radials' spherical bessel transform
+        const ModuleBase::matrix& nhtol,
+        std::complex<FPTYPE>* vkb_buf,
+        const UnitCell* ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+        const K_Vectors* kv_in,
+        const ModulePW::PW_Basis_K* wfc_basis_in,
+        const Structure_Factor* sf_in,
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb
+    );
 
     ~Onsite_Proj_tools();
 
@@ -69,10 +73,41 @@ class Onsite_Proj_tools
      */
     void cal_dbecp_f(int ik, int npm, int ipol);
 
-    void cal_force_dftu(int ik, int npm, FPTYPE* force, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
-    void cal_force_dspin(int ik, int npm, FPTYPE* force, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
-    void cal_stress_dftu(int ik, int npm, FPTYPE* stress, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
-    void cal_stress_dspin(int ik, int npm, FPTYPE* stress, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
+    void cal_force_dftu(
+        int ik,
+        int npm,
+        FPTYPE* force,
+        const int* orbital_corr,
+        const std::complex<FPTYPE>* vu,
+        const int size_vu,
+        const FPTYPE* h_wg
+    );
+
+    void cal_force_dspin(
+        int ik,
+        int npm,
+        FPTYPE* force,
+        const ModuleBase::Vector3<double>* lambda,
+        const FPTYPE* h_wg
+    );
+
+    // return stress(i,j) value
+    double cal_stress_dftu(
+        int ik,
+        int npm,
+        const int* orbital_corr,
+        const std::complex<FPTYPE>* vu,
+        const int size_vu,
+        const FPTYPE* h_wg
+    );
+
+    // return stress(i,j) value
+    double cal_stress_dspin(
+        int ik,
+        int npm,
+        const ModuleBase::Vector3<double>* lambda,
+        const FPTYPE* h_wg
+    );
 
 
     std::complex<FPTYPE>* get_becp() const { return becp; }
@@ -82,10 +117,12 @@ class Onsite_Proj_tools
     /**
      * @brief allocate the memory for the variables
      */
-    void allocate_memory(const ModuleBase::matrix& wg, 
-                         const ModuleBase::matrix& ekb,
-                         const std::vector<int>& nproj,
-                         const std::vector<int>& nch);
+    void allocate_memory(
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb,
+        const std::vector<int>& nproj,
+        const std::vector<int>& nch
+    );
     /**
      * @brief delete the memory for the variables
      */

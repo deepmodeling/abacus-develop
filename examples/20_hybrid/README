@@ -1,0 +1,104 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# Hybrid Functional Examples
+
+This directory contains examples for performing hybrid functional calculations in ABACUS. Hybrid functionals combine elements of Hartree-Fock theory with density functional theory (DFT) to improve the accuracy of electronic structure calculations.
+
+## What are Hybrid Functionals?
+
+Hybrid functionals are exchange-correlation functionals that include a portion of exact Hartree-Fock exchange in addition to the standard DFT exchange-correlation functional. This inclusion of exact exchange often leads to improved accuracy for:
+
+- Band gaps in semiconductors and insulators
+- Bond dissociation energies
+- Reaction barriers
+- Atomic and molecular properties
+- Electronic structure of strongly correlated systems
+
+### Common Hybrid Functionals:
+- **PBE0**: PBE functional with 25% exact exchange
+- **HSE06**: Heyd-Scuseria-Ernzerhof functional with screened exchange
+- **B3LYP**: Becke's three-parameter functional with Lee-Yang-Parr correlation
+
+## Hybrid Functional Calculations in ABACUS
+
+ABACUS supports hybrid functional calculations using both plane wave (PW) and LCAO (Linear Combination of Atomic Orbitals) basis sets. The key parameters for hybrid functional calculations are:
+
+- `dft_functional`: Specifies the hybrid functional to use (e.g., "pbe0", "hse06")
+- `hybrid_alpha`: Fraction of exact exchange (for functionals like PBE0)
+- `hybrid_beta`: Fraction of short-range exact exchange (for HSE06)
+- `hybrid_omega`: Screening parameter for HSE06 (in bohr⁻¹)
+
+## Examples Included
+
+### 1. 01_pw_Si2
+- **System**: Silicon dimer (Si2)
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates hybrid functional calculation using plane wave basis
+- **Functional**: PBE0
+- **Input Files**:
+  - `INPUT`: Contains the hybrid functional calculation parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the atomic structure
+
+### 2. 02_lcao_Si2
+- **System**: Silicon dimer (Si2)
+- **Basis**: LCAO (Linear Combination of Atomic Orbitals)
+- **Purpose**: Demonstrates hybrid functional calculation using LCAO basis
+- **Functional**: PBE0
+- **Input Files**:
+  - `INPUT`: Contains the hybrid functional calculation parameters
+  - `KPT`: Defines the k-point sampling
+  - `STRU`: Describes the atomic structure
+  - `run.sh`: Script to run the calculation
+  - Reference output files for comparison
+
+## Key Parameters in INPUT
+
+The INPUT files include specific parameters for hybrid functional calculations:
+
+- `dft_functional`: Set to the desired hybrid functional (e.g., "pbe0", "hse06")
+- `ecutwfc`: Energy cutoff for plane wave basis (for PW calculations)
+- `ecutrho`: Energy cutoff for charge density (for PW calculations)
+- `basis_type`: Set to "pw" or "lcao" depending on the basis set
+- `hybrid_alpha`: Fraction of exact exchange (for PBE0, default is 0.25)
+- `hybrid_beta`: Fraction of short-range exact exchange (for HSE06, default is 0.25)
+- `hybrid_omega`: Screening parameter for HSE06 (default is 0.11 bohr⁻¹)
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/20_hybrid/01_pw_Si2
+   ```
+
+2. Run ABACUS:
+   ```bash
+   abacus
+   ```
+
+   For the LCAO example, use the provided script:
+   ```bash
+   cd /abacus/examples/20_hybrid/02_lcao_Si2
+   bash run.sh
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation
+
+## Notes
+
+- Hybrid functional calculations are computationally more expensive than standard DFT calculations due to the inclusion of exact exchange
+- For plane wave basis, the computational cost scales as O(N³), where N is the number of basis functions
+- For LCAO basis, the computational cost is generally lower than for plane wave basis
+- The accuracy of hybrid functional calculations depends on the choice of functional and basis set
+- For large systems, consider using the HSE06 functional with screened exchange, which is more computationally efficient than PBE0
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set, k-point sampling, and other parameters
