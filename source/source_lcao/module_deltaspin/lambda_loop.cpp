@@ -229,10 +229,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
                 }
                 mean_error = sum_2d(temp_1) / nat;
                 rms_error = std::sqrt(mean_error);
-                std::cout<<"Current RMS: "<<rms_error<<std::endl;
+                std::cout<<" current RMS "<<rms_error<<std::endl;
                 if(rms_error > this->current_sc_thr_ * 10 && rerun == true && this->higher_mag_prec == true)
                 {
-                    std::cout<<"Error: RMS error is too large, rerun the loop"<<std::endl;
+                    std::cout<<" Error: RMS error is too large, rerun the loop"<<std::endl;
                     this->run_lambda_loop(outer_step, false);
                 }
             }

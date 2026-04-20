@@ -142,8 +142,13 @@ void print_2d(const std::string info, const std::vector<ModuleBase::Vector3<doub
     for (const auto &row : array)
     {
         iat += 1;
-        if (nspin == 2) { ofs << FmtCore::format("ATOM %6d %20.10f\n", iat, row.z*unit_convert);
-        } else if (nspin == 4) { ofs << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, row.x*unit_convert, row.y*unit_convert, row.z*unit_convert);
-}
+        if (nspin == 2)
+	{
+		ofs << FmtCore::format(" atom %6d %20.10f\n", iat, row.z*unit_convert);
+        }
+	else if (nspin == 4)
+	{
+		ofs << FmtCore::format(" atom %6d %20.10f %20.10f %20.10f\n", iat, row.x*unit_convert, row.y*unit_convert, row.z*unit_convert);
+	}
     }
 }
