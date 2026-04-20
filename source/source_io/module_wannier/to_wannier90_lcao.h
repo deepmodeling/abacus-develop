@@ -10,6 +10,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
@@ -90,7 +91,10 @@ class toWannier90_LCAO : public toWannier90
                    const psi::Psi<double>& psi,
                    const Parallel_Orbitals* pv)
     {
-        throw std::logic_error("The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
+        ModuleBase::WARNING_QUIT("toWannier90_LCAO::calculate", 
+                                 "The wave function is real (double type), indicating 'gamma_only = 1'. "
+                                 "The Wannier90 interface does not support Gamma-only calculations. "
+                                 "Please set 'gamma_only 0' in your INPUT file.");
     }
 
     void cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
