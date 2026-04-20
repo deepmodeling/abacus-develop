@@ -93,7 +93,16 @@ std::complex<double> ModuleIO::cal_LxijR(
         }
         return i * invsqrt2 * lmbd * valp;
     }
-    if (jm <= -1) {
+    if (jm == -1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 0, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 2, vR, &valm);
+        }
+        return -i * 0.5 * (std::sqrt(2) * lmbdp * valp + lmbdm * valm);
+    }
+    if (jm < -1) {
         if (std::fabs(lmbdp) > 1e-12) {
             calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
         }
@@ -116,7 +125,7 @@ std::complex<double> ModuleIO::cal_LyijR(
     // two-center-integral placeholders
     double valp = 0.;
     double valm = 0.;
-    if (jm >= 1) {
+    if (jm > 1) {
         if (std::fabs(lmbdp) > 1e-12) {
             calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
         }
@@ -124,6 +133,15 @@ std::complex<double> ModuleIO::cal_LyijR(
             calculator->calculate(it, il, iz, im, jt, jl, jz, jm-1, vR, &valm);
         }
         return -i * 0.5 * (lmbdp * valp - lmbdm * valm);
+    }
+    if (jm == 1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 2, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 0, vR, &valm);
+        }
+        return -i * 0.5 * (lmbdp * valp - std::sqrt(2) * lmbdm * valm);
     }
     if (jm == 0) {
         const double lmbd = _lambda_plus(jl, 0); // std::sqrt(l*(l+1))
