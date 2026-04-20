@@ -45,7 +45,7 @@ void BinManager::init_bins(
     nbiny = std::max(1, nbiny);
     nbinz = std::max(1, nbinz);
 
-    nbins = nbinx * nbiny * nbinz;
+    int nbins = nbinx * nbiny * nbinz;
 
     bins.clear();
 
@@ -164,9 +164,8 @@ void BinManager::build_atom_neighbors(
                 }
             }
         }
-
+        
         int n = neigh_tmp.size();
-
         int* ptr = neighbor_list.allocator.allocate(n);
 
         for (int k = 0; k < n; k++)

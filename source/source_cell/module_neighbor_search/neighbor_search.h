@@ -5,7 +5,7 @@
 #include "source_cell/module_neighbor_search/neighbor_atom.h"
 #include "source_cell/module_neighbor_search/bin_manager.h"
 #include "source_cell/module_neighbor_search/neighbor_list.h"
-#include "source_cell/unitcell.h"
+#include "source_cell/module_neighbor_search/unitcell_interface.h"
 
 class NeighborSearch
 {
@@ -13,16 +13,16 @@ public:
     NeighborSearch()=default;
     ~NeighborSearch()=default;
 
-    void init(const UnitCell& ucell, double sr, int mpi_rank);
+    void init(const IAtomProvider& ucell, double sr, int mpi_rank);
 
 
     void build_neighbors();
 
-    InputAtoms ucell_to_input_atoms(const UnitCell& ucell);
+    InputAtoms ucell_to_input_atoms(const IAtomProvider& ucell);
 
-    void Check_Expand_Condition(const UnitCell& ucell);
+    void Check_Expand_Condition(const IAtomProvider& ucell);
 
-    void setMemberVariables(const UnitCell& ucell);
+    void setMemberVariables(const IAtomProvider& ucell);
 
     double distance(
         double position_x,
