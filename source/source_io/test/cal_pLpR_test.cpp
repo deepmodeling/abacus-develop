@@ -68,21 +68,21 @@ TEST_F(CalpLpRTest, CalLzijRTest)
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lz|p(m=1)> = 0: sqrt(2)i<p(m=1)|p(m=-1)> = 0
+    // <p(m=1)|Lz|p(m=1)> = 0: i<p(m=1)|p(m=-1)> = 0
     il = 1; mi = 1; jl = 1; mj = 1;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lz|p(m=-1)> = -sqrt(2)i<p(m=1)|p(m=1)> = -sqrt(2)i
+    // <p(m=1)|Lz|p(m=-1)> = -i<p(m=1)|p(m=1)> = -i
     il = 1; mi = 1; jl = 1; mj = -1;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), -sqrt(2.0), DOUBLETHRESHOLD);
-    // <p(m=-1)|Lz|p(m=1)> = sqrt(2)i<p(m=-1)|p(m=-1)> = sqrt(2)i
+    EXPECT_NEAR(out.imag(), -1.0, DOUBLETHRESHOLD);
+    // <p(m=-1)|Lz|p(m=1)> = i<p(m=-1)|p(m=-1)> = i
     il = 1; mi = -1; jl = 1; mj = 1;
     out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(),  sqrt(2.0), DOUBLETHRESHOLD);
+    EXPECT_NEAR(out.imag(), 1.0, DOUBLETHRESHOLD);
 }
 
 TEST_F(CalpLpRTest, CalLxijRTest)

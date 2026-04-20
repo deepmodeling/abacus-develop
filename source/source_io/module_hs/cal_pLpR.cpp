@@ -57,7 +57,7 @@ std::complex<double> ModuleIO::cal_LzijR(
     }
     double val_ = 0;
     calculator->calculate(it, il, iz, mi, jt, jl, jz, -mj, vR, &val_);
-    return std::sqrt(2) * mj * i * val_;
+    return i * static_cast<double>(mj) * val_;
 }
 
 std::complex<double> ModuleIO::cal_LxijR(
