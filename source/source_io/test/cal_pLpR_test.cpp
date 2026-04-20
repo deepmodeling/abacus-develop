@@ -110,7 +110,7 @@ TEST_F(CalpLpRTest, CalLxijRTest)
     // l=1
     il = 1; jl = 1;
     std::vector<std::complex<double>> ans(9, 0.0);
-    ans[5] = {0.0, -1.0}; ans[7] = {0.0, 1.0};
+    ans[5] = {0.0, 1.0}; ans[7] = {0.0, -1.0};
     int idx = 0;
     const std::vector<int> m = {1, -1, 0}; // px, py, pz
     for (auto im_: m) {
@@ -140,7 +140,7 @@ TEST_F(CalpLpRTest, CalLyijRTest)
     // l=1
     il = 1; jl = 1;
     std::vector<std::complex<double>> ans(9, 0.0);
-    ans[2] = {0.0, 1.0}; ans[6] = {0.0, -1.0};
+    ans[2] = {0.0, -1.0}; ans[6] = {0.0, 1.0};
     int idx = 0;
     const std::vector<int> m = {1, -1, 0}; // px, py, pz
     for (auto im_: m) {
