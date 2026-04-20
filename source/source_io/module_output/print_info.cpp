@@ -8,42 +8,42 @@ namespace ModuleIO
 {
 
 void print_parameters(
-	const UnitCell& ucell, 
-	K_Vectors& kv,
+    const UnitCell& ucell, 
+    K_Vectors& kv,
     const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "print_parameters");
 
-	if(inp.calculation=="scf" 
-			|| inp.calculation=="relax" 
-			|| inp.calculation=="cell-relax" 
-			|| inp.calculation=="nscf"
-			|| inp.calculation=="get_pchg" 
-			|| inp.calculation=="get_wf" 
-			|| inp.calculation=="md")
-	{
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(inp.calculation=="scf")
-		{
-			std::cout << " Self-consistent calculations for electrons" << std::endl;
-		}
-		else if(inp.calculation=="test")
-		{
-			std::cout << " Test run" << std::endl;
-		}
-		if(inp.calculation=="relax")
-		{
+    if(inp.calculation=="scf" 
+            || inp.calculation=="relax" 
+            || inp.calculation=="cell-relax" 
+            || inp.calculation=="nscf"
+            || inp.calculation=="get_pchg" 
+            || inp.calculation=="get_wf" 
+            || inp.calculation=="md")
+    {
+        std::cout << " ----------------------------------------------------------------" << std::endl;
+        if(inp.calculation=="scf")
+        {
+            std::cout << " Self-consistent calculations for electrons" << std::endl;
+        }
+        else if(inp.calculation=="test")
+        {
+            std::cout << " Test run" << std::endl;
+        }
+        if(inp.calculation=="relax")
+        {
             std::cout << " Ion relaxation calculations" << std::endl;
-		}
+        }
         if(inp.calculation=="cell-relax")
         {
             std::cout << " Cell relaxation calculations" << std::endl;
         }
-		if(inp.calculation=="md")
-		{
-			std::cout << " Molecular Dynamics simulations" << std::endl;
+        if(inp.calculation=="md")
+        {
+            std::cout << " Molecular Dynamics simulations" << std::endl;
 
-			std::cout << " ---------------------------------------------------------" << std::endl;
+            std::cout << " ---------------------------------------------------------" << std::endl;
 
             if (PARAM.mdp.md_type == "fire")
             {
@@ -74,127 +74,130 @@ void print_parameters(
 
             std::cout << " Time interval(fs)        : " << PARAM.mdp.md_dt << std::endl;
         }
-        std::cout << " ---------------------------------------------------------" << std::endl;
+        std::cout << " ----------------------------------------------------------------" << std::endl;
 
 
-		std::cout << " " << std::setw(8) << "SPIN"
-		     << std::setw(16) << "KPOINTS"
-		     << std::setw(12) << "PROCESSORS"
-             << std::setw(12) << "THREADS";
+        std::cout << " " << std::setw(8) << "SPIN"
+             << std::setw(16) << "KPOINTS"
+             << std::setw(12) << "PROCESSES"
+             << std::setw(14) << "THREADS/PROC"
+             << std::setw(14) << "THREADS/TOTAL";
 
-		const bool orbinfo = (inp.basis_type=="lcao" || inp.basis_type=="lcao_in_pw" 
-						  || (inp.basis_type=="pw" && inp.init_wfc.substr(0, 3) == "nao"));
-		if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
+        const bool orbinfo = (inp.basis_type=="lcao" || inp.basis_type=="lcao_in_pw" 
+              || (inp.basis_type=="pw" && inp.init_wfc.substr(0, 3) == "nao"));
+        if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
 
-		std::cout << std::endl;
-		std::cout << " " << std::setw(8) << inp.nspin;
+        std::cout << std::endl;
+        std::cout << " " << std::setw(8) << inp.nspin;
 
-		if(PARAM.globalv.gamma_only_local)
-		{
-			std::cout << std::setw(16) << "Gamma";
-		}
-		else
-		{
-			std::cout << std::setw(16) << kv.get_nkstot();
-		}
+        if(PARAM.globalv.gamma_only_local)
+        {
+            std::cout << std::setw(16) << "Gamma";
+        }
+        else
+        {
+            std::cout << std::setw(16) << kv.get_nkstot();
+        }
 
-		std::cout << std::setw(12) << GlobalV::NPROC
-		     << std::setw(12) << PARAM.globalv.nthread_per_proc * GlobalV::NPROC;
-		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
+        std::cout << std::setw(12) << GlobalV::NPROC
+             << std::setw(14) << PARAM.globalv.nthread_per_proc
+             << std::setw(14) << PARAM.globalv.nthread_per_proc*GlobalV::NPROC;
 
-		std::cout << std::endl;
+        if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
-
-
-
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(inp.basis_type == "lcao")
-		{
-			std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
-		}
-		else if(inp.basis_type == "lcao_in_pw")
-		{
-			std::cout << " Expand Atomic bases into plane waves" << std::endl;
-		}
-		else if(inp.basis_type == "pw")
-		{
-			std::cout << " Use plane wave basis" << std::endl;
-		}
-		std::cout << " ---------------------------------------------------------" << std::endl;
+        std::cout << std::endl;
 
 
 
-		//----------------------------------
-		// second part
-		//----------------------------------
 
-		std::cout << " " << std::setw(8) << "ELEMENT";
-
-		if (orbinfo)
-		{
-			std::cout << std::setw(16) << "ORBITALS";
-			std::cout << std::setw(12) << "NBASE";
-		}
-		std::cout << std::setw(12) << "NATOM";
-
-		std::cout << std::setw(12) << "XC";
-		std::cout << std::endl;
-
-
-		const std::string spectrum = "spdfghi";
-		for(int it=0; it<ucell.ntype; ++it)
-		{
-			std::cout << " " << std::setw(8) << ucell.atoms[it].label;
-
-			if (orbinfo)
-			{
-				std::stringstream orb;
-				int norb = 0;
-
-				for(int L=0; L<=ucell.atoms[it].nwl; ++L)        // pengfei Li 16-2-29
-				{
-					norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
-					orb << ucell.atoms[it].l_nchi[L];
-					orb << spectrum[L];
-				}
-				orb << "-" << ucell.atoms[it].Rcut << "au";
-				
-				std::cout << std::setw(16) << orb.str();
-				std::cout << std::setw(12) << norb;
-			}
+        std::cout << " ----------------------------------------------------------------" << std::endl;
+        if(inp.basis_type == "lcao")
+        {
+            std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
+        }
+        else if(inp.basis_type == "lcao_in_pw")
+        {
+            std::cout << " Expand Atomic bases into plane waves" << std::endl;
+        }
+        else if(inp.basis_type == "pw")
+        {
+            std::cout << " Use plane wave basis" << std::endl;
+        }
+        std::cout << " ----------------------------------------------------------------" << std::endl;
 
 
-			std::cout << std::setw(12) << ucell.atoms[it].na;
-			std::cout << std::endl;
-		}
 
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		std::cout << " Initial plane wave basis and FFT box" << std::endl;
-		std::cout << " ---------------------------------------------------------" << std::endl;
+        //----------------------------------
+        // second part
+        //----------------------------------
 
-	}
+        std::cout << " " << std::setw(8) << "ELEMENT";
 
-	return;
+        if (orbinfo)
+        {
+            std::cout << std::setw(16) << "ORBITALS";
+            std::cout << std::setw(12) << "NBASE";
+        }
+        std::cout << std::setw(12) << "NATOM";
+
+        std::cout << std::setw(12) << "XC";
+        std::cout << std::endl;
+
+
+        const std::string spectrum = "spdfghi";
+        for(int it=0; it<ucell.ntype; ++it)
+        {
+            std::cout << " " << std::setw(8) << ucell.atoms[it].label;
+
+            if (orbinfo)
+            {
+                std::stringstream orb;
+                int norb = 0;
+
+                for(int L=0; L<=ucell.atoms[it].nwl; ++L)        // pengfei Li 16-2-29
+                {
+                    norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
+                    orb << ucell.atoms[it].l_nchi[L];
+                    orb << spectrum[L];
+                }
+                orb << "-" << ucell.atoms[it].Rcut << "au";
+                
+                std::cout << std::setw(16) << orb.str();
+                std::cout << std::setw(12) << norb;
+            }
+
+
+            std::cout << std::setw(12) << ucell.atoms[it].na;
+            std::cout << std::endl;
+        }
+
+        std::cout << " ----------------------------------------------------------------" << std::endl;
+        std::cout << " Initial plane wave basis and FFT box" << std::endl;
+        std::cout << " ----------------------------------------------------------------" << std::endl;
+
+    }
+
+    return;
 }
 
 void print_time(time_t& time_start, time_t& time_finish)
 {
     // print out information before ABACUS ends
-	std::cout << "\n START  Time  : " << ctime(&time_start);
-	std::cout << " FINISH Time  : " << ctime(&time_finish);
-	std::cout << " TOTAL  Time  : " << int(difftime(time_finish, time_start)) << std::endl;
-	std::cout << " SEE INFORMATION IN : " << PARAM.globalv.global_out_dir << std::endl;
+    std::cout << "\n START  Time  : " << ctime(&time_start);
+    std::cout << " FINISH Time  : " << ctime(&time_finish);
+    std::cout << " TOTAL  Time  : " << int(difftime(time_finish, time_start)) << std::endl;
+    std::cout << " SEE INFORMATION IN : " << PARAM.globalv.global_out_dir << std::endl;
 
-	GlobalV::ofs_running << "\n Start  Time  : " << ctime(&time_start);
-	GlobalV::ofs_running << " Finish Time  : " << ctime(&time_finish);
+    GlobalV::ofs_running << "\n Start  Time  : " << ctime(&time_start);
+    GlobalV::ofs_running << " Finish Time  : " << ctime(&time_finish);
 
-	double total_time = difftime(time_finish, time_start);
-	int hour = total_time / 3600;
-	int mins = ( total_time - 3600 * hour ) / 60;
-	int secs = total_time - 3600 * hour - 60 * mins ;
-	GlobalV::ofs_running << " Total  Time  : " << unsigned(hour) << " h "
-	    << unsigned(mins) << " mins "
-	    << unsigned(secs) << " secs "<< std::endl;
+    double total_time = difftime(time_finish, time_start);
+    int hour = total_time / 3600;
+    int mins = ( total_time - 3600 * hour ) / 60;
+    int secs = total_time - 3600 * hour - 60 * mins ;
+    GlobalV::ofs_running << " Total  Time  : " << unsigned(hour) << " h "
+        << unsigned(mins) << " mins "
+        << unsigned(secs) << " secs "<< std::endl;
 }
 
 void print_rhofft(ModulePW::PW_Basis* pw_rhod,
@@ -220,7 +223,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ofs << " | density or potential. If USPP is used, a double grid technique     |" << std::endl;
     ofs << " | is applied.                                                        |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
     ofs << " SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
 
@@ -313,7 +316,7 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
     ofs << " | the dimensions of FFT grid, which is used to represent the wave    |" << std::endl;
     ofs << " | functions of electrons.                                            |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
     ofs << " SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
@@ -350,38 +353,38 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
     std::cout << "\n ================================================================" << std::endl;
     GlobalV::ofs_running << " ================================================================" << std::endl;
 
-	if(PARAM.inp.calculation=="scf")
-	{
+    if(PARAM.inp.calculation=="scf")
+    {
         std::cout << " SELF-CONSISTENT: " << std::endl;
-		GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
-	}
-	else if(PARAM.inp.calculation=="nscf")
-	{
+        GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
+    }
+    else if(PARAM.inp.calculation=="nscf")
+    {
         std::cout << " NONSELF-CONSISTENT: " << std::endl;
-		GlobalV::ofs_running << " NONSELF-CONSISTENT" << std::endl;
-	}
-	else if(PARAM.inp.calculation=="md")
-	{
+        GlobalV::ofs_running << " NONSELF-CONSISTENT" << std::endl;
+    }
+    else if(PARAM.inp.calculation=="md")
+    {
         std::cout << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
-		GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
-	}
-	else
-	{
-		if(PARAM.inp.calculation=="relax")
-		{
-        	std::cout << " RELAX STEP: " << unsigned(istep) << std::endl;
-			GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep) << std::endl;
-		}
-    	else if(PARAM.inp.calculation=="cell-relax")
-    	{
+        GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
+    }
+    else
+    {
+        if(PARAM.inp.calculation=="relax")
+        {
+            std::cout << " RELAX STEP: " << unsigned(istep) << std::endl;
+            GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep) << std::endl;
+        }
+        else if(PARAM.inp.calculation=="cell-relax")
+        {
             std::cout << " RELAX STEP: " << unsigned(istep);
-        	std::cout << " (CELL_CHANGE# " << unsigned(stress_step);
-        	std::cout << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
+            std::cout << " (CELL_CHANGE# " << unsigned(stress_step);
+            std::cout << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
             GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep);
-			GlobalV::ofs_running << " (CELL_CHANGE# " << unsigned(stress_step);
-        	GlobalV::ofs_running << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
-    	}
-	}
+            GlobalV::ofs_running << " (CELL_CHANGE# " << unsigned(stress_step);
+            GlobalV::ofs_running << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
+        }
+    }
 
     std::cout << " ================================================================" << std::endl;
     GlobalV::ofs_running << " ================================================================" << std::endl;
