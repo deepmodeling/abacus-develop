@@ -7,7 +7,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::print_termination()
     print_2d("after-optimization spin (uB): (print in the inner loop): ", this->Mi_, this->nspin_);
     print_2d("after-optimization lambda (eV/uB): (print in the inner loop): ", this->lambda_, this->nspin_, ModuleBase::Ry_to_eV);
     std::cout << "Inner optimization for lambda ends." << std::endl;
-    std::cout << "===============================================================================" << std::endl;
+    std::cout << " ----------------------------------------------------------------\n" << std::endl;
 }
 
 template <>
@@ -41,9 +41,9 @@ bool spinconstrain::SpinConstrain<std::complex<double>>::check_rms_stop(int oute
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::print_header()
 {
-    std::cout << "===============================================================================" << std::endl;
-    std::cout << "Inner optimization for lambda begins ..." << std::endl;
-    std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
+    std::cout << "\n ----------------------------------------------------------------" << std::endl;
+    std::cout << " Inner optimization for lambda begins ..." << std::endl;
+    std::cout << " Covergence threshold " << this->sc_thr_ << std::endl;
 }
 
 /// check restriction
