@@ -59,7 +59,6 @@ public:
     int nbinx;
     int nbiny;
     int nbinz;
-    int nbins;
 
     std::vector<Bin> bins;
 };
