@@ -391,7 +391,7 @@ bool parse_atom_properties(std::ifstream& ifpos,
         else if ( tmpid == "mag" || tmpid == "magmom")
         {
             set_element_mag_zero = true;
-            double tmpamg=0;
+            double tmpamg=0.0;
             ifpos >> tmpamg;
             tmp=ifpos.get();
             while (tmp==' ')
@@ -409,12 +409,17 @@ bool parse_atom_properties(std::ifstream& ifpos,
                   +pow(atom.m_loc_[ia].z,2));
                 input_vec_mag=true;
 
+
             }
             else
             {
                 ifpos.putback(tmp);
                 atom.mag[ia]=tmpamg;
             }
+
+	    // print mag
+	    std::cout << " read mag for atom " << ia+1 
+		    << ": " << atom.mag[ia] << std::endl;
         }
         else if ( tmpid == "angle1")
         {
@@ -432,7 +437,7 @@ bool parse_atom_properties(std::ifstream& ifpos,
         }
         else if ( tmpid == "lambda")
         {
-            double tmplam=0;
+            double tmplam=0.0;
             ifpos >> tmplam;
             tmp=ifpos.get();
             while (tmp==' ')
@@ -444,6 +449,12 @@ bool parse_atom_properties(std::ifstream& ifpos,
                 ifpos.putback(tmp);
                 ifpos >> atom.lambda[ia].y>>atom.lambda[ia].z;
                 atom.lambda[ia].x=tmplam;
+
+		// print lambda
+		std::cout << " read lambda for atom " << ia+1 
+			<< ": "  << atom.lambda[ia].x 
+			<< " " << atom.lambda[ia].y 
+			<< " " << atom.lambda[ia].z << std::endl;
             }
             else
             {

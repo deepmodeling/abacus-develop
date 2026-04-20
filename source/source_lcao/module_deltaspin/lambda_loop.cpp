@@ -100,24 +100,32 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
-        int outer_step,
+		int outer_step,
 		bool rerun)
 {
     // init controlling parameters
-    int nat = this->get_nat();
-    int ntype = this->get_ntype();
+    const int nat = this->get_nat();
+    const int ntype = this->get_ntype();
+
     std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0);
     std::vector<ModuleBase::Vector3<double>> delta_lambda(nat,0.0);
+
     // set nu, dnu and dnu_last_step
     std::vector<ModuleBase::Vector3<double>> dnu(nat, 0.0), dnu_last_step(nat, 0.0);
+
     // two controlling temp variables
     std::vector<ModuleBase::Vector3<double>> temp_1(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> spin(nat, 0.0), delta_spin(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> search(nat, 0.0), search_old(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> new_spin(nat, 0.0), spin_plus(nat, 0.0);
 
-    double alpha_opt, alpha_plus;
-    double beta = 0.0, g = 0.0, mean_error = 0.0, mean_error_old = 0.0, rms_error = 0.0;
+    double alpha_opt = 0.0;
+    double alpha_plus = 0.0;
+    double beta = 0.0;
+    double g = 0.0;
+    double mean_error = 0.0;
+    double mean_error_old = 0.0;
+    double rms_error = 0.0;
 
     double alpha_trial = this->alpha_trial_;
 
@@ -143,9 +151,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
             this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
-            print_2d("initial lambda (eV/uB): ", initial_lambda, this->nspin_, ModuleBase::Ry_to_eV);
-            print_2d("initial spin (uB): ", spin, this->nspin_);
-            print_2d("target spin (uB): ", this->target_mag_, this->nspin_);
+            print_2d(" initial lambda (eV/uB): ", initial_lambda, this->nspin_, ModuleBase::Ry_to_eV);
+            print_2d(" initial mag (uB): ", spin, this->nspin_);
+            print_2d(" target mag (uB): ", this->target_mag_, this->nspin_);
             i_step++;
         }
         else
