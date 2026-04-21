@@ -348,7 +348,7 @@ void timer::print_all(std::ofstream &ofs, const bool check_end)
     const std::string table = "\n TIME STATISTICS\n" + time_statistics.str();
     std::cout<<table<<std::endl;
     ofs<<table<<std::endl;
-    write_to_json("time.json");
+//  write_to_json("time.json");
 
 }
 }
