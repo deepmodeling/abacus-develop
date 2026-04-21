@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
 Advanced Example: Step-by-Step Control & Error Handling
-
+=========================================================
 Demonstrates:
-- Manual execution of steps (step1 -> step2 -> step3 -> step4)
-- Customizing advanced input parameters (iter nums, mixings)
-- Post-processing checks
+  - Manual execution of individual steps (step0 → step1 → ... → step4)
+  - Customizing advanced parameters (iter nums, mixings, guiding centres)
+  - Post-processing checks
+  - Dry run mode for input validation
+
+Directory layout:
+  Bi2Se3_advanced/
+  ├── scf/        ← Step 0: ABACUS SCF output
+  └── wannier/    ← Step 1~4: Wannier90 workflow
 """
 
 import os
@@ -13,41 +19,39 @@ import sys
 import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from abacusw90.interface import ABACUSWannier90
 
-from abacusw90 import ABACUSWannier90
-from pathlib import Path
+# ============================================================
+# Config
+# ============================================================
+DRY_RUN = False  # True: stop after generating inputs; False: run everything
+BASE_DIR = "./Bi2Se3_advanced"
+SCF_DIR = f"{BASE_DIR}/scf"
+WORK_DIR = f"{BASE_DIR}/wannier"
 
-def check_input_files():
-    """Helper function to ensure necessary input files exist."""
-    required_files = ["Bi.oncvpsp.upf", "Se.oncvpsp.upf"] # Add orbitals if needed
-    for f in required_files:
-        if not Path(f).exists():
-            print(f"Warning: Input file '{f}' not found in current directory.")
-            print("Please ensure pseudo-potential and orbital files are available.")
-            return False
-    return True
 
 def main():
-    print("="*60)
-    print(" ABACUS Wannier90 Advanced Example")
-    print("="*60)
+    print("=== ABACUS Wannier90 Example: Advanced Usage ===")
+    print(f"    SCF dir  : {SCF_DIR}")
+    print(f"    Work dir : {WORK_DIR}")
+    print(f"    Dry run  : {DRY_RUN}")
+    print()
 
-    if not check_input_files():
-        return
-
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------
     # 1. Initialization
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------
     job = ABACUSWannier90(
-        work_dir="./Bi2Se3_wannier_advanced",
-        scf_dir="./Bi2Se3_scf"
+        work_dir=WORK_DIR,
+        scf_dir=SCF_DIR,
     )
 
-    # Structure Setup
+    # ----------------------------------------------------------
+    # 2. Structure: Bi2Se3 (Rhombohedral, R-3m)
+    # ----------------------------------------------------------
     lattice = [
-        [-2.069, -3.583614, 0.000000],
-        [ 2.069, -3.583614, 0.000000],
-        [ 0.000,  2.389075, 9.546667]
+        [-2.069, -3.583614, 0.0],
+        [2.069, -3.583614, 0.0],
+        [0.000, 2.389075, 9.546667],
     ]
     atoms = [
         {"name": "Bi", "pos": [0.399, 0.399, 0.697]},
@@ -57,15 +61,17 @@ def main():
         {"name": "Se", "pos": [0.794, 0.794, 0.882]},
     ]
     job.set_structure(lattice, atoms)
-    job.pp_orbitals = {"Bi": "Bi.oncvpsp.upf", "Se": "Se.oncvpsp.upf"}
+
+    # ----------------------------------------------------------
+    # 3. Dependency files
+    # ----------------------------------------------------------
+    job.pp_orbitals = {"Bi": "Bi.upf", "Se": "Se.upf"}
     job.orbital_files = ["Bi.orb", "Se.orb"]
 
-    # ------------------------------------------------------------------
-    # 2. Advanced Parameter Configuration
-    # ------------------------------------------------------------------
-    print("\n[Setup] Configuring advanced parameters...")
-    
-    # Customizing Wannier90 parameters
+    # ----------------------------------------------------------
+    # 4. Advanced Parameter Configuration
+    # ----------------------------------------------------------
+    print("[Setup] Configuring advanced parameters...")
     job.set_wannier_parameters(
         num_wann=30,
         num_bands=100,
@@ -75,95 +81,113 @@ def main():
         dis_froz_min=3.0,
         dis_froz_max=14.8,
         mp_grid=[4, 4, 4],
-        # Advanced kwargs passed directly to .win
-        dis_num_iter=500,         # Increase disentanglement iterations
-        dis_mix_ratio=0.5,        # Mixing ratio
-        num_iter=200,             # Wannierisation iterations
-        guiding_centres=True,     # Use guiding centres
-        write_xyz=True            # Output WF centres in xyz format
+        # --- Advanced Wannier90 params ---
+        dis_num_iter=500,  # more disentanglement iterations
+        num_iter=200,  # more minimization iterations
+        guiding_centres=True,  # use guiding centres for initial guess
     )
-
-    # Customizing ABACUS parameters
     job.set_abacus_parameters(
         ecutwfc=100,
         nbands=100,
+        basis_type="lcao",
+        ks_solver="genelpa",
         nspin=4,
         lspinorb=1,
-        # Advanced kwargs passed directly to INPUT
-        scf_thr=1e-9,
-        mixing_beta=0.4,
-        mixing_type='pulay'
+        # --- Advanced ABACUS params ---
+        scf_thr=1e-9,  # tighter convergence
+        mixing_beta=0.4,  # lower mixing for stability
+        mixing_type="pulay",  # Pulay mixing
     )
 
-    # ------------------------------------------------------------------
-    # 3. Manual Step-by-Step Execution
-    # ------------------------------------------------------------------
-    
-    # Step 1: Generate .win and .nnkp
+    # ----------------------------------------------------------
+    # 5. Step-by-step Execution
+    # ----------------------------------------------------------
     try:
-        print("\n>>> Step 1: Generating Wannier90 inputs...")
+        job._validate_inputs()
+
+        # === Step 0: SCF ===
+        print("\n>>> Step 0: Running ABACUS SCF...")
+        t0 = time.time()
+        job.step0_run_scf(
+            scf_mp_grid=[6, 6, 6],  # denser k-mesh for SCF
+            scf_nmax=200,
+            scf_thr=1e-9,
+        )
+        print(f"    Step 0 elapsed: {time.time() - t0:.1f}s")
+
+        # === Step 1: wannier90 -pp ===
+        print("\n>>> Step 1: Generating wannier90.win & preprocessing...")
         job.step1_generate_wannier_win()
-        print("    Success: wannier90.nnkp created.")
-    except Exception as e:
-        print(f"    Failed: {e}")
-        return
 
-    # Step 2: Prepare ABACUS inputs
-    # Here we can inject logic, e.g., checking if nnkp parsing is correct
-    try:
-        print("\n>>> Step 2: Preparing ABACUS inputs...")
+        # === Dry run gate: stop here in dry mode ===
+        if DRY_RUN:
+            # Still generate NSCF inputs so user can inspect them
+            print("\n>>> Step 2: Preparing ABACUS NSCF inputs...")
+            job.step2_prepare_abacus_input()
+
+            print()
+            print("=" * 60)
+            print("DRY RUN COMPLETE")
+            print(f"  SCF inputs  : {job.scf_dir}")
+            print(f"  NSCF inputs : {job.work_dir}")
+            print()
+            print("Generated files to inspect:")
+            print(f"  {job.scf_dir}/INPUT       (SCF parameters)")
+            print(f"  {job.scf_dir}/KPT         (SCF k-points)")
+            print(f"  {job.scf_dir}/STRU        (crystal structure)")
+            print(f"  {job.work_dir}/wannier90.win  (Wannier90 input)")
+            print(f"  {job.work_dir}/wannier90.nnkp (k-point mapping)")
+            print(f"  {job.work_dir}/INPUT       (NSCF parameters)")
+            print(f"  {job.work_dir}/KPT         (NSCF k-points)")
+            print(f"  {job.work_dir}/STRU        (crystal structure)")
+            print()
+            print("To continue: set DRY_RUN = False, or run manually:")
+            print("  job.step3_run_abacus()")
+            print("  job.step4_run_wannier90()")
+            print("=" * 60)
+            return
+
+        # === Step 2: NSCF input preparation ===
+        print("\n>>> Step 2: Preparing ABACUS NSCF inputs...")
         job.step2_prepare_abacus_input()
-        print("    Success: INPUT, KPT, STRU created.")
-    except Exception as e:
-        print(f"    Failed: {e}")
-        return
 
-    # Step 3: Run ABACUS
-    # This is the most time-consuming step
-    try:
-        print("\n>>> Step 3: Running ABACUS NSCF calculation...")
-        start_time = time.time()
+        # === Step 3: ABACUS NSCF ===
+        print("\n>>> Step 3: Running ABACUS NSCF (overlap matrices)...")
+        t3 = time.time()
         job.step3_run_abacus()
-        end_time = time.time()
-        print(f"    Success: ABACUS finished in {end_time - start_time:.2f} seconds.")
-    except Exception as e:
-        print(f"    Failed: {e}")
-        # Check log file for details
-        log_file = job.work_dir / "abacus_nscf.log"
-        if log_file.exists():
-            print(f"    Check log file: {log_file}")
-        return
+        print(f"    Step 3 elapsed: {time.time() - t3:.1f}s")
 
-    # Step 4: Run Wannier90
-    try:
+        # === Step 4: Wannier90 minimization ===
         print("\n>>> Step 4: Running Wannier90 minimization...")
+        t4 = time.time()
         job.step4_run_wannier90()
-        print("    Success: Wannier90 finished.")
-    except Exception as e:
-        print(f"    Failed: {e}")
-        return
+        print(f"    Step 4 elapsed: {time.time() - t4:.1f}s")
 
-    # ------------------------------------------------------------------
-    # 4. Post-Processing Check
-    # ------------------------------------------------------------------
-    print("\n[Post-Processing] Checking output files...")
-    hr_file = job.work_dir / "wannier90_hr.dat"
-    wout_file = job.work_dir / "wannier90.wout"
+        # === Post-processing check ===
+        print("\n>>> Post-processing check:")
+        hr = job.work_dir / "wannier90_hr.dat"
+        wout = job.work_dir / "wannier90.wout"
+        if hr.exists():
+            size_kb = hr.stat().st_size / 1024
+            print(f"  [OK] {hr}  ({size_kb:.1f} KB)")
+        else:
+            print(f"  [MISSING] {hr}")
+        if wout.exists():
+            # Check spread
+            with open(wout) as f:
+                for line in f:
+                    if "Final" in line and "Spread" in line:
+                        print(f"  [OK] {line.strip()}")
+                        break
+        print()
 
-    if hr_file.exists():
-        print(f"  [+] Tight-binding model found: {hr_file}")
-        print(f"  [+] File size: {hr_file.stat().st_size / 1024:.2f} KB")
-    else:
-        print("  [-] Error: wannier90_hr.dat not found.")
+    except FileNotFoundError as e:
+        print(f"\n[FILE ERROR] {e}")
+    except RuntimeError as e:
+        print(f"\n[RUNTIME ERROR] {e}")
+    except ValueError as e:
+        print(f"\n[INPUT ERROR] {e}")
 
-    if wout_file.exists():
-        # Basic check for convergence
-        with open(wout_file, 'r') as f:
-            content = f.read()
-            if "All done: wannier90 exiting" in content:
-                print("  [+] Wannier90 exited normally.")
-            else:
-                print("  [!] Warning: Wannier90 may not have exited normally.")
 
 if __name__ == "__main__":
     main()
