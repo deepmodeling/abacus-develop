@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 authors = [
     {name = "G Jin"},
-    {name = XY Zhou}
+    {name = "XY Zhou"}
 ]
 keywords = ["ABACUS", "Wannier90", "DFT", "Tight-Binding", "Physics"]
 classifiers = [
