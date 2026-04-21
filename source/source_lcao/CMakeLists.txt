@@ -53,6 +53,7 @@ if(ENABLE_LCAO)
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp
         wavefunc_in_pw.cpp
+        module_ri/abfs-vector3_order.cpp
     )
 
     add_library(

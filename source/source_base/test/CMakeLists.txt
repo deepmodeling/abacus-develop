@@ -161,12 +161,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_abfs-vector3_order
-  LIBS parameter 
-  SOURCES abfs-vector3_order_test.cpp ../abfs-vector3_order.cpp
-)
-
-AddTest(
   TARGET MODULE_BASE_global_file
   LIBS parameter 
   SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp

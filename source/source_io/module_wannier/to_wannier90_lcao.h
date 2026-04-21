@@ -1,7 +1,7 @@
 #ifndef TOWannier90_LCAO_H
 #define TOWannier90_LCAO_H
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -36,7 +36,7 @@
 
 #ifdef __LCAO
 #include "fR_overlap.h"
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/math_lebedev_laikov.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 

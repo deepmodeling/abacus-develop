@@ -1,7 +1,7 @@
 #ifndef LCAO_HS_ARRAYS_H
 #define LCAO_HS_ARRAYS_H
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 
 #include <complex>
 #include <vector>

@@ -1,7 +1,7 @@
 #ifndef TO_WANNIER90_LCAO_IN_PW_H
 #define TO_WANNIER90_LCAO_IN_PW_H
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

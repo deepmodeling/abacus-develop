@@ -123,8 +123,7 @@ OBJS_MAIN=main.o\
     driver_run.o\
     parameter.o
 
-OBJS_BASE=abfs-vector3_order.o\
-    assoc_laguerre.o\
+OBJS_BASE=assoc_laguerre.o\
     blas_connector_base.o\
     blas_connector_vector.o\
     blas_connector_matrix.o\
@@ -613,7 +612,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       module_mulliken/output_dmk.o\
       module_ml/io_npz.o\
 
-OBJS_LCAO=evolve_elec.o\
+OBJS_LCAO=abfs-vector3_order.o\
+      evolve_elec.o\
       evolve_psi.o\
       band_energy.o\
       middle_hamilt.o\
