@@ -7,8 +7,31 @@
 #include "source_cell/module_neighbor_search/neighbor_search.h"
 
 
+
 namespace ModuleESolver
 {
+
+    UnitCellPlus ESolver_LJ::change_from_ucell_to_ucell_plus(UnitCell& ucell)
+    {
+        UnitCellPlus ucell_plus;
+        ucell_plus.lat0 = ucell.lat0;
+        ucell_plus.omega = ucell.omega;
+        ucell_plus.nat = ucell.nat;
+        for(int i=0;i<ucell.ntype;i++)
+        {
+            ucell_plus.na.push_back(ucell.atoms[i].na);
+        }
+        ucell_plus.ntype = ucell.ntype;
+        ucell_plus.latvec = ucell.latvec;
+        for(int i=0;i<ucell.ntype;i++)
+        {
+            for(int j=0;j<ucell.atoms[i].na;j++)
+            {
+                ucell_plus.tau.push_back(ucell.atoms[i].tau[j]);
+            }
+        }
+        return ucell_plus;
+    }
 
 void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
@@ -33,8 +56,9 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
+    UnitCellPlus ucell_plus = change_from_ucell_to_ucell_plus(ucell);
     NeighborSearch neighbor_search;
-    neighbor_search.init(ucell, search_radius, 0);
+    neighbor_search.init(ucell_plus, search_radius, 0);
     neighbor_search.build_neighbors();
 
     double distance = 0.0;

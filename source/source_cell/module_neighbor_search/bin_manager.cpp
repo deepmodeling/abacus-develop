@@ -163,9 +163,11 @@ void BinManager::build_atom_neighbors(
                     }
                 }
             }
-        }
-        
+        } 
         int n = neigh_tmp.size();
+
+        //std::cout<<n<<std::endl;
+
         int* ptr = neighbor_list.allocator.allocate(n);
 
         for (int k = 0; k < n; k++)
