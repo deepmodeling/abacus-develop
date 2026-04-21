@@ -97,9 +97,11 @@ REM --- 6. Install Windows-side launchers ---
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
 > "%BIN_DIR%\abacus.cmd" echo @echo off
+>> "%BIN_DIR%\abacus.cmd" echo set "WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:%%WSLENV%%"
 >> "%BIN_DIR%\abacus.cmd" echo wsl -d %DISTRO% --cd "%%CD%%" -- abacus %%*
 
 > "%BIN_DIR%\abacus-mpi.cmd" echo @echo off
+>> "%BIN_DIR%\abacus-mpi.cmd" echo set "WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:%%WSLENV%%"
 >> "%BIN_DIR%\abacus-mpi.cmd" echo wsl -d %DISTRO% --cd "%%CD%%" -- abacus-mpi %%*
 
 REM Record install state so the uninstaller knows whether we added the distro.

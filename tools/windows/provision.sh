@@ -73,6 +73,10 @@ log "Installing system launchers..."
 
 cat > /usr/local/bin/abacus <<EOF
 #!/usr/bin/env bash
+# Cap OpenMP threads to 1 by default to avoid oversubscription.
+# Override from Windows via: set OMP_NUM_THREADS=4 (forwarded through WSLENV).
+: "\${OMP_NUM_THREADS:=1}"
+export OMP_NUM_THREADS
 source "$MINIFORGE_DIR/etc/profile.d/conda.sh"
 conda activate "$ENV_NAME"
 exec "$ENV_BIN/abacus" "\$@"
@@ -81,9 +85,17 @@ chmod +x /usr/local/bin/abacus
 
 cat > /usr/local/bin/abacus-mpi <<EOF
 #!/usr/bin/env bash
+: "\${OMP_NUM_THREADS:=1}"
+export OMP_NUM_THREADS
+# WSL's default Ubuntu has no non-root user, so mpirun/prterun refuses to
+# run without explicit opt-in. Env vars + flag cover OpenMPI 4.x and 5.x.
+export OMPI_ALLOW_RUN_AS_ROOT=1
+export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+export PRTE_MCA_prte_allow_run_as_root=1
+export PRTE_MCA_prte_allow_run_as_root_confirm=1
 source "$MINIFORGE_DIR/etc/profile.d/conda.sh"
 conda activate "$ENV_NAME"
-exec mpirun "\$@" "$ENV_BIN/abacus"
+exec mpirun --allow-run-as-root "\$@" "$ENV_BIN/abacus"
 EOF
 chmod +x /usr/local/bin/abacus-mpi
 
