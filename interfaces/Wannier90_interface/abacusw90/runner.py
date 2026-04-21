@@ -1,72 +1,93 @@
-"""
-Runner utility for executing external processes (ABACUS, Wannier90).
-"""
+"""runner.py - Runner utility for executing external processes (ABACUS, Wannier90)."""
 
 import subprocess
 import os
 from pathlib import Path
 from typing import Optional
 
+
 def run_command(
-    cmd: str, 
-    cwd: str, 
+    cmd: str,
+    cwd: str,
     log_file: Optional[str] = None,
     env: Optional[dict] = None,
-    shell: bool = True
+    shell: bool = True,
+    label: str = "command",
+    check: bool = True,
 ) -> int:
-    """
-    Executes a shell command in a specific directory.
-    
-    Args:
-        cmd (str): Command string to execute.
-        cwd (str): Working directory.
-        log_file (str, optional): File to write stdout/stderr. Defaults to None.
-        env (dict, optional): Environment variables. Defaults to None.
-        shell (bool, optional): Use shell. Defaults to True.
-        
-    Returns:
-        int: Return code of the process.
-    """
-    print(f">>> Executing: {cmd} (in {cwd})")
-    
-    # Prepare environment
+    """Executes a shell command in a specific directory."""
+    print(f">>> [{label}] Executing: {cmd}")
+    print(f">>> [{label}] Working directory: {cwd}")
+
     run_env = os.environ.copy()
     if env:
         run_env.update(env)
-        
-    # Open log file if specified
-    log_f = open(log_file, 'w') if log_file else None
-    
-    try:
-        process = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            shell=shell,
-            env=run_env,
-            stdout=log_f if log_f else subprocess.PIPE,
-            stderr=log_f if log_f else subprocess.PIPE,
-            text=True
-        )
-        
-        process.wait()
-        
-        if process.returncode != 0:
-            print(f"Warning: Command '{cmd}' exited with return code {process.returncode}")
-            
-        return process.returncode
-        
-    except Exception as e:
-        print(f"Error executing command: {e}")
-        return 1
-        
-    finally:
-        if log_f:
-            log_f.close()
 
-def check_file_exists(filepath: Path, raise_error: bool = True) -> bool:
-    """Check if a file exists."""
+    if log_file is None:
+        log_file = str(Path(cwd) / f".{label}.log")
+
+    try:
+        with open(log_file, "w") as log_f:
+            process = subprocess.Popen(
+                cmd,
+                cwd=cwd,
+                shell=shell,
+                env=run_env,
+                stdout=log_f,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            process.wait()
+
+        if process.returncode != 0:
+            with open(log_file, "r") as f:
+                lines = f.readlines()
+            tail = "".join(lines[-20:]) if lines else "(empty)"
+            msg = (
+                f"[{label}] Command failed with return code {process.returncode}.\n"
+                f"  Command : {cmd}\n"
+                f"  CWD     : {cwd}\n"
+                f"  Log file: {log_file}\n"
+                f"  Last 20 lines:\n{tail}"
+            )
+            if check:
+                raise RuntimeError(msg)
+            else:
+                print(f"Warning: {msg}")
+        else:
+            print(f">>> [{label}] Finished successfully (rc=0)")
+
+        return process.returncode
+
+    except FileNotFoundError:
+        raise RuntimeError(
+            f"[{label}] Executable not found in command: '{cmd}'.\n"
+            f"  Check that '{cmd.split()[0]}' is installed and in PATH."
+        )
+    except Exception as e:
+        raise RuntimeError(f"[{label}] Error executing command: {e}") from e
+
+
+def check_file_exists(
+    filepath,
+    raise_error: bool = True,
+    hint: str = "",
+) -> bool:
+    """Check if a file exists, with diagnostic context on failure."""
+    filepath = Path(filepath)
     if not filepath.exists():
         if raise_error:
-            raise FileNotFoundError(f"Required file not found: {filepath}")
+            parent = filepath.parent
+            if parent.exists():
+                siblings = [f.name for f in parent.iterdir()]
+                dir_info = f"Directory contents: {siblings}"
+            else:
+                dir_info = f"Parent directory does not exist: {parent}"
+
+            msg = f"Required file not found: {filepath}"
+            if hint:
+                msg += f"\n  Hint: {hint}"
+            msg += f"\n  {dir_info}"
+            raise FileNotFoundError(msg)
         return False
     return True
