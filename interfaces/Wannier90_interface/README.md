@@ -72,7 +72,7 @@ pip install -e .
 This interface automates the technical coupling steps between ABACUS and Wannier90. In the context of the standard tutorial workflow, it covers the following stages:
 | Step | Description | Responsibility |
 | :--- | :--- | :--- |
-| **Prerequisite** | **Step 1**: ABACUS SCF Calculation | User provides `scf_dir` |
+| **Automated** | **Step 1**: ABACUS SCF Calculation | **Interface Step 0** |
 | **Prerequisite** | **Step 2**: Determine Energy Windows | User provides `dis_win` parameters |
 | **Automated** | **Step 3**: Generate `wannier90.win` & Run `-pp` | **Interface Step 1** |
 | **Automated** | **Step 4**: ABACUS NSCF (Interface Mode) | **Interface Step 2 & 3** |
@@ -113,19 +113,20 @@ job.set_abacus_parameters(ecutwfc=100, nbands=100, lspinorb=1)
 # 5. Run Automation (Covers Tutorial Steps 3, 4, 5)
 job.run()
 ```
+
 ## Detailed Workflow Steps
 The `run()` method executes the following automated sequence:
 1.  **Generate Inputs & Preprocess**: Write `wannier90.win` and execute `wannier90 -pp` to generate `.nnkp`.
 2.  **Prepare ABACUS**: Parse `.nnkp` to generate ABACUS `KPT`, `INPUT`, and `STRU` files. Copy SCF charge densities.
 3.  **Run ABACUS Interface**: Execute ABACUS in NSCF mode with `towannier90=1`. This generates `mmn`, `amn`, `eig` files.
 4.  **Run Wannier90**: Execute `wannier90.x` to compute MLWFs and output `wannier90_hr.dat`.
+
 ## Requirements
 - **ABACUS**: v3.0 or higher (with Wannier90 interface support).
 - **Wannier90**: v3.0 or higher.
 - **Python**: 3.8+
-```
 
-## Important Notes
+# Important Notes
 
 - The k-point grid in the ABACUS NSCF calculation must match the one in the Wannier90 input file
 - Set `wvfn_formatted = .true.` in the Wannier90 input file to ensure compatibility with ABACUS output
