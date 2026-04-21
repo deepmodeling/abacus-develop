@@ -612,8 +612,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       module_mulliken/output_dmk.o\
       module_ml/io_npz.o\
 
-OBJS_LCAO=abfs-vector3_order.o\
-      evolve_elec.o\
+OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
       band_energy.o\
       middle_hamilt.o\
