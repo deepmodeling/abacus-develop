@@ -26,6 +26,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    :caption: Quick Start
 
    quick_start/easy_install
+   quick_start/windows_installer
    quick_start/hands_on
    quick_start/input
    quick_start/output
