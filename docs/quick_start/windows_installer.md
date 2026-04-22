@@ -235,18 +235,6 @@ Inside WSL (Ubuntu-22.04):
 /usr/local/bin/abacus, /usr/local/bin/abacus-mpi   # Linux-side launchers
 ```
 
-## Troubleshooting
-
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Window closes immediately after "Installing Ubuntu-22.04 …" | Legacy issue where `if errorlevel 1` was parse-time evaluated inside a nested block. | Pull latest `install-abacus.bat`. |
-| `$'\r': command not found` inside provisioning | `provision.sh` has CRLF line endings. | The installer strips `\r` at runtime. If you run `provision.sh` manually, first `sed -i 's/\r$//' provision.sh`. |
-| `prterun has detected an attempt to run as root` | OpenMPI refuses root by default. | Already handled in `abacus-mpi` wrapper. Re-run `install-abacus.bat` to regenerate wrappers if yours predate the fix. |
-| `Please run using "bash"/"dash"/…, but not "." or "source"` | Miniforge installer's sourced-check misfires under `bash installer.sh`. | Already fixed: installer now invokes via its own shebang (`chmod +x` + direct exec). |
-| `不存在具有所提供名称的分发 / WSL_E_DISTRO_NOT_FOUND` | Distro not actually registered; probe was fooled by Store appx. | Already fixed: probe now queries the WSL registry key. |
-| Very slow conda downloads from Mainland China | Default channel is GitHub / conda-forge.org. | Re-run and answer `y` to the TUNA mirror prompt. |
-| WSL warning `检测到 localhost 代理配置…` | Your Windows has a localhost HTTP proxy (e.g. Clash); WSL2 NAT mode can't reach it. | Cosmetic only. To silence, set `[wsl2] networkingMode=mirrored` in `%UserProfile%\.wslconfig`. |
-
 ## Design choices and trade-offs
 
 - **Why WSL2 + conda-forge instead of a native Windows build?** ABACUS's
