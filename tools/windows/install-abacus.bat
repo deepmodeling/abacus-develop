@@ -53,26 +53,44 @@ if errorlevel 1 (
 )
 
 REM --- 4. Ensure target distro registered ---
-echo [*] Probing WSL state. First call may take 30-60s while WSL2 cold-starts...
-wsl --set-default-version 2 >nul 2>&1
+echo [*] Updating WSL2 runtime if needed (Microsoft's progress bar shows below)...
+wsl --update
+wsl --set-default-version 2
 
-REM Probe: if `wsl -d DISTRO -- true` returns 0, the distro already exists.
-REM This avoids parsing `wsl -l -q` (UTF-16 output trips findstr).
-set "DISTRO_PREEXISTED=1"
-wsl -d %DISTRO% -u root -- /bin/true >nul 2>&1
+REM Detect distro via registry (reliable, ANSI output, no UTF-16 pitfalls).
+set "DISTRO_PREEXISTED=0"
+reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss" /s /v DistributionName 2>nul | findstr /i /c:"%DISTRO%" >nul
+if not errorlevel 1 set "DISTRO_PREEXISTED=1"
+
+REM NOTE: keep this block flat (no nested parens) so `if errorlevel 1` after
+REM each wsl.exe call reads the *runtime* errorlevel, not the parse-time one.
+if "%DISTRO_PREEXISTED%"=="1" goto :distro_ready
+
+echo [*] Installing %DISTRO% into WSL ^(Microsoft's download progress shows below^)...
+wsl --install -d %DISTRO% --no-launch
 if errorlevel 1 (
-    set "DISTRO_PREEXISTED=0"
-    echo [*] Installing %DISTRO% into WSL ^(this may take a few minutes^)...
-    wsl --install -d %DISTRO% --no-launch
-    if errorlevel 1 (
-        echo [!] Failed to install %DISTRO%. Reboot and retry, or run
-        echo [!]     wsl --install -d %DISTRO%
-        echo [!] manually and finish any setup prompt, then re-run this script.
-        pause & exit /b 1
-    )
-    REM Poke the distro once as root so any first-run steps complete without OOBE.
-    wsl -d %DISTRO% -u root -- /bin/true >nul 2>&1
+    echo [!] Failed to install %DISTRO%. Reboot and retry, or run
+    echo [!]     wsl --install -d %DISTRO%
+    echo [!] manually and finish any setup prompt, then re-run this script.
+    pause
+    exit /b 1
 )
+
+echo [*] Initializing %DISTRO% (first cold-start can take 30-60s)...
+wsl -d %DISTRO% -u root -- /bin/true >nul 2>&1
+
+reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss" /s /v DistributionName 2>nul | findstr /i /c:"%DISTRO%" >nul
+if errorlevel 1 (
+    echo [!] %DISTRO% still not registered after install. Possible causes:
+    echo [!]   - Microsoft Store blocked/unreachable
+    echo [!]   - A reboot is required to finish the initial WSL setup
+    echo [!] Reboot, then re-run this script. Or run manually:
+    echo [!]     wsl --install -d %DISTRO%
+    pause
+    exit /b 1
+)
+
+:distro_ready
 
 REM --- 5. Run provisioning script inside the distro ---
 echo [*] Provisioning ABACUS via conda-forge inside %DISTRO%.
@@ -87,7 +105,10 @@ if not defined WSL_SCRIPT (
     pause & exit /b 1
 )
 
-wsl -d %DISTRO% -u root -- env ABACUS_CHINA_MIRROR=!ABACUS_CHINA_MIRROR! bash "!WSL_SCRIPT!"
+REM Strip any CR bytes that a Windows editor / git autocrlf may have injected
+REM into provision.sh, then pipe the cleaned script into bash. Without this,
+REM bash reads `set -euo pipefail\r` and errors on the literal \r.
+wsl -d %DISTRO% -u root -- bash -c "sed 's/\r$//' '!WSL_SCRIPT!' | ABACUS_CHINA_MIRROR=!ABACUS_CHINA_MIRROR! bash"
 if errorlevel 1 (
     echo [!] Provisioning failed. See output above.
     pause & exit /b 1

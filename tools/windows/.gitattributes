@@ -1,0 +1,6 @@
+# Shell scripts must have LF line endings so bash inside WSL can parse them.
+*.sh text eol=lf
+
+# Batch files are Windows-only; keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
