@@ -32,7 +32,7 @@ void Charge::init_rho(const UnitCell& ucell,
     const int nspin = PARAM.inp.nspin;
     assert(nspin>0);
 
-    std::cout << " START CHARGE      : " << PARAM.inp.init_chg << std::endl;
+    std::cout << " START CHARGE         : " << PARAM.inp.init_chg << std::endl;
 
     // we need to set the omega for the charge density
     set_omega(&ucell.omega);

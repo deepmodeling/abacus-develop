@@ -3,7 +3,7 @@
 #include <vector>
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "gint.h"
 #include "gint_info.h"
 

@@ -49,7 +49,6 @@ add_library(
     tool_quit.cpp
     tool_title.cpp
     ylm.cpp
-    abfs-vector3_order.cpp
     parallel_common.cpp
     parallel_global.cpp
     parallel_comm.cpp

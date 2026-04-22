@@ -123,8 +123,7 @@ OBJS_MAIN=main.o\
     driver_run.o\
     parameter.o
 
-OBJS_BASE=abfs-vector3_order.o\
-    assoc_laguerre.o\
+OBJS_BASE=assoc_laguerre.o\
     blas_connector_base.o\
     blas_connector_vector.o\
     blas_connector_matrix.o\

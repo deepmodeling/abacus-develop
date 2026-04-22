@@ -1,3 +1,21 @@
+/**
+ * Unit-test of cal_pLpR.cpp
+ * 
+ * The representation matrices for Lx, Ly and Lz operators (SO(3) generators).
+ * On basis {s}:
+ * Lx: Ly: Lz:
+ * 0   0   0
+ * 
+ * On basis {px, py, pz}:
+ * Lx:             Ly:             Lz:
+ *    px  py  pz      px  py  pz      px  py  pz
+ * px  0           px  0       i   px  0  -i
+ * py      0  -i   py      0       py  i   0
+ * pz      i   0   pz -i       0   pz          0
+ * 
+ * will test if the calculated values are close to the above results.
+ */
+
 #include <gtest/gtest.h>
 #include <complex>
 #include <memory>
@@ -51,38 +69,29 @@ TEST_F(CalpLpRTest, CalLzijRTest)
     std::complex<double> out;
 
     ModuleBase::Vector3<double> vR(0., 0., 0.); // home-cell
-    int it = 0, ia = 0, il = 0, iz = 0, mi = 0;
-    int jt = 0, ja = 0, jl = 0, jz = 0, mj = 0; // self, the first s
+    int it = 0, ia = 0, il = 0, iz = 0, im = 0;
+    int jt = 0, ja = 0, jl = 0, jz = 0, jm = 0;
     
-    // <s|Lz|s> = 0: no magnetic moment
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
+    // l=0
+    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <s|Lz|p> = 0: orthogonal
-    jl = 1;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Lz|p(m=0)> = 0: orthogonal
-    il = 1; mi = -1; jl = 1; mj = 0;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lz|p(m=1)> = 1: same
-    il = 1; mi = 1; jl = 1; mj = 1;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 1.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Lz|d(m=0)> = 0: orthogonal
-    il = 2; mi = -1; jl = 2; mj = 0;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=1)|Lz|d(m=1)> = 1: same
-    il = 2; mi = 1; jl = 2; mj = 1;
-    out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, mi, jt, ja, jl, jz, mj, vR);
-    EXPECT_NEAR(out.real(), 1.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
+
+    // l=1
+    il = 1; jl = 1;
+    std::vector<std::complex<double>> ans(9, 0.0);
+    ans[1] = {0.0, -1.0}; ans[3] = {0.0, 1.0};
+    int idx = 0;
+    const std::vector<int> m = {1, -1, 0}; // px, py, pz
+    for (auto im_: m) {
+        for (auto jm_: m) {
+            im = im_; jm = jm_;
+            out = ModuleIO::cal_LzijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
+            EXPECT_NEAR(out.real(), ans[idx].real(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(out.imag(), ans[idx].imag(), DOUBLETHRESHOLD);
+            idx++;
+        }
+    }
 }
 
 TEST_F(CalpLpRTest, CalLxijRTest)
@@ -91,32 +100,28 @@ TEST_F(CalpLpRTest, CalLxijRTest)
 
     ModuleBase::Vector3<double> vR(0., 0., 0.); // home-cell
     int it = 0, ia = 0, il = 0, iz = 0, im = 0;
-    int jt = 0, ja = 0, jl = 0, jz = 0, jm = 0; // self, the first s
+    int jt = 0, ja = 0, jl = 0, jz = 0, jm = 0;
 
-    // <s|Lx|s> = 0: no anisotropy
+    // l=0
     out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <s|Lx|p> = 0: orthogonal
-    jl = 1;
-    out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Lx|p(m=0)> = 0.5: Lx|p(m=0)> = 1/2 (|p(m=-1)> + |p(m=1)>)
-    il = 1; im = -1; jl = 1; jm = 0;
-    out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.5*sqrt(2.0), DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=1)|Lx|p(m=1)> = 0: expectation value is 0
-    il = 1; im = 1; jl = 1; jm = 1;
-    out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Lx|d(m=0)> = 0.5: Lx|d(m=0)> = 1/2 (|d(m=-1)> + |d(m=1)>)
-    il = 2; im = -1; jl = 2; jm = 0;
-    out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.5*sqrt(6.0), DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
+
+    // l=1
+    il = 1; jl = 1;
+    std::vector<std::complex<double>> ans(9, 0.0);
+    ans[5] = {0.0, 1.0}; ans[7] = {0.0, -1.0};
+    int idx = 0;
+    const std::vector<int> m = {1, -1, 0}; // px, py, pz
+    for (auto im_: m) {
+        for (auto jm_: m) {
+            im = im_; jm = jm_;
+            out = ModuleIO::cal_LxijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
+            EXPECT_NEAR(out.real(), ans[idx].real(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(out.imag(), ans[idx].imag(), DOUBLETHRESHOLD);
+            idx++;
+        }
+    }
 }
 
 TEST_F(CalpLpRTest, CalLyijRTest)
@@ -127,30 +132,26 @@ TEST_F(CalpLpRTest, CalLyijRTest)
     int it = 0, ia = 0, il = 0, iz = 0, im = 0;
     int jt = 0, ja = 0, jl = 0, jz = 0, jm = 0; // self, the first s
 
-    // <s|Ly|s> = 0: no anisotropy
+    // l=0
     out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
     EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <s|Ly|p> = 0: orthogonal
-    jl = 1;
-    out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <p(m=-1)|Ly|p(m=0)> = -i/2: Ly|p(m=0)> = -i/2 (|p(m=1)> - |p(m=-1)>)
-    il = 1; im = -1; jl = 1; jm = 0;
-    out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.5*sqrt(2.0), DOUBLETHRESHOLD);
-    // <p(m=1)|Ly|p(m=1)> = 0: expectation value is 0
-    il = 1; im = 1; jl = 1; jm = 1;
-    out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.0, DOUBLETHRESHOLD);
-    // <d(m=-1)|Ly|d(m=0)> = -i/2: Ly|d(m=0)> = -i/2 (|d(m=1)> - |d(m=-1)>)
-    il = 2; im = -1; jl = 2; jm = 0;
-    out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
-    EXPECT_NEAR(out.real(), 0.0, DOUBLETHRESHOLD);
-    EXPECT_NEAR(out.imag(), 0.5*sqrt(6.0), DOUBLETHRESHOLD);
+    
+    // l=1
+    il = 1; jl = 1;
+    std::vector<std::complex<double>> ans(9, 0.0);
+    ans[2] = {0.0, -1.0}; ans[6] = {0.0, 1.0};
+    int idx = 0;
+    const std::vector<int> m = {1, -1, 0}; // px, py, pz
+    for (auto im_: m) {
+        for (auto jm_: m) {
+            im = im_; jm = jm_;
+            out = ModuleIO::cal_LyijR(calculator_, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR);
+            EXPECT_NEAR(out.real(), ans[idx].real(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(out.imag(), ans[idx].imag(), DOUBLETHRESHOLD);
+            idx++;
+        }
+    }
 }
 
 int main(int argc, char **argv)
