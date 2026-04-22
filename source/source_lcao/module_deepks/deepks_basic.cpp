@@ -250,10 +250,6 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     std::vector<torch::Tensor> tensor_inputs;
     tensor_inputs.push_back(inputs[0].toTensor());
     ec[0].reshape({1, 1}).requires_grad_(true);
-    torch::Tensor derivative = torch::autograd::grad(ec, tensor_inputs, {}, true)[0];
-    LCAO_deepks_io::save_tensor2npy<double>("gev.npy",
-                                            derivative.reshape({nat, deepks_param.des_per_atom}),
-                                            0); // dm_eig.npy is the input for gedm
 
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
