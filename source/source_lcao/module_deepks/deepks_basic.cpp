@@ -244,11 +244,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     }
     E_delta = ec[0].item<double>() * 2; // Ry; *2 is for Hartree to Ry
 
-    // get d ec[0]/d inputs
-    // inputs: [1, nat, des_per_atom]
     // ec: [1, 1]
-    std::vector<torch::Tensor> tensor_inputs;
-    tensor_inputs.push_back(inputs[0].toTensor());
     ec[0].reshape({1, 1}).requires_grad_(true);
 
     // cal gedm
