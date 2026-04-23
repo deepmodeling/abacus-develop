@@ -97,7 +97,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     make -j$(nproc) && \
     make install && \
     ls ${GKLIB_ROOT}/lib && \
-    cp ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so && \
+    cp -n ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so || true && \
     cd / && rm -rf GKlib-${GKLIB_VERSION} GKlib-${GKLIB_VERSION}.zip
 #.so file CANNOT be found otherwise.
 # 2. install METIS
