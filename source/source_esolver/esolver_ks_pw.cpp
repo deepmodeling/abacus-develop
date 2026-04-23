@@ -216,7 +216,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.calculation,
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
-                                                     false,
                                                      PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
