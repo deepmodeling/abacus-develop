@@ -8,6 +8,18 @@ MINIFORGE_DIR="/opt/abacus-miniforge"
 ENV_NAME="abacus_env"
 ENV_BIN="$MINIFORGE_DIR/envs/$ENV_NAME/bin"
 CHINA_MIRROR="${ABACUS_CHINA_MIRROR:-0}"
+VERSION_SPEC="${ABACUS_VERSION:-}"
+
+# Build the conda match-spec. Empty => latest; a bare version like "3.7.4"
+# is pinned with "="; anything containing an operator (>=, <, etc.) or a
+# comma is passed through as-is.
+if [ -z "$VERSION_SPEC" ]; then
+    ABACUS_PKG="abacus"
+elif echo "$VERSION_SPEC" | grep -qE '[<>=!,* ]'; then
+    ABACUS_PKG="abacus $VERSION_SPEC"
+else
+    ABACUS_PKG="abacus=$VERSION_SPEC"
+fi
 
 if [ "$CHINA_MIRROR" = "1" ]; then
     MINIFORGE_URL="https://mirrors.tuna.tsinghua.edu.cn/github-release/conda-forge/miniforge/LatestRelease/Miniforge3-Linux-x86_64.sh"
@@ -62,11 +74,13 @@ fi
 source "$MINIFORGE_DIR/etc/profile.d/conda.sh"
 
 if conda env list | awk 'NF && $1 !~ /^#/ {print $1}' | grep -qx "$ENV_NAME"; then
-    log "Updating existing env '$ENV_NAME' (channel: $CONDA_FORGE_CHANNEL)..."
-    conda install -n "$ENV_NAME" -y --override-channels -c "$CONDA_FORGE_CHANNEL" abacus
+    log "Updating existing env '$ENV_NAME' (channel: $CONDA_FORGE_CHANNEL, package: $ABACUS_PKG)..."
+    # shellcheck disable=SC2086
+    conda install -n "$ENV_NAME" -y --override-channels -c "$CONDA_FORGE_CHANNEL" $ABACUS_PKG
 else
-    log "Creating env '$ENV_NAME' (channel: $CONDA_FORGE_CHANNEL)..."
-    conda create -n "$ENV_NAME" -y --override-channels -c "$CONDA_FORGE_CHANNEL" abacus
+    log "Creating env '$ENV_NAME' (channel: $CONDA_FORGE_CHANNEL, package: $ABACUS_PKG)..."
+    # shellcheck disable=SC2086
+    conda create -n "$ENV_NAME" -y --override-channels -c "$CONDA_FORGE_CHANNEL" $ABACUS_PKG
 fi
 
 log "Installing system launchers..."
