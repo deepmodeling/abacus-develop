@@ -127,7 +127,7 @@ Users can find pseudopotentials in the following links:
 - [Quantum ESPRESSO](https://www.quantum-espresso.org/pseudopotentials): the official website of Quantum ESPRESSO, where you can find a large number of pseudopotential files.
 - [Stantard Solid State Pseudopotential library](https://www.materialscloud.org/sssp): a library of **high-quality** pseudopotentials for solid-state calculations, with **a large number of tests on efficiency and precison**.
 - [PWmat](http://www.pwmat.com/potential-download): a website that provides a large number of pseudopotential files, various kinds of semi-core constructed pseudopotentials are included. **Several sets (with or without f-electrons/noncolinear core correction) of Lanthanide pseudopotentials are also available**.
-- [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, paw, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
+- [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
 - [ABACUS@USTC](https://abacus.ustc.edu.cn/pseudo/list.htm): **ABACUS official website** where you can find a large number of pseudopotential files and numerical atomic orbital files.
 - [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary): BLPS format pseudopotential library
 

@@ -156,7 +156,6 @@ private:
             config_.tolerance,
             diag_ethr,
             config_.max_iterations,
-            config_.use_paw,
             comm_info
         );
 

@@ -112,10 +112,7 @@ endif()
 
 endif() # MKL::MKL
 
-# For compatibility with legacy libpaw_interface CMakeLists.txt
-if(TARGET MKL::MKL AND NOT TARGET IntelMKL::MKL)
-  add_library(IntelMKL::MKL ALIAS MKL::MKL)
-endif()
+
 
 # In oneAPI 2022, MKL_SCALAPACK might not be linked properly
 if(NOT TARGET MKL::MKL_SCALAPACK)

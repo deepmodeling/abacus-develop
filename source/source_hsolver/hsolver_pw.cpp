@@ -109,9 +109,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -133,9 +131,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
@@ -156,9 +152,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -175,9 +169,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
@@ -350,7 +342,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, this->use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
              david.diag(hpsi_func,
