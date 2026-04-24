@@ -65,8 +65,8 @@ def main():
     # ----------------------------------------------------------
     # 3. Dependency files
     # ----------------------------------------------------------
-    job.pp_orbitals = {"Bi": "Bi.upf", "Se": "Se.upf"}
-    job.orbital_files = ["Bi.orb", "Se.orb"]
+    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.upf", "Se": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.upf"}
+    job.orbital_files = ["../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.orb", "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.orb"]
 
     # ----------------------------------------------------------
     # 4. Advanced Parameter Configuration

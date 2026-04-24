@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """
-Example: Basic LCAO Workflow
-==============================
-Standard ABACUS (LCAO basis) to Wannier90 interface workflow.
-Demonstrates:
-  - Standard 4x4x4 k-point mesh
-  - Non-collinear spin-orbit coupling (nspin=4)
-  - Dry-run mode for input validation
-  - Comprehensive error handling & post-checks
+Example: PW (Plane Wave) Basis
+================================
+Key differences from basic.py:
+  - basis_type = 'pw'
+  - ks_solver  = 'cg'  (or 'dav', 'cg', 'bpcg')
+  - No orbital files needed
 
 Directory layout:
-  Bi2Se3_basic/
+  Bi2Se3_pw/
   ├── scf/        ← Step 0: ABACUS SCF output
   └── wannier/    ← Step 1~4: Wannier90 workflow
 """
@@ -24,14 +22,14 @@ from abacusw90.interface import ABACUSWannier90
 # ============================================================
 # Config
 # ============================================================
-DRY_RUN = False  # True: only generate input files; False: run full workflow
-BASE_DIR = "./Bi2Se3_basic"
+DRY_RUN = False
+BASE_DIR = "./Bi2Se3_pw"
 SCF_DIR = f"{BASE_DIR}/scf"
 WORK_DIR = f"{BASE_DIR}/wannier"
 
 
 def main():
-    print("=== ABACUS Wannier90 Example: Basic LCAO Workflow ===")
+    print("=== ABACUS Wannier90 Example: PW Basis ===")
     print(f"    SCF dir  : {SCF_DIR}")
     print(f"    Work dir : {WORK_DIR}")
     print(f"    Dry run  : {DRY_RUN}")
@@ -63,10 +61,10 @@ def main():
     job.set_structure(lattice, atoms)
 
     # ----------------------------------------------------------
-    # 3. Dependency files
+    # 3. Dependency files (PW only needs pseudopotentials)
     # ----------------------------------------------------------
-    job.pp_orbitals = {"Bi": "Bi.upf", "Se": "Se.upf"}
-    job.orbital_files = ["Bi.orb", "Se.orb"]
+    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.upf", "Se": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.upf"}
+    # ← PW基组不需要轨道文件，不设置 orbital_files
 
     # ----------------------------------------------------------
     # 4. Wannier90 Parameters
@@ -78,18 +76,18 @@ def main():
         dis_win_min=3.0,
         dis_win_max=18.0,
         dis_froz_min=3.0,
-        dis_froz_max=14.8,
+        dis_froz_max=13.5,
         mp_grid=[4, 4, 4],
     )
 
     # ----------------------------------------------------------
-    # 5. ABACUS Parameters
+    # 5. ABACUS Parameters (PW basis)
     # ----------------------------------------------------------
     job.set_abacus_parameters(
         ecutwfc=100,
         nbands=100,
-        basis_type="lcao",
-        ks_solver="genelpa",
+        basis_type="pw",  # ← Plane wave
+        ks_solver="cg",  # ← Conjugate gradient
         nspin=4,
         lspinorb=1,
     )
@@ -101,15 +99,15 @@ def main():
         if DRY_RUN:
             job._validate_inputs()
 
-            # Step 0: only generate SCF input files (skip ABACUS execution)
+            # Step 0: SCF (PW基组)
             job.step0_run_scf(
                 scf_mp_grid=[4, 4, 4],
             )
 
-            # Step 1: generate .win + wannier90 -pp (lightweight)
+            # Step 1: wannier90 -pp
             job.step1_generate_wannier_win()
 
-            # Step 2: generate NSCF INPUT/KPT/STRU
+            # Step 2: NSCF input files
             job.step2_prepare_abacus_input()
 
             print()
@@ -118,19 +116,8 @@ def main():
             print(f"  SCF   : {job.scf_dir}")
             print(f"  Work  : {job.work_dir}")
             print()
-            print("Generated files to inspect:")
-            print(f"  {job.scf_dir}/INPUT            (SCF parameters)")
-            print(f"  {job.scf_dir}/KPT              (SCF k-points)")
-            print(f"  {job.scf_dir}/STRU             (crystal structure)")
-            print(f"  {job.work_dir}/wannier90.win   (Wannier90 input)")
-            print(f"  {job.work_dir}/wannier90.nnkp  (k-point mapping)")
-            print(f"  {job.work_dir}/INPUT            (NSCF parameters)")
-            print(f"  {job.work_dir}/KPT              (NSCF k-points)")
-            print(f"  {job.work_dir}/STRU             (crystal structure)")
-            print()
             print("To run the full workflow, set DRY_RUN = False")
             print("=" * 60)
-
         else:
             job.run(run_scf=True)
 
@@ -156,7 +143,7 @@ def main():
         print(f"\n[FILE ERROR] {e}")
         print("  [1] wannier90.x in PATH?  →  which wannier90.x")
         print("  [2] abacus in PATH?       →  which abacus")
-        print("  [3] PP / orbital files?   →  ls *.upf *.orb")
+        print("  [3] PP files?             →  ls ../../../tests/PP_ORB/for_interface/Wannier90_interface/*.upf")
     except RuntimeError as e:
         print(f"\n[RUNTIME ERROR] {e}")
     except ValueError as e:
@@ -165,3 +152,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
