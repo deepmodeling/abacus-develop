@@ -1361,7 +1361,7 @@
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, SCF is considered converged only when both the charge-density criterion (`scf_thr`) and the total-energy criterion (`scf_ene_thr`) are satisfied. For local-orbital calculations, 1e-6 is usually accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, its total-energy criterion is applied as an additional convergence check only after the charge-density criterion (`scf_thr`) has been satisfied, and only from the second SCF iteration onward (`iter > 1`). For local-orbital calculations, 1e-6 is usually accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 - **Unit**: Ry if scf_thr_type=1, dimensionless if scf_thr_type=2
 
