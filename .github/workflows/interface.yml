@@ -1,6 +1,5 @@
 name: interface
 
-# 仅支持手动触发，不自动运行
 on:
   workflow_dispatch:
 
@@ -48,129 +47,130 @@ jobs:
           echo "OK: no wannier90.x (dryrun mode)"
 
       # ================================================================
-      #  Shared mock + patch (covers all three scripts)
+      #  Shared mock + patch
+      #  NOTE: env: MUST be a sibling of run: (same indent level).
+      #        run: uses block scalar literal (|) so the heredoc inside
+      #        is passed to bash with YAML indentation stripped.
       # ================================================================
       - name: Create mock data & patch script
-        run: python3 << 'PYEOF'
-      import os, re, textwrap
-
-      script = os.environ["SCRIPT"]
-      prefix = os.environ["PREFIX"]
-
-      # ── 1. Patch the example script ────────────────────────────
-      with open(script) as f:
-          src = f.read()
-
-      # Enable dry run
-      src = src.replace("DRY_RUN = False", "DRY_RUN = True")
-
-      # Skip step0 — requires ABACUS binary
-      src = re.sub(
-          r"\s*job\.step0_run_scf\([^)]*\)",
-          "        # [CI:skip] step0_run_scf — no ABACUS in this environment",
-          src,
-          flags=re.DOTALL,
-      )
-
-      # Skip step1 — requires wannier90.x binary
-      src = src.replace(
-          "job.step1_generate_wannier_win()",
-          "# [CI:skip] step1_generate_wannier_win — no wannier90.x in this environment",
-      )
-
-      with open(script, "w") as f:
-          f.write(src)
-      print(f"[patch] {script}")
-
-      # ── 2. Create work directories ─────────────────────────────
-      for d in [f"{prefix}/scf", f"{prefix}/wannier"]:
-          os.makedirs(d, exist_ok=True)
-
-      # ── 3. Mock STRU (scf/ + wannier/) ────────────────────────
-      stru = textwrap.dedent("""\
-          ATOMIC_SPECIES
-          Bi  208.980  Bi.upf
-          Se   78.960  Se.upf
-
-          LATTICE_CONSTANT
-          1.0
-
-          LATTICE_VECTORS
-          -2.069 -3.583614 0.0
-           2.069 -3.583614 0.0
-           0.000  2.389075 9.546667
-
-          ATOMIC_POSITIONS
-          Direct
-
-          Bi
-          0.399 0.399 0.697 1 1 1
-          0.601 0.601 0.303 1 1 1
-
-          Se
-          0.000 0.000 0.500 1 1 1
-          0.206 0.206 0.118 1 1 1
-          0.794 0.794 0.882 1 1 1
-          """)
-      for d in [f"{prefix}/scf", f"{prefix}/wannier"]:
-          p = os.path.join(d, "STRU")
-          with open(p, "w") as f:
-              f.write(stru)
-          print(f"[mock] {p}")
-
-      # ── 4. Mock wannier90.nnkp ────────────────────────────────
-      nbands = 20
-      nk     = 64   # 4 × 4 × 4
-      nntot  = 14
-
-      lines = [
-          f"     {nbands}", "!     num_bands",
-          f"     {nk}",     "!     num_kpts",
-          "     4     4     4", "!     mp_grid",
-      ]
-      for ix in range(4):
-          for iy in range(4):
-              for iz in range(4):
-                  lines.append(f"  {ix/4:.15f}  {iy/4:.15f}  {iz/4:.15f}")
-
-      lines.append(f"     {nntot}")
-      lines.append("!     nntot")
-      for ik in range(nk):
-          lines.append(f"     {nntot}")
-          for ib in range(nntot):
-              lines.append(f"     {(ik + ib) % nk + 1}")
-          lines.append(f"     {nntot}")
-          for ib in range(nntot):
-              lines.append("     0     0     0")
-
-      lines += [
-          f"     {nbands}", "!     num_exclude_bands",
-          "     30",        "!     num_wann",
-          "     6",         "!     num_proj",
-      ]
-      for proj in ["Bi : pz","Bi : px","Bi : py",
-                    "Se : pz","Se : px","Se : py"]:
-          lines.append(f"     {proj}")
-
-      nnkp = os.path.join(prefix, "wannier", "wannier90.nnkp")
-      with open(nnkp, "w") as f:
-          f.write("\n".join(lines) + "\n")
-      print(f"[mock] {nnkp}  ({len(lines)} lines)")
-
-      # ── 5. Mock PP & ORB files (unified path for all 3 scripts) ──
-      orb_dir = "tests/PP_ORB/for_interface/Wannier90_interface"
-      os.makedirs(orb_dir, exist_ok=True)
-      for name in ["Bi.upf", "Se.upf", "Bi.orb", "Se.orb"]:
-          p = os.path.join(orb_dir, name)
-          with open(p, "w") as f:
-              f.write("# mock for CI dryrun\n")
-          print(f"[mock] {p}")
-
-      print("\n[done] all mocks ready")
-      PYEOF
         env:
           SCRIPT: ${{ matrix.script }}
           PREFIX: ${{ matrix.prefix }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, textwrap
+
+          script = os.environ["SCRIPT"]
+          prefix = os.environ["PREFIX"]
+
+          # ── 1. Patch the example script ────────────────────────
+          with open(script) as f:
+              src = f.read()
+
+          src = src.replace("DRY_RUN = False", "DRY_RUN = True")
+
+          src = re.sub(
+              r"\s*job\.step0_run_scf\([^)]*\)",
+              "        # [CI:skip] step0_run_scf — no ABACUS in this environment",
+              src,
+              flags=re.DOTALL,
+          )
+
+          src = src.replace(
+              "job.step1_generate_wannier_win()",
+              "# [CI:skip] step1_generate_wannier_win — no wannier90.x in this environment",
+          )
+
+          with open(script, "w") as f:
+              f.write(src)
+          print(f"[patch] {script}")
+
+          # ── 2. Create work directories ─────────────────────────
+          for d in [f"{prefix}/scf", f"{prefix}/wannier"]:
+              os.makedirs(d, exist_ok=True)
+
+          # ── 3. Mock STRU (scf/ + wannier/) ────────────────────
+          stru = textwrap.dedent("""\
+              ATOMIC_SPECIES
+              Bi  208.980  Bi.upf
+              Se   78.960  Se.upf
+
+              LATTICE_CONSTANT
+              1.0
+
+              LATTICE_VECTORS
+              -2.069 -3.583614 0.0
+               2.069 -3.583614 0.0
+               0.000  2.389075 9.546667
+
+              ATOMIC_POSITIONS
+              Direct
+
+              Bi
+              0.399 0.399 0.697 1 1 1
+              0.601 0.601 0.303 1 1 1
+
+              Se
+              0.000 0.000 0.500 1 1 1
+              0.206 0.206 0.118 1 1 1
+              0.794 0.794 0.882 1 1 1
+              """)
+          for d in [f"{prefix}/scf", f"{prefix}/wannier"]:
+              p = os.path.join(d, "STRU")
+              with open(p, "w") as f:
+                  f.write(stru)
+              print(f"[mock] {p}")
+
+          # ── 4. Mock wannier90.nnkp ────────────────────────────
+          nbands = 20
+          nk     = 64   # 4 × 4 × 4
+          nntot  = 14
+
+          lines = [
+              f"     {nbands}", "!     num_bands",
+              f"     {nk}",     "!     num_kpts",
+              "     4     4     4", "!     mp_grid",
+          ]
+          for ix in range(4):
+              for iy in range(4):
+                  for iz in range(4):
+                      lines.append(f"  {ix/4:.15f}  {iy/4:.15f}  {iz/4:.15f}")
+
+          lines.append(f"     {nntot}")
+          lines.append("!     nntot")
+          for ik in range(nk):
+              lines.append(f"     {nntot}")
+              for ib in range(nntot):
+                  lines.append(f"     {(ik + ib) % nk + 1}")
+              lines.append(f"     {nntot}")
+              for ib in range(nntot):
+                  lines.append("     0     0     0")
+
+          lines += [
+              f"     {nbands}", "!     num_exclude_bands",
+              "     30",        "!     num_wann",
+              "     6",         "!     num_proj",
+          ]
+          for proj in ["Bi : pz","Bi : px","Bi : py",
+                        "Se : pz","Se : px","Se : py"]:
+              lines.append(f"     {proj}")
+
+          nnkp = os.path.join(prefix, "wannier", "wannier90.nnkp")
+          with open(nnkp, "w") as f:
+              f.write("\n".join(lines) + "\n")
+          print(f"[mock] {nnkp}  ({len(lines)} lines)")
+
+          # ── 5. Mock PP & ORB files ─────────────────────────────
+          orb_dir = "tests/PP_ORB/for_interface/Wannier90_interface"
+          os.makedirs(orb_dir, exist_ok=True)
+          for name in ["Bi.upf", "Se.upf", "Bi.orb", "Se.orb"]:
+              p = os.path.join(orb_dir, name)
+              with open(p, "w") as f:
+                  f.write("# mock for CI dryrun\n")
+              print(f"[mock] {p}")
+
+          print("\n[done] all mocks ready")
+          PYEOF
 
       # ================================================================
       #  Run
@@ -211,11 +211,9 @@ jobs:
           check "$W/KPT"
           check "$W/STRU"
 
-          # ── INPUT content checks ──────────────────────
           if [ -f "$W/INPUT" ]; then
             echo ""
             echo "--- INPUT keyword checks ---"
-
             for key in "calculation" "towannier90" "nspin"; do
               if grep -qi "$key" "$W/INPUT"; then
                 echo "  [OK]   INPUT contains '$key'"
@@ -224,8 +222,6 @@ jobs:
                 ERR=1
               fi
             done
-
-            # gamma_only is FORBIDDEN
             if grep -qi "gamma_only" "$W/INPUT"; then
               echo "  [FAIL] INPUT contains 'gamma_only' — forbidden!"
               ERR=1
@@ -234,10 +230,8 @@ jobs:
             fi
           fi
 
-          # ── Basis-specific checks ─────────────────────
           echo ""
           echo "--- Basis-specific checks (${{ matrix.basis }}) ---"
-
           if [ "${{ matrix.basis }}" = "pw" ]; then
             if grep -qi "orbital_file\|orbital_dir" "$W/INPUT"; then
               echo "  [FAIL] PW INPUT contains orbital_file/orbital_dir"
@@ -253,7 +247,6 @@ jobs:
             fi
           fi
 
-          # ── KPT sanity ────────────────────────────────
           if [ -f "$W/KPT" ]; then
             echo ""
             klines=$(wc -l < "$W/KPT")
@@ -298,4 +291,3 @@ jobs:
       - name: List all generated files
         if: always()
         run: find ${{ matrix.prefix }} -type f | sort
-
