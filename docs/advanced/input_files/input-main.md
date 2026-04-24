@@ -1368,7 +1368,7 @@
 ### scf_ene_thr
 
 - **Type**: Real
-- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the electron densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
+- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
 - **Default**: -1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 

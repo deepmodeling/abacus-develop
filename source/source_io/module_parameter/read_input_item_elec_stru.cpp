@@ -865,7 +865,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "total energy error threshold";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the electron densities before and after the Hpsi operation in one SCF step. It is not the same as the screen-output EDIFF, which is the energy difference before Hpsi and after charge mixing (i.e., across both Hpsi and charge-mixing operations).";
+        item.description = "It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the Hpsi operation in one SCF step. It is not the same as the screen-output EDIFF, which is the energy difference before Hpsi and after charge mixing (i.e., across both Hpsi and charge-mixing operations).";
         item.default_value = "-1.0. If the user does not set this parameter, it will not take effect.";
         item.unit = "eV";
         item.availability = "";
