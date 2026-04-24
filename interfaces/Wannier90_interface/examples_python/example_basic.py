@@ -65,8 +65,8 @@ def main():
     # ----------------------------------------------------------
     # 3. Dependency files
     # ----------------------------------------------------------
-    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.upf", "Se": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.upf"}
-    job.orbital_files = ["../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.orb", "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.orb"]
+    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/Bi_pbe_fr.upf", "Se": "../../../tests/PP_ORB/Se_pbe_fr.upf"}
+    job.orbital_files = ["../../../tests/PP_ORB/Bi_gga_10au_100Ry_2s2p2d.orb", "../../../tests/PP_ORB/Se_gga_10au_100Ry_2s2p2d.orb"]
 
     # ----------------------------------------------------------
     # 4. Wannier90 Parameters
@@ -156,7 +156,7 @@ def main():
         print(f"\n[FILE ERROR] {e}")
         print("  [1] wannier90.x in PATH?  →  which wannier90.x")
         print("  [2] abacus in PATH?       →  which abacus")
-        print("  [3] PP / orbital files?   →  ls ../../../tests/PP_ORB/for_interface/Wannier90_interface/*.upf ../../../tests/PP_ORB/for_interface/Wannier90_interface/*.orb")
+        print("  [3] PP / orbital files?   →  ls ../../../tests/PP_ORB/Bi*.upf ../../../tests/PP_ORB/Bi*.orb")
     except RuntimeError as e:
         print(f"\n[RUNTIME ERROR] {e}")
     except ValueError as e:

@@ -63,7 +63,7 @@ def main():
     # ----------------------------------------------------------
     # 3. Dependency files (PW only needs pseudopotentials)
     # ----------------------------------------------------------
-    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Bi.upf", "Se": "../../../tests/PP_ORB/for_interface/Wannier90_interface/Se.upf"}
+    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/Bi_pbe_fr.upf", "Se": "../../../tests/PP_ORB/Se_pbe_fr.upf"}
     # ← PW基组不需要轨道文件，不设置 orbital_files
 
     # ----------------------------------------------------------
@@ -143,7 +143,7 @@ def main():
         print(f"\n[FILE ERROR] {e}")
         print("  [1] wannier90.x in PATH?  →  which wannier90.x")
         print("  [2] abacus in PATH?       →  which abacus")
-        print("  [3] PP files?             →  ls ../../../tests/PP_ORB/for_interface/Wannier90_interface/*.upf")
+        print("  [3] PP files?             →  ls ../../../tests/PP_ORB/Bi*.upf")
     except RuntimeError as e:
         print(f"\n[RUNTIME ERROR] {e}")
     except ValueError as e:
