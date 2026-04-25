@@ -140,3 +140,65 @@ TEST_F(PWTEST,test_other)
     fftwf_cleanup();
 #endif
 }
+
+TEST_F(PWTEST, test_no_plane_wave_message_global_empty_k)
+{
+    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
+    ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
+#ifdef __MPI
+    pwktest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+#endif
+    const int nks = 1;
+    ModuleBase::Vector3<double> kvec_d[nks];
+    kvec_d[0].set(0.5, 0.5, 0.5);
+
+    pwktest.initgrids(2, latvec, 4, 4, 4);
+    pwktest.initparameters(true, 1e-4, nks, kvec_d);
+    testing::internal::CaptureStdout();
+    pwktest.setuptransform();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_THAT(output,
+                testing::HasSubstr("No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings."));
+}
+
+TEST_F(PWTEST, test_no_plane_wave_message_parallel_local_empty)
+{
+#ifndef __MPI
+    GTEST_SKIP() << "Requires MPI ranks to simulate local-empty but global-nonempty case.";
+#else
+    if (nproc_in_pool <= 1)
+    {
+        GTEST_SKIP() << "Requires more than one MPI rank.";
+    }
+
+    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
+    ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
+    pwktest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+
+    const int nks = 1;
+    ModuleBase::Vector3<double> kvec_d[nks];
+    kvec_d[0].set(0.0, 0.0, 0.0);
+
+    pwktest.initgrids(2, latvec, 4, 4, 4);
+    pwktest.initparameters(true, 8.0, nks, kvec_d);
+    testing::internal::CaptureStdout();
+    pwktest.setuptransform();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    const int local_npwk = pwktest.npwk[0];
+    int global_npwk = local_npwk;
+    MPI_Allreduce(MPI_IN_PLACE, &global_npwk, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+
+    const int local_target_rank = (local_npwk == 0 && global_npwk > 0) ? 1 : 0;
+    int any_target_rank = local_target_rank;
+    MPI_Allreduce(MPI_IN_PLACE, &any_target_rank, 1, MPI_INT, MPI_MAX, POOL_WORLD);
+    EXPECT_EQ(any_target_rank, 1);
+
+    if (local_target_rank == 1)
+    {
+        EXPECT_THAT(output,
+                    testing::HasSubstr("Current core has no plane waves! Please reduce the cores."));
+    }
+#endif
+}
