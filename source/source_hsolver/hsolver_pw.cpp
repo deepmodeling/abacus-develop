@@ -241,17 +241,26 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     const int cur_nbasis = psi.get_current_nbas();
 
-    // Check for rank deficiency: npwx (get_nbasis) should be >= nbands (get_nbands)
-    // When npwx < nbands, the number of plane waves is insufficient to represent
-    // all bands, leading to rank deficiency and psi_norm <= 0 during diagonalization.
-    const int npwx = psi.get_nbasis();
+    // Check for rank deficiency: the total number of plane waves (summed across
+    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
+    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
+    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
+    // psi.get_nbasis() gives the local storage dimension, not the total.
     const int nbands = psi.get_nbands();
-    if (npwx < nbands)
+    int npw_total = cur_nbasis;
+#ifdef __MPI
+    if (this->nproc_in_pool > 1)
     {
-        std::string msg = "npwx < nbands (" + std::to_string(npwx) + " < " + std::to_string(nbands)
-                          + "): the number of plane waves is less than the number of bands, "
-                          + "which leads to a rank-deficient problem. "
-                          + "Please increase ecutwfc or reduce nbands.";
+        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    }
+#endif
+    if (npw_total < nbands)
+    {
+        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
+                            + "): the total number of plane waves across all MPI processes "
+                            + "is less than the number of bands, "
+                            + "which leads to a rank-deficient problem. "
+                            + "Please increase ecutwfc or reduce nbands.";
         ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
     }
 
