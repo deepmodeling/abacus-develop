@@ -241,6 +241,20 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     const int cur_nbasis = psi.get_current_nbas();
 
+    // Check for rank deficiency: npwx (get_nbasis) should be >= nbands (get_nbands)
+    // When npwx < nbands, the number of plane waves is insufficient to represent
+    // all bands, leading to rank deficiency and psi_norm <= 0 during diagonalization.
+    const int npwx = psi.get_nbasis();
+    const int nbands = psi.get_nbands();
+    if (npwx < nbands)
+    {
+        std::string msg = "npwx < nbands (" + std::to_string(npwx) + " < " + std::to_string(nbands)
+                          + "): the number of plane waves is less than the number of bands, "
+                          + "which leads to a rank-deficient problem. "
+                          + "Please increase ecutwfc or reduce nbands.";
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
+    }
+
     // Shared matrix-blockvector operators used by all iterative solvers.
     auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
         auto psi_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);

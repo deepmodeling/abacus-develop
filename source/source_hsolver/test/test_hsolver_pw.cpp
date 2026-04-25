@@ -390,3 +390,19 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
 }
+
+// Test that the program exits with an error when npwx < nbands,
+// which would cause rank deficiency and psi_norm <= 0 during diagonalization.
+TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
+{
+    // Create psi with 5 bands but only 3 basis functions -> npwx=3 < nbands=5
+    psi_test_cd.resize(1, 5, 3);
+    std::vector<double> precond(3, 0.0);
+    std::vector<double> eigenvalues(5, 0.0);
+    // Expect death from WARNING_QUIT due to npwx < nbands
+    EXPECT_EXIT(
+        hs_d.hamiltSolvePsiK(&hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
+        ::testing::ExitedWithCode(1),
+        ".*"
+    );
+}

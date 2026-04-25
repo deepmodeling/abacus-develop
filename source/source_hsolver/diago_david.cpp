@@ -932,6 +932,9 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     if (psi_norm < 1.0e-12)
     {
         std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
+        std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+        std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+        std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
         std::cout << "nband = " << nband << std::endl;
         std::cout << "m = " << m << std::endl;
         exit(0);
