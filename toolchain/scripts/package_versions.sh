@@ -30,41 +30,41 @@ cmake_alt_sha256_macos="3d603e507c7579b13518ef752b4ffcf3ed479fba80ee171d7d85da81
 # STAGE 1: MPI Implementations
 # =============================================================================
 
-# OpenMPI (supports dual versions) - main=5.0.8, alt=4.1.6
-openmpi_main_ver="5.0.8"
-openmpi_main_sha256="53131e1a57e7270f645707f8b0b65ba56048f5b5ac3f68faabed3eb0d710e449"
-openmpi_alt_ver="4.1.6"
-openmpi_alt_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
+# OpenMPI (supports dual versions) - main=5.0.10, alt=4.1.8
+openmpi_main_ver="5.0.10"
+openmpi_main_sha256="0acecc4fc218e5debdbcb8a41d182c6b0f1d29393015ed763b2a91d5d7374cc6"
+openmpi_alt_ver="4.1.8"
+openmpi_alt_sha256="466f68e3132a1dc02710cc2011fafced8336d98359fa2dae4dddcfd5719f12a9"
 
-# MPICH (supports dual versions) - main=4.3.1, alt=4.1.0
-mpich_main_ver="4.3.1"
-mpich_main_sha256="acc11cb2bdc69678dc8bba747c24a28233c58596f81f03785bf2b7bb7a0ef7dc"
-mpich_alt_ver="4.1.0"
-mpich_alt_sha256="8b1ec63bc44c7caa2afbb457bc5b3cd4a70dbe46baba700123d67c48dc5ab6a0"
+# MPICH (supports dual versions) - main=5.0.1, alt=4.3.2
+mpich_main_ver="5.0.1"
+mpich_main_sha256="8c1832a13ddacf071685069f5fadfd1f2877a29e1a628652892c65211b1f3327"
+mpich_alt_ver="4.3.2"
+mpich_alt_sha256="47d774587a7156a53752218c811c852e70ac44db9c502dc3f399b4cb817e3818"
 
 # =============================================================================
 # STAGE 2: Math Libraries
 # =============================================================================
 
-# OpenBLAS (supports dual versions) - main=0.3.30, alt=0.3.27
-openblas_main_ver="0.3.30"
-openblas_main_sha256="27342cff518646afb4c2b976d809102e368957974c250a25ccc965e53063c95d"
-openblas_alt_ver="0.3.27"
-openblas_alt_sha256="aa2d68b1564fe2b13bc292672608e9cdeeeb6dc34995512e65c3b10f4599e897"
+# OpenBLAS (supports dual versions) - main=0.3.33, alt=0.3.30
+openblas_main_ver="0.3.33"
+openblas_main_sha256="6761af1d9f5d353ab4f0b7497be2643313b36c8f31caec0144bfef198e71e6ab"
+openblas_alt_ver="0.3.30"
+openblas_alt_sha256="27342cff518646afb4c2b976d809102e368957974c250a25ccc965e53063c95d"
 
 # =============================================================================
 # STAGE 3: Scientific Computing Libraries
 # =============================================================================
 
-# ELPA (supports dual versions) - main=2025.06.001, alt=2024.05.001
-elpa_main_ver="2025.06.001"
-elpa_main_sha256="feeb1fea1ab4a8670b8d3240765ef0ada828062ef7ec9b735eecba2848515c94"
+# ELPA (supports dual versions) - main=2026.02.001, alt=2024.05.001
+elpa_main_ver="2026.02.001"
+elpa_main_sha256="a379f27f4dbd27b2ee45017afec656d064301e97150c874649bdfd64957b75ed"
 elpa_alt_ver="2024.05.001"
 elpa_alt_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
 
-# FFTW (supports dual versions) - Special case: both main and alt are 3.3.10
-fftw_main_ver="3.3.10"
-fftw_main_sha256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
+# FFTW (supports dual versions) - main=3.3.11, alt=3.3.10
+fftw_main_ver="3.3.11"
+fftw_main_sha256="5630c24cdeb33b131612f7eb4b1a9934234754f9f388ff8617458d0be6f239a1"
 fftw_alt_ver="3.3.10"
 fftw_alt_sha256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
 
