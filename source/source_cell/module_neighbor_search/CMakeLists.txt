@@ -9,3 +9,8 @@ if(ENABLE_COVERAGE)
   add_coverage(neighbor_search)
 endif()
 
+if(BUILD_TESTING)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+  endif()
+endif()

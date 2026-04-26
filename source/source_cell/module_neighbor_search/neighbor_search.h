@@ -23,6 +23,7 @@ public:
     void Check_Expand_Condition(const IAtomProvider& ucell);
 
     void setMemberVariables(const IAtomProvider& ucell);
+    NeighborList& get_neighbor_list() { return neighbor_list; }
 
     double distance(
         double position_x,

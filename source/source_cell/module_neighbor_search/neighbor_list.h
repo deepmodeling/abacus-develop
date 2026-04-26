@@ -84,9 +84,10 @@ public:
 
     void initialize(int n, int pgsize) {
         nlocal = n;
-        allocator = PageAllocator(pgsize);
-        numneigh.resize(n);
-        firstneigh.resize(n);
+    allocator = PageAllocator(pgsize);
+    // ensure neighbor containers are sized and initialized
+    numneigh.assign(n, 0);
+    firstneigh.assign(n, nullptr);
     }
 
     void reset() {
