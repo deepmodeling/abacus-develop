@@ -12,7 +12,8 @@ public:
     int atom_type;
     int atom_index;
     int atom_id;
-    bool isghost;
+    //bool isghost;
+    bool is_inside;
 
     NeighborAtom(double x, double y, double z, int type, int index, int id)
         : position_x(x), position_y(y), position_z(z),

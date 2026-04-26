@@ -60,26 +60,69 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
     wide_y = (atoms.y_high - atoms.y_low) / ny;
     wide_z = (atoms.z_high - atoms.z_low) / nz;
 
+    int in_x, in_y, in_z;
+
     for (int i = 0; i < all_atoms.size(); i++)
     {
-        
-        int in_x = std::min(
-            static_cast<int>(std::floor((all_atoms[i].position_x - atoms.x_low) / wide_x)),
-            nx - 1
-        );
-        int in_y = std::min(
-            static_cast<int>(std::floor((all_atoms[i].position_y - atoms.y_low) / wide_y)),
-            ny - 1
-        );
-        int in_z = std::min(
-            static_cast<int>(std::floor((all_atoms[i].position_z - atoms.z_low) / wide_z)),
-            nz - 1
-        );
-
-
-        if (in_x==x && in_y==y && in_z==z&&all_atoms[i].position_x<=atoms.x_high&&all_atoms[i].position_y<=atoms.y_high&&all_atoms[i].position_z<=atoms.z_high)
+        if(wide_x==0)
         {
-            all_atoms[i].isghost = false;
+            if(all_atoms[i].position_x==atoms.x_low)
+            {
+                in_x = x;
+            }
+            else
+            {
+                in_x = std::numeric_limits<int>::max();
+            }
+        }
+        else
+        {
+            in_x = std::min(
+                static_cast<int>(std::floor((all_atoms[i].position_x - atoms.x_low) / wide_x)),
+                nx - 1
+            );
+        }
+        if(wide_y==0)
+        {
+            if(all_atoms[i].position_y==atoms.y_low)
+            {
+                in_y = y;
+            }
+            else
+            {
+                in_y = std::numeric_limits<int>::max();
+            }
+        }
+        else
+        {
+            in_y = std::min(
+                static_cast<int>(std::floor((all_atoms[i].position_y - atoms.y_low) / wide_y)),
+                ny - 1
+            );
+        }
+        if(wide_z==0)
+        {
+            if(all_atoms[i].position_z==atoms.z_low)
+            {
+                in_z = z;
+            }
+            else
+            {
+                in_z = std::numeric_limits<int>::max();
+            }
+        }
+        else
+        {
+            in_z = std::min(
+                static_cast<int>(std::floor((all_atoms[i].position_z - atoms.z_low) / wide_z)),
+                nz - 1
+            );
+        }
+        //std::cout<<in_x<<" "<<in_y<<" "<<in_z<<std::endl;
+
+        if (in_x==x && in_y==y && in_z==z&&all_atoms[i].position_x<=atoms.x_high&&all_atoms[i].position_y<=atoms.y_high&&all_atoms[i].position_z<=atoms.z_high&&all_atoms[i].is_inside)
+        {
+            //all_atoms[i].isghost = false;
             inside_atoms.push_back(all_atoms[i]);
         }
         else if (distance(
@@ -90,12 +133,12 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
             atoms.y_low,
             atoms.z_low) <= search_radius * search_radius)
         {
-            all_atoms[i].isghost = true;
+            //all_atoms[i].isghost = true;
             ghost_atoms.push_back(all_atoms[i]);
         }
     }
 
-    neighbor_list.initialize(ucell.get_natom(), 100000000);
+    neighbor_list.initialize(inside_atoms.size(), 100000000);
 }
 
 void NeighborSearch::build_neighbors()
@@ -162,6 +205,14 @@ void NeighborSearch::setMemberVariables(const IAtomProvider& ucell)
                         double z = ucell.get_tauu(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
                         NeighborAtom atom(x, y, z, i, j, atom_count);
+                        if(ix==0&&iy==0&&iz==0)
+                        {
+                            atom.is_inside = true;
+                        }
+                        else
+                        {
+                            atom.is_inside = false;
+                        }
                         all_atoms.push_back(atom);
                         atom_count++;
                     }
