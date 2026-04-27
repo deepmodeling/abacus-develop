@@ -5,7 +5,7 @@ remove_definitions(-D__EXX)
 if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
-    LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+    LIBS parameter base device MPI::MPI_CXX ${math_libs}
     SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
   )
   AddTest(
@@ -34,7 +34,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav
-    LIBS parameter  ${math_libs} base psi device
+    LIBS parameter base psi device ${math_libs}
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -42,7 +42,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_float
-    LIBS parameter  ${math_libs} base psi device
+    LIBS parameter base psi device ${math_libs}
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -59,7 +59,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_real
-    LIBS parameter  ${math_libs} base psi device
+    LIBS parameter base psi device ${math_libs}
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -69,7 +69,7 @@ if (ENABLE_MPI)
 
   AddTest(
     TARGET MODULE_HSOLVER_base
-    LIBS parameter  ${math_libs} psi device base
+    LIBS parameter psi device base ${math_libs}
     SOURCES test_hsolver.cpp 
   )
 
@@ -91,13 +91,13 @@ if (ENABLE_MPI)
     if(USE_ELPA)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
-      LIBS parameter  ${math_libs} ELPA::ELPA base genelpa psi device
+      LIBS parameter base genelpa psi device ELPA::ELPA ${math_libs}
       SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(
         TARGET MODULE_HSOLVER_LCAO
-        LIBS parameter  ${math_libs} base psi device
+        LIBS parameter base psi device ${math_libs}
         SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
       )
     endif()
@@ -105,7 +105,7 @@ if (ENABLE_MPI)
     if (ENABLE_PEXSI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO_PEXSI
-      LIBS parameter  ${math_libs} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} MPI::MPI_CXX base psi device pexsi
+      LIBS parameter base psi device pexsi MPI::MPI_CXX ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} ${math_libs}
       SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
     )
     endif()
@@ -113,7 +113,7 @@ if (ENABLE_MPI)
   if (USE_CUDA)
   AddTest(
     TARGET MODULE_HSOLVER_LCAO_cusolver
-    LIBS parameter  ${math_libs}  base psi device
+    LIBS parameter base psi device ${math_libs}
     SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp
     ../kernels/hegvd_op.cpp
     ../kernels/cuda/diag_cusolver.cu
@@ -149,20 +149,20 @@ install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 if (USE_ELPA)
   AddTest(
     TARGET MODULE_HSOLVER_diago_hs_parallel
-    LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+    LIBS parameter base device MPI::MPI_CXX genelpa psi ELPA::ELPA ${math_libs}
     SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
   )
 else()
   AddTest(
       TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+      LIBS parameter base device MPI::MPI_CXX psi ${math_libs}
       SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
     )
 endif()
 
 AddTest(
   TARGET MODULE_HSOLVER_linear_trans
-  LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+  LIBS parameter base device MPI::MPI_CXX ${math_libs}
   SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
 )
 
