@@ -76,6 +76,12 @@ inline void truncated_underflow(FPTYPE& x)
     }
 }
 
+template <typename FPTYPE>
+inline void truncated_underflow(const FPTYPE& x)
+{
+    truncated_underflow(const_cast<FPTYPE&>(x));
+}
+
 template <>
 inline void truncated_underflow(double& x)
 {

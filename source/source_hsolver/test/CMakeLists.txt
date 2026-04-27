@@ -10,7 +10,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_bpcg
-    LIBS parameter  ${math_libs} base psi device container
+    LIBS parameter base psi device container ${math_libs}
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -18,7 +18,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg
-    LIBS parameter  ${math_libs} base psi device container
+    LIBS parameter base psi device container ${math_libs}
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -26,7 +26,7 @@ if (ENABLE_MPI)
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg_float
-    LIBS parameter  ${math_libs} base psi device container
+    LIBS parameter base psi device container ${math_libs}
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -51,7 +51,7 @@ if (ENABLE_MPI)
   if(ENABLE_LCAO)
   AddTest(
     TARGET MODULE_HSOLVER_cg_real
-    LIBS parameter  ${math_libs} base psi device container
+    LIBS parameter base psi device container ${math_libs}
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
@@ -75,14 +75,14 @@ if (ENABLE_MPI)
 
   AddTest(
     TARGET MODULE_HSOLVER_pw
-    LIBS parameter  ${math_libs} psi device base container
+    LIBS parameter psi device base container ${math_libs}
     SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
     ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
   )
 
   AddTest(
     TARGET MODULE_HSOLVER_sdft
-    LIBS parameter  ${math_libs} psi device base container
+    LIBS parameter psi device base container ${math_libs}
     SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
                 ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
     )

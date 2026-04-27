@@ -338,11 +338,19 @@ if (USE_DSP)
 endif()
 if (USE_SW)
   add_compile_definitions(__SW)
+  dd_compile_options(-mieee)
   set(SW ON)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
 
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
+  list(APPEND math_libs
+    ${SW_FFT}/lib/libfftw3.a
+    ${SW_MATH}/libswfft.a
+    ${SW_MATH}/libswscalapack.a
+    ${SW_MATH}/libswlapack.a
+    ${SW_MATH}/libswblas.a
+    gfortran)
+>>>>>>> Stashed changes
 endif()
 
 find_package(Threads REQUIRED)
@@ -737,6 +745,8 @@ if(DEFINED TensorFlow_DIR)
   endif()
 endif()
 
+list(APPEND math_libs m)
+
 add_compile_definitions(__FFTW3 __SELINV METIS)
 
 if(INFO)
@@ -805,17 +815,11 @@ if(ENABLE_RAPIDJSON)
   target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
-if (USE_SW)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
-  list(APPEND math_libs gfortran)
-endif()
-
-list(APPEND math_libs m)
+<<<<<<< Updated upstream
+=======
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
+>>>>>>> Stashed changes
 install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
