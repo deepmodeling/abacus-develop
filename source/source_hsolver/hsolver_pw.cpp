@@ -241,6 +241,29 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     const int cur_nbasis = psi.get_current_nbas();
 
+    // Check for rank deficiency: the total number of plane waves (summed across
+    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
+    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
+    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
+    // psi.get_nbasis() gives the local storage dimension, not the total.
+    const int nbands = psi.get_nbands();
+    int npw_total = cur_nbasis;
+#ifdef __MPI
+    if (this->nproc_in_pool > 1)
+    {
+        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    }
+#endif
+    if (npw_total < nbands)
+    {
+        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
+                            + "): the total number of plane waves across all MPI processes "
+                            + "is less than the number of bands, "
+                            + "which leads to a rank-deficient problem. "
+                            + "Please increase ecutwfc or reduce nbands.";
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
+    }
+
     // Shared matrix-blockvector operators used by all iterative solvers.
     auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
         auto psi_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
