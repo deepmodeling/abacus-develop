@@ -53,7 +53,6 @@ For those who are interested in the source code, the following figure shows the 
 |   `-- module_pw               Data structures and relevant methods for planewave involved calculations
 |-- source_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
-|   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
 |-- source_estate               The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing

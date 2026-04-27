@@ -4,6 +4,7 @@
 
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/kernels/dsp/dsp_connector.h"
 // #include "source_base/module_container/ATen/kernels/lapack.h"
@@ -425,17 +426,54 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                 nbase,
                                 notconv,
                                 psi_norm);
+
+        // Check for zero norms (GPU path: copy norms from device to host)
+        Real* psi_norm_host = nullptr;
+        resmem_real_h_op()(psi_norm_host, notconv);
+        syncmem_var_d2h_op()(psi_norm_host, psi_norm, notconv);
+        for (int i = 0; i < notconv; i++)
+        {
+            if (psi_norm_host[i] <= 1.0e-12)
+            {
+                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
+                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
+                delmem_real_h_op()(psi_norm_host);
+                delmem_real_op()(psi_norm);
+                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+            }
+        }
+        delmem_real_h_op()(psi_norm_host);
         delmem_real_op()(psi_norm);
     }
     else
 #endif
     {
         Real* psi_norm = nullptr;
+        resmem_real_h_op()(psi_norm, notconv);
+        setmem_real_h_op()(psi_norm, 0.0, notconv);
+
         normalize_op<T, Device>()(this->dim,
                                 psi_iter,
                                 nbase,
                                 notconv,
                                 psi_norm);
+
+        // Check for zero norms (CPU path)
+        for (int i = 0; i < notconv; i++)
+        {
+            if (psi_norm[i] <= 1.0e-12)
+            {
+                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
+                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
+                delmem_real_h_op()(psi_norm);
+                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+            }
+        }
+        delmem_real_h_op()(psi_norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]

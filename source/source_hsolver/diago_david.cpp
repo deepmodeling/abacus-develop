@@ -16,9 +16,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
-                                  const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
@@ -933,6 +932,9 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     if (psi_norm < 1.0e-12)
     {
         std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
+        std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+        std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+        std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
         std::cout << "nband = " << nband << std::endl;
         std::cout << "m = " << m << std::endl;
         exit(0);

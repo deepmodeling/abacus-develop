@@ -97,7 +97,7 @@ public:
 		const int dim = phi.get_current_ngk();
 		const int nband = phi.get_nbands();
 		const int ld_psi = phi.get_nbasis();
-		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, false, comm_info);
+		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, comm_info);
 
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
