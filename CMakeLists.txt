@@ -350,7 +350,6 @@ if (USE_SW)
     ${SW_MATH}/libswlapack.a
     ${SW_MATH}/libswblas.a
     gfortran)
->>>>>>> Stashed changes
 endif()
 
 find_package(Threads REQUIRED)
@@ -745,8 +744,6 @@ if(DEFINED TensorFlow_DIR)
   endif()
 endif()
 
-list(APPEND math_libs m)
-
 add_compile_definitions(__FFTW3 __SELINV METIS)
 
 if(INFO)
@@ -815,11 +812,9 @@ if(ENABLE_RAPIDJSON)
   target_link_libraries(${ABACUS_BIN_NAME} json_output)
 endif()
 
-<<<<<<< Updated upstream
-=======
+list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
->>>>>>> Stashed changes
 install(PROGRAMS ${ABACUS_BIN_PATH}
         TYPE BIN
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
