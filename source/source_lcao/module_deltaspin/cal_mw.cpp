@@ -2,6 +2,7 @@
 
 #include "source_base/matrix.h"
 #include "source_base/name_angular.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/onsite_proj.h"
