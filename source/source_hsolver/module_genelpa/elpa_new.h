@@ -34,9 +34,10 @@ extern "C"
 // This header file was not available in the early ELPA.
 #if ELPA_API_VERSION >= 20231101
 #include <elpa/elpa_configured_options.h>
+
 #endif
 }
 
-
 #include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
+
 #endif

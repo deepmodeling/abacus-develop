@@ -1,9 +1,7 @@
 #ifndef KEDF_MANAGER_H
 #define KEDF_MANAGER_H
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_estate/elecstate.h"
 #include "kedf_lkt.h"
 #include "kedf_tf.h"
 #include "kedf_vw.h"
@@ -11,6 +9,8 @@
 #include "kedf_extwt.h"
 #include "kedf_xwm.h"
 #include "kedf_ml.h"
+
+struct Input_para;
 
 class KEDF_Manager
 {

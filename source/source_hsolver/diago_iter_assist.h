@@ -6,6 +6,8 @@
 #include "source_hamilt/hamilt.h"
 #include "source_psi/psi.h"
 
+#include <functional>
+
 namespace hsolver
 {
 

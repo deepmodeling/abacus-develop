@@ -1,5 +1,6 @@
 #include "symmetry.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_output/output.h"
 
 using namespace ModuleSymmetry;
 
@@ -308,4 +309,3 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     ModuleBase::timer::end("Symmetry","analy_sys");
     return;
 }
-

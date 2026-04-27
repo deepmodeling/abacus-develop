@@ -1,6 +1,7 @@
 #include "charge.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"

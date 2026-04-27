@@ -21,6 +21,9 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 #include "source_io/module_hs/cal_pLpR.h"
 #include "source_basis/module_nao/two_center_integrator.h"

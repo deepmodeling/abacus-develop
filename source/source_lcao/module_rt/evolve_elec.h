@@ -4,15 +4,12 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/module_external/scalapack_connector.h"   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
-#include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------

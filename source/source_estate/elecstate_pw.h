@@ -9,6 +9,8 @@
 #include "source_pw/module_pwdft/kernels/meta_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
+class pseudopot_cell_vnl;
+
 namespace elecstate
 {
 

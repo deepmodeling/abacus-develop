@@ -18,6 +18,7 @@
  * @date 2023-05-15
  */
 #include "esolver_dp.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"

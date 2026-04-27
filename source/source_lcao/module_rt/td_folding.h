@@ -1,7 +1,6 @@
 #ifndef TD_FOLDING_H
 #define TD_FOLDING_H
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_ri/abfs-vector3_order.h"
 
 namespace module_rt{
 // folding HR to hk, for hybrid gauge

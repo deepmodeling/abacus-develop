@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gint_type.h"
-#include "source_cell/unitcell.h"
 
 namespace ModuleGint
 {

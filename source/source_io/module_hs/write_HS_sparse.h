@@ -1,8 +1,6 @@
 #ifndef WRITE_HS_SPARSE_H
 #define WRITE_HS_SPARSE_H
 
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 

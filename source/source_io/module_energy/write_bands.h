@@ -4,7 +4,6 @@
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/matrix.h"
 #include "source_cell/klist.h"
-#include "source_cell/parallel_kpoints.h"
 
 namespace ModuleIO
 {

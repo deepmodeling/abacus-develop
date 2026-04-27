@@ -2,7 +2,6 @@
 #define WRITE_EIG_OCC_H
 #include "source_base/matrix.h"
 #include "source_cell/klist.h"
-#include "source_cell/parallel_kpoints.h"
 
 namespace ModuleIO
 {

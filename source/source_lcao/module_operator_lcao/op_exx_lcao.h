@@ -7,6 +7,7 @@
 #include <RI/ri/Cell_Nearest.h>
 #include "operator_lcao.h"
 #include "source_cell/klist.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 namespace hamilt
 {

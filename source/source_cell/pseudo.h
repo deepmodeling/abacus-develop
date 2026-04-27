@@ -3,7 +3,8 @@
 
 #include <cstdint>
 #include "source_base/global_function.h"
-#include "source_io/module_output/output.h"
+#include "source_base/matrix.h"
+#include "source_base/realarray.h"
 
 //-----------------------------------------
 // read in pseudopotentials

@@ -1,5 +1,6 @@
 #include "op_pw_exx.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h"
 

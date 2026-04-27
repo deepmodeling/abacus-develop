@@ -1,5 +1,6 @@
 #include "forces.h"
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/output_log.h"
 // new

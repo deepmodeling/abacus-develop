@@ -7,7 +7,6 @@
 #define ELEC_PSI_H
 
 #include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"

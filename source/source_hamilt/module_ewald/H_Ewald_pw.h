@@ -2,11 +2,8 @@
 #define H_EWALD_PW_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_pw/module_pwdft/forces.h"
-#include "source_pw/module_pwdft/stress_func.h"
 
 class H_Ewald_pw 
 {

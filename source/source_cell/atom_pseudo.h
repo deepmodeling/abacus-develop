@@ -1,9 +1,7 @@
 #ifndef ATOM_PSEUDO_H
 #define ATOM_PSEUDO_H
 
-#include "source_base/global_variable.h"
 #include "source_base/vector3.h"
-#include "source_io/module_output/output.h"
 #include "source_base/complexarray.h"
 #include "source_base/complexmatrix.h"
 #include "pseudo.h"

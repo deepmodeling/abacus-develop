@@ -1,8 +1,6 @@
 #ifndef OPERATOR_H
 #define OPERATOR_H
 
-#include "source_base/global_function.h"
-#include "source_base/tool_quit.h"
 #include "source_psi/psi.h"
 
 #include <complex>
