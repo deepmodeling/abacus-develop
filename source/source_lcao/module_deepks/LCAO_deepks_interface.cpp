@@ -12,6 +12,7 @@
 #include "source_lcao/module_deepks/deepks_orbital.h"
 #include "source_lcao/module_deepks/deepks_orbpre.h"
 #include "source_lcao/module_deepks/deepks_pdm.h"
+#include "source_lcao/module_deepks/deepks_spre.h"
 #include "source_lcao/module_deepks/deepks_vdpre.h"
 #include "source_lcao/module_deepks/deepks_vdrpre.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
