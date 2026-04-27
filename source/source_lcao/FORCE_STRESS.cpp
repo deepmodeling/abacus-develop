@@ -17,6 +17,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "source_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "source_lcao/module_deepks/deepks_force.h"
 #endif
 #include "source_lcao/module_operator_lcao/dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
