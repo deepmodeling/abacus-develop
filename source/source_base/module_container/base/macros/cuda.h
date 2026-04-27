@@ -6,6 +6,7 @@
 #include <cusolverDn.h>
 #include <thrust/complex.h>
 
+#include "source_base/module_device/device_check.h"
 
 #define THREADS_PER_BLOCK 256
 
