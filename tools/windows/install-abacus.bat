@@ -35,6 +35,16 @@ if not defined ABACUS_CHINA_MIRROR (
     if /i "!CHINA_INPUT!"=="y" set "ABACUS_CHINA_MIRROR=1"
 )
 
+REM --- 2c. Optional ABACUS version pin (blank = latest from conda-forge) ---
+if not defined ABACUS_VERSION (
+    echo.
+    echo Which ABACUS version would you like to install?
+    echo   - Leave blank to install the latest available on conda-forge.
+    echo   - Or enter an exact version, e.g. 3.7.4
+    echo   - You can also enter a conda match-spec, e.g. "^>=3.7,^<3.8"
+    set /p ABACUS_VERSION="ABACUS version [latest]: "
+)
+
 REM --- 3. Ensure WSL itself is present ---
 where wsl >nul 2>&1
 if errorlevel 1 (
@@ -108,7 +118,7 @@ if not defined WSL_SCRIPT (
 REM Strip any CR bytes that a Windows editor / git autocrlf may have injected
 REM into provision.sh, then pipe the cleaned script into bash. Without this,
 REM bash reads `set -euo pipefail\r` and errors on the literal \r.
-wsl -d %DISTRO% -u root -- bash -c "sed 's/\r$//' '!WSL_SCRIPT!' | ABACUS_CHINA_MIRROR=!ABACUS_CHINA_MIRROR! bash"
+wsl -d %DISTRO% -u root -- bash -c "sed 's/\r$//' '!WSL_SCRIPT!' | ABACUS_CHINA_MIRROR=!ABACUS_CHINA_MIRROR! ABACUS_VERSION='!ABACUS_VERSION!' bash"
 if errorlevel 1 (
     echo [!] Provisioning failed. See output above.
     pause & exit /b 1

@@ -109,9 +109,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -133,9 +131,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
@@ -156,9 +152,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -175,9 +169,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
@@ -248,6 +240,29 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 #endif
 
     const int cur_nbasis = psi.get_current_nbas();
+
+    // Check for rank deficiency: the total number of plane waves (summed across
+    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
+    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
+    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
+    // psi.get_nbasis() gives the local storage dimension, not the total.
+    const int nbands = psi.get_nbands();
+    int npw_total = cur_nbasis;
+#ifdef __MPI
+    if (this->nproc_in_pool > 1)
+    {
+        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    }
+#endif
+    if (npw_total < nbands)
+    {
+        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
+                            + "): the total number of plane waves across all MPI processes "
+                            + "is less than the number of bands, "
+                            + "which leads to a rank-deficient problem. "
+                            + "Please increase ecutwfc or reduce nbands.";
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
+    }
 
     // Shared matrix-blockvector operators used by all iterative solvers.
     auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
@@ -350,7 +365,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, this->use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
              david.diag(hpsi_func,

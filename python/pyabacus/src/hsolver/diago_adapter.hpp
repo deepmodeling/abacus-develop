@@ -84,7 +84,6 @@ public:
         double tol,
         std::vector<double>& diag_ethr,
         int max_iter,
-        bool use_paw,
         ::hsolver::diag_comm_info comm_info)
     {
         auto hpsi_func = make_hpsi_func_fstyle<T>(mm_op);
@@ -95,7 +94,6 @@ public:
             nband_,
             nbasis_,
             dav_ndim,
-            use_paw,
             comm_info
         );
 

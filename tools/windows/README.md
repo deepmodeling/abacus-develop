@@ -17,6 +17,9 @@ The pipeline, end to end:
    - Checks the Windows build (≥ 19041) and whether WSL is installed; if not,
      runs `wsl --install --no-launch` and asks the user to reboot once.
    - Optionally enables TUNA (Tsinghua) mirrors for users in Mainland China.
+   - Prompts for an ABACUS version (blank = latest on conda-forge; an exact
+     version like `3.7.4` is pinned; a match-spec like `>=3.7,<3.8` is passed
+     through to conda).
    - Detects the target distribution (`Ubuntu-22.04`) by querying the WSL
      registry key `HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss`. This
      is immune to UTF-16 parsing pitfalls and to Store appx leftovers that
@@ -85,6 +88,8 @@ The pipeline, end to end:
 1. Clone or download this repository.
 2. Right-click `install-abacus.bat` → **Run as administrator**.
 3. Answer the China-mirror prompt (`y` recommended inside Mainland China).
+   Then pick an ABACUS version when prompted (leave blank for the latest on
+   conda-forge; for a pinned install, type an exact version such as `3.7.4`).
 4. If this is the first time WSL is installed on the machine, the script
    will ask you to reboot and run it again.
 5. Wait for `[*] Provisioning ABACUS …` to finish (5–15 minutes on first

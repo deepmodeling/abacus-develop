@@ -145,8 +145,6 @@ void bind_hsolver(py::module& m)
                 The tolerance vector.
             max_iter : int
                 The maximum number of iterations.
-            use_paw : bool
-                Whether to use the projector augmented wave method.
         )pbdoc",
         "mm_op"_a,
         "precond_vec"_a,
@@ -154,7 +152,6 @@ void bind_hsolver(py::module& m)
         "tol"_a,
         "diag_ethr"_a,
         "max_iter"_a,
-        "use_paw"_a,
         "comm_info"_a)
         .def("set_psi", &PyDiagoDavidAdapter::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
