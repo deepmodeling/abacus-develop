@@ -1,5 +1,6 @@
 #include "FORCE_STRESS.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
