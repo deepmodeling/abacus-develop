@@ -91,8 +91,10 @@ void pseudopot_cell_vnl::getgradq_vnl(const UnitCell& ucell,
 
 	ModuleBase::YlmReal::grad_Ylm_Real(x1, npw, gk, ylm, dylm[0], dylm[1], dylm[2]);
 
-	// GPU path skips vkb allocation in init(); allocate now if needed
-	if (this->vkb.nc == 0 && this->nkb > 0 && this->vkbnc > 0) {
+	// GPU path skips vkb allocation in init(); allocate now if needed,
+	// and resize if the required dimensions changed after a later init().
+	if (this->nkb > 0 && this->vkbnc > 0
+		&& (this->vkb.nr != this->nkb || this->vkb.nc != this->vkbnc)) {
 		this->vkb.create(this->nkb, this->vkbnc);
 		ModuleBase::Memory::record("VNL::vkb", static_cast<size_t>(this->nkb) * this->vkbnc * sizeof(double));
 	}
