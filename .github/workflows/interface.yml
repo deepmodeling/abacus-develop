@@ -88,11 +88,22 @@ jobs:
               os.makedirs(d, exist_ok=True)
 
           # ── 3. Mock STRU (scf/ + wannier/) ────────────────────
-          stru = textwrap.dedent("""\
-              ATOMIC_SPECIES
-              Bi  208.980  Bi.upf
-              Se   78.960  Se.upf
+          if basis == "pw":
+              atom_species = (
+                  "ATOMIC_SPECIES\n"
+                  "Bi  208.980  Bi_pbe_fr.upf\n"
+                  "Se   78.960  Bi_pbe_fr.upf\n"
+                  "\n"
+              )
+          else:
+              atom_species = (
+                  "ATOMIC_SPECIES\n"
+                  "Bi  208.980  Bi_pbe_fr.upf  Bi_gga_10au_100Ry_2s2p2d.orb\n"
+                  "Se   78.960  Bi_pbe_fr.upf  Se_gga_10au_100Ry_2s2p2d.orb\n"
+                  "\n"
+              )
 
+          lattice_block = textwrap.dedent("""\
               LATTICE_CONSTANT
               1.0
 
@@ -113,6 +124,8 @@ jobs:
               0.206 0.206 0.118 1 1 1
               0.794 0.794 0.882 1 1 1
               """)
+
+          stru = atom_species + lattice_block
           for d in [f"{prefix}/scf", f"{prefix}/wannier"]:
               p = os.path.join(d, "STRU")
               with open(p, "w") as f:
@@ -159,9 +172,9 @@ jobs:
           print(f"[mock] {nnkp}  ({len(lines)} lines)")
 
           # ── 5. Mock PP & ORB files ─────────────────────────────
-          orb_dir = os.path.abspath("../../../tests/PP_ORB/for_interface/Wannier90_interface")
+          orb_dir = os.path.abspath("../../../tests/PP_ORB/")
           os.makedirs(orb_dir, exist_ok=True)
-          for name in ["Bi.upf", "Se.upf", "Bi.orb", "Se.orb"]:
+          for name in ["Bi_pbe_fr.upf", "Se_pbe_fr.upf", "Bi_gga_10au_100Ry_2s2p2d.orb", "Se_gga_10au_100Ry_2s2p2d.orb"]:
               p = os.path.join(orb_dir, name)
               with open(p, "w") as f:
                   f.write("# mock for CI dryrun\n")
