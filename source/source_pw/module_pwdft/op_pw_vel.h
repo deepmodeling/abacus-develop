@@ -59,7 +59,6 @@ class Velocity
     FPTYPE* gx_ = nullptr; ///<[Device, npwx] x component of G+K
     FPTYPE* gy_ = nullptr; ///<[Device, npwx] y component of G+K
     FPTYPE* gz_ = nullptr; ///<[Device, npwx] z component of G+K
-    std::complex<FPTYPE>* vkb_ = nullptr;     ///<[Device, nkb * npwk_max] nonlocal pseudopotential vkb
     std::complex<FPTYPE>* gradvkb_ = nullptr; ///<[Device, 3*nkb * npwk_max] gradient of nonlocal pseudopotential gradvkb
     FPTYPE* deeq_ = nullptr;                  ///<[Device] D matrix for nonlocal pseudopotential
     

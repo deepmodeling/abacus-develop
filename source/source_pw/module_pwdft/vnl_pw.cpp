@@ -216,7 +216,18 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     int npwx = this->wfcpw->npwk_max;
     if (nkb > 0 && allocate_vkb)
     {
-        vkb.create(nkb, npwx);
+        // On GPU, vkb.c (CPU memory) is never used: getvnl writes to separately
+        // allocated GPU buffers (c_vkb/z_vkb). Only dimensions are needed for BLAS LDA.
+        if (this->use_gpu_)
+        {
+            vkb.nr = nkb;
+            vkb.nc = npwx;
+            vkb.size = nkb * npwx;
+        }
+        else
+        {
+            vkb.create(nkb, npwx);
+        }
         ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
     }
 

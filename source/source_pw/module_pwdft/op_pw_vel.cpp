@@ -35,7 +35,6 @@ Velocity<FPTYPE, Device>::~Velocity()
     delmem_var_op()(this->gx_);
     delmem_var_op()(this->gy_);
     delmem_var_op()(this->gz_);
-    delmem_complex_op()(vkb_);
     delmem_complex_op()(gradvkb_);
 }
 
@@ -70,11 +69,8 @@ void Velocity<FPTYPE, Device>::init(const int ik_in)
         if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
         {
             const int nkb = this->ppcell->nkb;
-            // vkb
-            resmem_complex_op()(vkb_, nkb * npwk_max);
-            castmem_complex_h2d_op()(vkb_, this->ppcell->vkb.c, nkb * npwk_max);
 
-            // gradvkb
+            // gradvkb only exists on CPU, must copy to device
             resmem_complex_op()(gradvkb_, 3 * nkb * npwk_max);
             castmem_complex_h2d_op()(gradvkb_, this->ppcell->gradvkb.ptr, 3 * nkb * npwk_max);
         }
@@ -135,11 +131,10 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     Complex one = 1.0;
     Complex zero = 0.0;
 
-    Complex* vkb_d = reinterpret_cast<Complex*>(this->ppcell->vkb.c);
+    Complex* vkb_d = this->ppcell->template get_vkb_data<FPTYPE>();
     Complex* gradvkb_d = reinterpret_cast<Complex*>(this->ppcell->gradvkb.ptr);
     if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
     {
-        vkb_d = vkb_;
         gradvkb_d = gradvkb_;
     }
 
