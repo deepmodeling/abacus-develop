@@ -24,6 +24,10 @@ jobs:
             prefix: Bi2Se3_advanced
             basis: lcao
 
+    defaults:
+      run:
+        working-directory: interfaces/Wannier90_interface/examples_python
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,7 +40,7 @@ jobs:
       - name: Install abacusw90
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e ..
 
       - name: Confirm no wannier90.x in environment
         run: |
@@ -46,12 +50,6 @@ jobs:
           fi
           echo "OK: no wannier90.x (dryrun mode)"
 
-      # ================================================================
-      #  Shared mock + patch
-      #  NOTE: env: MUST be a sibling of run: (same indent level).
-      #        run: uses block scalar literal (|) so the heredoc inside
-      #        is passed to bash with YAML indentation stripped.
-      # ================================================================
       - name: Create mock data & patch script
         env:
           SCRIPT: ${{ matrix.script }}
@@ -161,7 +159,7 @@ jobs:
           print(f"[mock] {nnkp}  ({len(lines)} lines)")
 
           # ── 5. Mock PP & ORB files ─────────────────────────────
-          orb_dir = "tests/PP_ORB/for_interface/Wannier90_interface"
+          orb_dir = os.path.abspath("../../../tests/PP_ORB/for_interface/Wannier90_interface")
           os.makedirs(orb_dir, exist_ok=True)
           for name in ["Bi.upf", "Se.upf", "Bi.orb", "Se.orb"]:
               p = os.path.join(orb_dir, name)
@@ -172,15 +170,9 @@ jobs:
           print("\n[done] all mocks ready")
           PYEOF
 
-      # ================================================================
-      #  Run
-      # ================================================================
       - name: Run ${{ matrix.script }} — dryrun
         run: python ${{ matrix.script }} 2>&1 | tee run.log
 
-      # ================================================================
-      #  Validate
-      # ================================================================
       - name: Check dryrun completion banner
         run: |
           if grep -q "DRY RUN COMPLETE" run.log; then
@@ -269,9 +261,6 @@ jobs:
           echo "  ALL CHECKS PASSED  (${{ matrix.name }})"
           echo "=========================================="
 
-      # ================================================================
-      #  Debug (always runs, even on failure)
-      # ================================================================
       - name: Show full script output
         if: always()
         run: cat run.log
