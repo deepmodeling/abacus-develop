@@ -48,6 +48,11 @@ public:
 
     int* allocate(int n) {
         if (n <= 0) return nullptr;
+        // reject requests larger than a single page
+        if (n > pgsize) {
+            std::cerr << "PageAllocator::allocate error: request " << n << " larger than page size " << pgsize << std::endl;
+            return nullptr;
+        }
         if (pages.empty()) new_page();
         Page& p = pages.back();
         if (p.offset + n > p.capacity) {
@@ -60,9 +65,8 @@ public:
     }
 
     void reset() {
-        for (auto& p : pages) {
-            p.offset = 0;
-        }
+        pages.resize(1);
+        pages[0].offset = 0;
     }
 };
 
