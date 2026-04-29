@@ -7,6 +7,7 @@
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_lcao/module_rt/velocity_op.h"
 
 namespace ModuleESolver
@@ -65,6 +66,10 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     Velocity_op<TR>* velocity_mat = nullptr;
 
     TD_info* td_p = nullptr;
+
+    //! Moving spatial gauge for Ehrenfest dynamics, to calculate the correction term arising from the movement of basis
+    bool use_td_moving_gauge = false;
+    module_rt::TD_MovingGauge* td_mg_ = nullptr;
 
     //! Restart flag
     bool restart_done = false;

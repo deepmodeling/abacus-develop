@@ -10,9 +10,9 @@
 namespace module_rt
 {
 template <typename Device>
-Evolve_elec<Device>::Evolve_elec(){};
+Evolve_elec<Device>::Evolve_elec() {};
 template <typename Device>
-Evolve_elec<Device>::~Evolve_elec(){};
+Evolve_elec<Device>::~Evolve_elec() {};
 
 template <typename Device>
 ct::DeviceType Evolve_elec<Device>::ct_device_type = ct::DeviceTypeToEnum<Device>::value;
@@ -33,7 +33,11 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                     std::ofstream& ofs_running,
                                     const int propagator,
                                     const bool use_tensor,
-                                    const bool use_lapack)
+                                    const bool use_lapack,
+                                    module_rt::TD_MovingGauge* td_mg,
+                                    const UnitCell* ucell,
+                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                    const bool use_td_moving_gauge)
 {
     ModuleBase::TITLE("Evolve_elec", "solve_psi");
     ModuleBase::timer::start("Evolve_elec", "solve_psi");
@@ -57,6 +61,13 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
         if (!use_tensor)
         {
+            // Construct the local P_k matrix for moving spatial gauge, CPU only for now
+            std::vector<std::complex<double>> P_k_local(para_orb.nloc, {0.0, 0.0});
+            if (use_td_moving_gauge && td_mg != nullptr)
+            {
+                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.nloc, para_orb.ncol);
+            }
+
             const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
             evolve_psi(nband,
                        nlocal,
@@ -66,6 +77,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                        psi_laststep[0].get_pointer(),
                        Hk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
                        Sk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
+                       P_k_local.data(),
+                       use_td_moving_gauge,
                        &(ekb(ik, 0)),
                        propagator,
                        ofs_running,
