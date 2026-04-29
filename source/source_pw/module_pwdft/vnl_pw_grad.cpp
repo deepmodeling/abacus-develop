@@ -94,7 +94,6 @@ void pseudopot_cell_vnl::getgradq_vnl(const UnitCell& ucell,
 	// GPU path skips vkb allocation in init(); allocate now if needed
 	if (this->vkb.nc == 0 && this->nkb > 0 && this->vkbnc > 0) {
 		this->vkb.create(this->nkb, this->vkbnc);
-		ModuleBase::Memory::record("VNL::vkb", static_cast<size_t>(this->nkb) * this->vkbnc * sizeof(double));
 	}
 
 	int jkb = 0;
