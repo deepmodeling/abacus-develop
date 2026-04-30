@@ -40,7 +40,6 @@ case "$with_nep" in
         if [ -f $filename ]; then
             echo "$filename is found"
         else
-            echo "===> Notice: This version of NEP_CPU is downloaded from the GitHub master repository <==="
             download_pkg_from_url "${nep_sha256}" "${filename}" "${url}"
         fi
 

@@ -66,7 +66,6 @@ case "$with_libcomm" in
                 echo "$filename is found"
             else
                 # download from github.com and checksum
-                echo "===> Notice: This version of LibComm is downloaded in GitHub master repository  <==="
                 download_pkg_from_url "${libcomm_sha256}" "${filename}" "${url}"
             fi
             if [ "${PACK_RUN}" = "__TRUE__" ]; then

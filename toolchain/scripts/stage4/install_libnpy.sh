@@ -58,7 +58,6 @@ case "$with_libnpy" in
                 echo "$filename is found"
             else
                 # download from github.com and checksum
-                echo "===> Notice: This version of Libnpy is downloaded in GitHub Release <==="
                 download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
             fi
             if [ "${PACK_RUN}" = "__TRUE__" ]; then

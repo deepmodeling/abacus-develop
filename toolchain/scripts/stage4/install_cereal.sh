@@ -62,7 +62,6 @@ case "$with_cereal" in
                 echo "$filename is found"
             else
                 # download from github.com and checksum
-                echo "===> Notice: This version of CEREAL is downloaded in GitHub master repository  <==="
                 download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
             fi
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
