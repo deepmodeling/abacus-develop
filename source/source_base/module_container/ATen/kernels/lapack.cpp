@@ -382,7 +382,7 @@ struct lapack_hegvx<T, DEVICE_CPU> {
         const int itype = 1;    // ITYPE = 1:  A*x = (lambda)*B*x
         const char jobz = 'V';// JOBZ = 'V':  Compute eigenvalues and eigenvectors.
         const char range = 'I'; // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-        const char uplo = 'L'; // UPLO = 'L':  Lower triangles of A and B are stored.
+        const char uplo = 'U'; // UPLO = 'U':  Upper triangles of A and B are stored.
 
         const int il = 1;
         const int iu = m;
@@ -393,6 +393,13 @@ struct lapack_hegvx<T, DEVICE_CPU> {
 
         T work_query;
         Real rwork_query;
+
+        // dummy arrays for workspace query (some LAPACK implementations
+        // require valid pointers even during query)
+        const int liwork_query = 5 * n;
+        const int lrwork_query = 7 * n;
+        std::vector<int> iwork_query(liwork_query);
+        std::vector<int> ifail_query(n);
 
         // set lwork = -1 to query optimal work size
         lapackConnector::hegvx(
@@ -409,8 +416,8 @@ struct lapack_hegvx<T, DEVICE_CPU> {
                     &work_query,                 // WORK (query)
                     lwork,
                     &rwork_query,                // RWORK (query)
-                    static_cast<int*>(nullptr),  // IWORK (query)
-                    static_cast<int*>(nullptr),  // IFAIL (query)
+                    iwork_query.data(),          // IWORK (query)
+                    ifail_query.data(),          // IFAIL (query)
                     info);
 
         // !>  If LWORK = -1, then a workspace query is assumed; the routine
