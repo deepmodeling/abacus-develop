@@ -199,6 +199,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 5;
         use_libxc = true;
     }
+    else if ( xc_func == "SCANL")
+    {
+        func_id.push_back(XC_MGGA_X_SCANL);
+        func_id.push_back(XC_MGGA_C_SCANL);
+        func_type = 3;
+        use_libxc = true;
+    }
     else if( xc_func == "LC_PBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
@@ -350,7 +357,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
-        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
+        || xc_func == "SCANL" || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
         xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
         xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
     {

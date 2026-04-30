@@ -211,19 +211,112 @@ LCAO 基组（ecutwfc=100 Ry）：
 
 ---
 
-### 3.5 测试结果汇总
+#### 方案 7：有限差分 Laplacian（FD kernel in G-space）
+
+**核心思想**：谱 Laplacian ∇²f(G) = -|G|²f(G) 中的 |G|² 是无界的，导致高频放大和 SCF 发散。有限差分（FD）Laplacian 在低 G 时与谱 Laplacian 一致，但在高 G 时自然衰减，最大放大因子有界。
+
+**推导**：
+
+在分数坐标 u^α = n_α/N_α（α = 1,2,3）下，Laplacian 表示为：
+
+$$\nabla^2 = \sum_{\alpha,\beta} g^{\alpha\beta} \frac{\partial^2}{\partial u^\alpha \partial u^\beta}$$
+
+其中 g^{αβ} = GGT[αβ]/lat0² 是逆变度规张量，GGT 是倒格子度规矩阵（ABACUS 中的 `rhopw->GGT`）。
+
+对平面波 f(r) = exp(2πi Σ m_γ u^γ)，谱 Laplacian 给出：
+
+$$\frac{\partial^2 f}{\partial u^\alpha \partial u^\beta} = -(2\pi)^2 m_\alpha m_\beta \, f$$
+
+FD 近似给出：
+
+- **对角项** (α = β)：中心差分
+
+$$\left(\frac{\partial^2 f}{\partial (u^\alpha)^2}\right)_{\text{FD}} = -2N_\alpha^2 \left(1 - \cos\frac{2\pi m_\alpha}{N_\alpha}\right) \, f$$
+
+- **交叉项** (α ≠ β)：四点差分
+
+$$\left(\frac{\partial^2 f}{\partial u^\alpha \partial u^\beta}\right)_{\text{FD}} = -N_\alpha N_\beta \sin\frac{2\pi m_\alpha}{N_\alpha} \sin\frac{2\pi m_\beta}{N_\beta} \, f$$
+
+对低频模式 (m_α ≪ N_α)，FD 退化为谱形式（1-cos(x) ≈ x²/2, sin(x) ≈ x）。对 Nyquist 频率 (m_α = N_α/2)，放大因子为有界值 N_α² · 4/(2π)² ≈ 0.405 N_α²，而非谱 Laplacian 的 (N_α/2)²。
+
+组合所有项，FD Laplacian 的等效 G² 核为：
+
+$$\text{gg}_{\text{FD}} = \frac{1}{(2\pi)^2} \sum_{\alpha,\beta} \text{GGT}[\alpha][\beta] \cdot \text{FD}_{\alpha\beta}$$
+
+其中：
+
+$$\text{FD}_{\alpha\alpha} = 2N_\alpha^2(1-\cos\frac{2\pi m_\alpha}{N_\alpha}), \quad \text{FD}_{\alpha\beta}^{(\alpha\neq\beta)} = N_\alpha N_\beta \sin\frac{2\pi m_\alpha}{N_\alpha} \sin\frac{2\pi m_\beta}{N_\beta}$$
+
+最终，∇²_FD(vlapl·sgn) 在 G 空间中为：
+
+$$\widetilde{\nabla^2_{\text{FD}}(\text{vlapl}\cdot\text{sgn})}(\mathbf{G}) = -\text{gg}_{\text{FD}}(\mathbf{G}) \cdot \text{tpiba2} \cdot \widetilde{\text{vlapl}\cdot\text{sgn}}(\mathbf{G})$$
+
+**实现**：
+1. 计算 vlapl_sgn = vlapl·sgn（实空间）
+2. FFT: vlapl_sgn → vlapl_g
+3. 应用 FD kernel: vlapl_g_lapl[ig] = -vlapl_g[ig] · gg_FD[ig] · tpiba2
+4. IFFT: vlapl_g_lapl → vlapl_lapl（实空间）
+5. 加入 V_xc 和 vtxc
+
+**交叉项的物理意义**：对于非正交晶胞（如 FCC 原胞），度规张量 GGT 的非对角元不为零。此时，沿一个晶格方向的位移会影响其他方向的梯度分量。FD kernel 的交叉项 sin·sin 正确反映了这一点。对于正交晶胞（GGT 对角），交叉项消失，FD kernel 退化为三个方向的独立贡献。
+
+**数值验证**（FCC 原胞, a=10.2 Bohr, nx=ny=nz=36）：
+
+| Miller 指数 | gg_spectral | gg_FD | gg_FD/gg_spectral |
+|-------------|-------------|-------|-------------------|
+| (0,0,0) | 0 | 0 | 1.000 |
+| (1,0,0) | 3.0 | 2.992 | 0.997 |
+| (1,1,0) | 4.0 | 4.005 | 1.001 |
+| (5,0,0) | 75.0 | 70.36 | 0.938 |
+| (10,0,0) | 300.0 | 231.2 | 0.771 |
+| (18,0,0) | 972.0 | 393.9 | 0.405 |
+
+FD kernel 在低 G 时与谱 kernel 完全一致（<1% 偏差），在高 G 时衰减到谱值的 ~40%，有界且不会导致发散。
+
+**SCF 收敛性**：使用 Pulay mixing (beta=0.2)，SCANL 在 ecutwfc=80 Ry 下 SCF 正常收敛。
+
+**FD 应力验证**（Si₂ FCC 原胞, a₀=10.2 Bohr, δ=0.001, Pulay mixing beta=0.1–0.2）：
+
+PW 基组：
+
+| 泛函 | ecutwfc (Ry) | σ_FD (kbar) | σ_AB (kbar) | FD/AB | 误差 |
+|------|-------------|-------------|-------------|-------|------|
+| SCAN | 60 | 434.29 | 434.30 | 1.0000 | 0.00% |
+| SCAN | 80 | 434.47 | 434.48 | 1.0000 | 0.00% |
+| SCAN | 100 | 434.54 | 434.55 | 1.0000 | 0.00% |
+| SCANL | 60 | 431.89 | 435.60 | 0.9915 | -0.85% |
+| SCANL | 80 | 432.37 | 434.58 | 0.9949 | -0.51% |
+
+**注意**：ecutwfc=100 时 SCANL 的 SCF 收敛较困难（能量振荡较大），FD 应力结果不稳定，未列入上表。建议 SCANL 使用 ecutwfc ≤ 80 Ry。
+
+**与方案 3 的对比**：
+
+| 方案 | V 含 vlapl | vtxc 含 vlapl | SCF | FD/AB | 误差 |
+|------|-----------|--------------|-----|-------|------|
+| 方案 3 (无 vlapl 势) | ✗ | ✗ | 收敛 | 0.906 | -9.5% |
+| 方案 7 (FD Laplacian) | ✓ (FD) | ✓ (FD) | 收敛 | 0.995 | -0.51% |
+
+**FD Laplacian 方案将应力误差从 9.5% 降至 0.51%，改善了约 20 倍。**
+
+残余 0.5% 误差的可能来源：
+1. FD kernel 在高 G 区与谱 kernel 的偏差（已衰减但仍有差异）
+2. 有限差分应力本身的高阶误差（δ=0.001 的中心差分为二阶精度）
+3. vlapl stress 项中使用的 Hessian 仍为谱 Hessian
+
+---
 
 | 方案 | V 含 vlapl | vtxc 含 vlapl | stress 含 vlapl | SCF | FD/AB | 误差 |
 |------|-----------|--------------|----------------|-----|-------|------|
 | SCAN 基线 | N/A | N/A | N/A | 收敛 | 1.000 | 0.00% |
 | 方案 1 (严格) | ✓ | ✓ | ✓ | **发散** | — | — |
 | 方案 2 (sigma-as-lapl) | ✗ (假) | ✗ (假) | ✗ | 收敛 | 1.046 | 4.6% |
-| 方案 3 (严格应力) | ✗ | ✗ | ✓ | 收敛 | 0.91 | -9% |
+| 方案 3 (严格应力) | ✗ | ✗ | ✓ | 收敛 | 0.906 | -9.5% |
 | 方案 4 (vtxc含vlapl) | ✗ | ✓ | ✓ | 收敛 | 0.922 | -7.8% |
 | 方案 5 (衰减) | ✓(衰减) | ✓(衰减) | ✓ | 收敛 | ~0.9 | ~10% |
 | 方案 6 (ramp) | ✓(渐增) | ✓ | ✓ | **发散** | — | — |
+| **方案 7 (FD Laplacian)** | **✓ (FD)** | **✓ (FD)** | **✓** | **收敛** | **0.995** | **-0.5%** |
 
-**结论**：所有能收敛的方案都存在 5–10% 的应力误差。这是省略 vlapl 势的根本性后果——密度不在 SCANL 自洽势下产生，导致 etxc-vtxc 不匹配，进而使应力偏大。方案 2（sigma-as-lapl）的误差最小（4.6%），但那是传假输入给 LibXC 导致的偶然偏差，并非物理上更正确。
+**结论**：方案 7（FD Laplacian）是唯一同时满足 SCF 收敛和应力精度的方案。它通过用有界的 FD kernel 替代无界的 |G|² 谱 Laplacian，既解决了 SCF 发散问题，又将 vlapl 势纳入 V_xc 使得密度-势自洽，从而大幅改善应力精度（从 9.5% 误差降至 0.5%）。
 
 ---
 
@@ -270,42 +363,37 @@ VASP 使用 PAW 方法，ecutwfc 要求较低（~400–700 eV），可以在 800
 
 ## 5. 结论与建议
 
-### 5.1 不推荐使用 SCANL
+### 5.1 推荐方案：FD Laplacian（方案 7）
 
-**在 ABACUS（NCPP + 平面波）框架下不推荐使用 SCANL 及其他 ∇²ρ 依赖泛函**。原因：
+**FD Laplacian 方案是当前最佳方案**，它：
 
-1. **严格实现不可行**：vlapl 势 e2·∇²(vlapl) 在任何实际 ecutwfc 下导致 SCF 发散
-2. **NCPP 矛盾**：模守恒赝势需要 ≥60 Ry 的 ecutwfc，此范围内 vlapl 势必然不稳定
-3. **近似方案不可靠**：无论省略 vlapl 势（方案 3）还是用 sigma 伪装（方案 2），所得密度都不是 SCANL 自洽密度，结果与 FD 验证存在 2–5% 的偏差
-4. **VASP 也承认问题**：即使在 PAW 方法下，VASP 也建议不要使用超过 800 eV 的截断
+1. **SCF 收敛**：FD kernel 有界，不会导致 |G|² 发散
+2. **密度-势自洽**：V 包含 vlapl 贡献（通过 FD Laplacian），密度在近似自洽势下产生
+3. **应力精度高**：FD/AB = 0.995，误差仅 0.5%（远优于方案 3 的 9.5%）
+4. **适用于非正交晶胞**：通过度规张量 GGT 正确处理交叉项
+5. **无需调参**：不依赖衰减因子或 ramp 步数等人为参数
 
-### 5.2 推荐替代泛函
+**残余 0.5% 误差**是 FD kernel 与谱 kernel 在高 G 区差异的代价，对于实际应用完全可以接受。
+
+### 5.2 使用注意事项
+
+1. **FD Laplacian 是对谱 Laplacian 的近似**：在 FFT 网格上，它是"正确"的 Laplacian（对网格函数的有限差分），但与连续 Laplacian 有差异
+2. **需要 mixing_tau = 1**：meta-GGA 泛函需要混合动能密度
+3. **建议使用 Pulay mixing**：mixing_beta=0.2，对 SCANL 效果较好
+4. **仍建议优先考虑 r²SCAN**：r²SCAN 无 ∇²ρ 依赖，数值更稳定
+
+### 5.3 代码实现
+
+SCANL 已注册为 `dft_functional scanl`，内部映射为 `XC_MGGA_X_SCANL + XC_MGGA_C_SCANL`。
+
+vlapl 势项实现于 `xc_functional_libxc_vxc.cpp` 中的 `v_xc_meta` 函数，使用 G 空间 FD kernel 计算 ∇²(vlapl·sgn)。
+
+vlapl 应力项实现于 `xc_functional_gradcorr.cpp` 中的 `gradcorr` 函数。
+
+### 5.4 替代泛函
 
 | 泛函 | 依赖变量 | 特点 |
 |------|---------|------|
 | **r²SCAN** | ρ, ∇ρ, τ | SCAN 的正则化版本，数值稳定，推荐首选 |
-| **SCAN** | ρ, ∇ρ, τ | 与 SCANL 精度相近，无 ∇²ρ 依赖，数值稳定 |
-
-r²SCAN 是目前推荐的 meta-GGA 泛函，兼具 SCAN 的精度和更好的数值稳定性，且无 ∇²ρ 依赖问题。
-
-### 5.3 代码实现建议
-
-若仍需保留 SCANL 支持（例如用于与文献对比），建议采用**方案 3 + 运行时警告**：
-
-1. **V_xc 不含 vlapl**：e2·∇²(vlapl) 导致 |G|² 发散，无法加入
-2. **vtxc 不含 vlapl**：必须与 V 保持一致
-3. **etxc 含完整 exc**：LibXC 返回的能量密度已含 Laplacian 贡献
-4. **gradcorr stress 含 2·vlapl·Hess·e2**：从完整能量泛函严格推导
-5. **运行时打印 WARNING**
-
-在用户选择 ∇²ρ 依赖泛函时，应打印类似以下警告：
-
-```
-WARNING: The selected functional depends on the Laplacian of the density (∇²ρ).
-The vlapl contribution to the Kohn-Sham potential is omitted because including
-it (e2·∇²(vlapl)) causes SCF divergence due to |G|² amplification in reciprocal
-space. The self-consistent density is therefore NOT the exact SCANL density.
-The stress includes the vlapl term derived from the full energy functional.
-Results may be unreliable, especially for norm-conserving pseudopotentials
-which require high ecutwfc. Consider using r2SCAN or SCAN instead.
-```
+| **SCAN** | ρ, ∇ρ, τ | 无 ∇²ρ 依赖，数值稳定 |
+| **SCANL** | ρ, ∇ρ, ∇²ρ | 需 FD Laplacian 近似，0.5% 应力误差 |

@@ -392,33 +392,97 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
             }
         }
 
-        //process vlapl: omitted from V_xc and vtxc for SCF stability
-        // V_xc^vlapl = e2·∇²(vlapl·sgn) is excluded because it causes
-        // |G|² amplification in reciprocal space leading to SCF divergence.
-        // vtxc_vlapl is also excluded for consistency with the actual potential.
-        // The vlapl energy is already included in etxc via exc.
-        // The vlapl stress (σ = 2·vlapl·Hess·e2) is computed in gradcorr.
-        // Note: LibXC vlapl = ∂(ρε)/∂(∇²ρ) already includes ρ factor.
+        //process vlapl: ∇²(vlapl) contribution to potential
+        // Use finite-difference Laplacian in G-space to avoid unbounded
+        // |G|² amplification from the spectral Laplacian. The FD kernel
+        // replaces m_α² with n_α²·2(1-cos(2πm_α/n_α)) and m_α·m_β
+        // with n_α·n_β·sin(2πm_α/n_α)·sin(2πm_β/n_β), which matches
+        // the spectral kernel at low G but is bounded at high G.
+        // Cross terms from the metric tensor (GGT) are included for
+        // non-orthogonal cells.
+        for( int is=0; is<nspin; ++is )
         {
-            static bool vlapl_warning_printed = false;
-            if (!vlapl_warning_printed)
+            std::vector<double> vlapl_sgn(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+            for( int ir=0; ir<nrxx; ++ir )
             {
-                double vlapl_max = 0.0;
-                for (int i = 0; i < nrxx * nspin; ++i)
-                    vlapl_max = std::max(vlapl_max, std::abs(vlapl[i]));
-                if (vlapl_max > 1e-10)
-                {
-                    vlapl_warning_printed = true;
-                    ModuleBase::WARNING("XC_Functional_Libxc::v_xc_meta",
-                        "The selected functional depends on the Laplacian of the density. "
-                        "The vlapl contribution to V_xc is omitted because including it "
-                        "(e2*nabla^2(vlapl)) causes SCF divergence due to |G|^2 amplification. "
-                        "The self-consistent density is NOT the exact functional density. "
-                        "The stress includes the vlapl term from the full energy functional. "
-                        "Results may be unreliable, especially for norm-conserving pseudopotentials. "
-                        "Consider using r2SCAN or SCAN instead.");
-                }
+                vlapl_sgn[ir] = vlapl[ir*nspin+is] * sgn[ir*nspin+is];
             }
+
+            std::vector<std::complex<double>> vlapl_g(chr->rhopw->npw);
+            chr->rhopw->real2recip(vlapl_sgn.data(), vlapl_g.data());
+
+            const int ngrid[3] = {chr->rhopw->nx, chr->rhopw->ny, chr->rhopw->nz};
+            const ModuleBase::Matrix3& GGT_mat = chr->rhopw->GGT;
+            const double two_pi = ModuleBase::TWO_PI;
+            const double ggt[3][3] = {
+                {GGT_mat.e11, GGT_mat.e12, GGT_mat.e13},
+                {GGT_mat.e21, GGT_mat.e22, GGT_mat.e23},
+                {GGT_mat.e31, GGT_mat.e32, GGT_mat.e33}
+            };
+
+            const double four_pi_sq = ModuleBase::FOUR_PI * ModuleBase::PI;
+            std::vector<std::complex<double>> vlapl_g_lapl(chr->rhopw->npw);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+            for(int ig=0; ig<chr->rhopw->npw; ++ig)
+            {
+                double gg_fd_raw = 0.0;
+                const double m[3] = {chr->rhopw->gdirect[ig].x,
+                                     chr->rhopw->gdirect[ig].y,
+                                     chr->rhopw->gdirect[ig].z};
+                for(int alpha=0; alpha<3; ++alpha)
+                {
+                    const double phi_a = two_pi * m[alpha] / ngrid[alpha];
+                    for(int beta=0; beta<3; ++beta)
+                    {
+                        const double phi_b = two_pi * m[beta] / ngrid[beta];
+                        if(alpha == beta)
+                        {
+                            gg_fd_raw += ggt[alpha][alpha] * ngrid[alpha] * ngrid[alpha] * 2.0 * (1.0 - cos(phi_a));
+                        }
+                        else
+                        {
+                            gg_fd_raw += ggt[alpha][beta] * ngrid[alpha] * ngrid[beta] * sin(phi_a) * sin(phi_b);
+                        }
+                    }
+                }
+                const double gg_fd = gg_fd_raw / four_pi_sq;
+                vlapl_g_lapl[ig] = -vlapl_g[ig] * gg_fd * tpiba2;
+            }
+
+            std::vector<std::complex<double>> aux(chr->rhopw->nmaxgr);
+            chr->rhopw->recip2real(vlapl_g_lapl.data(), aux.data());
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+            for( int ir=0; ir<nrxx; ++ir )
+            {
+#ifdef __EXX
+                double vlapl_contrib = aux[ir].real();
+                if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
+                {
+                    vlapl_contrib *= (1.0 - XC_Functional::get_hybrid_alpha());
+                }
+                v(is,ir) += ModuleBase::e2 * vlapl_contrib;
+#else
+                v(is,ir) += ModuleBase::e2 * aux[ir].real();
+#endif
+            }
+
+            double vtxc_vlapl = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:vtxc_vlapl) schedule(static, 1024)
+#endif
+            for( int ir=0; ir<nrxx; ++ir )
+            {
+                vtxc_vlapl += ModuleBase::e2 * aux[ir].real() * chr->rho[is][ir] * sgn[ir*nspin+is];
+            }
+            vtxc += vtxc_vlapl;
         }
     }
 
