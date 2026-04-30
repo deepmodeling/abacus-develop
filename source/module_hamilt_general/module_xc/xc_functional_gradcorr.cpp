@@ -367,15 +367,15 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 						double v3xc, vlaplc;
 						double atau = chr->kin_r[0][ir]/2.0;
 						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, lapl1[ir], atau, sxc, v1xc, v2xc, v3xc, vlaplc);
-						// add vlapl stress contribution: σ_αβ^vlapl = -2 ∫ vlapl ∂²ρ/∂r_α∂r_β dr
-						// Hessian components order: xx, yy, zz, xy, yz, zx
+						// vlapl stress: σ_αβ = (2/Ω) Σ vlapl·Hessian_αβ·e2
+						// vlapl = ∂(ρε)/∂(∇²ρ) already includes ρ factor
 						for(int l = 0; l < 3; l++)
 						{
 							for(int m = 0; m < l+1; m++)
 							{
 								int ind = l*3 + m;
 								int ic = (l==0&&m==0) ? 0 : (l==1&&m==1) ? 1 : (l==2&&m==2) ? 2 : (l==0&&m==1) ? 3 : (l==1&&m==2) ? 4 : 5;
-								local_stress_gga[ind] -= 2.0 * vlaplc * hess1[ic * rhopw->nrxx + ir] * ModuleBase::e2;
+								local_stress_gga[ind] += 2.0 * vlaplc * hess1[ic * rhopw->nrxx + ir] * ModuleBase::e2;
 							}
 						}
 					}
@@ -442,7 +442,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
 						lapl1[ir], lapl2[ir],
 						atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, vlaplup, vlapldw);
-					// add vlapl stress contribution for both spin channels
+					// vlapl stress: σ_αβ = (2/Ω) Σ (vlapl_up·Hess_up + vlapl_dw·Hess_dw)·e2
+					// vlapl = ∂(ρε)/∂(∇²ρ) already includes ρ factor
 					if(is_stress)
 					{
 						for(int l = 0; l < 3; l++)
@@ -451,7 +452,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 							{
 								int ind = l*3 + m;
 								int ic = (l==0&&m==0) ? 0 : (l==1&&m==1) ? 1 : (l==2&&m==2) ? 2 : (l==0&&m==1) ? 3 : (l==1&&m==2) ? 4 : 5;
-								local_stress_gga[ind] -= 2.0 * (vlaplup * hess1[ic * rhopw->nrxx + ir] + vlapldw * hess2[ic * rhopw->nrxx + ir]) * ModuleBase::e2;
+								local_stress_gga[ind] += 2.0 * (vlaplup * hess1[ic * rhopw->nrxx + ir] + vlapldw * hess2[ic * rhopw->nrxx + ir]) * ModuleBase::e2;
 							}
 						}
 					}

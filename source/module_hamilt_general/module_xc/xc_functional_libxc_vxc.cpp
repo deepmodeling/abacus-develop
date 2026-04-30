@@ -392,45 +392,32 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
             }
         }
 
-        //process vlapl: ∇²(vlapl) contribution to potential
-        // vlapl = ∂ε/∂(∇²ρ), potential contribution = +∇²(vlapl)
-        std::vector<double> vlapl_real(nrxx * nspin);
-        for( int is=0; is<nspin; ++is )
+        //process vlapl: omitted from V_xc and vtxc for SCF stability
+        // V_xc^vlapl = e2·∇²(vlapl·sgn) is excluded because it causes
+        // |G|² amplification in reciprocal space leading to SCF divergence.
+        // vtxc_vlapl is also excluded for consistency with the actual potential.
+        // The vlapl energy is already included in etxc via exc.
+        // The vlapl stress (σ = 2·vlapl·Hess·e2) is computed in gradcorr.
+        // Note: LibXC vlapl = ∂(ρε)/∂(∇²ρ) already includes ρ factor.
         {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-            for( int ir=0; ir< nrxx; ++ir )
+            static bool vlapl_warning_printed = false;
+            if (!vlapl_warning_printed)
             {
-                vlapl_real[ir*nspin+is] = vlapl[ir*nspin+is] * sgn[ir*nspin+is];
-            }
-
-            // compute ∇²(vlapl[is]) via reciprocal space
-            std::vector<std::complex<double>> vlapl_g(chr->rhopw->npw);
-            chr->rhopw->real2recip(&vlapl_real[is * nrxx], vlapl_g.data());
-
-            std::vector<std::complex<double>> vlapl_lapl_g(chr->rhopw->npw);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-            for(int ig=0; ig<chr->rhopw->npw; ++ig)
-                vlapl_lapl_g[ig] = -vlapl_g[ig] * chr->rhopw->gg[ig] * tpiba2;
-
-            std::vector<std::complex<double>> aux(chr->rhopw->nmaxgr);
-            chr->rhopw->recip2real(vlapl_lapl_g.data(), aux.data());
-
-            for( int ir=0; ir< nrxx; ++ir )
-            {
-#ifdef __EXX
-                double vlapl_contrib = aux[ir].real();
-                if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
+                double vlapl_max = 0.0;
+                for (int i = 0; i < nrxx * nspin; ++i)
+                    vlapl_max = std::max(vlapl_max, std::abs(vlapl[i]));
+                if (vlapl_max > 1e-10)
                 {
-                    vlapl_contrib *= (1.0 - XC_Functional::get_hybrid_alpha());
+                    vlapl_warning_printed = true;
+                    ModuleBase::WARNING("XC_Functional_Libxc::v_xc_meta",
+                        "The selected functional depends on the Laplacian of the density. "
+                        "The vlapl contribution to V_xc is omitted because including it "
+                        "(e2*nabla^2(vlapl)) causes SCF divergence due to |G|^2 amplification. "
+                        "The self-consistent density is NOT the exact functional density. "
+                        "The stress includes the vlapl term from the full energy functional. "
+                        "Results may be unreliable, especially for norm-conserving pseudopotentials. "
+                        "Consider using r2SCAN or SCAN instead.");
                 }
-                v(is,ir) += vlapl_contrib;
-#else
-                v(is,ir) += aux[ir].real();
-#endif
             }
         }
     }
