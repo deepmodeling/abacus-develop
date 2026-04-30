@@ -374,7 +374,7 @@ config_set_defaults() {
     
     # Default enable options (following original script logic)
     CONFIG_CACHE["dry_run"]="__FALSE__"
-    CONFIG_CACHE["enable_tsan"]="__FALSE__"
+    CONFIG_CACHE["ENABLE_TSAN"]="__FALSE__"
     CONFIG_CACHE["enable_opencl"]="__FALSE__"
     CONFIG_CACHE["enable_cuda"]="__FALSE__"
     CONFIG_CACHE["enable_hip"]="__FALSE__"

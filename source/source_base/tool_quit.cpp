@@ -133,7 +133,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::string &calculation,const std::string &description)
 {
 #ifdef __NORMAL
-// only for UT, do nothing here
+    if(error_in) std::cout << description << std::endl;
 #else
 	if(error_in)
 	{

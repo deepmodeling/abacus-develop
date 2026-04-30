@@ -16,6 +16,7 @@ if(ENABLE_LCAO)
         td_folding.cpp
         solve_propagation.cpp
         boundary_fix.cpp
+        td_moving_gauge.cpp
     )
 
     if(USE_CUDA)

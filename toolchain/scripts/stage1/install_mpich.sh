@@ -37,9 +37,6 @@ source "${INSTALLDIR}"/toolchain.env
 [ ${MPI_MODE} != "mpich" ] && exit 0
 [ -f "${BUILDDIR}/setup_mpich" ] && rm "${BUILDDIR}/setup_mpich"
 
-MPICH_CFLAGS=""
-MPICH_LDFLAGS=""
-MPICH_LIBS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -78,11 +75,8 @@ case "${with_mpich}" in
             ./configure \
                 --prefix="${pkg_install_dir}" \
                 --libdir="${pkg_install_dir}/lib" \
-                MPICC="" \
                 FFLAGS="${FCFLAGS} ${compat_flag}" \
                 FCFLAGS="${FCFLAGS} ${compat_flag}" \
-                --without-x \
-                --enable-gl=no \
                 --with-device=${MPICH_DEVICE} \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
