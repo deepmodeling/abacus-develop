@@ -10,7 +10,6 @@
 
 #include <algorithm>
 // #include <chrono>
-#include <cstdlib>
 
 #include "lri_cv_tools.h"
 #include "source_base/global_variable.h"
@@ -20,15 +19,6 @@
 //#include "source_pw/hamilt_pwdft/global.h"
 
 #include <RI/global/Global_Func-1.h>
-
-namespace
-{
-bool exx_force_serial_env(const char* name)
-{
-    const char* value = std::getenv(name);
-    return value != nullptr && std::atoi(value) != 0;
-}
-}
 
 void Gaussian_Abfs::init(const UnitCell& ucell,
                          const int& Lmax,
@@ -386,7 +376,6 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
     const int total_lm = (lmax + 1) * (lmax + 1);
     std::vector<Tresult> result(total_lm, Tresult{});
     const int total_cells = this->n_cells[ik];
-    const bool force_serial = exx_force_serial_env("ABACUS_EXX_SERIAL_GAUSS_LATTICE");
 
 #pragma omp declare reduction(vec_plus : std::vector<Tresult> : std::transform(omp_out.begin(),                        \
                                                                                    omp_out.end(),                      \
@@ -417,22 +406,13 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
         }
     };
 
-    if (force_serial)
-    {
-        for (int idx = 0; idx < total_cells; ++idx)
-        {
-            accumulate_cell(idx, result);
-        }
-    }
-    else
-    {
 //     // auto start0 = std::chrono::system_clock::now();
 #pragma omp parallel for reduction(vec_plus : result)
-        for (int idx = 0; idx < total_cells; ++idx)
-        {
-            accumulate_cell(idx, result);
-        }
+    for (int idx = 0; idx < total_cells; ++idx)
+    {
+        accumulate_cell(idx, result);
     }
+
     // auto end0 = std::chrono::system_clock::now();
     // auto duration0 =
     // std::chrono::duration_cast<std::chrono::microseconds>(end0 - start0);

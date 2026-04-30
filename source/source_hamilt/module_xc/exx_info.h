@@ -25,6 +25,9 @@ struct Exx_Info
         double C_threshold = 0;
         double V_threshold = 0;
         double V_threshold_long = 0;
+        double V_cd_threshold = -1;
+        bool V_cd_stats_only = false;
+        bool V_cd_short_only = true;
         double dm_threshold = 0;
         double C_grad_threshold = 0;
         double V_grad_threshold = 0;

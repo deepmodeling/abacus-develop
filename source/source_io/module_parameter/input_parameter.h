@@ -624,6 +624,9 @@ struct Input_para
     double exx_c_threshold = 0.0001;             ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                ///< threshold to screen C matrix in exx
     double exx_v_threshold_long = 0.0;           ///< threshold to screen long-range V matrix in exx
+    double exx_vcd_threshold = -1.0;             ///< dynamic C/D-weighted threshold for merged-short EXX paths
+    bool exx_vcd_stats_only = false;             ///< collect weighted short-screen stats without skipping paths
+    bool exx_vcd_short_only = true;              ///< apply weighted short-screening only to the split short channel
     double exx_dm_threshold = 0.0001;            ///< threshold to screen density matrix in exx
     double exx_c_grad_threshold = 0.0001;        ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;           ///< threshold to screen nabla V matrix in exx

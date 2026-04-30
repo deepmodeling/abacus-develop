@@ -39,7 +39,8 @@ class Moment_abfs
         const bool allow_overwrite = false,
         const bool apply_cutoff = true,
         const bool write_vws = true,
-        const bool allow_insert = true);
+        const bool allow_insert = true,
+        const double value_scale = 1.0);
     void discard0_VR(
         const UnitCell& ucell,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,

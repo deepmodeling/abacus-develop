@@ -25,83 +25,11 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
 #include <numeric>
-#include <sstream>
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-namespace EwaldVqDebugDetail
-{
-struct TensorMapStats
-{
-    std::size_t block_count = 0;
-    std::size_t element_count = 0;
-    double sum_abs = 0.0;
-    double max_abs = 0.0;
-};
-
-inline bool debug_parallel_exx_enabled()
-{
-    const char* debug_env = std::getenv("ABACUS_EXX_DEBUG_PARALLEL");
-    return debug_env != nullptr && std::atoi(debug_env) != 0;
-}
-
-inline bool serial_ewald_vq_enabled()
-{
-    const char* debug_env = std::getenv("ABACUS_EXX_SERIAL_EWALD_VQ");
-    return debug_env != nullptr && std::atoi(debug_env) != 0;
-}
-
-template <typename Tkey1, typename Tdata>
-TensorMapStats tensor_map_stats(const std::map<int, std::map<Tkey1, RI::Tensor<Tdata>>>& tensor_map)
-{
-    TensorMapStats stats;
-    for (const auto& outer_pair: tensor_map)
-    {
-        (void)outer_pair;
-        for (const auto& inner_pair: outer_pair.second)
-        {
-            const RI::Tensor<Tdata>& tensor = inner_pair.second;
-            ++stats.block_count;
-            stats.element_count += static_cast<std::size_t>(tensor.get_shape_all());
-            for (int i = 0; i < tensor.get_shape_all(); ++i)
-            {
-                const double abs_value = std::abs(tensor.ptr()[i]);
-                stats.sum_abs += abs_value;
-                stats.max_abs = std::max(stats.max_abs, abs_value);
-            }
-        }
-    }
-    return stats;
-}
-
-inline TensorMapStats reduce_tensor_map_stats(const MPI_Comm& mpi_comm, const TensorMapStats& local_stats)
-{
-    TensorMapStats global_stats;
-    const unsigned long long local_counts[2] = {static_cast<unsigned long long>(local_stats.block_count),
-                                                static_cast<unsigned long long>(local_stats.element_count)};
-    unsigned long long global_counts[2] = {0ULL, 0ULL};
-    MPI_Allreduce(local_counts, global_counts, 2, MPI_UNSIGNED_LONG_LONG, MPI_SUM, mpi_comm);
-    global_stats.block_count = static_cast<std::size_t>(global_counts[0]);
-    global_stats.element_count = static_cast<std::size_t>(global_counts[1]);
-    MPI_Allreduce(&local_stats.sum_abs, &global_stats.sum_abs, 1, MPI_DOUBLE, MPI_SUM, mpi_comm);
-    MPI_Allreduce(&local_stats.max_abs, &global_stats.max_abs, 1, MPI_DOUBLE, MPI_MAX, mpi_comm);
-    return global_stats;
-}
-
-inline std::string format_tensor_map_stats(const TensorMapStats& stats)
-{
-    std::ostringstream oss;
-    oss << "blocks=" << stats.block_count
-        << ", elements=" << stats.element_count
-        << ", sum_abs=" << stats.sum_abs
-        << ", max_abs=" << stats.max_abs;
-    return oss.str();
-}
-}
 
 template<typename Tdata>
 Ewald_Vq<Tdata>::Ewald_Vq(){}
@@ -674,25 +602,11 @@ auto Ewald_Vq<Tdata>::cal_Vq(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_Vq");
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vq");
-    const bool debug_parallel_exx = EwaldVqDebugDetail::debug_parallel_exx_enabled();
 
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss = this->cal_Vs_minus_gauss(ucell,
                                                                                              this->list_A0,
                                                                                              this->list_A1,
                                                                                              Vs_in); //{ia0, {ia1, R}}
-    if (debug_parallel_exx)
-    {
-        const auto vs_minus_local_stats = EwaldVqDebugDetail::tensor_map_stats(Vs_minus_gauss);
-        const auto vs_minus_global_stats
-            = EwaldVqDebugDetail::reduce_tensor_map_stats(this->mpi_comm, vs_minus_local_stats);
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::cout << "EXX debug Vs_minus_gauss local(rank0): "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vs_minus_local_stats) << std::endl;
-            std::cout << "EXX debug Vs_minus_gauss reduced     : "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vs_minus_global_stats) << std::endl;
-        }
-    }
     const T_func_DPcal_Vq_dVq_minus_gauss<RI::Tensor<std::complex<double>>, RI::Tensor<Tdata>> func_cal_Vq_minus_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_Vq_minus_gauss,
                     this,
@@ -712,21 +626,9 @@ auto Ewald_Vq<Tdata>::cal_Vq(const UnitCell& ucell,
     auto Vq = this->set_Vq_dVq(ucell,
                                this->list_A0_pair_k,
                                this->list_A1_pair_k,
-                               Vs_minus_gauss,
-                               func_cal_Vq_minus_gauss,
-                               func_cal_Vq_gauss); //{ia0, ia1}
-    if (debug_parallel_exx)
-    {
-        const auto vq_local_stats = EwaldVqDebugDetail::tensor_map_stats(Vq);
-        const auto vq_global_stats = EwaldVqDebugDetail::reduce_tensor_map_stats(this->mpi_comm, vq_local_stats);
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::cout << "EXX debug Vq local(rank0): "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_local_stats) << std::endl;
-            std::cout << "EXX debug Vq reduced     : "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_global_stats) << std::endl;
-        }
-    }
+	                               Vs_minus_gauss,
+	                               func_cal_Vq_minus_gauss,
+	                               func_cal_Vq_gauss); //{ia0, ia1}
 
     ModuleBase::timer::end("Ewald_Vq", "cal_Vq");
     return Vq;
@@ -786,7 +688,6 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Ewald_Vq", "set_Vq_dVq");
     ModuleBase::timer::tick("Ewald_Vq", "set_Vq_dVq");
-    const bool debug_parallel_exx = EwaldVqDebugDetail::debug_parallel_exx_enabled();
 
     using namespace RI::Array_Operator;
     using Tin_convert = typename LRI_CV_Tools::TinType<Tout>::type;
@@ -809,19 +710,6 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
         = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_dVs_minus_gauss_in, atoms00, atoms01);
     std::map<TA, std::map<TAK, Tout>> Vq_dVq_minus_gauss_local
         = func_cal_Vq_dVq_minus_gauss(Vs_dVs_minus_gauss); // partial sum over local R blocks
-    if (debug_parallel_exx)
-    {
-        const auto vq_minus_local_stats = EwaldVqDebugDetail::tensor_map_stats(Vq_dVq_minus_gauss_local);
-        const auto vq_minus_global_stats
-            = EwaldVqDebugDetail::reduce_tensor_map_stats(this->mpi_comm, vq_minus_local_stats);
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::cout << "EXX debug Vq_minus_gauss local(rank0): "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_minus_local_stats) << std::endl;
-            std::cout << "EXX debug Vq_minus_gauss reduced     : "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_minus_global_stats) << std::endl;
-        }
-    }
 
     // MPI: combine partial Fourier sums from different local R subsets onto the
     // target (I, J, k) distribution.
@@ -837,37 +725,11 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
     }
     std::map<TA, std::map<TAK, Tout>> Vq_dVq_minus_gauss
         = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vq_dVq_minus_gauss_local, atoms10, atoms11);
-    if (debug_parallel_exx)
-    {
-        const auto vq_minus_comm_local_stats = EwaldVqDebugDetail::tensor_map_stats(Vq_dVq_minus_gauss);
-        const auto vq_minus_comm_global_stats
-            = EwaldVqDebugDetail::reduce_tensor_map_stats(this->mpi_comm, vq_minus_comm_local_stats);
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::cout << "EXX debug Vq_minus_gauss(comm) local(rank0): "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_minus_comm_local_stats) << std::endl;
-            std::cout << "EXX debug Vq_minus_gauss(comm) reduced     : "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_minus_comm_global_stats) << std::endl;
-        }
-    }
 
     // MPI: {ia0, {ia1, k}} to {ia0, ia1}
     std::map<TA, std::map<TAK, Tout>> Vq_dVq_gauss_out = func_cal_Vq_dVq_gauss(shift_for_mpi); //{ia0, {ia1, k}}
     std::map<TA, std::map<TAK, Tout>> Vq_dVq_gauss
         = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vq_dVq_gauss_out, atoms10, atoms11); //{ia0, ia1}
-    if (debug_parallel_exx)
-    {
-        const auto vq_gauss_local_stats = EwaldVqDebugDetail::tensor_map_stats(Vq_dVq_gauss);
-        const auto vq_gauss_global_stats
-            = EwaldVqDebugDetail::reduce_tensor_map_stats(this->mpi_comm, vq_gauss_local_stats);
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::cout << "EXX debug Vq_gauss local(rank0): "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_gauss_local_stats) << std::endl;
-            std::cout << "EXX debug Vq_gauss reduced     : "
-                      << EwaldVqDebugDetail::format_tensor_map_stats(vq_gauss_global_stats) << std::endl;
-        }
-    }
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
     for (size_t i0 = 0; i0 < list_A0_pair_k.size(); ++i0)
@@ -946,31 +808,14 @@ auto Ewald_Vq<Tdata>::cal_Vs(const UnitCell& ucell,
                              std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) //{ia0, {ia1, R}}
     -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
 {
-    ModuleBase::TITLE("Ewald_Vq", "cal_Vs");
-    ModuleBase::timer::start("Ewald_Vq", "cal_Vs");
-
-#ifdef _OPENMP
-    const bool force_serial_ewald_vq = EwaldVqDebugDetail::serial_ewald_vq_enabled();
-    int omp_threads_saved = 1;
-    if (force_serial_ewald_vq)
-    {
-        omp_threads_saved = omp_get_max_threads();
-        omp_set_num_threads(1);
-    }
-#endif
+	ModuleBase::TITLE("Ewald_Vq", "cal_Vs");
+	ModuleBase::timer::tick("Ewald_Vq", "cal_Vs");
 
     std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq = this->cal_Vq(ucell, chi, Vs_in);
     auto Vs = this->set_Vs_dVs<RI::Tensor<Tdata>>(ucell,
                                                   this->list_A0_pair_R_period,
                                                   this->list_A1_pair_R_period,
                                                   Vq); //{ia0, ia1}
-
-#ifdef _OPENMP
-    if (force_serial_ewald_vq)
-    {
-        omp_set_num_threads(omp_threads_saved);
-    }
-#endif
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs");
     return Vs;

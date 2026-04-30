@@ -10,6 +10,16 @@
 #include <vector>
 
 template <typename Tdata>
+inline int real_m_to_mm_index(const int m)
+{
+    if (m == 0)
+    {
+        return 0;
+    }
+    return (m > 0) ? (2 * m - 1) : (-2 * m);
+}
+
+template <typename Tdata>
 void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_multipole");
@@ -108,13 +118,13 @@ double Moment_abfs<Tdata>::sum_triple_Y_YLM_real(int l1,
     double sum = 0.0;
     const double tiny2 = 1e-10;
     const int L = l1 + l2;
-    const int idx1 = MGT.get_lm_index(l1, m1 + l1);
-    const int idx2 = MGT.get_lm_index(l2, m2 + l2);
+    const int idx1 = MGT.get_lm_index(l1, real_m_to_mm_index<Tdata>(m1));
+    const int idx2 = MGT.get_lm_index(l2, real_m_to_mm_index<Tdata>(m2));
 
     // cyl(m1,m2) = sum_M C(l1,l2,L,m1,m2,M) Y_LM(R)
     for (int M = -L; M <= L; ++M)
     {
-        const int idxL = MGT.get_lm_index(L, M + L);
+        const int idxL = MGT.get_lm_index(L, real_m_to_mm_index<Tdata>(M));
         const double C = MGT.Gaunt_Coefficients(idx1, idx2, idxL);
         const double ylm_solid = rly.at(idxL);
         const double ylm_real = (distance > tiny2) ? ylm_solid / pow(distance, l1 + l2) : ylm_solid;
@@ -141,7 +151,8 @@ void Moment_abfs<Tdata>::cal_VR(
     const bool allow_overwrite,
     const bool apply_cutoff,
     const bool write_vws,
-    const bool allow_insert)
+    const bool allow_insert,
+    const double value_scale)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
@@ -211,10 +222,10 @@ void Moment_abfs<Tdata>::cal_VR(
                     const double prefactor1 = std::pow(distance, L1 + L2 + 1);
                     for (int M1 = -L1; M1 <= L1; ++M1)
                     {
-                        const int index_M1 = M1 + L1;
+                        const int index_M1 = real_m_to_mm_index<Tdata>(M1);
                         for (int M2 = -L2; M2 <= L2; ++M2)
                         {
-                            const int index_M2 = M2 + L2;
+                            const int index_M2 = real_m_to_mm_index<Tdata>(M2);
                             const double prefactor = std::pow(-1, L2) * std::pow(ModuleBase::TWO_PI, 1.5) / prefactor1;
                             const double clmlm = this->cal_cl1l2(L1, L2);
                             // For real spherical harmonics, m order is: 0, 0, 1, -1, 0, 1, -1, 2, -2, ...
@@ -273,15 +284,6 @@ void Moment_abfs<Tdata>::cal_VR(
                                             // Log-space erfc truncation (FHI-aims implementation)
                                             cutoff_factor = 0.5 * std::erfc(std::log(distance / Rc) / std::log(width));
 
-                                            // Debug output for high states (check if truncation is working)
-                                            static int debug_count = 0;
-                                            if (debug_count < 10 && distance > Rc * 0.9 && distance < Rc * 1.2)
-                                            {
-                                                std::cout << "DEBUG: distance=" << distance << " Rc=" << Rc
-                                                          << " cutoff_factor=" << cutoff_factor << " value=" << value
-                                                          << std::endl;
-                                                debug_count++;
-                                            }
                                         }
                                         else if (distance <= 0.0)
                                         {
@@ -295,28 +297,9 @@ void Moment_abfs<Tdata>::cal_VR(
                                         }
                                     }
 
-                                    tmp_tensor(iA, iB) = value * cutoff_factor;
+                                    tmp_tensor(iA, iB) = value * (value_scale * cutoff_factor);
                                 }
                             }
-                            // if (iat0 == 0 && iat0 == 0 && R[0] == 2 && R[1] == 2 && R[2] == 1 && iat0 == 0 &&
-                            // iat1 == 0)
-                            // {
-                            //     std::cout << "iA: " << iA << ", iB: " << iB << ", L2: " << L2 << ", M2: " << M2
-                            //               << ", V= " << value << ", prefactor:" << prefactor << ",mom1: " << mom1
-                            //               << ", mom2: " << mom2 << ", clmlm: " << clmlm << ", ylm: " << ylm
-                            //               << std::endl;
-                            // }
-
-                            // if (R[0] == 2 && R[1] == 2 && R[2] == 1 && iat0 == 0 && iat1 == 0)
-                            // {
-                            //     out_pure_ri_tensor("Vs_tensor.txt", tmp_tensor, 0.0);
-                            // }
-                            // debug
-                            // std::cout << "T1: " << T1 << ", L1: " << L1 << ", T2: " << T2 << ", L2: " << L2
-                            //           << ", delta_R: " << delta_R[0] << ", " << delta_R[1] << ", " << delta_R[2]
-                            //           << ", distance: " << distance << ", outside V= " << value
-                            //           << ", prefactor:" << prefactor << ",mom1: " << mom1 << ", mom2: " << mom2
-                            //           << ", clmlm: " << clmlm << ", ylm_real: " << ylm_real << std::endl;
                         }
                     }
                 }
@@ -418,10 +401,10 @@ void Moment_abfs<Tdata>::discard0_VR(
                         {
                             for (int M1 = -L1; M1 <= L1; ++M1)
                             {
-                                const int index_M1 = M1 + L1;
+                                const int index_M1 = real_m_to_mm_index<Tdata>(M1);
                                 for (int M2 = -L2; M2 <= L2; ++M2)
                                 {
-                                    const int index_M2 = M2 + L2;
+                                    const int index_M2 = real_m_to_mm_index<Tdata>(M2);
 
                                     // Set all N1 != 0 or N2 != 0 elements to zero
                                     for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1)
@@ -489,10 +472,10 @@ void Moment_abfs<Tdata>::discard0_VR(
                 {
                     for (int M1 = -L1; M1 <= L1; ++M1)
                     {
-                        const int index_M1 = M1 + L1;
+                        const int index_M1 = real_m_to_mm_index<Tdata>(M1);
                         for (int M2 = -L2; M2 <= L2; ++M2)
                         {
-                            const int index_M2 = M2 + L2;
+                            const int index_M2 = real_m_to_mm_index<Tdata>(M2);
 
                             // Set all N1 != 0 or N2 != 0 elements to zero
                             for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1)

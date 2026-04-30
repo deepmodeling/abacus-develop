@@ -15,7 +15,6 @@
 #include "../../source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
-#include <cstdlib>
 #include <omp.h>
 
 template<typename Tdata>
@@ -52,14 +51,6 @@ void LRI_CV<Tdata>::set_orbitals(
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
-    const bool force_serial_set_orbitals = (std::getenv("ABACUS_EXX_SERIAL_SET_ORBITALS") != nullptr);
-    int omp_threads_saved = 1;
-    if (force_serial_set_orbitals)
-    {
-        omp_threads_saved = omp_get_max_threads();
-        omp_set_num_threads(1);
-    }
-
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
 	this->abfs_ccp = abfs_ccp_in;
@@ -89,11 +80,6 @@ void LRI_CV<Tdata>::set_orbitals(
 	        this->m_abfslcaos_lcaos.init_radial_table();
 	    }
 
-    if (force_serial_set_orbitals)
-    {
-        omp_set_num_threads(omp_threads_saved);
-    }
-
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 }
 
@@ -122,7 +108,6 @@ auto LRI_CV<Tdata>::cal_datas(
 	ModuleBase::timer::tick("LRI_CV", "cal_datas");
 
 			std::map<TA,std::map<TAC,Tresult>> Datas;
-            static const bool serial_cal_datas = (std::getenv("ABACUS_EXX_SERIAL_LRI_CV") != nullptr);
             auto cal_one = [&](const size_t i0, const size_t i1)
             {
                 const TA iat0 = list_A0[i0];
@@ -144,25 +129,12 @@ auto LRI_CV<Tdata>::cal_datas(
                     Datas[list_A0[i0]][list_A1[i1]] = Data;
                 }
             };
-            if (serial_cal_datas)
-            {
-                for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
-                {
-                    for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
-                    {
-                        cal_one(i0, i1);
-                    }
-                }
-            }
-            else
-            {
 #pragma omp parallel for collapse(2) schedule(dynamic)
-                for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
+            for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
+            {
+                for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
                 {
-                    for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
-                    {
-                        cal_one(i0, i1);
-                    }
+                    cal_one(i0, i1);
                 }
             }
 		ModuleBase::timer::tick("LRI_CV", "cal_datas");

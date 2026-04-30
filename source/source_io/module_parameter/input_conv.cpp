@@ -220,6 +220,9 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.C_threshold = PARAM.inp.exx_c_threshold;
         GlobalC::exx_info.info_ri.V_threshold = PARAM.inp.exx_v_threshold;
         GlobalC::exx_info.info_ri.V_threshold_long = PARAM.inp.exx_v_threshold_long;
+        GlobalC::exx_info.info_ri.V_cd_threshold = PARAM.inp.exx_vcd_threshold;
+        GlobalC::exx_info.info_ri.V_cd_stats_only = PARAM.inp.exx_vcd_stats_only;
+        GlobalC::exx_info.info_ri.V_cd_short_only = PARAM.inp.exx_vcd_short_only;
         GlobalC::exx_info.info_ri.dm_threshold = PARAM.inp.exx_dm_threshold;
         GlobalC::exx_info.info_ri.C_grad_threshold = PARAM.inp.exx_c_grad_threshold;
         GlobalC::exx_info.info_ri.V_grad_threshold = PARAM.inp.exx_v_grad_threshold;

@@ -26,12 +26,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <numeric>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -64,47 +62,17 @@ inline bool rotate_abfs_in_place_for_current_full_matrix(const Exx_Info::Exx_Inf
     return true;
 }
 
-inline int get_cal_hs_benchmark_repeat()
-{
-    const char* repeat_env = std::getenv("ABACUS_EXX_CALHS_BENCH_REPEAT");
-    if (repeat_env == nullptr)
-    {
-        return 1;
-    }
-    const int repeat = std::atoi(repeat_env);
-    return std::max(repeat, 1);
-}
-
-inline bool debug_parallel_exx_enabled()
-{
-    const char* debug_env = std::getenv("ABACUS_EXX_DEBUG_PARALLEL");
-    return debug_env != nullptr && std::atoi(debug_env) != 0;
-}
-
-inline bool compare_split_with_full_enabled()
-{
-    const char* compare_env = std::getenv("ABACUS_EXX_COMPARE_SPLIT_WITH_FULL");
-    return compare_env != nullptr && std::atoi(compare_env) != 0;
-}
-
-inline bool disable_rotated_n0_long_range()
-{
-    const char* disable_env = std::getenv("ABACUS_EXX_DISABLE_N0_LONG_RANGE");
-    return disable_env != nullptr && std::atoi(disable_env) != 0;
-}
-
-inline bool allow_rt_tddft_ewald_h_only_benchmark()
+inline bool allow_rt_tddft_ewald_force_stress_bypass()
 {
     return PARAM.inp.esolver_type == "tddft";
 }
 
-inline void print_rt_tddft_ewald_h_only_warning_once()
+inline void print_rt_tddft_ewald_force_stress_warning_once()
 {
     static bool warning_printed = false;
     if (!warning_printed && GlobalV::MY_RANK == 0)
     {
-        std::cout << "RT-TDDFT Ewald moment/split runs in H-only benchmark mode;"
-                  << " long-range EXX force/stress terms are not constructed."
+        std::cout << "RT-TDDFT Ewald moment/split skips long-range EXX force/stress construction."
                   << std::endl;
         warning_printed = true;
     }
@@ -141,6 +109,26 @@ inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_
         *synthesized_rcut = used_fallback_rcut;
     }
     return center2_param;
+}
+
+inline double get_total_fock_alpha(const CoulombParam& coulomb_param)
+{
+    double alpha_sum = 0.0;
+    const auto fock_it = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    if (fock_it == coulomb_param.end())
+    {
+        return alpha_sum;
+    }
+    for (const auto& param: fock_it->second)
+    {
+        const auto alpha_it = param.find("alpha");
+        if (alpha_it == param.end() || alpha_it->second.empty())
+        {
+            continue;
+        }
+        alpha_sum += std::stod(alpha_it->second);
+    }
+    return alpha_sum;
 }
 
 inline std::vector<std::vector<double>> build_rotation_rows(const std::vector<double>& moments,
@@ -573,207 +561,107 @@ extract_aux_tensor_map_matrices_prefix_by_type(
 }
 
 template<typename Tdata>
-inline void overwrite_ewald_far_field_with_moment(
+inline std::vector<std::pair<int, std::array<int, 3>>> filter_ewald_exact_near_pairs_for_atom(
+    const UnitCell& ucell,
+    const int iat0,
+    const std::vector<std::pair<int, std::array<int, 3>>>& list_A1_full,
+    const std::vector<double>& abfs_cutoff)
+{
+    std::vector<std::pair<int, std::array<int, 3>>> list_A1_near;
+    const int it0 = ucell.iat2it[iat0];
+    const int ia0 = ucell.iat2ia[iat0];
+    const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+
+    for (const auto& jr: list_A1_full)
+    {
+        const int iat1 = jr.first;
+        const int it1 = ucell.iat2it[iat1];
+        const int ia1 = ucell.iat2ia[iat1];
+        const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+        const auto delta_R = -tau0 + tau1 + (RI_Util::array3_to_Vector3(jr.second) * ucell.latvec);
+        const double exact_near_rcut = abfs_cutoff[it0] + abfs_cutoff[it1];
+        if (delta_R.norm() * ucell.lat0 < exact_near_rcut)
+        {
+            list_A1_near.push_back(jr);
+        }
+    }
+    return list_A1_near;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+build_ewald_bare_coulomb_with_moment(
     const Exx_Info::Exx_Info_RI& info,
+    const CoulombParam& ewald_coulomb_param,
     const UnitCell& ucell,
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
     const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
     const std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>& list_As_Vs,
-    LRI_CV<Tdata>& cv,
-    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& Vs_io)
+    LRI_CV<Tdata>& cv)
 {
     if (!info.coul_moment)
     {
-        return;
+        auto Vs_full = cv.cal_Vs(ucell,
+                                 list_As_Vs.first,
+                                 list_As_Vs.second[0],
+                                 {{"writable_Vws", true}});
+        cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_full);
+        return Vs_full;
     }
     if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
-        && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
+        && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
     {
         throw std::invalid_argument("exx_coul_moment for Ewald currently supports energy/SCF only.");
     }
     if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
     {
-        ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+    }
+    const double moment_value_scale = ExxLriDetail::get_total_fock_alpha(ewald_coulomb_param);
+    if (std::abs(moment_value_scale) <= std::numeric_limits<double>::epsilon())
+    {
+        throw std::invalid_argument("Failed to determine the Ewald Fock alpha for moment bare Coulomb construction.");
     }
 
     Moment_abfs<Tdata> moment_abfs(info);
     moment_abfs.cal_multipole(abfs);
-    // The overwrite targets V(a0b0), so the asymptotic condition must be based
-    // on the support of the auxiliary basis itself rather than the NAO cutoff.
     const std::vector<double> abfs_cutoff = Exx_Abfs::Construct_Orbs::get_Rcut(abfs);
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> Vs_direct;
+    cv.Vws.clear();
+
+    for (const int iat0: list_As_Vs.first)
+    {
+        const auto list_A1_near = filter_ewald_exact_near_pairs_for_atom<Tdata>(
+            ucell,
+            iat0,
+            list_As_Vs.second[0],
+            abfs_cutoff);
+        if (list_A1_near.empty())
+        {
+            continue;
+        }
+        auto Vs_near = cv.cal_Vs(ucell,
+                                 std::vector<int>{iat0},
+                                 list_A1_near,
+                                 {{"writable_Vws", false}});
+        Vs_direct = Vs_direct.empty() ? std::move(Vs_near) : LRI_CV_Tools::add(Vs_direct, Vs_near);
+    }
+
     moment_abfs.cal_VR(ucell,
                        abfs,
                        list_As_Vs,
                        abfs_cutoff,
                        0.0,
                        cv,
-                       Vs_io,
+                       Vs_direct,
                        abfs_old_to_new,
+                       false,
+                       false,
+                       false,
                        true,
-                       false,
-                       false,
-                       false);
-}
-
-template<typename Tdata>
-inline double tensor_max_abs_value(const RI::Tensor<Tdata>& tensor)
-{
-    double max_abs = 0.0;
-    for (int i = 0; i < tensor.get_shape_all(); ++i)
-    {
-        max_abs = std::max(max_abs, std::abs(tensor.ptr()[i]));
-    }
-    return max_abs;
-}
-
-struct TensorMapStats
-{
-    std::size_t block_count = 0;
-    std::size_t element_count = 0;
-    double sum_abs = 0.0;
-    double max_abs = 0.0;
-};
-
-struct AuxMatrixPrefixLeakStats
-{
-    std::size_t outside_element_count = 0;
-    double sum_abs_outside = 0.0;
-    double max_abs_outside = 0.0;
-    double max_abs_total = 0.0;
-};
-
-template<typename Tdata>
-inline TensorMapStats tensor_map_stats(
-    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensor_map)
-{
-    TensorMapStats stats;
-    for (const auto& iat_pair: tensor_map)
-    {
-        (void)iat_pair;
-        for (const auto& jr_pair: iat_pair.second)
-        {
-            const RI::Tensor<Tdata>& tensor = jr_pair.second;
-            ++stats.block_count;
-            stats.element_count += static_cast<std::size_t>(tensor.get_shape_all());
-            for (int i = 0; i < tensor.get_shape_all(); ++i)
-            {
-                const double abs_value = std::abs(tensor.ptr()[i]);
-                stats.sum_abs += abs_value;
-                stats.max_abs = std::max(stats.max_abs, abs_value);
-            }
-        }
-    }
-    return stats;
-}
-
-inline std::string format_tensor_map_stats(const TensorMapStats& stats)
-{
-    std::ostringstream oss;
-    oss << "blocks=" << stats.block_count
-        << ", elements=" << stats.element_count
-        << ", sum_abs=" << stats.sum_abs
-        << ", max_abs=" << stats.max_abs;
-    return oss.str();
-}
-
-inline TensorMapStats reduce_tensor_map_stats(const MPI_Comm& mpi_comm, const TensorMapStats& local_stats)
-{
-    TensorMapStats global_stats;
-    const unsigned long long local_counts[2] = {static_cast<unsigned long long>(local_stats.block_count),
-                                                static_cast<unsigned long long>(local_stats.element_count)};
-    unsigned long long global_counts[2] = {0ULL, 0ULL};
-    MPI_Allreduce(local_counts, global_counts, 2, MPI_UNSIGNED_LONG_LONG, MPI_SUM, mpi_comm);
-    global_stats.block_count = static_cast<std::size_t>(global_counts[0]);
-    global_stats.element_count = static_cast<std::size_t>(global_counts[1]);
-    MPI_Allreduce(&local_stats.sum_abs, &global_stats.sum_abs, 1, MPI_DOUBLE, MPI_SUM, mpi_comm);
-    MPI_Allreduce(&local_stats.max_abs, &global_stats.max_abs, 1, MPI_DOUBLE, MPI_MAX, mpi_comm);
-    return global_stats;
-}
-
-template<typename Tdata>
-inline std::pair<double, double> max_abs_diff_for_tensor_map(
-    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& lhs,
-    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& rhs)
-{
-    double max_diff = 0.0;
-    double max_ref = 0.0;
-
-    const auto update_from_pair = [&](const auto& reference_map, const auto& other_map)
-    {
-        for (const auto& iat0_pair: reference_map)
-        {
-            const auto other_iat0 = other_map.find(iat0_pair.first);
-            for (const auto& jr_pair: iat0_pair.second)
-            {
-                max_ref = std::max(max_ref, tensor_max_abs_value(jr_pair.second));
-                if (other_iat0 == other_map.end())
-                {
-                    max_diff = std::max(max_diff, tensor_max_abs_value(jr_pair.second));
-                    continue;
-                }
-                const auto other_jr = other_iat0->second.find(jr_pair.first);
-                if (other_jr == other_iat0->second.end())
-                {
-                    max_diff = std::max(max_diff, tensor_max_abs_value(jr_pair.second));
-                    continue;
-                }
-                const RI::Tensor<Tdata>& tensor_a = jr_pair.second;
-                const RI::Tensor<Tdata>& tensor_b = other_jr->second;
-                if (tensor_a.get_shape_all() != tensor_b.get_shape_all())
-                {
-                    max_diff = std::numeric_limits<double>::infinity();
-                    return;
-                }
-                for (int i = 0; i < tensor_a.get_shape_all(); ++i)
-                {
-                    max_diff = std::max(max_diff, std::abs(tensor_a.ptr()[i] - tensor_b.ptr()[i]));
-                }
-            }
-        }
-    };
-
-    update_from_pair(lhs, rhs);
-    update_from_pair(rhs, lhs);
-    return {max_diff, max_ref};
-}
-
-template<typename Tdata>
-inline AuxMatrixPrefixLeakStats aux_matrix_prefix_leak_stats(
-    const UnitCell& ucell,
-    const std::vector<std::size_t>& prefix_size_per_type,
-    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensor_map)
-{
-    AuxMatrixPrefixLeakStats stats;
-    for (const auto& iat_pair: tensor_map)
-    {
-        const int type_i = ucell.iat2it[iat_pair.first];
-        const std::size_t row_prefix = prefix_size_per_type.at(type_i);
-        for (const auto& jr_pair: iat_pair.second)
-        {
-            const RI::Tensor<Tdata>& tensor = jr_pair.second;
-            if (tensor.shape.size() != 2)
-            {
-                continue;
-            }
-            const int type_j = ucell.iat2it[jr_pair.first.first];
-            const std::size_t col_prefix = prefix_size_per_type.at(type_j);
-            for (std::size_t row = 0; row != tensor.shape[0]; ++row)
-            {
-                for (std::size_t col = 0; col != tensor.shape[1]; ++col)
-                {
-                    const double abs_value = std::abs(tensor(row, col));
-                    stats.max_abs_total = std::max(stats.max_abs_total, abs_value);
-                    if (row >= row_prefix || col >= col_prefix)
-                    {
-                        ++stats.outside_element_count;
-                        stats.sum_abs_outside += abs_value;
-                        stats.max_abs_outside = std::max(stats.max_abs_outside, abs_value);
-                    }
-                }
-            }
-        }
-    }
-    return stats;
+                       moment_value_scale);
+    cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_direct);
+    return Vs_direct;
 }
 
 template<typename Tdata>
@@ -831,25 +719,18 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
             = this->info.rotate_abfs
           && this->info.coul_moment
           && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end();
-        this->use_rotated_n0_long_range
-            = rotated_n0_requested && !ExxLriDetail::disable_rotated_n0_long_range();
-        if (rotated_n0_requested && !this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0)
-        {
-            std::cout << "Disable rotated ABFS leading-N0 long-range channel by"
-                      << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
-                      << std::endl;
-        }
+        this->use_rotated_n0_long_range = rotated_n0_requested;
     if (this->use_rotated_n0_long_range)
     {
         if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
-            && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
+            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
             if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
             {
-                ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
+                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
             }
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
 	                                                                             this->info.multip_moments_threshold);
@@ -924,25 +805,18 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
             = this->info.rotate_abfs
           && this->info.coul_moment
           && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end();
-        this->use_rotated_n0_long_range
-            = rotated_n0_requested && !ExxLriDetail::disable_rotated_n0_long_range();
-        if (rotated_n0_requested && !this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0)
-        {
-            std::cout << "Disable rotated ABFS leading-N0 long-range channel by"
-                      << " ABACUS_EXX_DISABLE_N0_LONG_RANGE=1; use full rotated Ewald long-range matrices instead."
-                      << std::endl;
-        }
+        this->use_rotated_n0_long_range = rotated_n0_requested;
     if (this->use_rotated_n0_long_range)
     {
         if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
-            && !ExxLriDetail::allow_rt_tddft_ewald_h_only_benchmark())
+            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
             if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
             {
-                ExxLriDetail::print_rt_tddft_ewald_h_only_warning_once();
+                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
             }
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
 	                                                                             this->info.multip_moments_threshold);
@@ -1141,8 +1015,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     {
         all_atoms.insert(iat);
     }
-    const bool debug_parallel_exx = ExxLriDetail::debug_parallel_exx_enabled();
-    const bool compare_split_with_full = ExxLriDetail::compare_split_with_full_enabled();
     int mpi_size = 1;
     MPI_Comm_size(this->mpi_comm, &mpi_size);
 	std::map<TA,TatomR> atoms_pos;
@@ -1163,46 +1035,34 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long;
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_full_reference_debug;
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_short_debug;
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long_debug;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
 	for (const auto& settings_list : this->coulomb_settings)
 	{
-		auto Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(
-			ucell,
-			list_As_Vs.first,
-			list_As_Vs.second[0],
-			{{"writable_Vws",true}});
-		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
-
-		if (debug_parallel_exx && settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-		{
-			const auto bare_vs_local_stats = ExxLriDetail::tensor_map_stats(Vs_temp);
-			const auto bare_vs_global_stats
-				= ExxLriDetail::reduce_tensor_map_stats(this->mpi_comm, bare_vs_local_stats);
-			if (GlobalV::MY_RANK == 0)
-			{
-				std::cout << "EXX debug Vs bare local(rank0): "
-						  << ExxLriDetail::format_tensor_map_stats(bare_vs_local_stats) << std::endl;
-				std::cout << "EXX debug Vs bare reduced     : "
-						  << ExxLriDetail::format_tensor_map_stats(bare_vs_global_stats) << std::endl;
-			}
-		}
-
-		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-		{
-			ExxLriDetail::overwrite_ewald_far_field_with_moment(
+		auto Vs_temp = (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+			? ExxLriDetail::build_ewald_bare_coulomb_with_moment(
 				this->info,
+				settings_list.second.second,
 				ucell,
 				this->abfs,
 				this->abfs_old_to_new_per_type,
 				list_As_Vs,
-				this->exx_objs[settings_list.first].cv,
-				Vs_temp);
+				this->exx_objs[settings_list.first].cv)
+			: this->exx_objs[settings_list.first].cv.cal_Vs(
+				ucell,
+				list_As_Vs.first,
+				list_As_Vs.second[0],
+				{{"writable_Vws",true}});
+		if (settings_list.first != Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
+			this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+		}
+
+		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
 			if (this->info.coul_moment && GlobalV::MY_RANK == 0)
 			{
-				std::cout << "Overwrite Ewald far-field bare Coulomb blocks with moment tensors in the current ABFS basis."
+				std::cout << "Construct Ewald bare Coulomb blocks directly in the current ABFS basis:"
+						  << " near-field exact + far-field moment."
 						  << std::endl;
 			}
 
@@ -1219,10 +1079,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 					{
 						const double chi
 							= this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
-						if (this->use_rotated_n0_long_range)
-						{
-							std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_full_temp;
-							std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long_temp;
+							if (this->use_rotated_n0_long_range)
+							{
+								std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long_temp;
 							if (mpi_size > 1)
 							{
 								MPI_Barrier(this->mpi_comm);
@@ -1241,15 +1100,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 											ucell,
 											chi,
 											period_Vs);
-									if (compare_split_with_full)
-									{
-										Vs_ewald_full_temp
-											= this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
-												ucell,
-												chi,
-												Vs_bare_root,
-												period_Vs);
-									}
 								}
 							}
 							else
@@ -1263,23 +1113,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 									= this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss(
 										ucell,
 										chi);
-								if (compare_split_with_full)
-								{
-									Vs_ewald_full_temp
-										= this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
-								}
-							}
-							if (compare_split_with_full && GlobalV::MY_RANK == 0)
-							{
-								Vs_full_reference_debug = Vs_full_reference_debug.empty()
-									? Vs_ewald_full_temp
-									: LRI_CV_Tools::add(Vs_full_reference_debug, Vs_ewald_full_temp);
-								Vs_short_debug = Vs_short_debug.empty()
-									? Vs_ewald_temp
-									: LRI_CV_Tools::add(Vs_short_debug, Vs_ewald_temp);
-								Vs_long_debug = Vs_long_debug.empty()
-									? Vs_ewald_long_temp
-									: LRI_CV_Tools::add(Vs_long_debug, Vs_ewald_long_temp);
 							}
 							Vs_ewald_long = Vs_ewald_long.empty() ? std::move(Vs_ewald_long_temp)
 																  : LRI_CV_Tools::add(Vs_ewald_long, Vs_ewald_long_temp);
@@ -1316,19 +1149,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			}
 
 			Vs_temp = std::move(Vs_ewald);
-			if (debug_parallel_exx)
-			{
-				const auto ewald_vs_local_stats = ExxLriDetail::tensor_map_stats(Vs_temp);
-				const auto ewald_vs_global_stats
-					= ExxLriDetail::reduce_tensor_map_stats(this->mpi_comm, ewald_vs_local_stats);
-				if (GlobalV::MY_RANK == 0)
-				{
-					std::cout << "EXX debug Vs ewald local(rank0): "
-							  << ExxLriDetail::format_tensor_map_stats(ewald_vs_local_stats) << std::endl;
-					std::cout << "EXX debug Vs ewald reduced     : "
-							  << ExxLriDetail::format_tensor_map_stats(ewald_vs_global_stats) << std::endl;
-				}
-			}
 			if (this->use_rotated_n0_long_range)
 			{
 				Vs_long = Vs_long.empty() ? std::move(Vs_ewald_long) : LRI_CV_Tools::add(Vs_long, Vs_ewald_long);
@@ -1349,50 +1169,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 	}
 
-	if (compare_split_with_full && this->use_rotated_n0_long_range && GlobalV::MY_RANK == 0
-		&& !Vs_full_reference_debug.empty())
-	{
-		auto Vs_split_sum_debug = Vs_short_debug;
-		auto Vs_long_debug_copy = Vs_long_debug;
-		Vs_split_sum_debug = LRI_CV_Tools::add(Vs_split_sum_debug, Vs_long_debug_copy);
-
-		auto Vs_full_minus_long_debug = Vs_full_reference_debug;
-		auto Vs_long_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), Vs_long_debug);
-		Vs_full_minus_long_debug = LRI_CV_Tools::add(Vs_full_minus_long_debug, Vs_long_negative_debug);
-
-		auto Vs_full_minus_short_debug = Vs_full_reference_debug;
-		auto Vs_short_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), Vs_short_debug);
-		Vs_full_minus_short_debug = LRI_CV_Tools::add(Vs_full_minus_short_debug, Vs_short_negative_debug);
-
-		const auto full_stats = ExxLriDetail::tensor_map_stats(Vs_full_reference_debug);
-		const auto short_stats = ExxLriDetail::tensor_map_stats(Vs_short_debug);
-		const auto long_stats = ExxLriDetail::tensor_map_stats(Vs_long_debug);
-		const auto sum_stats = ExxLriDetail::tensor_map_stats(Vs_split_sum_debug);
-		const auto long_prefix_leak_stats = ExxLriDetail::aux_matrix_prefix_leak_stats(
-			ucell,
-			this->abfs_long_prefix_size_per_type,
-			Vs_long_debug);
-		const auto total_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_reference_debug, Vs_split_sum_debug);
-		const auto short_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_minus_long_debug, Vs_short_debug);
-		const auto long_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Vs_full_minus_short_debug, Vs_long_debug);
-
-		std::cout << "EXX split/full Vs comparison (full basis)" << std::endl;
-		std::cout << "  full reference : " << ExxLriDetail::format_tensor_map_stats(full_stats) << std::endl;
-		std::cout << "  split short    : " << ExxLriDetail::format_tensor_map_stats(short_stats) << std::endl;
-		std::cout << "  split long     : " << ExxLriDetail::format_tensor_map_stats(long_stats) << std::endl;
-		std::cout << "  short+long     : " << ExxLriDetail::format_tensor_map_stats(sum_stats) << std::endl;
-		std::cout << "  diff(full, short+long): max_abs_diff=" << total_diff.first
-				  << ", max_abs_ref=" << total_diff.second << std::endl;
-		std::cout << "  diff(full-long, short): max_abs_diff=" << short_diff.first
-				  << ", max_abs_ref=" << short_diff.second << std::endl;
-		std::cout << "  diff(full-short, long): max_abs_diff=" << long_diff.first
-				  << ", max_abs_ref=" << long_diff.second << std::endl;
-		std::cout << "  long prefix leak : outside_elements=" << long_prefix_leak_stats.outside_element_count
-				  << ", sum_abs_outside=" << long_prefix_leak_stats.sum_abs_outside
-				  << ", max_abs_outside=" << long_prefix_leak_stats.max_abs_outside
-				  << ", max_abs_total=" << long_prefix_leak_stats.max_abs_total << std::endl;
-	}
-
 	if (write_cv && GlobalV::MY_RANK == 0)
 	{
 		LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs");
@@ -1401,30 +1177,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			LRI_CV_Tools::write_Vs_abf(Vs_long, PARAM.globalv.global_out_dir + "Vs_long_n0");
 		}
 	}
-	if (debug_parallel_exx)
-	{
-		const auto vs_local_stats = ExxLriDetail::tensor_map_stats(Vs);
-		const auto vs_global_stats = ExxLriDetail::reduce_tensor_map_stats(this->mpi_comm, vs_local_stats);
-		if (GlobalV::MY_RANK == 0)
-		{
-			std::cout << "EXX debug Vs local(rank0): "
-					  << ExxLriDetail::format_tensor_map_stats(vs_local_stats) << std::endl;
-			std::cout << "EXX debug Vs reduced     : "
-					  << ExxLriDetail::format_tensor_map_stats(vs_global_stats) << std::endl;
-		}
-	}
 	if (mpi_size > 1
 		&& this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end())
 	{
 		MPI_Barrier(this->mpi_comm);
 		auto Vs_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
 		MPI_Barrier(this->mpi_comm);
-		if (debug_parallel_exx && GlobalV::MY_RANK == 0)
-		{
-			const auto vs_root_stats = ExxLriDetail::tensor_map_stats(Vs_root);
-			std::cout << "EXX debug Vs_root full    : "
-					  << ExxLriDetail::format_tensor_map_stats(vs_root_stats) << std::endl;
-		}
 		if (GlobalV::MY_RANK != 0)
 		{
 			Vs_root.clear();
@@ -1450,19 +1208,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			Vs_long);
 	}
 	const double V_threshold_short = this->info.V_threshold;
-	if (compare_split_with_full && this->use_rotated_n0_long_range)
-	{
-		this->exx_lri.set_Vs(Vs_full_reference_debug, this->info.V_threshold, "debug_full");
-		this->exx_lri.set_Vs(Vs_short_debug, V_threshold_short, "debug_short_full");
-		this->exx_lri.set_Vs(Vs_long_debug, this->info.V_threshold_long, "debug_long_full");
-	}
 	this->exx_lri.set_Vs(std::move(Vs), V_threshold_short, this->use_rotated_n0_long_range ? "short" : "");
 	if (this->use_rotated_n0_long_range)
 	{
 		this->exx_lri.set_Vs(std::move(Vs_long), this->info.V_threshold_long, "long");
 	}
-
-    if (cal_dCV)
+	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
@@ -1527,22 +1278,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	{
 		LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
 	}
-	if (debug_parallel_exx)
-	{
-		const auto cs_local_stats = ExxLriDetail::tensor_map_stats(Cs);
-		const auto cs_global_stats = ExxLriDetail::reduce_tensor_map_stats(this->mpi_comm, cs_local_stats);
-		if (GlobalV::MY_RANK == 0)
-		{
-			std::cout << "EXX debug Cs local(rank0): "
-					  << ExxLriDetail::format_tensor_map_stats(cs_local_stats) << std::endl;
-			std::cout << "EXX debug Cs reduced     : "
-					  << ExxLriDetail::format_tensor_map_stats(cs_global_stats) << std::endl;
-		}
-	}
-	if (compare_split_with_full && this->use_rotated_n0_long_range)
-	{
-		this->exx_lri.set_Cs(Cs, this->info.C_threshold, "debug_full");
-	}
 	if (this->use_rotated_n0_long_range)
 	{
 		this->exx_lri.lri.set_tensors_map2(
@@ -1553,6 +1288,13 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		this->exx_lri.flag_finish.Cs = true;
 	}
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
+	{
+		typename decltype(this->exx_lri)::Weighted_Short_Config weighted_short_cfg;
+		weighted_short_cfg.weighted_short_threshold = this->info.V_cd_threshold;
+		weighted_short_cfg.weighted_short_stats_only = this->info.V_cd_stats_only;
+		weighted_short_cfg.weighted_short_only = this->info.V_cd_short_only;
+		this->exx_lri.set_weighted_short_config(weighted_short_cfg);
+	}
 
     if (cal_dCV)
 	{
@@ -1998,23 +1740,27 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 	for (const auto& settings_list : this->coulomb_settings)
 	{
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp
-			= this->exx_objs[settings_list.first].cv.cal_Vs(
+			= (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+			? ExxLriDetail::build_ewald_bare_coulomb_with_moment(
+				this->info,
+				settings_list.second.second,
+				ucell,
+				this->abfs,
+				this->abfs_old_to_new_per_type,
+				list_As_Vs,
+				this->exx_objs[settings_list.first].cv)
+			: this->exx_objs[settings_list.first].cv.cal_Vs(
 				ucell,
 				list_As_Vs.first,
 				list_As_Vs.second[0],
 				{{"writable_Vws", true}});
-		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+		if (settings_list.first != Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
+			this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+		}
 
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
-            ExxLriDetail::overwrite_ewald_far_field_with_moment(
-                this->info,
-                ucell,
-                this->abfs,
-                this->abfs_old_to_new_per_type,
-                list_As_Vs,
-                this->exx_objs[settings_list.first].cv,
-                Vs_temp);
 			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
 			for (const auto& param_list : settings_list.second.second)
@@ -2060,12 +1806,6 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	ModuleBase::timer::start("Exx_LRI", "cal_exx_elec");
 
 	const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
-    std::set<TA> all_atoms;
-    for (int iat = 0; iat < ucell.nat; ++iat)
-    {
-        all_atoms.insert(iat);
-    }
-    const bool debug_parallel_exx = ExxLriDetail::debug_parallel_exx_enabled();
 
 	if(p_symrot)
 		{
@@ -2076,73 +1816,39 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             this->exx_lri.set_symmetry(false, {});
         }
 
-    double full_cal_hs_time = 0.0;
-    double short_cal_hs_time = 0.0;
-    double long_cal_hs_time = 0.0;
-    const int cal_hs_benchmark_repeat = ExxLriDetail::get_cal_hs_benchmark_repeat();
-    const bool h_only_rt_mode = (PARAM.inp.esolver_type == "tddft");
-    const bool compare_split_with_full = ExxLriDetail::compare_split_with_full_enabled();
+	double full_cal_hs_time = 0.0;
+	double short_cal_hs_time = 0.0;
+	double long_cal_hs_time = 0.0;
 
-	    auto run_exx_channel =
-	        [&](RI::Exx<TA, Tcell, Ndim, Tdata>& exx_channel,
-	            const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& D_in,
-	            const int spin_index,
-	            const std::string& ds_suffix,
-	            const std::string& c_suffix,
-	            const std::string& v_suffix,
-	            double& cal_hs_time_acc) -> std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double>
-	    {
-	        if (debug_parallel_exx)
-	        {
-	            const auto d_local_stats = ExxLriDetail::tensor_map_stats(D_in);
-	            const auto d_full_stats = ExxLriDetail::tensor_map_stats(
-	                RI_2D_Comm::comm_map2_first(this->mpi_comm, D_in, all_atoms, all_atoms));
-	            if (GlobalV::MY_RANK == 0)
-	            {
-	                std::cout << "EXX debug D[" << ds_suffix << "] local: "
-	                          << ExxLriDetail::format_tensor_map_stats(d_local_stats) << std::endl;
-	                std::cout << "EXX debug D[" << ds_suffix << "] full : "
-	                          << ExxLriDetail::format_tensor_map_stats(d_full_stats) << std::endl;
-	            }
-	        }
-
-	        if (h_only_rt_mode)
-	        {
-	            exx_channel.set_Ds_no_post_2d(D_in, this->info.dm_threshold, ds_suffix);
-	        }
-	        else
-	        {
-	            exx_channel.set_Ds(D_in, this->info.dm_threshold, ds_suffix);
-	        }
-	        const auto cal_hs_t0 = std::chrono::steady_clock::now();
-	        for (int irepeat = 0; irepeat < cal_hs_benchmark_repeat; ++irepeat)
-	        {
-	            if (h_only_rt_mode)
-	            {
-	                exx_channel.cal_Hs_only({c_suffix, v_suffix, ds_suffix});
-	            }
-	            else
-	            {
-	                exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
-	            }
-	        }
-	        const auto cal_hs_t1 = std::chrono::steady_clock::now();
-        cal_hs_time_acc
-            += std::chrono::duration<double>(cal_hs_t1 - cal_hs_t0).count() / static_cast<double>(cal_hs_benchmark_repeat);
-
-        if (debug_parallel_exx)
+	auto run_exx_channel =
+		[&](RI::Exx<TA, Tcell, Ndim, Tdata>& exx_channel,
+			const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& D_in,
+			const int spin_index,
+			const std::string& ds_suffix,
+			const std::string& c_suffix,
+		    const std::string& v_suffix,
+		    double& cal_hs_time_acc) -> std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double>
+	{
+		exx_channel.set_Ds(D_in, this->info.dm_threshold, ds_suffix);
+		const auto cal_hs_t0 = std::chrono::steady_clock::now();
+		exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
+		const auto cal_hs_t1 = std::chrono::steady_clock::now();
+        cal_hs_time_acc += std::chrono::duration<double>(cal_hs_t1 - cal_hs_t0).count();
+        if (GlobalV::MY_RANK == 0 && this->info.V_cd_threshold > 0.0)
         {
-            const auto h_local_stats = ExxLriDetail::tensor_map_stats(exx_channel.Hs);
-	            const auto h_full_stats = ExxLriDetail::tensor_map_stats(
-	                RI_2D_Comm::comm_map2_first(this->mpi_comm, exx_channel.Hs, all_atoms, all_atoms));
-	            if (GlobalV::MY_RANK == 0)
-	            {
-	                std::cout << "EXX debug H[" << ds_suffix << "] local: "
-	                          << ExxLriDetail::format_tensor_map_stats(h_local_stats) << std::endl;
-	                std::cout << "EXX debug H[" << ds_suffix << "] full : "
-	                          << ExxLriDetail::format_tensor_map_stats(h_full_stats)
-	                          << ", energy=" << std::real(exx_channel.energy) << std::endl;
-	            }
+            const auto& vcd_stats = exx_channel.weighted_short_stats;
+            const double skip_pct = (vcd_stats.weighted_short_candidates == 0)
+                ? 0.0
+                : 100.0 * static_cast<double>(vcd_stats.weighted_short_skips)
+                    / static_cast<double>(vcd_stats.weighted_short_candidates);
+            std::cout << "EXX weighted short[" << ds_suffix << "|" << v_suffix << "] "
+                      << "thr=" << this->info.V_cd_threshold
+                      << ", stats_only=" << static_cast<int>(this->info.V_cd_stats_only)
+                      << ", candidates=" << vcd_stats.weighted_short_candidates
+                      << ", skips=" << vcd_stats.weighted_short_skips
+                      << ", skip_pct=" << skip_pct
+                      << ", max_score=" << vcd_stats.weighted_short_max_score
+                      << std::endl;
         }
 
         if (!p_symrot)
@@ -2153,23 +1859,20 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
                     std::move(exx_channel.Hs),
                     std::get<0>(judge[spin_index]),
                     std::get<1>(judge[spin_index])),
-                h_only_rt_mode ? 0.0 : std::real(exx_channel.energy));
+                std::real(exx_channel.energy));
         }
 
-	        auto Hs_a2D = exx_channel.post_2D.set_tensors_map2(exx_channel.Hs);
-	        Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_a2D);
-	        if (!h_only_rt_mode)
-	        {
-	            exx_channel.energy = exx_channel.post_2D.cal_energy(exx_channel.post_2D.saves["Ds_" + ds_suffix],
-	                                                                exx_channel.post_2D.set_tensors_map2(Hs_a2D));
-	        }
-	        return std::make_pair(
-	            RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+        auto Hs_a2D = exx_channel.post_2D.set_tensors_map2(exx_channel.Hs);
+        Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_a2D);
+        exx_channel.energy = exx_channel.post_2D.cal_energy(exx_channel.post_2D.saves["Ds_" + ds_suffix],
+                                                            exx_channel.post_2D.set_tensors_map2(Hs_a2D));
+        return std::make_pair(
+            RI::Communicate_Tensors_Map_Judge::comm_map2_first(
                 this->mpi_comm,
                 std::move(Hs_a2D),
                 std::get<0>(judge[spin_index]),
                 std::get<1>(judge[spin_index])),
-            h_only_rt_mode ? 0.0 : std::real(exx_channel.energy));
+            std::real(exx_channel.energy));
     };
 
 	// (nspin=4) the spinor H(R) rotation mixes the 4 spin channels, so they cannot be rotated
@@ -2187,111 +1890,22 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		const std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
-		std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> full_reference_channel;
-		if (compare_split_with_full && this->use_rotated_n0_long_range)
-		{
-			full_reference_channel = run_exx_channel(this->exx_lri,
-			                                         Ds[is],
-			                                         is,
-			                                         suffix + "_dbgfull",
-			                                         "debug_full",
-			                                         "debug_full",
-			                                         full_cal_hs_time);
-		}
-
-	        auto short_channel = run_exx_channel(this->exx_lri,
-	                                             Ds[is],
-	                                             is,
-	                                             suffix,
-	                                             this->use_rotated_n0_long_range ? "short" : "",
-	                                             this->use_rotated_n0_long_range ? "short" : "",
-	                                             this->use_rotated_n0_long_range ? short_cal_hs_time : full_cal_hs_time);
-	        if (this->use_rotated_n0_long_range)
-	        {
-	            std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> short_fullbasis_reference;
-	            std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double> long_fullbasis_reference;
-	            if (compare_split_with_full)
-	            {
-	                short_fullbasis_reference = run_exx_channel(this->exx_lri,
-	                                                            Ds[is],
-	                                                            is,
-	                                                            suffix + "_dbgshortfull",
-	                                                            "debug_full",
-	                                                            "debug_short_full",
-	                                                            full_cal_hs_time);
-	                long_fullbasis_reference = run_exx_channel(this->exx_lri,
-	                                                           Ds[is],
-	                                                           is,
-	                                                           suffix + "_dbglongfull",
-	                                                           "debug_full",
-	                                                           "debug_long_full",
-	                                                           full_cal_hs_time);
-	            }
-	            auto long_channel = run_exx_channel(this->exx_lri,
-	                                                Ds[is],
-	                                                is,
-	                                                suffix + "_lr",
-	                                                "long",
-	                                                "long",
-	                                                long_cal_hs_time);
-            if (compare_split_with_full && GlobalV::MY_RANK == 0)
-            {
-                auto Hs_split_sum_debug = short_channel.first;
-                auto Hs_long_debug_copy = long_channel.first;
-                Hs_split_sum_debug = LRI_CV_Tools::add(Hs_split_sum_debug, Hs_long_debug_copy);
-
-                auto Hs_full_minus_long_debug = full_reference_channel.first;
-                auto Hs_long_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), long_channel.first);
-                Hs_full_minus_long_debug
-                    = LRI_CV_Tools::add(Hs_full_minus_long_debug, Hs_long_negative_debug);
-
-                auto Hs_full_minus_short_debug = full_reference_channel.first;
-                auto Hs_short_negative_debug = LRI_CV_Tools::mul2(Tdata(-1), short_channel.first);
-                Hs_full_minus_short_debug
-                    = LRI_CV_Tools::add(Hs_full_minus_short_debug, Hs_short_negative_debug);
-
-                const auto full_stats = ExxLriDetail::tensor_map_stats(full_reference_channel.first);
-                const auto short_stats = ExxLriDetail::tensor_map_stats(short_channel.first);
-                const auto long_stats = ExxLriDetail::tensor_map_stats(long_channel.first);
-                const auto sum_stats = ExxLriDetail::tensor_map_stats(Hs_split_sum_debug);
-                const auto total_diff = ExxLriDetail::max_abs_diff_for_tensor_map(full_reference_channel.first,
-                                                                                  Hs_split_sum_debug);
-                const auto short_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Hs_full_minus_long_debug,
-                                                                                  short_channel.first);
-                const auto long_diff = ExxLriDetail::max_abs_diff_for_tensor_map(Hs_full_minus_short_debug,
-                                                                                 long_channel.first);
-                const auto short_direct_diff
-                    = ExxLriDetail::max_abs_diff_for_tensor_map(short_fullbasis_reference.first, short_channel.first);
-                const auto long_direct_diff
-                    = ExxLriDetail::max_abs_diff_for_tensor_map(long_fullbasis_reference.first, long_channel.first);
-
-                std::cout << "EXX split/full H comparison (spin " << is << ")" << std::endl;
-                std::cout << "  full reference : " << ExxLriDetail::format_tensor_map_stats(full_stats)
-                          << ", energy=" << full_reference_channel.second << std::endl;
-                std::cout << "  split short    : " << ExxLriDetail::format_tensor_map_stats(short_stats)
-                          << ", energy=" << short_channel.second << std::endl;
-                std::cout << "  split long     : " << ExxLriDetail::format_tensor_map_stats(long_stats)
-                          << ", energy=" << long_channel.second << std::endl;
-                std::cout << "  short+long     : " << ExxLriDetail::format_tensor_map_stats(sum_stats)
-                          << ", energy=" << (short_channel.second + long_channel.second) << std::endl;
-                std::cout << "  diff(full, short+long): max_abs_diff=" << total_diff.first
-                          << ", max_abs_ref=" << total_diff.second
-                          << ", energy_diff=" << std::abs(full_reference_channel.second
-                                                           - (short_channel.second + long_channel.second))
-                          << std::endl;
-                std::cout << "  diff(full-long, short): max_abs_diff=" << short_diff.first
-                          << ", max_abs_ref=" << short_diff.second << std::endl;
-                std::cout << "  diff(full-short, long): max_abs_diff=" << long_diff.first
-                          << ", max_abs_ref=" << long_diff.second << std::endl;
-                std::cout << "  diff(short_fullbasis_ref, short): max_abs_diff=" << short_direct_diff.first
-                          << ", max_abs_ref=" << short_direct_diff.second
-                          << ", energy_diff=" << std::abs(short_fullbasis_reference.second - short_channel.second)
-                          << std::endl;
-                std::cout << "  diff(long_fullbasis_ref, long): max_abs_diff=" << long_direct_diff.first
-                          << ", max_abs_ref=" << long_direct_diff.second
-                          << ", energy_diff=" << std::abs(long_fullbasis_reference.second - long_channel.second)
-                          << std::endl;
-            }
+        auto short_channel = run_exx_channel(this->exx_lri,
+                                             Ds[is],
+                                             is,
+                                             suffix,
+                                             this->use_rotated_n0_long_range ? "short" : "",
+                                             this->use_rotated_n0_long_range ? "short" : "",
+                                             this->use_rotated_n0_long_range ? short_cal_hs_time : full_cal_hs_time);
+        if (this->use_rotated_n0_long_range)
+        {
+            auto long_channel = run_exx_channel(this->exx_lri,
+                                                Ds[is],
+                                                is,
+                                                suffix + "_lr",
+                                                "long",
+                                                "long",
+                                                long_cal_hs_time);
             this->Hexxs[is] = LRI_CV_Tools::add(short_channel.first, long_channel.first);
             this->Eexx += short_channel.second + long_channel.second;
         }
@@ -2302,7 +1916,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
         }
 		post_process_Hexx(this->Hexxs[is]);
 	}
-	this->Eexx = h_only_rt_mode ? 0.0 : post_process_Eexx(this->Eexx);
+	this->Eexx = post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
     if (GlobalV::MY_RANK == 0)
     {
@@ -2311,18 +1925,11 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             const double total_cal_hs_time = short_cal_hs_time + long_cal_hs_time;
             std::cout << "EXX cal_Hs timing summary: short = " << short_cal_hs_time
                       << " s, long = " << long_cal_hs_time
-                      << " s, total = " << total_cal_hs_time
-                      << " s, repeat = " << cal_hs_benchmark_repeat;
-            if (compare_split_with_full)
-            {
-                std::cout << ", debug_full = " << full_cal_hs_time << " s";
-            }
-            std::cout << std::endl;
+                      << " s, total = " << total_cal_hs_time << " s" << std::endl;
         }
         else
         {
-            std::cout << "EXX cal_Hs timing summary: full = " << full_cal_hs_time
-                      << " s, repeat = " << cal_hs_benchmark_repeat << std::endl;
+            std::cout << "EXX cal_Hs timing summary: full = " << full_cal_hs_time << " s" << std::endl;
         }
     }
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
@@ -2372,6 +1979,13 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 	ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
 	this->force_exx.create(nat, Ndim);
+    if (PARAM.inp.esolver_type == "tddft" && this->use_rotated_n0_long_range)
+    {
+        this->force_exx.zero_out();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+        ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
+        return;
+    }
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		this->exx_lri.cal_force({"","",std::to_string(is),"",""});
@@ -2395,6 +2009,13 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	ModuleBase::timer::start("Exx_LRI", "cal_exx_stress");
 
 	this->stress_exx.create(Ndim, Ndim);
+    if (PARAM.inp.esolver_type == "tddft" && this->use_rotated_n0_long_range)
+    {
+        this->stress_exx.zero_out();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+        ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
+        return;
+    }
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
 		this->exx_lri.cal_stress({"","",std::to_string(is),"",""});

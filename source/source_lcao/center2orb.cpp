@@ -7,17 +7,6 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
-#include <cstdlib>
-
-namespace
-{
-bool exx_force_serial_env(const char* name)
-{
-    const char* value = std::getenv(name);
-    return value != nullptr && std::atoi(value) != 0;
-}
-}
-
 int Center2_Orb::get_rmesh(const double& R1, const double& R2, const double dr)
 {
     int rmesh = static_cast<int>((R1 + R2) / dr) + 5;
@@ -144,7 +133,6 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
     assert(jl.size()>=rmesh);
     assert(jlp1.size()>=rmesh);
 
-    const bool force_serial = exx_force_serial_env("ABACUS_EXX_SERIAL_CENTER2_ORB");
     auto accumulate_radial = [&](const int ir) {
         std::vector<double> integrated_func(kmesh);
         const std::vector<double>& jl_r = jl[ir];
@@ -184,22 +172,12 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         drs[ir] = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
     };
 
-    if (force_serial)
-    {
-        for (int ir = 0; ir < rmesh; ir++)
-        {
-            accumulate_radial(ir);
-        }
-    }
-    else
-    {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ir = 0; ir < rmesh; ir++)
-        {
-            accumulate_radial(ir);
-        }
+    for (int ir = 0; ir < rmesh; ir++)
+    {
+        accumulate_radial(ir);
     }
 
     // liaochen modify on 2010/4/22

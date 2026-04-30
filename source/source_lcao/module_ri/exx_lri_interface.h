@@ -147,7 +147,7 @@ public:
     /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
-    module_dm::DensityMatrix<T, double>* dm_last_step;
+    module_dm::DensityMatrix<T, double>* dm_last_step = nullptr;
 
     size_t hybrid_step() const { return hybrid_step_; }
     void set_hybrid_step(size_t s) { hybrid_step_ = s; }

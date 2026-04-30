@@ -303,6 +303,45 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_vcd_threshold");
+        item.annotation = "dynamic C/D-weighted threshold for merged-short EXX";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description
+            = "Optional second-stage screen applied during EXX short-channel contractions. A positive value enables dynamic path screening using current-step C/D/V block magnitudes. Non-positive values disable this feature and preserve the current behavior.";
+        item.default_value = "-1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.exx_vcd_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_vcd_stats_only");
+        item.annotation = "collect dynamic merged-short screening stats only";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Bool";
+        item.description
+            = "When true, collect C/D-weighted short-screening statistics without skipping any EXX contraction paths. Useful for calibrating the dynamic threshold before enabling it.";
+        item.default_value = "0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.exx_vcd_stats_only);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_vcd_short_only");
+        item.annotation = "apply dynamic screening only to merged-short EXX";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Bool";
+        item.description
+            = "When true, the C/D-weighted dynamic screen is restricted to the split merged-short EXX channel and does not affect full or long-range channels.";
+        item.default_value = "1";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.exx_vcd_short_only);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_dm_threshold");
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";

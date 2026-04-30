@@ -103,6 +103,9 @@ class XC_Functional
     };
 
     static void set_xc_type(const std::string xc_func_in);
+    static std::string resolve_runtime_xc_type(const std::string& input_xc_func,
+                                               const std::string& pseudo_xc_func);
+    static std::string resolve_runtime_xc_type(const UnitCell& ucell);
 
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);

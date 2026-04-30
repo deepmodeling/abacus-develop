@@ -4,8 +4,11 @@
 #include "source_base/constants.h"
 #include <cmath>
 
-#ifdef __LIBXC
-#include "libxc_abacus.h"
+#include <algorithm>
+#include <cctype>
+
+#ifdef USE_LIBXC
+#include "xc_functional_libxc.h"
 #endif
 
 XC_Functional::XC_Functional(){}
@@ -27,14 +30,21 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
     hybrid_alpha = alpha_in;
 }
 
-void XC_Functional::set_hse_omega(const double omega_in)
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_func,
+                                                   const std::string& pseudo_xc_func)
 {
-    hse_omega = omega_in;
+    std::string input_xc = input_xc_func;
+    std::transform(input_xc.begin(), input_xc.end(), input_xc.begin(), (::toupper));
+    if (!input_xc.empty() && input_xc != "DEFAULT" && input_xc != "NONE")
+    {
+        return input_xc_func;
+    }
+    return pseudo_xc_func;
 }
 
-void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
+std::string XC_Functional::resolve_runtime_xc_type(const UnitCell& ucell)
 {
-    runtime_parameters = parameters;
+    return resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell.atoms[0].ncpp.xc_func);
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
