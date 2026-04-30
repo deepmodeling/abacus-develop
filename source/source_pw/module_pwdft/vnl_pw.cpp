@@ -219,9 +219,9 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     if (nkb > 0 && allocate_vkb)
     {
         if (!this->use_gpu_)
-        {
-            vkb.create(nkb, npwx);
-            ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
+    {
+        vkb.create(nkb, npwx);
+        ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
         }
         // GPU path: vkb ComplexMatrix is not allocated.
         // Column dimension is stored in vkbnc for gemm/gemv leading dimension.

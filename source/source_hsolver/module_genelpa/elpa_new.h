@@ -34,7 +34,6 @@ extern "C"
 // This header file was not available in the early ELPA.
 #if ELPA_API_VERSION >= 20231101
 #include <elpa/elpa_configured_options.h>
-
 #endif
 }
 

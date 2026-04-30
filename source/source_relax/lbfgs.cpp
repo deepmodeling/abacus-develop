@@ -292,3 +292,4 @@ void LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& uc
     }
 
 }
+

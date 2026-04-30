@@ -107,7 +107,6 @@ template <typename T, typename Tdata> class RPA_LRI
     Exx_LRI<double>* exx_full_coulomb = nullptr;
 };
 Exx_LRI<double> exx_lri_rpa(GlobalC::exx_info.info_ri);
-
 #include "RPA_LRI.hpp"
 
 #endif

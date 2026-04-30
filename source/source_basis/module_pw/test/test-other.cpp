@@ -140,7 +140,6 @@ TEST_F(PWTEST,test_other)
     fftwf_cleanup();
 #endif
 }
-
 TEST_F(PWTEST, test_no_plane_wave_message_global_empty_k)
 {
     ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);

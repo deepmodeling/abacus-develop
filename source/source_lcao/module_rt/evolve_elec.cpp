@@ -10,9 +10,9 @@
 namespace module_rt
 {
 template <typename Device>
-Evolve_elec<Device>::Evolve_elec() {};
+Evolve_elec<Device>::Evolve_elec(){};
 template <typename Device>
-Evolve_elec<Device>::~Evolve_elec() {};
+Evolve_elec<Device>::~Evolve_elec(){};
 
 template <typename Device>
 ct::DeviceType Evolve_elec<Device>::ct_device_type = ct::DeviceTypeToEnum<Device>::value;

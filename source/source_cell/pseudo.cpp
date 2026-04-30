@@ -97,3 +97,4 @@ void pseudo::print_pseudo_h(std::ofstream& ofs) const
     output::printr1_d(ofs, " oc: ", oc.data(), nchi);
     ofs << "\n ----------------------";
 }
+

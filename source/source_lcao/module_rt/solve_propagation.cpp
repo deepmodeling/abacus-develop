@@ -11,13 +11,13 @@ namespace module_rt
 {
 #ifdef __MPI
 void solve_propagation(const Parallel_Orbitals* pv,
-                       const int nband,
-                       const int nlocal,
-                       const double dt,
-                       const std::complex<double>* Stmp,
-                       const std::complex<double>* Htmp,
-                       const std::complex<double>* psi_k_laststep,
-                       std::complex<double>* psi_k)
+                        const int nband,
+                        const int nlocal,
+                        const double dt,
+                        const std::complex<double>* Stmp,
+                        const std::complex<double>* Htmp,
+                        const std::complex<double>* psi_k_laststep,
+                        std::complex<double>* psi_k)
 {
     // (1) init A,B and copy Htmp to A & B
     std::complex<double>* operator_A = new std::complex<double>[pv->nloc];
@@ -29,7 +29,7 @@ void solve_propagation(const Parallel_Orbitals* pv,
     BlasConnector::copy(pv->nloc, Htmp, 1, operator_B, 1);
 
     const double dt_au = dt / ModuleBase::AU_to_FS;
-
+    
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (2) compute operator_A & operator_B by GEADD
     // operator_A = Stmp + i*para * Htmp;   beta2 = para = 0.25 * dt
@@ -44,25 +44,25 @@ void solve_propagation(const Parallel_Orbitals* pv,
     // (3) b = operator_B @ psi_k_laststep
     std::complex<double>* tmp_b = new std::complex<double>[pv->nloc_wfc];
     ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nband,
-                             nlocal,
-                             1.0,
-                             operator_B,
-                             1,
-                             1,
-                             pv->desc,
-                             psi_k_laststep,
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             tmp_b,
-                             1,
-                             1,
-                             pv->desc_wfc);
-    // get ipiv
+                        'N',
+                        nlocal,
+                        nband,
+                        nlocal,
+                        1.0,
+                        operator_B,
+                        1,
+                        1,
+                        pv->desc,
+                        psi_k_laststep,
+                        1,
+                        1,
+                        pv->desc_wfc,
+                        0.0,
+                        tmp_b,
+                        1,
+                        1,
+                        pv->desc_wfc);
+    //get ipiv
     int* ipiv = new int[pv->nloc];
     int info = 0;
     // (4) solve Ac=b
@@ -119,21 +119,21 @@ void solve_propagation(const Parallel_Orbitals* pv,
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
-                             nband,
+                            nband,
                              nlocal,
                              1.0,
                              operator_B,
-                             1,
-                             1,
-                             pv->desc,
+                            1,
+                            1,
+                            pv->desc,
                              psi_k_laststep,
                              1,
                              1,
                              pv->desc_wfc,
                              0.0,
-                             tmp_b,
-                             1,
-                             1,
+                            tmp_b,
+                            1,
+                            1,
                              pv->desc_wfc);
 
     // get ipiv
@@ -143,13 +143,13 @@ void solve_propagation(const Parallel_Orbitals* pv,
     // (4) solve Ac=b
     ScalapackConnector::gesv(nlocal, nband, operator_A, 1, 1, pv->desc, ipiv, tmp_b, 1, 1, pv->desc_wfc, &info);
 
-    // copy solution to psi_k
+    //copy solution to psi_k
     BlasConnector::copy(pv->nloc_wfc, tmp_b, 1, psi_k, 1);
 
-    delete[] tmp_b;
-    delete[] ipiv;
-    delete[] operator_A;
-    delete[] operator_B;
+    delete []tmp_b;
+    delete []ipiv;
+    delete []operator_A;
+    delete []operator_B;
 }
 #endif // __MPI
 } // namespace module_rt

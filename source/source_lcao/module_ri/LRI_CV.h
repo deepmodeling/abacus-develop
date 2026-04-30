@@ -137,7 +137,6 @@ private:
 		const Tfunc &func_cal_o11);
 };
 
-
 #include "LRI_CV.hpp"
 
 #endif

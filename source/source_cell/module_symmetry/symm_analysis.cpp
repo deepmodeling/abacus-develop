@@ -309,3 +309,4 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     ModuleBase::timer::end("Symmetry","analy_sys");
     return;
 }
+
