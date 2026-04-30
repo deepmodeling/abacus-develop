@@ -325,14 +325,22 @@ struct lapack_hegvx<T, DEVICE_GPU> {
         const char uplo = 'U';
         int meig = 0;
 
-        // this hegvdx will protect the input A, B from being overwritten
-        // and write the eigenvectors into eigen_vec.
+        // cuSOLVER hegvdx overwrites A and B on exit, so copy A to
+        // eigen_vec and backup B to protect the origin matrices.
+        CHECK_CUDA(cudaMemcpy(eigen_vec, A, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
+
+        T* d_B_backup = nullptr;
+        CHECK_CUDA(cudaMalloc(&d_B_backup, sizeof(T) * n * lda));
+        CHECK_CUDA(cudaMemcpy(d_B_backup, B, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
+
         cuSolverConnector::hegvdx(cusolver_handle,
             itype, jobz, range, uplo,
-            n, lda, A, B,
+            n, lda, eigen_vec, d_B_backup,
             Real(0), Real(0),
             1, m, &meig,
             eigen_val, eigen_vec);
+
+        CHECK_CUDA(cudaFree(d_B_backup));
     }
 };
 
