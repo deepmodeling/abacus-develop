@@ -133,6 +133,34 @@ struct lapack_hegvd<T, DEVICE_GPU> {
     }
 };
 
+template <typename T>
+struct lapack_hegvx<T, DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T* A,
+        T* B,
+        const int m,
+        Real* eigen_val,
+        T* eigen_vec)
+    {
+        // Fallback to CPU: copy matrices to host, call CPU lapack_hegvx, copy results back
+        std::vector<T> H_A(n * lda);
+        std::vector<T> H_B(n * lda);
+        std::vector<Real> H_eigen_val(n);
+        std::vector<T> H_eigen_vec(n * lda);
+
+        hipErrcheck(hipMemcpy(H_A.data(), A, sizeof(T) * n * lda, hipMemcpyDeviceToHost));
+        hipErrcheck(hipMemcpy(H_B.data(), B, sizeof(T) * n * lda, hipMemcpyDeviceToHost));
+
+        lapack_hegvx<T, DEVICE_CPU>()(n, lda, H_A.data(), H_B.data(), m, H_eigen_val.data(), H_eigen_vec.data());
+
+        hipErrcheck(hipMemcpy(eigen_val, H_eigen_val.data(), sizeof(Real) * n, hipMemcpyHostToDevice));
+        hipErrcheck(hipMemcpy(eigen_vec, H_eigen_vec.data(), sizeof(T) * n * lda, hipMemcpyHostToDevice));
+    }
+};
+
 template struct set_matrix<float,  DEVICE_GPU>;
 template struct set_matrix<double, DEVICE_GPU>;
 template struct set_matrix<std::complex<float>,  DEVICE_GPU>;
@@ -157,6 +185,11 @@ template struct lapack_hegvd<float,  DEVICE_GPU>;
 template struct lapack_hegvd<double, DEVICE_GPU>;
 template struct lapack_hegvd<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_hegvd<std::complex<double>, DEVICE_GPU>;
+
+template struct lapack_hegvx<float,  DEVICE_GPU>;
+template struct lapack_hegvx<double, DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_hegvx<std::complex<double>, DEVICE_GPU>;
 
 } // namespace kernels
 } // namespace container

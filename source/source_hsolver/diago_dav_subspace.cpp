@@ -668,57 +668,22 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            ct::kernels::lapack_hegvx<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, nband, this->d_eigenvalue, this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
     }
+    else if (this->diag_subspace == 0)
+    {
+        if (this->diag_comm.rank == 0)
+        {
+            ct::kernels::lapack_hegvx<T, ct_Device>()(
+                nbase, this->nbase_x, this->hcc, this->scc, nband,
+                (*eigenvalue_iter).data(), this->vcc);
+        }
+    }
     else
     {
-        if (this->diag_subspace == 0)
-        {
-            if (this->diag_comm.rank == 0)
-            {
-                std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
-                std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
-
-                for (size_t i = 0; i < nbase; i++)
-                {
-                    for (size_t j = 0; j < nbase; j++)
-                    {
-                        h_diag[i][j] = hcc[i * this->nbase_x + j];
-                        s_diag[i][j] = scc[i * this->nbase_x + j];
-                    }
-                }
-                hegvx_op<T, Device>()(this->ctx,
-                                      nbase,
-                                      this->nbase_x,
-                                      this->hcc,
-                                      this->scc,
-                                      nband,
-                                      (*eigenvalue_iter).data(),
-                                      this->vcc);
-                // reset:
-                for (size_t i = 0; i < nbase; i++)
-                {
-                    for (size_t j = 0; j < nbase; j++)
-                    {
-                        hcc[i * this->nbase_x + j] = h_diag[i][j];
-                        scc[i * this->nbase_x + j] = s_diag[i][j];
-                    }
-
-                    for (size_t j = nbase; j < this->nbase_x; j++)
-                    {
-                        hcc[i * this->nbase_x + j] = *this->zero;
-                        hcc[j * this->nbase_x + i] = *this->zero;
-                        scc[i * this->nbase_x + j] = *this->zero;
-                        scc[j * this->nbase_x + i] = *this->zero;
-                    }
-                }
-            }
-        }
-        else
-        {
 #ifdef __MPI
             std::vector<T> h_diag;
             std::vector<T> s_diag;
@@ -760,7 +725,6 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
             std::cout << "Error: parallel diagonalization is not supported in serial mode." << std::endl;
             exit(1);
 #endif
-        }
     }
 
 #ifdef __MPI
