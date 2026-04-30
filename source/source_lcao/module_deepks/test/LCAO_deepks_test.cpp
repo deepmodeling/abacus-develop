@@ -1,4 +1,7 @@
 #include "LCAO_deepks_test.h"
+#include "source_lcao/module_deepks/deepks_check.h"
+#include "source_lcao/module_deepks/deepks_force.h"
+#include "source_lcao/module_deepks/deepks_orbital.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 
