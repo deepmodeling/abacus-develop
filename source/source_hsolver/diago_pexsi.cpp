@@ -4,6 +4,7 @@
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
+#include "source_base/tool_title.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
