@@ -55,11 +55,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
 
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -107,12 +107,12 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
-		const int tlp1 = 2 * target_L + 1;
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
+        const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         // calculate and save the table of two-center integrals
@@ -177,7 +177,7 @@ template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("DFTU", "contributeHR");
-    if (this->dftu->get_dmr(0) == nullptr && this->dftu->initialed_locale == false)
+    if (this->dftu->get_dmr(0) == nullptr && !this->dftu->is_locale_initialized())
     { // skip the calculation if dm_in_dftu is nullptr
         return;
     }
@@ -203,11 +203,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         auto tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
@@ -215,7 +215,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // first iteration to calculate occupation matrix
         const int spin_fold = (this->nspin == 4) ? 4 : 1;
         std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
-        if (this->dftu->initialed_locale == false)
+        if (!this->dftu->is_locale_initialized())
         {
             const hamilt::HContainer<double>* dmR_current = this->dftu->get_dmr(this->current_spin);
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
@@ -249,20 +249,18 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             Parallel_Reduce::reduce_all(occ.data(), occ.size());
 #endif
             // save occ to dftu
-            for (int i = 0; i < occ.size(); i++)
+            if (this->nspin == 1)
             {
-				if (this->nspin == 1) 
-				{
-					occ[i] *= 0.5;
-				}
-                this->dftu->locale[iat0][target_L][0][this->current_spin].c[i] = occ[i];
+                for (auto& v : occ) { v *= 0.5; }
             }
+            this->dftu->set_locale_flat(iat0, target_L, this->current_spin, occ);
         }
         else // use readin locale to calculate occupation matrix
         {
-            for (int i = 0; i < occ.size(); i++)
+            for (int i = 0; i < static_cast<int>(occ.size()); i++)
             {
-                occ[i] = this->dftu->locale[iat0][target_L][0][this->current_spin].c[i];
+                occ[i] = this->dftu->get_locale(iat0, target_L, 0, this->current_spin,
+                                                  i / (2 * target_L + 1), i % (2 * target_L + 1));
             }
             // set initialed_locale to false to avoid using readin locale in next iteration
         }
@@ -321,7 +319,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 	// for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
 	if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
 	{
-		this->dftu->initialed_locale = false;
+		this->dftu->mark_locale_dirty();
 	}
 
     // update this->current_spin: only nspin=2 iterate change it between 0 and 1

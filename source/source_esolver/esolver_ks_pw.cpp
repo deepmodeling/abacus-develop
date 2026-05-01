@@ -189,7 +189,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, PARAM.inp);
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->p_chgmix);
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -216,6 +216,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.calculation,
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
+                                                     false,
                                                      PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
