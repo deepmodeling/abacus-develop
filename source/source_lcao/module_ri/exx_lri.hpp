@@ -32,6 +32,8 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 #if defined(__GLIBC__)
 #include <malloc.h>
@@ -129,6 +131,104 @@ inline double get_total_fock_alpha(const CoulombParam& coulomb_param)
         alpha_sum += std::stod(alpha_it->second);
     }
     return alpha_sum;
+}
+
+template <typename T, typename = void>
+struct has_weighted_short_config : std::false_type
+{
+};
+
+template <typename T>
+struct has_weighted_short_config<T, std::void_t<typename T::Weighted_Short_Config>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct has_set_weighted_short_config : std::false_type
+{
+};
+
+template <typename T>
+struct has_set_weighted_short_config<
+    T,
+    std::void_t<decltype(std::declval<T&>().set_weighted_short_config(
+        std::declval<const typename T::Weighted_Short_Config&>()))>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct has_weighted_short_stats_member : std::false_type
+{
+};
+
+template <typename T>
+struct has_weighted_short_stats_member<T, std::void_t<decltype(std::declval<const T&>().weighted_short_stats)>>
+    : std::true_type
+{
+};
+
+template <typename Texx>
+constexpr bool supports_weighted_short_v
+    = has_weighted_short_config<Texx>::value && has_set_weighted_short_config<Texx>::value
+      && has_weighted_short_stats_member<Texx>::value;
+
+inline void print_weighted_short_old_libri_warning_once(const double threshold)
+{
+    static bool warning_printed = false;
+    if (!warning_printed && GlobalV::MY_RANK == 0)
+    {
+        std::cout << "EXX weighted short requested with exx_vcd_threshold=" << threshold
+                  << ", but the linked LibRI does not provide weighted-short screening. "
+                  << "Falling back to the legacy unscreened EXX path." << std::endl;
+        warning_printed = true;
+    }
+}
+
+template <typename Texx>
+void maybe_set_weighted_short_config(
+    Texx& exx,
+    const Exx_Info::Exx_Info_RI& info)
+{
+    if constexpr (supports_weighted_short_v<Texx>)
+    {
+        typename Texx::Weighted_Short_Config weighted_short_cfg;
+        weighted_short_cfg.weighted_short_threshold = info.V_cd_threshold;
+        weighted_short_cfg.weighted_short_stats_only = info.V_cd_stats_only;
+        weighted_short_cfg.weighted_short_only = info.V_cd_short_only;
+        exx.set_weighted_short_config(weighted_short_cfg);
+    }
+    else if (info.V_cd_threshold > 0.0)
+    {
+        print_weighted_short_old_libri_warning_once(info.V_cd_threshold);
+    }
+}
+
+template <typename Texx>
+void maybe_print_weighted_short_stats(
+    const Texx& exx_channel,
+    const Exx_Info::Exx_Info_RI& info,
+    const std::string& ds_suffix,
+    const std::string& v_suffix)
+{
+    if constexpr (supports_weighted_short_v<Texx>)
+    {
+        if (GlobalV::MY_RANK == 0 && info.V_cd_threshold > 0.0)
+        {
+            const auto& vcd_stats = exx_channel.weighted_short_stats;
+            const double skip_pct = (vcd_stats.weighted_short_candidates == 0)
+                ? 0.0
+                : 100.0 * static_cast<double>(vcd_stats.weighted_short_skips)
+                    / static_cast<double>(vcd_stats.weighted_short_candidates);
+            std::cout << "EXX weighted short[" << ds_suffix << "|" << v_suffix << "] "
+                      << "thr=" << info.V_cd_threshold
+                      << ", stats_only=" << static_cast<int>(info.V_cd_stats_only)
+                      << ", candidates=" << vcd_stats.weighted_short_candidates
+                      << ", skips=" << vcd_stats.weighted_short_skips
+                      << ", skip_pct=" << skip_pct
+                      << ", max_score=" << vcd_stats.weighted_short_max_score
+                      << std::endl;
+        }
+    }
 }
 
 inline std::vector<std::vector<double>> build_rotation_rows(const std::vector<double>& moments,
@@ -1288,13 +1388,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		this->exx_lri.flag_finish.Cs = true;
 	}
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
-	{
-		typename decltype(this->exx_lri)::Weighted_Short_Config weighted_short_cfg;
-		weighted_short_cfg.weighted_short_threshold = this->info.V_cd_threshold;
-		weighted_short_cfg.weighted_short_stats_only = this->info.V_cd_stats_only;
-		weighted_short_cfg.weighted_short_only = this->info.V_cd_short_only;
-		this->exx_lri.set_weighted_short_config(weighted_short_cfg);
-	}
+    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info);
 
     if (cal_dCV)
 	{
@@ -1834,22 +1928,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 		exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
 		const auto cal_hs_t1 = std::chrono::steady_clock::now();
         cal_hs_time_acc += std::chrono::duration<double>(cal_hs_t1 - cal_hs_t0).count();
-        if (GlobalV::MY_RANK == 0 && this->info.V_cd_threshold > 0.0)
-        {
-            const auto& vcd_stats = exx_channel.weighted_short_stats;
-            const double skip_pct = (vcd_stats.weighted_short_candidates == 0)
-                ? 0.0
-                : 100.0 * static_cast<double>(vcd_stats.weighted_short_skips)
-                    / static_cast<double>(vcd_stats.weighted_short_candidates);
-            std::cout << "EXX weighted short[" << ds_suffix << "|" << v_suffix << "] "
-                      << "thr=" << this->info.V_cd_threshold
-                      << ", stats_only=" << static_cast<int>(this->info.V_cd_stats_only)
-                      << ", candidates=" << vcd_stats.weighted_short_candidates
-                      << ", skips=" << vcd_stats.weighted_short_skips
-                      << ", skip_pct=" << skip_pct
-                      << ", max_score=" << vcd_stats.weighted_short_max_score
-                      << std::endl;
-        }
+        ExxLriDetail::maybe_print_weighted_short_stats(exx_channel, this->info, ds_suffix, v_suffix);
 
         if (!p_symrot)
         {
