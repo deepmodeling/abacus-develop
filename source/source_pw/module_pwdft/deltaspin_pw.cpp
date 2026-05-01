@@ -29,10 +29,11 @@ bool run_deltaspin_lambda_loop(const int iter,
         return true;
     }
     /// Case 2: Magnetic moments already converged in previous iteration.
-    /// Continue to refine lambda in subsequent SCF iterations.
+    /// The lambda values and charge density were already updated in Case 1.
+    /// Skip the solver so the SCF can converge with the existing charge density.
+    /// Re-running the lambda loop would re-update the charge density and disrupt SCF mixing.
     else if (sc.mag_converged())
     {
-        sc.run_lambda_loop(iter);
         return true;
     }
 

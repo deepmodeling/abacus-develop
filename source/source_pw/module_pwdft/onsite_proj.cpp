@@ -6,6 +6,9 @@
 #include <tuple>
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/onsite_proj_print.h"
+#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "source_base/projgen.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -111,6 +114,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
     {
         this->ucell = ucell_in;
         this->ntype = ucell_in->ntype;
+        this->isk_ = kv.isk.data();
 
         this->pw_basis_ = &pw_basis;
         this->sf_ = &sf;
@@ -287,6 +291,7 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     // CACHE 1 - if cache the tab_, <G+k|p> can be reused for SCF and RELAX calculation
     // [in] pw_basis, ik, omega, tpiba, irow2it
     this->ik_ = ik;
+    this->becp_ready_ = false;
     this->npw_ = pw_basis_->npwk[ik];
     this->npwx_ = pw_basis_->npwk_max;
     // std::vector<ModuleBase::Vector3<double>> q(this->npw_);
@@ -340,7 +345,8 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::overlap_proj_psi( 
                     const int npm,
-                    const std::complex<double>* ppsi)
+                    const std::complex<double>* ppsi,
+                    const int ld_psi)
 {
     ModuleBase::timer::start("OnsiteProj", "overlap");
     // STAGE 3 - cal_becp
@@ -398,11 +404,13 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
             this->h_becp = this->becp;
         }
     }
-    this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi); // in cal_becp, npm should be the one not multiplied by npol
+    this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi, ld_psi > 0 ? ld_psi : this->npwx_); // in cal_becp, npm should be the one not multiplied by npol
     if(this->device == base_device::GpuDevice)
     {
         syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
+    this->becp_ready_ = true;
+    this->ik_becp_ = this->ik_;
     ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
@@ -580,6 +588,46 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     
     // print charge
     ModuleBase::timer::end("OnsiteProj", "cal_occupation");
+}
+
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dftu(int ik, int npm, T* force,
+                                                        const Plus_U& dftu, int nks,
+                                                        const double* wg_ik) const
+{
+    const int isk_val = this->isk_ ? this->isk_[ik] : 0;
+    const std::complex<double>* vu_ptr = dftu.get_eff_pot_pw_spin(isk_val);
+    const int vu_size = dftu.get_size_eff_pot_pw_spin();
+    this->fs_tools->cal_force_dftu(ik, npm, force,
+        dftu.get_orbital_corr_data(), vu_ptr, vu_size, wg_ik);
+}
+
+template <typename T, typename Device>
+double projectors::OnsiteProjector<T, Device>::cal_stress_onsite_dftu(int ik, int npm,
+                                                           const Plus_U& dftu, int nks,
+                                                           const double* wg_ik) const
+{
+    const int isk_val = this->isk_ ? this->isk_[ik] : 0;
+    const std::complex<double>* vu_ptr = dftu.get_eff_pot_pw_spin(isk_val);
+    const int vu_size = dftu.get_size_eff_pot_pw_spin();
+    return this->fs_tools->cal_stress_dftu(ik, npm,
+        dftu.get_orbital_corr_data(), vu_ptr, vu_size, wg_ik);
+}
+
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dspin(int ik, int npm, T* force,
+                                                         const ModuleBase::Vector3<double>* lambda,
+                                                         const double* wg_ik) const
+{
+    this->fs_tools->cal_force_dspin(ik, npm, force, lambda, wg_ik);
+}
+
+template <typename T, typename Device>
+double projectors::OnsiteProjector<T, Device>::cal_stress_onsite_dspin(int ik, int npm,
+                                                            const ModuleBase::Vector3<double>* lambda,
+                                                            const double* wg_ik) const
+{
+    return this->fs_tools->cal_stress_dspin(ik, npm, lambda, wg_ik);
 }
 
 template class projectors::OnsiteProjector<double, base_device::DEVICE_CPU>;
