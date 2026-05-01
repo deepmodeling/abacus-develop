@@ -394,6 +394,8 @@
     - [sccut](#sccut)
     - [sc\_drop\_thr](#sc_drop_thr)
     - [sc\_scf\_thr](#sc_scf_thr)
+    - [sc\_direction\_only](#sc_direction_only)
+    - [sc\_lambda\_strategy](#sc_lambda_strategy)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
     - [vdw\_s6](#vdw_s6)
@@ -3481,8 +3483,8 @@
 
 - **Type**: Integer
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
-  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter onsite_radius).
-  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
+  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter onsite_radius). Supported for both PW and LCAO basis sets.
+  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing). Only available for LCAO basis.
   - 0: Do not calculate plus U correction.
 - **Default**: 0
 
@@ -3628,6 +3630,24 @@
 - **Availability**: *sc_mag_switch is true*
 - **Description**: Density error threshold for inner loop of spin-constrained SCF
 - **Default**: 1.0e-4
+
+### sc_direction_only
+
+- **Type**: Boolean
+- **Availability**: *sc_mag_switch is true*
+- **Description**: When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint. When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
+- **Default**: False
+
+### sc_lambda_strategy
+
+- **Type**: String
+- **Availability**: *sc_mag_switch is true*
+- **Description**: Lambda update strategy for spin-constrained DFT. Available options are:
+  - bfgs: BFGS quasi-Newton method (default, robust and well-tested)
+  - linear_response: linear response method (Scheme B)
+  - augmented_lagrangian: augmented Lagrangian method (Scheme C)
+  - hybrid_delayed: hybrid delayed update (Scheme D)
+- **Default**: bfgs
 
 [back to top](#full-list-of-input-keywords)
 

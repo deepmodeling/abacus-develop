@@ -4266,6 +4266,26 @@ parameters:
     default_value: "1.0e-4"
     unit: ""
     availability: sc_mag_switch is true
+  - name: sc_direction_only
+    category: Spin-Constrained DFT
+    type: Boolean
+    description: |
+      When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint. When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
+    default_value: "False"
+    unit: ""
+    availability: sc_mag_switch is true
+  - name: sc_lambda_strategy
+    category: Spin-Constrained DFT
+    type: String
+    description: |
+      Lambda update strategy for spin-constrained DFT. Available options are:
+      * bfgs: BFGS quasi-Newton method (default, robust and well-tested)
+      * linear_response: linear response method (Scheme B)
+      * augmented_lagrangian: augmented Lagrangian method (Scheme C)
+      * hybrid_delayed: hybrid delayed update (Scheme D)
+    default_value: "bfgs"
+    unit: ""
+    availability: sc_mag_switch is true
   - name: qo_switch
     category: Quasiatomic Orbital (QO) analysis
     type: Boolean
