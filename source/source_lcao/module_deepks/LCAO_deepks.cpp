@@ -1,4 +1,14 @@
+// wenfei 2022-1-5
+// This file contains constructor and destructor of the class LCAO_deepks,
 #include "source_io/module_parameter/parameter.h"
+// as well as subroutines for initializing and releasing relevant data structures
+
+// Other than the constructor and the destructor, it contains 3 types of subroutines:
+// 1. subroutines that are related to calculating descriptors:
+//   - init : allocates some arrays
+//   - init_index : records the index (inl)
+// 2. subroutines that are related to V_delta:
+//   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
 #ifdef __MLALGO
 
@@ -47,12 +57,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
     ModuleBase::TITLE("LCAO_Deepks", "init");
     ModuleBase::timer::start("LCAO_Deepks", "init");
 
-    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    ofs << " |                                                                    |" << std::endl;
-    ofs << " |                      #Initialize DeePKS (LCAO)#                    |" << std::endl;
-    ofs << " | Setup machine-Learning-Based DeePKS method based on NAO basis set  |" << std::endl;
-    ofs << " |                                                                    |" << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs << " Initialize the descriptor index for DeePKS (lcao line)" << std::endl;
 
     const int lm = orb.get_lmax_d();
     const int nm = orb.get_nchimax_d();
@@ -77,8 +82,8 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         this->deepks_param.nchi_d_l[l] = orb.Alpha[0].getNchi(l);
     }
 
-    ofs << " Lmax of descriptor " << deepks_param.lmaxd << std::endl;
-    ofs << " Nmax of descriptor " << deepks_param.nmaxd << std::endl;
+    ofs << " lmax of descriptor = " << deepks_param.lmaxd << std::endl;
+    ofs << " nmax of descriptor = " << deepks_param.nmaxd << std::endl;
 
     int pdm_size = 0;
     this->deepks_param.inlmax = tot_inl;
@@ -99,7 +104,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
 
     if (!PARAM.inp.deepks_equiv)
     {
-        // ofs << " total basis (all atoms) for descriptor = " << std::endl;
+        ofs << " total basis (all atoms) for descriptor = " << std::endl;
 
         // init pdm
         for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
@@ -117,7 +122,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         }
         pdm_size = pdm_size * pdm_size;
         this->deepks_param.des_per_atom = pdm_size;
-        ofs << " Equivariant version, pdm matrices size " << pdm_size << std::endl;
+        ofs << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
         for (int iat = 0; iat < nat; iat++)
         {
             this->pdm[iat] = torch::zeros({pdm_size}, torch::kFloat64);
@@ -148,7 +153,7 @@ void LCAO_Deepks<T>::init_index(const int ntype,
     {
         this->deepks_param.inl_index[it].create(na[it], this->deepks_param.lmaxd + 1, this->deepks_param.nmaxd);
 
-        //ofs << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
+        ofs << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
 
         for (int ia = 0; ia < na[it]; ia++)
         {
@@ -165,8 +170,8 @@ void LCAO_Deepks<T>::init_index(const int ntype,
         } // end ia
     }     // end it
     assert(Total_nchi == inl);
-    ofs << " Descriptors per atom " << this->deepks_param.des_per_atom << std::endl;
-    ofs << " Total Descriptors " << this->deepks_param.n_descriptor << std::endl;
+    ofs << " descriptors_per_atom " << this->deepks_param.des_per_atom << std::endl;
+    ofs << " total_descriptors " << this->deepks_param.n_descriptor << std::endl;
     return;
 }
 

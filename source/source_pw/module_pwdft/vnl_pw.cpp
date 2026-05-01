@@ -214,17 +214,10 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     // dq+4)*cell_factor;
     this->lmaxq = 2 * this->lmaxkb + 1;
     int npwx = this->wfcpw->npwk_max;
-    this->vkbnc = npwx;
     if (nkb > 0 && allocate_vkb)
     {
-        if (!this->use_gpu_)
-        {
-            vkb.create(nkb, npwx);
-            ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
-        }
-        // GPU path: vkb ComplexMatrix is not allocated.
-        // Column dimension is stored in vkbnc for gemm/gemv leading dimension.
-        // Actual GPU buffers (c_vkb/z_vkb) are allocated below.
+        vkb.create(nkb, npwx);
+        ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90

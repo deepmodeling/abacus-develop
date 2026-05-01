@@ -13,7 +13,6 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
-#include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------
@@ -159,11 +158,7 @@ class Evolve_elec
                           std::ofstream& ofs_running,
                           const int propagator,
                           const bool use_tensor,
-                          const bool use_lapack,
-                          module_rt::TD_MovingGauge* td_mg,
-                          const UnitCell* ucell,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                          const bool use_td_moving_gauge);
+                          const bool use_lapack);
 
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     static ct::DeviceType ct_device_type;

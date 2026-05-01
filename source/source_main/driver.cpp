@@ -28,7 +28,6 @@ void Driver::init()
 
     // 2) Print the current time, since it may run a long time.
     time_t time_start = std::time(nullptr);
-    ModuleBase::timer::start();
 
     // 3) Welcome to the atomic world! Let's do some fancy stuff here.
     this->atomic_world();

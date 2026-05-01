@@ -36,7 +36,7 @@ void calculate()
 /*
 	time_t time_start = std::time(NULL);
 
-//	ModuleBase::timer::start();
+//	ModuleBase::timer::tick();
 
 	//----------------------------------------------------------
 	// main program for doing electronic structure calculations
