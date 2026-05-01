@@ -2,6 +2,7 @@
 #define BASIC_FUNCS_H
 
 #include <cmath>
+#include <complex>
 #include <vector>
 #include <ostream>
 

@@ -92,6 +92,18 @@ double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
     }
     double sum_k = sum_2d(temp_1);
     double sum_k2 = sum_2d(temp_2);
+    printf("[ALPHA-OPT] nat=%d sum_k=%.6e sum_k2=%.6e alpha_trial=%.6e\n", nat, sum_k, sum_k2, alpha_trial);
+    for(int ia=0; ia<std::min(2,(int)nat); ++ia) {
+        printf("[ALPHA-OPT] spin[%d]=(%.4f,%.4f,%.4f) spin_plus[%d]=(%.4f,%.4f,%.4f)\n",
+               ia, spin[ia].x, spin[ia].y, spin[ia].z,
+               ia, spin_plus[ia].x, spin_plus[ia].y, spin_plus[ia].z);
+    }
+    if (std::abs(sum_k2) < 1e-30) {
+        printf("[ALPHA-OPT] WARNING: sum_k2 too small, returning alpha_trial\n");
+        fflush(stdout);
+        return alpha_trial;
+    }
+    fflush(stdout);
     return sum_k * alpha_trial / sum_k2;
 }
 
@@ -131,6 +143,13 @@ bool spinconstrain::SpinConstrain<std::complex<double>>::check_gradient_decay(
             {
                 for (int jc = 0; jc < 3; jc++)
                 {
+                    if (std::abs(nu_change[ja][jc]) < 1e-30) {
+                        printf("[GRAD-DECAY] WARNING: nu_change[%d][%d] too small! delta_lambda=(%.6e,%.6e,%.6e) dnu_last=(%.6e,%.6e,%.6e)\n",
+                               ja, jc, delta_lambda[ja].x, delta_lambda[ja].y, delta_lambda[ja].z,
+                               dnu_last_step[ja].x, dnu_last_step[ja].y, dnu_last_step[ja].z);
+                        fflush(stdout);
+                        nu_change[ja][jc] = 1e-30;
+                    }
                     spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
                 }
             }

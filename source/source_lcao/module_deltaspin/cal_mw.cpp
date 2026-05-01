@@ -21,7 +21,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
     this->zero_Mi();
     const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
     std::vector<double> moments;
-    if(PARAM.inp.nspin==2)
+    if(this->nspin_==2)
     {
         this->dm_->switch_dmr(2);
 
@@ -36,7 +36,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
             this->Mi_[iat].z = moments[iat];
         }
     }
-    else if(PARAM.inp.nspin==4)
+    else if(this->nspin_==4)
     {
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
         for(int iat=0;iat<this->Mi_.size();iat++)
@@ -76,32 +76,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
             // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
             onsite_p->overlap_proj_psi(nbands * npol, psi_pointer);
             const std::complex<double>* becp = onsite_p->get_h_becp();
-            // becp(nbands*npol , nkb)
-            // mag = wg * \sum_{nh}becp * becp
             int nkb = onsite_p->get_tot_nproj();
-            for(int ib = 0;ib<nbands;ib++)
-            {
-                const double weight = this->pelec->wg(ik, ib);
-                int begin_ih = 0;
-                for(int iat = 0; iat < this->Mi_.size(); iat++)
-                {
-                    std::complex<double> occ[4] = {ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
-                    const int nh = onsite_p->get_nh(iat);
-                    for(int ih = 0; ih < nh; ih++)
-                    {
-                        const int index = ib*2*nkb + begin_ih + ih;
-                        occ[0] += conj(becp[index]) * becp[index];
-                        occ[1] += conj(becp[index]) * becp[index + nkb];
-                        occ[2] += conj(becp[index + nkb]) * becp[index];
-                        occ[3] += conj(becp[index + nkb]) * becp[index + nkb];
-                    }
-                    // occ has been reduced and calculate mag
-                    this->Mi_[iat].z += weight * (occ[0] - occ[3]).real();
-                    this->Mi_[iat].x += weight * (occ[1] + occ[2]).real();
-                    this->Mi_[iat].y += weight * (occ[1] - occ[2]).imag();
-                    begin_ih += nh;
-                }
-            }
+            this->accumulate_Mi_from_becp(becp, nkb, nbands, npol, ik,
+                &this->pelec->wg(ik, 0), &onsite_p->get_nh(0));
         }
     }
 #if ((defined __CUDA) || (defined __ROCM))
@@ -122,37 +99,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
             // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
             onsite_p->overlap_proj_psi(nbands * npol, psi_pointer);
             const std::complex<double>* becp = onsite_p->get_h_becp();
-            // becp(nbands*npol , nkb)
-            // mag = wg * \sum_{nh}becp * becp
             int nkb = onsite_p->get_size_becp() / nbands / npol;
-            for(int ib = 0;ib<nbands;ib++)
-            {
-                const double weight = this->pelec->wg(ik, ib);
-                int begin_ih = 0;
-                for(int iat = 0; iat < this->Mi_.size(); iat++)
-                {
-                    std::complex<double> occ[4] = {ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
-                    const int nh = onsite_p->get_nh(iat);
-                    for(int ih = 0; ih < nh; ih++)
-                    {
-                        const int index = ib*2*nkb + begin_ih + ih;
-                        occ[0] += conj(becp[index]) * becp[index];
-                        occ[1] += conj(becp[index]) * becp[index + nkb];
-                        occ[2] += conj(becp[index + nkb]) * becp[index];
-                        occ[3] += conj(becp[index + nkb]) * becp[index + nkb];
-                    }
-                    // occ has been reduced and calculate mag
-                    this->Mi_[iat].z += weight * (occ[0] - occ[3]).real();
-                    this->Mi_[iat].x += weight * (occ[1] + occ[2]).real();
-                    this->Mi_[iat].y += weight * (occ[1] - occ[2]).imag();
-                    begin_ih += nh;
-                }
-            }
+            this->accumulate_Mi_from_becp(becp, nkb, nbands, npol, ik,
+                &this->pelec->wg(ik, 0), &onsite_p->get_nh(0));
         }
     }
 #endif
     // reduce mag from all k-pools
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, PARAM.globalv.nproc_in_pool, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }

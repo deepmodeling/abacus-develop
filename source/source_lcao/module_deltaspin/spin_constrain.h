@@ -1,6 +1,7 @@
 #ifndef SPIN_CONSTRAIN_H
 #define SPIN_CONSTRAIN_H
 
+#include <complex>
 #include <map>
 #include <vector>
 
@@ -21,6 +22,24 @@
 namespace spinconstrain
 {
 
+/**
+ * @brief Extract magnetic moment from nspin=4 occupation matrix elements.
+ *
+ * Given occ[4] = {|a|^2, a* b, b* a, |b|^2} (spinor density matrix),
+ * the magnetic moment components are:
+ *   Mz = occ[0] - occ[3]  (sigma_z)
+ *   Mx = occ[1] + occ[2]  (sigma_x)
+ *   My = Im(occ[1] - occ[2])  (sigma_y)
+ */
+inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> occ[4], double weight)
+{
+    return ModuleBase::Vector3<double>(
+        weight * (occ[1] + occ[2]).real(),
+        weight * (occ[1] - occ[2]).imag(),
+        weight * (occ[0] - occ[3]).real()
+    );
+}
+
 struct ScAtomData;
 
 template <typename TK>
@@ -38,6 +57,7 @@ public:
                double sccut_in,
                double sc_drop_thr_in,
                const UnitCell& ucell,
+               bool direction_only_in,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
                const K_Vectors& kv_in,
@@ -68,17 +88,36 @@ public:
 
   double get_escon() const;
 
-  void run_lambda_loop(int outer_step, 
+  void run_lambda_loop(int outer_step,
 		  bool rerun = true);
+
+  /// @brief optimized lambda loop for LCAO nspin=2: subspace diag + analytical Jacobian
+  void run_lambda_loop_lcao(int outer_step);
 
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
+  /**
+   * @brief PW基组的波函数和电荷更新实现
+   * @details 包含两个阶段：
+   *          1. 子空间对角化：对每个k点应用DeltaSpin修正并求解
+   *          2. 电荷更新：根据pw_solve参数选择全空间对角化或直接更新电荷
+   */
+  void update_psi_charge_pw(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+  
+  /// CPU版本的PW基组更新实现
+  void update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+  
+#if ((defined __CUDA) || (defined __ROCM))
+  /// GPU版本的PW基组更新实现
+  void update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+#endif
+
   void calculate_delta_hcc(std::complex<double>* h_tmp, 
 		  const std::complex<double>* becp_k, 
 		  const ModuleBase::Vector3<double>* delta_lambda, 
-		  const int nbands, const int nkb, const int* nh_iat);
+		  const int nbands, const int nkb, const int* nh_iat, const int ik);
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
@@ -223,7 +262,15 @@ public:
 
   private:
     SpinConstrain(){};                               // Private constructor
-    ~SpinConstrain(){};                              // Destructor
+    ~SpinConstrain()
+    {
+        delete[] sub_h_save;
+        delete[] sub_s_save;
+        delete[] becp_save;
+        sub_h_save = nullptr;
+        sub_s_save = nullptr;
+        becp_save = nullptr;
+    };
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
@@ -251,6 +298,7 @@ public:
     bool debug = false;
     double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_; // in unit of Ry/uB = 3 eV/uB
+    bool direction_only_ = false; ///< only optimize the direction of magnetization
 
   public:
     /// @brief save operator for spin-constrained DFT
@@ -260,6 +308,20 @@ public:
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief get is_Mi_converged
     bool mag_converged() const {return this->is_Mi_converged;}
+    void set_npol(int npol);
+    int get_npol() const;
+    int get_nw() const;
+    int get_iwt(int itype, int iat, int orbital_index) const;
+    /// get spin sign for k-point ik: +1 for spin-up, -1 for spin-down
+    int get_spin_sign(int ik) const;
+    /// accumulate Mi from becp for a single k-point
+    void accumulate_Mi_from_becp(const std::complex<double>* becp,
+                                 int nkb,
+                                 int nbands,
+                                 int npol,
+                                 int ik,
+                                 const double* wg_ik,
+                                 const int* nh_iat);
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
     hamilt::Operator<TK>* p_operator = nullptr;

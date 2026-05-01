@@ -12,8 +12,13 @@ void spinconstrain::SpinConstrain<double>::cal_mi_lcao(const int& step, bool pri
 }
 
 template <>
-void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step, 
+void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step,
 		bool rerun)
+{
+}
+
+template <>
+void spinconstrain::SpinConstrain<double>::run_lambda_loop_lcao(int outer_step)
 {
 }
 
