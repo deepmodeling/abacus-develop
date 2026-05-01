@@ -85,7 +85,7 @@ void print_parameters(
 
         const bool orbinfo = (inp.basis_type=="lcao" || inp.basis_type=="lcao_in_pw" 
               || (inp.basis_type=="pw" && inp.init_wfc.substr(0, 3) == "nao"));
-
+        if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
 
         std::cout << std::endl;
         std::cout << " " << std::setw(8) << inp.nspin;
@@ -103,7 +103,12 @@ void print_parameters(
              << std::setw(14) << PARAM.globalv.nthread_per_proc
              << std::setw(14) << PARAM.globalv.nthread_per_proc*GlobalV::NPROC;
 
+        if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
+
         std::cout << std::endl;
+
+
+
 
         std::cout << " ----------------------------------------------------------------" << std::endl;
         if(inp.basis_type == "lcao")
@@ -120,13 +125,11 @@ void print_parameters(
         }
         std::cout << " ----------------------------------------------------------------" << std::endl;
 
+
+
         //----------------------------------
         // second part
         //----------------------------------
-        if (orbinfo) 
-        { 
-            std::cout << " TOTAL NBASE" << " " << PARAM.globalv.nlocal << std::endl;
-        }
 
         std::cout << " " << std::setw(8) << "ELEMENT";
 
@@ -137,6 +140,7 @@ void print_parameters(
         }
         std::cout << std::setw(12) << "NATOM";
 
+        std::cout << std::setw(12) << "XC";
         std::cout << std::endl;
 
 
