@@ -23,6 +23,16 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
     return tmp_DMR;
 }
 
+void Plus_U::get_locale_flat(const int iat, const int l, std::vector<double>& occ) const
+{
+    occ.clear();
+}
+
+void Plus_U::set_locale_flat(const int iat, const int l, const int spin,
+                              const std::vector<double>& occ)
+{
+}
+
 //---------------------------------------
 // Unit test of Plus_U class
 // Plus_U is a derivative class of Operator, it is used to calculate the kinetic matrix
