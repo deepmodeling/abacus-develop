@@ -13,7 +13,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_h_lambda(
     int isk)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
-    ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
+    ModuleBase::timer::start("SpinConstrain", "cal_h_lambda");
     const Parallel_Orbitals* pv = this->ParaV;
     for (const auto& sc_elem1 : this->get_atomCounts())
     {
@@ -101,7 +101,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_h_lambda(
             }
         }
     }
-    ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
+    ModuleBase::timer::start("SpinConstrain", "cal_h_lambda");
     return;
 }
 

@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "source_base/constants.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_base/vector3.h"
@@ -14,6 +16,7 @@
 #include "source_cell/unitcell.h"
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
+#include "source_lcao/module_deltaspin/lambda_update_strategies.h"
 
 #ifdef __LCAO
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
@@ -41,6 +44,14 @@ inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> oc
 }
 
 struct ScAtomData;
+
+enum class LambdaStrategyType
+{
+    BFGS,
+    LinearResponse,
+    AugmentedLagrangian,
+    HybridDelayed
+};
 
 template <typename TK>
 class SpinConstrain
@@ -114,10 +125,27 @@ public:
   void update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
 #endif
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, 
-		  const std::complex<double>* becp_k, 
-		  const ModuleBase::Vector3<double>* delta_lambda, 
+  void calculate_delta_hcc(std::complex<double>* h_tmp,
+		  const std::complex<double>* becp_k,
+		  const ModuleBase::Vector3<double>* delta_lambda,
 		  const int nbands, const int nkb, const int* nh_iat, const int ik);
+
+#ifdef __LCAO
+  /// @brief calculate Hamiltonian contribution from lambda for LCAO nspin=4
+  void cal_h_lambda(std::complex<double>* h_lambda,
+                    const std::complex<double>* Sloc2,
+                    bool column_major,
+                    int isk);
+  /// @brief convert orbital matrix to nested vector format
+  std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix& orbMulP);
+  /// @brief calculate magnetic moment from orbital matrix
+  void calculate_MW(const std::vector<std::vector<std::vector<double>>>& AorbMulP);
+  /// @brief collect magnetic moment from complex matrix
+  void collect_MW(ModuleBase::matrix& MecMulP,
+                  const ModuleBase::ComplexMatrix& mud,
+                  int nw,
+                  int isk);
+#endif
 
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
@@ -259,6 +287,12 @@ public:
                                void* p_hamilt_in,
                                void* psi_in,
                                elecstate::ElecState* pelec_in);
+    /// @brief set lambda update strategy type
+    void set_strategy_type(LambdaStrategyType type);
+    /// @brief set strategy-specific parameters
+    void set_strategy_params(double mu_init, double mu_max,
+                             double mu_growth, double mix_beta,
+                             double sc_scf_thr);
 
   private:
     SpinConstrain(){};                               // Private constructor
@@ -299,6 +333,9 @@ public:
     double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_; // in unit of Ry/uB = 3 eV/uB
     bool direction_only_ = false; ///< only optimize the direction of magnetization
+    /// lambda update strategy
+    LambdaStrategyType strategy_type_ = LambdaStrategyType::BFGS;
+    std::unique_ptr<LambdaUpdateStrategy> strategy_;
 
   public:
     /// @brief save operator for spin-constrained DFT

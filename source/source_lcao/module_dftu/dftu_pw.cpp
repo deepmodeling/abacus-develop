@@ -360,8 +360,11 @@ void Plus_U::cal_occ_pw(const int iter,
     ModuleBase::timer::end("Plus_U", "cal_occ_pw");
 }
 /// calculate the local DFT+U effective potential matrix for PW base.
+/// TODO: implement VU potential calculation for PW basis
 void Plus_U::cal_VU_pot_pw(const int spin)
 {
-
+    // Placeholder: VU potential for PW is computed via cal_eff_pot_mat_* in the
+    // onsite projector path. This function is reserved for future direct-PW implementation.
+    (void)spin;
 }
 
