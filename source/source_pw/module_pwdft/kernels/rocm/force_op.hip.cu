@@ -361,7 +361,7 @@ __global__ void cal_force_onsite(int wg_nc,
                 const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb0]) * becp[inkb2 + nkb];
                 const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb0 + nkb]) * becp[inkb2];
                 const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb0 + nkb]) * becp[inkb2 + nkb];
-                const FPTYPE tmp = -fac * (ps[0] * dbb0 + ps[1] * dbb2 + ps[2] * dbb1 + ps[3] * dbb3).real();
+                const FPTYPE tmp = -fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
                 atomicAdd(force + iat * forcenl_nc + ipol, tmp);
             }
         }
