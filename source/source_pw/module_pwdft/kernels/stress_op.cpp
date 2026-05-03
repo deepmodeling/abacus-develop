@@ -232,7 +232,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 const std::complex<FPTYPE> dbb1 = conj(dbecp[ib2 * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
                                 const std::complex<FPTYPE> dbb2 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
                                 const std::complex<FPTYPE> dbb3 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
-                                local_stress -= fac * (ps0 * dbb0 + ps1 * dbb2 + ps2 * dbb1 + ps3 * dbb3).real();
+                                local_stress -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
                             }
                         } // end ip
                     }     // ia

@@ -256,7 +256,7 @@ __global__ void cal_force_nl(
                     const thrust::complex<FPTYPE> dbb1 = conj(dbecp[index0]) * becp[index1 + nkb];
                     const thrust::complex<FPTYPE> dbb2 = conj(dbecp[index0 + nkb]) * becp[index1];
                     const thrust::complex<FPTYPE> dbb3 = conj(dbecp[index0 + nkb]) * becp[index1 + nkb];
-                    const FPTYPE tmp = - fac * (ps0 * dbb0 + ps1 * dbb2 + ps2 * dbb1 + ps3 * dbb3).real();
+                    const FPTYPE tmp = - fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
                     atomicAdd(force + iat * forcenl_nc + ipol, tmp);
                 }
             }

@@ -254,7 +254,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                     const std::complex<FPTYPE> dbb2 = conj(dbecp[index0 + nkb]) * becp[index1];
                                     const std::complex<FPTYPE> dbb3 = conj(dbecp[index0 + nkb]) * becp[index1 + nkb];
 
-                                    local_force[ipol] -= fac * (ps0 * dbb0 + ps1 * dbb2 + ps2 * dbb1 + ps3 * dbb3).real();
+                                    local_force[ipol] -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
                                 }
                             }
                         }

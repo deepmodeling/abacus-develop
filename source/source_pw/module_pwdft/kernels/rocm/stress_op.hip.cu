@@ -322,7 +322,7 @@ __global__ void cal_stress_nl(
             const thrust::complex<FPTYPE> dbb1 = conj(dbecp[ib2 * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
             const thrust::complex<FPTYPE> dbb2 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
             const thrust::complex<FPTYPE> dbb3 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
-            stress_var -= fac * (ps0 * dbb0 + ps1 * dbb2 + ps2 * dbb1 + ps3 * dbb3).real();
+            stress_var -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
         }
         ++iat;
         sum+=nproj;
