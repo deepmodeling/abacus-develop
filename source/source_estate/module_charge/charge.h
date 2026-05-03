@@ -136,6 +136,12 @@ class Charge
      */
     void rho_mpi();
 
+    /**
+     * @brief Sum kin_r at different pools (k-point/band parallelism).
+     *        Only used when GlobalV::KPAR * bndpar > 1
+     */
+    void kin_r_mpi();
+
 	/**
 	 * @brief 	Reduce among different pools 
      *          If NPROC_IN_POOLs are all the same, use GlobalV::KP_WORLD
