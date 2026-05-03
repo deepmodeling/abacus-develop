@@ -1,0 +1,123 @@
+Info: Local MPI proc number: 1,OpenMP thread number: 1,Total thread number: 1,Local thread limit: 14
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0f9d7d97e (Thu Apr 30 12:48:20 2026 +0800)
+
+ Sun May  3 09:53:18 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Core(TM) Ultra 5 225H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 24 * 24 * 24
+ UNIFORM GRID DIM(BIG): 24 * 24 * 24
+ DONE(0.0392222  SEC) : SETUP UNITCELL
+ DONE(0.0393218  SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 4       2               1           1             1             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Fe      2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.0422761  SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0474001  SEC) : LOCAL POTENTIAL
+ DONE(0.0583962  SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 0.361328
+ DONE(0.0934921  SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.115037   SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -3.50e-03  -3.47e-03  -3.47e-03   1.94e-01  -5.93364556e+03   0.00000000e+00   6.0771e+01   0.17
+ DS2     -1.98e-02  -1.99e-02  -1.99e-02   5.37e-02  -5.61422656e+03   3.19418997e+02   2.7921e+01   0.10
+ DS3      3.63e-01   3.63e-01   3.63e-01   6.30e-01  -5.66083219e+03  -4.66056224e+01   9.3630e-01   0.12
+ DS4      6.56e-01   6.55e-01   6.55e-01   1.13e+00  -5.66314277e+03  -2.31058782e+00   9.7970e-01   0.09
+ DS5      1.13e+00   1.13e+00   1.13e+00   1.96e+00  -5.66288810e+03   2.54671960e-01   8.4319e-01   0.09
+ DS6      1.53e+00   1.53e+00   1.53e+00   2.66e+00  -5.65330287e+03   9.58522743e+00   6.5627e-01   0.09
+ DS7      3.47e+00   3.46e+00   3.46e+00   6.00e+00  -5.66100286e+03  -7.69999107e+00   3.6125e-01   0.12
+ DS8      4.01e+00   3.99e+00   3.99e+00   6.93e+00  -5.66254900e+03  -1.54613591e+00   3.2290e-01   0.10
+ DS9      4.09e+00   4.06e+00   4.06e+00   7.05e+00  -5.66250300e+03   4.59968832e-02   2.6478e-01   0.09
+ DS10     4.08e+00   4.04e+00   4.04e+00   7.03e+00  -5.66203009e+03   4.72914699e-01   1.4532e-01   0.10
+ DS11     4.29e+00   4.26e+00   4.26e+00   7.40e+00  -5.66220039e+03  -1.70299816e-01   2.5843e-02   0.10
+ DS12     4.63e+00   4.59e+00   4.59e+00   7.98e+00  -5.66227859e+03  -7.81989233e-02   6.0138e-02   0.09
+ DS13     4.64e+00   4.60e+00   4.60e+00   8.00e+00  -5.66242306e+03  -1.44469498e-01   2.8920e-02   0.10
+ DS14     4.64e+00   4.60e+00   4.60e+00   8.00e+00  -5.66243570e+03  -1.26406010e-02   2.4667e-02   0.09
+ DS15     4.65e+00   4.61e+00   4.61e+00   8.01e+00  -5.66242785e+03   7.85163952e-03   1.4419e-02   0.07
+ DS16     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66242977e+03  -1.92022552e-03   6.7341e-03   0.12
+ DS17     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66241657e+03   1.31921202e-02   4.8540e-03   0.12
+ DS18     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66239501e+03   2.15685563e-02   4.0954e-03   0.09
+ DS19     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66238415e+03   1.08550899e-02   1.5128e-03   0.10
+ SCF restart after this step!
+ DS20     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66286314e+03  -4.78985858e-01   1.4389e-04   0.10
+ DS21     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66239196e+03   4.71176545e-01   6.4087e-05   0.09
+ DS22     4.65e+00   4.61e+00   4.61e+00   8.02e+00  -5.66238948e+03   2.48237415e-03   5.5053e-06   0.08
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -31999.2856202446        64.7867976142        64.7955475894 
+         64.7867976142    -33600.9735805777       560.6550312603 
+         64.7955475894       560.6550312603    -33600.9824691361 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -33067.080557 kbar
+
+ TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             2.37   15       0.16   100.00 
+ Driver            atomic_world      2.37   1        2.37   100.00 
+ PW_Basis_Sup      recip2real        0.04   397      0.00   1.70   
+ PSIPrepare        prepare_init      0.03   1        0.03   1.47   
+ psi_init_atomic   tabulate          0.03   1        0.03   1.47   
+ Relax_Driver      relax_driver      2.28   1        2.28   95.97  
+ ESolver_KS        runner            2.24   1        2.24   94.41  
+ Potential         cal_veff          0.18   23       0.01   7.74   
+ PW_Basis_Sup      real2recip        0.04   463      0.00   1.79   
+ PotXC             cal_veff          0.18   23       0.01   7.42   
+ XC_Functional     v_xc              0.19   25       0.01   7.82   
+ ESolver_KS_PW     hamilt2rho_single 1.99   22       0.09   83.75  
+ HSolverPW         solve             1.99   22       0.09   83.74  
+ HSolverPW         solve_psik        1.68   44       0.04   70.83  
+ Diago_DavSubspace diag_once         1.68   44       0.04   70.68  
+ Diago_DavSubspace first             0.64   44       0.01   26.98  
+ Operator          hPsi              1.40   187      0.01   59.08  
+ Operator          veff_pw           1.30   187      0.01   54.94  
+ PW_Basis_K        recip2real        0.80   11858    0.00   33.88  
+ PW_Basis_K        real2recip        0.53   8338     0.00   22.30  
+ Operator          nonlocal_pw       0.08   187      0.00   3.39   
+ Nonlocal          add_nonlocal_pp   0.06   187      0.00   2.47   
+ Diago_DavSubspace cal_elem          0.03   187      0.00   1.30   
+ Diago_DavSubspace diag_zhegvx       0.19   187      0.00   7.87   
+ Diago_DavSubspace cal_grad          0.82   143      0.01   34.33  
+ Diago_DavSubspace last              0.03   86       0.00   1.45   
+ ElecStatePW       psiToRho          0.30   22       0.01   12.59  
+ Stress_PW         cal_stress        0.02   1        0.02   1.01   
+-------------------------------------------------------------------
+
+
+ START  Time  : Sun May  3 09:53:18 2026
+ FINISH Time  : Sun May  3 09:53:20 2026
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.autotest/
