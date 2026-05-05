@@ -145,10 +145,19 @@ void PW_Basis_K::setupIndGk()
             }
         }
         this->npwk[ik] = ng;
+        int ng_global_k = ng;
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, &ng_global_k, 1, MPI_INT, MPI_SUM, this->pool_world);
+#endif
+        const char* no_pw_message = "Current core has no plane waves! Please reduce the cores.";
+        if (ng_global_k == 0)
+        {
+            no_pw_message = "No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings.";
+        }
         ModuleBase::CHECK_WARNING_QUIT((ng == 0),
                                        "pw_basis_k.cpp",
                                        PARAM.inp.calculation,
-                                       "Current core has no plane waves! Please reduce the cores.");
+                                       no_pw_message);
         if (this->npwk_max < ng)
         {
             this->npwk_max = ng;
