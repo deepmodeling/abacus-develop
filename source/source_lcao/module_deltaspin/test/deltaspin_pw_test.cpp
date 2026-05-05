@@ -535,7 +535,7 @@ TEST_F(DeltaSpinPwTest, DeltaHcc_GemmContribution)
     };
 
     // Manual: h_tmp[i,j] += sum_k conj(becp[k,i]) * ps[k,j]
-    // becp stored as becp[k*nbands + i], ps stored as ps[k*nbands + j]
+    // becp stored column-major as becp[k + i*npm], ps stored as ps[k + j*npm]
     std::vector<std::complex<double>> h_tmp(nbands * nbands, {0.0, 0.0});
     for(int i = 0; i < nbands; i++)
     {
@@ -543,7 +543,7 @@ TEST_F(DeltaSpinPwTest, DeltaHcc_GemmContribution)
         {
             for(int k = 0; k < npm; k++)
             {
-                h_tmp[i * nbands + j] += std::conj(becp[k * nbands + i]) * ps[k * nbands + j];
+                h_tmp[i * nbands + j] += std::conj(becp[k + i * npm]) * ps[k + j * npm];
             }
         }
     }
