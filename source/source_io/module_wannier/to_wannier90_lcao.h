@@ -1,13 +1,10 @@
 #ifndef TOWannier90_LCAO_H
 #define TOWannier90_LCAO_H
 
-#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -22,9 +19,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "source_lcao/wavefunc_in_pw.h"
 #include "source_psi/psi.h"
-#include "../module_hs/single_R_io.h"
 #include "to_wannier90.h"
 
 #include <algorithm>
@@ -37,9 +32,7 @@
 
 #ifdef __LCAO
 #include "fR_overlap.h"
-#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/math_lebedev_laikov.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
 
 class Coordinate_3D
 {

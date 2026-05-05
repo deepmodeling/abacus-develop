@@ -11,7 +11,6 @@
 #include "../../source_base/complexarray.h"
 #include "../../source_base/complexmatrix.h"
 #include "../../source_base/global_function.h"
-#include "../../source_base/global_variable.h"
 #include "../../source_base/intarray.h"
 #include "../../source_base/matrix.h"
 #include "../../source_base/vector3.h"

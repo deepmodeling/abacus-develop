@@ -3,7 +3,6 @@
 #include <memory>
 #include <cmath>
 #include "gint_type.h"
-#include "source_base/timer.h"
 
 namespace ModuleGint
 {

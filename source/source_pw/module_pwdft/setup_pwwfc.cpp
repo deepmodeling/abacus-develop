@@ -2,6 +2,7 @@
 #include "source_base/parallel_comm.h" // POOL_WORLD
 #include "source_base/parallel_reduce.h" // Parallel_Reduce
 #include "source_io/module_output/print_info.h" // print information
+#include "source_io/module_parameter/parameter.h"
 
 void pw::teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc)
 {

@@ -3,6 +3,9 @@
 
 #include "source_cell/klist.h"
 #include "source_estate/module_dm/density_matrix.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_psi/psi.h"
 
 /**
  * @brief Manages the computation of the charge densities for different bands (band-decomposed charge densities).

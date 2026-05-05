@@ -2,6 +2,7 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
+#include "matrix_methods.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
 

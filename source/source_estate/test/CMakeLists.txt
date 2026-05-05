@@ -56,6 +56,7 @@ AddTest(
     ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
+    ../module_charge/charge_mpi.cpp
     ../../source_psi/psi.cpp
     # ../../source_psi/kernels/psi_memory_op.cpp
     ../../source_base/module_device/memory_op.cpp

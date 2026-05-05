@@ -5,7 +5,6 @@
 #ifndef K_VECTOR_UTILS_H
 #define K_VECTOR_UTILS_H
 
-#include "source_base/global_variable.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 

@@ -7,6 +7,7 @@
 #include "unitcell.h"
 #include "bcast_cell.h"
 #include "source_base/tool_quit.h"
+#include "source_io/module_output/output.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/read_stru.h"
 #include "source_base/atom_in.h"

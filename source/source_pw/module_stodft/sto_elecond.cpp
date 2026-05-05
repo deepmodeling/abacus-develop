@@ -5,6 +5,7 @@
 #include "source_base/memory.h"
 #include "source_base/module_container/ATen/tensor.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_io/module_parameter/parameter.h"

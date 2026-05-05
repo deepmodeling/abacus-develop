@@ -18,6 +18,7 @@
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/deepks_force.h"
 #endif
 
 #ifdef _OPENMP

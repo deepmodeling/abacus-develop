@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 
 #include "op_pw_veff.h"
 #include "op_pw_ekin.h"

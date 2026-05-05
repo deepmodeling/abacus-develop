@@ -1,5 +1,6 @@
 #include "source_pw/module_pwdft/dftu_pw.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace pw
 {

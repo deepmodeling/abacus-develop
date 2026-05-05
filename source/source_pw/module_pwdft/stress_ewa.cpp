@@ -1,8 +1,10 @@
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/libm/libm.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef _OPENMP
 #include <omp.h>

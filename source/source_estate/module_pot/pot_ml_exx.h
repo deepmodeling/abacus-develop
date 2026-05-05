@@ -1,11 +1,9 @@
 #ifndef POT_ML_EXX_H
 #define POT_ML_EXX_H
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MLALGO
 
 #include "pot_base.h"
-#include "source_pw/module_ofdft/nn_of.h"
 #include "source_io/module_ml/cal_mlkedf_descriptors.h"
 #include "source_pw/module_ofdft/ml_base.h"
 

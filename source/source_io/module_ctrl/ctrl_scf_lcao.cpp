@@ -1,5 +1,6 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 
+#include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>

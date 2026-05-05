@@ -1,5 +1,6 @@
 #include "elecstate_tools.h"
 #include "occupy.h"
+#include "source_base/parallel_reduce.h"
 namespace elecstate
 {
     void calEBand(const ModuleBase::matrix& ekb,const ModuleBase::matrix& wg,fenergy& f_en)

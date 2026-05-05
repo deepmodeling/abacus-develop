@@ -1,6 +1,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 
 #include <base/macros/macros.h>
+#include "source_base/parallel_reduce.h"
 #include <thrust/complex.h>
 
 template <>

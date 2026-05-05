@@ -65,7 +65,6 @@ case "$with_libri" in
                 echo "$filename is found"
             else
                 # download from github.com and checksum
-                echo "===> Notice: This version of LibRI is downloaded in GitHub Release <==="
                 download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
             fi
             if [ "${PACK_RUN}" = "__TRUE__" ]; then

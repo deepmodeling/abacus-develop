@@ -3,7 +3,6 @@
 
 #include "ORB_atomic.h"
 #include "ORB_atomic_lm.h"
-#include "ORB_nonlocal.h"
 
 ////////////////////////////////////////////////////////////
 /// advices for reconstructions:

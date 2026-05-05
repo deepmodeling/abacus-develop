@@ -1,7 +1,7 @@
 #ifndef MODULE_HAMILT_EKINETIC_H
 #define MODULE_HAMILT_EKINETIC_H
 
-#include "source_psi/psi.h"
+#include "source_base/module_device/types.h"
 #include <complex>
 
 namespace hamilt {

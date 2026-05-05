@@ -1,6 +1,7 @@
 #include "read_pseudo.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_file.h"
+#include "source_cell/cal_atoms_info.h"
 #include "source_cell/read_pp.h"
 #include "source_cell/bcast_cell.h"
 #include "source_base/element_elec_config.h"

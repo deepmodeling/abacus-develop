@@ -7,7 +7,6 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_mulliken/output_dmk.h"
 #include "source_io/module_mulliken/output_sk.h"
-#include "source_base/formatter.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 
