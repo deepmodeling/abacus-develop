@@ -252,7 +252,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& ntype,
                     const int& wg_nc,
                     const int& ik,
-                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
@@ -264,7 +263,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
     {
 //	std::cout << " DFT+U kernel called " << std::endl;
         FPTYPE local_stress = 0;
-        int sum = 0;
+        int iat = 0, sum = 0;
         for (int it = 0; it < ntype; it++)
         {
             const int orbital_l = orbital_corr[it];
@@ -282,53 +281,35 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             {
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
-                    const int ib2 = ib*npol;
+                    const int ib2 = ib*2;
                     FPTYPE fac = d_wg[ik * wg_nc + ib];
-                    switch (npol)
+                    for (int ip1 = ip_begin; ip1 < ip_end; ip1++)
                     {
-                    case 1:
-                        for (int ip1 = ip_begin; ip1 < ip_end; ip1++)
+                        const int m1 = ip1 - ip_begin;
+                        const int inkb1 = ib2 * nkb + sum + ia * nproj + ip1;
+                        // out<<"\n ps = "<<ps;
+                        for (int ip2 = ip_begin; ip2 < ip_end; ip2++)
                         {
-                            const int m1 = ip1 - ip_begin;
-                            const int inkb1 = ib2 * nkb + sum + ia * nproj + ip1;
-                            for (int ip2 = ip_begin; ip2 < ip_end; ip2++)
+                            const int m2 = ip2 - ip_begin;
+                            std::complex<FPTYPE> ps[4];
+                            for(int i = 0; i < 4; i++)
                             {
-                                const int m2 = ip2 - ip_begin;
-                                const int inkb2 = ib2 * nkb + sum + ia * nproj + ip2;
-                                local_stress -= fac * (vu[m1 * tlp1 + m2] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
+                                ps[i] = vu[(i * tlp1_2 + m1 * tlp1 + m2)];
                             }
-                        } // end ip
-                        break;
-                    case 2:
-                        for (int ip1 = ip_begin; ip1 < ip_end; ip1++)
-                        {
-                            const int m1 = ip1 - ip_begin;
-                            const int inkb1 = ib2 * nkb + sum + ia * nproj + ip1;
-                            for (int ip2 = ip_begin; ip2 < ip_end; ip2++)
-                            {
-                                const int m2 = ip2 - ip_begin;
-                                std::complex<FPTYPE> ps[4];
-                                for(int i = 0; i < 4; i++)
-                                {
-                                    ps[i] = vu[(i * tlp1_2 + m1 * tlp1 + m2)];
-                                }
-                                const int inkb2 = ib2 * nkb + sum + ia * nproj + ip2;
+                            const int inkb2 = ib2 * nkb + sum + ia * nproj + ip2;
 
-                                const std::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb2];
-                                const std::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb2];
-                                const std::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb2];
-                                const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb2];
-                                local_stress -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
-                            }
-                        } // end ip
-                        break;
-                    default:
-                        break;
-                    }
+                            const std::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb2];
+                            const std::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb2];
+                            const std::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb2];
+                            const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb2];
+                            local_stress -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
+                        }
+                    } // end ip
                 }// ib
-                vu += npol * npol * tlp1_2;// step for vu
+                vu += 4 * tlp1_2;// step for vu
             }// ia
             sum += atom_na[it] * nproj;
+            iat += atom_na[it];
         } // end it
         *stress += local_stress;
     };
@@ -339,7 +320,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& ntype,
                     const int& wg_nc,
                     const int& ik,
-                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
@@ -356,43 +336,25 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             for (int ia = 0; ia < atom_na[it]; ia++)
             {
                 int iat = iat0 + ia;
-                if (npol == 2)
+                const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
+                const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+                for (int ib = 0; ib < nbands_occ; ib++)
                 {
-                    const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-                    const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
-                    for (int ib = 0; ib < nbands_occ; ib++)
+                    const int ib2 = ib*2;
+                    FPTYPE fac = d_wg[ik * wg_nc + ib];
+                    for (int ip = 0; ip < nproj; ip++)
                     {
-                        const int ib2 = ib * 2;
-                        FPTYPE fac = d_wg[ik * wg_nc + ib];
-                        for (int ip = 0; ip < nproj; ip++)
-                        {
-                            const int inkb1 = ib2 * nkb + sum + ia * nproj + ip;
+                        const int inkb1 = ib2 * nkb + sum + ia * nproj + ip;
 
-                            const std::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb1];
-                            const std::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb1];
-                            const std::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb1];
-                            const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb1];
-                            local_stress -= fac * (coefficients0 * dbb0 + coefficients1 * dbb2 + coefficients2 * dbb1 + coefficients3 * dbb3).real();
-                        } // end ip
-                    } // ib
-                }
-                else if (npol == 1)
-                {
-                    const FPTYPE coefficients0(lambda[iat*3+2]);
-                    for (int ib = 0; ib < nbands_occ; ib++)
-                    {
-                        FPTYPE fac = d_wg[ik * wg_nc + ib];
-                        for (int ip = 0; ip < nproj; ip++)
-                        {
-                            const int inkb = ib * nkb + sum + ia * nproj + ip;
-
-                            const FPTYPE dbb = (conj(dbecp[inkb]) * becp[inkb]).real();
-                            local_stress -= fac * coefficients0 * dbb;
-                        } // end ip
-                    } // ib
-                }
+                        const std::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb1];
+                        const std::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb1];
+                        const std::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb1];
+                        const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb1];
+                        local_stress -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
+                    } // end ip
+                }// ib
             }// ia
             sum += atom_na[it] * nproj;
             iat0 += atom_na[it];
