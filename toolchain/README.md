@@ -467,19 +467,6 @@ NPROCS_OVERWRITE=4 ./toolchain_gnu.sh --with-gcc --with-openmpi
 - **CI/CD environments**: Match container resource limits
 - **Debugging**: Use single-core compilation for clearer error messages
 
-### Legacy Script Options
-
-The deprecated `install_abacus_toolchain.sh` supports additional options:
-
-| Option | Description | Availability |
-|--------|-------------|--------------|
-| `--dry-run` | Test configuration without installation | ✅ New & Legacy |
-| `--pack-run` | Download packages without building | ✅ New & Legacy |
-| `--no-check-certificate` | Skip SSL certificate verification | ⚠️ Legacy only (use `DOWNLOAD_CERT_POLICY=skip`) |
-| `-j N` | Limit parallel compilation processes | ⚠️ Legacy only (use `NPROCS_OVERWRITE=N`) |
-
-> **Migration Note**: The new toolchain system (`toolchain_*.sh` scripts) is recommended over the legacy `install_abacus_toolchain.sh`. Legacy options like `--no-check-certificate` and `-j N` are replaced by environment variables `DOWNLOAD_CERT_POLICY` and `NPROCS_OVERWRITE` respectively.
-
 ### Environment Management
 
 The toolchain generates several setup files:
@@ -509,7 +496,6 @@ scripts/
 | File | Purpose |
 |------|---------|
 | `install_abacus_toolchain_new.sh` | Main orchestration script (new version) |
-| `install_abacus_toolchain.sh` | Legacy main script (deprecated) |
 | `toolchain_*.sh` | Frontend scripts for specific toolchains |
 | `scripts/lib/config_manager.sh` | Configuration management |
 | `scripts/lib/package_manager.sh` | Package installation logic |
