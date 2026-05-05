@@ -157,7 +157,7 @@ fi
 # echo "has_stress:"$has_stress
 #-------------------------------
 if ! test -z "$has_stress" && [  $has_stress == 1 ]; then
-    grep -A6 "TOTAL-STRESS" $running_path| awk '/^[[:space:]]*-?[0-9]/' | head -3> stress.txt
+    grep -A6 "TOTAL-STRESS" $running_path| awk '/^[[:space:]]*-?[0-9]/' | tail -3> stress.txt
 	total_stress=`sum_file stress.txt`
 	rm stress.txt
 	echo "totalstressref $total_stress" >>$1
