@@ -8,7 +8,7 @@ gamma_only    0
 noncolin    1
 #nbands    28
 scf_thr    1.0e-6
-scf_nmax    50
+scf_nmax    100
 out_chg    0
 smearing_method    gaussian
 smearing_sigma    0.01
@@ -31,7 +31,7 @@ nsc_min    2
 sc_scf_nmin    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    1e-3
+sc_scf_thr    1e-2
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB
