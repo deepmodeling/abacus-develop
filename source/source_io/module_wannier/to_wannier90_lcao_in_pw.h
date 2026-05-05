@@ -1,23 +1,15 @@
 #ifndef TO_WANNIER90_LCAO_IN_PW_H
 #define TO_WANNIER90_LCAO_IN_PW_H
 
-#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
-#include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_psi/psi.h"
-#include "../module_hs/single_R_io.h"
 #include "to_wannier90.h"
 #include "to_wannier90_pw.h"
 

@@ -5,7 +5,6 @@
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
-#include "matrix_methods.h"
 //#include "line_search.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"

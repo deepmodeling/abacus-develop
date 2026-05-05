@@ -1,5 +1,6 @@
 #include "hsolver_pw.h"
 
+#include "source_base/parallel_comm.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"

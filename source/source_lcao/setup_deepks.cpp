@@ -2,6 +2,12 @@
 
 #include "source_io/module_parameter/parameter.h" // use parameter
 #include "source_lcao/LCAO_domain.h"
+#ifdef __MLALGO
+#include "source_lcao/module_deepks/LCAO_deepks_io.h"
+#include "source_lcao/module_deepks/deepks_basic.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
+#include "source_lcao/module_deepks/deepks_phialpha.h"
+#endif
 
 template <typename TK>
 Setup_DeePKS<TK>::Setup_DeePKS()

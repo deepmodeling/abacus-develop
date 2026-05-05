@@ -14,7 +14,6 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "single_R_io.h"
 
 #include <map>
 #include <set>

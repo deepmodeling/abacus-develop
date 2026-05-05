@@ -1,4 +1,6 @@
 #include "parallel_device.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_device/types.h"
 #ifdef __MPI
 namespace Parallel_Common
 {

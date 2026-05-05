@@ -146,7 +146,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     -DCMAKE_C_FLAGS="-O3 -fopenmp" \
     -DCMAKE_CXX_FLAGS="-O3 -fopenmp" \
     -DXSDK_ENABLE_Fortran=ON \
-    -DCMAKE_Fortran_COMPILER=mpiifx && \
+    -DCMAKE_Fortran_COMPILER=mpiifx && \                             
     make -j$(nproc) && \
     make install && \
     cd / && rm -rf superlu_dist-${SUPERLU_DIST_VERSION} v${SUPERLU_DIST_VERSION}.tar.gz

@@ -5,7 +5,6 @@
 #include "LRI_CV.h"
 // #include "module_xc/exx_info.h"
 // #include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "source_base/matrix.h"
 #include "Exx_LRI.h"
 // #include "module_ri/Exx_LRI.h"
 // #include <RI/physics/Exx.h>

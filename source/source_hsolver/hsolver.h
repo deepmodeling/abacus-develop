@@ -1,9 +1,8 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
-
+#include <fstream>
+#include <string>
 
 namespace hsolver
 {

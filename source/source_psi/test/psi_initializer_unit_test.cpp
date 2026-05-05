@@ -10,6 +10,7 @@
 #include "../psi_init_random.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_cell/klist.h"
+#include "source_io/module_output/output.h"
 
 /*
 =========================

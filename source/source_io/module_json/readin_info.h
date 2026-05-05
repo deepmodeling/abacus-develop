@@ -1,8 +1,5 @@
 #ifndef READIN_INFO_H
 #define READIN_INFO_H
-#include "source_cell/module_symmetry/symmetry.h"
-#include "source_cell/atom_spec.h"
-#include "source_cell/unitcell.h"
 
 
 

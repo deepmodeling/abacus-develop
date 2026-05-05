@@ -6,6 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
+#include "source_io/module_output/output.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/memory.h"
@@ -216,8 +217,14 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     int npwx = this->wfcpw->npwk_max;
     if (nkb > 0 && allocate_vkb)
     {
+if (!this->use_gpu_)
+    {
         vkb.create(nkb, npwx);
         ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
+        }
+        // GPU path: vkb ComplexMatrix is not allocated.
+        // Column dimension is stored in vkbnc for gemm/gemv leading dimension.
+        // Actual GPU buffers (c_vkb/z_vkb) are allocated below.
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90

@@ -11,7 +11,7 @@
 #include "source_base/element_basis_index.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/module_xc/exx_info.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 
 #include <RI/global/Tensor.h>
 #include <array>

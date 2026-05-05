@@ -2,14 +2,11 @@
 #define UNITCELL_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
-#include "source_io/module_output/output.h"
 #include "module_symmetry/symmetry.h"
 
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
 

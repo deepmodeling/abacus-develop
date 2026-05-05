@@ -2,7 +2,6 @@
 #define FORCES_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_basis/module_pw/pw_basis_k.h"
@@ -10,11 +9,12 @@
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
-#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
 #include "structure_factor.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+
+class pseudopot_cell_vnl;
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces

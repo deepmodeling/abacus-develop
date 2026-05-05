@@ -1,4 +1,5 @@
 #include "forces.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"
