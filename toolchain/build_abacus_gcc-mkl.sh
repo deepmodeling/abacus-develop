@@ -22,13 +22,12 @@ BUILD_DIR=build_abacus_gcc_mkl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2025.06.001/cpu
-# ELPA=$INSTALL_DIR/elpa-2025.06.001/nvidia # for elpa-gpu
-CEREAL=$INSTALL_DIR/cereal-master/include/cereal
-LIBXC=$INSTALL_DIR/libxc-7.0.0
-RAPIDJSON=$INSTALL_DIR/rapidjson-master
-LIBRI=$INSTALL_DIR/LibRI-master
-LIBCOMM=$INSTALL_DIR/LibComm-master
+ELPA=${ELPA_ROOT}
+CEREAL=${CEREAL_ROOT}/include
+LIBXC=${LIBXC_ROOT}
+RAPIDJSON=${RAPIDJSON_ROOT}
+LIBRI=${LIBRI_ROOT}
+LIBCOMM=${LIBCOMM_ROOT}
 USE_CUDA=OFF  # set ON to enable gpu-abacus
 # NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch

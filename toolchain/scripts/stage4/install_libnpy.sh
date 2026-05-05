@@ -71,7 +71,7 @@ case "$with_libnpy" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
+        LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBNPY from system paths ===================="
@@ -99,7 +99,7 @@ case "$with_libnpy" in
         echo "==================== Linking LIBNPY to user paths ===================="
         pkg_install_dir="${with_libnpy}"
         check_dir "${pkg_install_dir}"
-        LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
+        LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_libnpy" != "__DONTUSE__" ]; then

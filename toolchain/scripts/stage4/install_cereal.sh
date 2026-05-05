@@ -77,7 +77,7 @@ case "$with_cereal" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        CEREAL_CFLAGS="-I'${pkg_install_dir}'"
+        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding CEREAL from system paths ===================="
@@ -105,7 +105,7 @@ case "$with_cereal" in
         echo "==================== Linking CEREAL to user paths ===================="
         pkg_install_dir="${with_cereal}"
         check_dir "${pkg_install_dir}"
-        CEREAL_CFLAGS="-I'${pkg_install_dir}'"
+        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then

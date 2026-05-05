@@ -79,7 +79,7 @@ case "$with_libcomm" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBCOMM from system paths ===================="
@@ -107,7 +107,7 @@ case "$with_libcomm" in
         echo "==================== Linking LIBCOMM to user paths ===================="
         pkg_install_dir="${with_libcomm}"
         check_dir "${pkg_install_dir}"
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_libcomm" != "__DONTUSE__" ]; then
