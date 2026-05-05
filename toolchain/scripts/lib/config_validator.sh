@@ -404,6 +404,22 @@ validate_system_requirements() {
                 "This will install GCC ${gcc_ver:-13.2.0} (>= $gcc_min_version.x) with full C++17/C++20 support."
             return
         fi
+
+        local cuda_major=""
+        if command -v nvidia-smi &> /dev/null; then
+            local nvidia_banner=$(nvidia-smi 2>/dev/null | head -n 3 | tr '\n' ' ')
+            local cuda_version=$(echo "$nvidia_banner" | sed -n 's/.*CUDA Version:[[:space:]]*\([0-9.]*\).*/\1/p')
+            cuda_major=$(echo "$cuda_version" | awk -F. '{print $1}')
+        fi
+        if [[ "$gcc_major" -ge 14 ]] && [[ -n "$cuda_major" ]] && [[ "$cuda_major" =~ ^[0-9]+$ ]] && [[ "$cuda_major" -lt 13 ]]; then
+            add_validation_warning_group "gcc_cuda_compat_risk" \
+                "Potential GCC/CUDA incompatibility risk detected:" \
+                "  gcc:  $gcc_version (>= 14)" \
+                "  cuda: $cuda_major.x (< 13, from nvidia-smi)" \
+                "" \
+                "This combination may cause CUDA-related compilation failures." \
+                "Consider upgrading CUDA (>= 13) or using a compatible GCC toolchain."
+        fi
         
         # Success - add informational message
         add_validation_info "System GCC toolchain validated: version $gcc_version (>= $gcc_min_version.x required)"
