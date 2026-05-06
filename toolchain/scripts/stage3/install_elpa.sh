@@ -74,11 +74,7 @@ case "$with_elpa" in
         else
             require_env MATH_LIBS
             url="https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
-            if [ -f ${elpa_pkg} ]; then
-                echo "${elpa_pkg} is found"
-            else
-                download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
-            fi
+            retrieve_package "${elpa_sha256}" "${elpa_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0

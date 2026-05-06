@@ -50,12 +50,7 @@ case "${with_mpich}" in
         if verify_checksums "${install_lock_file}"; then
             echo "mpich-${mpich_ver} is already installed, skipping it."
         else
-            if [ -f ${mpich_pkg} ]; then
-                echo "${mpich_pkg} is found"
-            else
-                #download_pkg_from_ABACUS_org "${mpich_sha256}" "${mpich_pkg}"
-                download_pkg_from_url "${mpich_sha256}" "${mpich_pkg}" "${url}"
-            fi
+            retrieve_package "${mpich_sha256}" "${mpich_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0

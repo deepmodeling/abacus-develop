@@ -50,13 +50,8 @@ case "${with_openblas}" in
         if verify_checksums "${install_lock_file}"; then
             echo "openblas-${openblas_ver} is already installed, skipping it."
         else
-            if [ -f ${openblas_pkg} ]; then
-                echo "${openblas_pkg} is found"
-            else
-                # using codeload.github
-                url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
-                download_pkg_from_url "${openblas_sha256}" "${openblas_pkg}" "${url}"
-            fi
+            url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
+            retrieve_package "${openblas_sha256}" "${openblas_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0

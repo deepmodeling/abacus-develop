@@ -871,13 +871,7 @@ checksum() {
   # sha256sum, but has an equivalent with shasum -a 256
   command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
-  if echo "$__sha256  $__filename" | ${__shasum_command} --check; then
-    echo "Checksum of $__filename Ok"
-  else
-    rm -v ${__filename}
-    report_error "Checksum of $__filename could not be verified, abort."
-    return 1
-  fi
+  echo "$__sha256  $__filename" | ${__shasum_command} --check
 }
 
 # Enhanced checksum verification with multiple hash algorithms
@@ -942,8 +936,6 @@ download_pkg_from_org() {
         return 1
     fi
   fi
-  # checksum
-  checksum "$__filename" "$__sha256"
 }
 
 download_pkg_from_url() {
@@ -997,9 +989,34 @@ download_pkg_from_url() {
       ;;
   esac
   
-  # checksum validation (unchanged)
-  if [ "$__sha256" != "--no-checksum" ]; then
-    checksum "$__filename" "$__sha256"
+  # checksum
+  if checksum "$__filename" "$__sha256"; then
+    echo "Checksum of $__filename OK"
+  else
+    rm -vf "${__filename}"
+    report_error "Checksum of $__filename could not be verified, abort."
+    return 1
+  fi
+}
+
+# retrieve package under current directory with filename and checksum verification
+# if file exists and checksum is correct, only print a message
+# if file exists but checksum is incorrect, delete and re-download from cp2k.org
+# if file does not exist, download from cp2k.org
+retrieve_package() {
+  local __sha256="$1"
+  local __filename="$2"
+  local __url="$3"
+  if ! [ -f "${__filename}" ]; then
+    download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+  else
+    if ! checksum "$__filename" "$__sha256"; then
+      echo "$__filename is found but checksum is wrong; delete and re-download"
+      rm -vf "${__filename}"
+      download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+    else
+      echo "$__filename is found and checksum is right"
+    fi
   fi
 }
 

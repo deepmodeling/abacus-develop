@@ -58,12 +58,7 @@ case "$with_cereal" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${cereal_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0

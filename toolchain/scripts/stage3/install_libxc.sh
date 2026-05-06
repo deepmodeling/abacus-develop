@@ -51,13 +51,8 @@ case "$with_libxc" in
         if verify_checksums "${install_lock_file}"; then
             echo "libxc-${libxc_ver} is already installed, skipping it."
         else
-            if [ -f ${libxc_pkg} ]; then
-                echo "${libxc_pkg} is found"
-            else
-                #download_pkg_from_ABACUS_org "${libxc_sha256}" "${libxc_pkg}"
-                libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
-                download_pkg_from_url  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
-            fi
+            libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
+            retrieve_package  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0

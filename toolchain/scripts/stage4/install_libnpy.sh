@@ -54,12 +54,7 @@ case "$with_libnpy" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${libnpy_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
