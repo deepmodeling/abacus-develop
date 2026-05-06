@@ -270,7 +270,7 @@ __global__ void cal_force_nl(
                     const thrust::complex<FPTYPE> dbb1 = conj(dbecp[index0]) * becp[index1 + nkb];
                     const thrust::complex<FPTYPE> dbb2 = conj(dbecp[index0 + nkb]) * becp[index1];
                     const thrust::complex<FPTYPE> dbb3 = conj(dbecp[index0 + nkb]) * becp[index1 + nkb];
-                    const FPTYPE tmp = - fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
+                    const FPTYPE tmp = - fac * (ps0 * dbb0 + ps1 * dbb2 + ps2 * dbb1 + ps3 * dbb3).real();
                     atomicAdd(force + iat * forcenl_nc + ipol, tmp);
                 }
             }
@@ -375,7 +375,7 @@ __global__ void cal_force_onsite(int wg_nc,
                 const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb0]) * becp[inkb2 + nkb];
                 const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb0 + nkb]) * becp[inkb2];
                 const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb0 + nkb]) * becp[inkb2 + nkb];
-                const FPTYPE tmp = -fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
+                const FPTYPE tmp = -fac * (ps[0] * dbb0 + ps[1] * dbb2 + ps[2] * dbb1 + ps[3] * dbb3).real();
                 atomicAdd(force + iat * forcenl_nc + ipol, tmp);
             }
         }
@@ -454,6 +454,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const int& nbands,
                                                                   const int& ik,
                                                                   const int& nkb,
+                                                                  const int& npol,
                                                                   const int* atom_nh,
                                                                   const int* atom_na,
                                                                   const FPTYPE& tpiba,
@@ -493,6 +494,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const int& nbands,
                                                                   const int& ik,
                                                                   const int& nkb,
+                                                                  const int& npol,
                                                                   const int* atom_nh,
                                                                   const int* atom_na,
                                                                   const FPTYPE& tpiba,
