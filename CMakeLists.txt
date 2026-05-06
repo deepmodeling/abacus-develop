@@ -51,6 +51,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
+option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
@@ -450,6 +451,15 @@ if(USE_CUDA)
     endif()
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
+    endif()
+    if (ENABLE_NCCL_PARALLEL_DEVICE)
+      if (NOT ENABLE_MPI)
+        message(FATAL_ERROR
+          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
+      endif()
+      add_compile_definitions(__NCCL_PARALLEL_DEVICE)
+      include(cmake/SetupNccl.cmake)
+      abacus_setup_nccl(${ABACUS_BIN_NAME})
     endif()
     if (ENABLE_CUSOLVERMP)
       # Keep cuSOLVERMp discovery/linking logic in a dedicated module.

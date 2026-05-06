@@ -609,12 +609,16 @@ config_export_to_env() {
     
     # Export all configuration values as environment variables
     for key in "${!CONFIG_CACHE[@]}"; do
-        export "$key"="${CONFIG_CACHE[$key]}"
+        case "$key" in
+            enable_*) ;;
+            *) export "$key"="${CONFIG_CACHE[$key]}" ;;
+        esac
     done
 
-    # Backward compatibility for stage scripts expecting uppercase GPU flags
-    # Installers (e.g., stage3/install_elpa.sh) read ENABLE_CUDA, not enable_cuda
     export ENABLE_CUDA="${CONFIG_CACHE[enable_cuda]}"
+    export ENABLE_HIP="${CONFIG_CACHE[enable_hip]}"
+    export ENABLE_OPENCL="${CONFIG_CACHE[enable_opencl]}"
+    export ENABLE_CRAY="${CONFIG_CACHE[enable_cray]:-"__FALSE__"}"
     
     # Export package list variables
     export tool_list

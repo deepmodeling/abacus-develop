@@ -30,8 +30,13 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "cereal" "$version_suffix"
-dirname="cereal-${cereal_ver}"
-filename="cereal-${cereal_ver}.tar.gz"
+if [[ "${cereal_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+    short_ver="${cereal_ver:0:7}"
+else
+    short_ver="${cereal_ver}"
+fi
+dirname="cereal-${short_ver}"
+filename="cereal-${short_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -77,7 +82,7 @@ case "$with_cereal" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        CEREAL_CFLAGS="-I'${pkg_install_dir}'"
+        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding CEREAL from system paths ===================="
@@ -105,7 +110,7 @@ case "$with_cereal" in
         echo "==================== Linking CEREAL to user paths ===================="
         pkg_install_dir="${with_cereal}"
         check_dir "${pkg_install_dir}"
-        CEREAL_CFLAGS="-I'${pkg_install_dir}'"
+        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
