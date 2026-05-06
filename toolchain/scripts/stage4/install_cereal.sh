@@ -50,7 +50,7 @@ case "$with_cereal" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${cereal_ver}" =~ ^[0-9a-f]{7}$ ]]; then
+        if [[ "${cereal_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
         else
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"

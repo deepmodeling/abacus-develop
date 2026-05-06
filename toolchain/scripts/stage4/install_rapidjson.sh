@@ -44,19 +44,19 @@ cd "${BUILDDIR}"
 case "$with_rapidjson" in
     __INSTALL__)
         echo "==================== Installing RapidJSON ===================="
-        dirname="rapidjson-${short_ver}"
+        dirname="rapidjson-${rapidjson_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/rapidjson/${rapidjson_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${rapidjson_ver}" =~ ^[0-9a-f]{7}$ ]]; then
+        if [[ "${rapidjson_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/Tencent/rapidjson/tar.gz/${rapidjson_ver}"
         else
             url="https://codeload.github.com/Tencent/rapidjson/tar.gz/v${rapidjson_ver}"
         fi
-        filename="rapidjson-${short_ver}.tar.gz"
+        filename="rapidjson-${rapidjson_ver}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else

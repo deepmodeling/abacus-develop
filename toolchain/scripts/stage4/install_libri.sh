@@ -45,19 +45,19 @@ cd "${BUILDDIR}"
 case "$with_libri" in
     __INSTALL__)
         echo "==================== Installing LIBRI ===================="
-        dirname="LibRI-${short_ver}"
+        dirname="LibRI-${libri_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${libri_ver}" =~ ^[0-9a-f]{7}$ ]]; then
+        if [[ "${libri_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${libri_ver}"
         else
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/v${libri_ver}"
         fi
-        filename="LibRI-${short_ver}.tar.gz"
+        filename="LibRI-${libri_ver}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
