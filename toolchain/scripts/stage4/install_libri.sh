@@ -34,11 +34,6 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libri" "$version_suffix"
-if [[ "${libri_ver}" =~ ^[0-9a-f]{40}$ ]]; then
-    short_ver="${libri_ver:0:7}"
-else
-    short_ver="${libri_ver}"
-fi
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 

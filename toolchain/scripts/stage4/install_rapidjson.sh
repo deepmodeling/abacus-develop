@@ -32,11 +32,6 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "rapidjson" "$version_suffix"
-if [[ "${rapidjson_ver}" =~ ^[0-9a-f]{40}$ ]]; then
-    short_ver="${rapidjson_ver:0:7}"
-else
-    short_ver="${rapidjson_ver}"
-fi
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
