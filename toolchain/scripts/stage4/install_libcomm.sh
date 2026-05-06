@@ -54,7 +54,7 @@ case "$with_libcomm" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${libcomm_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+        if [[ "${libcomm_ver}" =~ ^[0-9a-f]{7}$ ]]; then
             url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/${libcomm_ver}"
         else
             url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/v${libcomm_ver}"
