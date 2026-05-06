@@ -927,7 +927,7 @@ download_pkg_from_url() {
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
     "strict")
       echo "Downloading with strict certificate validation: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         rm -f "$__filename"
         report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
@@ -938,7 +938,7 @@ download_pkg_from_url() {
       ;;
     "skip")
       echo "Downloading with certificate validation disabled: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
         rm -f "$__filename"
         report_error "failed to download $__url"
         recommend_offline_installation "$__filename" "$__url"
@@ -950,7 +950,7 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
@@ -979,8 +979,8 @@ download_pkg_from_url() {
 }
 
 # retrieve package under current directory with filename and checksum verification
-# if file exists and checksum is correct, only print the success message
-# if file exists but checksum is incorrect, delete and re-download from cp2k.org
+# if file exists and checksum is correct, print the success message
+# if file exists but checksum is incorrect, delete and re-download
 # if file does not exist, download from corresponding websites
 retrieve_package() {
   local __sha256="$1"
