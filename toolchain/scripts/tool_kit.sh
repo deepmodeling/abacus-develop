@@ -917,27 +917,6 @@ verify_file_integrity() {
   fi
 }
 
-# downloader for the package tars, includes checksum
-# backup and deprecated
-download_pkg_from_org() {
-  # usage: download_pkg_from_org sha256 filename
-  echo "use cp2k mirror to download $__filename"
-  local __sha256="$1"
-  local __filename="$2"
-  local __url="https://www.cp2k.org/static/downloads/$__filename"
-  # download
-  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
-  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url"
-  if ! wget ${DOWNLOADER_FLAGS} $__url; then
-    report_error "failed to download $__url"
-    recommend_offline_installation $__filename $__url
-    if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-    fi
-  fi
-}
-
 download_pkg_from_url() {
   # usage: download_pkg_from_url sha256 filename url
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
@@ -1000,9 +979,9 @@ download_pkg_from_url() {
 }
 
 # retrieve package under current directory with filename and checksum verification
-# if file exists and checksum is correct, only print a message
+# if file exists and checksum is correct, only print the success message
 # if file exists but checksum is incorrect, delete and re-download from cp2k.org
-# if file does not exist, download from cp2k.org
+# if file does not exist, download from corresponding websites
 retrieve_package() {
   local __sha256="$1"
   local __filename="$2"
