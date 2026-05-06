@@ -1,6 +1,7 @@
 #include "pw_basis_k.h"
 
 #include "source_base/constants.h"
+#include "source_base/global_variable.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
@@ -215,6 +216,7 @@ void PW_Basis_K::setuptransform()
     std::string fft_device = this->device;
 #if defined(__DSP)
     fft_device = "dsp";
+    this->fft_bundle.set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
     this->fft_bundle.setfft(fft_device, this->precision);
     if (this->xprime)
