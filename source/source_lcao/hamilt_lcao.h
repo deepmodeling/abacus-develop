@@ -3,7 +3,6 @@
 
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"

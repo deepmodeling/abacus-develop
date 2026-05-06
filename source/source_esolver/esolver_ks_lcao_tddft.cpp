@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
 #include "source_io/module_ctrl/ctrl_output_td.h"

@@ -1,4 +1,15 @@
 #include "LCAO_deepks_test.h"
+#include "source_lcao/module_deepks/deepks_check.h"
+#include "source_lcao/module_deepks/deepks_descriptor.h"
+#include "source_lcao/module_deepks/deepks_force.h"
+#include "source_lcao/module_deepks/deepks_fpre.h"
+#include "source_lcao/module_deepks/deepks_orbpre.h"
+#include "source_lcao/module_deepks/deepks_orbital.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
+#include "source_lcao/module_deepks/deepks_phialpha.h"
+#include "source_lcao/module_deepks/deepks_spre.h"
+#include "source_lcao/module_deepks/deepks_vdpre.h"
+#include "source_lcao/module_deepks/deepks_vdrpre.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 

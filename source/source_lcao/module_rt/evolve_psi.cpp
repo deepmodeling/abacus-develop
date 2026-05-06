@@ -87,14 +87,14 @@ void evolve_psi(const int nband,
     {
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
-        /// @output psi_k        
+        /// @output psi_k
         if (use_td_moving_gauge)
         {
             solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, P_k, psi_k_laststep, psi_k);
         }
         else
         {
-            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+        solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
         }
     }
 

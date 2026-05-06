@@ -2,8 +2,6 @@
 #define __PARALLEL_DEVICE_H__
 #ifdef __MPI
 #include "mpi.h"
-#include "source_base/module_device/device.h"
-#include "source_base/module_device/memory_op.h"
 #include <complex>
 namespace Parallel_Common
 {

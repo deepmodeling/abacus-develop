@@ -3,8 +3,6 @@
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_lcao/module_rt/boundary_fix.h"
-#include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/td_moving_gauge.h"

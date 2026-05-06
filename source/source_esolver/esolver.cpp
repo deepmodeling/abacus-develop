@@ -12,10 +12,7 @@
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
 #include "source_lcao/module_lr/esolver_lrtd_lcao.h"
-extern "C"
-{
 #include "source_base/module_external/blacs_connector.h"
-}
 #endif
 #include "esolver_dp.h"
 #include "esolver_nep.h"

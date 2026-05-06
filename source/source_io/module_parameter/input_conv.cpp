@@ -7,6 +7,7 @@
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"

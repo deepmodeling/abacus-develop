@@ -1,5 +1,7 @@
 #include "kedf_manager.h"
 
+#include "source_io/module_parameter/parameter.h"
+
 /**
  * @brief [Interface to kedf]
  * Initialize the KEDFs.
