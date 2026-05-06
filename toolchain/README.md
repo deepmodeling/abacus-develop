@@ -145,6 +145,17 @@ mkdir build
 ./toolchain_gnu.sh
 ```
 
+The downloading process can be facilitated via `./toolchain_gnu.sh --pack-run`.
+
+Also, for users in China, we provide a Gitee mirror repository with pre-downloaded packages:
+```bash
+# Clone the Gitee repository in toolchain directory
+git clone https://gitee.com/jamesmisaka/abacus_toolchain_build.git
+# Move packages to build directory
+mv abacus_toolchain_build/* build/
+# Then run toolchain normally
+```
+
 ### Hybrid Installation
 
 Mix online and offline packages as needed - the toolchain automatically detects locally available packages and downloads missing ones.
