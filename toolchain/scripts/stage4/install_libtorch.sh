@@ -116,7 +116,6 @@ export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
 export CP_LIBS="\${CP_LIBS} -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch"
 EOF
-        cat "${BUILDDIR}/setup_libtorch" >> "${SETUPFILE}"
         cat << EOF >> "${BUILDDIR}/setup_libtorch"
 export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
 export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"

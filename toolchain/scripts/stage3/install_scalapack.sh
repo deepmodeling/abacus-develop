@@ -115,7 +115,6 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-        cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_scalapack"
 export SCALAPACK_ROOT="${pkg_install_dir}"
@@ -125,6 +124,7 @@ export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__SCALAPACK|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${SCALAPACK_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(-lscalapack|) \${CP_LIBS}"
 EOF
+    cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

@@ -102,12 +102,12 @@ if [ "$with_libnpy" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libnpy"
 export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
 export LIBNPY_ROOT="${pkg_install_dir}"
 EOF
+    cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libnpy"

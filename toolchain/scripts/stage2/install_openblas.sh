@@ -172,7 +172,6 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_openblas" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_openblas"
 export OPENBLAS_ROOT="${pkg_install_dir}"
@@ -185,6 +184,7 @@ export MATH_LIBS="\${MATH_LIBS} ${OPENBLAS_LIBS}"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
+    cat "${BUILDDIR}/setup_openblas" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_openblas"

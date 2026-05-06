@@ -109,12 +109,12 @@ if [ "$with_libri" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libri"
 export LIBRI_CFLAGS="${LIBRI_CFLAGS}"
 export LIBRI_ROOT="${pkg_install_dir}"
 EOF
+    cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libri"

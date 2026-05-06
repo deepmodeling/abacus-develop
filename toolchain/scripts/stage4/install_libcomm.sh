@@ -110,12 +110,12 @@ if [ "$with_libcomm" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libcomm"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libcomm"
 export LIBCOMM_CFLAGS="${LIBCOMM_CFLAGS}"
 export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
+    cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libcomm"
