@@ -115,8 +115,8 @@ std::string determine_type()
             c = std::toupper(c);
         }
     }
-    base_device::information::output_device_info(std::cout);
-    base_device::information::output_device_info(GlobalV::ofs_running);
+    base_device::information::output_device_info(std::cout, PARAM.inp.device);
+    base_device::information::output_device_info(GlobalV::ofs_running, PARAM.inp.device);
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/

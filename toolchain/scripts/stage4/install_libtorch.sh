@@ -53,13 +53,8 @@ case "${with_libtorch}" in
         if verify_checksums "${install_lock_file}"; then
             echo "${dirname} is already installed, skipping it."
         else
-            if [ -f ${filename} ]; then
-                echo "${filename} is found"
-            else
-                # download from pytorch.com and checksum
-                url=https://download.pytorch.org/libtorch/cpu/${archive_file}
-                download_pkg_from_url "${libtorch_sha256}" "${filename}" "${url}"
-            fi
+            url=https://download.pytorch.org/libtorch/cpu/${archive_file}
+            retrieve_package "${libtorch_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -121,7 +116,6 @@ export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
 export CP_LIBS="\${CP_LIBS} -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch"
 EOF
-        cat "${BUILDDIR}/setup_libtorch" >> "${SETUPFILE}"
         cat << EOF >> "${BUILDDIR}/setup_libtorch"
 export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
 export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"

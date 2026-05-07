@@ -37,11 +37,7 @@ case "$with_nep" in
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
-        if [ -f $filename ]; then
-            echo "$filename is found"
-        else
-            download_pkg_from_url "${nep_sha256}" "${filename}" "${url}"
-        fi
+        retrieve_package "${nep_sha256}" "${filename}" "${url}"
 
         if [ "${PACK_RUN}" = "__TRUE__" ]; then
             echo "--pack-run mode specified, skip installation"
@@ -130,7 +126,6 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-    cat "${BUILDDIR}/setup_nep" >> $SETUPFILE
   fi
   cat << EOF >> "${BUILDDIR}/setup_nep"
 export NEP_CFLAGS="${NEP_CFLAGS}"
@@ -142,6 +137,7 @@ export CP_LDFLAGS="\${CP_LDFLAGS} \${NEP_LDFLAGS}"
 export CP_LIBS="\${NEP_LIBS} \${CP_LIBS}"
 export NEP_ROOT="${pkg_install_dir}"
 EOF
+  cat "${BUILDDIR}/setup_nep" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_nep"

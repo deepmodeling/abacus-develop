@@ -18,12 +18,12 @@ gcc_alt_sha256="af828619dd1970734dda3cfb792ea3f2cba61b5a00170ba8bce4910749d73c07
 
 # CMake (supports dual versions) - main=3.31.7, alt=3.30.5
 cmake_main_ver="3.31.7"
-cmake_main_sha256_x86_64="b7a5c909cdafc36042c8c9bd5765e92ff1f2528cf01720aa6dc4df294ec7e1a0"
-cmake_main_sha256_aarch64="ce8e32b2c1c497dd7f619124c043ac5c28a88677e390c58748dd62fe460c62a2"
+cmake_main_sha256_x86_64="14e15d0b445dbeac686acc13fe13b3135e8307f69ccf4c5c91403996ce5aa2d4"
+cmake_main_sha256_aarch64="e5b2dc2aefdca10afe09c8fa4ee2bbb4e732665943a94322f99c118781910c3c"
 cmake_main_sha256_macos="1cb11aa2edae8551bb0f22807c6f5246bd0eb60ae9fa1474781eb4095d299aca"
 cmake_alt_ver="3.30.5"
-cmake_alt_sha256_x86_64="83de8839f3fb0d9caf982a0435da3fa8c4fbe2c817dfec99def310dc7e6a8404"
-cmake_alt_sha256_aarch64="93c3b8920379585dece1314f113c6c9008eaedfe56023c78d856fc86dad5b8e2"
+cmake_alt_sha256_x86_64="f747d9b23e1a252a8beafb4ed2bc2ddf78cff7f04a8e4de19f4ff88e9b51dc9d"
+cmake_alt_sha256_aarch64="da7dead2c92c1747b40d506d7f7d68590f5bab175316d2e7af73e48a2e417e48"
 cmake_alt_sha256_macos="3d603e507c7579b13518ef752b4ffcf3ed479fba80ee171d7d85da8153e869d0"
 
 # =============================================================================
@@ -100,21 +100,21 @@ libnpy_alt_ver="1.0.1"
 libnpy_alt_sha256="43452a4db1e8c1df606c64376ea1e32789124051d7640e7e4e8518ab4f0fba44"
 
 # Branch packages cut with specific commits
-cereal_ver="22a1b369f39be918ca79206a83c4facd759f9105"
-cereal_sha256="ca3d544456f93ea3176eab85e2e7892063af45b20467bb4ad9c1c51068e521c6"
+cereal_ver="22a1b36"
+cereal_sha256="a8171736e6b553dd6cd37919c13433b01f499d24d45af502975a9439728803e0"
 
-libcomm_ver="965bf90713ce5598bae4fd957d417065f77ceb42"
-libcomm_sha256="1d1626b833c51efa7ab844af140e022e063ea64389c9e47b168c24fcc05b7323"
+libcomm_ver="965bf90"
+libcomm_sha256="d7b991465d98d7b715b484d86880bf3525b9bf0cc62c3e5d38b0f6d140f6b9d4"
 
-libri_ver="e6d78e0504693d2a464c72b87d3240ce183fd881"
-libri_sha256="ead14f05b645f3d028e09f715abaa0e8fca3d1d6d61804239c4858b33397286a"
+libri_ver="e6d78e0"
+libri_sha256="619b49a14047d7a167515d1f1d0fa2d82fbebd63b8cbd3181e07df6ed993a22c"
 
-rapidjson_ver="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
-rapidjson_sha256="2d2601a82d2d3b7e143a3c8d43ef616671391034bc46891a9816b79cf2d3e7a8"
+rapidjson_ver="24b5e7a"
+rapidjson_sha256="dcb57b11036cb8fc6b2a57a6aded68d52e9cfe543811bf4fa8941087f84e72d0"
 
 # NEP (Neural Evolution Potential) - CPU version
-nep_ver="629ec5dda3127e046fde3f8082aedfca8deb915e"
-nep_sha256="57803d2e98ca5c8ced09e3e8d21ac1a0dbd61dda1977997864195f8c54b9b1f9"
+nep_ver="629ec5d"
+nep_sha256="4d4d3c64211a2a39e5d5c795b77befbba987cc809786e0cd6abfa46d0f3bf8cb"
 
 # =============================================================================
 # Package Variable Loading Function

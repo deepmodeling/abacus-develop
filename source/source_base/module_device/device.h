@@ -31,8 +31,10 @@ int get_device_num(std::string device_flag);
 /**
  * @brief Output the device information
  * for source_esolver
+ * @param output  output stream.
+ * @param device  device flag, "cpu" / "gpu" / "dsp".
  */
-void output_device_info(std::ostream& output);
+void output_device_info(std::ostream& output, const std::string& device);
 
 /**
  * @brief Safely probes for GPU availability without exiting on error.

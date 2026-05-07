@@ -19,6 +19,7 @@
 
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/parallel_comm.h"
 #endif
 
 using namespace hsolver;
@@ -583,62 +584,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         // Only on dsp hardware need an extra space to reduce data
         mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
-        auto* swap = new T[notconv * this->nbase_x];
-
-        syncmem_complex_op()(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-        if (std::is_same<T, double>::value)
-        {
-            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-            Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
-        }
-        else
-        {
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-
-            syncmem_complex_op()(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-        }
-        delete[] swap;
+        assert(this->diag_comm.comm == POOL_WORLD);
+        Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+        Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
 #endif
     }
 #endif

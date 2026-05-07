@@ -1,5 +1,6 @@
 #include"source_hsolver/diago_david.h"
 #include"source_hsolver/diago_iter_assist.h"
+#include "source_base/parallel_comm.h"
 #include"source_pw/module_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "source_psi/psi.h"
@@ -84,7 +85,7 @@ public:
         phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
-        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
+        const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};
 #else
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif

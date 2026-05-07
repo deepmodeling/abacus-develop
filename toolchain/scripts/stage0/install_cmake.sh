@@ -71,11 +71,9 @@ cd "${BUILDDIR}"
 case "${with_cmake}" in
     __INSTALL__)
         echo "==================== Installing CMake ===================="
-        cmake_ext="sh"
         if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
             if [ "$(uname -s)" = "Darwin" ]; then
                 cmake_arch="macos-universal"
-                cmake_ext="tar.gz"
             elif [ "$(uname -s)" = "Linux" ]; then
                 cmake_arch="linux-aarch64"
             else
@@ -92,17 +90,12 @@ case "${with_cmake}" in
         pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
         #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
-        cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.${cmake_ext}"
+        cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "cmake-${cmake_ver} is already installed, skipping it."
         else
-            if [ -f $cmake_pkg ]; then
-                echo "$cmake_pkg is found"
-            else
-                #download_pkg_from_ABACUS_org "${cmake_sha256}" "$cmake_pkg"
-                url="https://cmake.org/files/v${cmake_ver%.*}/${cmake_pkg}"
-                download_pkg_from_url "${cmake_sha256}" "${cmake_pkg}" "${url}"
-            fi
+            url="https://cmake.org/files/v${cmake_ver%.*}/${cmake_pkg}"
+            retrieve_package "${cmake_sha256}" "${cmake_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -110,10 +103,11 @@ case "${with_cmake}" in
             echo "Installing from scratch into ${pkg_install_dir}"
             mkdir -p ${pkg_install_dir}
             if [ "${cmake_arch}" = "macos-universal" ]; then
-                tar --strip-components=3 -xvf $cmake_pkg -C ${pkg_install_dir} > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+                strip_components=3
             else
-                /bin/sh $cmake_pkg --prefix=${pkg_install_dir} --skip-license > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+                strip_components=1
             fi
+            tar --strip-components=${strip_components} -xvf ${cmake_pkg} -C ${pkg_install_dir} > install.log 2>&1 || tail_excerpt install.log
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
         fi
         ;;
