@@ -481,6 +481,11 @@ config_validate() {
         CONFIG_CACHE["ARCH_NUM"]="no"
     fi
     
+    # Backward compatibility: also export ARCH_NUM to environment when set
+    if [[ -n "${CONFIG_CACHE[ARCH_NUM]}" ]]; then
+        export ARCH_NUM="${CONFIG_CACHE[ARCH_NUM]}"
+    fi
+    
     return 0
 }
 
@@ -606,6 +611,10 @@ config_export_to_env() {
     for key in "${!CONFIG_CACHE[@]}"; do
         export "$key"="${CONFIG_CACHE[$key]}"
     done
+
+    # Backward compatibility for stage scripts expecting uppercase GPU flags
+    # Installers (e.g., stage3/install_elpa.sh) read ENABLE_CUDA, not enable_cuda
+    export ENABLE_CUDA="${CONFIG_CACHE[enable_cuda]}"
     
     # Export package list variables
     export tool_list

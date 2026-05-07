@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 #SBATCH -J build_abacus_intel
 #SBATCH -N 1
 #SBATCH -n 16
