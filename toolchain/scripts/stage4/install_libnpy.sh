@@ -104,10 +104,9 @@ prepend_path CPATH "${pkg_install_dir}/include"
 EOF
     fi
     cat << EOF >> "${BUILDDIR}/setup_libnpy"
-export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
 export LIBNPY_ROOT="${pkg_install_dir}"
 EOF
-    cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_libnpy" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libnpy"

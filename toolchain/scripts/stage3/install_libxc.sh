@@ -127,7 +127,7 @@ export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBXC_LDFLAGS}"
 export CP_LIBS="${LIBXC_LIBS} \${CP_LIBS}"
 export LIBXC_ROOT="${pkg_install_dir}"
 EOF
-    cat "${BUILDDIR}/setup_libxc" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_libxc" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libxc"

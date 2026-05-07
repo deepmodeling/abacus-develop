@@ -1049,3 +1049,20 @@ write_toolchain_env() {
     export -p
   ) > "${__installdir}/toolchain.env"
 }
+
+# Append a setup fragment to the public setup file, keeping runtime search paths
+# and package roots while dropping build-only flag variables.
+filter_setup() {
+  local source_file="$1"
+  local target_file="$2"
+
+  if [[ ! -f "$source_file" ]]; then
+    report_error "File '$source_file' does not exist."
+    return 1
+  fi
+
+  local filename
+  filename=$(basename "$source_file")
+  echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
+  grep -v -E '^[[:space:]]*(export[[:space:]]+)?([A-Za-z0-9_]+_)?(CFLAGS|CXXFLAGS|FCFLAGS|LDFLAGS|LIBS|INCLUDES)="|^[[:space:]]*export[[:space:]]+CP_(DFLAGS|CFLAGS|LDFLAGS|LIBS)="|^[[:space:]]*# (For|Other)' "$source_file" >> "$target_file"
+}
