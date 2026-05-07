@@ -112,10 +112,9 @@ prepend_path CPATH "${pkg_install_dir}/include"
 EOF
     fi
     cat << EOF >> "${BUILDDIR}/setup_libcomm"
-export LIBCOMM_CFLAGS="${LIBCOMM_CFLAGS}"
 export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
-    cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_libcomm" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libcomm"

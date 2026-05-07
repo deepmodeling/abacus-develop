@@ -266,7 +266,7 @@ export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${ELPA_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(${ELPA_LIBS}|) \${CP_LIBS}"
 export ELPA_VERSION="${elpa_ver}"
 EOF
-    cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_elpa" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_elpa"
