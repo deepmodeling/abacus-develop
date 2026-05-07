@@ -32,10 +32,6 @@ FFTW3=$AOCLhome
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
 USE_CUDA=OFF  # set ON to enable gpu-abacus
-# NEP_DIR=$INSTALL_DIR/NEP_CPU-main
-# LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
-# LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
-# DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
 # if clang++ have problem, switch back to g++
 
@@ -59,11 +55,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLIBCOMM_DIR=$LIBCOMM \
         -DUSE_CUDA=$USE_CUDA \
 #        -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
-#        -DNEP_DIR=$NEP_DIR \
-#         -DENABLE_MLALGO=1 \
-#         -DTorch_DIR=$LIBTORCH \
-#         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-# 	      -DDeePMD_DIR=$DEEPMD \
 #         -DENABLE_CUSOLVERMP=ON \
 #         -D CAL_CUSOLVERMP_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2x.xx/math_libs/1x.x/targets/x86_64-linux/lib
 
