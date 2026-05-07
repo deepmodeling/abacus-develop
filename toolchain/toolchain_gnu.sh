@@ -42,7 +42,7 @@ WITH_LIBCOMM="install"
 # Optional Features (MLALGO support)
 WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
-WITH_NEP="no"  # Not Supported in LTS
+WITH_NEP="no"
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
@@ -72,8 +72,6 @@ LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
 SCALAPACK_VERSION="main"    # main=2.2.2, alt=2.2.1
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
-# Note: main(2.1.2) version of LibTorch need glibc > 2.27
-# Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
 # ============================================================================
 # Execute Installation (DO NOT MODIFY BELOW THIS LINE)

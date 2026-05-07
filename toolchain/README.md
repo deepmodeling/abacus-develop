@@ -1,4 +1,4 @@
-# ABACUS Toolchain (for LTS)
+# ABACUS Toolchain
 
 [![Version](https://img.shields.io/badge/version-2025.3-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 [![License](https://img.shields.io/badge/license-GPL--compatible-green.svg)](#license)
@@ -124,7 +124,7 @@ Before running the toolchain, please make sure you have loaded the related envir
   - [LibNPY](https://github.com/llohse/libnpy) - NumPy I/O for C++
   - [LibRI](https://github.com/abacusmodeling/LibRI) - Resolution of Identity library
   - [LibComm](https://github.com/abacusmodeling/LibComm) - Communication library
-  - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential (Not Supported)
+  - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential
   - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
   - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
 - **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
@@ -151,21 +151,21 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 ## Supported Toolchains
 
 ### GNU Toolchain
-- **Compilers**: System GCC (≥5.0) or installed GCC
+- **Compilers**: System GCC (≥5.0)
 - **MPI**: OpenMPI or MPICH
 - **Math**: OpenBLAS + ScaLAPACK
 - **Features**: Most stable, widely compatible
 
 ### Intel Toolchain
-- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort) with system/installed GCC (≥5.0) 
+- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort)
 - **MPI**: Intel MPI
 - **Math**: Intel MKL
-- **Features**: Optimized performance for Intel Machine
+- **Features**: Optimized performance, EXX support
 
 ### AMD Toolchain
-- **Compilers**: AMD AOCC or system/installed GCC
+- **Compilers**: AMD AOCC or GCC
 - **Math**: AMD AOCL (Optimized math libraries)
-- **Features**: AMD processor optimization (e.g., Zen3+)
+- **Features**: AMD processor optimization
 
 ## Dependencies
 
@@ -193,7 +193,7 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | LibComm | master | EXX calculations | GPL-3.0 | Install |
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
 | LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
-| NEP | main | Neuroevolution potential | MIT | Not Supported |
+| NEP | main | Neural network potential | MIT | Optional |
 
 Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html) and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and [AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to system option, but one should install them manually by server administrator.
 

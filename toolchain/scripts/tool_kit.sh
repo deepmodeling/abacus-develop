@@ -956,7 +956,6 @@ download_pkg_from_url() {
     "strict")
       echo "Downloading with strict certificate validation: $__url"
       if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
-        rm -f "$__filename"
         report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
         if [ "${PACK_RUN}" != "__TRUE__" ]; then
@@ -967,7 +966,6 @@ download_pkg_from_url() {
     "skip")
       echo "Downloading with certificate validation disabled: $__url"
       if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
-        rm -f "$__filename"
         report_error "failed to download $__url"
         recommend_offline_installation "$__filename" "$__url"
         if [ "${PACK_RUN}" != "__TRUE__" ]; then
@@ -978,12 +976,11 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" 2>/dev/null; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
         if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
-          rm -f "$__filename"
           report_error "failed to download $__url (both secure and insecure attempts failed)"
           recommend_offline_installation "$__filename" "$__url"
           if [ "${PACK_RUN}" != "__TRUE__" ]; then

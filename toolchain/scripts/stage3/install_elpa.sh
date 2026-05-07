@@ -114,11 +114,9 @@ case "$with_elpa" in
                 fi
             fi
             for TARGET in "cpu" "nvidia"; do
-                # Accept both uppercase and lowercase GPU enable flags for compatibility
-                gpu_enabled="${ENABLE_CUDA:-${enable_cuda}}"
-                [ "$TARGET" = "nvidia" ] && [ "$gpu_enabled" != "__TRUE__" ] && continue
+                [ "$TARGET" = "nvidia" ] && [ "$ENABLE_CUDA" != "__TRUE__" ] && continue
                 # disable cpu if cuda is enabled, only install one
-                [ "$TARGET" != "nvidia" ] && [ "$gpu_enabled" = "__TRUE__" ] && continue
+                [ "$TARGET" != "nvidia" ] && [ "$ENABLE_CUDA" = "__TRUE__" ] && continue
                 # extend the pkg_install_dir by TARGET
                 # this linking method is totally different from cp2k toolchain
                 # for cp2k, ref https://github.com/cp2k/cp2k/commit/6fe2fc105b8cded84256248f68c74139dd8fc2e9
@@ -141,7 +139,6 @@ case "$with_elpa" in
                         --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
                         --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
                         --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
-                        --enable-nvidia-cub --with-cusolver \
                         OMPI_MCA_plm_rsh_agent=/bin/false \
                         FC=${MPIFC} \
                         CC=${MPICC} \
@@ -173,7 +170,6 @@ case "$with_elpa" in
                         --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
                         --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
                         --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
-                        --enable-nvidia-cub --with-cusolver \
                         FC=${MPIFC} \
                         CC=${MPICC} \
                         CXX=${MPICXX} \

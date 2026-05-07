@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #SBATCH -J build_abacus_gnu
 #SBATCH -N 1
 #SBATCH -n 16
@@ -31,6 +31,7 @@ RAPIDJSON=$INSTALL_DIR/rapidjson-master/
 LIBRI=$INSTALL_DIR/LibRI-master
 LIBCOMM=$INSTALL_DIR/LibComm-master
 USE_CUDA=OFF  # set ON to enable gpu-abacus
+# NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd #
@@ -55,7 +56,8 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLIBCOMM_DIR=$LIBCOMM \
         -DUSE_CUDA=$USE_CUDA \
 #         -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
-#         -DENABLE_DEEPKS=1 \
+#         -DNEP_DIR=$NEP_DIR \
+#         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
 # 	      -DDeePMD_DIR=$DEEPMD \

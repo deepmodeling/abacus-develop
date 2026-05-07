@@ -42,7 +42,7 @@ WITH_LIBCOMM="install"
 # Optional Features (MLALGO support)
 WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
-WITH_NEP="no"  # Not Supported in LTS
+WITH_NEP="no"
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
@@ -68,10 +68,7 @@ CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
 OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
 ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
-# Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
-# Note: main(2.1.2) version of LibTorch need glibc > 2.27
-# Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
 # Note: GCC-AOCL toolchain uses AOCL for math libraries (FFTW, ScaLAPACK)
 # so OpenBLAS and ScaLAPACK version selections are not applicable
