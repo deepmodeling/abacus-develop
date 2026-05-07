@@ -119,6 +119,10 @@ void Driver::reading()
     ModuleIO::ReadInput input(PARAM.globalv.myrank);
     input.read_parameters(PARAM, PARAM.globalv.global_in_card);
 
+#if defined(__CUDA) && defined(__USE_NVTX)
+    ModuleBase::timer::set_nvtx_enabled(PARAM.inp.timer_enable_nvtx);
+#endif
+
     // (2) create the output directory, running_*.log and print info
     input.create_directory(PARAM);
     this->print_start_info();
