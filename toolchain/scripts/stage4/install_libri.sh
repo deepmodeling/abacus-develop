@@ -39,7 +39,6 @@ source "${INSTALLDIR}"/toolchain.env
 
 [ -f "${BUILDDIR}/setup_libri" ] && rm "${BUILDDIR}/setup_libri"
 
-libri_CFLAGS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -49,7 +48,7 @@ case "$with_libri" in
         dirname="LibRI-${libri_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
@@ -95,7 +94,7 @@ case "$with_libri" in
             # RI/version.h -> remove /RI/version.h -> get include dir -> get parent dir
             libri_include_dir="$(dirname "$(dirname "$libri_header_path")")"
             pkg_install_dir="$(dirname "$libri_include_dir")"
-            echo "Found libri at: $pkg_install_dir"
+            echo "Found libri at: ${pkg_install_dir}"
             LIBRI_CFLAGS="-I'${libri_include_dir}'"
         else
             report_error "Cannot find RI/version.h in system paths"
@@ -114,14 +113,13 @@ esac
 if [ "$with_libri" != "__DONTUSE__" ]; then
     if [ "$with_libri" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
-prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libri"
-export LIBRI_CFLAGS="${libri_CFLAGS}"
-export LIBRI_ROOT="$pkg_install_dir"
+export LIBRI_CFLAGS="${LIBRI_CFLAGS}"
+export LIBRI_ROOT="${pkg_install_dir}"
 EOF
 fi
 

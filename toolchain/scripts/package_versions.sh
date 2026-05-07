@@ -75,10 +75,10 @@ libxc_alt_ver="6.2.2"
 libxc_alt_sha256="f72ed08af7b9dff5f57482c5f97bff22c7dc49da9564bc93871997cbda6dacf3"
 
 # ScaLAPACK (supports dual versions) - main=2.2.2, alt=2.2.1
-scalapack_main_ver="2.2.2"
-scalapack_main_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7b7d022"
-scalapack_alt_ver="2.2.1"
-scalapack_alt_sha256="4aede775fdb28fa44b331875730bcd5bab130caaec225fadeccf424c8fcb55aa"
+scalapack_main_ver="2.2.3"
+scalapack_main_sha256="5d93701eca663925e98010dd8d0f45fd79b2191d74e5afa5711d587370a8b9dd"
+scalapack_alt_ver="2.2.2"
+scalapack_alt_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7b7d022"
 
 # =============================================================================
 # STAGE 4: Advanced Feature Libraries

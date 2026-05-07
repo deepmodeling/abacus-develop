@@ -44,7 +44,7 @@ case "${with_scalapack}" in
     __INSTALL__)
         echo "==================== Installing ScaLAPACK ===================="
         pkg_install_dir="${INSTALLDIR}/scalapack-${scalapack_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "scalapack-${scalapack_ver} is already installed, skipping it."
         else
@@ -119,19 +119,13 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="${pkg_install_dir}":\${CMAKE_PREFIX_PATH}
-export SCALAPACK_ROOT="${pkg_install_dir}"
 EOF
         cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_scalapack"
+export SCALAPACK_ROOT="${pkg_install_dir}"
 export SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}"
 export SCALAPACK_LIBS="${SCALAPACK_LIBS}"
-export SCALAPACK_ROOT="${pkg_install_dir}"
 export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__SCALAPACK|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${SCALAPACK_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(-lscalapack|) \${CP_LIBS}"

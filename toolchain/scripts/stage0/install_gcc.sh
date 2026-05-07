@@ -49,7 +49,7 @@ case "${with_gcc}" in
         repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
         repkg_install_dir="${INSTALLDIR}/${repack_filename}"
         #pkg_install_dir="${HOME}/apps/gcc/${gcc_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "gcc-${gcc_ver} is already installed, skipping it."
         else
@@ -229,13 +229,6 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib64"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib64"
 prepend_path CPATH "${pkg_install_dir}/include"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib64":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib64":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib64":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
     fi
     cat << EOF >> "${BUILDDIR}/setup_gcc"
