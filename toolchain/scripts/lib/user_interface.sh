@@ -690,6 +690,15 @@ ui_show_summary() {
     echo "   ├─ Kernel: $(uname -r)"
     echo "   ├─ glibc: $(ui_get_glibc_version)"
     echo "   ├─ CPU Cores: $(nproc 2>/dev/null || echo "unknown")"
+    # CPU model detection
+    local cpu_model="unknown"
+    if command -v lscpu &> /dev/null; then
+        cpu_model=$(LC_ALL=C lscpu | awk -F: '/^Model name/{print $2}' | sed 's/^[[:space:]]*//')
+    fi
+    if [[ -z "$cpu_model" || "$cpu_model" == "unknown" ]] && [[ -r /proc/cpuinfo ]]; then
+        cpu_model=$(awk -F: '/model name|Hardware|Processor/{print $2; exit}' /proc/cpuinfo | sed 's/^[[:space:]]*//')
+    fi
+    echo "   ├─ CPU Model: ${cpu_model}"
     if command -v free &> /dev/null; then
         local mem_gb=$(free -g | awk '/^Mem:/ {print $2}')
         echo "   ├─ Memory: ${mem_gb}GB"

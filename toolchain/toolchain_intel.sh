@@ -87,7 +87,10 @@ INTELMPI_CLASSIC="no"   # Set to "yes" to use classic Intel MPI wrappers (mpiicc
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
 ELPA_VERSION="alt"         # main=2025.06.001, alt=2024.05.001 for intel oneapi<2024.2
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+# Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+# Note: main(2.1.2) version of LibTorch need glibc > 2.27
+# Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
 # Note: Intel toolchain uses MKL for math libraries (FFTW, ScaLAPACK)
 # so OpenBLAS, FFTW, and ScaLAPACK version selections are not applicable
