@@ -12,6 +12,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 #include "source_base/parallel_global.h"
+#ifdef __DSP
+#include "source_base/module_device/memory_op.h"
+#endif
 
 Driver::Driver()
 {
@@ -123,6 +126,10 @@ void Driver::reading()
 
 #if defined(__CUDA) && defined(__USE_NVTX)
     ModuleBase::timer::set_nvtx_enabled(PARAM.inp.timer_enable_nvtx);
+#endif
+
+#ifdef __DSP
+    base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 
     // (2) create the output directory, running_*.log and print info

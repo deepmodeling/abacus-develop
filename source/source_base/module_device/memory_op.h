@@ -220,6 +220,11 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
 
 #ifdef __DSP
 
+/// @brief Inject the DSP cluster id used by mt-allocator (mtfunc::malloc_ht).
+/// Caller-injected (typically once after input parameters are read).
+/// Defaults to 0 if never set.
+void set_dsp_cluster_id(int id);
+
 template <typename FPTYPE, typename Device>
 struct resize_memory_op_mt
 {
