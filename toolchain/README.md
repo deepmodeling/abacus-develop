@@ -1,4 +1,4 @@
-# ABACUS Toolchain
+# ABACUS Toolchain (for LTS)
 
 [![Version](https://img.shields.io/badge/version-2026.1-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 [![License](https://img.shields.io/badge/license-GPL--compatible-green.svg)](#license)
@@ -125,7 +125,7 @@ Before running the toolchain, please make sure you have loaded the related envir
   - [LibNPY](https://github.com/llohse/libnpy) - NumPy I/O for C++
   - [LibRI](https://github.com/abacusmodeling/LibRI) - Resolution of Identity library
   - [LibComm](https://github.com/abacusmodeling/LibComm) - Communication library
-  - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential
+  - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential (Not Supported)
   - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
   - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
 - **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
@@ -205,7 +205,7 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | LibComm | pinned commit | EXX calculations | GPL-3.0 | Install |
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
 | LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
-| NEP | main | Neuroevolution potential | MIT | Optional |
+| NEP | main | Neuroevolution potential | MIT | Not Supported |
 
 Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html) and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and [AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to system option, but one should install them manually by server administrator.
 
