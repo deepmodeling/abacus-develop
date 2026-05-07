@@ -293,6 +293,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
         {
 		    upf.complete_default(ucell.atoms[i].ncpp);
 
+            log << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential type", ucell.atoms[i].ncpp.pp_type);
             ModuleBase::GlobalFunc::OUT(log, "Exchange-correlation functional", ucell.atoms[i].ncpp.xc_func);
