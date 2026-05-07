@@ -186,17 +186,17 @@ case "$with_elpa" in
                 make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
                 make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
                 cd ..
-                # link elpa
-                link=${pkg_install_dir}/include/elpa
-                if [[ ! -d $link ]]; then
-                    ln -s ${pkg_install_dir}/include/elpa_openmp-${elpa_ver}/elpa $link
-                fi
             done
             cd ..
             
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
         fi
         [ "$enable_openmp" != "yes" ] && elpa_dir_openmp=""
+        elpa_include="${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}"
+        link="${pkg_install_dir}/include/elpa"
+        if [[ -d "${elpa_include}/elpa" && ! -e "$link" && ! -L "$link" ]]; then
+            ln -s "${elpa_include}/elpa" "$link"
+        fi
         ELPA_CFLAGS="-I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/modules' -I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/elpa'"
         ELPA_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
         ;;
