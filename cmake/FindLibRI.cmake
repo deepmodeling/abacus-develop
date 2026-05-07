@@ -16,7 +16,7 @@ if(NOT LIBRI_DIR)
     include(FetchContent)
     FetchContent_Declare(
         LibRI
-        URL https://github.com/abacusmodeling/LibRI/archive/refs/tags/v0.2.1.1.tar.gz
+       URL  https://codeload.github.com/abacusmodeling/LibRI//tar.gz/v0.2.1.1
     )
     FetchContent_Populate(LibRI)
     set(LIBRI_DIR ${libri_SOURCE_DIR})
