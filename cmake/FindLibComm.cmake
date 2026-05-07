@@ -16,7 +16,7 @@ if(NOT LIBCOMM_DIR)
     include(FetchContent)
     FetchContent_Declare(
         LibComm
-        URL https://github.com/abacusmodeling/LibComm/archive/refs/tags/v0.1.1.tar.gz
+        URL https://codeload.github.com/abacusmodeling/LibComm/tar.gz/965bf90713ce5598bae4fd957d417065f77ceb42
     )
     FetchContent_Populate(LibComm)
     set(LIBCOMM_DIR ${libcomm_SOURCE_DIR})

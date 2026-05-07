@@ -51,7 +51,7 @@ case "$with_rapidjson" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${rapidjson_ver}" =~ ^(master|main|develop)$ ]]; then
+        if [[ "${rapidjson_ver}" =~ ^[0-9a-f]{40}$ ]]; then
             url="https://codeload.github.com/Tencent/rapidjson/tar.gz/${rapidjson_ver}"
         else
             url="https://codeload.github.com/Tencent/rapidjson/tar.gz/v${rapidjson_ver}"

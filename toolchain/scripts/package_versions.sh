@@ -99,22 +99,22 @@ libnpy_main_sha256="43452a4db1e8c1df606c64376ea1e32789124051d7640e7e4e8518ab4f0f
 libnpy_alt_ver="1.0.1"
 libnpy_alt_sha256="43452a4db1e8c1df606c64376ea1e32789124051d7640e7e4e8518ab4f0fba44"
 
-# Master branch packages (no fixed versions)
-cereal_ver="master"
-cereal_sha256="--no-checksum"
+# Branch packages cut with specific commits
+cereal_ver="22a1b369f39be918ca79206a83c4facd759f9105"
+cereal_sha256="ca3d544456f93ea3176eab85e2e7892063af45b20467bb4ad9c1c51068e521c6"
 
-libcomm_ver="master"
-libcomm_sha256="--no-checksum"
+libcomm_ver="965bf90713ce5598bae4fd957d417065f77ceb42"
+libcomm_sha256="1d1626b833c51efa7ab844af140e022e063ea64389c9e47b168c24fcc05b7323"
 
-libri_ver="master"
-libri_sha256="--no-checksum"
+libri_ver="e6d78e0504693d2a464c72b87d3240ce183fd881"
+libri_sha256="ead14f05b645f3d028e09f715abaa0e8fca3d1d6d61804239c4858b33397286a"
 
-rapidjson_ver="master"
-rapidjson_sha256="--no-checksum"
+rapidjson_ver="24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+rapidjson_sha256="2d2601a82d2d3b7e143a3c8d43ef616671391034bc46891a9816b79cf2d3e7a8"
 
 # NEP (Neural Evolution Potential) - CPU version
-nep_ver="main"
-nep_sha256="--no-checksum"
+nep_ver="629ec5dda3127e046fde3f8082aedfca8deb915e"
+nep_sha256="57803d2e98ca5c8ced09e3e8d21ac1a0dbd61dda1977997864195f8c54b9b1f9"
 
 # =============================================================================
 # Package Variable Loading Function
