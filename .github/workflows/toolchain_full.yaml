@@ -1,0 +1,146 @@
+name: Toolchain Full Build Test
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+    inputs:
+      variants:
+        description: "Comma-separated variants: gnu,intel,cuda"
+        required: false
+        default: "gnu,intel,cuda"
+jobs:
+  full-build-gnu:
+    if: contains(inputs.variants || 'gnu,intel,cuda', 'gnu')
+    runs-on: X64
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install requirements
+        run: |
+          set -euo pipefail
+          cd toolchain/root_requirements
+          sudo ./install_requirements_ubuntu.sh
+      - name: Build toolchain
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./toolchain_gnu.sh
+      - name: Build ABACUS
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./build_abacus_gnu.sh
+          cd ..
+          ./bin/abacus --version || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-full-gnu
+          path: |
+            toolchain/compile.log
+            toolchain/compile.err
+            toolchain/install/setup
+            toolchain/build/**/make.log
+            toolchain/build/**/configure.log
+            toolchain/build/**/cmake.log
+          if-no-files-found: ignore
+
+  full-build-intel:
+    if: contains(inputs.variants || 'gnu,intel,cuda', 'intel')
+    runs-on: X64
+    container:
+      image: ghcr.io/deepmodeling/abacus-intel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install requirements
+        run: |
+          set -euo pipefail
+          cd toolchain/root_requirements
+          sudo ./install_requirements_ubuntu.sh
+      - name: Build toolchain
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./toolchain_intel.sh
+      - name: Build ABACUS
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./build_abacus_intel.sh
+          cd ..
+          ./bin/abacus --version || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-full-intel
+          path: |
+            toolchain/compile.log
+            toolchain/compile.err
+            toolchain/install/setup
+            toolchain/build/**/make.log
+            toolchain/build/**/configure.log
+            toolchain/build/**/cmake.log
+          if-no-files-found: ignore
+
+  full-build-cuda:
+    if: contains(inputs.variants || 'gnu,intel,cuda', 'cuda')
+    runs-on: nvidia
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install requirements
+        run: |
+          set -euo pipefail
+          if [ -f /etc/os-release ]; then . /etc/os-release; fi
+          if [ "${ID:-}" = "ubuntu" ] || [ "${ID_LIKE:-}" = "debian" ]; then
+            sudo ./toolchain/root_requirements/install_requirements_ubuntu.sh
+          elif [ "${ID:-}" = "fedora" ] || [ "${ID_LIKE:-}" = "rhel fedora" ]; then
+            sudo ./toolchain/root_requirements/install_requirements_fedora.sh
+          else
+            exit 1
+          fi
+      - name: Prepare CUDA and NVHPC
+        run: |
+          set -euo pipefail
+          if command -v nvidia-smi >/dev/null 2>&1; then
+            nvidia-smi
+            cap="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1 | tr -d '.' | xargs || true)"
+          fi
+          if [ -z "${cap:-}" ]; then cap="70"; fi
+          echo "GPU_CAP=${cap}" >> "$GITHUB_ENV"
+          if command -v module >/dev/null 2>&1; then
+            module use /opt/nvidia/hpc_sdk/modulefiles || true
+            module load nvhpc/26.1 || module load nvhpc-hpcx-cuda12/25.3
+          else
+            exit 1
+          fi
+          if [ -d /usr/local/cuda ]; then
+            echo "CUDA_PATH=/usr/local/cuda" >> "$GITHUB_ENV"
+          fi
+      - name: Build toolchain
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./toolchain_gnu.sh --enable-cuda --gpu-ver "${GPU_CAP}"
+      - name: Build ABACUS
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./build_abacus_gnu.sh
+          cd ..
+          ./bin/abacus --version || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-full-cuda
+          path: |
+            toolchain/compile.log
+            toolchain/compile.err
+            toolchain/install/setup
+          if-no-files-found: ignore

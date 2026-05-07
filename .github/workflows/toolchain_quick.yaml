@@ -1,0 +1,82 @@
+name: Toolchain Quick Test
+on:
+  pull_request:
+    paths:
+      - toolchain/**
+      - .github/workflows/toolchain_quick.yml
+  push:
+    branches:
+      - develop
+    paths:
+      - toolchain/**
+      - .github/workflows/toolchain_quick.yml
+  workflow_dispatch:
+jobs:
+  lint-and-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dos2unix shellcheck
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' f; do
+            bash -n "$f"
+          done < <(find toolchain -type f -name '*.sh' -print0)
+      - name: Python syntax
+        run: |
+          python3 -m compileall toolchain
+      - name: CRLF check
+        run: |
+          set -euo pipefail
+          if grep -RIl $'\r' toolchain | head -n 1 | grep -q .; then
+            grep -RIl $'\r' toolchain | head -n 50
+            exit 1
+          fi
+      - name: Shellcheck
+        run: |
+          set -euo pipefail
+          shellcheck --version
+          find toolchain -type f -name '*.sh' -print0 | xargs -0 -n1 shellcheck -x || true
+
+  dry-run-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [gnu, intel, cuda]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dos2unix
+      - name: Dry run
+        run: |
+          set -euo pipefail
+          cd toolchain
+          rm -rf build install
+          find . -type f -name '*.sh' -exec chmod +x {} +
+          if [ "${{ matrix.variant }}" = "gnu" ]; then
+            ./toolchain_gnu.sh --dry-run --skip-system-checks
+          elif [ "${{ matrix.variant }}" = "intel" ]; then
+            ./toolchain_intel.sh --dry-run --skip-system-checks
+          elif [ "${{ matrix.variant }}" = "cuda" ]; then
+            ./toolchain_gnu.sh --dry-run --skip-system-checks --enable-cuda --gpu-ver 70
+          fi
+      - name: Upload setup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-${{ matrix.variant }}-dryrun
+          path: |
+            toolchain/install/setup
+            toolchain/compile.log
+            toolchain/compile.err
+          if-no-files-found: ignore
+
