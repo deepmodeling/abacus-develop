@@ -1,0 +1,112 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.2
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 8ac72710d (Fri May 22 23:08:26 2026 +0800)
+
+ Sat May 23 13:19:16 2026
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Ga: [Ar] 3d10 4s2 4p1
+ Warning: the number of valence electrons in pseudopotential > 5 for As: [Ar] 3d10 4s2 4p3
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG): 32 * 32 * 32
+ DONE(0.129156   SEC) : SYMMETRY
+ DONE(0.129168   SEC) : SETUP UNITCELL
+ DONE(0.226947   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               1           8             8             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Ga      4           
+ As      4           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.24245    SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.26298    SEC) : LOCAL POTENTIAL
+ DONE(0.312943   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 23.4644
+ DONE(0.459024   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.812524   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.94959838e+04   0.00000000e+00   5.4363e+00   1.44
+ CG2     -1.95012282e+04  -5.24444966e+00   2.2308e-01   1.16
+ CG3     -1.95026111e+04  -1.38290128e+00   1.6251e-02   1.59
+ CG4     -1.95024576e+04   1.53499501e-01   1.3184e-03   1.64
+ CG5     -1.95024149e+04   4.26877894e-02   1.7591e-04   1.37
+ CG6     -1.95024061e+04   8.83882054e-03   1.4269e-05   1.31
+ CG7     -1.95024069e+04  -8.57116848e-04   3.5433e-07   1.93
+ CG8     -1.95024072e+04  -2.70667542e-04   1.3091e-07   1.65
+ CG9     -1.95024072e+04   1.24739358e-05   6.6537e-09   1.49
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11616.8146983932         0.0000000000         0.0000000000 
+          0.0000000000    -11616.8146983932         0.0000000000 
+          0.0000000000         0.0000000000    -11616.8146983932 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11616.814698 kbar
+
+ TIME STATISTICS
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              16.28  17       0.96   100.00 
+ Driver          atomic_world       16.28  1        16.28  100.00 
+ Relax_Driver    relax_driver       15.82  1        15.82  97.15  
+ ESolver_KS      runner             13.94  1        13.94  85.63  
+ ESolver_KS_PW   before_scf         0.35   1        0.35   2.17   
+ PSIPrepare      initialize_psi     0.31   1        0.31   1.88   
+ Nonlocal        getvnl             0.22   40       0.01   1.38   
+ pp_cell_vnl     getvnl             0.22   40       0.01   1.38   
+ DiagoIterAssist diag_subspace_init 0.19   4        0.05   1.16   
+ Operator        hPsi               8.94   7553     0.00   54.89  
+ Operator        EkineticPW         0.40   7553     0.00   2.47   
+ Operator        veff_pw            4.13   7553     0.00   25.35  
+ PW_Basis_K      recip2real         2.75   12565    0.00   16.86  
+ PW_Basis_K      gathers_scatterp   0.57   12565    0.00   3.51   
+ PW_Basis_K      real2recip         1.48   10045    0.00   9.07   
+ PW_Basis_K      gatherp_scatters   0.20   10045    0.00   1.22   
+ Operator        nonlocal_pw        4.36   7553     0.00   26.77  
+ Nonlocal        add_nonlocal_pp    2.29   7553     0.00   14.05  
+ ESolver_KS_PW   hamilt2rho_single  13.47  9        1.50   82.76  
+ HSolverPW       solve              13.44  9        1.49   82.56  
+ HSolverPW       solve_psik         12.72  36       0.35   78.12  
+ DiagoCG         diag_once          11.21  36       0.31   68.88  
+ ElecStatePW     psiToRho           0.52   9        0.06   3.21   
+ DiagoIterAssist diag_subspace      1.37   32       0.04   8.40   
+ Forces          cal_force          0.23   1        0.23   1.40   
+ Forces          cal_force_nl       0.18   1        0.18   1.10   
+ Stress_PW       cal_stress         1.65   1        1.65   10.13  
+ Stress          stress_nl          1.55   1        1.55   9.53   
+------------------------------------------------------------------
+
+
+ START  Time  : Sat May 23 13:19:16 2026
+ FINISH Time  : Sat May 23 13:19:33 2026
+ TOTAL  Time  : 17
+ SEE INFORMATION IN : OUT.ABACUS/

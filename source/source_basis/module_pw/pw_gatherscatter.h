@@ -1,6 +1,5 @@
 #include "pw_basis.h"
 #include "source_base/global_function.h"
-#include "source_base/timer.h"
 #include <typeinfo>
 
 namespace ModulePW
@@ -15,8 +14,8 @@ namespace ModulePW
 template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
-    
-    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
+
+    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane,
     {
         const int nst_ = this->nst;
         const int nz_ = this->nz;
@@ -112,7 +111,10 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
+
+
+
+    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot,
     {
         const int nrxx_ = this->nrxx;
         const int nst_ = this->nst;
