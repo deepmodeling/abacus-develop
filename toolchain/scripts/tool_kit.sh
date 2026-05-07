@@ -1064,5 +1064,38 @@ filter_setup() {
   local filename
   filename=$(basename "$source_file")
   echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
-  grep -v -E '^[[:space:]]*(export[[:space:]]+)?([A-Za-z0-9_]+_)?(CFLAGS|CXXFLAGS|FCFLAGS|LDFLAGS|LIBS|INCLUDES)="|^[[:space:]]*export[[:space:]]+CP_(DFLAGS|CFLAGS|LDFLAGS|LIBS)="|^[[:space:]]*# (For|Other)' "$source_file" >> "$target_file"
+  awk '
+    function skip(line) {
+      return line ~ /^[[:space:]]*(export[[:space:]]+)?([A-Za-z0-9_]+_)?(CFLAGS|CXXFLAGS|FCFLAGS|LDFLAGS|LIBS|INCLUDES)="/ ||
+             line ~ /^[[:space:]]*export[[:space:]]+CP_(DFLAGS|CFLAGS|LDFLAGS|LIBS)="/ ||
+             line ~ /^[[:space:]]*# (For|Other)/
+    }
+    function reset_block() {
+      block_count = 0
+      block_has_body = 0
+      in_block = 0
+    }
+    /^[[:space:]]*if[[:space:]].*;[[:space:]]*then[[:space:]]*$/ {
+      reset_block()
+      in_block = 1
+      block[++block_count] = $0
+      next
+    }
+    in_block {
+      if ($0 ~ /^[[:space:]]*fi[[:space:]]*$/) {
+        if (block_has_body) {
+          for (i = 1; i <= block_count; i++) print block[i]
+          print $0
+        }
+        reset_block()
+        next
+      }
+      if (!skip($0)) {
+        block[++block_count] = $0
+        block_has_body = 1
+      }
+      next
+    }
+    !skip($0) { print }
+  ' "$source_file" >> "$target_file"
 }
