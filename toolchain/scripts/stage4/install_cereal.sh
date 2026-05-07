@@ -30,13 +30,8 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "cereal" "$version_suffix"
-if [[ "${cereal_ver}" =~ ^[0-9a-f]{40}$ ]]; then
-    short_ver="${cereal_ver:0:7}"
-else
-    short_ver="${cereal_ver}"
-fi
-dirname="cereal-${short_ver}"
-filename="cereal-${short_ver}.tar.gz"
+dirname="cereal-${cereal_ver}"
+filename="cereal-${cereal_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -55,7 +50,7 @@ case "$with_cereal" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${cereal_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+        if [[ "${cereal_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
         else
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
@@ -63,12 +58,7 @@ case "$with_cereal" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${cereal_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -120,7 +110,6 @@ prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     fi
-    cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
     cat << EOF >> "${BUILDDIR}/setup_cereal"
 export CEREAL_ROOT="${pkg_install_dir}"
 export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
@@ -128,6 +117,7 @@ export CP_DFLAGS="\${CP_DFLAGS} -D__CEREAL"
 export CP_CFLAGS="\${CP_CFLAGS} ${CEREAL_CFLAGS}"
 export CEREAL_VERSION="${cereal_ver}"
 EOF
+    cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_cereal"

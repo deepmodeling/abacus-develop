@@ -34,11 +34,6 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libri" "$version_suffix"
-if [[ "${libri_ver}" =~ ^[0-9a-f]{40}$ ]]; then
-    short_ver="${libri_ver:0:7}"
-else
-    short_ver="${libri_ver}"
-fi
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -50,28 +45,23 @@ cd "${BUILDDIR}"
 case "$with_libri" in
     __INSTALL__)
         echo "==================== Installing LIBRI ===================="
-        dirname="LibRI-${short_ver}"
+        dirname="LibRI-${libri_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${libri_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+        if [[ "${libri_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${libri_ver}"
         else
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/v${libri_ver}"
         fi
-        filename="LibRI-${short_ver}.tar.gz"
+        filename="LibRI-${libri_ver}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${libri_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -119,12 +109,12 @@ if [ "$with_libri" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libri"
 export LIBRI_CFLAGS="${LIBRI_CFLAGS}"
 export LIBRI_ROOT="${pkg_install_dir}"
 EOF
+    cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libri"

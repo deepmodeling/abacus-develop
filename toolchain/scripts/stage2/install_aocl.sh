@@ -66,6 +66,7 @@ export MATH_CFLAGS="\${MATH_CFLAGS} ${AOCL_CFLAGS}"
 export MATH_LDFLAGS="\${MATH_LDFLAGS} ${AOCL_LDFLAGS}"
 export MATH_LIBS="\${MATH_LIBS} ${AOCL_LIBS}"
 EOF
+    cat "${BUILDDIR}/setup_aocl" >> $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_aocl"
