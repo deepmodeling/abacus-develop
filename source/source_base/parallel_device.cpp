@@ -86,14 +86,14 @@ NcclCommRegistry& get_nccl_registry()
 }
 
 template <typename T>
-void nccl_bcast_impl(T* object, const int n, MPI_Comm& comm, ncclDataType_t datatype, const int count_scale = 1)
+void nccl_bcast_impl(T* object, const int n, MPI_Comm& comm, ncclDataType_t datatype, int root = 0, const int count_scale = 1)
 {
     NcclCommContext& ctx = get_nccl_registry().get(comm);
     if (ctx.size <= 1 || n <= 0)
     {
         return;
     }
-    CHECK_NCCL(ncclBroadcast(object, object, static_cast<size_t>(n) * count_scale, datatype, 0, ctx.comm, ctx.stream));
+    CHECK_NCCL(ncclBroadcast(object, object, static_cast<size_t>(n) * count_scale, datatype, root, ctx.comm, ctx.stream));
     CHECK_CUDA(cudaStreamSynchronize(ctx.stream));
 }
 
@@ -183,24 +183,24 @@ void nccl_gatherv_impl(const T* sendbuf,
 }
 } // namespace
 
-void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm)
+void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm, int root)
 {
-    nccl_bcast_impl(object, n, comm, ncclDouble);
+    nccl_bcast_impl(object, n, comm, ncclDouble, root);
 }
 
-void nccl_bcast_data(std::complex<double>* object, const int& n, MPI_Comm& comm)
+void nccl_bcast_data(std::complex<double>* object, const int& n, MPI_Comm& comm, int root)
 {
-    nccl_bcast_impl(reinterpret_cast<double*>(object), n, comm, ncclDouble, 2);
+    nccl_bcast_impl(reinterpret_cast<double*>(object), n, comm, ncclDouble, root, 2);
 }
 
-void nccl_bcast_data(float* object, const int& n, MPI_Comm& comm)
+void nccl_bcast_data(float* object, const int& n, MPI_Comm& comm, int root)
 {
-    nccl_bcast_impl(object, n, comm, ncclFloat);
+    nccl_bcast_impl(object, n, comm, ncclFloat, root);
 }
 
-void nccl_bcast_data(std::complex<float>* object, const int& n, MPI_Comm& comm)
+void nccl_bcast_data(std::complex<float>* object, const int& n, MPI_Comm& comm, int root)
 {
-    nccl_bcast_impl(reinterpret_cast<float*>(object), n, comm, ncclFloat, 2);
+    nccl_bcast_impl(reinterpret_cast<float*>(object), n, comm, ncclFloat, root, 2);
 }
 
 void nccl_reduce_data(double* object, const int& n, MPI_Comm& comm)
@@ -302,21 +302,21 @@ void recv_data(std::complex<float>* buf, int count, int source, int tag, MPI_Com
 {
     MPI_Recv(buf, count, MPI_COMPLEX, source, tag, comm, status);
 }
-void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm)
+void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm, int root)
 {
-    MPI_Bcast(object, n * 2, MPI_DOUBLE, 0, comm);
+    MPI_Bcast(object, n * 2, MPI_DOUBLE, root, comm);
 }
-void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm)
+void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm, int root)
 {
-    MPI_Bcast(object, n * 2, MPI_FLOAT, 0, comm);
+    MPI_Bcast(object, n * 2, MPI_FLOAT, root, comm);
 }
-void bcast_data(double* object, const int& n, const MPI_Comm& comm)
+void bcast_data(double* object, const int& n, const MPI_Comm& comm, int root)
 {
-    MPI_Bcast(object, n, MPI_DOUBLE, 0, comm);
+    MPI_Bcast(object, n, MPI_DOUBLE, root, comm);
 }
-void bcast_data(float* object, const int& n, const MPI_Comm& comm)
+void bcast_data(float* object, const int& n, const MPI_Comm& comm, int root)
 {
-    MPI_Bcast(object, n, MPI_FLOAT, 0, comm);
+    MPI_Bcast(object, n, MPI_FLOAT, root, comm);
 }
 void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& comm)
 {

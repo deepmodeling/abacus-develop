@@ -4,6 +4,7 @@
 #include "mpi.h"
 #include <complex>
 #include <type_traits>
+#include "source_base/module_device/types.h"
 namespace Parallel_Common
 {
 void isend_data(const double* buf, int count, int dest, int tag, MPI_Comm& comm, MPI_Request* request);
@@ -18,10 +19,10 @@ void recv_data(double* buf, int count, int source, int tag, MPI_Comm& comm, MPI_
 void recv_data(std::complex<double>* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status);
 void recv_data(float* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status);
 void recv_data(std::complex<float>* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status);
-void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm);
-void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm);
-void bcast_data(double* object, const int& n, const MPI_Comm& comm);
-void bcast_data(float* object, const int& n, const MPI_Comm& comm);
+void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm, int root = 0);
+void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm, int root = 0);
+void bcast_data(double* object, const int& n, const MPI_Comm& comm, int root = 0);
+void bcast_data(float* object, const int& n, const MPI_Comm& comm, int root = 0);
 void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& comm);
 void reduce_data(std::complex<float>* object, const int& n, const MPI_Comm& comm);
 void reduce_data(double* object, const int& n, const MPI_Comm& comm);
@@ -32,10 +33,10 @@ void gatherv_data(const float* sendbuf, int sendcount, float* recvbuf, const int
 void gatherv_data(const std::complex<float>* sendbuf, int sendcount, std::complex<float>* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm);
 
 #if defined(__NCCL_PARALLEL_DEVICE)
-void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm);
-void nccl_bcast_data(std::complex<double>* object, const int& n, MPI_Comm& comm);
-void nccl_bcast_data(float* object, const int& n, MPI_Comm& comm);
-void nccl_bcast_data(std::complex<float>* object, const int& n, MPI_Comm& comm);
+void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm, int root = 0);
+void nccl_bcast_data(std::complex<double>* object, const int& n, MPI_Comm& comm, int root = 0);
+void nccl_bcast_data(float* object, const int& n, MPI_Comm& comm, int root = 0);
+void nccl_bcast_data(std::complex<float>* object, const int& n, MPI_Comm& comm, int root = 0);
 void nccl_reduce_data(double* object, const int& n, MPI_Comm& comm);
 void nccl_reduce_data(std::complex<double>* object, const int& n, MPI_Comm& comm);
 void nccl_reduce_data(float* object, const int& n, MPI_Comm& comm);
@@ -116,35 +117,35 @@ void recv_dev(T* object, int count, int source, int tag, MPI_Comm& comm, MPI_Sta
 }
 
 /**
- * @brief bcast data in Device
+ * @brief broadcast data in Device
  * 
  * @tparam T: float, double, std::complex<float>, std::complex<double>
  * @tparam Device 
- * @param ctx Device ctx
- * @param object complex arrays in Device
- * @param n the size of complex arrays
+ * @param object arrays in Device
+ * @param n the size of array
  * @param comm MPI_Comm
- * @param tmp_space tmp space in CPU
+ * @param root root rank (default 0)
+ * @param tmp_space optional tmp space in CPU (default nullptr)
  */
 template <typename T, typename Device>
-void bcast_dev(T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
+void bcast_dev(T* object, const int& n, const MPI_Comm& comm, int root = 0, T* tmp_space = nullptr)
 {
 #if defined(__NCCL_PARALLEL_DEVICE)
     if (std::is_same<Device, base_device::DEVICE_GPU>::value)
     {
-        nccl_bcast_data(object, n, const_cast<MPI_Comm&>(comm));
+        nccl_bcast_data(object, n, const_cast<MPI_Comm&>(comm), root);
         return;
     }
 #endif
 #ifdef __CUDA_MPI
-    bcast_data(object, n, comm);
+    bcast_data(object, n, comm, root);
 #else
     object_cpu_point<T,Device> o;
     int rank = 0;
     MPI_Comm_rank(comm, &rank);
-    T* object_cpu = rank == 0 ? o.get(object, n, tmp_space) : o.get_buffer(object, n, tmp_space);
-    bcast_data(object_cpu, n, comm);
-    if (rank != 0)
+    T* object_cpu = rank == root ? o.get(object, n, tmp_space) : o.get_buffer(object, n, tmp_space);
+    bcast_data(object_cpu, n, comm, root);
+    if (rank != root)
     {
         o.sync_h2d(object, object_cpu, n);
     }
