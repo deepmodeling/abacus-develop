@@ -23,7 +23,7 @@ namespace ModuleGint
                          const GintInfo& gint_info);
 
     template<typename TGint, typename TDM>
-    void transfer_dm_2d_to_gint(
+    void transfer_dm2d(
         const GintInfo& gint_info,
         const std::vector<HContainer<TDM>*>& dm,
         std::vector<HContainer<TGint>>& dm_gint);
