@@ -14,6 +14,7 @@
 #include "source_base/parallel_global.h"
 #ifdef __DSP
 #include "source_base/module_device/memory_op.h"
+#include "source_base/module_external/blas_connector.h"
 #endif
 
 Driver::Driver()
@@ -130,6 +131,7 @@ void Driver::reading()
 
 #ifdef __DSP
     base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    BlasConnector::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 
     // (2) create the output directory, running_*.log and print info
