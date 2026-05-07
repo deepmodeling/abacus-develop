@@ -13,6 +13,9 @@ namespace ModuleBase
 // 1024 Byte = 1 KB
 // 1024 KB   = 1 MB
 // 1024 MB   = 1 GB
+
+const double memory_warning_threshold_mb = 20.0;
+
 double Memory::total = 0.0;
 int Memory::complex_matrix_memory = 2*sizeof(double); // 16 byte
 int Memory::double_memory = sizeof(double); // 8 byte
@@ -149,7 +152,7 @@ double Memory::record
 
 	consume[find] = Memory::calculate_mem(n_in,type);
 
-	if(consume[find] > 5)
+	if(consume[find] > memory_warning_threshold_mb)
 	{
 		print(find);
 	}
@@ -211,7 +214,7 @@ void Memory::record
 		{
 			Memory::total += size_mb - consume[find];
 			consume[find] = size_mb;
-			if(consume[find] > 5)
+			if(consume[find] > memory_warning_threshold_mb)
 			{
 				print(find);
 			}
@@ -268,7 +271,7 @@ double Memory::record_gpu
 
 	consume_gpu[find] = Memory::calculate_mem(n_in,type);
 
-	if(consume_gpu[find] > 5)
+	if(consume_gpu[find] > memory_warning_threshold_mb)
 	{
 		print(find);
 	}
@@ -330,7 +333,7 @@ void Memory::record_gpu
 		{
 			Memory::total_gpu += size_mb - consume_gpu[find];
 			consume_gpu[find] = size_mb;
-			if(consume_gpu[find] > 5)
+			if(consume_gpu[find] > memory_warning_threshold_mb)
 			{
 				print(find);
 			}
@@ -343,7 +346,7 @@ void Memory::record_gpu
 
 void Memory::print(const int find)
 {
-	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
+	GlobalV::ofs_running <<"\n *** Memory Allocation Warning *** "
 	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
 	return;
 }
