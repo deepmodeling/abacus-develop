@@ -791,7 +791,7 @@ ui_show_summary() {
             cuda_version="unavailable"
         fi
     fi
-    
+
     echo "   ├─ GPU: $gpu_info"
     echo "   ├─ NVIDIA Driver: $nvidia_driver"
     echo "   └─ CUDA Version: $cuda_version"
