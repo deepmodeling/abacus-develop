@@ -34,8 +34,13 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libcomm" "$version_suffix"
-dirname="LibComm-${libcomm_ver}"
-filename="LibComm-${libcomm_ver}.tar.gz"
+if [[ "${libcomm_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+    short_ver="${libcomm_ver:0:7}"
+else
+    short_ver="${libcomm_ver}"
+fi
+dirname="LibComm-${short_ver}"
+filename="LibComm-${short_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -79,7 +84,7 @@ case "$with_libcomm" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBCOMM from system paths ===================="
@@ -107,7 +112,7 @@ case "$with_libcomm" in
         echo "==================== Linking LIBCOMM to user paths ===================="
         pkg_install_dir="${with_libcomm}"
         check_dir "${pkg_install_dir}"
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_libcomm" != "__DONTUSE__" ]; then

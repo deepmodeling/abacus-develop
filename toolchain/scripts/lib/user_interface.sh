@@ -777,7 +777,24 @@ ui_show_summary() {
         fi
     fi
     
-    echo "   └─ GPU: $gpu_info"
+    local nvidia_driver="unavailable"
+    local cuda_version="unavailable"
+    if command -v nvidia-smi &> /dev/null; then
+        nvidia_driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -n1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        if [[ -z "$nvidia_driver" ]]; then
+            nvidia_driver="unavailable"
+        fi
+        local nvidia_banner=$(nvidia-smi 2>/dev/null | head -n 3 | tr '\n' ' ')
+        cuda_version=$(echo "$nvidia_banner" | sed -n 's/.*CUDA Version:[[:space:]]*\([0-9.]*\).*/\1/p')
+        cuda_version=$(echo "$cuda_version" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        if [[ -z "$cuda_version" ]]; then
+            cuda_version="unavailable"
+        fi
+    fi
+    
+    echo "   ├─ GPU: $gpu_info"
+    echo "   ├─ NVIDIA Driver: $nvidia_driver"
+    echo "   └─ CUDA Version: $cuda_version"
     echo ""
     
     # Configuration box with aligned formatting

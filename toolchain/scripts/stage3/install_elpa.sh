@@ -115,7 +115,7 @@ case "$with_elpa" in
             fi
             for TARGET in "cpu" "nvidia"; do
                 # Accept both uppercase and lowercase GPU enable flags for compatibility
-                gpu_enabled="${ENABLE_CUDA:-${enable_cuda}}"
+                gpu_enabled="${ENABLE_CUDA}"
                 [ "$TARGET" = "nvidia" ] && [ "$gpu_enabled" != "__TRUE__" ] && continue
                 # disable cpu if cuda is enabled, only install one
                 [ "$TARGET" != "nvidia" ] && [ "$gpu_enabled" = "__TRUE__" ] && continue
