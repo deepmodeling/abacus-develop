@@ -96,7 +96,10 @@ void print_parameters(
         }
         else
         {
-            std::cout << std::setw(16) << kv.get_nkstot();
+            const int nspin = kv.get_nspin();
+            const int nkstot = kv.get_nkstot();
+            const int nkpoints_real = (nspin > 0) ? (nkstot / nspin) : nkstot;
+            std::cout << std::setw(16) << nkpoints_real;
         }
 
         std::cout << std::setw(12) << GlobalV::NPROC
