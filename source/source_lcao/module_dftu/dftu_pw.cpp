@@ -3,6 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
+#include "source_base/parallel_global.h"
 
 /// calculate occupation matrix for DFT+U (PW basis)
 ///
@@ -201,13 +202,13 @@ void Plus_U::cal_occ_pw(const int iter,
         if(PARAM.inp.nspin != 4)
         {
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
-                    PARAM.globalv.nproc_in_pool, 
+                    GlobalV::NPROC_IN_POOL, 
                     this->locale[iat][target_l][0][0].c, 
                     size);
             if(PARAM.inp.nspin == 2)
             {
                 Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
-                        PARAM.globalv.nproc_in_pool, 
+                        GlobalV::NPROC_IN_POOL, 
                         this->locale[iat][target_l][0][1].c, 
                         size);
             }
@@ -215,7 +216,7 @@ void Plus_U::cal_occ_pw(const int iter,
         else
         {
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
-                    PARAM.globalv.nproc_in_pool, 
+                    GlobalV::NPROC_IN_POOL, 
                     this->locale[iat][target_l][0][0].c, 
                     size * 4);
         }
