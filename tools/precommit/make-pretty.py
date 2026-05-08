@@ -2,12 +2,15 @@
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 root = Path("/repo")
 build_dir = Path(os.environ.get("BUILD_DIR", "build"))
+jobs = int(os.environ.get("JOBS", "1"))
 
 cpp_format_exts = {
     ".c", ".cc", ".cpp", ".cxx", ".c++",
@@ -39,7 +42,7 @@ os.chdir(root)
 compile_db = root / build_dir / "compile_commands.json"
 
 if not compile_db.exists():
-    cmake_args = os.environ.get("CMAKE_ARGS", "").split()
+    cmake_args = shlex.split(os.environ.get("CMAKE_ARGS", ""))
     run([
         "cmake",
         "-S", ".",
@@ -82,10 +85,10 @@ for entry in db:
 print(f"==> clang-tidy translation units: {len(tidy_files)}", flush=True)
 
 tidy_failures = []
-extra = os.environ.get("CLANG_TIDY_EXTRA_ARGS", "").split()
+extra = shlex.split(os.environ.get("CLANG_TIDY_EXTRA_ARGS", ""))
 strict = os.environ.get("STRICT_CLANG_TIDY", "0") == "1"
 
-for rel in tidy_files:
+def run_tidy(rel):
     cmd = [
         "clang-tidy",
         str(rel),
@@ -95,9 +98,15 @@ for rel in tidy_files:
     ]
     print("+ " + " ".join(cmd), flush=True)
     ret = subprocess.run(cmd).returncode
-    if ret != 0:
-        tidy_failures.append((str(rel), ret))
-        print(f"WARNING: clang-tidy failed for {rel} with exit code {ret}", flush=True)
+    return str(rel), ret
+
+with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+    futures = [pool.submit(run_tidy, rel) for rel in tidy_files]
+    for fut in as_completed(futures):
+        filename, ret = fut.result()
+        if ret != 0:
+            tidy_failures.append((str(rel), ret))
+            print(f"WARNING: clang-tidy failed for {rel} with exit code {ret}", flush=True)
 
 if tidy_failures:
     print("==> clang-tidy failures:", flush=True)
