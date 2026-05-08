@@ -89,13 +89,21 @@ extra = shlex.split(os.environ.get("CLANG_TIDY_EXTRA_ARGS", ""))
 strict = os.environ.get("STRICT_CLANG_TIDY", "0") == "1"
 
 def run_tidy(rel):
+    abs_file = str((root / rel).resolve())
+
+    line_filter = json.dumps([
+        {"name": abs_file, "lines": [[1, 1000000]]}
+    ])
+
     cmd = [
         "clang-tidy",
         str(rel),
         f"-p={build_dir}",
+        f"-line-filter={line_filter}",
         "--fix-errors",
         *extra,
     ]
+
     print("+ " + " ".join(cmd), flush=True)
     ret = subprocess.run(cmd).returncode
     return str(rel), ret
