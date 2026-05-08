@@ -135,11 +135,12 @@ class Plus_U
   public:
     /// interface for PW base
 	/// calculate the local occupation number matrix for PW based wave functions
-	void cal_occ_pw(const int iter, 
-			const void* psi_in, 
-			const ModuleBase::matrix& wg_in, 
-			const UnitCell& cell, 
-			Charge_Mixing* p_chgmix);
+	void cal_occ_pw(const int iter,
+			const void* psi_in,
+			const ModuleBase::matrix& wg_in,
+			const UnitCell& cell,
+			Charge_Mixing* p_chgmix,
+			const int* isk);
 
     /// calculate the local DFT+U effective potential matrix for PW base.
     void cal_VU_pot_pw(const int spin);

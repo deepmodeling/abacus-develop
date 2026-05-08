@@ -12,22 +12,17 @@
 /// nspin=2 (npol=1): two spin channels stored separately:
 ///   locale[iat][l][n][0] = spin-up, locale[iat][l][n][1] = spin-down;
 ///   becp indices: ib*nkb + begin_ih + m (same formula for both spins);
-///   spin channel selected by `is` derived from ik >= nk/2;
-///   eff_pot_pw split layout: [all_spin_up | all_spin_down];
-///   uom_array split layout:  [all_spin_up | all_spin_down];
-///   VU spin-down stored at eff_pot_pw.size()/2 + eff_pot_pw_index[iat].
+///   spin channel selected by `isk[ik]` (not ik >= nk/2, which fails for kpar>1);
 ///
 /// nspin=4 (npol=2): spinor calculation;
 ///   locale has a single matrix of size (2*tlp1) x (2*tlp1) per atom
-///   storing all 4 Pauli blocks contiguously;
-///   becp indices: ib*npol*nkb + begin_ih + m_begin + m (with spinor offset);
-///   eff_pot_pw has tlp1_npol^2 = 4*tlp1^2 entries per atom;
-///   after VU calculation, Pauli→spin transformation is applied.
+///   storing all 4 Pauli blocks contiguously.
 void Plus_U::cal_occ_pw(const int iter, 
 		const void* psi_in, 
 		const ModuleBase::matrix& wg_in, 
 		const UnitCell& cell, 
-		Charge_Mixing* p_chgmix)
+		Charge_Mixing* p_chgmix,
+		const int* isk)
 {
     ModuleBase::timer::start("Plus_U", "cal_occ_pw");
     this->copy_locale(cell);
@@ -41,11 +36,7 @@ void Plus_U::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = 0;
-            if(PARAM.inp.nspin == 2 && ik >= psi_p->get_nk()/2)
-            {
-                is = 1; 
-            }
+            int is = (PARAM.inp.nspin == 2) ? isk[ik] : 0;
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
@@ -125,11 +116,7 @@ void Plus_U::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = 0;
-            if(PARAM.inp.nspin == 2 && ik >= psi_p->get_nk()/2)
-            {
-                is = 1; 
-            }
+            int is = (PARAM.inp.nspin == 2) ? isk[ik] : 0;
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 

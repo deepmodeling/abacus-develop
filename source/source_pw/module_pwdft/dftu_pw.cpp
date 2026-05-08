@@ -11,7 +11,8 @@ void iter_init_dftu_pw(const int iter,
                         const void* psi,
                         const ModuleBase::matrix& wg,
                         const UnitCell& ucell,
-                        Charge_Mixing* p_chgmix)
+                        Charge_Mixing* p_chgmix,
+                        const int* isk)
 {
     if (!p_chgmix || !PARAM.inp.dft_plus_u)
     {
@@ -25,7 +26,7 @@ void iter_init_dftu_pw(const int iter,
 
     if (dftu.omc != 2)
     {
-        dftu.cal_occ_pw(iter, psi, wg, ucell, p_chgmix);
+        dftu.cal_occ_pw(iter, psi, wg, ucell, p_chgmix, isk);
     }
     dftu.output(ucell);
 }
