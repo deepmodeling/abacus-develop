@@ -1380,7 +1380,7 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        &lwork  // ← 这里才是 lwork 的地址！
+        &lwork  // ← correct: pass address of lwork
     ));
 
     cuComplex* d_work = nullptr;
@@ -1395,7 +1395,7 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        reinterpret_cast<cuComplex*>(d_tau),  // ← 这里才是 d_tau
+        reinterpret_cast<cuComplex*>(d_tau),  // ← correct: d_tau
         d_work, lwork, d_info));
 
     int h_info = 0;

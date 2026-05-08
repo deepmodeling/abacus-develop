@@ -24,7 +24,7 @@ orbital_corr    2
 hubbard_u    5.0
 onsite_radius   3.0
 
-# DeltaSpin — 极松阈值
+# DeltaSpin -- loose convergence threshold
 sc_mag_switch    1
 sc_thr    1e-4
 nsc    100

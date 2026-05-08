@@ -18,7 +18,7 @@ ks_solver    dav_subspace
 symmetry    0
 kpar    1
 
-# DeltaSpin parameters — nsc=1: 只读 lambda 不迭代优化
+# DeltaSpin parameters -- nsc=1: read lambda only, skip iterative optimization
 sc_mag_switch    1
 sc_thr    1e-4
 nsc    1

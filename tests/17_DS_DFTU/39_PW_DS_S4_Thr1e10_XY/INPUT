@@ -17,7 +17,7 @@ ks_solver    dav_subspace
 symmetry    0
 kpar    2
 
-# DeltaSpin — 极严阈值
+# DeltaSpin -- strict convergence threshold
 sc_mag_switch    1
 sc_thr    1e-4
 nsc    100

@@ -113,7 +113,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 
         nppstr = mp_x + 1;
     }
-    else if (direction == 2) // 计算y方向
+    else if (direction == 2) // y-direction calculation
     {
         const int num_string = mp_x * mp_z;
 
@@ -163,7 +163,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 
         nppstr = mp_y + 1;
     }
-    else if (direction == 3) // 计算z方向
+    else if (direction == 3) // z-direction calculation
     {
         const int num_string = mp_x * mp_y;
 

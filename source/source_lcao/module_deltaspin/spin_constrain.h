@@ -110,18 +110,18 @@ public:
   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
   /**
-   * @brief PW基组的波函数和电荷更新实现
-   * @details 包含两个阶段：
-   *          1. 子空间对角化：对每个k点应用DeltaSpin修正并求解
-   *          2. 电荷更新：根据pw_solve参数选择全空间对角化或直接更新电荷
+   * @brief Wavefunction and charge density update implementation for PW basis
+   * @details Two-stage process:
+   *          1. Subspace diagonalization: apply DeltaSpin correction and solve for each k-point
+   *          2. Charge update: full-space diagonalization or direct charge update based on pw_solve
    */
   void update_psi_charge_pw(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
   
-  /// CPU版本的PW基组更新实现
+  /// CPU implementation of PW basis update
   void update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
   
 #if ((defined __CUDA) || (defined __ROCM))
-  /// GPU版本的PW基组更新实现
+  /// GPU implementation of PW basis update
   void update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
 #endif
 
