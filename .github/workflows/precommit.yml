@@ -1,4 +1,4 @@
-name: Integration Test and Unit Test
+name: Precommit
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test
+    name: Precommit
     runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     container:
@@ -33,13 +33,11 @@ jobs:
         run: |
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
-      - name: Build
-        run: |
-          cmake --build build -j8
-          cmake --install build
-      - name: Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          cmake --build build --target test ARGS="-V --timeout 1700"
+      - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args:
+            --from-ref ${{ github.event.pull_request.base.sha }}
+              --to-ref ${{ github.event.pull_request.head.sha }}
+        continue-on-error: true
+      - uses: pre-commit-ci/lite-action@v1.0.3
+
