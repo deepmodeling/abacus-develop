@@ -53,7 +53,7 @@ ENV CMAKE_ARGS=${CMAKE_ARGS}
 ENV CLANG_TIDY_EXTRA_ARGS=${CLANG_TIDY_EXTRA_ARGS}
 ENV STRICT_CLANG_TIDY=${STRICT_CLANG_TIDY}
 
-RUN python3 /repo/tools/precommit/make-pretty.py
+RUN python3 /repo/tools/precommit/make_pretty.py
 
 FROM scratch AS export
 COPY --from=pretty /out/ /

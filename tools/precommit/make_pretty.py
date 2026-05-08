@@ -20,7 +20,10 @@ cpp_format_exts = {
 }
 
 tidy_source_exts = {
-    ".cc", ".cpp", ".cxx", ".c++",
+    ".c", ".cc", ".cpp", ".cxx", ".c++",
+    ".h", ".hh", ".hpp", ".hxx",
+    ".ipp", ".tpp",
+    ".cu", ".cuh",
 }
 
 exclude_names = {
