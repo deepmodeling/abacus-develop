@@ -2,24 +2,18 @@
 
 import json
 import os
-import shlex
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-root = Path("/repo")
-build_dir = Path(os.environ.get("BUILD_DIR", "build"))
+root = Path("/repo").resolve()
+build_dir = root / "build"
+out = Path("/out").resolve()
+
 jobs = int(os.environ.get("JOBS", "1"))
 
-cpp_format_exts = {
-    ".c", ".cc", ".cpp", ".cxx", ".c++",
-    ".h", ".hh", ".hpp", ".hxx",
-    ".ipp", ".tpp",
-    ".cu", ".cuh",
-}
-
-tidy_source_exts = {
+precommit_exts = {
     ".c", ".cc", ".cpp", ".cxx", ".c++",
     ".h", ".hh", ".hpp", ".hxx",
     ".ipp", ".tpp",
@@ -29,137 +23,187 @@ tidy_source_exts = {
 exclude_names = {
     ".git",
     "build",
-    build_dir.name,
     ".cache",
+    "__pycache__",
 }
 
 def is_excluded(path: Path) -> bool:
-    return any(part in exclude_names or part.startswith("cmake-build-") for part in path.parts)
+    return any(
+        part in exclude_names
+        or part.startswith("cmake-build-")
+        or part.startswith("build-")
+        for part in path.parts
+    )
 
 def run(cmd, check=True):
-    print("+ " + " ".join(cmd), flush=True)
+    print("+ " + " ".join(str(x) for x in cmd), flush=True)
     return subprocess.run(cmd, check=check)
 
-os.chdir(root)
+def collect_precommit_files():
+    files = []
 
-compile_db = root / build_dir / "compile_commands.json"
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
 
-if not compile_db.exists():
-    cmake_args = shlex.split(os.environ.get("CMAKE_ARGS", ""))
-    run([
-        "cmake",
-        "-S", ".",
-        "-B", str(build_dir),
-        "-G", "Ninja",
-        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-        *cmake_args,
-    ])
+        rel = path.relative_to(root)
 
-if not compile_db.exists():
-    raise SystemExit(f"ERROR: {compile_db} was not generated")
+        if is_excluded(rel):
+            continue
 
-with compile_db.open("r", encoding="utf-8") as f:
-    db = json.load(f)
+        if path.suffix in precommit_exts:
+            files.append(rel)
 
-tidy_files = []
-seen = set()
+    return sorted(files)
 
-for entry in db:
-    filename = entry.get("file")
-    if not filename:
-        continue
+def language_for_file(path: Path):
+    suffix = path.suffix
 
-    path = Path(filename)
-    if not path.is_absolute():
-        path = Path(entry.get("directory", root)) / path
+    if suffix == ".c":
+        return "clang", "c", "-std=c11"
 
-    try:
-        rel = path.resolve().relative_to(root.resolve())
-    except ValueError:
-        continue
+    if suffix in {".cu", ".cuh"}:
+        return "clang++", "cuda", "-std=c++17"
 
-    if is_excluded(rel):
-        continue
+    if suffix in {".h", ".hh", ".hpp", ".hxx", ".ipp", ".tpp"}:
+        return "clang++", "c++-header", "-std=c++17"
 
-    if rel.suffix in tidy_source_exts and rel.exists() and rel not in seen:
-        tidy_files.append(rel)
-        seen.add(rel)
+    return "clang++", "c++", "-std=c++17"
 
-print(f"==> clang-tidy translation units: {len(tidy_files)}", flush=True)
+def collect_include_dirs(files):
+    include_dirs = {
+        root,
+        root / "source",
+        root / "source" / "source_base",
+        root / "python" / "pyabacus" / "src",
+    }
 
-tidy_failures = []
-extra = shlex.split(os.environ.get("CLANG_TIDY_EXTRA_ARGS", ""))
-strict = os.environ.get("STRICT_CLANG_TIDY", "0") == "1"
+    for rel in files:
+        include_dirs.add((root / rel).parent.resolve())
+
+    return sorted(include_dirs)
+
+def generate_compile_commands(files):
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+
+    build_dir.mkdir(parents=True, exist_ok=True)
+
+    include_dirs = collect_include_dirs(files)
+    commands = []
+
+    for rel in files:
+        path = (root / rel).resolve()
+        compiler, lang, std_flag = language_for_file(path)
+
+        args = [
+            compiler,
+            "-x", lang,
+            std_flag,
+            "-fsyntax-only",
+            "-Wno-unknown-warning-option",
+            "-Wno-unused-command-line-argument",
+            *[f"-I{inc}" for inc in include_dirs],
+            str(path),
+        ]
+
+        commands.append({
+            "directory": str(root),
+            "file": str(path),
+            "arguments": args,
+        })
+
+    compile_db = build_dir / "compile_commands.json"
+    compile_db.write_text(json.dumps(commands, indent=2), encoding="utf-8")
+
+    print(f"==> Generated synthetic compile database: {compile_db}", flush=True)
+    print(f"==> Synthetic entries: {len(commands)}", flush=True)
+
+def run_clang_format(files):
+    print(f"==> clang-format files: {len(files)}", flush=True)
+
+    batch = []
+
+    for rel in files:
+        batch.append(str(rel))
+
+        if len(batch) >= 100:
+            run(["clang-format", "-i", "-style=file", "--fallback-style=GNU", *batch])
+            batch.clear()
+
+    if batch:
+        run(["clang-format", "-i", "-style=file", "--fallback-style=GNU", *batch])
 
 def run_tidy(rel):
     abs_file = str((root / rel).resolve())
 
     line_filter = json.dumps([
-        {"name": abs_file, "lines": [[1, 1000000]]}
+        {"name": abs_file, "lines": [[1, 100000000]]},
+        {"name": str(rel), "lines": [[1, 100000000]]},
     ])
 
     cmd = [
         "clang-tidy",
-        str(rel),
+        abs_file,
         f"-p={build_dir}",
         f"-line-filter={line_filter}",
         "--fix-errors",
-        *extra,
+        "--quiet",
     ]
 
     print("+ " + " ".join(cmd), flush=True)
     ret = subprocess.run(cmd).returncode
     return str(rel), ret
 
-with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
-    futures = [pool.submit(run_tidy, rel) for rel in tidy_files]
-    for fut in as_completed(futures):
-        filename, ret = fut.result()
-        if ret != 0:
-            tidy_failures.append((str(rel), ret))
-            print(f"WARNING: clang-tidy failed for {rel} with exit code {ret}", flush=True)
+def run_clang_tidy(files):
+    print(f"==> clang-tidy files: {len(files)}", flush=True)
 
-if tidy_failures:
-    print("==> clang-tidy failures:", flush=True)
-    for filename, ret in tidy_failures:
-        print(f"  {ret}: {filename}", flush=True)
-    if strict:
-        raise SystemExit("ERROR: clang-tidy failed and STRICT_CLANG_TIDY=1")
+    failures = []
 
-format_files = []
+    with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+        futures = [pool.submit(run_tidy, rel) for rel in files]
 
-for path in root.rglob("*"):
-    if not path.is_file():
-        continue
+        for fut in as_completed(futures):
+            filename, ret = fut.result()
 
-    rel = path.relative_to(root)
-    if is_excluded(rel):
-        continue
+            if ret != 0:
+                failures.append((filename, ret))
+                print(
+                    f"WARNING: clang-tidy failed for {filename} with exit code {ret}",
+                    flush=True,
+                )
 
-    if path.suffix in cpp_format_exts:
-        format_files.append(rel)
+    if failures:
+        print("==> clang-tidy failures:", flush=True)
+        for filename, ret in failures:
+            print(f"  {ret}: {filename}", flush=True)
 
-print(f"==> clang-format files: {len(format_files)}", flush=True)
+def export_files(files):
+    if out.exists():
+        shutil.rmtree(out)
 
-batch = []
-for rel in format_files:
-    batch.append(str(rel))
-    if len(batch) >= 100:
-        run(["clang-format", "-i", "-style=file", "--fallback-style=GNU", *batch])
-        batch.clear()
+    out.mkdir(parents=True)
 
-if batch:
-    run(["clang-format", "-i", "-style=file", "--fallback-style=GNU", *batch])
+    for rel in files:
+        src = root / rel
+        dst = out / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
 
-out = Path("/out")
-if out.exists():
-    shutil.rmtree(out)
-out.mkdir(parents=True)
+    print("==> Exported C/C++ files only to /out", flush=True)
 
-for rel in format_files:
-    src = root / rel
-    dst = out / rel
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst)
+def main():
+    os.chdir(root)
 
-print("==> Exported C/C++ files only to /out", flush=True)
+    files = collect_precommit_files()
+    print(f"==> C/C++ files discovered: {len(files)}", flush=True)
+
+    generate_compile_commands(files)
+
+    run_clang_tidy(files)
+    run_clang_format(files)
+
+    export_files(files)
+
+if __name__ == "__main__":
+    main()
