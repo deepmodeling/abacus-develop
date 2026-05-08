@@ -2,11 +2,13 @@
 Checks: '
     -*,
     modernize-deprecated-headers,
-    modernize-redundant-void-arg,
     modernize-use-bool-literals,
     modernize-use-nullptr,
-    readability-avoid-return-with-void-value,
-    readability-braces-around-statements
+    readability-avoid-return-with-void-value
+
+    # TODO: Find out why the two checks would cause fatal regression
+    # modernize-redundant-void-arg,
+    # readability-braces-around-statements
 
     # llvm-header-guard,
     # bugprone-*,
