@@ -147,7 +147,7 @@ def run_tidy(rel):
         abs_file,
         f"-p={build_dir}",
         f"-line-filter={line_filter}",
-        "--fix-errors",
+        "--fix",
         "--quiet",
     ]
 
