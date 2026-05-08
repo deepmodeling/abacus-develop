@@ -33,6 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache ca-certificates python-is-python3 python3-pip
+          sudo pip install --upgrade pip
           sudo pip install clang-format clang-tidy
 
       - name: Configure
