@@ -31,7 +31,7 @@ class DiagoIterAssist
     static int SCF_ITER;
 
     // for psi::Psi structure
-     /**
+    /**
      * @brief Diagonalizes the Hamiltonian in a subspace defined by the given wavefunction.
      *
      * This static function computes the eigenvalues and eigenvectors of the Hamiltonian
@@ -47,12 +47,12 @@ class DiagoIterAssist
      * @param n_band  Number of bands (eigenvalues/eigenvectors) to compute. Default is 0 (all).
      * @param is_S_orthogonal If true, assumes the input wavefunction is already orthogonalized.
      */
-    static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
-                              const psi::Psi<T, Device>& psi,
-                              psi::Psi<T, Device>& evc,
-                              Real *en,
-                              int n_band = 0,
-                              const bool is_S_orthogonal = false);
+    static void diag_subspace (const hamilt::Hamilt<T, Device>* const pHamilt,
+                               const psi::Psi<T, Device>& psi,
+                               psi::Psi<T, Device>& evc,
+                               Real* en,
+                               int n_band = 0,
+                               const bool is_S_orthogonal = false);
 
     /// @brief use LAPACK to diagonalize the Hamiltonian matrix
     /// @param pHamilt interface to hamiltonian
@@ -61,41 +61,37 @@ class DiagoIterAssist
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
     /// @param en eigenenergies
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
     /// and return all - zero eigenenergies.
-    static void diag_subspace_init(
-            hamilt::Hamilt<T, Device>* pHamilt,
-            const T* psi,
-            int psi_nr,
-            int psi_nc,
-            psi::Psi<T, Device> &evc,
-            Real* en,
-            const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
-            const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
+    static void diag_subspace_init (
+        hamilt::Hamilt<T, Device>* pHamilt,
+        const T* psi,
+        int psi_nr,
+        int psi_nc,
+        psi::Psi<T, Device>& evc,
+        Real* en,
+        const std::function<void (T*, const int)>& add_to_hcc = [] (T* null, const int n) {},
+        const std::function<void (const T* const, const int, const int)>& export_vcc
+        = [] (const T* null, const int n, const int m) {});
 
-    static void diag_heevx(const int nstart,
+    static void diag_heevx (const int nstart, const int nbands, const T* hcc, const int ldh, Real* e, T* vcc);
+    static void diag_hegvd (const int nstart,
                             const int nbands,
-                            const T *hcc,
-                            const int ldh,
-                            Real *e,
-                            T *vcc);
-    static void diag_hegvd(const int nstart,
-                            const int nbands,
-                            const T *hcc,
-                            T *sc,
+                            const T* hcc,
+                            T* sc,
                             const int ldh, // nstart
-                            Real *e,
-                            T *vcc);
+                            Real* e,
+                            T* vcc);
 
     /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
     /// @param pHamilt : hamiltonian operator carrier
     /// @param psi : wavefunction
     /// @param hcc : Hamiltonian matrix
     /// @param scc : overlap matrix
-    static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                T *hcc, 
-                                                T *scc);
+    static void cal_hs_subspace (const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+                                 const psi::Psi<T, Device>& psi,           // [in] wavefunction
+                                 T* hcc,
+                                 T* scc);
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix
@@ -105,22 +101,13 @@ class DiagoIterAssist
     /// @param mat_out : output matrix to be rotated
     /// @param mat_col : number of columns of target matrix
     /// @param en : eigenvalues
-    static void diag_responce(const T* hcc,
-                              T* scc,
-                              const int nbands,
-                              const T* mat_in, 
-                              T* mat_out, 
-                              int mat_col, 
-                              Real* en);
-    
-    /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
-    static void diag_subspace_psi(const T* hcc,
-                              T* scc,
-                              const int dim_subspace,
-                              psi::Psi<T, Device>& evc,
-                              Real* en);
+    static void
+        diag_responce (const T* hcc, T* scc, const int nbands, const T* mat_in, T* mat_out, int mat_col, Real* en);
 
-    static bool test_exit_cond(const int& ntry, const int& notconv);
+    /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
+    static void diag_subspace_psi (const T* hcc, T* scc, const int dim_subspace, psi::Psi<T, Device>& evc, Real* en);
+
+    static bool test_exit_cond (const int& ntry, const int& notconv);
 
   private:
     constexpr static const Device* ctx = {};
@@ -169,10 +156,10 @@ template <typename T, typename Device>
 int DiagoIterAssist<T, Device>::SCF_ITER = 0;
 
 template <typename T, typename Device>
-T DiagoIterAssist<T, Device>::one = static_cast<T>(1.0);
+T DiagoIterAssist<T, Device>::one = static_cast<T> (1.0);
 
 template <typename T, typename Device>
-T DiagoIterAssist<T, Device>::zero = static_cast<T>(0.0);
+T DiagoIterAssist<T, Device>::zero = static_cast<T> (0.0);
 } // namespace hsolver
 
 #endif

@@ -24,7 +24,7 @@ namespace ModuleBase
  *               x+n*Dx-xi               xi+(k-n+1)*Dx-x
  *      Bk[n] = -----------*B(k-1)[n] + -----------------*B(k-1)[n-1]
  *                 k*Dx                        k*Dx
- * USAGE: 
+ * USAGE:
  *   ModuleBase::Bspline bp;
  *   bp.init(10,0.7,2); //Dx = 0.7, xi = 2
  *   bp.getbslpine(0.5); //x = 0.5
@@ -34,24 +34,24 @@ namespace ModuleBase
 class Bspline
 {
   private:
-    int norder; // the order of bezier base; norder >= 0
-    double Dx; // Dx: the interval of control node
-    double xi; // xi: the starting point
-    double * bezier = nullptr; // bezier[n] = Bk[n]
+    int norder;               // the order of bezier base; norder >= 0
+    double Dx;                // Dx: the interval of control node
+    double xi;                // xi: the starting point
+    double* bezier = nullptr; // bezier[n] = Bk[n]
 
   public:
-    Bspline();
-    ~Bspline();
+    Bspline ();
+    ~Bspline ();
 
-    void init(int norderin, double Dxin, double xiin);
+    void init (int norderin, double Dxin, double xiin);
 
     // Get the result of i-th bezier base functions for different input x+xi+n*Dx.
     // x should be in [0,Dx]
     // n-th result is stored in bezier[n];
-    void getbspline(double x);
+    void getbspline (double x);
 
     // get the element of bezier
-    double bezier_ele(int n);
+    double bezier_ele (int n);
 };
 } // namespace ModuleBase
 #endif

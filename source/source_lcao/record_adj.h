@@ -14,24 +14,23 @@ class Record_adj
     bool info_modified = false;
 
   public:
-    Record_adj();
-    ~Record_adj();
+    Record_adj ();
+    ~Record_adj ();
 
     //--------------------------------------------
     // This will record the orbitals according to
     // HPSEPS's 2D block division.
     //--------------------------------------------
-    void for_2d(const UnitCell& ucell,
-                const Grid_Driver& grid_d,
-                Parallel_Orbitals& pv,
-                bool gamma_only,
-                const std::vector<double>& orb_cutoff);
+    void for_2d (const UnitCell& ucell,
+                 const Grid_Driver& grid_d,
+                 Parallel_Orbitals& pv,
+                 bool gamma_only,
+                 const std::vector<double>& orb_cutoff);
 
+    void delete_grid ();
 
-    void delete_grid();
-
-    int na_proc=0;
-    int* na_each=nullptr;
+    int na_proc = 0;
+    int* na_each = nullptr;
 
     //--------------------------------------------
     // record sparse atom index in for_grid();
@@ -46,12 +45,12 @@ class Record_adj
     // 1. iat2ca[iat] > 0 ? na_each[iat2ca[iat]] : 0
     // 2. iat2ca[iat] > 0 ? info[iat2ca[iat]] : nullptr
     //--------------------------------------------
-    int* iat2ca=nullptr;
+    int* iat2ca = nullptr;
 
     //------------------------------------------------
     // info will identify each atom in each unitcell.
     //------------------------------------------------
-    int*** info=nullptr;
+    int*** info = nullptr;
 
   private:
 };

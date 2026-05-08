@@ -12,92 +12,92 @@
 class Nose_Hoover : public MD_base
 {
   public:
-    Nose_Hoover(const Parameter& param_in, UnitCell& unit_in);
-    ~Nose_Hoover();
+    Nose_Hoover (const Parameter& param_in, UnitCell& unit_in);
+    ~Nose_Hoover ();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
-    void first_half(std::ofstream& ofs);
-    void second_half();
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
-    void write_restart(const std::string& global_out_dir);
-    void restart(const std::string& global_readin_dir);
+    void setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void first_half (std::ofstream& ofs);
+    void second_half ();
+    void print_md (std::ofstream& ofs, const bool& cal_stress);
+    void write_restart (const std::string& global_out_dir);
+    void restart (const std::string& global_readin_dir);
 
     /**
      * @brief perform half-step update of thermostats coupled with particles
      *
      */
-    void particle_thermo();
+    void particle_thermo ();
 
     /**
      * @brief perform half-step update of thermostats coupled with barostat
      *
      */
-    void baro_thermo();
+    void baro_thermo ();
 
     /**
      * @brief perform half-step update of barostat velocity
      *
      */
-    void update_baro();
+    void update_baro ();
 
     /**
      * @brief perform half-step update of velocity due to barostat
      *
      */
-    void vel_baro();
+    void vel_baro ();
 
     /**
      * @brief determine target stress
      *
      */
-    void target_stress();
+    void target_stress ();
 
     /**
      * @brief couple stress component due to md_pcouple
      *
      */
-    void couple_stress();
+    void couple_stress ();
 
     /**
      * @brief perform half-step update of volume
      *
      * @param ofs determine the output files
      */
-    void update_volume(std::ofstream& ofs);
+    void update_volume (std::ofstream& ofs);
 
     const int nc_tchain = 1;  ///< the number of nc for nvt
     const int nc_pchain = 1;  ///< the number of nc for npt
     const static int nys = 7; ///< the number of scale evolution operator
     double w[nys];            ///< scale evolution operator
 
-    int tdof;           ///< particle degree of freedom
-    double t_target=0.0;///< target temperature
-    double* mass_eta = nullptr;   ///< mass of thermostats coupled with particles
-    double* eta = nullptr;        ///< position of thermostats coupled with particles
-    double* v_eta = nullptr;      ///< velocity of thermostats coupled with particles
-    double* g_eta = nullptr;      ///< acceleration of thermostats coupled with particles
+    int tdof;                   ///< particle degree of freedom
+    double t_target = 0.0;      ///< target temperature
+    double* mass_eta = nullptr; ///< mass of thermostats coupled with particles
+    double* eta = nullptr;      ///< position of thermostats coupled with particles
+    double* v_eta = nullptr;    ///< velocity of thermostats coupled with particles
+    double* g_eta = nullptr;    ///< acceleration of thermostats coupled with particles
 
-    int npt_flag;                ///< whether NPT ensemble
-    double mass_omega[6];        ///< mass of lattice component
-    double v_omega[6];           ///< velocity of lattice component
-    double pstart[6];            ///< initial stress components
-    double pstop[6];             ///< final stress components
-    double pfreq[6];             ///< Oscillation frequency, used to determine qmass of thermostats coupled with barostat
-    int pflag[6];                ///< control stress components
-    int pdim;                    ///< pdim = pflag[0] + pflag[1] + pflag[2], number of barostatted dims
-    double p_target[6];          ///< target stress components
-    double p_hydro = 0.0;        ///< target hydrostatic target pressure
+    int npt_flag;         ///< whether NPT ensemble
+    double mass_omega[6]; ///< mass of lattice component
+    double v_omega[6];    ///< velocity of lattice component
+    double pstart[6];     ///< initial stress components
+    double pstop[6];      ///< final stress components
+    double pfreq[6];      ///< Oscillation frequency, used to determine qmass of thermostats coupled with barostat
+    int pflag[6];         ///< control stress components
+    int pdim;             ///< pdim = pflag[0] + pflag[1] + pflag[2], number of barostatted dims
+    double p_target[6];   ///< target stress components
+    double p_hydro = 0.0; ///< target hydrostatic target pressure
     double p_current[6] = {0.0}; ///< current stress after coupled
-    double* mass_peta = nullptr;           ///< mass of thermostats coupled with barostat
-    double* peta = nullptr;                ///< position of thermostats coupled with barostat
-    double* v_peta = nullptr;              ///< velocity of thermostats coupled with barostat
-    double* g_peta = nullptr;              ///< acceleration of thermostats coupled with barostat
-    double mtk_term=0;           ///< mtk correction
-    double md_tfreq;             ///< Oscillation frequency, used to determine qmass of thermostats coupled with particles
-    double md_pfirst;            ///< Initial pressure
-    double md_plast;             ///< Final pressure
-    double md_pfreq;             ///< Oscillation frequency, used to determine qmass of thermostats coupled with barostat
+    double* mass_peta = nullptr; ///< mass of thermostats coupled with barostat
+    double* peta = nullptr;      ///< position of thermostats coupled with barostat
+    double* v_peta = nullptr;    ///< velocity of thermostats coupled with barostat
+    double* g_peta = nullptr;    ///< acceleration of thermostats coupled with barostat
+    double mtk_term = 0;         ///< mtk correction
+    double md_tfreq;  ///< Oscillation frequency, used to determine qmass of thermostats coupled with particles
+    double md_pfirst; ///< Initial pressure
+    double md_plast;  ///< Final pressure
+    double md_pfreq;  ///< Oscillation frequency, used to determine qmass of thermostats coupled with barostat
 };
 
 #endif

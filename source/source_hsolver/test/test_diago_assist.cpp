@@ -8,38 +8,32 @@
 
 class TestDiagoIterAssist : public ::testing::Test
 {
-	public:
-      using dia_f = hsolver::DiagoIterAssistSolver<float, base_device::DEVICE_CPU>;
-      using dia_d = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+  public:
+    using dia_f = hsolver::DiagoIterAssistSolver<float, base_device::DEVICE_CPU>;
+    using dia_d = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
-      hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-      hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+    hamilt::Hamilt<std::complex<double>> hamilt_test_d;
+    hamilt::Hamilt<std::complex<float>> hamilt_test_f;
 
-      DIAGOTEST::hamilt.create(4, 4);
+    DIAGOTEST::hamilt.create (4, 4);
 
-      psi::Psi<std::complex<double>> psi_test_cd;
-      psi::Psi<std::complex<float>> psi_test_cf;
+    psi::Psi<std::complex<double>> psi_test_cd;
+    psi::Psi<std::complex<float>> psi_test_cf;
 
-      elecstate::ElecState elecstate_test;
+    elecstate::ElecState elecstate_test;
 
-      std::string method_test = "none";
+    std::string method_test = "none";
 
-      std::ofstream temp_ofs;
+    std::ofstream temp_ofs;
 };
 
-TEST_F(TestDiagoIterAssist, diag_subspace)
+TEST_F (TestDiagoIterAssist, diag_subspace)
 {
-    dia_f::diag_subspace();
-    dia_d::diag_subspace();
-    EXPECT_EQ(true);
+    dia_f::diag_subspace ();
+    dia_d::diag_subspace ();
+    EXPECT_EQ (true);
 }
 
-TEST_F(TestDiagoIterAssist, diag_hegvd)
-{
-    EXPECT_EQ(true);
-}
+TEST_F (TestDiagoIterAssist, diag_hegvd) { EXPECT_EQ (true); }
 
-TEST_F(TestDiagoIterAssist, test_exit_cond)
-{
-    EXPECT_EQ(true);
-}
+TEST_F (TestDiagoIterAssist, test_exit_cond) { EXPECT_EQ (true); }

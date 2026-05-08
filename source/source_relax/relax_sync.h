@@ -11,16 +11,16 @@
 class Relax
 {
   public:
-    Relax() {};
-    ~Relax() {};
+    Relax () {};
+    ~Relax () {};
 
     // prepare for relaxation
-    void init_relax(const int nat_in);
+    void init_relax (const int nat_in);
     // perform a single relaxation step
-    bool relax_step(UnitCell& ucell,
-                    const ModuleBase::matrix& force,
-                    const ModuleBase::matrix& stress,
-                    const double etot_in);
+    bool relax_step (UnitCell& ucell,
+                     const ModuleBase::matrix& force,
+                     const ModuleBase::matrix& stress,
+                     const double etot_in);
 
   private:
     int istep = 0; // count ionic step
@@ -29,19 +29,19 @@ class Relax
     // constraints are considered here
     // also check if relaxation has converged
     // based on threshold in force & stress
-    bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+    bool setup_gradient (const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
 
     // check whether previous line search is done
-    bool check_line_search();
+    bool check_line_search ();
 
     // if line search not done : perform line search
-    void perform_line_search();
+    void perform_line_search ();
 
     // if line search done: find new search direction and make a trial move
-    void new_direction();
+    void new_direction ();
 
     // move ions and lattice vectors
-    void move_cell_ions(UnitCell& ucell, const bool is_new_dir);
+    void move_cell_ions (UnitCell& ucell, const bool is_new_dir);
 
     int nat = 0;         // number of atoms
     bool ltrial = false; // if last step is trial step
@@ -71,7 +71,7 @@ class Relax
 
     // in CG, search_dr = search_dr_p + grad * gamma
     double gamma = 0.0;
-    void calculate_gamma();
+    void calculate_gamma ();
 
     // Intermediate variables
     // I put them here because they are used across different subroutines

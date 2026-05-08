@@ -10,26 +10,15 @@
 #undef protected
 // mock functions for UnitCell
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal () {}
+InfoNonlocal::~InfoNonlocal () {}
 #endif
-Magnetism::Magnetism()
-{
-    this->start_mag = nullptr;
-}
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
-Parallel_Grid::~Parallel_Grid(){};
-
+Magnetism::Magnetism () { this->start_mag = nullptr; }
+Magnetism::~Magnetism () { delete[] this->start_mag; }
+Parallel_Grid::~Parallel_Grid () {};
 
 // mock functions for Charge
-Charge::Charge()
+Charge::Charge ()
 {
     rhopw = new ModulePW::PW_Basis;
     rhopw->nrxx = 8;
@@ -38,19 +27,20 @@ Charge::Charge()
     rhopw->nz = 2;
     rho = new double*[1];
     rho[0] = new double[rhopw->nrxx];
-    ModuleBase::GlobalFunc::ZEROS(rho[0], rhopw->nrxx);
+    ModuleBase::GlobalFunc::ZEROS (rho[0], rhopw->nrxx);
     for (int i = 0; i < rhopw->nrxx; ++i)
-    {
-        rho[0][i] = i + 1;
-    }
+        {
+            rho[0][i] = i + 1;
+        }
 }
-Charge::~Charge()
+Charge::~Charge ()
 {
     delete[] rho[0];
     delete[] rho;
     delete rhopw;
 }
-void Charge::atomic_rho(const int spin_number_need,
+void
+    Charge::atomic_rho (const int spin_number_need,
                         const double& omega,
                         double** rho_in,
                         const ModuleBase::ComplexMatrix& strucFac,
@@ -61,35 +51,31 @@ void Charge::atomic_rho(const int spin_number_need,
 // mock functions for PW_Basis
 namespace ModulePW
 {
-PW_Basis::PW_Basis()
+PW_Basis::PW_Basis () {}
+PW_Basis::~PW_Basis () {}
+void
+    PW_Basis::initgrids (const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
 {
 }
-PW_Basis::~PW_Basis()
-{
-}
-void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
-{
-}
-void PW_Basis::initgrids(const double lat0_in,
+void
+    PW_Basis::initgrids (const double lat0_in,
                          const ModuleBase::Matrix3 latvec_in,
                          const int nx_in,
                          int ny_in,
                          int nz_in)
 {
 }
-void PW_Basis::distribute_r()
+void
+    PW_Basis::distribute_r ()
 {
 }
 } // namespace ModulePW
 
 // mock functions for Structure_Factor
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
+Structure_Factor::Structure_Factor () {}
+Structure_Factor::~Structure_Factor () {}
+void
+    Structure_Factor::setup (const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
 {
 }
 
@@ -118,192 +104,194 @@ class ChargeExtraTest : public ::testing::Test
     Parallel_Grid* pgrid = nullptr;
     Charge charge;
     Structure_Factor sf;
-    void SetUp() override
+    void
+        SetUp () override
     {
         PARAM.input.nspin = 1;
         PARAM.sys.global_out_dir = "./support/";
-        ucell = utp.SetUcellInfo();
+        ucell = utp.SetUcellInfo ();
         ucell->omega = 1.0;
     }
-    void TearDown() override
+    void
+        TearDown () override
     {
     }
 };
 
-TEST_F(ChargeExtraTest, InitCEWarningQuit)
+TEST_F (ChargeExtraTest, InitCEWarningQuit)
 {
     PARAM.input.chg_extrap = "wwww";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
-                ::testing::ExitedWithCode(1),
-                "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
+    testing::internal::CaptureStdout ();
+    EXPECT_EXIT (CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
+                 ::testing::ExitedWithCode (1),
+                 "");
+    std::string output = testing::internal::GetCapturedStdout ();
+    EXPECT_THAT (output, testing::HasSubstr ("charge extrapolation method is not available"));
 }
 
-TEST_F(ChargeExtraTest, InitCECase1)
+TEST_F (ChargeExtraTest, InitCECase1)
 {
     PARAM.input.chg_extrap = "none";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 0);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    EXPECT_EQ (CE.pot_order, 0);
 }
 
-TEST_F(ChargeExtraTest, InitCECase2)
+TEST_F (ChargeExtraTest, InitCECase2)
 {
     PARAM.input.chg_extrap = "atomic";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 1);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    EXPECT_EQ (CE.pot_order, 1);
 }
 
-TEST_F(ChargeExtraTest, InitCECase3)
+TEST_F (ChargeExtraTest, InitCECase3)
 {
     PARAM.input.chg_extrap = "first-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 2);
-    EXPECT_NE(CE.delta_rho1.size(), 0);
-    EXPECT_NE(CE.delta_rho2.size(), 0);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    EXPECT_EQ (CE.pot_order, 2);
+    EXPECT_NE (CE.delta_rho1.size (), 0);
+    EXPECT_NE (CE.delta_rho2.size (), 0);
 }
 
-TEST_F(ChargeExtraTest, InitCECase4)
+TEST_F (ChargeExtraTest, InitCECase4)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 3);
-    EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
-    EXPECT_DOUBLE_EQ(CE.beta, 0.0);
-    EXPECT_NE(CE.delta_rho1.size(), 0);
-    EXPECT_NE(CE.delta_rho2.size(), 0);
-    EXPECT_NE(CE.dis_old1, nullptr);
-    EXPECT_NE(CE.dis_old2, nullptr);
-    EXPECT_NE(CE.dis_now, nullptr);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    EXPECT_EQ (CE.pot_order, 3);
+    EXPECT_DOUBLE_EQ (CE.alpha, 1.0);
+    EXPECT_DOUBLE_EQ (CE.beta, 0.0);
+    EXPECT_NE (CE.delta_rho1.size (), 0);
+    EXPECT_NE (CE.delta_rho2.size (), 0);
+    EXPECT_NE (CE.dis_old1, nullptr);
+    EXPECT_NE (CE.dis_old2, nullptr);
+    EXPECT_NE (CE.dis_now, nullptr);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
+TEST_F (ChargeExtraTest, ExtrapolateChargeCase1)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 0;
     CE.pot_order = 3;
 
-    GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    GlobalV::ofs_running.close();
+    GlobalV::ofs_running.open ("log");
+    CE.extrapolate_charge (pgrid, *ucell.get (), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    GlobalV::ofs_running.close ();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs ("log");
     std::string expected_output = " charge density from previous step !\n";
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
+    std::string output ((std::istreambuf_iterator<char> (ifs)), std::istreambuf_iterator<char> ());
+    ifs.close ();
+    std::remove ("log");
 
-    EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 0);
+    EXPECT_EQ (output, expected_output);
+    EXPECT_EQ (CE.rho_extr, 0);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
+TEST_F (ChargeExtraTest, ExtrapolateChargeCase2)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 1;
     CE.pot_order = 3;
 
-    GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    GlobalV::ofs_running.close();
+    GlobalV::ofs_running.open ("log");
+    CE.extrapolate_charge (pgrid, *ucell.get (), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    GlobalV::ofs_running.close ();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs ("log");
     std::string expected_output = " NEW-OLD atomic charge density approx. for the potential !\n";
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
+    std::string output ((std::istreambuf_iterator<char> (ifs)), std::istreambuf_iterator<char> ());
+    ifs.close ();
+    std::remove ("log");
 
-    EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 1);
+    EXPECT_EQ (output, expected_output);
+    EXPECT_EQ (CE.rho_extr, 1);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
+TEST_F (ChargeExtraTest, ExtrapolateChargeCase3)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 2;
     CE.pot_order = 3;
 
-    GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    GlobalV::ofs_running.close();
+    GlobalV::ofs_running.open ("log");
+    CE.extrapolate_charge (pgrid, *ucell.get (), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    GlobalV::ofs_running.close ();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs ("log");
     std::string expected_output = " first order charge density extrapolation !\n";
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
+    std::string output ((std::istreambuf_iterator<char> (ifs)), std::istreambuf_iterator<char> ());
+    ifs.close ();
+    std::remove ("log");
 
-    EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 2);
+    EXPECT_EQ (output, expected_output);
+    EXPECT_EQ (CE.rho_extr, 2);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
+TEST_F (ChargeExtraTest, ExtrapolateChargeCase4)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
 
-    GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    GlobalV::ofs_running.close();
+    GlobalV::ofs_running.open ("log");
+    CE.extrapolate_charge (pgrid, *ucell.get (), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    GlobalV::ofs_running.close ();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs ("log");
     std::string expected_output = " second order charge density extrapolation !\n alpha = 0\n beta = 0\n";
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
+    std::string output ((std::istreambuf_iterator<char> (ifs)), std::istreambuf_iterator<char> ());
+    ifs.close ();
+    std::remove ("log");
 
-    EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 3);
-    std::remove("./support/OLD2_SPIN1_CHG.cube");
+    EXPECT_EQ (output, expected_output);
+    EXPECT_EQ (CE.rho_extr, 3);
+    std::remove ("./support/OLD2_SPIN1_CHG.cube");
 }
 
-TEST_F(ChargeExtraTest, UpdateAllDis)
+TEST_F (ChargeExtraTest, UpdateAllDis)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
         {
-            CE.dis_old1[i][j] = i;
-            CE.dis_now[i][j] = j;
+            for (int j = 0; j < 3; ++j)
+                {
+                    CE.dis_old1[i][j] = i;
+                    CE.dis_now[i][j] = j;
+                }
         }
-    }
 
-    CE.update_all_dis(*ucell.get());
+    CE.update_all_dis (*ucell.get ());
 
-    EXPECT_EQ(CE.istep, 4);
-    EXPECT_DOUBLE_EQ(CE.dis_old2[0][2], 0.0);
-    EXPECT_DOUBLE_EQ(CE.dis_old1[0][2], 2.0);
-    EXPECT_DOUBLE_EQ(CE.dis_now[0][2], 0.0);
+    EXPECT_EQ (CE.istep, 4);
+    EXPECT_DOUBLE_EQ (CE.dis_old2[0][2], 0.0);
+    EXPECT_DOUBLE_EQ (CE.dis_old1[0][2], 2.0);
+    EXPECT_DOUBLE_EQ (CE.dis_now[0][2], 0.0);
 }
 
-TEST_F(ChargeExtraTest, FindAlphaAndBeta)
+TEST_F (ChargeExtraTest, FindAlphaAndBeta)
 {
     PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
+    CE.Init_CE (PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
         {
-            CE.dis_old1[i][j] = i;
-            CE.dis_now[i][j] = j;
+            for (int j = 0; j < 3; ++j)
+                {
+                    CE.dis_old1[i][j] = i;
+                    CE.dis_now[i][j] = j;
+                }
         }
-    }
 
-    CE.find_alpha_and_beta(ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.find_alpha_and_beta (ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
 
-    EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
-    EXPECT_DOUBLE_EQ(CE.beta, 0.0);
+    EXPECT_DOUBLE_EQ (CE.alpha, 1.0);
+    EXPECT_DOUBLE_EQ (CE.beta, 0.0);
 }

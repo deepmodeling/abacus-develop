@@ -12,18 +12,15 @@ namespace ModuleIO
 class Input_Item
 {
   public:
-    Input_Item(){};
+    Input_Item () {};
 
-    Input_Item(const std::string& label_in)
-    {
-        label = label_in;
-    }
+    Input_Item (const std::string& label_in) { label = label_in; }
 
-    Input_Item(const Input_Item& item)
+    Input_Item (const Input_Item& item)
     {
         label = item.label;
         str_values = item.str_values;
-        final_value.str(item.final_value.str());
+        final_value.str (item.final_value.str ());
         // Documentation fields
         category = item.category;
         type = item.type;
@@ -50,14 +47,16 @@ class Input_Item
     std::string unit;          ///< unit of measurement (empty if none)
     std::string availability;  ///< availability conditions (empty if always)
 
-    bool is_read() const ///< check if the input item is read
+    bool
+        is_read () const ///< check if the input item is read
     {
-        return !str_values.empty();
+        return !str_values.empty ();
     }
 
-    size_t get_size() const ///< get size of the input item
+    size_t
+        get_size () const ///< get size of the input item
     {
-        return str_values.size();
+        return str_values.size ();
     }
 
     std::string annotation; ///< brief annotation (kept for backward compatibility)
@@ -65,14 +64,14 @@ class Input_Item
     // ====== !!! These functions are complete.        ======
     // ====== !!! Do not add any more functions here.  ======
     /// read value function
-    std::function<void(const Input_Item&, Parameter&)> read_value = [](const Input_Item& item, Parameter& param) {};
+    std::function<void (const Input_Item&, Parameter&)> read_value = [] (const Input_Item& item, Parameter& param) {};
     /// check value function
-    std::function<void(const Input_Item&, const Parameter&)> check_value = nullptr;
+    std::function<void (const Input_Item&, const Parameter&)> check_value = nullptr;
     /// reset this value when some conditions are met
     /// e.g. should only reset the value of this item
-    std::function<void(const Input_Item&, Parameter&)> reset_value = nullptr;
+    std::function<void (const Input_Item&, Parameter&)> reset_value = nullptr;
     /// get final_value function for output INPUT file
-    std::function<void(Input_Item&, const Parameter&)> get_final_value = nullptr;
+    std::function<void (Input_Item&, const Parameter&)> get_final_value = nullptr;
     // ====== !!! Do not add any more functions here.  ======
 };
 

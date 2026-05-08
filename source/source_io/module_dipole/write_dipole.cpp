@@ -4,7 +4,8 @@
 #include "source_lcao/module_rt/evolve_elec.h"
 
 // fuxiang add 2017-03-15
-void ModuleIO::write_dipole(const UnitCell& ucell,
+void
+    ModuleIO::write_dipole (const UnitCell& ucell,
                             const double* rho_save,
                             const ModulePW::PW_Basis* rhopw,
                             const int& is,
@@ -12,27 +13,27 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
                             const std::string& fn,
                             const int& precision)
 {
-    ModuleBase::TITLE("ModuleIO", "write_dipole");
+    ModuleBase::TITLE ("ModuleIO", "write_dipole");
 
     time_t start, end;
     std::ofstream ofs;
 
     if (GlobalV::MY_RANK == 0)
-    {
-        start = time(NULL);
-
-        ofs.open(fn.c_str(), std::ofstream::app);
-        if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO", "Can't create Charge File!");
+            start = time (NULL);
+
+            ofs.open (fn.c_str (), std::ofstream::app);
+            if (!ofs)
+                {
+                    ModuleBase::WARNING ("ModuleIO", "Can't create Charge File!");
+                }
         }
-    }
 
     double bmod[3];
     for (int i = 0; i < 3; i++)
-    {
-        bmod[i] = prepare(ucell, i);
-    }
+        {
+            bmod[i] = prepare (ucell, i);
+        }
 
 #ifndef __MPI
     double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
@@ -41,135 +42,136 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     double lat_factor_z = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->nz;
 
     for (int k = 0; k < rhopw->nz; k++)
-    {
-        for (int j = 0; j < rhopw->ny; j++)
         {
-            for (int i = 0; i < rhopw->nx; i++)
-            {
-                int index = i * rhopw->ny * rhopw->nz + j * rhopw->nz + k;
-                double rho_val = rho_save[index];
+            for (int j = 0; j < rhopw->ny; j++)
+                {
+                    for (int i = 0; i < rhopw->nx; i++)
+                        {
+                            int index = i * rhopw->ny * rhopw->nz + j * rhopw->nz + k;
+                            double rho_val = rho_save[index];
 
-                dipole_elec_x -= rho_val * i * lat_factor_x;
-                dipole_elec_y -= rho_val * j * lat_factor_y;
-                dipole_elec_z -= rho_val * k * lat_factor_z;
-            }
+                            dipole_elec_x -= rho_val * i * lat_factor_x;
+                            dipole_elec_y -= rho_val * j * lat_factor_y;
+                            dipole_elec_z -= rho_val * k * lat_factor_z;
+                        }
+                }
         }
-    }
 
-    dipole_elec_x *= ucell.omega / static_cast<double>(rhopw->nxyz);
-    dipole_elec_y *= ucell.omega / static_cast<double>(rhopw->nxyz);
-    dipole_elec_z *= ucell.omega / static_cast<double>(rhopw->nxyz);
-    Parallel_Reduce::reduce_pool(dipole_elec_x);
-    Parallel_Reduce::reduce_pool(dipole_elec_y);
-    Parallel_Reduce::reduce_pool(dipole_elec_z);
+    dipole_elec_x *= ucell.omega / static_cast<double> (rhopw->nxyz);
+    dipole_elec_y *= ucell.omega / static_cast<double> (rhopw->nxyz);
+    dipole_elec_z *= ucell.omega / static_cast<double> (rhopw->nxyz);
+    Parallel_Reduce::reduce_pool (dipole_elec_x);
+    Parallel_Reduce::reduce_pool (dipole_elec_y);
+    Parallel_Reduce::reduce_pool (dipole_elec_z);
 
-    ofs << istep+1 << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
+    ofs << istep + 1 << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
 
     double dipole_elec[3] = {0.0, 0.0, 0.0};
 
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
-    {
-        int i = ir / (rhopw->ny * rhopw->nplane);
-        int j = ir / rhopw->nplane - i * rhopw->ny;
-        int k = ir % rhopw->nplane + rhopw->startz_current;
-        double x = (double)i / rhopw->nx;
-        double y = (double)j / rhopw->ny;
-        double z = (double)k / rhopw->nz;
+        {
+            int i = ir / (rhopw->ny * rhopw->nplane);
+            int j = ir / rhopw->nplane - i * rhopw->ny;
+            int k = ir % rhopw->nplane + rhopw->startz_current;
+            double x = (double)i / rhopw->nx;
+            double y = (double)j / rhopw->ny;
+            double z = (double)k / rhopw->nz;
 
-        dipole_elec[0] -= rho_save[ir] * x;
-        dipole_elec[1] -= rho_save[ir] * y;
-        dipole_elec[2] -= rho_save[ir] * z;
-    }
+            dipole_elec[0] -= rho_save[ir] * x;
+            dipole_elec[1] -= rho_save[ir] * y;
+            dipole_elec[2] -= rho_save[ir] * z;
+        }
 
-    Parallel_Reduce::reduce_pool(dipole_elec[0]);
-    Parallel_Reduce::reduce_pool(dipole_elec[1]);
-    Parallel_Reduce::reduce_pool(dipole_elec[2]);
+    Parallel_Reduce::reduce_pool (dipole_elec[0]);
+    Parallel_Reduce::reduce_pool (dipole_elec[1]);
+    Parallel_Reduce::reduce_pool (dipole_elec[2]);
     for (int i = 0; i < 3; ++i)
-    {
-        dipole_elec[i] *= ucell.lat0 / bmod[i] * ucell.omega / rhopw->nxyz;
-    }
+        {
+            dipole_elec[i] *= ucell.lat0 / bmod[i] * ucell.omega / rhopw->nxyz;
+        }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_x(t)", dipole_elec[0]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_y(t)", dipole_elec[1]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_z(t)", dipole_elec[2]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Electronic dipole moment P_elec_x(t)", dipole_elec[0]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Electronic dipole moment P_elec_y(t)", dipole_elec[1]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Electronic dipole moment P_elec_z(t)", dipole_elec[2]);
 
-    ofs << std::setprecision(precision) << istep+1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
+    ofs << std::setprecision (precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
         << dipole_elec[2] << std::endl;
 
     double dipole_ion[3] = {0.0};
     double dipole_sum = 0.0;
 
     for (int i = 0; i < 3; ++i)
-    {
-        for (int it = 0; it < ucell.ntype; ++it)
         {
-            double sum = 0;
-            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-            {
-                sum += ucell.atoms[it].taud[ia][i];
-            }
-            dipole_ion[i] += sum * ucell.atoms[it].ncpp.zv;
+            for (int it = 0; it < ucell.ntype; ++it)
+                {
+                    double sum = 0;
+                    for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+                        {
+                            sum += ucell.atoms[it].taud[ia][i];
+                        }
+                    dipole_ion[i] += sum * ucell.atoms[it].ncpp.zv;
+                }
+            dipole_ion[i] *= ucell.lat0 / bmod[i]; //* ModuleBase::FOUR_PI / ucell.omega;
         }
-        dipole_ion[i] *= ucell.lat0 / bmod[i]; //* ModuleBase::FOUR_PI / ucell.omega;
-    }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_x(t)", dipole_ion[0]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_y(t)", dipole_ion[1]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_z(t)", dipole_ion[2]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Ionic dipole moment P_ion_x(t)", dipole_ion[0]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Ionic dipole moment P_ion_y(t)", dipole_ion[1]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Ionic dipole moment P_ion_z(t)", dipole_ion[2]);
 
     double dipole[3] = {0.0};
     for (int i = 0; i < 3; ++i)
-    {
-        dipole[i] = dipole_ion[i] + dipole_elec[i];
-    }
+        {
+            dipole[i] = dipole_ion[i] + dipole_elec[i];
+        }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_x(t)", dipole[0]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_y(t)", dipole[1]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_z(t)", dipole[2]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Total dipole moment P_tot_x(t)", dipole[0]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Total dipole moment P_tot_y(t)", dipole[1]);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Total dipole moment P_tot_z(t)", dipole[2]);
 
-    dipole_sum = sqrt(dipole[0] * dipole[0] + dipole[1] * dipole[1] + dipole[2] * dipole[2]);
+    dipole_sum = sqrt (dipole[0] * dipole[0] + dipole[1] * dipole[1] + dipole[2] * dipole[2]);
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment norm |P_tot(t)|", dipole_sum);
+    ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "Total dipole moment norm |P_tot(t)|", dipole_sum);
 
 #endif
 
     if (GlobalV::MY_RANK == 0)
-    {
-        end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("write_dipole", start, end);
-        ofs.close();
-    }
+        {
+            end = time (NULL);
+            ModuleBase::GlobalFunc::OUT_TIME ("write_dipole", start, end);
+            ofs.close ();
+        }
 
     return;
 }
 
-double ModuleIO::prepare(const UnitCell& cell, int& dir)
+double
+    ModuleIO::prepare (const UnitCell& cell, int& dir)
 {
     double bvec[3] = {0.0};
     double bmod = 0.0;
     if (dir == 0)
-    {
-        bvec[0] = cell.G.e11;
-        bvec[1] = cell.G.e12;
-        bvec[2] = cell.G.e13;
-    }
+        {
+            bvec[0] = cell.G.e11;
+            bvec[1] = cell.G.e12;
+            bvec[2] = cell.G.e13;
+        }
     else if (dir == 1)
-    {
-        bvec[0] = cell.G.e21;
-        bvec[1] = cell.G.e22;
-        bvec[2] = cell.G.e23;
-    }
+        {
+            bvec[0] = cell.G.e21;
+            bvec[1] = cell.G.e22;
+            bvec[2] = cell.G.e23;
+        }
     else if (dir == 2)
-    {
-        bvec[0] = cell.G.e31;
-        bvec[1] = cell.G.e32;
-        bvec[2] = cell.G.e33;
-    }
+        {
+            bvec[0] = cell.G.e31;
+            bvec[1] = cell.G.e32;
+            bvec[2] = cell.G.e33;
+        }
     else
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::prepare", "direction is wrong!");
-    }
-    bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
+        {
+            ModuleBase::WARNING_QUIT ("ModuleIO::prepare", "direction is wrong!");
+        }
+    bmod = sqrt (pow (bvec[0], 2) + pow (bvec[1], 2) + pow (bvec[2], 2));
     return bmod;
 }

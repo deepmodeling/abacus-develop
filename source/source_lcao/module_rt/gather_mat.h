@@ -20,7 +20,8 @@ struct Matrix_g
 #ifdef __MPI
 // Collect matrices from all processes to root process
 template <typename T>
-void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock<T>& mat_l, Matrix_g<T>& mat_g)
+void
+    gatherMatrix (const int myid, const int root_proc, const hamilt::MatrixBlock<T>& mat_l, Matrix_g<T>& mat_g)
 {
     const int* desca = mat_l.desc; // Obtain the descriptor of the local matrix
     int ctxt = desca[1];           // BLACS context
@@ -28,25 +29,26 @@ void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock
     int ncols = desca[3];          // Global matrix column number
 
     if (myid == root_proc)
-    {
-        mat_g.p.reset(new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
-    }
+        {
+            mat_g.p.reset (new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
+        }
     else
-    {
-        mat_g.p.reset(new T[nrows * ncols]); // Placeholder for non-root processes
-    }
+        {
+            mat_g.p.reset (new T[nrows * ncols]); // Placeholder for non-root processes
+        }
 
     // Set the descriptor of the global matrix
-    mat_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
+    mat_g.desc.reset (new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
     mat_g.row = nrows;
     mat_g.col = ncols;
 
     // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
-    Cpxgemr2d(nrows, ncols, mat_l.p, 1, 1, const_cast<int*>(desca), mat_g.p.get(), 1, 1, mat_g.desc.get(), ctxt);
+    Cpxgemr2d (nrows, ncols, mat_l.p, 1, 1, const_cast<int*> (desca), mat_g.p.get (), 1, 1, mat_g.desc.get (), ctxt);
 }
 
 template <typename T>
-void distributeMatrix(hamilt::MatrixBlock<T>& mat_l, const module_rt::Matrix_g<T>& mat_g)
+void
+    distributeMatrix (hamilt::MatrixBlock<T>& mat_l, const module_rt::Matrix_g<T>& mat_g)
 {
     const int* desc_local = mat_l.desc; // Obtain the descriptor from Parallel_Orbitals
     int ctxt = desc_local[1];           // BLACS context
@@ -54,17 +56,28 @@ void distributeMatrix(hamilt::MatrixBlock<T>& mat_l, const module_rt::Matrix_g<T
     int ncols = desc_local[3];          // Global matrix column number
 
     // Check matrix size consistency
-    if (mat_g.row != static_cast<size_t>(nrows) || mat_g.col != static_cast<size_t>(ncols))
-    {
-        throw std::invalid_argument("module_rt::distributeMatrix: Global matrix size mismatch.");
-    }
+    if (mat_g.row != static_cast<size_t> (nrows) || mat_g.col != static_cast<size_t> (ncols))
+        {
+            throw std::invalid_argument ("module_rt::distributeMatrix: Global matrix size mismatch.");
+        }
 
     // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
-    Cpxgemr2d(nrows, ncols, mat_g.p.get(), 1, 1, mat_g.desc.get(), mat_l.p, 1, 1, const_cast<int*>(desc_local), ctxt);
+    Cpxgemr2d (nrows,
+               ncols,
+               mat_g.p.get (),
+               1,
+               1,
+               mat_g.desc.get (),
+               mat_l.p,
+               1,
+               1,
+               const_cast<int*> (desc_local),
+               ctxt);
 }
 
 template <typename T>
-void gatherPsi(const int myid,
+void
+    gatherPsi (const int myid,
                const int root_proc,
                T* psi_l,
                const Parallel_Orbitals& para_orb,
@@ -76,25 +89,26 @@ void gatherPsi(const int myid,
     int ncols = desc_psi[3];                 // Global matrix column number
 
     if (myid == root_proc)
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
-    }
+        {
+            psi_g.p.reset (new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
+        }
     else
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // Placeholder for non-root processes
-    }
+        {
+            psi_g.p.reset (new T[nrows * ncols]); // Placeholder for non-root processes
+        }
 
     // Set the descriptor of the global psi
-    psi_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
+    psi_g.desc.reset (new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
     psi_g.row = nrows;
     psi_g.col = ncols;
 
     // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
-    Cpxgemr2d(nrows, ncols, psi_l, 1, 1, const_cast<int*>(desc_psi), psi_g.p.get(), 1, 1, psi_g.desc.get(), ctxt);
+    Cpxgemr2d (nrows, ncols, psi_l, 1, 1, const_cast<int*> (desc_psi), psi_g.p.get (), 1, 1, psi_g.desc.get (), ctxt);
 }
 
 template <typename T>
-void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
+void
+    distributePsi (const Parallel_Orbitals& para_orb, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
 {
     const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
     int ctxt = desc_psi[1];                  // BLACS context
@@ -102,7 +116,7 @@ void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const module_rt:
     int ncols = desc_psi[3];                 // Global matrix column number
 
     // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
-    Cpxgemr2d(nrows, ncols, psi_g.p.get(), 1, 1, psi_g.desc.get(), psi_l, 1, 1, const_cast<int*>(desc_psi), ctxt);
+    Cpxgemr2d (nrows, ncols, psi_g.p.get (), 1, 1, psi_g.desc.get (), psi_l, 1, 1, const_cast<int*> (desc_psi), ctxt);
 }
 //------------------------ MPI gathering and distributing functions ------------------------//
 

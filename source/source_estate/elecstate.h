@@ -14,51 +14,54 @@ namespace elecstate
 class ElecState
 {
   public:
-    ElecState()
-    {
-    }
-    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
+    ElecState () {}
+    ElecState (Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
     {
         this->charge = chr_in;
-        this->charge->set_rhopw(rhopw_in);
+        this->charge->set_rhopw (rhopw_in);
         this->bigpw = bigpw_in;
         this->eferm.two_efermi = PARAM.globalv.two_fermi;
     }
-    virtual ~ElecState()
+    virtual ~ElecState ()
     {
         if (this->pot != nullptr)
-        {
-            delete this->pot;
-            this->pot = nullptr;
-        }
+            {
+                delete this->pot;
+                this->pot = nullptr;
+            }
     }
-    void init_ks(Charge* chr_in, // pointer for class Charge
-                 const K_Vectors* klist_in,
-                 int nk_in, // number of k points
-                 const ModulePW::PW_Basis_Big* bigpw_in);
+    void init_ks (Charge* chr_in, // pointer for class Charge
+                  const K_Vectors* klist_in,
+                  int nk_in, // number of k points
+                  const ModulePW::PW_Basis_Big* bigpw_in);
 
     // return current electronic density rho, as a input for constructing Hamiltonian
-    virtual const double* getRho(int spin) const;
+    virtual const double* getRho (int spin) const;
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
-    virtual void psiToRho(const psi::Psi<std::complex<double>>& psi)
+    virtual void
+        psiToRho (const psi::Psi<std::complex<double>>& psi)
     {
         return;
     }
-    virtual void psiToRho(const psi::Psi<double>& psi)
+    virtual void
+        psiToRho (const psi::Psi<double>& psi)
     {
         return;
     }
-    virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
+    virtual void
+        cal_tau (const psi::Psi<std::complex<double>>& psi)
     {
         return;
     }
-    virtual void cal_tau(const psi::Psi<double>& psi)
+    virtual void
+        cal_tau (const psi::Psi<double>& psi)
     {
         return;
     }
-    virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
+    virtual void
+        cal_tau (const psi::Psi<std::complex<float>>& psi)
     {
         return;
     }
@@ -69,27 +72,30 @@ class ElecState
     // 1. input rho would be store to file for restart
     // 2. calculated rho should be near with input rho when convergence has achieved
     // 3. new rho should be input rho for next scf step.
-    virtual void getNewRho()
+    virtual void
+        getNewRho ()
     {
         return;
     }
 
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
-    
+
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
-    void init_nelec_spin();
+    void init_nelec_spin ();
     // used to record number of electrons per spin index
     // for NSPIN=2, it will record number of spin up and number of spin down
     // for NSPIN=4, it will record total number, magnetization for x, y, z direction
     std::vector<double> nelec_spin;
 
-    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
+    virtual void
+        print_psi (const psi::Psi<double>& psi_in, const int istep = -1)
     {
         return;
     }
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1)
+    virtual void
+        print_psi (const psi::Psi<std::complex<double>>& psi_in, const int istep = -1)
     {
         return;
     }
@@ -102,12 +108,12 @@ class ElecState
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
      */
-    void init_scf(const UnitCell& ucell,
-                  const Parallel_Grid& pgrid,
-                  const ModuleBase::ComplexMatrix& strucfac,
-                  const bool* numeric,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr);
+    void init_scf (const UnitCell& ucell,
+                   const Parallel_Grid& pgrid,
+                   const ModuleBase::ComplexMatrix& strucfac,
+                   const bool* numeric,
+                   ModuleSymmetry::Symmetry& symm,
+                   const void* wfcpw = nullptr);
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
@@ -117,33 +123,34 @@ class ElecState
     const ModulePW::PW_Basis_Big* bigpw = nullptr; ///< bigpw will be removed later
 
   public: // something aboud energies. See elecstate_energy.cpp
-    void cal_bandgap();
-    void cal_bandgap_updw();
+    void cal_bandgap ();
+    void cal_bandgap_updw ();
 
-    double cal_delta_eband(const UnitCell& ucell) const;
-    double cal_delta_escf() const;
+    double cal_delta_eband (const UnitCell& ucell) const;
+    double cal_delta_escf () const;
 
     ModuleBase::matrix vnew;
     bool vnew_exist = false;
-    void cal_converged();
-    void cal_energies(const int type);
-    void set_exx(const double& Eexx);
-    void set_exx(const std::complex<double>& Eexx);
+    void cal_converged ();
+    void cal_energies (const int type);
+    void set_exx (const double& Eexx);
+    void set_exx (const std::complex<double>& Eexx);
 
-    double get_hartree_energy();
-    double get_etot_efield();
-    double get_etot_gatefield();
+    double get_hartree_energy ();
+    double get_etot_efield ();
+    double get_etot_gatefield ();
 
-    double get_solvent_model_Ael();
-    double get_solvent_model_Acav();
+    double get_solvent_model_Ael ();
+    double get_solvent_model_Acav ();
 
-    virtual double get_spin_constrain_energy()
+    virtual double
+        get_spin_constrain_energy ()
     {
         return 0.0;
     }
 
-    double get_dftu_energy();
-    double get_local_pp_energy();
+    double get_dftu_energy ();
+    double get_local_pp_energy ();
 
     fenergy f_en; ///< energies contribute to the total free energy
     Efermi eferm; ///< fermi energies
@@ -158,7 +165,6 @@ class ElecState
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
   public:
-
     bool skip_weights = false;
 };
 

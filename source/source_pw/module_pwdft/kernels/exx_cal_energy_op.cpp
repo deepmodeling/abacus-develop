@@ -22,17 +22,18 @@ template <typename FPTYPE>
 struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 {
     using T = std::complex<FPTYPE>;
-    FPTYPE operator()(const T *den, const FPTYPE *pot, FPTYPE scalar, int npw)
+    FPTYPE
+    operator() (const T * den, const FPTYPE * pot, FPTYPE scalar, int npw)
     {
         FPTYPE energy = 0.0;
-        #ifdef _OPENMP
-        #pragma omp parallel for reduction(+:energy)
-        #endif
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : energy)
+#endif
         for (int ig = 0; ig < npw; ++ig)
-        {
-            // Calculate the energy contribution from each reciprocal lattice vector
-            energy += (den[ig] * std::conj(den[ig])).real() * pot[ig];
-        }
+            {
+                // Calculate the energy contribution from each reciprocal lattice vector
+                energy += (den[ig] * std::conj (den[ig])).real () * pot[ig];
+            }
         // Scale the energy by the scalar factor
         return scalar * energy;
     }

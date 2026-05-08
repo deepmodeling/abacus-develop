@@ -4,11 +4,11 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_pw.h"
 
-#include "source_estate/fp_energy.h" // eferm
+#include "source_estate/fp_energy.h"            // eferm
 #include "source_estate/module_charge/charge.h" // chr
-#include "source_lcao/setup_dm.h" // Setup_DM
-#include "source_cell/klist.h" // K_Vectors
-#include "source_base/matrix.h" // matrix
+#include "source_lcao/setup_dm.h"               // Setup_DM
+#include "source_cell/klist.h"                  // K_Vectors
+#include "source_base/matrix.h"                 // matrix
 
 namespace ModuleIO
 {
@@ -16,36 +16,35 @@ template <typename T>
 class Cal_ldos
 {
   public:
-    Cal_ldos(){};
-    ~Cal_ldos(){};
+    Cal_ldos () {};
+    ~Cal_ldos () {};
 
-    static void cal_ldos_lcao(
-        const elecstate::Efermi &eferm, // mohan add 2025-11-02
-        const Charge &chr, // mohan add add 2025-11-02
-        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
-		const K_Vectors &kv, // k points, mohan add 2025-11-02
-        const ModuleBase::matrix &ekb, // mohan add 2025-11-02
-        const ModuleBase::matrix &wg, // mohan add 2025-11-02
-		const psi::Psi<T>& psi,
-		const Parallel_Grid& pgrid,
-		const UnitCell& ucell);
+    static void cal_ldos_lcao (const elecstate::Efermi& eferm,       // mohan add 2025-11-02
+                               const Charge& chr,                    // mohan add add 2025-11-02
+                               const LCAO_domain::Setup_DM<T>& dmat, // mohan add 2025-11-02
+                               const K_Vectors& kv,                  // k points, mohan add 2025-11-02
+                               const ModuleBase::matrix& ekb,        // mohan add 2025-11-02
+                               const ModuleBase::matrix& wg,         // mohan add 2025-11-02
+                               const psi::Psi<T>& psi,
+                               const Parallel_Grid& pgrid,
+                               const UnitCell& ucell);
 
 }; // namespace Cal_ldos
 
-void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
-                 const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
-
-void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
-                 const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
-
-void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+void cal_ldos_pw (const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const psi::Psi<std::complex<double>>& psi,
                   const Parallel_Grid& pgrid,
                   const UnitCell& ucell);
+
+void stm_mode_pw (const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                  const psi::Psi<std::complex<double>>& psi,
+                  const Parallel_Grid& pgrid,
+                  const UnitCell& ucell);
+
+void ldos_mode_pw (const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                   const psi::Psi<std::complex<double>>& psi,
+                   const Parallel_Grid& pgrid,
+                   const UnitCell& ucell);
 
 /*
  * @brief Get grid points and shifts for interpolation.
@@ -59,14 +58,14 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
  * @param points The grid index that the points in the line are placed in.
  * @param shifts The shifts along three directions due to the points are not on the grid exactly.
  */
-void get_grid_points(const std::vector<double>& start,
-                     const std::vector<double>& end,
-                     const int& npoints,
-                     const int& nx,
-                     const int& ny,
-                     const int& nz,
-                     std::vector<std::vector<int>>& points,
-                     std::vector<std::vector<double>>& shifts);
+void get_grid_points (const std::vector<double>& start,
+                      const std::vector<double>& end,
+                      const int& npoints,
+                      const int& nx,
+                      const int& ny,
+                      const int& nz,
+                      std::vector<std::vector<int>>& points,
+                      std::vector<std::vector<double>>& shifts);
 
 /*
  * @brief Trilinear interpolation of data on a 3D grid.
@@ -77,11 +76,11 @@ void get_grid_points(const std::vector<double>& start,
  * @param data The data to be interpolated.
  * @param results The results of the interpolation.
  */
-void trilinear_interpolate(const std::vector<std::vector<int>>& points,
-                           const std::vector<std::vector<double>>& shifts,
-                           const Parallel_Grid& pgrid,
-                           const std::vector<double>& data,
-                           std::vector<double>& results);
+void trilinear_interpolate (const std::vector<std::vector<int>>& points,
+                            const std::vector<std::vector<double>>& shifts,
+                            const Parallel_Grid& pgrid,
+                            const std::vector<double>& data,
+                            std::vector<double>& results);
 
 } // namespace ModuleIO
 

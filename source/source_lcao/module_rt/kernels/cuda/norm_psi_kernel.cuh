@@ -12,16 +12,16 @@ namespace gpu
 {
 
 // Standard C++ wrapper to launch the normalization kernel
-void launch_normalize_cij_kernel(cuDoubleComplex* d_Cij,
-                                 int nrow,
-                                 int ncol,
-                                 int nb,
-                                 int dim0,
-                                 int dim1,
-                                 int my_prow,
-                                 int my_pcol,
-                                 int nband,
-                                 cudaStream_t stream);
+void launch_normalize_cij_kernel (cuDoubleComplex* d_Cij,
+                                  int nrow,
+                                  int ncol,
+                                  int nb,
+                                  int dim0,
+                                  int dim1,
+                                  int my_prow,
+                                  int my_pcol,
+                                  int nband,
+                                  cudaStream_t stream);
 
 } // namespace gpu
 } // namespace module_rt

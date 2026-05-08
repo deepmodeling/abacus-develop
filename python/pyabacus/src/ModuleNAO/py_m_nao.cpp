@@ -15,84 +15,86 @@ using namespace pyabacus::utils;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void bind_m_nao(py::module& m)
+void
+    bind_m_nao (py::module& m)
 {
     // Bind the RadialCollection class
-    py::class_<RadialCollection>(m, "RadialCollection")
-        .def(py::init<>(), R"pbdoc(
+    py::class_<RadialCollection> (m, "RadialCollection")
+        .def (py::init<> (), R"pbdoc(
             A class that holds all numerical radial functions of the same kind.
 
             An instance of this class could be the collection of all radial functions
             of numerical atomic orbitals, or all Kleinman-Bylander beta functions from
             all elements involved in a calculation.
             )pbdoc")
-        .def(
+        .def (
             "build",
-            [](RadialCollection& self, int nfile, const py::list& file_list, char ftype) {
-                std::vector<std::string> files;
-                files.reserve(nfile);
-                for (auto file: file_list)
+            [] (RadialCollection& self, int nfile, const py::list& file_list, char ftype)
                 {
-                    files.push_back(file.cast<std::string>());
-                }
-                self.build(nfile, files.data(), ftype);
-            },
+                    std::vector<std::string> files;
+                    files.reserve (nfile);
+                    for (auto file: file_list)
+                        {
+                            files.push_back (file.cast<std::string> ());
+                        }
+                    self.build (nfile, files.data (), ftype);
+                },
             "Builds the collection from (orbital) files",
             "nfile"_a,
             "file_list"_a,
             "ftype"_a = '\0')
-        .def("set_transformer",
-             &RadialCollection::set_transformer,
-             "Sets a spherical Bessel transformers for all RadialSet objects.",
-             "sbt"_a,
-             "update"_a = 0)
-        .def("set_uniform_grid",
-             &RadialCollection::set_uniform_grid,
-             "Sets a common uniform grid for all RadialSet objects.",
-             "for_r_space"_a,
-             "ngrid"_a,
-             "cutoff"_a,
-             "mode"_a = 'i',
-             "enable_fft"_a = false)
-        .def(
+        .def ("set_transformer",
+              &RadialCollection::set_transformer,
+              "Sets a spherical Bessel transformers for all RadialSet objects.",
+              "sbt"_a,
+              "update"_a = 0)
+        .def ("set_uniform_grid",
+              &RadialCollection::set_uniform_grid,
+              "Sets a common uniform grid for all RadialSet objects.",
+              "for_r_space"_a,
+              "ngrid"_a,
+              "cutoff"_a,
+              "mode"_a = 'i',
+              "enable_fft"_a = false)
+        .def (
             "set_grid",
-            [](RadialCollection& self,
-               const bool for_r_space,
-               const int ngrid,
-               py::array_t<double> grid,
-               const char mode = 'i') {
-                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
-                self.set_grid(for_r_space, ngrid, get_array_ptr(grid), mode);
-            },
+            [] (RadialCollection& self,
+                const bool for_r_space,
+                const int ngrid,
+                py::array_t<double> grid,
+                const char mode = 'i')
+                {
+                    check_array_size (grid, static_cast<size_t> (ngrid), "grid");
+                    self.set_grid (for_r_space, ngrid, get_array_ptr (grid), mode);
+                },
             "Sets a common grid for all RadialSet objects.",
             "for_r_space"_a,
             "ngrid"_a,
             "grid"_a,
             "mode"_a = 'i')
-        .def(
+        .def (
             "__call__",
-            [](RadialCollection& self, const int itype, const int l, const int izeta) -> const NumericalRadial& {
-                return self(itype, l, izeta);
-            },
+            [] (RadialCollection& self, const int itype, const int l, const int izeta) -> const NumericalRadial&
+                { return self (itype, l, izeta); },
             py::return_value_policy::reference_internal,
             "itype"_a,
             "l"_a,
             "izeta"_a)
         // Getters
-        .def("symbol", &RadialCollection::symbol, "itype"_a)
-        .def_property_readonly("ntype", &RadialCollection::ntype)
-        .def("lmax", overload_cast_<const int>()(&RadialCollection::lmax, py::const_), "itype"_a)
-        .def("lmax", overload_cast_<>()(&RadialCollection::lmax, py::const_))
-        .def("rcut_max", overload_cast_<const int>()(&RadialCollection::rcut_max, py::const_), "itype"_a)
-        .def("rcut_max", overload_cast_<>()(&RadialCollection::rcut_max, py::const_))
-        .def("nzeta", &RadialCollection::nzeta, "itype"_a, "l"_a)
-        .def("nzeta_max", overload_cast_<const int>()(&RadialCollection::nzeta_max, py::const_), "itype"_a)
-        .def("nzeta_max", overload_cast_<>()(&RadialCollection::nzeta_max, py::const_))
-        .def("nchi", overload_cast_<const int>()(&RadialCollection::nchi, py::const_), "itype"_a)
-        .def("nchi", overload_cast_<>()(&RadialCollection::nchi, py::const_));
+        .def ("symbol", &RadialCollection::symbol, "itype"_a)
+        .def_property_readonly ("ntype", &RadialCollection::ntype)
+        .def ("lmax", overload_cast_<const int> () (&RadialCollection::lmax, py::const_), "itype"_a)
+        .def ("lmax", overload_cast_<> () (&RadialCollection::lmax, py::const_))
+        .def ("rcut_max", overload_cast_<const int> () (&RadialCollection::rcut_max, py::const_), "itype"_a)
+        .def ("rcut_max", overload_cast_<> () (&RadialCollection::rcut_max, py::const_))
+        .def ("nzeta", &RadialCollection::nzeta, "itype"_a, "l"_a)
+        .def ("nzeta_max", overload_cast_<const int> () (&RadialCollection::nzeta_max, py::const_), "itype"_a)
+        .def ("nzeta_max", overload_cast_<> () (&RadialCollection::nzeta_max, py::const_))
+        .def ("nchi", overload_cast_<const int> () (&RadialCollection::nchi, py::const_), "itype"_a)
+        .def ("nchi", overload_cast_<> () (&RadialCollection::nchi, py::const_));
     // Bind the TwoCenterIntegrator class
-    py::class_<TwoCenterIntegrator>(m, "TwoCenterIntegrator")
-        .def(py::init<>(), R"pbdoc(
+    py::class_<TwoCenterIntegrator> (m, "TwoCenterIntegrator")
+        .def (py::init<> (), R"pbdoc(
     A class to compute two-center integrals.
 
     This class computes two-center integrals of the form:
@@ -114,9 +116,9 @@ void bind_m_nao(py::module& m)
     Kleinman-Bylander nonlocal projectors, the overlap & kinetic integrals between all numerical atomic orbitals, etc.
     This is done by tabulating the radial part of the integrals on an r-space grid and the real Gaunt coefficients in advance.
     )pbdoc")
-        .def("tabulate",
-             &TwoCenterIntegrator::tabulate,
-             R"pbdoc(
+        .def ("tabulate",
+              &TwoCenterIntegrator::tabulate,
+              R"pbdoc(
         Tabulates the radial part of a two-center integral.
 
         Parameters:
@@ -126,43 +128,44 @@ void bind_m_nao(py::module& m)
         nr (int): Number of r-space grid points.
         cutoff (float): r-space cutoff radius.
         )pbdoc",
-             "bra"_a,
-             "ket"_a,
-             "op"_a,
-             "nr"_a,
-             "cutoff"_a)
-        .def(
+              "bra"_a,
+              "ket"_a,
+              "op"_a,
+              "nr"_a,
+              "cutoff"_a)
+        .def (
             "calculate",
-            [](TwoCenterIntegrator& self,
-               const int itype1,
-               const int l1,
-               const int izeta1,
-               const int m1,
-               const int itype2,
-               const int l2,
-               const int izeta2,
-               const int m2,
-               py::array_t<double> pvR,
-               bool cal_grad = false) {
-                check_array_size(pvR, 3, "pvR");
-                double* cvR = get_array_ptr(pvR);
-                ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
-                double out[1] = {0.0};
-                double grad_out[3] = {0.0, 0.0, 0.0};
-                double* grad_ptr = cal_grad ? grad_out : nullptr;
-                self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_ptr);
-                py::array_t<double> out_array(1, out);
-                if (cal_grad)
+            [] (TwoCenterIntegrator& self,
+                const int itype1,
+                const int l1,
+                const int izeta1,
+                const int m1,
+                const int itype2,
+                const int l2,
+                const int izeta2,
+                const int m2,
+                py::array_t<double> pvR,
+                bool cal_grad = false)
                 {
-                    py::array_t<double> grad_out_array(3, grad_out);
-                    return py::make_tuple(out_array, grad_out_array);
-                }
-                else
-                {
-                    py::array_t<double> grad_out_array(0);
-                    return py::make_tuple(out_array, grad_out_array);
-                }
-            },
+                    check_array_size (pvR, 3, "pvR");
+                    double* cvR = get_array_ptr (pvR);
+                    ModuleBase::Vector3<double> vR (cvR[0], cvR[1], cvR[2]);
+                    double out[1] = {0.0};
+                    double grad_out[3] = {0.0, 0.0, 0.0};
+                    double* grad_ptr = cal_grad ? grad_out : nullptr;
+                    self.calculate (itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_ptr);
+                    py::array_t<double> out_array (1, out);
+                    if (cal_grad)
+                        {
+                            py::array_t<double> grad_out_array (3, grad_out);
+                            return py::make_tuple (out_array, grad_out_array);
+                        }
+                    else
+                        {
+                            py::array_t<double> grad_out_array (0);
+                            return py::make_tuple (out_array, grad_out_array);
+                        }
+                },
             R"pbdoc(
     Compute the two-center integrals.
 
@@ -214,24 +217,25 @@ void bind_m_nao(py::module& m)
             "m2"_a,
             "pvR"_a,
             "cal_grad"_a = false)
-        .def(
+        .def (
             "snap",
-            [](TwoCenterIntegrator& self,
-               const int itype1,
-               const int l1,
-               const int izeta1,
-               const int m1,
-               const int itype2,
-               py::array_t<double> pvR,
-               const bool deriv) {
-                check_array_size(pvR, 3, "pvR");
-                double* cvR = get_array_ptr(pvR);
-                ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
-                // TODO: check deriv & out memory allocation
-                std::vector<std::vector<double>> out;
-                self.snap(itype1, l1, izeta1, m1, itype2, vR, deriv, out);
-                return out;
-            },
+            [] (TwoCenterIntegrator& self,
+                const int itype1,
+                const int l1,
+                const int izeta1,
+                const int m1,
+                const int itype2,
+                py::array_t<double> pvR,
+                const bool deriv)
+                {
+                    check_array_size (pvR, 3, "pvR");
+                    double* cvR = get_array_ptr (pvR);
+                    ModuleBase::Vector3<double> vR (cvR[0], cvR[1], cvR[2]);
+                    // TODO: check deriv & out memory allocation
+                    std::vector<std::vector<double>> out;
+                    self.snap (itype1, l1, izeta1, m1, itype2, vR, deriv, out);
+                    return out;
+                },
             R"pbdoc(
     Compute a batch of two-center integrals.
 
@@ -246,8 +250,8 @@ void bind_m_nao(py::module& m)
             "pvR"_a,
             "deriv"_a = false);
     // Bind the NumericalRadial class
-    py::class_<NumericalRadial>(m, "NumericalRadial")
-        .def(py::init<>(), R"pbdoc(
+    py::class_<NumericalRadial> (m, "NumericalRadial")
+        .def (py::init<> (), R"pbdoc(
     A class that represents a numerical radial function.
 
     This class is designed to be the container for the radial part of numerical atomic orbitals, Kleinman-Bylander beta functions, and all other similar numerical radial functions in three-dimensional space, each of which is associated with some angular momentum l and whose r and k space values are related by an l-th order spherical Bessel transform.
@@ -255,31 +259,32 @@ void bind_m_nao(py::module& m)
     A NumericalRadial object can be initialized by "build", which requires the angular momentum, the number of grid points, the grid and the corresponding values. Grid does not have to be uniform. One can initialize the object in either r or k space. After initialization, one can set the
     grid in the other space via set_grid or set_uniform_grid. Values in the other space are automatically computed by a spherical Bessel transform.
         )pbdoc")
-        .def(
+        .def (
             "build",
-            [](NumericalRadial& self,
-               const int l,
-               const bool for_r_space,
-               const int ngrid,
-               py::array_t<double> grid,
-               py::array_t<double> value,
-               const int p = 0,
-               const int izeta = 0,
-               const std::string symbol = "",
-               const int itype = 0,
-               const bool init_sbt = true) {
-                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
-                self.build(l,
-                           for_r_space,
-                           ngrid,
-                           get_array_ptr(grid),
-                           get_array_ptr(value),
-                           p,
-                           izeta,
-                           symbol,
-                           itype,
-                           init_sbt);
-            },
+            [] (NumericalRadial& self,
+                const int l,
+                const bool for_r_space,
+                const int ngrid,
+                py::array_t<double> grid,
+                py::array_t<double> value,
+                const int p = 0,
+                const int izeta = 0,
+                const std::string symbol = "",
+                const int itype = 0,
+                const bool init_sbt = true)
+                {
+                    check_array_size (grid, static_cast<size_t> (ngrid), "grid");
+                    self.build (l,
+                                for_r_space,
+                                ngrid,
+                                get_array_ptr (grid),
+                                get_array_ptr (value),
+                                p,
+                                izeta,
+                                symbol,
+                                itype,
+                                init_sbt);
+                },
             R"pbdoc(
     Initializes the object by providing the grid & values in one space.
 
@@ -320,9 +325,9 @@ void bind_m_nao(py::module& m)
             "symbol"_a = "",
             "itype"_a = 0,
             "init_sbt"_a = true)
-        .def("set_transformer",
-             &NumericalRadial::set_transformer,
-             R"pbdoc(
+        .def ("set_transformer",
+              &NumericalRadial::set_transformer,
+              R"pbdoc(
     Sets a SphericalBesselTransformer.
 
     By default, the class uses an internal SphericalBesselTransformer, but one can optionally use a shared one. This could be beneficial when there are a lot of NumericalRadial objects whose grids have the same size.
@@ -338,18 +343,19 @@ void bind_m_nao(py::module& m)
         *  1: calls a forward transform;
         * -1: calls a backward transform.
         )pbdoc",
-             "sbt"_a,
-             "update"_a = 0)
-        .def(
+              "sbt"_a,
+              "update"_a = 0)
+        .def (
             "set_grid",
-            [](NumericalRadial& self,
-               const bool for_r_space,
-               const int ngrid,
-               py::array_t<double> grid,
-               const char mode = 'i') {
-                check_array_size(grid, static_cast<size_t>(ngrid), "grid");
-                self.set_grid(for_r_space, ngrid, get_array_ptr(grid), mode);
-            },
+            [] (NumericalRadial& self,
+                const bool for_r_space,
+                const int ngrid,
+                py::array_t<double> grid,
+                const char mode = 'i')
+                {
+                    check_array_size (grid, static_cast<size_t> (ngrid), "grid");
+                    self.set_grid (for_r_space, ngrid, get_array_ptr (grid), mode);
+                },
             R"pbdoc(
     Sets up a grid.
 
@@ -376,9 +382,9 @@ void bind_m_nao(py::module& m)
             "ngrid"_a,
             "grid"_a,
             "mode"_a = 'i')
-        .def("set_uniform_grid",
-             &NumericalRadial::set_uniform_grid,
-             R"pbdoc(
+        .def ("set_uniform_grid",
+              &NumericalRadial::set_uniform_grid,
+              R"pbdoc(
     Sets up a uniform grid.
 
     The functionality of this function is similar to set_grid, except that the new grid is a uniform grid specified by the cutoff and the number of grid points, which are calculated as:
@@ -398,16 +404,15 @@ void bind_m_nao(py::module& m)
      mode : char
         Specifies how values are updated, could be 'i' or 't'.
             )pbdoc",
-             "for_r_space"_a,
-             "ngrid"_a,
-             "cutoff"_a,
-             "mode"_a = 'i',
-             "enable_fft"_a = false)
-        .def(
+              "for_r_space"_a,
+              "ngrid"_a,
+              "cutoff"_a,
+              "mode"_a = 'i',
+              "enable_fft"_a = false)
+        .def (
             "set_value",
-            [](NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p) {
-                self.set_value(for_r_space, get_array_ptr(value), p);
-            },
+            [] (NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p)
+                { self.set_value (for_r_space, get_array_ptr (value), p); },
             R"pbdoc(
     Updates values on an existing grid.
 
@@ -420,10 +425,10 @@ void bind_m_nao(py::module& m)
             "for_r_space"_a,
             "value"_a,
             "p"_a)
-        .def("wipe", &NumericalRadial::wipe, "r_space"_a = true, "k_space"_a = true)
-        .def("normalize",
-             &NumericalRadial::normalize,
-             R"pbdoc(
+        .def ("wipe", &NumericalRadial::wipe, "r_space"_a = true, "k_space"_a = true)
+        .def ("normalize",
+              &NumericalRadial::normalize,
+              R"pbdoc(
     Normalizes the radial function.
 
     The radial function is normalized such that the integral of the square of the function multiplied by the square of the radial coordinate over the entire space is equal to one:
@@ -432,43 +437,40 @@ void bind_m_nao(py::module& m)
 
     where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space are updated automatically via a spherical Bessel transform.
     )pbdoc",
-             "for_r_space"_a = true)
+              "for_r_space"_a = true)
         // Getters
-        .def_property_readonly("symbol", &NumericalRadial::symbol)
-        .def_property_readonly("itype", &NumericalRadial::itype)
-        .def_property_readonly("izeta", &NumericalRadial::izeta)
-        .def_property_readonly("l", &NumericalRadial::l)
-        .def_property_readonly("nr", &NumericalRadial::nr)
-        .def_property_readonly("nk", &NumericalRadial::nk)
-        .def_property_readonly("rcut", &NumericalRadial::rcut)
-        .def_property_readonly("kcut", &NumericalRadial::kcut)
-        .def_property_readonly("rmax", &NumericalRadial::rmax)
-        .def_property_readonly("kmax", &NumericalRadial::kmax)
-        .def_property_readonly("pr", &NumericalRadial::pr)
-        .def_property_readonly("pk", &NumericalRadial::pk)
-        .def_property_readonly("sbt", &NumericalRadial::sbt)
-        .def_property_readonly("rgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk()));
-                               })
-        .def_property_readonly("rvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk()));
-                               })
-        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
+        .def_property_readonly ("symbol", &NumericalRadial::symbol)
+        .def_property_readonly ("itype", &NumericalRadial::itype)
+        .def_property_readonly ("izeta", &NumericalRadial::izeta)
+        .def_property_readonly ("l", &NumericalRadial::l)
+        .def_property_readonly ("nr", &NumericalRadial::nr)
+        .def_property_readonly ("nk", &NumericalRadial::nk)
+        .def_property_readonly ("rcut", &NumericalRadial::rcut)
+        .def_property_readonly ("kcut", &NumericalRadial::kcut)
+        .def_property_readonly ("rmax", &NumericalRadial::rmax)
+        .def_property_readonly ("kmax", &NumericalRadial::kmax)
+        .def_property_readonly ("pr", &NumericalRadial::pr)
+        .def_property_readonly ("pk", &NumericalRadial::pk)
+        .def_property_readonly ("sbt", &NumericalRadial::sbt)
+        .def_property_readonly ("rgrid",
+                                [] (NumericalRadial& self)
+                                    { return numpy_from_ptr_copy (self.rgrid (), static_cast<size_t> (self.nr ())); })
+        .def_property_readonly ("kgrid",
+                                [] (NumericalRadial& self)
+                                    { return numpy_from_ptr_copy (self.kgrid (), static_cast<size_t> (self.nk ())); })
+        .def_property_readonly ("rvalue",
+                                [] (NumericalRadial& self)
+                                    { return numpy_from_ptr_copy (self.rvalue (), static_cast<size_t> (self.nr ())); })
+        .def_property_readonly ("kvalue",
+                                [] (NumericalRadial& self)
+                                    { return numpy_from_ptr_copy (self.kvalue (), static_cast<size_t> (self.nk ())); })
+        .def_property_readonly ("is_fft_compliant",
+                                overload_cast_<> () (&NumericalRadial::is_fft_compliant, py::const_));
 }
 
-PYBIND11_MODULE(_nao_pack, m)
+PYBIND11_MODULE (_nao_pack, m)
 {
-    m.doc() = "Module for Numerical Atomic Orbitals (NAO) in ABACUS";
+    m.doc () = "Module for Numerical Atomic Orbitals (NAO) in ABACUS";
 
-    bind_m_nao(m);
+    bind_m_nao (m);
 }

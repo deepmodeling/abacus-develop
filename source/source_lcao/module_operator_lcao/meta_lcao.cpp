@@ -11,4 +11,4 @@ template class Meta<OperatorLCAO<std::complex<double>, double>>;
 
 template class Meta<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
-}
+} // namespace hamilt

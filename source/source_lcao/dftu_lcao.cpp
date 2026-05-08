@@ -7,73 +7,80 @@ namespace ModuleESolver
 {
 
 template <typename TK>
-void init_dftu_lcao(const int istep,
-                     const int iter,
-                     const Input_para& inp,
-                     void* dftu,
-                     void* dm,
-                     const UnitCell& ucell,
-                     double** rho,
-                     const int nrxx)
+void
+    init_dftu_lcao (const int istep,
+                    const int iter,
+                    const Input_para& inp,
+                    void* dftu,
+                    void* dm,
+                    const UnitCell& ucell,
+                    double** rho,
+                    const int nrxx)
 {
     if (!inp.dft_plus_u)
-    {
-        return;
-    }
-    
-    auto* dftu_ptr = static_cast<Plus_U*>(dftu);
-    auto* dm_ptr = static_cast<elecstate::DensityMatrix<TK, double>*>(dm);
-    
+        {
+            return;
+        }
+
+    auto* dftu_ptr = static_cast<Plus_U*> (dftu);
+    auto* dm_ptr = static_cast<elecstate::DensityMatrix<TK, double>*> (dm);
+
     if (istep != 0 || iter != 1)
-    {
-        dftu_ptr->set_dmr(dm_ptr);
-    }
-    
+        {
+            dftu_ptr->set_dmr (dm_ptr);
+        }
+
     /// Calculate U and J if Yukawa potential is used
-    dftu_ptr->cal_slater_UJ(ucell, rho, nrxx);
+    dftu_ptr->cal_slater_UJ (ucell, rho, nrxx);
 }
 
 template <typename TK>
-void finish_dftu_lcao(const int iter,
-                       const bool conv_esolver,
-                       const Input_para& inp,
-                       void* dftu,
-                       const UnitCell& ucell,
-                       const std::vector<std::vector<TK>>& dm_vec,
-                       const K_Vectors& kv,
-                       const double mixing_beta,
-                       void* hamilt_lcao)
+void
+    finish_dftu_lcao (const int iter,
+                      const bool conv_esolver,
+                      const Input_para& inp,
+                      void* dftu,
+                      const UnitCell& ucell,
+                      const std::vector<std::vector<TK>>& dm_vec,
+                      const K_Vectors& kv,
+                      const double mixing_beta,
+                      void* hamilt_lcao)
 {
     if (!inp.dft_plus_u)
-    {
-        return;
-    }
-    
-    auto* dftu_ptr = static_cast<Plus_U*>(dftu);
-    auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
-    
+        {
+            return;
+        }
+
+    auto* dftu_ptr = static_cast<Plus_U*> (dftu);
+    auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*> (hamilt_lcao);
+
     /// old DFT+U method calculates energy correction in esolver,
     /// new DFT+U method calculates energy in Hamiltonian
     if (inp.dft_plus_u == 2)
-    {
-        if (dftu_ptr->omc != 2)
         {
-            dftu_cal_occup_m(iter, ucell, dm_vec, kv, mixing_beta, 
-                             static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr);
+            if (dftu_ptr->omc != 2)
+                {
+                    dftu_cal_occup_m (iter,
+                                      ucell,
+                                      dm_vec,
+                                      kv,
+                                      mixing_beta,
+                                      static_cast<hamilt::Hamilt<TK>*> (hamilt_lcao_ptr),
+                                      *dftu_ptr);
+                }
+            dftu_ptr->cal_energy_correction (ucell, iter);
         }
-        dftu_ptr->cal_energy_correction(ucell, iter);
-    }
-    dftu_ptr->output(ucell);
-    
+    dftu_ptr->output (ucell);
+
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
-    {
-        dftu_ptr->initialed_locale = true;
-    }
+        {
+            dftu_ptr->initialed_locale = true;
+        }
 }
 
 /// Template instantiation
-template void init_dftu_lcao<double>(const int istep,
+template void init_dftu_lcao<double> (const int istep,
                                       const int iter,
                                       const Input_para& inp,
                                       void* dftu,
@@ -81,7 +88,7 @@ template void init_dftu_lcao<double>(const int istep,
                                       const UnitCell& ucell,
                                       double** rho,
                                       const int nrxx);
-template void init_dftu_lcao<std::complex<double>>(const int istep,
+template void init_dftu_lcao<std::complex<double>> (const int istep,
                                                     const int iter,
                                                     const Input_para& inp,
                                                     void* dftu,
@@ -90,7 +97,7 @@ template void init_dftu_lcao<std::complex<double>>(const int istep,
                                                     double** rho,
                                                     const int nrxx);
 
-template void finish_dftu_lcao<double>(const int iter,
+template void finish_dftu_lcao<double> (const int iter,
                                         const bool conv_esolver,
                                         const Input_para& inp,
                                         void* dftu,
@@ -99,7 +106,7 @@ template void finish_dftu_lcao<double>(const int iter,
                                         const K_Vectors& kv,
                                         const double mixing_beta,
                                         void* hamilt_lcao);
-template void finish_dftu_lcao<std::complex<double>>(const int iter,
+template void finish_dftu_lcao<std::complex<double>> (const int iter,
                                                       const bool conv_esolver,
                                                       const Input_para& inp,
                                                       void* dftu,

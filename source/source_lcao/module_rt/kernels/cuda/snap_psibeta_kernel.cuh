@@ -62,43 +62,48 @@ constexpr int MAX_M0_SIZE = 2 * MAX_L + 1;
  * @param theta Phase angle in radians
  * @return Complex exponential as cuDoubleComplex
  */
-__device__ __forceinline__ cuDoubleComplex cu_exp_i(double theta)
+__device__ __forceinline__ cuDoubleComplex
+    cu_exp_i (double theta)
 {
     double s, c;
-    sincos(theta, &s, &c);
-    return make_cuDoubleComplex(c, s);
+    sincos (theta, &s, &c);
+    return make_cuDoubleComplex (c, s);
 }
 
 /**
  * @brief Complex multiplication: a * b
  */
-__device__ __forceinline__ cuDoubleComplex cu_mul(cuDoubleComplex a, cuDoubleComplex b)
+__device__ __forceinline__ cuDoubleComplex
+    cu_mul (cuDoubleComplex a, cuDoubleComplex b)
 {
-    return make_cuDoubleComplex(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    return make_cuDoubleComplex (a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 }
 
 /**
  * @brief Complex addition: a + b
  */
-__device__ __forceinline__ cuDoubleComplex cu_add(cuDoubleComplex a, cuDoubleComplex b)
+__device__ __forceinline__ cuDoubleComplex
+    cu_add (cuDoubleComplex a, cuDoubleComplex b)
 {
-    return make_cuDoubleComplex(a.x + b.x, a.y + b.y);
+    return make_cuDoubleComplex (a.x + b.x, a.y + b.y);
 }
 
 /**
  * @brief Complex conjugate: conj(a)
  */
-__device__ __forceinline__ cuDoubleComplex cu_conj(cuDoubleComplex a)
+__device__ __forceinline__ cuDoubleComplex
+    cu_conj (cuDoubleComplex a)
 {
-    return make_cuDoubleComplex(a.x, -a.y);
+    return make_cuDoubleComplex (a.x, -a.y);
 }
 
 /**
  * @brief Complex times real: a * r
  */
-__device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double r)
+__device__ __forceinline__ cuDoubleComplex
+    cu_mul_real (cuDoubleComplex a, double r)
 {
-    return make_cuDoubleComplex(a.x * r, a.y * r);
+    return make_cuDoubleComplex (a.x * r, a.y * r);
 }
 
 //=============================================================================
@@ -117,22 +122,20 @@ __device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double
  * @param distance Radial distance r at which to interpolate
  * @return Interpolated function value
  */
-__device__ __forceinline__ double interpolate_radial_gpu(const double* __restrict__ psi,
-                                                         int mesh,
-                                                         double inv_dk,
-                                                         double distance)
+__device__ __forceinline__ double
+    interpolate_radial_gpu (const double* __restrict__ psi, int mesh, double inv_dk, double distance)
 {
     double position = distance * inv_dk;
-    int iq = __double2int_rd(position); // floor(position)
+    int iq = __double2int_rd (position); // floor(position)
 
     // Boundary checks
     if (iq > mesh - 4 || iq < 0)
-    {
-        return 0.0;
-    }
+        {
+            return 0.0;
+        }
 
     // Lagrange interpolation weights
-    double x0 = position - static_cast<double>(iq);
+    double x0 = position - static_cast<double> (iq);
     double x1 = 1.0 - x0;
     double x2 = 2.0 - x0;
     double x3 = 3.0 - x0;
@@ -144,7 +147,6 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
 //=============================================================================
 // Device Helper Functions - Spherical Harmonics
 //=============================================================================
-
 
 //=============================================================================
 // Data Structures for Kernel Input
@@ -225,18 +227,18 @@ struct NeighborOrbitalData
  * @param nlm_dim               Output dimension: 1 for overlap only, 4 for overlap + current
  * @param nlm_out               Output array [total_neighbor_orbitals * nlm_dim * natomwfc]
  */
-__global__ void snap_psibeta_atom_batch_kernel(double3 R0,
-                                               double3 A,
-                                               const NeighborOrbitalData* __restrict__ neighbor_orbitals,
-                                               const ProjectorData* __restrict__ projectors,
-                                               const double* __restrict__ psi_radial,
-                                               const double* __restrict__ beta_radial,
-                                               const int* __restrict__ proj_m0_offset,
-                                               int total_neighbor_orbitals,
-                                               int nproj,
-                                               int natomwfc,
-                                               int nlm_dim,
-                                               cuDoubleComplex* __restrict__ nlm_out);
+__global__ void snap_psibeta_atom_batch_kernel (double3 R0,
+                                                double3 A,
+                                                const NeighborOrbitalData* __restrict__ neighbor_orbitals,
+                                                const ProjectorData* __restrict__ projectors,
+                                                const double* __restrict__ psi_radial,
+                                                const double* __restrict__ beta_radial,
+                                                const int* __restrict__ proj_m0_offset,
+                                                int total_neighbor_orbitals,
+                                                int nproj,
+                                                int natomwfc,
+                                                int nlm_dim,
+                                                cuDoubleComplex* __restrict__ nlm_out);
 
 //=============================================================================
 // Host-side Initialization
@@ -251,7 +253,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
  *
  * @note Must be called once before any kernel launches in a calculation session.
  */
-void copy_grids_to_device();
+void copy_grids_to_device ();
 
 } // namespace gpu
 } // namespace module_rt

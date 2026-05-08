@@ -21,46 +21,50 @@ namespace Json
 // #endif
 // }
 
-void json_output()
+void
+    json_output ()
 {
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
-        AbacusJson::write_to_json("abacus.json");
+        AbacusJson::write_to_json ("abacus.json");
 #else
-    AbacusJson::write_to_json("abacus.json");
+    AbacusJson::write_to_json ("abacus.json");
 #endif
 #endif // __RAPIDJSON
 }
 
-void create_Json(UnitCell* ucell, const Parameter& param)
+void
+    create_Json (UnitCell* ucell, const Parameter& param)
 {
 #ifdef __RAPIDJSON
-    gen_general_info(param);
-    gen_init(ucell);
+    gen_general_info (param);
+    gen_init (ucell);
     // gen_stru(ucell);
 #endif
-    json_output();
+    json_output ();
 }
 
-void gen_stru_wrapper(UnitCell* ucell)
+void
+    gen_stru_wrapper (UnitCell* ucell)
 {
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
-        gen_stru(ucell);
+        gen_stru (ucell);
 #else
-    gen_stru(ucell);
+    gen_stru (ucell);
 #endif
 #endif
 }
 
-void convert_time(std::time_t time_now, std::string& time_str)
+void
+    convert_time (std::time_t time_now, std::string& time_str)
 {
-    std::tm* tm = std::localtime(&time_now);
+    std::tm* tm = std::localtime (&time_now);
     std::ostringstream oss;
-    oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
-    time_str = oss.str();
+    oss << std::put_time (tm, "%Y-%m-%d %H:%M:%S");
+    time_str = oss.str ();
 }
 
 } // namespace Json

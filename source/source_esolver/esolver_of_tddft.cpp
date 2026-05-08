@@ -20,108 +20,104 @@
 namespace ModuleESolver
 {
 
-ESolver_OF_TDDFT::ESolver_OF_TDDFT()
+ESolver_OF_TDDFT::ESolver_OF_TDDFT ()
 {
     this->classname = "ESolver_OF_TDDFT";
-    this->evolve_ofdft=new Evolve_OFDFT();
+    this->evolve_ofdft = new Evolve_OFDFT ();
 }
 
-ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
-{
-    delete this->evolve_ofdft;
-}
+ESolver_OF_TDDFT::~ESolver_OF_TDDFT () { delete this->evolve_ofdft; }
 
-
-void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
+void
+    ESolver_OF_TDDFT::runner (UnitCell& ucell, const int istep)
 {
-    ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
+    ModuleBase::timer::start ("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
-    this->before_opt(istep, ucell);
+    this->before_opt (istep, ucell);
     this->iter_ = 0;
 
-    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
-    this->iter_time = ModuleBase::get_time();
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302
+    this->iter_time = ModuleBase::get_time ();
 
-    if (this->phi_td.empty())
-    {
-        const int size = PARAM.inp.nspin * this->pw_rho->nrxx;
-        this->phi_td.resize(size, std::complex<double>(0.0, 0.0));
-    }
-
-    if ((istep==0) && PARAM.inp.init_chg != "file")
-    {
-        while (true)
+    if (this->phi_td.empty ())
         {
-            // once we get a new rho and phi, update potential
-            this->update_potential(ucell);
-
-            // calculate the energy of new rho and phi
-            this->energy_llast_ = this->energy_last_;
-            this->energy_last_ = this->energy_current_;
-            this->energy_current_ = this->cal_energy();
-
-
-            // check if the job is done
-            if (this->check_exit(conv_esolver))
-            {
-                break;
-            }
-
-            // find the optimization direction and step lenghth theta according to the potential
-            this->optimize(ucell);
-
-            // update the rho and phi based on the direction and theta
-            this->update_rho();
-
-            this->iter_++;
-
-            ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
+            const int size = PARAM.inp.nspin * this->pw_rho->nrxx;
+            this->phi_td.resize (size, std::complex<double> (0.0, 0.0));
         }
+
+    if ((istep == 0) && PARAM.inp.init_chg != "file")
+        {
+            while (true)
+                {
+                    // once we get a new rho and phi, update potential
+                    this->update_potential (ucell);
+
+                    // calculate the energy of new rho and phi
+                    this->energy_llast_ = this->energy_last_;
+                    this->energy_last_ = this->energy_current_;
+                    this->energy_current_ = this->cal_energy ();
+
+                    // check if the job is done
+                    if (this->check_exit (conv_esolver))
+                        {
+                            break;
+                        }
+
+                    // find the optimization direction and step lenghth theta according to the potential
+                    this->optimize (ucell);
+
+                    // update the rho and phi based on the direction and theta
+                    this->update_rho ();
+
+                    this->iter_++;
+
+                    ESolver_FP::iter_finish (ucell, istep, this->iter_, conv_esolver);
+                }
 
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
-            }
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+                        {
+                            phi_td[is * this->pw_rho->nrxx + ir] = pphi_[is][ir];
+                        }
+                }
         }
-    }
-    else if ((istep==0) && PARAM.inp.init_chg == "file")
-    {
+    else if ((istep == 0) && PARAM.inp.init_chg == "file")
+        {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
-            }
-        } 
-        conv_esolver=true;
-    }
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+                        {
+                            phi_td[is * this->pw_rho->nrxx + ir] = pphi_[is][ir];
+                        }
+                }
+            conv_esolver = true;
+        }
     else
-    {
-        this->evolve_ofdft->propagate_psi_RK4(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
+        {
+            this->evolve_ofdft->propagate_psi_RK4 (this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                pphi_[is][ir]=std::abs(phi_td[is*this->pw_rho->nrxx+ir]);
-            }
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+                        {
+                            pphi_[is][ir] = std::abs (phi_td[is * this->pw_rho->nrxx + ir]);
+                        }
+                }
+            conv_esolver = true;
         }
-        conv_esolver=true;
-    }
 
-    this->after_opt(istep, ucell, conv_esolver);
+    this->after_opt (istep, ucell, conv_esolver);
 
-    ModuleBase::timer::end("ESolver_OF_TDDFT", "runner");
+    ModuleBase::timer::end ("ESolver_OF_TDDFT", "runner");
 }
 
 } // namespace ModuleESolver

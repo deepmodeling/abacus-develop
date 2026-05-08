@@ -6,17 +6,17 @@
 
 namespace unitcell
 {
-    // Mock state tracking
-    extern bool remake_cell_called;
-    extern std::string remake_cell_latName;
-    extern ModuleBase::Matrix3 remake_cell_latvec;
+// Mock state tracking
+extern bool remake_cell_called;
+extern std::string remake_cell_latName;
+extern ModuleBase::Matrix3 remake_cell_latvec;
 
-    // Mock implementation of remake_cell
-    void remake_cell(Lattice& lat);
+// Mock implementation of remake_cell
+void remake_cell (Lattice& lat);
 
-    // Helper functions for testing
-    void reset_remake_cell_mock();
-    bool was_remake_cell_called();
-}
+// Helper functions for testing
+void reset_remake_cell_mock ();
+bool was_remake_cell_called ();
+} // namespace unitcell
 
 #endif // MOCK_REMAKE_CELL_H

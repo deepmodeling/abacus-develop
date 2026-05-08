@@ -16,7 +16,7 @@
  *     - functions: gen_rndm_r and compute_ap
  */
 
-TEST(ClebschGordanTest, ClebschGordanExit)
+TEST (ClebschGordanTest, ClebschGordanExit)
 {
     int lmaxkb = -2;
     ModuleBase::realArray ap;
@@ -24,23 +24,25 @@ TEST(ClebschGordanTest, ClebschGordanExit)
     ModuleBase::IntArray lpl;
 
     std::string output;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleBase::Clebsch_Gordan::clebsch_gordan(lmaxkb + 1, ap, lpx, lpl), ::testing::ExitedWithCode(1), "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Clebsch_Gordan: lmaxkb + 1 < 0"));
+    testing::internal::CaptureStdout ();
+    EXPECT_EXIT (ModuleBase::Clebsch_Gordan::clebsch_gordan (lmaxkb + 1, ap, lpx, lpl),
+                 ::testing::ExitedWithCode (1),
+                 "");
+    output = testing::internal::GetCapturedStdout ();
+    EXPECT_THAT (output, testing::HasSubstr ("Clebsch_Gordan: lmaxkb + 1 < 0"));
 }
 
-TEST(ClebschGordanTest, ClebschGordan)
+TEST (ClebschGordanTest, ClebschGordan)
 {
     int lmaxkb = 1;
     ModuleBase::realArray ap;
     ModuleBase::IntArray lpx;
     ModuleBase::IntArray lpl;
 
-    ModuleBase::Clebsch_Gordan::clebsch_gordan(lmaxkb + 1, ap, lpx, lpl);
-    EXPECT_DOUBLE_EQ(ap(0, 0, 0), 0.28209479177387564);
-    EXPECT_EQ(lpx(0, 0), 1);
-    EXPECT_EQ(lpx(3, 3), 3);
-    EXPECT_EQ(lpl(0, 0, 5), 0);
-    EXPECT_EQ(lpl(3, 3, 8), 0);
+    ModuleBase::Clebsch_Gordan::clebsch_gordan (lmaxkb + 1, ap, lpx, lpl);
+    EXPECT_DOUBLE_EQ (ap (0, 0, 0), 0.28209479177387564);
+    EXPECT_EQ (lpx (0, 0), 1);
+    EXPECT_EQ (lpx (3, 3), 3);
+    EXPECT_EQ (lpl (0, 0, 5), 0);
+    EXPECT_EQ (lpl (3, 3, 8), 0);
 }

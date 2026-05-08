@@ -21,8 +21,8 @@ namespace ModuleBase
 class Mathzone
 {
   public:
-    Mathzone();
-    ~Mathzone();
+    Mathzone ();
+    ~Mathzone ();
 
   public:
     /**
@@ -35,12 +35,15 @@ class Mathzone
      * @author Peize Lin (2016-08-03)
      */
     template <typename Type>
-    static std::vector<Type> Pointwise_Product(const std::vector<Type> &f1, const std::vector<Type> &f2)
+    static std::vector<Type>
+        Pointwise_Product (const std::vector<Type>& f1, const std::vector<Type>& f2)
     {
-        assert(f1.size() == f2.size());
-        std::vector<Type> f(f1.size());
-        for (int ir = 0; ir != f.size(); ++ir)
-            f[ir] = f1[ir] * f2[ir];
+        assert (f1.size () == f2.size ());
+        std::vector<Type> f (f1.size ());
+        for (int ir = 0; ir != f.size (); ++ir)
+            {
+                f[ir] = f1[ir] * f2[ir];
+            }
         return f;
     }
 
@@ -62,23 +65,24 @@ class Mathzone
      * @param[in] R33
      * @param[out] cx Cartesian coordinats
      * @param[out] cy
-     * @param[out] cz 
+     * @param[out] cz
      */
-    static inline void Direct_to_Cartesian(const double &dx,
-                                           const double &dy,
-                                           const double &dz,
-                                           const double &R11,
-                                           const double &R12,
-                                           const double &R13,
-                                           const double &R21,
-                                           const double &R22,
-                                           const double &R23,
-                                           const double &R31,
-                                           const double &R32,
-                                           const double &R33,
-                                           double &cx,
-                                           double &cy,
-                                           double &cz)
+    static inline void
+        Direct_to_Cartesian (const double& dx,
+                             const double& dy,
+                             const double& dz,
+                             const double& R11,
+                             const double& R12,
+                             const double& R13,
+                             const double& R21,
+                             const double& R22,
+                             const double& R23,
+                             const double& R31,
+                             const double& R32,
+                             const double& R33,
+                             double& cx,
+                             double& cy,
+                             double& cz)
     {
         ModuleBase::Matrix3 lattice_vector;
         ModuleBase::Vector3<double> direct_vec, cartesian_vec;
@@ -123,21 +127,22 @@ class Mathzone
      * @param[out] dy
      * @param[out] dz
      */
-    static inline void Cartesian_to_Direct(const double &cx,
-                                           const double &cy,
-                                           const double &cz,
-                                           const double &R11,
-                                           const double &R12,
-                                           const double &R13,
-                                           const double &R21,
-                                           const double &R22,
-                                           const double &R23,
-                                           const double &R31,
-                                           const double &R32,
-                                           const double &R33,
-                                           double &dx,
-                                           double &dy,
-                                           double &dz)
+    static inline void
+        Cartesian_to_Direct (const double& cx,
+                             const double& cy,
+                             const double& cz,
+                             const double& R11,
+                             const double& R12,
+                             const double& R13,
+                             const double& R21,
+                             const double& R22,
+                             const double& R23,
+                             const double& R31,
+                             const double& R32,
+                             const double& R33,
+                             double& dx,
+                             double& dy,
+                             double& dz)
     {
         ModuleBase::Matrix3 lattice_vector, inv_lat;
         lattice_vector.e11 = R11;
@@ -150,7 +155,7 @@ class Mathzone
         lattice_vector.e32 = R32;
         lattice_vector.e33 = R33;
 
-        inv_lat = lattice_vector.Inverse();
+        inv_lat = lattice_vector.Inverse ();
 
         ModuleBase::Vector3<double> direct_vec, cartesian_vec;
         cartesian_vec.x = cx;
@@ -163,15 +168,16 @@ class Mathzone
         return;
     }
 
-    template<typename T>
-    static ModuleBase::Vector3<T> latvec_projection(const std::array<ModuleBase::Vector3<T>,3> &latvec)
+    template <typename T>
+    static ModuleBase::Vector3<T>
+        latvec_projection (const std::array<ModuleBase::Vector3<T>, 3>& latvec)
     {
         ModuleBase::Vector3<T> proj;
-        proj.x = std::abs( latvec[0] * (latvec[1] ^ latvec[2]).normalize() );
-        proj.y = std::abs( latvec[1] * (latvec[2] ^ latvec[0]).normalize() );
-        proj.z = std::abs( latvec[2] * (latvec[0] ^ latvec[1]).normalize() );
+        proj.x = std::abs (latvec[0] * (latvec[1] ^ latvec[2]).normalize ());
+        proj.y = std::abs (latvec[1] * (latvec[2] ^ latvec[0]).normalize ());
+        proj.z = std::abs (latvec[2] * (latvec[0] ^ latvec[1]).normalize ());
         return proj;
-    } 
+    }
 };
 
 } // namespace ModuleBase

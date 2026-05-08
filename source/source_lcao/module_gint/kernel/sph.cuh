@@ -4,7 +4,7 @@
 
 namespace ModuleGint
 {
-    // Import unified GPU sph_harm functions from ModuleBase
-    using ModuleBase::sph_harm;
-    using ModuleBase::grad_rl_sph_harm;
-}
+// Import unified GPU sph_harm functions from ModuleBase
+using ModuleBase::grad_rl_sph_harm;
+using ModuleBase::sph_harm;
+} // namespace ModuleGint

@@ -12,19 +12,19 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class PSIPrepare : public PSIPrepareBase
 {
   public:
-    PSIPrepare(const std::string& init_wfc_in,
-            const std::string& ks_solver_in,
-            const std::string& basis_type_in,
-            const int& rank,
-            const UnitCell& ucell,
-            const Structure_Factor& sf,
-            const K_Vectors& kv_in,
-            const pseudopot_cell_vnl& nlpp,
-            const ModulePW::PW_Basis_K& pw_wfc);
-    ~PSIPrepare(){};
+    PSIPrepare (const std::string& init_wfc_in,
+                const std::string& ks_solver_in,
+                const std::string& basis_type_in,
+                const int& rank,
+                const UnitCell& ucell,
+                const Structure_Factor& sf,
+                const K_Vectors& kv_in,
+                const pseudopot_cell_vnl& nlpp,
+                const ModulePW::PW_Basis_K& pw_wfc);
+    ~PSIPrepare () {};
 
     ///@brief prepare the wavefunction initialization
-    void prepare_init(const int& random_seed);
+    void prepare_init (const int& random_seed);
 
     //------------------------ only for psi_initializer --------------------
     /**
@@ -35,16 +35,16 @@ class PSIPrepare : public PSIPrepareBase
      * @param ofs_running output stream for running information
      * @param is_already_initpsi whether psi has been initialized
      */
-    void initialize_psi(Psi<std::complex<double>>* psi,
-                        psi::Psi<T, Device>* kspw_psi,
-                        hamilt::Hamilt<T, Device>* p_hamilt,
-                        std::ofstream& ofs_running);
+    void initialize_psi (Psi<std::complex<double>>* psi,
+                         psi::Psi<T, Device>* kspw_psi,
+                         hamilt::Hamilt<T, Device>* p_hamilt,
+                         std::ofstream& ofs_running);
 
     /**
      * @brief initialize NAOs in plane wave basis, only for LCAO_IN_PW
      *
      */
-    void initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running);
+    void initialize_lcao_in_pw (Psi<T>* psi_local, std::ofstream& ofs_running);
 
     // psi_initializer<T, Device>* psi_initer = nullptr;
     // change to use smart pointer to manage the memory, and avoid memory leak
@@ -87,7 +87,11 @@ class PSIPrepare : public PSIPrepareBase
 };
 
 ///@brief allocate the wavefunction
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx);
+void allocate_psi (Psi<std::complex<double>>*& psi,
+                   const int& nks,
+                   const std::vector<int>& ngk,
+                   const int& nbands,
+                   const int& npwx);
 
 } // namespace psi
 #endif

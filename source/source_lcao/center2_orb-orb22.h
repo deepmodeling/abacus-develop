@@ -19,29 +19,29 @@
 class Center2_Orb::Orb22
 {
   public:
-    Orb22(const Numerical_Orbital_Lm& nA1_in,
-          const Numerical_Orbital_Lm& nA2_in,
-          const Numerical_Orbital_Lm& nB1_in,
-          const Numerical_Orbital_Lm& nB2_in,
-          const ModuleBase::Sph_Bessel_Recursive::D2* psb,
-          const ORB_gaunt_table& MGT_in);
+    Orb22 (const Numerical_Orbital_Lm& nA1_in,
+           const Numerical_Orbital_Lm& nA2_in,
+           const Numerical_Orbital_Lm& nB1_in,
+           const Numerical_Orbital_Lm& nB2_in,
+           const ModuleBase::Sph_Bessel_Recursive::D2* psb,
+           const ORB_gaunt_table& MGT_in);
 
-    void init_radial_table();
-    void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
+    void init_radial_table ();
+    void init_radial_table (const std::set<size_t>& radials); // unit: Bohr/MOT.dr
 
-    double cal_overlap(const ModuleBase::Vector3<double>& RA,
-                       const ModuleBase::Vector3<double>& RB, // unit: Bohr
-                       const int& mA1,
-                       const int& mA2,
-                       const int& mB1,
-                       const int& mB2) const;
+    double cal_overlap (const ModuleBase::Vector3<double>& RA,
+                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
+                        const int& mA1,
+                        const int& mA2,
+                        const int& mB1,
+                        const int& mB2) const;
 
-    ModuleBase::Vector3<double> cal_grad_overlap(const ModuleBase::Vector3<double>& RA,
-                                                 const ModuleBase::Vector3<double>& RB, // unit: Bohr
-                                                 const int& mA1,
-                                                 const int& mA2,
-                                                 const int& mB1,
-                                                 const int& mB2) const;
+    ModuleBase::Vector3<double> cal_grad_overlap (const ModuleBase::Vector3<double>& RA,
+                                                  const ModuleBase::Vector3<double>& RB, // unit: Bohr
+                                                  const int& mA1,
+                                                  const int& mA2,
+                                                  const int& mB1,
+                                                  const int& mB2) const;
 
   protected: // Peize Lin test 2016-10-07
     const Numerical_Orbital_Lm& nA1;

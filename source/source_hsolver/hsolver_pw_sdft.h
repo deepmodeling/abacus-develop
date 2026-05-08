@@ -12,44 +12,44 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverPW_SDFT(K_Vectors* pkv,
-                   ModulePW::PW_Basis_K* wfc_basis_in,
-                   Stochastic_WF<T, Device>& stowf,
-                   StoChe<Real, Device>& stoche,
-                   hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
-                   const std::string calculation_type_in,
-                   const std::string basis_type_in,
-                   const std::string method_in,
-                   const bool use_uspp_in,
-                   const int nspin_in,
-                   const int scf_iter_in,
-                   const int diag_iter_max_in,
-                   const double diag_thr_in,
-                   const bool need_subspace_in)
-        : HSolverPW<T, Device>(wfc_basis_in,
-                               calculation_type_in,
-                               basis_type_in,
-                               method_in,
-                               use_uspp_in,
-                               nspin_in,
-                               scf_iter_in,
-                               diag_iter_max_in,
-                               diag_thr_in,
-                               need_subspace_in)
+    HSolverPW_SDFT (K_Vectors* pkv,
+                    ModulePW::PW_Basis_K* wfc_basis_in,
+                    Stochastic_WF<T, Device>& stowf,
+                    StoChe<Real, Device>& stoche,
+                    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
+                    const std::string calculation_type_in,
+                    const std::string basis_type_in,
+                    const std::string method_in,
+                    const bool use_uspp_in,
+                    const int nspin_in,
+                    const int scf_iter_in,
+                    const int diag_iter_max_in,
+                    const double diag_thr_in,
+                    const bool need_subspace_in)
+        : HSolverPW<T, Device> (wfc_basis_in,
+                                calculation_type_in,
+                                basis_type_in,
+                                method_in,
+                                use_uspp_in,
+                                nspin_in,
+                                scf_iter_in,
+                                diag_iter_max_in,
+                                diag_thr_in,
+                                need_subspace_in)
     {
-        stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
+        stoiter.init (pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
 
-    void solve(const UnitCell& ucell,
-               hamilt::Hamilt<T, Device>* pHamilt,
-               psi::Psi<T, Device>& psi,
-               psi::Psi<T>& psi_cpu,
-               elecstate::ElecState* pes,
-               ModulePW::PW_Basis_K* wfc_basis,
-               Stochastic_WF<T, Device>& stowf,
-               const int istep,
-               const int iter,
-               const bool skip_charge);
+    void solve (const UnitCell& ucell,
+                hamilt::Hamilt<T, Device>* pHamilt,
+                psi::Psi<T, Device>& psi,
+                psi::Psi<T>& psi_cpu,
+                elecstate::ElecState* pes,
+                ModulePW::PW_Basis_K* wfc_basis,
+                Stochastic_WF<T, Device>& stowf,
+                const int istep,
+                const int iter,
+                const bool skip_charge);
 
     Stochastic_Iter<T, Device> stoiter;
 

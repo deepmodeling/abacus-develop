@@ -23,18 +23,20 @@
 class BetaRadials : public RadialSet
 {
   public:
-    BetaRadials() {}
-    BetaRadials(const BetaRadials& other) : RadialSet(other) {} //!< deep copy
+    BetaRadials () {}
+    BetaRadials (const BetaRadials& other) : RadialSet (other) {} //!< deep copy
 
     using RadialSet::operator=;
-    BetaRadials* clone() const { return new BetaRadials(*this); } // covariant return type
+    BetaRadials*
+        clone () const
+    {
+        return new BetaRadials (*this);
+    } // covariant return type
 
-    ~BetaRadials() {}
+    ~BetaRadials () {}
 
     /// Build the class from a Numerical_Nonlocal object
-    void build(const Numerical_Nonlocal& nl,
-               const int itype = 0,
-               std::ofstream* const ptr_log = nullptr);
+    void build (const Numerical_Nonlocal& nl, const int itype = 0, std::ofstream* const ptr_log = nullptr);
 
     /*
     void build(const std::string& file,          //!< pseudopotential file name

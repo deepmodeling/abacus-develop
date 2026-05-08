@@ -28,21 +28,22 @@ struct GetTypeThrust<std::complex<double>>
     using type = thrust::complex<double>; /**< The return type specialization for std::complex<double>. */
 };
 
-static inline cublasOperation_t GetCublasOperation(const char& trans)
+static inline cublasOperation_t
+    GetCublasOperation (const char& trans)
 {
     cublasOperation_t cutrans = {};
     if (trans == 'N')
-    {
-        cutrans = CUBLAS_OP_N;
-    }
+        {
+            cutrans = CUBLAS_OP_N;
+        }
     else if (trans == 'T')
-    {
-        cutrans = CUBLAS_OP_T;
-    }
+        {
+            cutrans = CUBLAS_OP_T;
+        }
     else if (trans == 'C')
-    {
-        cutrans = CUBLAS_OP_C;
-    }
+        {
+            cutrans = CUBLAS_OP_C;
+        }
     return cutrans;
 }
 
@@ -83,44 +84,48 @@ struct GetTypeCuda<std::complex<double>>
     static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_C_64F;
 };
 
-static inline cublasFillMode_t cublas_fill_mode(const char& uplo)
+static inline cublasFillMode_t
+    cublas_fill_mode (const char& uplo)
 {
     if (uplo == 'U' || uplo == 'u')
         return CUBLAS_FILL_MODE_UPPER;
     else if (uplo == 'L' || uplo == 'l')
         return CUBLAS_FILL_MODE_LOWER;
     else
-        throw std::runtime_error("cublas_fill_mode: unknown uplo");
+        throw std::runtime_error ("cublas_fill_mode: unknown uplo");
 }
 
-static inline cublasDiagType_t cublas_diag_type(const char& diag)
+static inline cublasDiagType_t
+    cublas_diag_type (const char& diag)
 {
     if (diag == 'U' || diag == 'u')
         return CUBLAS_DIAG_UNIT;
     else if (diag == 'N' || diag == 'n')
         return CUBLAS_DIAG_NON_UNIT;
     else
-        throw std::runtime_error("cublas_diag_type: unknown diag");
+        throw std::runtime_error ("cublas_diag_type: unknown diag");
 }
 
-static inline cusolverEigMode_t cublas_eig_mode(const char& jobz)
+static inline cusolverEigMode_t
+    cublas_eig_mode (const char& jobz)
 {
     if (jobz == 'N' || jobz == 'n')
         return CUSOLVER_EIG_MODE_NOVECTOR;
     else if (jobz == 'V' || jobz == 'v')
         return CUSOLVER_EIG_MODE_VECTOR;
     else
-        throw std::runtime_error("cublas_eig_mode: unknown diag");
+        throw std::runtime_error ("cublas_eig_mode: unknown diag");
 }
 
-static inline cusolverEigType_t cublas_eig_type(const int& itype)
+static inline cusolverEigType_t
+    cublas_eig_type (const int& itype)
 {
     if (itype == 1)
         return CUSOLVER_EIG_TYPE_1;
     else if (itype == 2)
         return CUSOLVER_EIG_TYPE_2;
     else
-        throw std::runtime_error("cublas_eig_mode: unknown diag");
+        throw std::runtime_error ("cublas_eig_mode: unknown diag");
 }
 
 /**
@@ -134,7 +139,8 @@ static inline cusolverEigType_t cublas_eig_type(const int& itype)
  * @return Corresponding cusolverEigRange_t enum value
  * @throws std::runtime_error if character is invalid
  */
-static inline cusolverEigRange_t cublas_eig_range(const char& range)
+static inline cusolverEigRange_t
+    cublas_eig_range (const char& range)
 {
     if (range == 'A' || range == 'a')
         return CUSOLVER_EIG_RANGE_ALL;
@@ -143,7 +149,7 @@ static inline cusolverEigRange_t cublas_eig_range(const char& range)
     else if (range == 'I' || range == 'i')
         return CUSOLVER_EIG_RANGE_I;
     else
-        throw std::runtime_error("cublas_eig_range: unknown range '" + std::string(1, range) + "'");
+        throw std::runtime_error ("cublas_eig_range: unknown range '" + std::string (1, range) + "'");
 }
 
 #endif // BASE_MACROS_CUDA_H_

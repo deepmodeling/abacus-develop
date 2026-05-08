@@ -20,21 +20,20 @@
 
 class SltkAtomTest : public testing::Test
 {
-protected:
+  protected:
     FAtom test;
 };
 
-
-TEST_F(SltkAtomTest, SetterGetters)
+TEST_F (SltkAtomTest, SetterGetters)
 {
-    FAtom test_temp(1.0, 2.0, 3.0, 4, 5, 0, 1, 2);
+    FAtom test_temp (1.0, 2.0, 3.0, 4, 5, 0, 1, 2);
 
-    EXPECT_DOUBLE_EQ(test_temp.x, 1.0);
-    EXPECT_DOUBLE_EQ(test_temp.y, 2.0);
-    EXPECT_DOUBLE_EQ(test_temp.z, 3.0);
-    EXPECT_EQ(test_temp.type, 4);
-    EXPECT_EQ(test_temp.natom, 5);
-    EXPECT_EQ(test_temp.cell_x, 0);
-    EXPECT_EQ(test_temp.cell_y, 1);
-    EXPECT_EQ(test_temp.cell_z, 2);
+    EXPECT_DOUBLE_EQ (test_temp.x, 1.0);
+    EXPECT_DOUBLE_EQ (test_temp.y, 2.0);
+    EXPECT_DOUBLE_EQ (test_temp.z, 3.0);
+    EXPECT_EQ (test_temp.type, 4);
+    EXPECT_EQ (test_temp.natom, 5);
+    EXPECT_EQ (test_temp.cell_x, 0);
+    EXPECT_EQ (test_temp.cell_y, 1);
+    EXPECT_EQ (test_temp.cell_z, 2);
 }

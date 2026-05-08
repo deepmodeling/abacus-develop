@@ -21,12 +21,12 @@ class pseudopot_cell_vnl
 {
 
   public:
-    pseudopot_cell_vnl();
-    ~pseudopot_cell_vnl();
-    void init(const UnitCell& cell,
-              Structure_Factor* psf_in,
-              const ModulePW::PW_Basis_K* wfc_basis = nullptr,
-              const bool allocate_vkb = true);
+    pseudopot_cell_vnl ();
+    ~pseudopot_cell_vnl ();
+    void init (const UnitCell& cell,
+               Structure_Factor* psf_in,
+               const ModulePW::PW_Basis_K* wfc_basis = nullptr,
+               const bool allocate_vkb = true);
 
     double cell_factor = 0.0; // LiuXh add 20180619
 
@@ -34,20 +34,20 @@ class pseudopot_cell_vnl
 
     int lmaxkb = 0; // max angular momentum for non-local projectors
 
-    void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
+    void init_vnl (UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
-    void rescale_vnl(const double& omega_in);
+    void rescale_vnl (const double& omega_in);
 
     template <typename FPTYPE, typename Device>
-    void getvnl(Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
+    void getvnl (Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
 
     // void getvnl_alpha(const int &ik);
 
-    void init_vnl_alpha(const UnitCell& cell);
+    void init_vnl_alpha (const UnitCell& cell);
 
-    void initgradq_vnl(const UnitCell& cell);
+    void initgradq_vnl (const UnitCell& cell);
 
-    void getgradq_vnl(const UnitCell& ucell, const int ik);
+    void getgradq_vnl (const UnitCell& ucell, const int ik);
 
     //===============================================================
     // MEMBER VARIABLES :
@@ -113,11 +113,11 @@ class pseudopot_cell_vnl
     int vkbnc = 0;
 
     // other variables
-    std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
+    std::complex<double> Cal_C (int alpha, int lu, int mu, int L, int M);
 
-    double CG(int l1, int m1, int l2, int m2, int L, int M);
+    double CG (int l1, int m1, int l2, int m2, int L, int M);
 
-    void print_vnl(std::ofstream& ofs);
+    void print_vnl (std::ofstream& ofs);
 
     /**
      * @brief Compute the radial Fourier transform of the Q functions
@@ -136,22 +136,22 @@ class pseudopot_cell_vnl
      * @param ylm [in] the real spherical harmonics
      * @param qg [out] the Fourier transform of interest
      */
-    void radial_fft_q(const int ng,
-                      const int ih,
-                      const int jh,
-                      const int itype,
-                      const double* qnorm,
-                      const ModuleBase::matrix ylm,
-                      std::complex<double>* qg) const;
+    void radial_fft_q (const int ng,
+                       const int ih,
+                       const int jh,
+                       const int itype,
+                       const double* qnorm,
+                       const ModuleBase::matrix ylm,
+                       std::complex<double>* qg) const;
     template <typename FPTYPE, typename Device>
-    void radial_fft_q(Device* ctx,
-                      const int ng,
-                      const int ih,
-                      const int jh,
-                      const int itype,
-                      const FPTYPE* qnorm,
-                      const FPTYPE* ylm,
-                      std::complex<FPTYPE>* qg) const;
+    void radial_fft_q (Device* ctx,
+                       const int ng,
+                       const int ih,
+                       const int jh,
+                       const int itype,
+                       const FPTYPE* qnorm,
+                       const FPTYPE* ylm,
+                       std::complex<FPTYPE>* qg) const;
 
     /**
      * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors
@@ -160,31 +160,31 @@ class pseudopot_cell_vnl
      * @param rho_basis potential FFT grids
      * @param cell UnitCell
      */
-    void cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+    void cal_effective_D (const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
 #ifdef __LCAO
     ORB_gaunt_table MGT;
 #endif
 
     template <typename FPTYPE>
-    FPTYPE* get_nhtol_data() const;
+    FPTYPE* get_nhtol_data () const;
     template <typename FPTYPE>
-    FPTYPE* get_nhtolm_data() const;
+    FPTYPE* get_nhtolm_data () const;
     template <typename FPTYPE>
-    FPTYPE* get_indv_data() const;
+    FPTYPE* get_indv_data () const;
     template <typename FPTYPE>
-    FPTYPE* get_tab_data() const;
+    FPTYPE* get_tab_data () const;
     template <typename FPTYPE>
-    FPTYPE* get_deeq_data() const;
+    FPTYPE* get_deeq_data () const;
     template <typename FPTYPE>
-    FPTYPE* get_qq_nt_data() const;
+    FPTYPE* get_qq_nt_data () const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_qq_so_data() const;
+    std::complex<FPTYPE>* get_qq_so_data () const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_vkb_data() const;
+    std::complex<FPTYPE>* get_vkb_data () const;
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_deeq_nc_data() const;
+    std::complex<FPTYPE>* get_deeq_nc_data () const;
 
-    void release_memory();
+    void release_memory ();
 
   private:
     bool memory_released = false;
@@ -216,7 +216,7 @@ class pseudopot_cell_vnl
      *
      * @param cell UnitCell
      */
-    void compute_qrad(UnitCell& cell);
+    void compute_qrad (UnitCell& cell);
 
     /**
      * @brief computes the integral of the effective potential with the Q function
@@ -225,7 +225,7 @@ class pseudopot_cell_vnl
      * @param rho_basis potential FFT grids
      * @param cell UnitCell
      */
-    void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+    void newq (const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
 
     /**
      * @brief calculate D functions in the soc case when tvanp is true
@@ -233,7 +233,7 @@ class pseudopot_cell_vnl
      * @param iat the index of atom
      * @param cell UnitCell
      */
-    void newd_so(const int& iat, UnitCell& cell);
+    void newd_so (const int& iat, UnitCell& cell);
 
     /**
      * @brief calculate D functions in the noncolin case when tvanp is true
@@ -241,7 +241,7 @@ class pseudopot_cell_vnl
      * @param iat the index of atom
      * @param cell UnitCell
      */
-    void newd_nc(const int& iat, UnitCell& cell);
+    void newd_nc (const int& iat, UnitCell& cell);
 };
 
 #endif // VNL_IN_PW

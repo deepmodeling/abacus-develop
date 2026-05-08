@@ -27,9 +27,9 @@ class Moment_abfs
     using TAq = std::pair<TA, Tq>;
 
   public:
-    Moment_abfs(Exx_Info::Exx_Info_RI& info_in) : info(info_in) {};
-    ~Moment_abfs() {};
-    void cal_VR(
+    Moment_abfs (Exx_Info::Exx_Info_RI& info_in) : info (info_in) {};
+    ~Moment_abfs () {};
+    void cal_VR (
         const UnitCell& ucell,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,
         const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>>& list_r,
@@ -37,7 +37,7 @@ class Moment_abfs
         const double Rc,
         LRI_CV<Tdata>& cv,
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
-    void discard0_VR(
+    void discard0_VR (
         const UnitCell& ucell,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,
         const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>>& list_r,
@@ -45,23 +45,23 @@ class Moment_abfs
         const double Rc,
         LRI_CV<Tdata>& cv,
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
-    void cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
-    void rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
-    double sum_triple_Y_YLM_real(int l1,
-                                 int m1, // real m1, not index
-                                 int l2,
-                                 int m2,                         // real m2, not index
-                                 const std::vector<double>& rly, // real Y_LM(R)
-                                 const ORB_gaunt_table& MGT,
-                                 const double distance);
-    double cal_cl1l2(int l1, int l2) const;
+    void cal_multipole (const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
+    void rotate_abfs (std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in);
+    double sum_triple_Y_YLM_real (int l1,
+                                  int m1, // real m1, not index
+                                  int l2,
+                                  int m2,                         // real m2, not index
+                                  const std::vector<double>& rly, // real Y_LM(R)
+                                  const ORB_gaunt_table& MGT,
+                                  const double distance);
+    double cal_cl1l2 (int l1, int l2) const;
     /// double factorial
-    double dfact(const int& l) const;
-    int factorial(const int& n) const;
-    double ln_factorial(int n) const;
+    double dfact (const int& l) const;
+    int factorial (const int& n) const;
+    double ln_factorial (int n) const;
 
-    void out_pure_ri_tensor(const std::string fn, RI::Tensor<std::complex<double>>& olp, const double threshold);
-    void out_pure_ri_tensor(const std::string fn, RI::Tensor<double>& olp, const double threshold);
+    void out_pure_ri_tensor (const std::string fn, RI::Tensor<std::complex<double>>& olp, const double threshold);
+    void out_pure_ri_tensor (const std::string fn, RI::Tensor<double>& olp, const double threshold);
 
     std::vector<std::vector<std::vector<double>>> multipole;
 

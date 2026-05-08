@@ -14,190 +14,190 @@
 #include "gmock/gmock.h"
 
 using namespace std;
-TEST_F(PWTEST,test_other)
+TEST_F (PWTEST, test_other)
 {
-    cout<<"Test other codes"<<endl;
-    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
-    ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
+    cout << "Test other codes" << endl;
+    ModulePW::PW_Basis pwtest (device_flag, precision_flag);
+    ModulePW::PW_Basis_K pwktest (device_flag, precision_flag);
+    ModuleBase::Matrix3 latvec (0.2, 0, 0, 0, 1, 0, 0, 0, 1);
 #ifdef __MPI
-    pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
-    pwktest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+    pwtest.initmpi (nproc_in_pool, rank_in_pool, POOL_WORLD);
+    pwktest.initmpi (nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
-    pwtest.initgrids(3, latvec, 2, 10, 10);
-    pwtest.initparameters(false, 20, 3); //distribute_type = 3
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(pwtest.setuptransform(), ::testing::ExitedWithCode(1), "");
-    string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+    pwtest.initgrids (3, latvec, 2, 10, 10);
+    pwtest.initparameters (false, 20, 3); // distribute_type = 3
+    testing::internal::CaptureStdout ();
+    EXPECT_EXIT (pwtest.setuptransform (), ::testing::ExitedWithCode (1), "");
+    string output = testing::internal::GetCapturedStdout ();
+    EXPECT_THAT (output, testing::HasSubstr ("NOTICE"));
 
     int nks = 2;
-    ModuleBase::Vector3<double> *kvec_d = new ModuleBase::Vector3<double>[nks];
-    kvec_d[0].set(0,0,0.5);
-    kvec_d[1].set(0.5,0.5,0.5);
-    pwktest.set_precision("double");
-    pwktest.initgrids(2, latvec, 4,4,4);
-    pwktest.initparameters(true, 20, nks, kvec_d);
-    pwktest.setuptransform();
-    pwktest.collect_local_pw();
+    ModuleBase::Vector3<double>* kvec_d = new ModuleBase::Vector3<double>[nks];
+    kvec_d[0].set (0, 0, 0.5);
+    kvec_d[1].set (0.5, 0.5, 0.5);
+    pwktest.set_precision ("double");
+    pwktest.initgrids (2, latvec, 4, 4, 4);
+    pwktest.initparameters (true, 20, nks, kvec_d);
+    pwktest.setuptransform ();
+    pwktest.collect_local_pw ();
 #ifdef __ENABLE_FLOAT_FFTW
-    pwktest.set_precision("single");
+    pwktest.set_precision ("single");
 #endif
-    pwktest.initparameters(true, 8, nks, kvec_d);
-    pwktest.setuptransform();
-    pwktest.collect_local_pw();
+    pwktest.initparameters (true, 8, nks, kvec_d);
+    pwktest.setuptransform ();
+    pwktest.collect_local_pw ();
     const int nrxx = pwktest.nrxx;
-    std::complex<double> * rhor1 = new std::complex<double> [nrxx];
-    std::complex<double> * rhor2 = new std::complex<double> [nrxx];
+    std::complex<double>* rhor1 = new std::complex<double>[nrxx];
+    std::complex<double>* rhor2 = new std::complex<double>[nrxx];
 #ifdef __ENABLE_FLOAT_FFTW
-    complex<float> * rhofr1 = new complex<float> [nrxx];
-    complex<float> * rhofr2 = new complex<float> [nrxx];
+    complex<float>* rhofr1 = new complex<float>[nrxx];
+    complex<float>* rhofr2 = new complex<float>[nrxx];
 #endif
     const base_device::DEVICE_CPU* ctx;
-    for(int ik = 0; ik < nks; ++ik)
-    {
-        const int npwk = pwktest.npwk[ik];
-        std::complex<double> * rhog1 = new std::complex<double> [npwk];
-        std::complex<double> * rhog2 = new std::complex<double> [npwk];
+    for (int ik = 0; ik < nks; ++ik)
+        {
+            const int npwk = pwktest.npwk[ik];
+            std::complex<double>* rhog1 = new std::complex<double>[npwk];
+            std::complex<double>* rhog2 = new std::complex<double>[npwk];
 #ifdef __ENABLE_FLOAT_FFTW
-        complex<float> * rhofg1 = new complex<float> [npwk];
-        complex<float> * rhofg2 = new complex<float> [npwk];
+            complex<float>* rhofg1 = new complex<float>[npwk];
+            complex<float>* rhofg2 = new complex<float>[npwk];
 #endif
-        for(int ig = 0 ; ig < npwk ; ++ig)
-        {
-            rhog1[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwktest.getgdirect(ik,ig).x+1) + 1);
-            rhog2[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwktest.getgdirect(ik,ig).x+1) + 1);
-        }    
+            for (int ig = 0; ig < npwk; ++ig)
+                {
+                    rhog1[ig] = 1.0 / (pwktest.getgk2 (ik, ig) + 1)
+                                + ModuleBase::IMAG_UNIT / (std::abs (pwktest.getgdirect (ik, ig).x + 1) + 1);
+                    rhog2[ig] = 1.0 / (pwktest.getgk2 (ik, ig) + 1)
+                                + ModuleBase::IMAG_UNIT / (std::abs (pwktest.getgdirect (ik, ig).x + 1) + 1);
+                }
 #ifdef __ENABLE_FLOAT_FFTW
-        for(int ig = 0 ; ig < npwk ; ++ig)
-        {
-            rhofg1[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwktest.getgdirect(ik,ig).x+1) + 1);
-            rhofg2[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwktest.getgdirect(ik,ig).x+1) + 1);
-        }  
+            for (int ig = 0; ig < npwk; ++ig)
+                {
+                    rhofg1[ig] = 1.0 / (pwktest.getgk2 (ik, ig) + 1)
+                                 + ModuleBase::IMAG_UNIT / (std::abs (pwktest.getgdirect (ik, ig).x + 1) + 1);
+                    rhofg2[ig] = 1.0 / (pwktest.getgk2 (ik, ig) + 1)
+                                 + ModuleBase::IMAG_UNIT / (std::abs (pwktest.getgdirect (ik, ig).x + 1) + 1);
+                }
 #endif
 
-        pwktest.recip_to_real(ctx, rhog1, rhor1, ik);
-        pwktest.recip2real(rhog2, rhor2, ik);
-        for(int ir = 0 ; ir < nrxx; ++ir)
-        {
-            EXPECT_NEAR(std::abs(rhor1[ir]),std::abs(rhor2[ir]),1e-8);
+            pwktest.recip_to_real (ctx, rhog1, rhor1, ik);
+            pwktest.recip2real (rhog2, rhor2, ik);
+            for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    EXPECT_NEAR (std::abs (rhor1[ir]), std::abs (rhor2[ir]), 1e-8);
+                }
+            pwktest.real_to_recip (ctx, rhor1, rhog1, ik);
+            pwktest.real2recip (rhor2, rhog2, ik);
+            for (int ig = 0; ig < npwk; ++ig)
+                {
+                    EXPECT_NEAR (std::abs (rhog1[ig]), std::abs (rhog2[ig]), 1e-8);
+                }
+#ifdef __ENABLE_FLOAT_FFTW
+            pwktest.recip_to_real (ctx, rhofg1, rhofr1, ik);
+            pwktest.recip2real (rhofg2, rhofr2, ik);
+            for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    EXPECT_NEAR (std::abs (rhofr1[ir]), std::abs (rhofr2[ir]), 1e-6);
+                }
+            pwktest.real_to_recip (ctx, rhofr1, rhofg1, ik);
+            pwktest.real2recip (rhofr2, rhofg2, ik);
+            for (int ig = 0; ig < npwk; ++ig)
+                {
+                    EXPECT_NEAR (std::abs (rhofg1[ig]), std::abs (rhofg2[ig]), 1e-6);
+                }
+#endif
+
+            delete[] rhog1;
+            delete[] rhog2;
+#ifdef __ENABLE_FLOAT_FFTW
+            delete[] rhofg1;
+            delete[] rhofg2;
+#endif
         }
-        pwktest.real_to_recip(ctx, rhor1, rhog1, ik);
-        pwktest.real2recip(rhor2, rhog2, ik);
-        for(int ig = 0 ; ig < npwk; ++ig)
-        {
-            EXPECT_NEAR(std::abs(rhog1[ig]),std::abs(rhog2[ig]),1e-8);
-        }
+    delete[] rhor1;
+    delete[] rhor2;
 #ifdef __ENABLE_FLOAT_FFTW
-        pwktest.recip_to_real(ctx, rhofg1, rhofr1, ik);
-        pwktest.recip2real(rhofg2, rhofr2, ik);
-        for(int ir = 0 ; ir < nrxx; ++ir)
-        {
-            EXPECT_NEAR(std::abs(rhofr1[ir]),std::abs(rhofr2[ir]),1e-6);
-        }
-        pwktest.real_to_recip(ctx, rhofr1, rhofg1, ik);
-        pwktest.real2recip(rhofr2, rhofg2, ik);
-        for(int ig = 0 ; ig < npwk; ++ig)
-        {
-            EXPECT_NEAR(std::abs(rhofg1[ig]),std::abs(rhofg2[ig]),1e-6);
-        }
+    delete[] rhofr1;
+    delete[] rhofr2;
 #endif
 
-
-
-        delete [] rhog1;
-        delete [] rhog2;
+    double* d_kvec_c = pwktest.get_kvec_c_data<double> ();
+    double* d_gcar = pwktest.get_gcar_data<double> ();
+    double* d_gk2 = pwktest.get_gk2_data<double> ();
 #ifdef __ENABLE_FLOAT_FFTW
-        delete [] rhofg1;
-        delete [] rhofg2;
-#endif
-    }
-    delete [] rhor1;
-    delete [] rhor2;
-#ifdef __ENABLE_FLOAT_FFTW
-    delete [] rhofr1;
-    delete [] rhofr2;
+    float* s_kvec_c = pwktest.get_kvec_c_data<float> ();
+    float* s_gcar = pwktest.get_gcar_data<float> ();
+    float* s_gk2 = pwktest.get_gk2_data<float> ();
 #endif
 
-
-    double* d_kvec_c = pwktest.get_kvec_c_data<double>();
-    double* d_gcar = pwktest.get_gcar_data<double>();
-    double* d_gk2 = pwktest.get_gk2_data<double>();
-#ifdef __ENABLE_FLOAT_FFTW
-    float* s_kvec_c = pwktest.get_kvec_c_data<float>();
-    float* s_gcar = pwktest.get_gcar_data<float>();
-    float* s_gk2 = pwktest.get_gk2_data<float>();
-#endif
-
-    
     delete[] kvec_d;
-    ModulePW::PW_Basis *p_pw = new ModulePW::PW_Basis(device_flag, precision_flag);
-    ModulePW::PW_Basis_K *p_pwk = new ModulePW::PW_Basis_K(device_flag, precision_flag);
+    ModulePW::PW_Basis* p_pw = new ModulePW::PW_Basis (device_flag, precision_flag);
+    ModulePW::PW_Basis_K* p_pwk = new ModulePW::PW_Basis_K (device_flag, precision_flag);
     delete p_pw;
     delete p_pwk;
-    fftw_cleanup();
+    fftw_cleanup ();
 #ifdef __ENABLE_FLOAT_FFTW
-    fftwf_cleanup();
+    fftwf_cleanup ();
 #endif
 }
-TEST_F(PWTEST, test_no_plane_wave_message_global_empty_k)
+TEST_F (PWTEST, test_no_plane_wave_message_global_empty_k)
 {
-    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
-    ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
+    ModulePW::PW_Basis_K pwktest (device_flag, precision_flag);
+    ModuleBase::Matrix3 latvec (0.2, 0, 0, 0, 1, 0, 0, 0, 1);
 #ifdef __MPI
-    pwktest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+    pwktest.initmpi (nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
     const int nks = 1;
     ModuleBase::Vector3<double> kvec_d[nks];
-    kvec_d[0].set(0.5, 0.5, 0.5);
+    kvec_d[0].set (0.5, 0.5, 0.5);
 
-    pwktest.initgrids(2, latvec, 4, 4, 4);
-    pwktest.initparameters(true, 1e-4, nks, kvec_d);
-    testing::internal::CaptureStdout();
-    pwktest.setuptransform();
-    std::string output = testing::internal::GetCapturedStdout();
+    pwktest.initgrids (2, latvec, 4, 4, 4);
+    pwktest.initparameters (true, 1e-4, nks, kvec_d);
+    testing::internal::CaptureStdout ();
+    pwktest.setuptransform ();
+    std::string output = testing::internal::GetCapturedStdout ();
 
-    EXPECT_THAT(output,
-                testing::HasSubstr("No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings."));
+    EXPECT_THAT (output,
+                 testing::HasSubstr ("No plane waves are available for this k-point across the whole pool. Please "
+                                     "increase ecutwfc or check KPT settings."));
 }
 
-TEST_F(PWTEST, test_no_plane_wave_message_parallel_local_empty)
+TEST_F (PWTEST, test_no_plane_wave_message_parallel_local_empty)
 {
 #ifndef __MPI
-    GTEST_SKIP() << "Requires MPI ranks to simulate local-empty but global-nonempty case.";
+    GTEST_SKIP () << "Requires MPI ranks to simulate local-empty but global-nonempty case.";
 #else
     if (nproc_in_pool <= 1)
-    {
-        GTEST_SKIP() << "Requires more than one MPI rank.";
-    }
+        {
+            GTEST_SKIP () << "Requires more than one MPI rank.";
+        }
 
-    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
-    ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
-    pwktest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+    ModulePW::PW_Basis_K pwktest (device_flag, precision_flag);
+    ModuleBase::Matrix3 latvec (0.2, 0, 0, 0, 1, 0, 0, 0, 1);
+    pwktest.initmpi (nproc_in_pool, rank_in_pool, POOL_WORLD);
 
     const int nks = 1;
     ModuleBase::Vector3<double> kvec_d[nks];
-    kvec_d[0].set(0.0, 0.0, 0.0);
+    kvec_d[0].set (0.0, 0.0, 0.0);
 
-    pwktest.initgrids(2, latvec, 4, 4, 4);
-    pwktest.initparameters(true, 8.0, nks, kvec_d);
-    testing::internal::CaptureStdout();
-    pwktest.setuptransform();
-    std::string output = testing::internal::GetCapturedStdout();
+    pwktest.initgrids (2, latvec, 4, 4, 4);
+    pwktest.initparameters (true, 8.0, nks, kvec_d);
+    testing::internal::CaptureStdout ();
+    pwktest.setuptransform ();
+    std::string output = testing::internal::GetCapturedStdout ();
 
     const int local_npwk = pwktest.npwk[0];
     int global_npwk = local_npwk;
-    MPI_Allreduce(MPI_IN_PLACE, &global_npwk, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce (MPI_IN_PLACE, &global_npwk, 1, MPI_INT, MPI_SUM, POOL_WORLD);
 
     const int local_target_rank = (local_npwk == 0 && global_npwk > 0) ? 1 : 0;
     int any_target_rank = local_target_rank;
-    MPI_Allreduce(MPI_IN_PLACE, &any_target_rank, 1, MPI_INT, MPI_MAX, POOL_WORLD);
-    EXPECT_EQ(any_target_rank, 1);
+    MPI_Allreduce (MPI_IN_PLACE, &any_target_rank, 1, MPI_INT, MPI_MAX, POOL_WORLD);
+    EXPECT_EQ (any_target_rank, 1);
 
     if (local_target_rank == 1)
-    {
-        EXPECT_THAT(output,
-                    testing::HasSubstr("Current core has no plane waves! Please reduce the cores."));
-    }
+        {
+            EXPECT_THAT (output, testing::HasSubstr ("Current core has no plane waves! Please reduce the cores."));
+        }
 #endif
 }

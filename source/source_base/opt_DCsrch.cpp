@@ -1,7 +1,7 @@
 #include "opt_DCsrch.h"
 
-#include <math.h>
-#include <string.h>
+#include <cmath>
+#include <cstring>
 
 // This file is translated from fortran codes dcstep.f of scipy.
 // The structure and all annotation of the original file have been retained.
@@ -10,17 +10,18 @@
 
 namespace ModuleBase
 {
-int dcsrch(double& stp,
-           double& f,
-           double& g,
-           double& ftol,
-           double& gtol,
-           double& xtol,
-           char* task,
-           double& stpmin,
-           double& stpmax,
-           int* isave,
-           double* dsave)
+int
+    dcsrch (double& stp,
+            double& f,
+            double& g,
+            double& ftol,
+            double& gtol,
+            double& xtol,
+            char* task,
+            double& stpmin,
+            double& stpmax,
+            int* isave,
+            double* dsave)
 {
     // c     **********
     // c
@@ -171,235 +172,239 @@ int dcsrch(double& stp,
     double ginit = 0.0, gtest = 0.0, gm = 0.0, gx = 0.0, gxm = 0.0, gy = 0.0, gym = 0.0;
     double stx = 0.0, sty = 0.0, stmin = 0.0, stmax = 0.0, width = 0.0, width1 = 0.0;
 
-    extern /* Subroutine */ void dcstep(double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        bool&,
-                                        double&,
-                                        double&);
+    extern /* Subroutine */ void dcstep (double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         double&,
+                                         bool&,
+                                         double&,
+                                         double&);
     // c     Initialization block.
-    if (strncmp(task, "START", 5) == 0)
-    {
-        // c        Check the input arguments for errors.
-        if (stp < stpmin)
+    if (strncmp (task, "START", 5) == 0)
         {
-            strcpy(task, "ERROR: STP .LT. STPMIN");
-        }
-        if (stp > stpmax)
-        {
-            strcpy(task, "ERROR: STP .GT. STPMAX");
-        }
-        if (g >= 0.)
-        {
-            strcpy(task, "ERROR: INITIAL G .GE. ZERO");
-        }
-        if (ftol < 0.)
-        {
-            strcpy(task, "ERROR: FTOL .LT. ZERO");
-        }
-        if (gtol < 0.)
-        {
-            strcpy(task, "ERROR: GTOL .LT. ZERO");
-        }
-        if (xtol < 0.)
-        {
-            strcpy(task, "ERROR: XTOL .LT. ZERO");
-        }
-        if (stpmin < 0.)
-        {
-            strcpy(task, "ERROR: STPMIN .LT. ZERO");
-        }
-        if (stpmax < stpmin)
-        {
-            strcpy(task, "ERROR: STPMAX .LT. STPMIN");
-        }
+            // c        Check the input arguments for errors.
+            if (stp < stpmin)
+                {
+                    strcpy (task, "ERROR: STP .LT. STPMIN");
+                }
+            if (stp > stpmax)
+                {
+                    strcpy (task, "ERROR: STP .GT. STPMAX");
+                }
+            if (g >= 0.)
+                {
+                    strcpy (task, "ERROR: INITIAL G .GE. ZERO");
+                }
+            if (ftol < 0.)
+                {
+                    strcpy (task, "ERROR: FTOL .LT. ZERO");
+                }
+            if (gtol < 0.)
+                {
+                    strcpy (task, "ERROR: GTOL .LT. ZERO");
+                }
+            if (xtol < 0.)
+                {
+                    strcpy (task, "ERROR: XTOL .LT. ZERO");
+                }
+            if (stpmin < 0.)
+                {
+                    strcpy (task, "ERROR: STPMIN .LT. ZERO");
+                }
+            if (stpmax < stpmin)
+                {
+                    strcpy (task, "ERROR: STPMAX .LT. STPMIN");
+                }
 
-        // c        Exit if there are errors on input.
+            // c        Exit if there are errors on input.
 
-        if (strncmp(task, "ERROR", 5) == 0)
-        {
-            return 0;
-        }
-        // c        Initialize local variables.
-        brackt = false;
-        stage = 1;
-        finit = f;
-        ginit = g;
-        gtest = ftol * ginit;
-        width = stpmax - stpmin;
-        width1 = width / p5;
-
-        // c        The variables stx, fx, gx contain the values of the step,
-        // c        function, and derivative at the best step.
-        // c        The variables sty, fy, gy contain the value of the step,
-        // c        function, and derivative at sty.
-        // c        The variables stp, f, g contain the values of the step,
-        // c        function, and derivative at stp.
-
-        stx = zero;
-        fx = finit;
-        gx = ginit;
-        sty = zero;
-        fy = finit;
-        gy = ginit;
-        stmin = zero;
-        stmax = stp + stp * xtrapu;
-        strcpy(task, "FG");
-        goto L10;
-    }
-    else
-    {
-
-        // c        Restore local variables.
-
-        if (isave[1] == 1)
-        {
-            brackt = true;
-        }
-        else
-        {
+            if (strncmp (task, "ERROR", 5) == 0)
+                {
+                    return 0;
+                }
+            // c        Initialize local variables.
             brackt = false;
+            stage = 1;
+            finit = f;
+            ginit = g;
+            gtest = ftol * ginit;
+            width = stpmax - stpmin;
+            width1 = width / p5;
+
+            // c        The variables stx, fx, gx contain the values of the step,
+            // c        function, and derivative at the best step.
+            // c        The variables sty, fy, gy contain the value of the step,
+            // c        function, and derivative at sty.
+            // c        The variables stp, f, g contain the values of the step,
+            // c        function, and derivative at stp.
+
+            stx = zero;
+            fx = finit;
+            gx = ginit;
+            sty = zero;
+            fy = finit;
+            gy = ginit;
+            stmin = zero;
+            stmax = stp + stp * xtrapu;
+            strcpy (task, "FG");
+            goto L10;
         }
-        stage = isave[2];
-        ginit = dsave[1];
-        gtest = dsave[2];
-        gx = dsave[3];
-        gy = dsave[4];
-        finit = dsave[5];
-        fx = dsave[6];
-        fy = dsave[7];
-        stx = dsave[8];
-        sty = dsave[9];
-        stmin = dsave[10];
-        stmax = dsave[11];
-        width = dsave[12];
-        width1 = dsave[13];
-    }
+    else
+        {
+
+            // c        Restore local variables.
+
+            if (isave[1] == 1)
+                {
+                    brackt = true;
+                }
+            else
+                {
+                    brackt = false;
+                }
+            stage = isave[2];
+            ginit = dsave[1];
+            gtest = dsave[2];
+            gx = dsave[3];
+            gy = dsave[4];
+            finit = dsave[5];
+            fx = dsave[6];
+            fy = dsave[7];
+            stx = dsave[8];
+            sty = dsave[9];
+            stmin = dsave[10];
+            stmax = dsave[11];
+            width = dsave[12];
+            width1 = dsave[13];
+        }
 
     // c     If psi(stp) <= 0 and f'(stp) >= 0 for some step, then the
     // c     algorithm enters the second stage.
 
     ftest = finit + stp * gtest;
     if (stage == 1 && f <= ftest && g >= zero)
-        stage = 2;
+        {
+            stage = 2;
+        }
 
     // c     Test for warnings.
 
     if (brackt && (stp <= stmin || stp >= stmax))
-    {
-        strcpy(task, "WARNING: ROUNDING ERRORS PREVENT PROGRESS");
-    }
+        {
+            strcpy (task, "WARNING: ROUNDING ERRORS PREVENT PROGRESS");
+        }
     if (brackt && stmax - stmin <= xtol * stmax)
-    {
-        strcpy(task, "WARNING: XTOL TEST SATISFIED");
-    }
+        {
+            strcpy (task, "WARNING: XTOL TEST SATISFIED");
+        }
     if (stp == stpmax && f <= ftest && g <= gtest)
-    {
-        strcpy(task, "WARNING: STP = STPMAX");
-    }
+        {
+            strcpy (task, "WARNING: STP = STPMAX");
+        }
     if (stp == stpmin && (f > ftest || g >= gtest))
-    {
-        strcpy(task, "WARNING: STP = STPMIN");
-    }
+        {
+            strcpy (task, "WARNING: STP = STPMIN");
+        }
 
     // c     Test for convergence.
 
-    if (f <= ftest && std::abs(g) <= gtol * (-ginit))
-    {
-        strcpy(task, "CONVERGENCE");
-        // strcpy(task, "CONVERGENCE", 11);
-    }
+    if (f <= ftest && std::abs (g) <= gtol * (-ginit))
+        {
+            strcpy (task, "CONVERGENCE");
+            // strcpy(task, "CONVERGENCE", 11);
+        }
 
     // c     Test for termination.
 
-    if (strncmp(task, "WARN", 4) == 0 || strncmp(task, "CONV", 4) == 0)
-    {
-        goto L10;
-    }
+    if (strncmp (task, "WARN", 4) == 0 || strncmp (task, "CONV", 4) == 0)
+        {
+            goto L10;
+        }
 
     // c     A modified function is used to predict the step during the
     // c     first stage if a lower function value has been obtained but
     // c     the decrease is not sufficient.
 
     if (stage == 1 && f <= fx && f > ftest)
-    {
+        {
 
-        // c        Define the modified function and derivative values.
+            // c        Define the modified function and derivative values.
 
-        fm = f - stp * gtest;
-        fxm = fx - stx * gtest;
-        fym = fy - sty * gtest;
-        gm = g - gtest;
-        gxm = gx - gtest;
-        gym = gy - gtest;
+            fm = f - stp * gtest;
+            fxm = fx - stx * gtest;
+            fym = fy - sty * gtest;
+            gm = g - gtest;
+            gxm = gx - gtest;
+            gym = gy - gtest;
 
-        // c        Call dcstep to update stx, sty, and to compute the new step.
+            // c        Call dcstep to update stx, sty, and to compute the new step.
 
-        dcstep(stx, fxm, gxm, sty, fym, gym, stp, fm, gm, brackt, stmin, stmax);
+            dcstep (stx, fxm, gxm, sty, fym, gym, stp, fm, gm, brackt, stmin, stmax);
 
-        // c        Reset the function and derivative values for f.
+            // c        Reset the function and derivative values for f.
 
-        fx = fxm + stx * gtest;
-        fy = fym + sty * gtest;
-        gx = gxm + gtest;
-        gy = gym + gtest;
-    }
+            fx = fxm + stx * gtest;
+            fy = fym + sty * gtest;
+            gx = gxm + gtest;
+            gy = gym + gtest;
+        }
     else
-    {
+        {
 
-        // c       Call dcstep to update stx, sty, and to compute the new step.
+            // c       Call dcstep to update stx, sty, and to compute the new step.
 
-        dcstep(stx, fx, gx, sty, fy, gy, stp, f, g, brackt, stmin, stmax);
-    }
+            dcstep (stx, fx, gx, sty, fy, gy, stp, f, g, brackt, stmin, stmax);
+        }
     // c     Decide if a bisection step is needed.
     if (brackt)
-    {
-        if (std::abs(sty - stx) >= p66 * width1)
-            stp = stx + p5 * (sty - stx);
-        width1 = width;
-        width = std::abs(sty - stx);
-    }
+        {
+            if (std::abs (sty - stx) >= p66 * width1)
+                {
+                    stp = stx + p5 * (sty - stx);
+                }
+            width1 = width;
+            width = std::abs (sty - stx);
+        }
     // c     Set the minimum and maximum steps allowed for stp.
 
     if (brackt)
-    {
-        stmin = std::min(stx, sty);
-        stmax = std::max(stx, sty);
-    }
+        {
+            stmin = std::min (stx, sty);
+            stmax = std::max (stx, sty);
+        }
     else
-    {
-        stmin = stp + xtrapl * (stp - stx);
-        stmax = stp + xtrapu * (stp - stx);
-    }
+        {
+            stmin = stp + xtrapl * (stp - stx);
+            stmax = stp + xtrapu * (stp - stx);
+        }
 
     // c     Force the step to be within the bounds stpmax and stpmin.
-    stp = std::max(stp, stpmin);
-    stp = std::min(stp, stpmax);
+    stp = std::max (stp, stpmin);
+    stp = std::min (stp, stpmax);
     // c     If further progress is not possible, let stp be the best
     // c     point obtained during the search.
     if ((brackt && (stp <= stmin || stp >= stmax)) || (brackt && stmax - stmin <= xtol * stmax))
-    {
-        stp = stx;
-    }
+        {
+            stp = stx;
+        }
     // c     Obtain another function and derivative.
 
-    strcpy(task, "FG");
+    strcpy (task, "FG");
 L10:
     // c     Save local variables.
     if (brackt)
-    {
-        isave[1] = 1;
-    }
+        {
+            isave[1] = 1;
+        }
     else
-    {
-        isave[1] = 0;
-    }
+        {
+            isave[1] = 0;
+        }
     isave[2] = stage;
     dsave[1] = ginit;
     dsave[2] = gtest;
@@ -417,18 +422,19 @@ L10:
     return 0;
 }
 
-/* Subroutine */ void dcstep(double& stx,
-                             double& fx,
-                             double& dx,
-                             double& sty,
-                             double& fy,
-                             double& dy,
-                             double& stp,
-                             double& fp,
-                             double& dp,
-                             bool& brackt,
-                             double& stpmin,
-                             double& stpmax)
+/* Subroutine */ void
+    dcstep (double& stx,
+            double& fx,
+            double& dx,
+            double& sty,
+            double& fy,
+            double& dy,
+            double& stp,
+            double& fp,
+            double& dp,
+            bool& brackt,
+            double& stpmin,
+            double& stpmax)
 {
     // c     **********
     // c
@@ -529,7 +535,7 @@ L10:
 
     double gamma, p, q, r, s, sgnd, stpc, stpf, stpq, theta;
 
-    sgnd = dp * (dx / std::abs(dx));
+    sgnd = dp * (dx / std::abs (dx));
 
     // c     First case: A higher function value. The minimum is bracketed.
     // c     If the cubic step is closer to stx than the quadratic step, the
@@ -537,28 +543,31 @@ L10:
     // c     quadratic steps is taken.
 
     if (fp > fx)
-    {
-        theta = three * (fx - fp) / (stp - stx) + dx + dp;
-        double temps = std::max(std::abs(theta), std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
-        s = std::max(temps, std::abs(dp));
-        gamma = s * sqrt(pow(theta / s, 2) - (dx / s) * (dp / s));
-        if (stp < stx)
-            gamma = -gamma;
-        p = (gamma - dx) + theta;
-        q = ((gamma - dx) + gamma) + dp;
-        r = p / q;
-        stpc = stx + r * (stp - stx);
-        stpq = stx + ((dx / ((fx - fp) / (stp - stx) + dx)) / two) * (stp - stx);
-        if (std::abs(stpc - stx) < std::abs(stpq - stx))
         {
-            stpf = stpc;
+            theta = three * (fx - fp) / (stp - stx) + dx + dp;
+            double temps
+                = std::max (std::abs (theta), std::abs (dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+            s = std::max (temps, std::abs (dp));
+            gamma = s * sqrt (pow (theta / s, 2) - (dx / s) * (dp / s));
+            if (stp < stx)
+                {
+                    gamma = -gamma;
+                }
+            p = (gamma - dx) + theta;
+            q = ((gamma - dx) + gamma) + dp;
+            r = p / q;
+            stpc = stx + r * (stp - stx);
+            stpq = stx + ((dx / ((fx - fp) / (stp - stx) + dx)) / two) * (stp - stx);
+            if (std::abs (stpc - stx) < std::abs (stpq - stx))
+                {
+                    stpf = stpc;
+                }
+            else
+                {
+                    stpf = stpc + (stpq - stpc) / two;
+                }
+            brackt = true;
         }
-        else
-        {
-            stpf = stpc + (stpq - stpc) / two;
-        }
-        brackt = true;
-    }
 
     // c     Second case: A lower function value and derivatives of opposite
     // c     sign. The minimum is bracketed. If the cubic step is farther from
@@ -566,167 +575,176 @@ L10:
     // c     secant step is taken.
 
     else if (sgnd < zero)
-    {
-        theta = three * (fx - fp) / (stp - stx) + dx + dp;
-        double temps = std::max(std::abs(theta), std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
-        s = std::max(temps, std::abs(dp));
-        gamma = s * sqrt(pow(theta / s, 2) - (dx / s) * (dp / s));
-        if (stp > stx)
-            gamma = -gamma;
-        p = (gamma - dp) + theta;
-        q = ((gamma - dp) + gamma) + dx;
-        r = p / q;
-        stpc = stp + r * (stx - stp);
-        stpq = stp + (dp / (dp - dx)) * (stx - stp);
-        if (std::abs(stpc - stp) > std::abs(stpq - stp))
         {
-            stpf = stpc;
+            theta = three * (fx - fp) / (stp - stx) + dx + dp;
+            double temps
+                = std::max (std::abs (theta), std::abs (dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+            s = std::max (temps, std::abs (dp));
+            gamma = s * sqrt (pow (theta / s, 2) - (dx / s) * (dp / s));
+            if (stp > stx)
+                {
+                    gamma = -gamma;
+                }
+            p = (gamma - dp) + theta;
+            q = ((gamma - dp) + gamma) + dx;
+            r = p / q;
+            stpc = stp + r * (stx - stp);
+            stpq = stp + (dp / (dp - dx)) * (stx - stp);
+            if (std::abs (stpc - stp) > std::abs (stpq - stp))
+                {
+                    stpf = stpc;
+                }
+            else
+                {
+                    stpf = stpq;
+                }
+            brackt = true;
         }
-        else
-        {
-            stpf = stpq;
-        }
-        brackt = true;
-    }
 
     // c     Third case: A lower function value, derivatives of the same sign,
     // c     and the magnitude of the derivative decreases.
 
-    else if (std::abs(dp) < std::abs(dx))
-    {
-        // c        The cubic step is computed only if the cubic tends to infinity
-        // c        in the direction of the step or if the minimum of the cubic
-        // c        is beyond stp. Otherwise the cubic step is defined to be the
-        // c        secant step.
-        theta = three * (fx - fp) / (stp - stx) + dx + dp;
-        double temps = std::max(std::abs(theta), std::abs(dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
-        s = std::max(temps, std::abs(dp));
-        // c        The case gamma = 0 only arises if the cubic does not tend
-        // c        to infinity in the direction of the step.
-        gamma = s * sqrt(std::max(zero, pow(theta / s, 2) - (dx / s) * (dp / s)));
-        if (stp > stx)
-            gamma = -gamma;
-        p = (gamma - dp) + theta;
-        q = (gamma + (dx - dp)) + gamma;
-        r = p / q;
-        if (r < zero && gamma != zero)
+    else if (std::abs (dp) < std::abs (dx))
         {
-            stpc = stp + r * (stx - stp);
-        }
-        else if (stp > stx)
-        {
-            stpc = stpmax;
-        }
-        else
-        {
-            stpc = stpmin;
-        }
-        stpq = stp + (dp / (dp - dx)) * (stx - stp);
-
-        if (brackt)
-        {
-            // c           A minimizer has been bracketed. If the cubic step is
-            // c           closer to stp than the secant step, the cubic step is
-            // c           taken, otherwise the secant step is taken.
-            if (std::abs(stpc - stp) < std::abs(stpq - stp))
-            {
-                stpf = stpc;
-            }
-            else
-            {
-                stpf = stpq;
-            }
+            // c        The cubic step is computed only if the cubic tends to infinity
+            // c        in the direction of the step or if the minimum of the cubic
+            // c        is beyond stp. Otherwise the cubic step is defined to be the
+            // c        secant step.
+            theta = three * (fx - fp) / (stp - stx) + dx + dp;
+            double temps
+                = std::max (std::abs (theta), std::abs (dx)); // get max(std::abs(theta),std::abs(dx),std::abs(dp))
+            s = std::max (temps, std::abs (dp));
+            // c        The case gamma = 0 only arises if the cubic does not tend
+            // c        to infinity in the direction of the step.
+            gamma = s * sqrt (std::max (zero, pow (theta / s, 2) - (dx / s) * (dp / s)));
             if (stp > stx)
-            {
-                stpf = std::min(stp + p66 * (sty - stp), stpf);
-            }
+                {
+                    gamma = -gamma;
+                }
+            p = (gamma - dp) + theta;
+            q = (gamma + (dx - dp)) + gamma;
+            r = p / q;
+            if (r < zero && gamma != zero)
+                {
+                    stpc = stp + r * (stx - stp);
+                }
+            else if (stp > stx)
+                {
+                    stpc = stpmax;
+                }
             else
-            {
-                stpf = std::max(stp + p66 * (sty - stp), stpf);
-            }
-        }
-        else
-        {
-            // c           A minimizer has not been bracketed. If the cubic step is
-            // c           farther from stp than the secant step, the cubic step is
-            // c           taken, otherwise the secant step is taken.
-            if (std::abs(stpc - stp) > std::abs(stpq - stp))
-            {
-                stpf = stpc;
-            }
+                {
+                    stpc = stpmin;
+                }
+            stpq = stp + (dp / (dp - dx)) * (stx - stp);
+
+            if (brackt)
+                {
+                    // c           A minimizer has been bracketed. If the cubic step is
+                    // c           closer to stp than the secant step, the cubic step is
+                    // c           taken, otherwise the secant step is taken.
+                    if (std::abs (stpc - stp) < std::abs (stpq - stp))
+                        {
+                            stpf = stpc;
+                        }
+                    else
+                        {
+                            stpf = stpq;
+                        }
+                    if (stp > stx)
+                        {
+                            stpf = std::min (stp + p66 * (sty - stp), stpf);
+                        }
+                    else
+                        {
+                            stpf = std::max (stp + p66 * (sty - stp), stpf);
+                        }
+                }
             else
-            {
-                stpf = stpq;
-            }
-            stpf = std::min(stpmax, stpf);
-            stpf = std::max(stpmin, stpf);
+                {
+                    // c           A minimizer has not been bracketed. If the cubic step is
+                    // c           farther from stp than the secant step, the cubic step is
+                    // c           taken, otherwise the secant step is taken.
+                    if (std::abs (stpc - stp) > std::abs (stpq - stp))
+                        {
+                            stpf = stpc;
+                        }
+                    else
+                        {
+                            stpf = stpq;
+                        }
+                    stpf = std::min (stpmax, stpf);
+                    stpf = std::max (stpmin, stpf);
+                }
         }
-    }
     // c     Fourth case: A lower function value, derivatives of the same sign,
     // c     and the magnitude of the derivative does not decrease. If the
     // c     minimum is not bracketed, the step is either stpmin or stpmax,
     // c     otherwise the cubic step is taken.
     else
-    {
-        if (brackt)
         {
-            theta = three * (fp - fy) / (sty - stp) + dy + dp;
-            double temps
-                = std::max(std::abs(theta), std::abs(dy)); // get max(std::abs(theta),std::abs(dy),std::abs(dp))
-            s = std::max(temps, std::abs(dp));
-            gamma = s * sqrt(pow(theta / s, 2) - (dy / s) * (dp / s));
-            if (stp > sty)
-                gamma = -gamma;
-            p = (gamma - dp) + theta;
-            q = ((gamma - dp) + gamma) + dy;
-            r = p / q;
-            stpc = stp + r * (sty - stp);
-            stpf = stpc;
+            if (brackt)
+                {
+                    theta = three * (fp - fy) / (sty - stp) + dy + dp;
+                    double temps = std::max (std::abs (theta),
+                                             std::abs (dy)); // get max(std::abs(theta),std::abs(dy),std::abs(dp))
+                    s = std::max (temps, std::abs (dp));
+                    gamma = s * sqrt (pow (theta / s, 2) - (dy / s) * (dp / s));
+                    if (stp > sty)
+                        {
+                            gamma = -gamma;
+                        }
+                    p = (gamma - dp) + theta;
+                    q = ((gamma - dp) + gamma) + dy;
+                    r = p / q;
+                    stpc = stp + r * (sty - stp);
+                    stpf = stpc;
+                }
+            else if (stp > stx)
+                {
+                    stpf = stpmax;
+                }
+            else
+                {
+                    stpf = stpmin;
+                }
         }
-        else if (stp > stx)
-        {
-            stpf = stpmax;
-        }
-        else
-        {
-            stpf = stpmin;
-        }
-    }
     // c     Update the interval which contains a minimizer.
     if (fp > fx)
-    {
-        sty = stp;
-        fy = fp;
-        dy = dp;
-    }
-    else
-    {
-        if (sgnd < zero)
         {
-            sty = stx;
-            fy = fx;
-            dy = dx;
+            sty = stp;
+            fy = fp;
+            dy = dp;
         }
-        stx = stp;
-        fx = fp;
-        dx = dp;
-    }
+    else
+        {
+            if (sgnd < zero)
+                {
+                    sty = stx;
+                    fy = fx;
+                    dy = dx;
+                }
+            stx = stp;
+            fx = fp;
+            dx = dp;
+        }
     // c     Compute the new step.
     stp = stpf;
 }
 
-void Opt_DCsrch::dcSrch(double& f, double& g, double& rstp, char* rtask)
+void
+    Opt_DCsrch::dcSrch (double& f, double& g, double& rstp, char* rtask)
 {
-    dcsrch(rstp,
-           f,
-           g,
-           this->ftol_,
-           this->gtol_,
-           this->xtol_,
-           rtask,
-           this->stpmin_,
-           this->stpmax_,
-           this->isave_,
-           this->dsave_);
+    dcsrch (rstp,
+            f,
+            g,
+            this->ftol_,
+            this->gtol_,
+            this->xtol_,
+            rtask,
+            this->stpmin_,
+            this->stpmax_,
+            this->isave_,
+            this->dsave_);
 }
 } // namespace ModuleBase

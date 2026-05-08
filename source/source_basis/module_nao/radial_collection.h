@@ -17,71 +17,112 @@
 class RadialCollection
 {
   public:
-    RadialCollection() = default;
-    RadialCollection(const RadialCollection& other);          ///< deep copy
-    RadialCollection& operator=(const RadialCollection& rhs); ///< deep copy
+    RadialCollection () = default;
+    RadialCollection (const RadialCollection& other);          ///< deep copy
+    RadialCollection& operator= (const RadialCollection& rhs); ///< deep copy
 
-    ~RadialCollection();
+    ~RadialCollection ();
 
     /// Builds the collection from (orbital) files.
-    void build(const int nfile, const std::string* const file, const char ftype = '\0');
+    void build (const int nfile, const std::string* const file, const char ftype = '\0');
 
     /// Builds the collection from Numerical_Nonlocal objects.
-    void build(const int ntype, Numerical_Nonlocal* const nls);
+    void build (const int ntype, Numerical_Nonlocal* const nls);
 
     /// Builds the collection from RadialCollection objects and another radius cutoff.
-    void build(const RadialCollection* nls, double radius = 0.0);
+    void build (const RadialCollection* nls, double radius = 0.0);
 
     /// builds the collection from quasi hydrogen radial functions
-    void build(const int ntype, 
-               const double* const charges, 
-               const bool with_slater_screening,
-               const int* const nmax, 
-               const std::string* symbols = nullptr,
-               const double conv_thr = 1e-10,
-               const std::string* strategies = nullptr,
-               const int& rank = 0);
-               
+    void build (const int ntype,
+                const double* const charges,
+                const bool with_slater_screening,
+                const int* const nmax,
+                const std::string* symbols = nullptr,
+                const double conv_thr = 1e-10,
+                const std::string* strategies = nullptr,
+                const int& rank = 0);
+
     /// builds the collection from pseudopotential pswfc
-    void build(const int ntype, 
-               const std::string* const file, 
-               const double* const screening_coeff,
-               const double conv_thr = 1e-10,
-               const int& rank = 0);
+    void build (const int ntype,
+                const std::string* const file,
+                const double* const screening_coeff,
+                const double conv_thr = 1e-10,
+                const int& rank = 0);
 
     /// builds a collection of truncated spherical Bessel functions
-    void build(const int lmax, 
-               const int nbes,
-               const double rcut,
-               const double sigma,
-               const double dr
-               );
+    void build (const int lmax, const int nbes, const double rcut, const double sigma, const double dr);
 
     /**
      * @name Getters
      */
     ///@{
-    const std::string& symbol(const int itype) const { return radset_[itype]->symbol(); }
-    int ntype() const { return ntype_; }
-    int lmax(const int itype) const { return radset_[itype]->lmax(); }
-    int lmax() const { return lmax_; }
-    double rcut_max(const int itype) const { return radset_[itype]->rcut_max(); }
-    double rcut_max() const { return rcut_max_; }
-    int nzeta(const int itype, const int l) const { return radset_[itype]->nzeta(l); }
-    int nzeta_max(const int itype) const { return radset_[itype]->nzeta_max(); }
-    int nzeta_max() const { return nzeta_max_; }
-    int nchi() const { return nchi_; }
-    int nchi(const int itype) const { return radset_[itype]->nchi(); }
-
-    const NumericalRadial& operator()(const int itype, const int l, const int izeta) const
+    const std::string&
+        symbol (const int itype) const
     {
-        assert(itype >= 0 && itype < ntype_);
-        return radset_[itype]->chi(l, izeta);
+        return radset_[itype]->symbol ();
+    }
+    int
+        ntype () const
+    {
+        return ntype_;
+    }
+    int
+        lmax (const int itype) const
+    {
+        return radset_[itype]->lmax ();
+    }
+    int
+        lmax () const
+    {
+        return lmax_;
+    }
+    double
+        rcut_max (const int itype) const
+    {
+        return radset_[itype]->rcut_max ();
+    }
+    double
+        rcut_max () const
+    {
+        return rcut_max_;
+    }
+    int
+        nzeta (const int itype, const int l) const
+    {
+        return radset_[itype]->nzeta (l);
+    }
+    int
+        nzeta_max (const int itype) const
+    {
+        return radset_[itype]->nzeta_max ();
+    }
+    int
+        nzeta_max () const
+    {
+        return nzeta_max_;
+    }
+    int
+        nchi () const
+    {
+        return nchi_;
+    }
+    int
+        nchi (const int itype) const
+    {
+        return radset_[itype]->nchi ();
     }
 
-    const RadialSet& operator()(const int itype) const
+    const NumericalRadial&
+        operator() (const int itype, const int l, const int izeta) const
     {
-        assert(itype >= 0 && itype < ntype_);
+        assert (itype >= 0 && itype < ntype_);
+        return radset_[itype]->chi (l, izeta);
+    }
+
+    const RadialSet&
+        operator() (const int itype) const
+    {
+        assert (itype >= 0 && itype < ntype_);
         return *radset_[itype];
     }
     ///@}
@@ -92,30 +133,34 @@ class RadialCollection
      *  Objects are sorted by l first, by itype next, by izeta last.
      */
     ///@{
-    const NumericalRadial** cbegin() const
+    const NumericalRadial**
+        cbegin () const
     {
-        assert(ntype_ > 0);
+        assert (ntype_ > 0);
         return iter_;
     }
 
-    const NumericalRadial** cend() const
+    const NumericalRadial**
+        cend () const
     {
-        assert(ntype_ > 0);
+        assert (ntype_ > 0);
         return iter_ + nchi_;
     }
 
     /// *(this->cbegin(l)) returns the address of the first NumericalRadial object with angular momentum l
-    const NumericalRadial** cbegin(const int l) const
+    const NumericalRadial**
+        cbegin (const int l) const
     {
-        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
-        return iter_ + std::accumulate(nl_, nl_ + l, 0);
+        assert (ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate (nl_, nl_ + l, 0);
     }
 
     /// *(this->cend(l)) returns the address of one-past-last NumericalRadial object with angular momentum l
-    const NumericalRadial** cend(const int l) const
+    const NumericalRadial**
+        cend (const int l) const
     {
-        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
-        return iter_ + std::accumulate(nl_, nl_ + l + 1, 0);
+        assert (ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate (nl_, nl_ + l + 1, 0);
     }
     ///@}
 
@@ -124,28 +169,28 @@ class RadialCollection
      */
     ///@{
     /// Sets a spherical Bessel transformers for all RadialSet objects.
-    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update = 0);
+    void set_transformer (ModuleBase::SphericalBesselTransformer sbt, const int update = 0);
 
     /// Sets a common grid for all RadialSet objects.
-    void set_grid(const bool for_r_space, const int ngrid, const double* grid, const char mode = 'i');
+    void set_grid (const bool for_r_space, const int ngrid, const double* grid, const char mode = 'i');
 
     /// Sets a common uniform grid for all RadialSet objects.
-    void set_uniform_grid(const bool for_r_space,
-                          const int ngrid,
-                          const double cutoff,
-                          const char mode = 'i',
-                          const bool enable_fft = false);
+    void set_uniform_grid (const bool for_r_space,
+                           const int ngrid,
+                           const double cutoff,
+                           const char mode = 'i',
+                           const bool enable_fft = false);
     ///@}
 
     /**
      * @brief export all RadialSet objects to a file in a given format.
-     * 
-     * Supported formats:  
+     *
+     * Supported formats:
      * - "abacus_orb" (default): ABACUS Numerical atomic orbital format
      */
-    void to_file(const std::string& appendix,                ///< file name
-                 const std::string& format = "abacus_orb"    ///< file format
-                 ) const;
+    void to_file (const std::string& appendix,             ///< file name
+                  const std::string& format = "abacus_orb" ///< file format
+    ) const;
 
   private:
     int ntype_ = 0;         ///< number of RadialSet in the collection
@@ -168,13 +213,13 @@ class RadialCollection
     int* nl_ = nullptr;
 
     /// Deallocates all RadialSet objects and resets all members to default.
-    void cleanup();
+    void cleanup ();
 
     /// Builds iter_ from radset_.
-    void iter_build();
+    void iter_build ();
 
     /// Finds the maximum cutoff radius among all RadialSet objects and sets rcut_max_ accordingly.
-    void set_rcut_max();
+    void set_rcut_max ();
 
     /**
      * @brief Returns the file type of a given file.
@@ -184,7 +229,7 @@ class RadialCollection
      *
      * Only rank-0 performs the check; the result is broadcasted to all ranks.
      */
-    char check_file_type(const std::string& file) const;
+    char check_file_type (const std::string& file) const;
 };
 
 #endif

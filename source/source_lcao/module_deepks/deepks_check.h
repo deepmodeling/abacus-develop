@@ -19,7 +19,7 @@ namespace DeePKS_domain
 // 1. check_tensor, which is used for tensor data checking
 
 template <typename T>
-void check_tensor(const torch::Tensor& tensor, const std::string& filename, const int rank);
+void check_tensor (const torch::Tensor& tensor, const std::string& filename, const int rank);
 
 } // namespace DeePKS_domain
 

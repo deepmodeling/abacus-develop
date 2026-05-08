@@ -3,46 +3,48 @@
 double surchem::Acav = 0;
 double surchem::Ael = 0;
 
-surchem::surchem()
+surchem::surchem ()
 {
     TOTN_real = nullptr;
     delta_phi = nullptr;
     epspot = nullptr;
-    Vcav = ModuleBase::matrix();
-    Vel = ModuleBase::matrix();
+    Vcav = ModuleBase::matrix ();
+    Vel = ModuleBase::matrix ();
     qs = 0;
 }
 
-void surchem::allocate(const int &nrxx, const int &nspin)
+void
+    surchem::allocate (const int& nrxx, const int& nspin)
 {
-    assert(nrxx >= 0);
-    assert(nspin > 0);
+    assert (nrxx >= 0);
+    assert (nspin > 0);
 
     delete[] TOTN_real;
     delete[] delta_phi;
     delete[] epspot;
     if (nrxx > 0)
-    {
-        TOTN_real = new double[nrxx];
-        delta_phi = new double[nrxx];
-        epspot = new double[nrxx];
-    }
+        {
+            TOTN_real = new double[nrxx];
+            delta_phi = new double[nrxx];
+            epspot = new double[nrxx];
+        }
     else
-    {
-        TOTN_real = nullptr;
-        delta_phi = nullptr;
-        epspot = nullptr;
-    }
-    Vcav.create(nspin, nrxx);
-    Vel.create(nspin, nrxx);
+        {
+            TOTN_real = nullptr;
+            delta_phi = nullptr;
+            epspot = nullptr;
+        }
+    Vcav.create (nspin, nrxx);
+    Vel.create (nspin, nrxx);
 
-    ModuleBase::GlobalFunc::ZEROS(delta_phi, nrxx);
-    ModuleBase::GlobalFunc::ZEROS(TOTN_real, nrxx);
-    ModuleBase::GlobalFunc::ZEROS(epspot, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (delta_phi, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (TOTN_real, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (epspot, nrxx);
     return;
 }
 
-void surchem::clear()
+void
+    surchem::clear ()
 {
     delete[] TOTN_real;
     delete[] delta_phi;
@@ -51,11 +53,8 @@ void surchem::clear()
     this->delta_phi = nullptr;
     this->epspot = nullptr;
 
-    this->Vcav.create(0, 0); 
-    this->Vel.create(0, 0);
+    this->Vcav.create (0, 0);
+    this->Vel.create (0, 0);
 }
 
-surchem::~surchem()
-{
-    this->clear();
-}
+surchem::~surchem () { this->clear (); }

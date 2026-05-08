@@ -4,7 +4,7 @@
 
 namespace ModuleIO
 {
-	void write_orb_info(const UnitCell* ucell);
+void write_orb_info (const UnitCell* ucell);
 }
 
 #endif

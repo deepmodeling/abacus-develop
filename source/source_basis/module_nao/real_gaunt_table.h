@@ -24,12 +24,13 @@
 class RealGauntTable
 {
   public:
-    RealGauntTable(RealGauntTable const&) = delete;
-    RealGauntTable& operator=(RealGauntTable const&) = delete;
+    RealGauntTable (RealGauntTable const&) = delete;
+    RealGauntTable& operator= (RealGauntTable const&) = delete;
 
-    ~RealGauntTable() {}
+    ~RealGauntTable () {}
 
-    static RealGauntTable& instance()
+    static RealGauntTable&
+        instance ()
     {
         static RealGauntTable instance_;
         return instance_;
@@ -64,21 +65,25 @@ class RealGauntTable
      *
      *       where c = sqrt(3/4/pi) and r = sqrt(x^2 + y^2 + z^2).
      *                                                                                  */
-    void build(const int lmax);
+    void build (const int lmax);
 
     /// gets the tabulated real Gaunt coefficient
-    const double& operator()(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    const double& operator() (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// returns the maximum l (for the first two dimensions; the third dimension is 2*lmax)
-    int lmax() const { return lmax_; }
-
-    /// Returns the amount of heap memory used by this class (in bytes).
-    size_t memory() const
+    int
+        lmax () const
     {
-        return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double)) 
-                + real_gaunt_table_.NumElements() * sizeof(double);
+        return lmax_;
     }
 
+    /// Returns the amount of heap memory used by this class (in bytes).
+    size_t
+        memory () const
+    {
+        return gaunt_table_.size () * (6 * sizeof (int) + sizeof (double))
+               + real_gaunt_table_.NumElements () * sizeof (double);
+    }
 
     /*!
      * @brief Computes the standard Gaunt coefficients.
@@ -98,11 +103,10 @@ class RealGauntTable
      *       symbols, which in turn is evaluated with the Racah formula. This might have
      *       some numerical issue for large l and is yet to be studied later.
      *                                                                                  */
-    double gaunt(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
-
+    double gaunt (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
   private:
-    RealGauntTable() {}
+    RealGauntTable () {}
 
     /// maximum angular momentum of the table (for the first two dimensions)
     int lmax_ = -1;
@@ -117,16 +121,20 @@ class RealGauntTable
     std::map<std::array<int, 6>, double> gaunt_table_;
 
     /// table of real Gaunt coefficients
-    container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
+    container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape ({0})};
 
     /// selection rule of standard & real Gaunt coefficients regarding l1, l2, l3
-    bool gaunt_select_l(const int l1, const int l2, const int l3) const;
+    bool gaunt_select_l (const int l1, const int l2, const int l3) const;
 
     /// selection rule of standard Gaunt coefficients regarding m1, m2, m3
-    bool gaunt_select_m(const int m1, const int m2, const int m3) const { return m1 + m2 + m3 == 0; }
+    bool
+        gaunt_select_m (const int m1, const int m2, const int m3) const
+    {
+        return m1 + m2 + m3 == 0;
+    }
 
     /// selection rule of real Gaunt coefficients regarding m1, m2, m3
-    bool real_gaunt_select_m(const int m1, const int m2, const int m3) const;
+    bool real_gaunt_select_m (const int m1, const int m2, const int m3) const;
 
     /*!
      * @brief Returns whether the given l & m are valid quantum numbers.
@@ -134,13 +142,13 @@ class RealGauntTable
      * This function checks whether abs(mi) <= li (i=1,2,3) is satisfied.
      * This implies li >= 0.
      *                                                                                  */
-    bool is_valid_lm(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    bool is_valid_lm (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// Get a Gaunt coefficient by looking up the table
-    double gaunt_lookup(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    double gaunt_lookup (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// Get a real Gaunt coefficient from the stored Gaunt coefficients
-    double real_gaunt_lookup(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    double real_gaunt_lookup (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /*!
      * @brief Symmetry-adapted key for gaunt_table_.
@@ -157,13 +165,14 @@ class RealGauntTable
      * if necessary so that the returned key {l1,l2,l3,m1,m2,m3} satisfies
      * l1 >= l2 >= l3 and m3 >= 0.
      *                                                                                  */
-    std::array<int, 6> gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    std::array<int, 6>
+        gaunt_key (const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// swap (l1,m1) <--> (l2,m2) if l1 < l2; do nothing otherwise
-    void arrange(int& l1, int& l2, int& m1, int& m2) const;
+    void arrange (int& l1, int& l2, int& m1, int& m2) const;
 
     /// returns n! as a double
-    double factorial(const int n) const;
+    double factorial (const int n) const;
 
     /*!
      * @brief Returns the linearized index of Y(l,m).
@@ -172,10 +181,14 @@ class RealGauntTable
      *      m       0  -1   0   1  -2  -1   0   1   2  -3 ...
      *    index     0   1   2   3   4   5   6   7   8   9 ...
      *                                                                                  */
-    int index_map(int l, int m) const;
+    int index_map (int l, int m) const;
 
     /// returns pow(-1, m)
-    int minus_1_pow(int m) const { return m % 2 ? -1 : 1; }
+    int
+        minus_1_pow (int m) const
+    {
+        return m % 2 ? -1 : 1;
+    }
 };
 
 #endif

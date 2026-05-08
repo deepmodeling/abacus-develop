@@ -25,10 +25,10 @@ namespace sparse_format
 
 /**
  * @brief Calculate the Hamiltonian matrix elements in real space using EXX data in sparse format
- * 
+ *
  * This function computes the Hamiltonian matrix elements in real space (HR) from EXX data,
  * which is stored in a sparse tensor format. The results are added to the HS_Arrays structure.
- * 
+ *
  * @tparam Tdata Data type for the matrix elements (double or std::complex<double>)
  * @param ucell Unit cell information
  * @param pv Parallel orbitals information for distributed computation
@@ -39,7 +39,7 @@ namespace sparse_format
  * @param Hexxs EXX data stored as a nested map structure of tensors
  */
 template <typename Tdata>
-void cal_HR_exx(
+void cal_HR_exx (
     const UnitCell& ucell,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
@@ -49,7 +49,7 @@ void cal_HR_exx(
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs);
 
 // Explicit instantiations for double and complex<double> types
-extern template void cal_HR_exx<double>(
+extern template void cal_HR_exx<double> (
     const UnitCell& ucell,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
@@ -58,16 +58,17 @@ extern template void cal_HR_exx<double>(
     const int (&nmp)[3],
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<double>>>>& Hexxs);
 
-extern template void cal_HR_exx<std::complex<double>>(
+extern template void cal_HR_exx<std::complex<double>> (
     const UnitCell& ucell,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>&
+        Hexxs);
 
-}
+} // namespace sparse_format
 
 #endif // __EXX
 #endif // SPARSE_FORMAT_EXX_H

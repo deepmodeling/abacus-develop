@@ -6,15 +6,15 @@ namespace hamilt
 {
 
 template <typename T, typename Device>
-HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
-                                      ModulePW::PW_Basis_K* wfc_basis,
-                                      K_Vectors* p_kv,
-                                      pseudopot_cell_vnl* nlpp,
-									  const UnitCell* ucell,
-									  const int& npol,
-                                      Real* emin_in,
-                                      Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell), ngk(p_kv->ngk)
+HamiltSdftPW<T, Device>::HamiltSdftPW (elecstate::Potential* pot_in,
+                                       ModulePW::PW_Basis_K* wfc_basis,
+                                       K_Vectors* p_kv,
+                                       pseudopot_cell_vnl* nlpp,
+                                       const UnitCell* ucell,
+                                       const int& npol,
+                                       Real* emin_in,
+                                       Real* emax_in)
+    : HamiltPW<T, Device> (pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell), ngk (p_kv->ngk)
 {
     this->classname = "HamiltSdftPW";
     this->npwk_max = wfc_basis->npwk_max;
@@ -24,33 +24,34 @@ HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
 }
 
 template <typename T, typename Device>
-void HamiltSdftPW<T, Device>::hPsi(const T* psi_in, T* hpsi, const int& nbands)
+void
+    HamiltSdftPW<T, Device>::hPsi (const T* psi_in, T* hpsi, const int& nbands)
 {
-    auto call_act = [&, this](const Operator<T, Device>* op, const bool& is_first_node) -> void {
-        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()],  is_first_node);
-    };
+    auto call_act = [&, this] (const Operator<T, Device>* op, const bool& is_first_node) -> void
+        { op->act (nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik ()], is_first_node); };
 
-    ModuleBase::timer::start("HamiltSdftPW", "hPsi");
-    call_act(this->ops, true); // first node
-    Operator<T, Device>* node((Operator<T, Device>*)this->ops->next_op);
+    ModuleBase::timer::start ("HamiltSdftPW", "hPsi");
+    call_act (this->ops, true); // first node
+    Operator<T, Device>* node ((Operator<T, Device>*)this->ops->next_op);
     while (node != nullptr)
-    {
-        call_act(node, false); // other nodes
-        node = (Operator<T, Device>*)(node->next_op);
-    }
-    ModuleBase::timer::end("HamiltSdftPW", "hPsi");
+        {
+            call_act (node, false); // other nodes
+            node = (Operator<T, Device>*)(node->next_op);
+        }
+    ModuleBase::timer::end ("HamiltSdftPW", "hPsi");
 
     return;
 }
 
 template <typename T, typename Device>
-void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int& nbands)
+void
+    HamiltSdftPW<T, Device>::hPsi_norm (const T* psi_in, T* hpsi_norm, const int& nbands)
 {
-    ModuleBase::timer::start("HamiltSdftPW", "hPsi_norm");
+    ModuleBase::timer::start ("HamiltSdftPW", "hPsi_norm");
 
-    this->hPsi(psi_in, hpsi_norm, nbands);
+    this->hPsi (psi_in, hpsi_norm, nbands);
 
-    const int ik = this->ops->get_ik();
+    const int ik = this->ops->get_ik ();
     const int npwk_max = this->npwk_max;
     const int npwk = this->ngk[ik];
     const Real emin = *this->emin;
@@ -58,8 +59,8 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     const Real Ebar = (emin + emax) / 2;
     const Real DeltaE = (emax - emin) / 2;
 
-    hpsi_norm_op<Real, Device>()(this->ctx, nbands, npwk_max, npwk, Ebar, DeltaE, hpsi_norm, psi_in);
-    ModuleBase::timer::end("HamiltSdftPW", "hPsi_norm");
+    hpsi_norm_op<Real, Device> () (this->ctx, nbands, npwk_max, npwk, Ebar, DeltaE, hpsi_norm, psi_in);
+    ModuleBase::timer::end ("HamiltSdftPW", "hPsi_norm");
 }
 
 template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;

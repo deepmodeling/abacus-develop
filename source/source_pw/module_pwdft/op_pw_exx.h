@@ -26,32 +26,40 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    OperatorEXXPW(const int* isk_in,
-                  const ModulePW::PW_Basis_K* wfcpw_in,
-                  const ModulePW::PW_Basis* rhopw_in,
-                  K_Vectors* kv_in,
-                  const UnitCell* ucell);
+    OperatorEXXPW (const int* isk_in,
+                   const ModulePW::PW_Basis_K* wfcpw_in,
+                   const ModulePW::PW_Basis* rhopw_in,
+                   K_Vectors* kv_in,
+                   const UnitCell* ucell);
 
     template <typename T_in, typename Device_in = Device>
-    explicit OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op_exx);
+    explicit OperatorEXXPW (const OperatorEXXPW<T_in, Device_in>* op_exx);
 
-    virtual ~OperatorEXXPW();
+    virtual ~OperatorEXXPW ();
 
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T *tmpsi_in,
-                     T *tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const override;
+    virtual void act (const int nbands,
+                      const int nbasis,
+                      const int npol,
+                      const T* tmpsi_in,
+                      T* tmhpsi,
+                      const int ngk_ik = 0,
+                      const bool is_first_node = false) const override;
 
-    double cal_exx_energy(psi::Psi<T, Device> *psi_) const;
+    double cal_exx_energy (psi::Psi<T, Device>* psi_) const;
 
-    void set_psi(psi::Psi<T, Device> &psi_in) const { psi = psi_in; }
+    void
+        set_psi (psi::Psi<T, Device>& psi_in) const
+    {
+        psi = psi_in;
+    }
 
-    void set_wg(const ModuleBase::matrix *wg_in) { wg = wg_in; }
+    void
+        set_wg (const ModuleBase::matrix* wg_in)
+    {
+        wg = wg_in;
+    }
 
-    void construct_ace() const;
+    void construct_ace () const;
 
     bool first_iter = true;
 
@@ -62,86 +70,86 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
-    const UnitCell *ucell = nullptr;
+    const UnitCell* ucell = nullptr;
     Real tpiba = 0;
-    
-    std::vector<int> get_q_points(const int ik) const;
-    const T *get_pw(const int m, const int iq) const;
 
-    void multiply_potential(T *density_recip, int ik, int iq) const;
+    std::vector<int> get_q_points (const int ik) const;
+    const T* get_pw (const int m, const int iq) const;
 
-    void act_op(const int nbands,
-                const int nbasis,
-                const int npol,
-                const T *tmpsi_in,
-                T *tmhpsi,
-                const int ngk_ik = 0,
-                const bool is_first_node = false) const;
+    void multiply_potential (T* density_recip, int ik, int iq) const;
 
-    void act_op_kpar(const int nbands,
-            const int nbasis,
-            const int npol,
-            const T *tmpsi_in,
-            T *tmhpsi,
-            const int ngk_ik = 0,
-            const bool is_first_node = false) const;
+    void act_op (const int nbands,
+                 const int nbasis,
+                 const int npol,
+                 const T* tmpsi_in,
+                 T* tmhpsi,
+                 const int ngk_ik = 0,
+                 const bool is_first_node = false) const;
 
-    void act_op_ace(const int nbands,
-                    const int nbasis,
-                    const int npol,
-                    const T *tmpsi_in,
-                    T *tmhpsi,
-                    const int ngk_ik = 0,
-                    const bool is_first_node = false) const;
+    void act_op_kpar (const int nbands,
+                      const int nbasis,
+                      const int npol,
+                      const T* tmpsi_in,
+                      T* tmhpsi,
+                      const int ngk_ik = 0,
+                      const bool is_first_node = false) const;
 
-    double cal_exx_energy_op(psi::Psi<T, Device> *psi_) const;
+    void act_op_ace (const int nbands,
+                     const int nbasis,
+                     const int npol,
+                     const T* tmpsi_in,
+                     T* tmhpsi,
+                     const int ngk_ik = 0,
+                     const bool is_first_node = false) const;
 
-    double cal_exx_energy_ace(psi::Psi<T, Device> *psi_) const;
+    double cal_exx_energy_op (psi::Psi<T, Device>* psi_) const;
 
-    void cal_density_recip(const T* psi_nk_real, const T* psi_mq_real, double omega) const;
+    double cal_exx_energy_ace (psi::Psi<T, Device>* psi_) const;
 
-    void rho_recip2real(const T* rho_recip, T* rho_real, bool add = false, Real factor = 1.0) const;
+    void cal_density_recip (const T* psi_nk_real, const T* psi_mq_real, double omega) const;
+
+    void rho_recip2real (const T* rho_recip, T* rho_real, bool add = false, Real factor = 1.0) const;
 
     mutable int cnt = 0;
 
     mutable bool potential_got = false;
-    
+
     // pws
-//    mutable std::vector<std::unique_ptr<T[]>> pws;
+    //    mutable std::vector<std::unique_ptr<T[]>> pws;
 
     // k vectors
-    K_Vectors *kv = nullptr;
+    K_Vectors* kv = nullptr;
 
     // psi
     mutable psi::Psi<T, Device> psi;
     const ModuleBase::matrix* wg;
 
     // real space memory
-    T *psi_nk_real = nullptr;
-    T *psi_mq_real = nullptr;
-    T *density_real = nullptr;
-    T *h_psi_real = nullptr;
+    T* psi_nk_real = nullptr;
+    T* psi_mq_real = nullptr;
+    T* density_real = nullptr;
+    T* h_psi_real = nullptr;
     // density recip space memory
-    T *density_recip = nullptr;
+    T* density_recip = nullptr;
     // h_psi recip space memory
-    T *h_psi_recip = nullptr;
-    Real *pot = nullptr;
+    T* h_psi_recip = nullptr;
+    Real* pot = nullptr;
 
     // Lin Lin's ACE memory, 10.1021/acs.jctc.6b00092
-    mutable T* h_psi_ace = nullptr; // H \Psi, W in the paper
+    mutable T* h_psi_ace = nullptr;     // H \Psi, W in the paper
     mutable T* psi_h_psi_ace = nullptr; // \Psi^{\dagger} H \Psi, M in the paper
-    mutable T* L_ace = nullptr; // cholesky(-M).L, L in the paper
-    mutable std::vector<T*> Xi_ace_k; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
-//    mutable T* Xi_ace = nullptr; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
+    mutable T* L_ace = nullptr;         // cholesky(-M).L, L in the paper
+    mutable std::vector<T*> Xi_ace_k;   // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
+    //    mutable T* Xi_ace = nullptr; // L^{-1} (H \Psi)^{\dagger}, \Xi in the paper
 
     mutable std::map<int, std::vector<int>> q_points;
 
     // occupational number
-    const ModuleBase::matrix *p_wg;
+    const ModuleBase::matrix* p_wg;
 
-//    mutable bool update_psi = false;
+    //    mutable bool update_psi = false;
 
-    Device *ctx = {};
+    Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
@@ -166,40 +174,39 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using lapack_trtri = container::kernels::lapack_trtri<T, ct_Device>;
 
     bool gamma_extrapolation = true;
-
 };
 
 template <typename Real, typename Device>
-void get_exx_potential(const K_Vectors* kv,
-                       const ModulePW::PW_Basis_K* wfcpw,
-                       ModulePW::PW_Basis* rhopw_dev,
-                       Real* pot,
-                       double tpiba,
-                       bool gamma_extrapolation,
-                       double ucell_omega,
-                       int ik,
-                       int iq,
-                       bool is_stress = false);
+void get_exx_potential (const K_Vectors* kv,
+                        const ModulePW::PW_Basis_K* wfcpw,
+                        ModulePW::PW_Basis* rhopw_dev,
+                        Real* pot,
+                        double tpiba,
+                        bool gamma_extrapolation,
+                        double ucell_omega,
+                        int ik,
+                        int iq,
+                        bool is_stress = false);
 
 template <typename Real, typename Device>
-void get_exx_stress_potential(const K_Vectors* kv,
-                              const ModulePW::PW_Basis_K* wfcpw,
-                              ModulePW::PW_Basis* rhopw_dev,
-                              Real* pot,
-                              double tpiba,
-                              bool gamma_extrapolation,
-                              double ucell_omega,
-                              int ik,
-                              int iq);
+void get_exx_stress_potential (const K_Vectors* kv,
+                               const ModulePW::PW_Basis_K* wfcpw,
+                               ModulePW::PW_Basis* rhopw_dev,
+                               Real* pot,
+                               double tpiba,
+                               bool gamma_extrapolation,
+                               double ucell_omega,
+                               int ik,
+                               int iq);
 
-double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
-                      double erfc_omega,
-                      const K_Vectors* kv,
-                      const ModulePW::PW_Basis_K* wfcpw,
-                      ModulePW::PW_Basis* rhopw_dev,
-                      double tpiba,
-                      bool gamma_extrapolation,
-                      double ucell_omega);
+double exx_divergence (Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
+                       double erfc_omega,
+                       const K_Vectors* kv,
+                       const ModulePW::PW_Basis_K* wfcpw,
+                       ModulePW::PW_Basis* rhopw_dev,
+                       double tpiba,
+                       bool gamma_extrapolation,
+                       double ucell_omega);
 
 } // namespace hamilt
 

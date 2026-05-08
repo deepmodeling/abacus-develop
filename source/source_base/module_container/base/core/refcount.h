@@ -5,65 +5,71 @@
 #include <memory>
 #include <iostream>
 
-namespace base {
-namespace core {
+namespace base
+{
+namespace core
+{
 
 /**
  * @brief The base class for reference-counted objects.
  */
-class counted_base {
- public:
+class counted_base
+{
+  public:
     /**
      * @brief Default constructor. Initializes the reference count to one.
      */
-    counted_base();
+    counted_base ();
 
     /**
      * @brief Increases the reference count by one.
      */
-    void ref() const;
+    void ref () const;
 
     /**
      * @brief Decreases the reference count by one.
      * @return True if the object is deleted, otherwise false.
      */
-    bool unref() const;
+    bool unref () const;
 
     /**
      * @brief Gets the current reference count.
      * @return The current reference count.
      */
-    int_fast32_t ref_count() const;
+    int_fast32_t ref_count () const;
 
     /**
      * @brief Checks if the reference count is one.
      * @return True if the reference count is one, otherwise false.
      */
-    bool ref_count_is_one() const;
+    bool ref_count_is_one () const;
 
- protected:
+  protected:
     /**
      * @brief Virtual destructor.
      * @details The destructor is protected to prevent the explicit initialization of the base class.
      */
-    virtual ~counted_base() {}
+    virtual ~counted_base () {}
 
- private:
+  private:
     mutable std::atomic_int_fast32_t ref_;
-    counted_base(const counted_base&) = delete;
-    void operator=(const counted_base&) = delete;
+    counted_base (const counted_base&) = delete;
+    void operator= (const counted_base&) = delete;
 };
 
 /**
  * @brief A deleter functor for creating std::unique_ptr that unrefs objects.
  */
-struct ref_count_deleter {
+struct ref_count_deleter
+{
     /**
      * @brief Calls unref on the object.
      * @param o Pointer to the object.
      */
-    void operator()(const counted_base* o) const {
-        o->unref();
+    void
+        operator() (const counted_base* o) const
+    {
+        o->unref ();
     }
 };
 
@@ -81,15 +87,17 @@ class ref_count_ptr;
  * @return A smart pointer holding the reference to the object.
  */
 template <typename T>
-std::unique_ptr<T, ref_count_deleter> get_new_ref(T* ptr) {
-    static_assert(std::is_base_of<counted_base, T>::value,
-                  "T must be derived from counted_base");
+std::unique_ptr<T, ref_count_deleter>
+    get_new_ref (T* ptr)
+{
+    static_assert (std::is_base_of<counted_base, T>::value, "T must be derived from counted_base");
 
-    if (ptr == nullptr) {
-        return std::unique_ptr<T, ref_count_deleter>();
-    }
-    ptr->ref();
-    return std::unique_ptr<T, ref_count_deleter>(ptr);
+    if (ptr == nullptr)
+        {
+            return std::unique_ptr<T, ref_count_deleter> ();
+        }
+    ptr->ref ();
+    return std::unique_ptr<T, ref_count_deleter> (ptr);
 }
 
 /**
@@ -97,20 +105,24 @@ std::unique_ptr<T, ref_count_deleter> get_new_ref(T* ptr) {
  * @tparam T Type of the object.
  */
 template <typename T>
-class ref_count_ptr : public std::unique_ptr<T, ref_count_deleter> {
- public:
+class ref_count_ptr : public std::unique_ptr<T, ref_count_deleter>
+{
+  public:
     using std::unique_ptr<T, ref_count_deleter>::unique_ptr;
 
     /**
      * @brief Adds a new reference to the owned object.
      * @return A smart pointer holding the reference to the object.
      */
-    std::unique_ptr<T, ref_count_deleter> get_new_ref() const {
-        if (this->get() == nullptr) {
-            return std::unique_ptr<T, ref_count_deleter>();
-        }
-        this->get()->ref();
-        return std::unique_ptr<T, ref_count_deleter>(this->get());
+    std::unique_ptr<T, ref_count_deleter>
+        get_new_ref () const
+    {
+        if (this->get () == nullptr)
+            {
+                return std::unique_ptr<T, ref_count_deleter> ();
+            }
+        this->get ()->ref ();
+        return std::unique_ptr<T, ref_count_deleter> (this->get ());
     }
 };
 

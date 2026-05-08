@@ -25,18 +25,18 @@ namespace DeePKS_domain
 // which is defind as gevdm * dm_hl * overlap * overlap
 
 template <typename TK, typename TH>
-void cal_orbital_precalc(const std::vector<TH>& dm_hl,
-                         const int nat,
-                         const int nks,
-                         const DeePKS_Param& deepks_param,
-                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                         const std::vector<hamilt::HContainer<double>*> phialpha,
-                         const std::vector<torch::Tensor> gevdm,
-                         const UnitCell& ucell,
-                         const LCAO_Orbitals& orb,
-                         const Parallel_Orbitals& pv,
-                         const Grid_Driver& GridD,
-                         torch::Tensor& orbital_precalc);
+void cal_orbital_precalc (const std::vector<TH>& dm_hl,
+                          const int nat,
+                          const int nks,
+                          const DeePKS_Param& deepks_param,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                          const std::vector<hamilt::HContainer<double>*> phialpha,
+                          const std::vector<torch::Tensor> gevdm,
+                          const UnitCell& ucell,
+                          const LCAO_Orbitals& orb,
+                          const Parallel_Orbitals& pv,
+                          const Grid_Driver& GridD,
+                          torch::Tensor& orbital_precalc);
 } // namespace DeePKS_domain
 #endif
 #endif

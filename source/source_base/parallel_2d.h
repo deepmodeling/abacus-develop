@@ -11,65 +11,73 @@
 class Parallel_2D
 {
   public:
-    Parallel_2D() = default;
-    ~Parallel_2D() = default;
+    Parallel_2D () = default;
+    ~Parallel_2D () = default;
 
-    Parallel_2D& operator=(Parallel_2D&& rhs) = default;
-    Parallel_2D(Parallel_2D&& rhs) = default;
+    Parallel_2D& operator= (Parallel_2D&& rhs) = default;
+    Parallel_2D (Parallel_2D&& rhs) = default;
 
     /// number of local rows
-    int get_row_size() const
+    int
+        get_row_size () const
     {
         return nrow;
     };
 
     /// number of local columns
-    int get_col_size() const
+    int
+        get_col_size () const
     {
         return ncol;
     };
 
     /// number of global rows
-    int get_global_row_size() const;
+    int get_global_row_size () const;
 
     /// number of global columns
-    int get_global_col_size() const;
+    int get_global_col_size () const;
 
     /// number of local matrix elements
-    int64_t get_local_size() const
+    int64_t
+        get_local_size () const
     {
         return nloc;
     };
 
     /// get the local index of a global index (row)
-    int global2local_row(const int igr) const
+    int
+        global2local_row (const int igr) const
     {
         return global2local_row_[igr];
     }
 
     /// get the local index of a global index (col)
-    int global2local_col(const int igc) const
+    int
+        global2local_col (const int igc) const
     {
         return global2local_col_[igc];
     }
 
     /// get the global index of a local index (row)
-    int local2global_row(const int ilr) const
+    int
+        local2global_row (const int ilr) const
     {
         return local2global_row_[ilr];
     }
 
     /// get the global index of a local index (col)
-    int local2global_col(const int ilc) const
+    int
+        local2global_col (const int ilc) const
     {
         return local2global_col_[ilc];
     }
 
     /// check whether a global index is in this process
-    bool in_this_processor(const int iw1_all, const int iw2_all) const;
+    bool in_this_processor (const int iw1_all, const int iw2_all) const;
 
     /// side length of 2d square block
-    int get_block_size() const
+    int
+        get_block_size () const
     {
         return nb;
     };
@@ -80,21 +88,21 @@ class Parallel_2D
      * and set up the info of a block-cyclic distribution.
      *
      */
-    int init(const int mg,
-             const int ng,
-             const int nb, // square block is assumed
-             const MPI_Comm comm,
-             bool mode = false);
+    int init (const int mg,
+              const int ng,
+              const int nb, // square block is assumed
+              const MPI_Comm comm,
+              bool mode = false);
 
     /**
      * @brief Set up the info of a block-cyclic distribution using given
      * BLACS context.
      *
      */
-    int set(const int mg,
-            const int ng,
-            const int nb, // square block is assumed
-            const int blacs_ctxt);
+    int set (const int mg,
+             const int ng,
+             const int nb, // square block is assumed
+             const int blacs_ctxt);
 
     /// BLACS context
     int blacs_ctxt = -1;
@@ -102,10 +110,10 @@ class Parallel_2D
     /// ScaLAPACK descriptor
     int desc[9] = {};
 
-    MPI_Comm comm() const;
+    MPI_Comm comm () const;
 #endif
 
-    void set_serial(const int mg, const int ng);
+    void set_serial (const int mg, const int ng);
 
     // FIXME the following variables should be private, but they are
     // widely used in the code currently. Public visibility is kept
@@ -142,8 +150,8 @@ class Parallel_2D
     std::vector<int> local2global_col_;
 
 #ifdef __MPI
-    void _init_proc_grid(const MPI_Comm comm, const bool mode);
-    void _set_dist_info(const int mg, const int ng, const int nb);
+    void _init_proc_grid (const MPI_Comm comm, const bool mode);
+    void _set_dist_info (const int mg, const int ng, const int nb);
 #endif
 };
 #endif

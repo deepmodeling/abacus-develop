@@ -5,10 +5,12 @@
 #include "source_psi/psi.h"
 #include <complex>
 
-namespace hamilt {
+namespace hamilt
+{
 
 template <typename FPTYPE, typename Device>
-struct cal_sk_op {
+struct cal_sk_op
+{
     /// @brief The prestep of the calculation of getvnl for multi device
     ///
     /// Input Parameters
@@ -39,63 +41,63 @@ struct cal_sk_op {
     ///
     /// Output Parameters
     /// @param sk - output results matrix with size ucell.nat * npw
-    void operator()(const Device* ctx,
-                    const int& ik,
-                    const int& ntype,
-                    const int& nx,
-                    const int& ny,
-                    const int& nz,
-                    const int& rho_nx,
-                    const int& rho_ny,
-                    const int& rho_nz,
-                    const int& npw,
-                    const int& npwx,
-                    const int& fftny,
-                    const int& eigts1_nc,
-                    const int& eigts2_nc,
-                    const int& eigts3_nc,
-                    const int* atom_na,
-                    const int* igl2isz,
-                    const int* is2fftixy,
-                    const FPTYPE& TWO_PI,
-                    const FPTYPE* kvec_c,
-                    const FPTYPE* atom_tau,
-                    std::complex<FPTYPE>* eigts1,
-                    std::complex<FPTYPE>* eigts2,
-                    std::complex<FPTYPE>* eigts3,
-                    std::complex<FPTYPE>* sk);
+    void operator() (const Device* ctx,
+                     const int& ik,
+                     const int& ntype,
+                     const int& nx,
+                     const int& ny,
+                     const int& nz,
+                     const int& rho_nx,
+                     const int& rho_ny,
+                     const int& rho_nz,
+                     const int& npw,
+                     const int& npwx,
+                     const int& fftny,
+                     const int& eigts1_nc,
+                     const int& eigts2_nc,
+                     const int& eigts3_nc,
+                     const int* atom_na,
+                     const int* igl2isz,
+                     const int* is2fftixy,
+                     const FPTYPE& TWO_PI,
+                     const FPTYPE* kvec_c,
+                     const FPTYPE* atom_tau,
+                     std::complex<FPTYPE>* eigts1,
+                     std::complex<FPTYPE>* eigts2,
+                     std::complex<FPTYPE>* eigts3,
+                     std::complex<FPTYPE>* sk);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_sk_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* ctx,
-                    const int& ik,
-                    const int& ntype,
-                    const int& nx,
-                    const int& ny,
-                    const int& nz,
-                    const int& rho_nx,
-                    const int& rho_ny,
-                    const int& rho_nz,
-                    const int& npw,
-                    const int& npwx,
-                    const int& fftny,
-                    const int& eigts1_nc,
-                    const int& eigts2_nc,
-                    const int& eigts3_nc,
-                    const int* atom_na,
-                    const int* igl2isz,
-                    const int* is2fftixy,
-                    const FPTYPE& TWO_PI,
-                    const FPTYPE* kvec_c,
-                    const FPTYPE* atom_tau,
-                    std::complex<FPTYPE>* eigts1,
-                    std::complex<FPTYPE>* eigts2,
-                    std::complex<FPTYPE>* eigts3,
-                    std::complex<FPTYPE>* sk);
+    void operator() (const base_device::DEVICE_GPU* ctx,
+                     const int& ik,
+                     const int& ntype,
+                     const int& nx,
+                     const int& ny,
+                     const int& nz,
+                     const int& rho_nx,
+                     const int& rho_ny,
+                     const int& rho_nz,
+                     const int& npw,
+                     const int& npwx,
+                     const int& fftny,
+                     const int& eigts1_nc,
+                     const int& eigts2_nc,
+                     const int& eigts3_nc,
+                     const int* atom_na,
+                     const int* igl2isz,
+                     const int* is2fftixy,
+                     const FPTYPE& TWO_PI,
+                     const FPTYPE* kvec_c,
+                     const FPTYPE* atom_tau,
+                     std::complex<FPTYPE>* eigts1,
+                     std::complex<FPTYPE>* eigts2,
+                     std::complex<FPTYPE>* eigts3,
+                     std::complex<FPTYPE>* sk);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-}  // namespace hamilt
-#endif //SRC_PW_WF_MULTI_DEVICE_H
+} // namespace hamilt
+#endif // SRC_PW_WF_MULTI_DEVICE_H

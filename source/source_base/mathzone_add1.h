@@ -14,11 +14,11 @@ LiaoChen add @ 2010/03/09 to add efficient functions in LCAO calculation
 class Mathzone_Add1
 {
   public:
-    Mathzone_Add1();
-    ~Mathzone_Add1();
+    Mathzone_Add1 ();
+    ~Mathzone_Add1 ();
 
-    static double dualfac(const int& l);
-    static double factorial(const int& l);
+    static double dualfac (const int& l);
+    static double factorial (const int& l);
     /**
      * @brief calculate second derivatives for cubic
      * spline interpolation
@@ -30,12 +30,12 @@ class Mathzone_Add1
      * @param[in] ypn   f'(n) boundary condition
      * @param[out] y2   f''(x)
      */
-    static void SplineD2(const double* rad,
-                         const double* rad_f,
-                         const int& mesh,
-                         const double& yp1,
-                         const double& ypn,
-                         double* y2);
+    static void SplineD2 (const double* rad,
+                          const double* rad_f,
+                          const int& mesh,
+                          const double& yp1,
+                          const double& ypn,
+                          double* y2);
 
     /**
      * @brief cubic spline interpolation
@@ -50,14 +50,14 @@ class Mathzone_Add1
      * @param[out] dy   f'(x) after interpolation
      * @param[out] ddy   f''(x) after interpolation
      */
-    static void Cubic_Spline_Interpolation(const double* const rad,
-                                           const double* const rad_f,
-                                           const double* const y2,
-                                           const int& mesh,
-                                           const double* const r,
-                                           const int& rsize,
-                                           double* const y,
-                                           double* const dy);
+    static void Cubic_Spline_Interpolation (const double* const rad,
+                                            const double* const rad_f,
+                                            const double* const y2,
+                                            const int& mesh,
+                                            const double* const r,
+                                            const int& rsize,
+                                            double* const y,
+                                            double* const dy);
 
     /**
      * @brief "spline like interpolation" of a uniform
@@ -69,9 +69,9 @@ class Mathzone_Add1
      * @param R         f(R) is to be calculated
      * @return double   f(R)
      */
-    static double Uni_RadialF(const double* rad_f, const int& msh, const double& dr, const double& R);
+    static double Uni_RadialF (const double* rad_f, const int& msh, const double& dr, const double& R);
 
-    static void Uni_Deriv_Phi(const double* radf, const int& mesh, const double& dr, const int& nd, double* phind);
+    static void Uni_Deriv_Phi (const double* radf, const int& mesh, const double& dr, const int& nd, double* phind);
 
   private:
     const static int sph_lmax = 20;

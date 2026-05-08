@@ -23,33 +23,33 @@ class Center2_Orb
     // are moved here to decouple module_ao from Center2_Orb
     //=========================================================================
 
-    static int get_rmesh(const double& R1, const double& R2, const double dr);
+    static int get_rmesh (const double& R1, const double& R2, const double dr);
 
-    static void init_Table_Spherical_Bessel(const int Lmax_used,
-                                            const double dr,
-                                            const double dk,
-                                            const int kmesh,
-                                            const int Rmesh,
-                                            ModuleBase::Sph_Bessel_Recursive::D2*& psb);
+    static void init_Table_Spherical_Bessel (const int Lmax_used,
+                                             const double dr,
+                                             const double dk,
+                                             const int kmesh,
+                                             const int Rmesh,
+                                             ModuleBase::Sph_Bessel_Recursive::D2*& psb);
 
-    static void cal_ST_Phi12_R(const int& job,
-                               const int& l,
-                               const Numerical_Orbital_Lm& n1,
-                               const Numerical_Orbital_Lm& n2,
-                               const int& rmesh,
-                               std::vector<double> &rs,
-                               std::vector<double> &drs,
-                               const ModuleBase::Sph_Bessel_Recursive::D2* psb);
+    static void cal_ST_Phi12_R (const int& job,
+                                const int& l,
+                                const Numerical_Orbital_Lm& n1,
+                                const Numerical_Orbital_Lm& n2,
+                                const int& rmesh,
+                                std::vector<double>& rs,
+                                std::vector<double>& drs,
+                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
     // Peize Lin add 2017-10-13
-    static void cal_ST_Phi12_R(const int& job,
-                               const int& l,
-                               const Numerical_Orbital_Lm& n1,
-                               const Numerical_Orbital_Lm& n2,
-                               const std::set<size_t>& radials, // only calculate ir in radials
-                               std::vector<double> &rs,
-                               std::vector<double> &drs,
-                               const ModuleBase::Sph_Bessel_Recursive::D2* psb);
+    static void cal_ST_Phi12_R (const int& job,
+                                const int& l,
+                                const Numerical_Orbital_Lm& n1,
+                                const Numerical_Orbital_Lm& n2,
+                                const std::set<size_t>& radials, // only calculate ir in radials
+                                std::vector<double>& rs,
+                                std::vector<double>& drs,
+                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 };
 
 #endif // CENTER2_ORB_H

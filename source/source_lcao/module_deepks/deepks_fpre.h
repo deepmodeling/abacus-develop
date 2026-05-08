@@ -31,16 +31,16 @@ namespace DeePKS_domain
 // calculate the gradient of pdm with regard to atomic positions
 // d/dX D_{Inl,mm'}
 template <typename TK>
-void cal_gdmx(const int nks,
-              const DeePKS_Param& deepks_param,
-              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-              std::vector<hamilt::HContainer<double>*> phialpha,
-              const hamilt::HContainer<double>* dmr,
-              const UnitCell& ucell,
-              const LCAO_Orbitals& orb,
-              const Parallel_Orbitals& pv,
-              const Grid_Driver& GridD,
-              torch::Tensor& gdmx);
+void cal_gdmx (const int nks,
+               const DeePKS_Param& deepks_param,
+               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+               std::vector<hamilt::HContainer<double>*> phialpha,
+               const hamilt::HContainer<double>* dmr,
+               const UnitCell& ucell,
+               const LCAO_Orbitals& orb,
+               const Parallel_Orbitals& pv,
+               const Grid_Driver& GridD,
+               torch::Tensor& gdmx);
 
 /// calculates gradient of descriptors w.r.t atomic positions
 ///----------------------------------------------------
@@ -51,12 +51,12 @@ void cal_gdmx(const int nks,
 ///  - b: the atoms whose force being calculated)
 /// gevdm*gdmx->gvx
 ///----------------------------------------------------
-void cal_gvx(const int nat,
-             const DeePKS_Param& deepks_param,
-             const std::vector<torch::Tensor>& gevdm,
-             const torch::Tensor& gdmx,
-             torch::Tensor& gvx,
-             const int rank);
+void cal_gvx (const int nat,
+              const DeePKS_Param& deepks_param,
+              const std::vector<torch::Tensor>& gevdm,
+              const torch::Tensor& gdmx,
+              torch::Tensor& gvx,
+              const int rank);
 
 } // namespace DeePKS_domain
 #endif

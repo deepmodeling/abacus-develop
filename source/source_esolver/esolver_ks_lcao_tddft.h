@@ -15,38 +15,38 @@ template <typename TR, typename Device = base_device::DEVICE_CPU>
 class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 {
   public:
-    ESolver_KS_LCAO_TDDFT();
+    ESolver_KS_LCAO_TDDFT ();
 
-    ~ESolver_KS_LCAO_TDDFT();
+    ~ESolver_KS_LCAO_TDDFT ();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners (UnitCell& ucell, const Input_para& inp) override;
 
   protected:
-    virtual void runner(UnitCell& cell, const int istep) override;
+    virtual void runner (UnitCell& cell, const int istep) override;
 
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single (UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    void store_h_s_psi(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
+    void store_h_s_psi (UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
-    void iter_finish(UnitCell& ucell,
-                     const int istep,
-                     const int estep,
-                     const int estep_max,
-                     int& iter,
-                     bool& conv_esolver);
+    void iter_finish (UnitCell& ucell,
+                      const int istep,
+                      const int estep,
+                      const int estep_max,
+                      int& iter,
+                      bool& conv_esolver);
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf (UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    void print_step();
+    void print_step ();
 
     //! Wave function for all k-points of last time step
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
 
     //! Hamiltonian for all k-points of last time step
-    ct::Tensor Hk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE);
+    ct::Tensor Hk_laststep = ct::Tensor (ct::DataType::DT_COMPLEX_DOUBLE);
 
     //! Overlap matrix for all k-points of last time step
-    ct::Tensor Sk_laststep = ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE);
+    ct::Tensor Sk_laststep = ct::Tensor (ct::DataType::DT_COMPLEX_DOUBLE);
 
     //! Control heterogeneous computing of the TDDFT solver
     bool use_tensor = false;
@@ -73,7 +73,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     bool restart_done = false;
 
   private:
-    void weight_dm_rho(const UnitCell& ucell);
+    void weight_dm_rho (const UnitCell& ucell);
 };
 
 } // namespace ModuleESolver

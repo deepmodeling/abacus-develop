@@ -26,33 +26,33 @@ namespace DeePKS_domain
 // 7. prepare_box : prepares box tensor for output as deepks_out_labels = 2
 
 // load the trained neural network models
-void load_model(const std::string& model_file, torch::jit::script::Module& model);
+void load_model (const std::string& model_file, torch::jit::script::Module& model);
 
 // calculate gevdm
-void cal_gevdm(const int nat,
-               const DeePKS_Param& deepks_param,
-               const std::vector<torch::Tensor>& pdm,
-               std::vector<torch::Tensor>& gevdm);
+void cal_gevdm (const int nat,
+                const DeePKS_Param& deepks_param,
+                const std::vector<torch::Tensor>& pdm,
+                std::vector<torch::Tensor>& gevdm);
 
 /// calculate partial of energy correction to descriptors
-void cal_edelta_gedm(const int nat,
-                     const DeePKS_Param& deepks_param,
-                     const std::vector<torch::Tensor>& descriptor,
-                     const std::vector<torch::Tensor>& pdm,
-                     torch::jit::script::Module& model_deepks,
-                     double** gedm,
-                     double& E_delta);
-void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
-void cal_edelta_gedm_equiv(const int nat,
-                           const DeePKS_Param& deepks_param,
-                           const std::vector<torch::Tensor>& descriptor,
-                           torch::jit::script::Module& model_deepks,
-                           double** gedm,
-                           double& E_delta,
-                           const int rank);
+void cal_edelta_gedm (const int nat,
+                      const DeePKS_Param& deepks_param,
+                      const std::vector<torch::Tensor>& descriptor,
+                      const std::vector<torch::Tensor>& pdm,
+                      torch::jit::script::Module& model_deepks,
+                      double** gedm,
+                      double& E_delta);
+void check_gedm (const DeePKS_Param& deepks_param, double** gedm);
+void cal_edelta_gedm_equiv (const int nat,
+                            const DeePKS_Param& deepks_param,
+                            const std::vector<torch::Tensor>& descriptor,
+                            torch::jit::script::Module& model_deepks,
+                            double** gedm,
+                            double& E_delta,
+                            const int rank);
 
-void prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out);
-void prepare_box(const UnitCell& ucell, torch::Tensor& box_out);
+void prepare_atom (const UnitCell& ucell, torch::Tensor& atom_out);
+void prepare_box (const UnitCell& ucell, torch::Tensor& box_out);
 } // namespace DeePKS_domain
 #endif
 #endif

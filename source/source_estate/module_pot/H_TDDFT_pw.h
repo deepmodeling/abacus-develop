@@ -10,7 +10,7 @@ namespace elecstate
 class H_TDDFT_pw : public PotBase
 {
   public:
-    H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in) : ucell_(ucell_in)
+    H_TDDFT_pw (const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in) : ucell_ (ucell_in)
     {
         this->dynamic_mode = false;
         this->fixed_mode = true;
@@ -20,23 +20,23 @@ class H_TDDFT_pw : public PotBase
         // If it is the first time to create an H_TDDFT_pw instance and is restart calculation,
         // initialize istep using current_step_info
         if (!is_initialized && PARAM.inp.mdp.md_restart)
-        {
-            int restart_istep = -1;
-            std::string file_dir = PARAM.globalv.global_readin_dir;
-            current_step_info(file_dir, restart_istep);
-
-            if (restart_istep >= 0)
             {
-                H_TDDFT_pw::istep = restart_istep - 1; // Update istep
-            }
+                int restart_istep = -1;
+                std::string file_dir = PARAM.globalv.global_readin_dir;
+                current_step_info (file_dir, restart_istep);
 
-            is_initialized = true; // Mark as initialized, so that istep will not be initialized again
-        }
+                if (restart_istep >= 0)
+                    {
+                        H_TDDFT_pw::istep = restart_istep - 1; // Update istep
+                    }
+
+                is_initialized = true; // Mark as initialized, so that istep will not be initialized again
+            }
     }
 
-    ~H_TDDFT_pw() {};
+    ~H_TDDFT_pw () {};
 
-    void cal_fixed_v(double* vl_pseudo) override;
+    void cal_fixed_v (double* vl_pseudo) override;
 
     /**
      * @brief Compute ionic force of electric field
@@ -44,7 +44,7 @@ class H_TDDFT_pw : public PotBase
      * @param[in] cell Information of cell
      * @param[out] fe Force of electric field  F = qE
      */
-    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fe);
+    static void compute_force (const UnitCell& cell, ModuleBase::matrix& fe);
 
     // parameters
     static int stype; // 0: length gauge; 1: velocity gauge; 2: hybrid gauge
@@ -113,7 +113,7 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> heavi_amp; // Ry/bohr
 
     // update At for velocity gauge by intergral of E(t)dt
-    static void update_At();
+    static void update_At ();
 
   private:
     static int istep;
@@ -125,22 +125,22 @@ class H_TDDFT_pw : public PotBase
     const UnitCell* ucell_ = nullptr;
 
     // Obtain the current MD step information, used for restart calculation
-    void current_step_info(const std::string& file_dir, int& istep);
+    void current_step_info (const std::string& file_dir, int& istep);
 
     // Potential of electric field in space domain: for length gauge only
-    void cal_v_space(std::vector<double>& vext_space, int direc);
-    void cal_v_space_length(std::vector<double>& vext_space, int direc);
-    double cal_v_space_length_potential(double i);
+    void cal_v_space (std::vector<double>& vext_space, int direc);
+    void cal_v_space_length (std::vector<double>& vext_space, int direc);
+    double cal_v_space_length_potential (double i);
 
     // Potential of electric field in time domain: Gaussian, trapezoid, trigonometric, Heaviside
-    static double cal_v_time(int t_type, const bool last);
-    static double cal_v_time_Gauss(const bool last);
-    static double cal_v_time_trapezoid(const bool last);
-    static double cal_v_time_trigonometric(const bool last);
-    static double cal_v_time_heaviside(const bool last);
+    static double cal_v_time (int t_type, const bool last);
+    static double cal_v_time_Gauss (const bool last);
+    static double cal_v_time_trapezoid (const bool last);
+    static double cal_v_time_trigonometric (const bool last);
+    static double cal_v_time_heaviside (const bool last);
 
     // Get ncut number for At integral
-    static int check_ncut(int t_type);
+    static int check_ncut (int t_type);
 };
 
 } // namespace elecstate

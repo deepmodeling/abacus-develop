@@ -5,8 +5,10 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
-// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden allocations.
-void surchem::v_correction(const UnitCell& cell,
+// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden
+// allocations.
+void
+    surchem::v_correction (const UnitCell& cell,
                            const Parallel_Grid& pgrid,
                            const ModulePW::PW_Basis* rho_basis,
                            const int& nspin,
@@ -15,47 +17,47 @@ void surchem::v_correction(const UnitCell& cell,
                            Structure_Factor* sf,
                            ModuleBase::matrix& v)
 {
-    ModuleBase::TITLE("surchem", "v_cor");
-    ModuleBase::timer::start("surchem", "v_cor");
+    ModuleBase::TITLE ("surchem", "v_cor");
+    ModuleBase::timer::start ("surchem", "v_cor");
 
-    assert(rho_basis->nrxx>0);
-   
+    assert (rho_basis->nrxx > 0);
+
     double* porter = new double[rho_basis->nrxx];
-	for (int i = 0; i < rho_basis->nrxx; i++)
-	{
-		porter[i] = 0.0;
-	}
+    for (int i = 0; i < rho_basis->nrxx; i++)
+        {
+            porter[i] = 0.0;
+        }
     const int nspin0 = (nspin == 2) ? 2 : 1;
-	for (int is = 0; is < nspin0; is++)
-	{
-		for (int ir = 0; ir < rho_basis->nrxx; ir++)
-		{
-			porter[ir] += rho[is][ir];
-		}
-	}
+    for (int is = 0; is < nspin0; is++)
+        {
+            for (int ir = 0; ir < rho_basis->nrxx; ir++)
+                {
+                    porter[ir] += rho[is][ir];
+                }
+        }
 
     std::complex<double>* porter_g = new std::complex<double>[rho_basis->npw];
-    ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);
+    ModuleBase::GlobalFunc::ZEROS (porter_g, rho_basis->npw);
 
-    rho_basis->real2recip(porter, porter_g);
+    rho_basis->real2recip (porter, porter_g);
 
     std::complex<double>* n = new std::complex<double>[rho_basis->npw];
     std::complex<double>* total_n = new std::complex<double>[rho_basis->npw];
     std::complex<double>* ps_totn = new std::complex<double>[rho_basis->npw];
 
-    cal_totn(cell, rho_basis, porter_g, n, total_n, vlocal);
+    cal_totn (cell, rho_basis, porter_g, n, total_n, vlocal);
 
-    cal_pseudo(cell, pgrid, rho_basis, porter_g, ps_totn, sf);
+    cal_pseudo (cell, pgrid, rho_basis, porter_g, ps_totn, sf);
 
     // ModuleBase::matrix v(nspin, rho_basis->nrxx);
     if (v.nr != nspin || v.nc != rho_basis->nrxx)
-    {
-        v.create(nspin, rho_basis->nrxx);
-    }
-    ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis->nrxx);
+        {
+            v.create (nspin, rho_basis->nrxx);
+        }
+    ModuleBase::GlobalFunc::ZEROS (v.c, nspin * rho_basis->nrxx);
 
-    cal_vel(cell, rho_basis, total_n, ps_totn, nspin, v);
-    cal_vcav(cell, rho_basis, ps_totn, nspin, v);
+    cal_vel (cell, rho_basis, total_n, ps_totn, nspin, v);
+    cal_vcav (cell, rho_basis, ps_totn, nspin, v);
 
     delete[] porter;
     delete[] porter_g;
@@ -63,6 +65,6 @@ void surchem::v_correction(const UnitCell& cell,
     delete[] ps_totn;
     delete[] total_n;
 
-    ModuleBase::timer::end("surchem", "v_cor");
+    ModuleBase::timer::end ("surchem", "v_cor");
     return;
 }

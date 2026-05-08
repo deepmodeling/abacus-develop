@@ -7,8 +7,10 @@
 #include <base/macros/macros.h>
 #include <ATen/core/tensor_types.h>
 
-namespace container {
-namespace kernels {
+namespace container
+{
+namespace kernels
+{
 
 /**
  * @brief A functor to resize memory allocation.
@@ -16,7 +18,8 @@ namespace kernels {
  * @tparam Device Device type where the memory will be allocated.
  */
 template <typename T, typename Device>
-struct resize_memory {
+struct resize_memory
+{
     /**
      * @brief Resize memory allocation.
      *
@@ -25,7 +28,7 @@ struct resize_memory {
      * @param size New size of the allocated memory.
      * @param record_in Optional message to record the resize operation.
      */
-    void operator()(T*& arr, const size_t& size, const char* record_in = nullptr);
+    void operator() (T*& arr, const size_t& size, const char* record_in = nullptr);
 };
 
 /**
@@ -34,7 +37,8 @@ struct resize_memory {
  * @tparam Device Device type where the memory is allocated.
  */
 template <typename T, typename Device>
-struct set_memory {
+struct set_memory
+{
     /**
      * @brief Set memory to a constant value.
      *
@@ -42,7 +46,7 @@ struct set_memory {
      * @param var Constant value to set.
      * @param size Size of the memory to set.
      */
-    void operator()(T* arr, const T& var, const size_t& size);
+    void operator() (T* arr, const T& var, const size_t& size);
 };
 
 /**
@@ -55,7 +59,8 @@ struct set_memory {
  * @tparam Device_in The input device.
  */
 template <typename T, typename Device_out, typename Device_in>
-struct synchronize_memory {
+struct synchronize_memory
+{
     /**
      * @brief Synchronizes memory between devices.
      *
@@ -67,29 +72,32 @@ struct synchronize_memory {
      * @param arr_in The input array.
      * @param size The size of the array.
      */
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const size_t& size);
+    void operator() (T* arr_out, const T* arr_in, const size_t& size);
 };
 
 template <typename T, typename Device_out, typename Device_in>
-struct synchronize_memory_stride {
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const std::vector<int64_t>& out_size,
-        const std::vector<int64_t>& in_size)
+struct synchronize_memory_stride
+{
+    void
+        operator() (T* arr_out,
+                    const T* arr_in,
+                    const std::vector<int64_t>& out_size,
+                    const std::vector<int64_t>& in_size)
     {
-        REQUIRES_OK(in_size.size() == out_size.size() && in_size.size() <= 2);
-        if (in_size.size() == 1) {
-            synchronize_memory<T, Device_out, Device_in>()(arr_out, arr_in, in_size[0]);
-        }
-        else {
-            for (int64_t ii = 0; ii < out_size[0]; ii++) {
-                synchronize_memory<T, Device_out, Device_in>()(arr_out + ii * out_size[1], arr_in + ii * in_size[1], in_size[1]);
+        REQUIRES_OK (in_size.size () == out_size.size () && in_size.size () <= 2);
+        if (in_size.size () == 1)
+            {
+                synchronize_memory<T, Device_out, Device_in> () (arr_out, arr_in, in_size[0]);
             }
-        }
+        else
+            {
+                for (int64_t ii = 0; ii < out_size[0]; ii++)
+                    {
+                        synchronize_memory<T, Device_out, Device_in> () (arr_out + ii * out_size[1],
+                                                                         arr_in + ii * in_size[1],
+                                                                         in_size[1]);
+                    }
+            }
     }
 };
 
@@ -104,7 +112,8 @@ struct synchronize_memory_stride {
  * @tparam Device_in The input device.
  */
 template <typename T_out, typename T_in, typename Device_out, typename Device_in>
-struct cast_memory {
+struct cast_memory
+{
     /**
      * @brief Casts memory between devices.
      *
@@ -116,12 +125,8 @@ struct cast_memory {
      * @param arr_in The input array.
      * @param size The size of the array.
      */
-    void operator()(
-        T_out* arr_out,
-        const T_in* arr_in,
-        const size_t& size);
+    void operator() (T_out* arr_out, const T_in* arr_in, const size_t& size);
 };
-
 
 /**
  * @brief Deletes memory on a device.
@@ -132,7 +137,8 @@ struct cast_memory {
  * @tparam Device The device.
  */
 template <typename T, typename Device>
-struct delete_memory {
+struct delete_memory
+{
     /**
      * @brief Deletes memory on a device.
      *
@@ -141,7 +147,7 @@ struct delete_memory {
      * @param dev The device.
      * @param arr The array to be deleted.
      */
-    void operator()(T* arr);
+    void operator() (T* arr);
 };
 
 } // namespace kernels

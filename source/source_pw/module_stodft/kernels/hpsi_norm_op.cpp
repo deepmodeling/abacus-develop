@@ -6,7 +6,8 @@ namespace hamilt
 template <typename FPTYPE>
 struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* dev,
+    void
+        operator() (const base_device::DEVICE_CPU* dev,
                     const int& nbands,
                     const int& npwk_max,
                     const int& npwk,
@@ -19,13 +20,13 @@ struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
 #pragma omp parallel for
 #endif
         for (int ib = 0; ib < nbands; ++ib)
-        {
-            const int ig0 = ib * npwk_max;
-            for (int ig = 0; ig < npwk; ++ig)
             {
-                hpsi_norm[ig + ig0] = (hpsi_norm[ig + ig0] - Ebar * psi_in[ig + ig0]) / DeltaE;
+                const int ig0 = ib * npwk_max;
+                for (int ig = 0; ig < npwk; ++ig)
+                    {
+                        hpsi_norm[ig + ig0] = (hpsi_norm[ig + ig0] - Ebar * psi_in[ig + ig0]) / DeltaE;
+                    }
             }
-        }
     }
 };
 

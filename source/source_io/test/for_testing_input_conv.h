@@ -97,127 +97,117 @@ std::string Lattice_Change_Basic::fixed_axes = "None";
 int ModuleSymmetry::Symmetry::symm_flag = 0;
 bool ModuleSymmetry::Symmetry::symm_autoclose = false;
 
-Charge_Mixing::Charge_Mixing()
-{
-}
-Charge_Mixing::~Charge_Mixing()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-ModuleDFTU::DFTU::DFTU()
-{
-}
-ModuleDFTU::DFTU::~DFTU()
-{
-}
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-UnitCell::UnitCell()
-{
-    itia2iat.create(1, 1);
-}
-UnitCell::~UnitCell() {}
+Charge_Mixing::Charge_Mixing () {}
+Charge_Mixing::~Charge_Mixing () {}
+pseudopot_cell_vnl::pseudopot_cell_vnl () {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl () {}
+Soc::~Soc () {}
+Fcoef::~Fcoef () {}
+pseudopot_cell_vl::pseudopot_cell_vl () {}
+pseudopot_cell_vl::~pseudopot_cell_vl () {}
+ORB_gaunt_table::ORB_gaunt_table () {}
+ORB_gaunt_table::~ORB_gaunt_table () {}
+ModuleDFTU::DFTU::DFTU () {}
+ModuleDFTU::DFTU::~DFTU () {}
+Structure_Factor::Structure_Factor () {}
+Structure_Factor::~Structure_Factor () {}
+UnitCell::UnitCell () { itia2iat.create (1, 1); }
+UnitCell::~UnitCell () {}
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-LCAO_Orbitals::LCAO_Orbitals() {}
-LCAO_Orbitals::~LCAO_Orbitals() {}
+InfoNonlocal::InfoNonlocal () {}
+InfoNonlocal::~InfoNonlocal () {}
+LCAO_Orbitals::LCAO_Orbitals () {}
+LCAO_Orbitals::~LCAO_Orbitals () {}
 #endif
-Magnetism::Magnetism() {}
-Magnetism::~Magnetism() {}
-void Occupy::decision(const std::string& name,
-                      const std::string& smearing_method,
-                      const double& smearing_sigma) {
+Magnetism::Magnetism () {}
+Magnetism::~Magnetism () {}
+void
+    Occupy::decision (const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
+{
     return;
 }
 // void UnitCell::setup(const std::string&,const int&,const int&,const
 // bool&,const std::string&){return;}
-void UnitCell::setup(const std::string& latname_in,
+void
+    UnitCell::setup (const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
-                     const std::string& fixed_axes_in) {
+                     const std::string& fixed_axes_in)
+{
     this->latName = latname_in;
     this->ntype = ntype_in;
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
-    if (fixed_axes_in == "None") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
-    } else if (fixed_axes_in == "volume") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
-        // Note: fixed_axes="volume" is now supported with relax_new=false
-        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
-    } else if (fixed_axes_in == "shape") {
-        // Note: fixed_axes="shape" is now supported with relax_new=false
-        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
-    } else if (fixed_axes_in == "a") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
-    } else if (fixed_axes_in == "b") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
-    } else if (fixed_axes_in == "c") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
-    } else if (fixed_axes_in == "ab") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
-    } else if (fixed_axes_in == "ac") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
-    } else if (fixed_axes_in == "bc") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
-    } else if (fixed_axes_in == "abc") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
-    } else {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
-    }
+    if (fixed_axes_in == "None")
+        {
+            this->lc[0] = 1;
+            this->lc[1] = 1;
+            this->lc[2] = 1;
+        }
+    else if (fixed_axes_in == "volume")
+        {
+            this->lc[0] = 1;
+            this->lc[1] = 1;
+            this->lc[2] = 1;
+            // Note: fixed_axes="volume" is now supported with relax_new=false
+            // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
+        }
+    else if (fixed_axes_in == "shape")
+        {
+            // Note: fixed_axes="shape" is now supported with relax_new=false
+            // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
+            this->lc[0] = 1;
+            this->lc[1] = 1;
+            this->lc[2] = 1;
+        }
+    else if (fixed_axes_in == "a")
+        {
+            this->lc[0] = 0;
+            this->lc[1] = 1;
+            this->lc[2] = 1;
+        }
+    else if (fixed_axes_in == "b")
+        {
+            this->lc[0] = 1;
+            this->lc[1] = 0;
+            this->lc[2] = 1;
+        }
+    else if (fixed_axes_in == "c")
+        {
+            this->lc[0] = 1;
+            this->lc[1] = 1;
+            this->lc[2] = 0;
+        }
+    else if (fixed_axes_in == "ab")
+        {
+            this->lc[0] = 0;
+            this->lc[1] = 0;
+            this->lc[2] = 1;
+        }
+    else if (fixed_axes_in == "ac")
+        {
+            this->lc[0] = 0;
+            this->lc[1] = 1;
+            this->lc[2] = 0;
+        }
+    else if (fixed_axes_in == "bc")
+        {
+            this->lc[0] = 1;
+            this->lc[1] = 0;
+            this->lc[2] = 0;
+        }
+    else if (fixed_axes_in == "abc")
+        {
+            this->lc[0] = 0;
+            this->lc[1] = 0;
+            this->lc[2] = 0;
+        }
+    else
+        {
+            ModuleBase::WARNING_QUIT ("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+        }
     return;
 }
 // void Structure_Factor::set(const int&)
@@ -225,22 +215,24 @@ void UnitCell::setup(const std::string& latname_in,
 //     return;
 // }
 
-namespace MD_func {
-void current_md_info(const int& my_rank,
-                     const std::string& file_dir,
-                     int& md_step,
-                     double& temperature) {
+namespace MD_func
+{
+void
+    current_md_info (const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
+{
     return;
 }
 } // namespace MD_func
 
-namespace GlobalC {
+namespace GlobalC
+{
 ModuleDFTU::DFTU dftu;
 Restart restart;
 } // namespace GlobalC
 
 #ifdef __PEXSI
-namespace pexsi {
+namespace pexsi
+{
 int PEXSI_Solver::pexsi_npole = 0;
 bool PEXSI_Solver::pexsi_inertia = 0;
 int PEXSI_Solver::pexsi_nmax = 0;

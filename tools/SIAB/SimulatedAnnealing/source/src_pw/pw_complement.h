@@ -9,16 +9,25 @@
 
 namespace PW_complement
 {
-int get_total_pw_number(const double& ggcut_start, const double& ggcut_end,
-                        const int& nx, const int& ny, const int& nz, const Matrix3& GGT);
+int get_total_pw_number (const double& ggcut_start,
+                         const double& ggcut_end,
+                         const int& nx,
+                         const int& ny,
+                         const int& nz,
+                         const Matrix3& GGT);
 
-void get_total_pw(double* ig2sort, Vector3<double> *igsort,
-                  const double& ggcut_start, const double& ggcut_end,
-                  const int& nx, const int& ny, const int& nz, const Matrix3& GGT, // GGT = G*GT
-                  int& ngm); // number of total plane waves.
+void get_total_pw (double* ig2sort,
+                   Vector3<double>* igsort,
+                   const double& ggcut_start,
+                   const double& ggcut_end,
+                   const int& nx,
+                   const int& ny,
+                   const int& nz,
+                   const Matrix3& GGT, // GGT = G*GT
+                   int& ngm);          // number of total plane waves.
 
 // output nx, ny, nz according to input: latve and ggcut.
-void get_FFT_dimension(const Matrix3& latvec, const double &ggcut, int &nx, int &ny, int &nz);
+void get_FFT_dimension (const Matrix3& latvec, const double& ggcut, int& nx, int& ny, int& nz);
 
 //==========================================================
 // MEMBER FUNCTION :
@@ -30,10 +39,7 @@ void get_FFT_dimension(const Matrix3& latvec, const double &ggcut, int &nx, int 
 // the 3D G-grid and the FFT grid.
 // generate : gg_global, g_global, ig_global
 //==========================================================
-void setup_GVectors(const Matrix3& G, const int &ngmc_g, double* gg,
-                    Vector3<double>* ig, Vector3<double>* g);
-}
-
+void setup_GVectors (const Matrix3& G, const int& ngmc_g, double* gg, Vector3<double>* ig, Vector3<double>* g);
+} // namespace PW_complement
 
 #endif
-

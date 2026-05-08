@@ -15,17 +15,17 @@ namespace Json
 /**
  * @param ucell: ucell for reading json parameters.
  */
-void gen_init(UnitCell* ucell);
+void gen_init (UnitCell* ucell);
 
 /**
  * @param nkstot,nkstot_ibz: two param in json tree
  */
-void add_nkstot(int nkstot);
+void add_nkstot (int nkstot);
 
 /**
  * @param ucell: ucell for reading structure init in abacus.
  */
-void gen_stru(UnitCell* ucell);
+void gen_stru (UnitCell* ucell);
 #endif
 } // namespace Json
 #endif

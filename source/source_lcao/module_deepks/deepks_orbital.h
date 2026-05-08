@@ -23,12 +23,12 @@ namespace DeePKS_domain
 // 1. cal_o_delta, which is used for O_delta calculation
 
 template <typename TK, typename TH>
-void cal_o_delta(const std::vector<TH>& dm_hl,
-                 const std::vector<std::vector<TK>>& h_delta,
-                 ModuleBase::matrix& o_delta,
-                 const Parallel_Orbitals& pv,
-                 const int nks,
-                 const int nspin);
+void cal_o_delta (const std::vector<TH>& dm_hl,
+                  const std::vector<std::vector<TK>>& h_delta,
+                  ModuleBase::matrix& o_delta,
+                  const Parallel_Orbitals& pv,
+                  const int nks,
+                  const int nspin);
 } // namespace DeePKS_domain
 
 #endif

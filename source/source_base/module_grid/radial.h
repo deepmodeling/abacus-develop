@@ -3,8 +3,10 @@
 
 #include <vector>
 
-namespace Grid {
-namespace Radial {
+namespace Grid
+{
+namespace Radial
+{
 
 /**
  * @brief Radial quadratures.
@@ -33,18 +35,15 @@ namespace Radial {
  * before applying the "radial multiplier" introduced by Zhang et al.
  * The true number of grid points is (nbase+1) * mult - 1.
  */
-void baker(int nbase, double R, double* r, double* w, int mult = 1);
-void baker(int nbase, double R, std::vector<double>& r,
-           std::vector<double>& w, int mult = 1);
-
+void baker (int nbase, double R, double* r, double* w, int mult = 1);
+void baker (int nbase, double R, std::vector<double>& r, std::vector<double>& w, int mult = 1);
 
 /**
  * Murray, C. W., Handy, N. C., & Laming, G. J. (1993).
  * Quadrature schemes for integrals of density functional theory.
  * Molecular Physics, 78(4), 997-1014.
  */
-void murray(int n, double R, double* r, double* w);
-
+void murray (int n, double R, double* r, double* w);
 
 /**
  * Treutler, O., & Ahlrichs, R. (1995).
@@ -53,8 +52,7 @@ void murray(int n, double R, double* r, double* w);
  *
  * @note M4 reduces to M3 at alpha = 0.
  */
-void treutler_m4(int n, double R, double* r, double* w, double alpha = 0.6);
-
+void treutler_m4 (int n, double R, double* r, double* w, double alpha = 0.6);
 
 /**
  * Mura, M. E., & Knowles, P. J. (1996).
@@ -62,7 +60,7 @@ void treutler_m4(int n, double R, double* r, double* w, double alpha = 0.6);
  * density‐functional calculations.
  * The Journal of chemical physics, 104(24), 9848-9858.
  */
-void mura(int n, double R, double* r, double* w);
+void mura (int n, double R, double* r, double* w);
 
 } // end of namespace Radial
 } // end of namespace Grid

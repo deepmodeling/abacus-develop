@@ -12,71 +12,75 @@ template class OperatorDFTU<OperatorLCAO<std::complex<double>, double>>;
 
 template class OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
-template<typename TK, typename TR>
-void OperatorDFTU<OperatorLCAO<TK, TR>>::contributeHR()
+template <typename TK, typename TR>
+void
+    OperatorDFTU<OperatorLCAO<TK, TR>>::contributeHR ()
 {
-    //no calculation of HR yet for DFTU operator
+    // no calculation of HR yet for DFTU operator
     return;
 }
 
-template<>
-void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
+template <>
+void
+    OperatorDFTU<OperatorLCAO<double, double>>::contributeHk (int ik)
 {
-    ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
+    ModuleBase::TITLE ("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start ("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
-    std::vector<double> eff_pot(this->hsk->get_pv()->nloc);
+    std::vector<double> eff_pot (this->hsk->get_pv ()->nloc);
 
-    this->dftu->cal_eff_pot_mat_real(ik, &eff_pot[0], isk, this->hsk->get_sk());
+    this->dftu->cal_eff_pot_mat_real (ik, &eff_pot[0], isk, this->hsk->get_sk ());
 
-    double* hk = this->hsk->get_hk();
+    double* hk = this->hsk->get_hk ();
 
-    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
-    {
-        hk[irc] += eff_pot[irc];
-    }
+    for (int irc = 0; irc < this->hsk->get_pv ()->nloc; irc++)
+        {
+            hk[irc] += eff_pot[irc];
+        }
 
-    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end ("OperatorDFTU", "contributeHk");
 }
 
-template<>
-void OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
+template <>
+void
+    OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk (int ik)
 {
-    ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
+    ModuleBase::TITLE ("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start ("OperatorDFTU", "contributeHk");
 
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
-    std::vector<std::complex<double>> eff_pot(this->hsk->get_pv()->nloc);
+    std::vector<std::complex<double>> eff_pot (this->hsk->get_pv ()->nloc);
 
-    this->dftu->cal_eff_pot_mat_complex(ik, &eff_pot[0], isk, this->hsk->get_sk());
+    this->dftu->cal_eff_pot_mat_complex (ik, &eff_pot[0], isk, this->hsk->get_sk ());
 
-    std::complex<double>* hk = this->hsk->get_hk();
+    std::complex<double>* hk = this->hsk->get_hk ();
 
-    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
-    {
-        hk[irc] += eff_pot[irc];
-    }
+    for (int irc = 0; irc < this->hsk->get_pv ()->nloc; irc++)
+        {
+            hk[irc] += eff_pot[irc];
+        }
 
-    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end ("OperatorDFTU", "contributeHk");
 }
 
-template<>
-void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
+template <>
+void
+    OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk (int ik)
 {
-    ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
+    ModuleBase::TITLE ("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start ("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
-    std::vector<std::complex<double>> eff_pot(this->hsk->get_pv()->nloc);
+    std::vector<std::complex<double>> eff_pot (this->hsk->get_pv ()->nloc);
 
-    this->dftu->cal_eff_pot_mat_complex(ik, &eff_pot[0], isk, this->hsk->get_sk());
+    this->dftu->cal_eff_pot_mat_complex (ik, &eff_pot[0], isk, this->hsk->get_sk ());
 
-    std::complex<double>* hk = this->hsk->get_hk();
-    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
-    {
-        hk[irc] += eff_pot[irc];
-    }
+    std::complex<double>* hk = this->hsk->get_hk ();
+    for (int irc = 0; irc < this->hsk->get_pv ()->nloc; irc++)
+        {
+            hk[irc] += eff_pot[irc];
+        }
 
-    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end ("OperatorDFTU", "contributeHk");
 }
 
-}
+} // namespace hamilt

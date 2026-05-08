@@ -12,30 +12,30 @@ namespace ModuleGint
 {
 class Gint_fvl_meta_gpu : public Gint
 {
-    public:
-    Gint_fvl_meta_gpu(
-        const int nspin,
-        const std::vector<const double*>& vr_eff,
-        const std::vector<const double*>& vofk,
-        const std::vector<HContainer<double>*>& dm_vec,
-        const bool isforce,
-        const bool isstress,
-        ModuleBase::matrix* fvl,
-        ModuleBase::matrix* svl)
-        : nspin_(nspin), vr_eff_(vr_eff), vofk_(vofk), dm_vec_(dm_vec),
-          isforce_(isforce), isstress_(isstress), fvl_(fvl), svl_(svl),
-          dr3_(gint_info_->get_mgrid_volume()) {}
+  public:
+    Gint_fvl_meta_gpu (const int nspin,
+                       const std::vector<const double*>& vr_eff,
+                       const std::vector<const double*>& vofk,
+                       const std::vector<HContainer<double>*>& dm_vec,
+                       const bool isforce,
+                       const bool isstress,
+                       ModuleBase::matrix* fvl,
+                       ModuleBase::matrix* svl)
+        : nspin_ (nspin), vr_eff_ (vr_eff), vofk_ (vofk), dm_vec_ (dm_vec), isforce_ (isforce), isstress_ (isstress),
+          fvl_ (fvl), svl_ (svl), dr3_ (gint_info_->get_mgrid_volume ())
+    {
+    }
 
-    void cal_gint();
+    void cal_gint ();
 
-    private:
-    void init_dm_gint_();
+  private:
+    void init_dm_gint_ ();
 
-    void transfer_cpu_to_gpu_();
+    void transfer_cpu_to_gpu_ ();
 
-    void transfer_gpu_to_cpu_();
+    void transfer_gpu_to_cpu_ ();
 
-    void cal_fvl_svl_();
+    void cal_fvl_svl_ ();
 
     // input
     const int nspin_;

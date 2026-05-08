@@ -1,13 +1,13 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include "esolver_fp.h" // first-principles esolver
-#include "source_basis/module_pw/pw_basis_k.h" // use plane wave
-#include "source_cell/klist.h" // use k-points in Brillouin zone
+#include "esolver_fp.h"                                // first-principles esolver
+#include "source_basis/module_pw/pw_basis_k.h"         // use plane wave
+#include "source_cell/klist.h"                         // use k-points in Brillouin zone
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
-#include "source_hamilt/hamilt.h" // use Hamiltonian
-#include "source_hamilt/hamilt_base.h" // use Hamiltonian base class
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_hamilt/hamilt.h"                      // use Hamiltonian
+#include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
+#include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace ModuleESolver
@@ -17,35 +17,35 @@ class ESolver_KS : public ESolver_FP
 {
   public:
     //! Constructor
-    ESolver_KS();
+    ESolver_KS ();
 
     //! Deconstructor
-    virtual ~ESolver_KS();
+    virtual ~ESolver_KS ();
 
-    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    virtual void before_all_runners (UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner (UnitCell& ucell, const int istep) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners (UnitCell& ucell) override;
 
   protected:
     //! Something to do before SCF iterations.
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    virtual void before_scf (UnitCell& ucell, const int istep) override;
 
     //! Something to do before hamilt2rho function in each iter loop.
-    virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
+    virtual void iter_init (UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2rho function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish (UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    virtual void hamilt2rho_single (UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    void hamilt2rho (UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf (UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     //! Hamiltonian (base class pointer, actual type determined at runtime)
     hamilt::HamiltBase* p_hamilt = nullptr;
@@ -62,17 +62,17 @@ class ESolver_KS : public ESolver_FP
     //! DFT+U method, mohan add 2025-11-07
     Plus_U dftu;
 
-    std::string basisname;      //! esolver_ks_lcao.cpp
-    double esolver_KS_ne = 0.0; //! number of electrons
-    double diag_ethr;           //! the threshold for diagonalization
-    double scf_thr;             //! scf density threshold
-    double scf_ene_thr;         //! scf energy threshold
-    double drho;                //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;       //! the error of HSolver
-    int maxniter;               //! maximum iter steps for scf
-    int niter;                  //! iter steps actually used in scf
+    std::string basisname;          //! esolver_ks_lcao.cpp
+    double esolver_KS_ne = 0.0;     //! number of electrons
+    double diag_ethr;               //! the threshold for diagonalization
+    double scf_thr;                 //! scf density threshold
+    double scf_ene_thr;             //! scf energy threshold
+    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;           //! the error of HSolver
+    int maxniter;                   //! maximum iter steps for scf
+    int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
-    bool scf_nmax_flag = false; // whether scf has reached nmax, mohan add 20250921
+    bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
 };
 } // namespace ModuleESolver
 #endif

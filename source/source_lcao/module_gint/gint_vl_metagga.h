@@ -11,22 +11,20 @@ namespace ModuleGint
 
 class Gint_vl_metagga : public Gint
 {
-    public:
-    Gint_vl_metagga(
-        const double* vr_eff,
-        const double* vofk,
-        HContainer<double>* hR)
-        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
-    
-    void cal_gint();
+  public:
+    Gint_vl_metagga (const double* vr_eff, const double* vofk, HContainer<double>* hR)
+        : vr_eff_ (vr_eff), vofk_ (vofk), hR_ (hR), dr3_ (gint_info_->get_mgrid_volume ())
+    {
+    }
 
-    private:
+    void cal_gint ();
 
-    void init_hr_gint_();
-    
+  private:
+    void init_hr_gint_ ();
+
     // note that only the upper triangle matrix of hR is calculated
     // that's why we need compose_hr_gint() to fill the lower triangle matrix.
-    void cal_hr_gint_();
+    void cal_hr_gint_ ();
 
     // input
     const double* vr_eff_ = nullptr;
@@ -39,7 +37,6 @@ class Gint_vl_metagga : public Gint
     double dr3_;
 
     HContainer<double> hr_gint_;
-
 };
 
-}
+} // namespace ModuleGint

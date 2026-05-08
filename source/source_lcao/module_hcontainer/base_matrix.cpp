@@ -8,7 +8,7 @@ namespace hamilt
 {
 
 template <typename T>
-BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
+BaseMatrix<T>::BaseMatrix (const int& nrow_, const int& ncol_, T* data_existed)
 {
     nrow_local = nrow_;
     ncol_local = ncol_;
@@ -18,181 +18,188 @@ BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
 
 // move constructor
 template <typename T>
-BaseMatrix<T>::BaseMatrix(BaseMatrix<T>&& matrix)
+BaseMatrix<T>::BaseMatrix (BaseMatrix<T>&& matrix)
 {
     this->nrow_local = matrix.nrow_local;
     this->ncol_local = matrix.ncol_local;
     this->value_begin = matrix.value_begin;
     this->allocated = matrix.allocated;
     if (matrix.allocated)
-    {
-        matrix.allocated = false;
-    }
+        {
+            matrix.allocated = false;
+        }
     matrix.value_begin = nullptr;
 }
 
 // copy constructor
 template <typename T>
-BaseMatrix<T>::BaseMatrix(const BaseMatrix<T>& matrix)
+BaseMatrix<T>::BaseMatrix (const BaseMatrix<T>& matrix)
 {
     this->nrow_local = matrix.nrow_local;
     this->ncol_local = matrix.ncol_local;
     if (matrix.allocated)
-    {
-        this->value_begin = new T[nrow_local * ncol_local];
-        ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
-        this->allocated = true;
-        for (int i = 0; i < nrow_local * ncol_local; i++)
         {
-            this->value_begin[i] = matrix.value_begin[i];
+            this->value_begin = new T[nrow_local * ncol_local];
+            ModuleBase::GlobalFunc::ZEROS (this->value_begin, nrow_local * ncol_local);
+            this->allocated = true;
+            for (int i = 0; i < nrow_local * ncol_local; i++)
+                {
+                    this->value_begin[i] = matrix.value_begin[i];
+                }
         }
-    }
     else
-    {
-        this->value_begin = matrix.value_begin;
-        this->allocated = false;
-    }
+        {
+            this->value_begin = matrix.value_begin;
+            this->allocated = false;
+        }
 }
 
 template <typename T>
-BaseMatrix<T>::~BaseMatrix()
+BaseMatrix<T>::~BaseMatrix ()
 {
     if (this->allocated)
-    {
-        delete[] value_begin;
-    }
+        {
+            delete[] value_begin;
+        }
 }
 
 // allocate
 template <typename T>
-void BaseMatrix<T>::allocate(T* data_array, bool if_zero)
+void
+    BaseMatrix<T>::allocate (T* data_array, bool if_zero)
 {
 #ifdef __DEBUG
-assert(nrow_local*ncol_local>0);
+    assert (nrow_local * ncol_local > 0);
 #endif
-    if(data_array != nullptr && !this->allocated)
-    {
-        this->value_begin = data_array;
-    }
-    else if(data_array != nullptr && this->allocated)
-    {
-        delete[] this->value_begin;
-        this->value_begin = data_array;
-        this->allocated = false;
-    }
-    else if(data_array == nullptr && !this->allocated)
-    {
-        this->value_begin = new T[nrow_local * ncol_local];
-        this->allocated = true;
-    }
+    if (data_array != nullptr && !this->allocated)
+        {
+            this->value_begin = data_array;
+        }
+    else if (data_array != nullptr && this->allocated)
+        {
+            delete[] this->value_begin;
+            this->value_begin = data_array;
+            this->allocated = false;
+        }
+    else if (data_array == nullptr && !this->allocated)
+        {
+            this->value_begin = new T[nrow_local * ncol_local];
+            this->allocated = true;
+        }
     else
-    {
-        // do nothing
-    }
-    if(if_zero) 
-    {
-        this->set_zero();
-    }
+        {
+            // do nothing
+        }
+    if (if_zero)
+        {
+            this->set_zero ();
+        }
 }
 
 // zeros
 template <typename T>
-void BaseMatrix<T>::set_zero()
+void
+    BaseMatrix<T>::set_zero ()
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert (this->value_begin != nullptr);
 #endif
-    ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
+    ModuleBase::GlobalFunc::ZEROS (this->value_begin, nrow_local * ncol_local);
 }
 
 // add_array
 template <typename T>
-void BaseMatrix<T>::add_array(T* array)
+void
+    BaseMatrix<T>::add_array (T* array)
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert (this->value_begin != nullptr);
 #endif
     // if allocated, add data from array into matrix
     // if whole matrix and 2d-block format, add data from array into matrix either
     for (int i = 0; i < nrow_local * ncol_local; ++i)
-    {
-        value_begin[i] += array[i];
-    }
+        {
+            value_begin[i] += array[i];
+        }
 }
 
 // operator= for copy assignment
 template <typename T>
-BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
+BaseMatrix<T>&
+    BaseMatrix<T>::operator= (const BaseMatrix<T>& other)
 {
     if (this != &other)
-    {
-        this->nrow_local = other.nrow_local;
-        this->ncol_local = other.ncol_local;
+        {
+            this->nrow_local = other.nrow_local;
+            this->ncol_local = other.ncol_local;
 
-        if (this->allocated)
-        {
-            delete[] this->value_begin;
-        }
+            if (this->allocated)
+                {
+                    delete[] this->value_begin;
+                }
 
-        if (other.allocated)
-        {
-            this->value_begin = new T[nrow_local * ncol_local];
-            ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
-            this->allocated = true;
-            for (int i = 0; i < nrow_local * ncol_local; ++i)
-            {
-                this->value_begin[i] = other.value_begin[i];
-            }
+            if (other.allocated)
+                {
+                    this->value_begin = new T[nrow_local * ncol_local];
+                    ModuleBase::GlobalFunc::ZEROS (this->value_begin, nrow_local * ncol_local);
+                    this->allocated = true;
+                    for (int i = 0; i < nrow_local * ncol_local; ++i)
+                        {
+                            this->value_begin[i] = other.value_begin[i];
+                        }
+                }
+            else
+                {
+                    this->value_begin = other.value_begin;
+                    this->allocated = false;
+                }
         }
-        else
-        {
-            this->value_begin = other.value_begin;
-            this->allocated = false;
-        }
-    }
     return *this;
 }
 
 // operator= for move assignment
 template <typename T>
-BaseMatrix<T>& BaseMatrix<T>::operator=(BaseMatrix<T>&& other) noexcept
+BaseMatrix<T>&
+    BaseMatrix<T>::operator= (BaseMatrix<T>&& other) noexcept
 {
     if (this != &other)
-    {
-        this->nrow_local = other.nrow_local;
-        this->ncol_local = other.ncol_local;
-
-        if (this->allocated)
         {
-            delete[] this->value_begin;
-        }
+            this->nrow_local = other.nrow_local;
+            this->ncol_local = other.ncol_local;
 
-        this->value_begin = other.value_begin;
-        this->allocated = other.allocated;
-        if (other.allocated)
-        {
-            other.allocated = false;
+            if (this->allocated)
+                {
+                    delete[] this->value_begin;
+                }
+
+            this->value_begin = other.value_begin;
+            this->allocated = other.allocated;
+            if (other.allocated)
+                {
+                    other.allocated = false;
+                }
+            other.value_begin = nullptr;
         }
-        other.value_begin = nullptr;
-    }
     return *this;
 }
 
 // get_memory_size
 template <typename T>
-size_t BaseMatrix<T>::get_memory_size() const
+size_t
+    BaseMatrix<T>::get_memory_size () const
 {
-    size_t memory_size = sizeof(*this);
-    if(this->allocated)
-    {
-        memory_size += nrow_local * ncol_local * sizeof(T);
-    }
+    size_t memory_size = sizeof (*this);
+    if (this->allocated)
+        {
+            memory_size += nrow_local * ncol_local * sizeof (T);
+        }
     return memory_size;
 }
 
 // set size
 template <typename T>
-void BaseMatrix<T>::set_size(const int& nrow, const int& ncol)
+void
+    BaseMatrix<T>::set_size (const int& nrow, const int& ncol)
 {
     this->nrow_local = nrow;
     this->ncol_local = ncol;

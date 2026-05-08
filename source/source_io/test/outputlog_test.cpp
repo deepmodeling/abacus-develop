@@ -20,65 +20,67 @@
  * - Tested Functions:
  *  - output_convergence_after_scf()
  *  - output_efermi()
-*/
+ */
 
 // Test the output_convergence_after_scf function
-TEST(OutputConvergenceAfterSCFTest, TestConvergence) {
+TEST (OutputConvergenceAfterSCFTest, TestConvergence)
+{
     bool convergence = true;
     double energy = 2.0;
-    std::ofstream ofs_running("test_output_convergence.txt");
-    ModuleIO::output_convergence_after_scf(convergence, energy, ofs_running);
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_convergence.txt");
+    ModuleIO::output_convergence_after_scf (convergence, energy, ofs_running);
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_convergence.txt");
+    std::ifstream ifs_running ("test_output_convergence.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content = " #SCF IS CONVERGED#\n #TOTAL ENERGY# 27.211396 eV\n";
 
-    EXPECT_EQ(file_content, expected_content);
-    //std::remove("test_output_convergence.txt");
+    EXPECT_EQ (file_content, expected_content);
+    // std::remove("test_output_convergence.txt");
 }
 
-TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
+TEST (OutputConvergenceAfterSCFTest, TestNotConvergence)
+{
     bool convergence = false;
     double energy = 2.0;
-    std::ofstream ofs_running("test_output_convergence_noconvergence.txt");
-    testing::internal::CaptureStdout();
-    ModuleIO::output_convergence_after_scf(convergence, energy, ofs_running);
-    std::string screen_output = testing::internal::GetCapturedStdout();
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_convergence_noconvergence.txt");
+    testing::internal::CaptureStdout ();
+    ModuleIO::output_convergence_after_scf (convergence, energy, ofs_running);
+    std::string screen_output = testing::internal::GetCapturedStdout ();
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_convergence_noconvergence.txt");
+    std::ifstream ifs_running ("test_output_convergence_noconvergence.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content = " !!SCF IS NOT CONVERGED!!\n";
     std::string expected_content_screen = " !!SCF IS NOT CONVERGED!!\n";
 
-    EXPECT_EQ(file_content, expected_content);
-    EXPECT_EQ(screen_output, expected_content_screen);
-    //std::remove("test_output_convergence_noconvergence.txt");
+    EXPECT_EQ (file_content, expected_content);
+    EXPECT_EQ (screen_output, expected_content_screen);
+    // std::remove("test_output_convergence_noconvergence.txt");
 }
 
 // Test the output_efermi function
-TEST(OutputAfterRelaxTest, TestConvergence)
+TEST (OutputAfterRelaxTest, TestConvergence)
 {
     bool conv_ion = true;
     bool conv_esolver = false;
-    std::ofstream ofs_running("test_output_after_relax.txt");
-    ModuleIO::output_after_relax(conv_ion, conv_esolver, ofs_running);
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_after_relax.txt");
+    ModuleIO::output_after_relax (conv_ion, conv_esolver, ofs_running);
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_after_relax.txt");
+    std::ifstream ifs_running ("test_output_after_relax.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content
         = "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -88,50 +90,52 @@ TEST(OutputAfterRelaxTest, TestConvergence)
           "\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%"
           "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 
-    EXPECT_EQ(file_content, expected_content);
-    std::remove("test_output_after_relax.txt");
+    EXPECT_EQ (file_content, expected_content);
+    std::remove ("test_output_after_relax.txt");
 }
 
-TEST(OutputEfermiTest, TestNotConvergence) {
+TEST (OutputEfermiTest, TestNotConvergence)
+{
     bool convergence = false;
     double efermi = 1.0;
-    std::ofstream ofs_running("test_output_efermi_noconvergence.txt");
-    ModuleIO::output_efermi(convergence, efermi, ofs_running);
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_efermi_noconvergence.txt");
+    ModuleIO::output_efermi (convergence, efermi, ofs_running);
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_efermi_noconvergence.txt");
+    std::ifstream ifs_running ("test_output_efermi_noconvergence.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content = ""; // No output expected if convergence is false
 
-    EXPECT_EQ(file_content, expected_content);
-    std::remove("test_output_efermi_noconvergence.txt");
+    EXPECT_EQ (file_content, expected_content);
+    std::remove ("test_output_efermi_noconvergence.txt");
 }
 
-TEST(OutputEfermiTest, TestMOutputLevel) {
+TEST (OutputEfermiTest, TestMOutputLevel)
+{
     bool convergence = true;
     double efermi = 1.0;
     PARAM.input.out_level = "m"; // Setting output level to "m"
-    std::ofstream ofs_running("test_output_efermi_m_outputlevel.txt");
-    ModuleIO::output_efermi(convergence, efermi, ofs_running);
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_efermi_m_outputlevel.txt");
+    ModuleIO::output_efermi (convergence, efermi, ofs_running);
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_efermi_m_outputlevel.txt");
+    std::ifstream ifs_running ("test_output_efermi_m_outputlevel.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content = ""; // No output expected if OUT_LEVEL is "m"
 
-    EXPECT_EQ(file_content, expected_content);
-    std::remove("test_output_efermi_m_outputlevel.txt");
+    EXPECT_EQ (file_content, expected_content);
+    std::remove ("test_output_efermi_m_outputlevel.txt");
 }
 
-UnitCell::UnitCell()
+UnitCell::UnitCell ()
 {
     ntype = 1;
     nat = 2;
@@ -141,53 +145,35 @@ UnitCell::UnitCell()
     latvec.e12 = latvec.e13 = latvec.e23 = 0;
     latvec.e21 = latvec.e31 = latvec.e32 = 0;
 
-    atoms[0].taud.resize(2);
-    atoms[0].taud[0].set(0.5456, 0, 0.54275);
-    atoms[0].taud[1].set(0.54, 0.8495, 0.34175);
+    atoms[0].taud.resize (2);
+    atoms[0].taud[0].set (0.5456, 0, 0.54275);
+    atoms[0].taud[1].set (0.54, 0.8495, 0.34175);
 }
-UnitCell::~UnitCell()
+UnitCell::~UnitCell ()
 {
     if (atoms != nullptr)
         delete[] atoms;
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Atom::Atom()
+InfoNonlocal::InfoNonlocal () {}
+InfoNonlocal::~InfoNonlocal () {}
+Magnetism::Magnetism () {}
+Magnetism::~Magnetism () {}
+Atom::Atom ()
 {
     na = 2;
     label = "Al";
 }
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+Atom::~Atom () {}
+Atom_pseudo::Atom_pseudo () {}
+Atom_pseudo::~Atom_pseudo () {}
+pseudo::pseudo () {}
+pseudo::~pseudo () {}
+SepPot::SepPot () {}
+SepPot::~SepPot () {}
+Sep_Cell::Sep_Cell () noexcept {}
+Sep_Cell::~Sep_Cell () noexcept {}
 
-TEST(OutputVacuumLevelTest, OutputVacuumLevel)
+TEST (OutputVacuumLevelTest, OutputVacuumLevel)
 {
     PARAM.input.nspin = 1;
     UnitCell ucell;
@@ -197,151 +183,161 @@ TEST(OutputVacuumLevelTest, OutputVacuumLevel)
     rho[0] = new double[nrxx];
     double* v_elecstat = new double[nrxx];
     for (int ir = 0; ir < nrxx; ++ir)
-    {
-        rho[0][ir] = 0.01 * ir;
-        v_elecstat[ir] = 0.02 * ir;
-    }
+        {
+            rho[0][ir] = 0.01 * ir;
+            v_elecstat[ir] = 0.02 * ir;
+        }
 
-    std::ofstream ofs_running("test_output_vacuum_level.txt");
-    ModuleIO::output_vacuum_level(&ucell, rho, v_elecstat, nx, ny, nz, nxyz, nrxx, nplane, startz_current, ofs_running);
-    ofs_running.close();
+    std::ofstream ofs_running ("test_output_vacuum_level.txt");
+    ModuleIO::output_vacuum_level (&ucell,
+                                   rho,
+                                   v_elecstat,
+                                   nx,
+                                   ny,
+                                   nz,
+                                   nxyz,
+                                   nrxx,
+                                   nplane,
+                                   startz_current,
+                                   ofs_running);
+    ofs_running.close ();
 
-    std::ifstream ifs_running("test_output_vacuum_level.txt");
+    std::ifstream ifs_running ("test_output_vacuum_level.txt");
     std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
+    ss << ifs_running.rdbuf ();
+    std::string file_content = ss.str ();
+    ifs_running.close ();
 
     std::string expected_content = "The vacuum level is 2380.86 eV\n";
 
-    EXPECT_EQ(file_content, expected_content);
-    std::remove("test_output_vacuum_level.txt");
+    EXPECT_EQ (file_content, expected_content);
+    std::remove ("test_output_vacuum_level.txt");
 
     delete[] rho[0];
     delete[] rho;
     delete[] v_elecstat;
 }
 
-TEST(PrintForce, PrintForce)
+TEST (PrintForce, PrintForce)
 {
     UnitCell ucell;
     PARAM.input.test_force = 1;
     std::string name = "TOTAL-FORCE";
-    ModuleBase::matrix force(2, 3);
-    force(0, 0) = 1.0;
-    force(0, 1) = 2.0;
-    force(0, 2) = 3.0;
-    force(1, 0) = 0.0;
-    force(1, 1) = 0.0;
-    force(1, 2) = 0.0;
+    ModuleBase::matrix force (2, 3);
+    force (0, 0) = 1.0;
+    force (0, 1) = 2.0;
+    force (0, 2) = 3.0;
+    force (1, 0) = 0.0;
+    force (1, 1) = 0.0;
+    force (1, 2) = 0.0;
 
-    std::ofstream ofs("running_force.txt");
-    ModuleIO::print_force(ofs, ucell, name, force, false);
-    ofs.close();
+    std::ofstream ofs ("running_force.txt");
+    ModuleIO::print_force (ofs, ucell, name, force, false);
+    ofs.close ();
 
-    std::ifstream ifs("running_force.txt");
+    std::ifstream ifs ("running_force.txt");
     std::string output_str;
 
-    getline(ifs, output_str);
-    getline(ifs, output_str); // mohan add 2025-06-22
-    EXPECT_THAT(output_str, testing::HasSubstr("#TOTAL-FORCE#"));
+    getline (ifs, output_str);
+    getline (ifs, output_str); // mohan add 2025-06-22
+    EXPECT_THAT (output_str, testing::HasSubstr ("#TOTAL-FORCE#"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("-------------------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str,
+                 testing::HasSubstr ("-------------------------------------------------------------------------"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("    Atoms              Force_x              Force_y              Force_z"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str,
+                 testing::HasSubstr ("    Atoms              Force_x              Force_y              Force_z"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("-------------------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str,
+                 testing::HasSubstr ("-------------------------------------------------------------------------"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("Al1        25.7110532015        51.4221064030        77.1331596044"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("Al1        25.7110532015        51.4221064030        77.1331596044"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("Al2         0.0000000000         0.0000000000         0.0000000000"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("Al2         0.0000000000         0.0000000000         0.0000000000"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("-------------------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str,
+                 testing::HasSubstr ("-------------------------------------------------------------------------"));
 
-    ifs.close();
-    std::remove("running_force.txt");
+    ifs.close ();
+    std::remove ("running_force.txt");
 }
 
-TEST(PrintStress, PrintStress)
+TEST (PrintStress, PrintStress)
 {
-    ModuleBase::matrix stress(3, 3);
-    stress(0, 0) = 1.0;
-    stress(0, 1) = 2.0;
-    stress(0, 2) = 3.0;
-    stress(1, 0) = 0.0;
-    stress(1, 1) = 0.0;
-    stress(1, 2) = 0.0;
-    stress(2, 0) = 0.0;
-    stress(2, 1) = 0.0;
-    stress(2, 2) = 0.0;
+    ModuleBase::matrix stress (3, 3);
+    stress (0, 0) = 1.0;
+    stress (0, 1) = 2.0;
+    stress (0, 2) = 3.0;
+    stress (1, 0) = 0.0;
+    stress (1, 1) = 0.0;
+    stress (1, 2) = 0.0;
+    stress (2, 0) = 0.0;
+    stress (2, 1) = 0.0;
+    stress (2, 2) = 0.0;
 
-    std::ofstream ofs("running_stress.txt");
+    std::ofstream ofs ("running_stress.txt");
     bool screen = false;
-    ModuleIO::print_stress("TOTAL-STRESS", stress, screen, false, ofs);
-    ofs.close();
+    ModuleIO::print_stress ("TOTAL-STRESS", stress, screen, false, ofs);
+    ofs.close ();
 
-    std::ifstream ifs("running_stress.txt");
+    std::ifstream ifs ("running_stress.txt");
     std::string output_str;
-    getline(ifs, output_str);
-    getline(ifs, output_str); // mohan add 2025-06-22
-    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-STRESS (kbar)#"));
+    getline (ifs, output_str);
+    getline (ifs, output_str); // mohan add 2025-06-22
+    EXPECT_THAT (output_str, testing::HasSubstr (" #TOTAL-STRESS (kbar)#"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("----------------------------------------------------------------"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("             Stress_x             Stress_y             Stress_z"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("             Stress_x             Stress_y             Stress_z"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("----------------------------------------------------------------"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("   147105.2279754489    294210.4559508978    441315.6839263467"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("   147105.2279754489    294210.4559508978    441315.6839263467"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("        0.0000000000         0.0000000000         0.0000000000"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("        0.0000000000         0.0000000000         0.0000000000"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str, testing::HasSubstr ("----------------------------------------------------------------"));
 
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): 49035.075992 kbar"));
-    ifs.close();
-    std::remove("running_stress.txt");
+    getline (ifs, output_str);
+    EXPECT_THAT (output_str,
+                 testing::HasSubstr (" #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): 49035.075992 kbar"));
+    ifs.close ();
+    std::remove ("running_stress.txt");
 }
 
-int main(int argc, char** argv)
+int
+    main (int argc, char** argv)
 {
 #ifdef __MPI
-    setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
-    divide_pools(GlobalV::NPROC,
-                 GlobalV::MY_RANK,
-                 GlobalV::NPROC_IN_POOL,
-                 GlobalV::KPAR,
-                 GlobalV::MY_POOL,
-                 GlobalV::RANK_IN_POOL);
+    setupmpi (argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
+    divide_pools (GlobalV::NPROC,
+                  GlobalV::MY_RANK,
+                  GlobalV::NPROC_IN_POOL,
+                  GlobalV::KPAR,
+                  GlobalV::MY_POOL,
+                  GlobalV::RANK_IN_POOL);
 #endif
 
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    testing::InitGoogleTest (&argc, argv);
+    int result = RUN_ALL_TESTS ();
 
 #ifdef __MPI
-    finishmpi();
+    finishmpi ();
 #endif
     return result;
 }

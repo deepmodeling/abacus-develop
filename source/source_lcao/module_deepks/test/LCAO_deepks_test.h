@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/density_matrix.h"
-//#include "parallel_orbitals.h"
+// #include "parallel_orbitals.h"
 
 #include "../LCAO_deepks.h"
 
@@ -27,8 +27,8 @@ class test_deepks
 {
 
   public:
-    test_deepks();
-    ~test_deepks();
+    test_deepks ();
+    ~test_deepks ();
 
     LCAO_Orbitals ORB;
 
@@ -64,53 +64,53 @@ class test_deepks
     elecstate::DensityMatrix<T, double>* p_elec_DM;
 
     // preparation
-    void preparation();
-    void set_parameters(); // set some global variables
-    void setup_cell();
+    void preparation ();
+    void set_parameters (); // set some global variables
+    void setup_cell ();
 
-    void count_ntype(); // from STRU, count types of elements
-    void set_ekcut();   // from LCAO files, read and set ekcut
+    void count_ntype (); // from STRU, count types of elements
+    void set_ekcut ();   // from LCAO files, read and set ekcut
 
-    void prep_neighbour();
-    void setup_kpt();
-    void set_orbs();
+    void prep_neighbour ();
+    void setup_kpt ();
+    void set_orbs ();
 
     // tranfer Matrix into vector<T>
-    void set_dm_new();
+    void set_dm_new ();
 
     // tranfer vector<T> into DensityMatrix
-    void set_p_elec_DM();
+    void set_p_elec_DM ();
 
     // checking
-    void check_dstable();
-    void check_phialpha();
+    void check_dstable ();
+    void check_phialpha ();
 
-    void read_dm(const int nks);
+    void read_dm (const int nks);
 
-    void check_pdm();
-    void check_descriptor(std::vector<torch::Tensor>& descriptor);
+    void check_pdm ();
+    void check_descriptor (std::vector<torch::Tensor>& descriptor);
 
-    void check_gdmx(torch::Tensor& gdmx);
-    void check_gdmepsl(torch::Tensor& gdmepsl);
+    void check_gdmx (torch::Tensor& gdmx);
+    void check_gdmepsl (torch::Tensor& gdmepsl);
 
-    void check_gvx(torch::Tensor& gdmx);
-    void check_gvepsl(torch::Tensor& gdmepsl);
+    void check_gvx (torch::Tensor& gdmx);
+    void check_gvepsl (torch::Tensor& gdmepsl);
 
-    void check_orbpre();
+    void check_orbpre ();
 
-    void check_vdpre();
+    void check_vdpre ();
 
-    void check_vdrpre();
+    void check_vdrpre ();
 
-    void check_edelta(std::vector<torch::Tensor>& descriptor);
+    void check_edelta (std::vector<torch::Tensor>& descriptor);
 
     // calculate V_delta
-    void cal_V_delta();
+    void cal_V_delta ();
 
-    void check_e_deltabands();
-    void check_f_delta_and_stress_delta();
-    void check_o_delta();
+    void check_e_deltabands ();
+    void check_f_delta_and_stress_delta ();
+    void check_o_delta ();
 
     // compares numbers stored in two files
-    void compare_with_ref(const std::string f1, const std::string f2);
+    void compare_with_ref (const std::string f1, const std::string f2);
 };

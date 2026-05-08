@@ -10,22 +10,22 @@
 class Verlet : public MD_base
 {
   public:
-    Verlet(const Parameter& param_in, UnitCell& unit_in);
-    ~Verlet();
+    Verlet (const Parameter& param_in, UnitCell& unit_in);
+    ~Verlet ();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
-    void first_half(std::ofstream& ofs);
-    void second_half();
-    void restart(const std::string& global_readin_dir);
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
-    void write_restart(const std::string& global_out_dir);
+    void setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void first_half (std::ofstream& ofs);
+    void second_half ();
+    void restart (const std::string& global_readin_dir);
+    void print_md (std::ofstream& ofs, const bool& cal_stress);
+    void write_restart (const std::string& global_out_dir);
 
     /**
      * @brief apply specifical thermostats according to the input para
      *
      */
-    void apply_thermostat();
+    void apply_thermostat ();
 
     /**
      * @brief rescale atomic velocities
@@ -34,7 +34,7 @@ class Verlet : public MD_base
      * @param current_temp the current temperature
      * @param target_temp the target temperature
      */
-    void thermalize(const int& nraise, const double& current_temp, const double& target_temp);
+    void thermalize (const int& nraise, const double& current_temp, const double& target_temp);
 };
 
 #endif

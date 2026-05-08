@@ -6,14 +6,13 @@
 
 class Orthogonal
 {
-	public:
-	Orthogonal();
-	~Orthogonal();
+  public:
+    Orthogonal ();
+    ~Orthogonal ();
 
-	void start(SpillageStep &step1, SpillageStep &step2);
+    void start (SpillageStep& step1, SpillageStep& step2);
 
-	int test;
+    int test;
 };
 
 #endif
-

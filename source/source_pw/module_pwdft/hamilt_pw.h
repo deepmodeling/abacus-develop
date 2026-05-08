@@ -18,38 +18,37 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class HamiltPW : public Hamilt<T, Device>
 {
   private:
-    // Note GetTypeReal<T>::type will 
-    // return T if T is real type(float, double), 
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
 
   public:
+    HamiltPW (elecstate::Potential* pot_in,
+              ModulePW::PW_Basis_K* wfc_basis,
+              K_Vectors* p_kv,
+              pseudopot_cell_vnl* nlpp,
+              Plus_U* p_dftu, // mohan add 2025-11-06
+              const UnitCell* ucell);
 
-	HamiltPW(elecstate::Potential* pot_in, 
-			ModulePW::PW_Basis_K* wfc_basis, 
-			K_Vectors* p_kv, 
-			pseudopot_cell_vnl* nlpp,
-			Plus_U *p_dftu, // mohan add 2025-11-06
-			const UnitCell* ucell);
+    template <typename T_in, typename Device_in = Device>
+    explicit HamiltPW (const HamiltPW<T_in, Device_in>* hamilt);
 
-    template<typename T_in, typename Device_in = Device>
-    explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
-
-    ~HamiltPW();
+    ~HamiltPW ();
 
     // for target K point, update consequence of hPsi() and matrix()
-    void updateHk(const int ik) override;
+    void updateHk (const int ik) override;
 
-    void sPsi(const T* psi_in, // psi
-              T* spsi,         // spsi
-              const int nrow,  // dimension of spsi: nbands * nrow
-              const int npw,   // number of plane waves
-              const int nbands // number of bands
+    void sPsi (const T* psi_in, // psi
+               T* spsi,         // spsi
+               const int nrow,  // dimension of spsi: nbands * nrow
+               const int npw,   // number of plane waves
+               const int nbands // number of bands
     ) const override;
 
-    void set_exx_helper(Exx_Helper<T, Device>& exx_helper_in);
+    void set_exx_helper (Exx_Helper<T, Device>& exx_helper_in);
 
-protected:
+  protected:
     // used in sPhi, which are calculated in hPsi or sPhi
     const pseudopot_cell_vnl* ppcell = nullptr;
     const UnitCell* const ucell = nullptr;

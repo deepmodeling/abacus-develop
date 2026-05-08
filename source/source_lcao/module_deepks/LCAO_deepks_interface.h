@@ -15,7 +15,7 @@ class LCAO_Deepks_Interface
   public:
     /// @brief Constructor for LCAO_Deepks_Interface
     /// @param ld_in
-    LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in);
+    LCAO_Deepks_Interface (std::shared_ptr<LCAO_Deepks<TK>> ld_in);
     /// @brief output deepks-related labels, descriptors and energy corrections
     /// @param[in] etot
     /// @param[in] nks
@@ -33,30 +33,30 @@ class LCAO_Deepks_Interface
     /// @param[in] iter
     /// @param[in] conv_esolver
     /// @param[in] rank
-    void out_deepks_labels(const double& etot,
-                           const int& nks,
-                           const int& nat,
-                           const int& nlocal,
-                           const ModuleBase::matrix& ekb,
-                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD,
-                           const Parallel_Orbitals* ParaV,
-                           const psi::Psi<TK>& psid,
-                           const elecstate::DensityMatrix<TK, double>* dm,
-                           hamilt::HamiltLCAO<TK, TR>* p_ham,
-                           const int& iter,
-                           const bool& conv_esolver,
-                           const int rank,
-                           std::ostream& ofs_running);
+    void out_deepks_labels (const double& etot,
+                            const int& nks,
+                            const int& nat,
+                            const int& nlocal,
+                            const ModuleBase::matrix& ekb,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                            const UnitCell& ucell,
+                            const LCAO_Orbitals& orb,
+                            const Grid_Driver& GridD,
+                            const Parallel_Orbitals* ParaV,
+                            const psi::Psi<TK>& psid,
+                            const elecstate::DensityMatrix<TK, double>* dm,
+                            hamilt::HamiltLCAO<TK, TR>* p_ham,
+                            const int& iter,
+                            const bool& conv_esolver,
+                            const int rank,
+                            std::ostream& ofs_running);
 
     /// @brief Get the filename for deepks output files
     /// @param file_type Type of the file (e.g., "etot", "ftot", etc.)
     /// @param label_type Type of the label (from PARAM.inp.deepks_out_labels)
     /// @param iter Iteration number (e.g., -1 for after_scf, or specific iteration number)
     /// @return The full path to the output file
-    std::string get_filename(const std::string& file_type, const int& label_type, const int& iter);
+    std::string get_filename (const std::string& file_type, const int& label_type, const int& iter);
 
   private:
     std::shared_ptr<LCAO_Deepks<TK>> ld;

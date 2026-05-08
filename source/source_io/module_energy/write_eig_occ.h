@@ -5,14 +5,9 @@
 
 namespace ModuleIO
 {
-	void write_eig_iter(const ModuleBase::matrix &ekb,
-		const ModuleBase::matrix &wg,
-		const K_Vectors& kv);
+void write_eig_iter (const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, const K_Vectors& kv);
 
-	void write_eig_file(const ModuleBase::matrix &ekb,
-			const ModuleBase::matrix &wg,
-			const K_Vectors& kv,
-			const int istep);
-}
+void write_eig_file (const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, const K_Vectors& kv, const int istep);
+} // namespace ModuleIO
 
 #endif

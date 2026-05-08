@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 
-namespace ModuleIO {
+namespace ModuleIO
+{
 
 /**
  * @brief Generates the filename for the DMK file based on the given parameters.
@@ -18,17 +19,17 @@ namespace ModuleIO {
  * @param ik The index of the k-point.
  * @return The generated filename.
  */
-std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep);
+std::string dmk_gen_fname (const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep);
 
 /**
  * @brief Read one double from a file.
  */
-void dmk_readData(std::ifstream& ifs, double& data);
+void dmk_readData (std::ifstream& ifs, double& data);
 
 /**
  * @brief Read one complex double from a file.
  */
-void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
+void dmk_readData (std::ifstream& ifs, std::complex<double>& data);
 
 /**
  * @brief Reads the DMK data from a file.
@@ -45,13 +46,13 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
  * @return True if the DMK data is successfully read, false otherwise.
  */
 template <typename T>
-bool read_dmk(const int nspin,
-              const int nk,
-	      const K_Vectors &kv,
-              const Parallel_2D& pv,
-	      const std::string& dmk_dir,
-	      std::vector<std::vector<T>>& dmk,
-	      std::ofstream &ofs_running);
+bool read_dmk (const int nspin,
+               const int nk,
+               const K_Vectors& kv,
+               const Parallel_2D& pv,
+               const std::string& dmk_dir,
+               std::vector<std::vector<T>>& dmk,
+               std::ofstream& ofs_running);
 
 /**
  * @brief Writes the DMK data to a file.
@@ -68,13 +69,13 @@ bool read_dmk(const int nspin,
  * @param pv The Parallel_2D object. The 2d-block parallel information of DMK.
  */
 template <typename T>
-void write_dmk(const std::vector<std::vector<T>>& dmk,
-	       const K_Vectors &kv,
-               const int precision,
-               const std::vector<double>& efs,
-               const UnitCell* ucell,
-               const Parallel_2D& pv,
-               const int istep);
+void write_dmk (const std::vector<std::vector<T>>& dmk,
+                const K_Vectors& kv,
+                const int precision,
+                const std::vector<double>& efs,
+                const UnitCell* ucell,
+                const Parallel_2D& pv,
+                const int istep);
 
 } // namespace ModuleIO
 

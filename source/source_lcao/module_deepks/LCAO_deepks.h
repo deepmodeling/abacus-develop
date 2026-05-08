@@ -80,11 +80,13 @@ class LCAO_Deepks
     double** gedm = nullptr; //[tot_Inl][(2l+1)*(2l+1)]
 
     // functions for hr status: 1. get value; 2. set value;
-    int get_hr_cal()
+    int
+        get_hr_cal ()
     {
         return this->hr_cal;
     }
-    void set_hr_cal(bool cal)
+    void
+        set_hr_cal (bool cal)
     {
         this->hr_cal = cal;
     }
@@ -104,30 +106,30 @@ class LCAO_Deepks
     //   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
   public:
-    explicit LCAO_Deepks();
-    ~LCAO_Deepks();
+    explicit LCAO_Deepks ();
+    ~LCAO_Deepks ();
 
     /// Allocate memory and calculate the index of descriptor in all atoms.
     ///(only for descriptor part, not including scf)
-    void init(const LCAO_Orbitals& orb,
-              const int nat,
-              const int ntype,
-              const int nks,
-              const Parallel_Orbitals& pv_in,
-              std::vector<int> na,
-              std::ofstream& ofs);
+    void init (const LCAO_Orbitals& orb,
+               const int nat,
+               const int ntype,
+               const int nks,
+               const Parallel_Orbitals& pv_in,
+               std::vector<int> na,
+               std::ofstream& ofs);
 
     /// Allocate memory for correction to Hamiltonian
-    void allocate_V_delta(const int nat, const int nks = 1);
+    void allocate_V_delta (const int nat, const int nks = 1);
 
     /// Initialize the dm_r container
-    void init_DMR(const UnitCell& ucell,
-                  const LCAO_Orbitals& orb,
-                  const Parallel_Orbitals& pv,
-                  const Grid_Driver& GridD);
+    void init_DMR (const UnitCell& ucell,
+                   const LCAO_Orbitals& orb,
+                   const Parallel_Orbitals& pv,
+                   const Grid_Driver& GridD);
 
     //! a temporary interface for cal_e_delta_band
-    void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);
+    void dpks_cal_e_delta_band (const std::vector<std::vector<T>>& dm, const int nks);
 
   private:
     // flag of HR status,
@@ -136,12 +138,12 @@ class LCAO_Deepks
     bool hr_cal = true;
 
     // arrange index of descriptor in all atoms
-    void init_index(const int ntype,
-                    const int nat,
-                    std::vector<int> na,
-                    const int tot_inl,
-                    const LCAO_Orbitals& orb,
-                    std::ofstream& ofs);
+    void init_index (const int ntype,
+                     const int nat,
+                     std::vector<int> na,
+                     const int tot_inl,
+                     const LCAO_Orbitals& orb,
+                     std::ofstream& ofs);
 
     const Parallel_Orbitals* pv = nullptr;
 };

@@ -12,25 +12,25 @@
 
 namespace GlobalC
 {
-    ModulePW::PW_Basis* rhopw;
+ModulePW::PW_Basis* rhopw;
 }
 
-UnitCell::UnitCell(){};
-UnitCell::~UnitCell(){};
+UnitCell::UnitCell () {};
+UnitCell::~UnitCell () {};
 
-Magnetism::Magnetism(){};
-Magnetism::~Magnetism(){};
+Magnetism::Magnetism () {};
+Magnetism::~Magnetism () {};
 
-Atom::Atom(){};
-Atom::~Atom(){};
-Atom_pseudo::Atom_pseudo(){};
-Atom_pseudo::~Atom_pseudo(){};
-pseudo::pseudo(){};
-pseudo::~pseudo(){};
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+Atom::Atom () {};
+Atom::~Atom () {};
+Atom_pseudo::Atom_pseudo () {};
+Atom_pseudo::~Atom_pseudo () {};
+pseudo::pseudo () {};
+pseudo::~pseudo () {};
+SepPot::SepPot () {}
+SepPot::~SepPot () {}
+Sep_Cell::Sep_Cell () noexcept {}
+Sep_Cell::~Sep_Cell () noexcept {}
 /*
 Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};
@@ -39,7 +39,8 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
 class Setcell
 {
   public:
-    static void setupcell(UnitCell &ucell)
+    static void
+        setupcell (UnitCell& ucell)
     {
         ucell.ntype = 2;
 
@@ -74,18 +75,17 @@ class Setcell
         ucell.atoms[0].na = 2;
         ucell.atoms[1].na = 1;
 
-        ucell.atoms[0].tau.resize(ucell.atoms[0].na);
-        ucell.atoms[1].tau.resize(ucell.atoms[1].na);
+        ucell.atoms[0].tau.resize (ucell.atoms[0].na);
+        ucell.atoms[1].tau.resize (ucell.atoms[1].na);
 
-        ucell.atoms[0].tau[0].set(7.5456, 0, 9.54275);
-        ucell.atoms[0].tau[1].set(7.542, 1.8495, 7.34175);
-        ucell.atoms[1].tau[0].set(7.54965, 0, 7.48585);
+        ucell.atoms[0].tau[0].set (7.5456, 0, 9.54275);
+        ucell.atoms[0].tau[1].set (7.542, 1.8495, 7.34175);
+        ucell.atoms[1].tau[0].set (7.54965, 0, 7.48585);
 
         ucell.atoms[0].ncpp.zv = 1;
         ucell.atoms[1].ncpp.zv = 6;
 
-        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
-
+        ucell.omega = std::abs (ucell.latvec.Det ()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
     };
 };
 

@@ -9,88 +9,112 @@
 namespace vdw
 {
 
-void Vdwd2Parameters::initial_parameters(const Input_para &input, std::ofstream* plog)
+void
+    Vdwd2Parameters::initial_parameters (const Input_para& input, std::ofstream* plog)
 {
-    scaling_ = std::stod(input.vdw_s6);
+    scaling_ = std::stod (input.vdw_s6);
     damping_ = input.vdw_d;
-    C6_input(input.vdw_C6_file, input.vdw_C6_unit);
-    R0_input(input.vdw_R0_file, input.vdw_R0_unit);
+    C6_input (input.vdw_C6_file, input.vdw_C6_unit);
+    R0_input (input.vdw_R0_file, input.vdw_R0_unit);
     model_ = input.vdw_cutoff_type;
     if (input.vdw_cutoff_type == "radius")
-    {
-        radius_ = std::stod(input.vdw_cutoff_radius);
-        if (!(input.vdw_radius_unit == "Bohr"))
         {
-            radius_ /= ModuleBase::BOHR_TO_A;
+            radius_ = std::stod (input.vdw_cutoff_radius);
+            if (!(input.vdw_radius_unit == "Bohr"))
+                {
+                    radius_ /= ModuleBase::BOHR_TO_A;
+                }
         }
-    }
     else if (input.vdw_cutoff_type == "period")
-    {
-        period_ = input.vdw_cutoff_period;
-    }
+        {
+            period_ = input.vdw_cutoff_period;
+        }
 }
 
-void Vdwd2Parameters::initset(const UnitCell &ucell)
+void
+    Vdwd2Parameters::initset (const UnitCell& ucell)
 {
     if (model_ == "radius")
-    {
-        period_.x = 2 * ceil(radius_ / ucell.lat0 / sqrt(ucell.a1.norm2())) + 1;
-        period_.y = 2 * ceil(radius_ / ucell.lat0 / sqrt(ucell.a2.norm2())) + 1;
-        period_.z = 2 * ceil(radius_ / ucell.lat0 / sqrt(ucell.a3.norm2())) + 1;
-    }
+        {
+            period_.x = 2 * ceil (radius_ / ucell.lat0 / sqrt (ucell.a1.norm2 ())) + 1;
+            period_.y = 2 * ceil (radius_ / ucell.lat0 / sqrt (ucell.a2.norm2 ())) + 1;
+            period_.z = 2 * ceil (radius_ / ucell.lat0 / sqrt (ucell.a3.norm2 ())) + 1;
+        }
 }
 
-void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
+void
+    Vdwd2Parameters::C6_input (const std::string& file, const std::string& unit)
 {
     C6_ = C6_default_;
     if (file != "default")
-    {
-        std::ifstream ifs(file);
-        if (!ifs)
-            ModuleBase::WARNING_QUIT("Vdwd2::C6_input",
-                                     "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING(file));
-        std::string element;
-        double value = 0.0;
-        while (ifs >> element >> value)
-            C6_[element] = value;
-        ifs.close();
-    }
-    for (auto &c6: C6_)
-    {
-        if (unit == "Jnm6/mol")
-            c6.second *= 1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow(ModuleBase::BOHR_TO_A, 6)
-                         / ModuleBase::Ry_to_eV;
-        else if (unit == "eVA6")
-            c6.second /= pow(ModuleBase::BOHR_TO_A, 6) / ModuleBase::Ry_to_eV;
-        else
-            ModuleBase::WARNING_QUIT("Input", "vdwD2_C6_unit must be Jnm6/mol or eVA6");
-    }
+        {
+            std::ifstream ifs (file);
+            if (!ifs)
+                {
+                    ModuleBase::WARNING_QUIT ("Vdwd2::C6_input",
+                                              "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING (file));
+                }
+            std::string element;
+            double value = 0.0;
+            while (ifs >> element >> value)
+                {
+                    C6_[element] = value;
+                }
+            ifs.close ();
+        }
+    for (auto& c6: C6_)
+        {
+            if (unit == "Jnm6/mol")
+                {
+                    c6.second *= 1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow (ModuleBase::BOHR_TO_A, 6)
+                                 / ModuleBase::Ry_to_eV;
+                }
+            else if (unit == "eVA6")
+                {
+                    c6.second /= pow (ModuleBase::BOHR_TO_A, 6) / ModuleBase::Ry_to_eV;
+                }
+            else
+                {
+                    ModuleBase::WARNING_QUIT ("Input", "vdwD2_C6_unit must be Jnm6/mol or eVA6");
+                }
+        }
 }
 
-void Vdwd2Parameters::R0_input(const std::string &file, const std::string &unit)
+void
+    Vdwd2Parameters::R0_input (const std::string& file, const std::string& unit)
 {
     R0_ = R0_default_;
     if (file != "default")
-    {
-        std::ifstream ifs(file.c_str());
-        if (!ifs)
-            ModuleBase::WARNING_QUIT("Vdwd2::R0_input",
-                                     "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING(file));
-        std::string element;
-        double value = 0.0;
-        while (ifs >> element >> value)
-            R0_[element] = value;
-        ifs.close();
-    }
-    for (auto &r0: R0_)
-    {
-        if (unit == "A")
-            r0.second /= ModuleBase::BOHR_TO_A;
-        else if (unit == "Bohr")
-            ;
-        else
-            ModuleBase::WARNING_QUIT("Input", "vdwD2_R0_unit must be A or Bohr");
-    }
+        {
+            std::ifstream ifs (file.c_str ());
+            if (!ifs)
+                {
+                    ModuleBase::WARNING_QUIT ("Vdwd2::R0_input",
+                                              "Can not find the file " + ModuleBase::GlobalFunc::TO_STRING (file));
+                }
+            std::string element;
+            double value = 0.0;
+            while (ifs >> element >> value)
+                {
+                    R0_[element] = value;
+                }
+            ifs.close ();
+        }
+    for (auto& r0: R0_)
+        {
+            if (unit == "A")
+                {
+                    r0.second /= ModuleBase::BOHR_TO_A;
+                }
+            else if (unit == "Bohr")
+                {
+                    ;
+                }
+            else
+                {
+                    ModuleBase::WARNING_QUIT ("Input", "vdwD2_R0_unit must be A or Bohr");
+                }
+        }
 }
 
 const std::map<std::string, double> Vdwd2Parameters::C6_default_ = {

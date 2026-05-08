@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-#include "source_base/macros.h"   // GetRealType
+#include "source_base/macros.h" // GetRealType
 #include "source_hamilt/hamilt.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
@@ -19,8 +19,8 @@ class DiagoPexsi
     static std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in);
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+    DiagoPexsi (const Parallel_Orbitals* ParaV_in);
+    void diag (hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
     const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
     std::vector<T*> EDM;
@@ -28,7 +28,7 @@ class DiagoPexsi
     double totalEnergyS;
     double totalFreeEnergy;
     std::unique_ptr<pexsi::PEXSI_Solver> ps;
-    ~DiagoPexsi();
+    ~DiagoPexsi ();
 };
 } // namespace hsolver
 

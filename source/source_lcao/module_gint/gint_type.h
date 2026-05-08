@@ -6,10 +6,10 @@
 
 namespace ModuleGint
 {
-    using Matrix3 = ModuleBase::Matrix3;
-    using Vec3d = ModuleBase::Vector3<double>;
-    using Vec3i = ModuleBase::Vector3<int>;
+using Matrix3 = ModuleBase::Matrix3;
+using Vec3d = ModuleBase::Vector3<double>;
+using Vec3i = ModuleBase::Vector3<int>;
 
-    template <typename T>
-    using HContainer = hamilt::HContainer<T>;
-}
+template <typename T>
+using HContainer = hamilt::HContainer<T>;
+} // namespace ModuleGint

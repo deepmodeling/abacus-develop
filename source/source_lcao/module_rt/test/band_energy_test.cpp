@@ -20,7 +20,7 @@
 
 #define doublethreshold 1e-8
 
-TEST(BandEnergyTest, testBandEnergy)
+TEST (BandEnergyTest, testBandEnergy)
 {
     std::complex<double>* psi_k;
     std::complex<double>* Htmp;
@@ -29,7 +29,7 @@ TEST(BandEnergyTest, testBandEnergy)
     int nlocal = 4;
     bool print_matrix = false;
     Parallel_Orbitals* pv;
-    pv = new Parallel_Orbitals();
+    pv = new Parallel_Orbitals ();
     pv->nloc = nlocal * nlocal;
     pv->nloc_wfc = nlocal * nband;
     pv->ncol = nlocal;
@@ -48,11 +48,11 @@ TEST(BandEnergyTest, testBandEnergy)
     // Initialize input matrices
     int info;
     int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow),
-        lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    int irsrc = 0, icsrc = 0, lld = numroc_ (&nlocal, &mb, &myprow, &irsrc, &nprow),
+        lld1 = numroc_ (&nband, &mb, &myprow, &irsrc, &nprow);
+    descinit_ (pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_ (pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_ (pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
     // Initialize data
     Htmp = new std::complex<double>[nlocal * nlocal];
@@ -60,15 +60,15 @@ TEST(BandEnergyTest, testBandEnergy)
     ekb = new double[nband];
 
     for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
         {
-            if (i == j)
-            {
-                Htmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
-            }
+            for (int j = 0; j < nlocal; ++j)
+                {
+                    if (i == j)
+                        {
+                            Htmp[i * nlocal + j] = std::complex<double> (1.0, 0.0);
+                        }
+                }
         }
-    }
     Htmp[1] = 0.5;
     Htmp[4] = 0.5;
 
@@ -86,12 +86,12 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
+    module_rt::compute_ekb (pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
 
     // Check the results
-    EXPECT_NEAR(ekb[0], 3.0, doublethreshold);
-    EXPECT_NEAR(ekb[1], 8.0, doublethreshold);
-    EXPECT_NEAR(ekb[2], 10.0, doublethreshold);
+    EXPECT_NEAR (ekb[0], 3.0, doublethreshold);
+    EXPECT_NEAR (ekb[1], 8.0, doublethreshold);
+    EXPECT_NEAR (ekb[2], 10.0, doublethreshold);
 
     delete[] psi_k;
     delete[] Htmp;

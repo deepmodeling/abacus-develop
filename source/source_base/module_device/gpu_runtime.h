@@ -19,52 +19,52 @@
 #include <cuda_runtime.h>
 
 // Error handling
-#define gpuError_t                      cudaError_t
-#define gpuSuccess                      cudaSuccess
-#define gpuGetErrorString               cudaGetErrorString
+#define gpuError_t cudaError_t
+#define gpuSuccess cudaSuccess
+#define gpuGetErrorString cudaGetErrorString
 
 // Device management
-#define gpuGetDeviceCount               cudaGetDeviceCount
-#define gpuGetDevice                    cudaGetDevice
-#define gpuSetDevice                    cudaSetDevice
-#define gpuGetDeviceProperties          cudaGetDeviceProperties
-#define gpuDeviceProp_t                 cudaDeviceProp
+#define gpuGetDeviceCount cudaGetDeviceCount
+#define gpuGetDevice cudaGetDevice
+#define gpuSetDevice cudaSetDevice
+#define gpuGetDeviceProperties cudaGetDeviceProperties
+#define gpuDeviceProp_t cudaDeviceProp
 
 // Version info
-#define gpuDriverGetVersion             cudaDriverGetVersion
-#define gpuRuntimeGetVersion            cudaRuntimeGetVersion
+#define gpuDriverGetVersion cudaDriverGetVersion
+#define gpuRuntimeGetVersion cudaRuntimeGetVersion
 
 // Peer access
-#define gpuDeviceCanAccessPeer          cudaDeviceCanAccessPeer
+#define gpuDeviceCanAccessPeer cudaDeviceCanAccessPeer
 
 // Error check macro
-#define gpuErrcheck                     CHECK_CUDA
+#define gpuErrcheck CHECK_CUDA
 
 #elif defined(__ROCM)
 
 #include <hip/hip_runtime.h>
 
 // Error handling
-#define gpuError_t                      hipError_t
-#define gpuSuccess                      hipSuccess
-#define gpuGetErrorString               hipGetErrorString
+#define gpuError_t hipError_t
+#define gpuSuccess hipSuccess
+#define gpuGetErrorString hipGetErrorString
 
 // Device management
-#define gpuGetDeviceCount               hipGetDeviceCount
-#define gpuGetDevice                    hipGetDevice
-#define gpuSetDevice                    hipSetDevice
-#define gpuGetDeviceProperties          hipGetDeviceProperties
-#define gpuDeviceProp_t                 hipDeviceProp_t
+#define gpuGetDeviceCount hipGetDeviceCount
+#define gpuGetDevice hipGetDevice
+#define gpuSetDevice hipSetDevice
+#define gpuGetDeviceProperties hipGetDeviceProperties
+#define gpuDeviceProp_t hipDeviceProp_t
 
 // Version info
-#define gpuDriverGetVersion             hipDriverGetVersion
-#define gpuRuntimeGetVersion            hipRuntimeGetVersion
+#define gpuDriverGetVersion hipDriverGetVersion
+#define gpuRuntimeGetVersion hipRuntimeGetVersion
 
 // Peer access
-#define gpuDeviceCanAccessPeer          hipDeviceCanAccessPeer
+#define gpuDeviceCanAccessPeer hipDeviceCanAccessPeer
 
 // Error check macro
-#define gpuErrcheck                     CHECK_CUDA
+#define gpuErrcheck CHECK_CUDA
 
 #endif // __CUDA / __ROCM
 

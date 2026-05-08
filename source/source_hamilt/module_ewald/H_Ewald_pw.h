@@ -5,36 +5,33 @@
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
 
-class H_Ewald_pw 
+class H_Ewald_pw
 {
   public:
-    H_Ewald_pw();
-    ~H_Ewald_pw();
+    H_Ewald_pw ();
+    ~H_Ewald_pw ();
 
     // compute the Ewald energy
-    static double compute_ewald(const UnitCell& cell,
-                                const ModulePW::PW_Basis* rho_basis,
-                                const ModuleBase::ComplexMatrix& strucFac);
+    static double compute_ewald (const UnitCell& cell,
+                                 const ModulePW::PW_Basis* rho_basis,
+                                 const ModuleBase::ComplexMatrix& strucFac);
 
   public:
-    static int estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg);
+    static int estimate_mxr (const double& rmax, const ModuleBase::Matrix3& bg);
 
-    static void rgen(
-        const ModuleBase::Vector3<double> &dtau,
-        const double &rmax,
-        int *irr,
-        const ModuleBase::Matrix3 &at,
-        const ModuleBase::Matrix3 &bg,
-        ModuleBase::Vector3<double> *r,
-        double *r2,
-      const int mxr,
-        int  &nrm
-    );
+    static void rgen (const ModuleBase::Vector3<double>& dtau,
+                      const double& rmax,
+                      int* irr,
+                      const ModuleBase::Matrix3& at,
+                      const ModuleBase::Matrix3& bg,
+                      ModuleBase::Vector3<double>* r,
+                      double* r2,
+                      const int mxr,
+                      int& nrm);
 
-	// the coefficient of ewald method
-	static double alpha;
+    // the coefficient of ewald method
+    static double alpha;
     static int mxr;
-
 };
 
-#endif //ewald energy
+#endif // ewald energy

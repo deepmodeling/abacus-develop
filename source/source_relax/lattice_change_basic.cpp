@@ -21,30 +21,31 @@ double Lattice_Change_Basic::etot_p = 0.0;
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
-void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)
+void
+    Lattice_Change_Basic::setup_gradient (const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress)
 {
-    ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
+    ModuleBase::TITLE ("Lattice_Change_Basic", "setup_gradient");
 
     // Apply fixed_axes constraints to stress tensor
     if (Lattice_Change_Basic::fixed_axes == "shape")
-    {
-        // Shape constraint: only volume can change (isotropic expansion/contraction)
-        // Replace stress with pure hydrostatic pressure
-        double pressure = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3.0;
-        stress.zero_out();
-        stress(0, 0) = pressure;
-        stress(1, 1) = pressure;
-        stress(2, 2) = pressure;
-    }
+        {
+            // Shape constraint: only volume can change (isotropic expansion/contraction)
+            // Replace stress with pure hydrostatic pressure
+            double pressure = (stress (0, 0) + stress (1, 1) + stress (2, 2)) / 3.0;
+            stress.zero_out ();
+            stress (0, 0) = pressure;
+            stress (1, 1) = pressure;
+            stress (2, 2) = pressure;
+        }
     else if (Lattice_Change_Basic::fixed_axes == "volume")
-    {
-        // Volume constraint: only shape can change
-        // Remove hydrostatic pressure component from stress
-        double stress_aver = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3.0;
-        stress(0, 0) = stress(0, 0) - stress_aver;
-        stress(1, 1) = stress(1, 1) - stress_aver;
-        stress(2, 2) = stress(2, 2) - stress_aver;
-    }
+        {
+            // Volume constraint: only shape can change
+            // Remove hydrostatic pressure component from stress
+            double stress_aver = (stress (0, 0) + stress (1, 1) + stress (2, 2)) / 3.0;
+            stress (0, 0) = stress (0, 0) - stress_aver;
+            stress (1, 1) = stress (1, 1) - stress_aver;
+            stress (2, 2) = stress (2, 2) - stress_aver;
+        }
     // Note: Axis constraints ("a", "b", "c", etc.) are handled via ucell.lc[] flags below
 
     lat[0] = ucell.latvec.e11 * ucell.lat0;
@@ -59,46 +60,46 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
 
     // Calculate gradients for each lattice vector, or zero them if fixed
     if (ucell.lc[0] == 1)
-    {
-        grad[0] = -(lat[0] * stress(0, 0) + lat[1] * stress(1, 0) + lat[2] * stress(2, 0));
-        grad[1] = -(lat[0] * stress(0, 1) + lat[1] * stress(1, 1) + lat[2] * stress(2, 1));
-        grad[2] = -(lat[0] * stress(0, 2) + lat[1] * stress(1, 2) + lat[2] * stress(2, 2));
-    }
+        {
+            grad[0] = -(lat[0] * stress (0, 0) + lat[1] * stress (1, 0) + lat[2] * stress (2, 0));
+            grad[1] = -(lat[0] * stress (0, 1) + lat[1] * stress (1, 1) + lat[2] * stress (2, 1));
+            grad[2] = -(lat[0] * stress (0, 2) + lat[1] * stress (1, 2) + lat[2] * stress (2, 2));
+        }
     else
-    {
-        // Zero out gradient for fixed lattice vector a
-        grad[0] = 0.0;
-        grad[1] = 0.0;
-        grad[2] = 0.0;
-    }
+        {
+            // Zero out gradient for fixed lattice vector a
+            grad[0] = 0.0;
+            grad[1] = 0.0;
+            grad[2] = 0.0;
+        }
 
     if (ucell.lc[1] == 1)
-    {
-        grad[3] = -(lat[3] * stress(0, 0) + lat[4] * stress(1, 0) + lat[5] * stress(2, 0));
-        grad[4] = -(lat[3] * stress(0, 1) + lat[4] * stress(1, 1) + lat[5] * stress(2, 1));
-        grad[5] = -(lat[3] * stress(0, 2) + lat[4] * stress(1, 2) + lat[5] * stress(2, 2));
-    }
+        {
+            grad[3] = -(lat[3] * stress (0, 0) + lat[4] * stress (1, 0) + lat[5] * stress (2, 0));
+            grad[4] = -(lat[3] * stress (0, 1) + lat[4] * stress (1, 1) + lat[5] * stress (2, 1));
+            grad[5] = -(lat[3] * stress (0, 2) + lat[4] * stress (1, 2) + lat[5] * stress (2, 2));
+        }
     else
-    {
-        // Zero out gradient for fixed lattice vector b
-        grad[3] = 0.0;
-        grad[4] = 0.0;
-        grad[5] = 0.0;
-    }
+        {
+            // Zero out gradient for fixed lattice vector b
+            grad[3] = 0.0;
+            grad[4] = 0.0;
+            grad[5] = 0.0;
+        }
 
     if (ucell.lc[2] == 1)
-    {
-        grad[6] = -(lat[6] * stress(0, 0) + lat[7] * stress(1, 0) + lat[8] * stress(2, 0));
-        grad[7] = -(lat[6] * stress(0, 1) + lat[7] * stress(1, 1) + lat[8] * stress(2, 1));
-        grad[8] = -(lat[6] * stress(0, 2) + lat[7] * stress(1, 2) + lat[8] * stress(2, 2));
-    }
+        {
+            grad[6] = -(lat[6] * stress (0, 0) + lat[7] * stress (1, 0) + lat[8] * stress (2, 0));
+            grad[7] = -(lat[6] * stress (0, 1) + lat[7] * stress (1, 1) + lat[8] * stress (2, 1));
+            grad[8] = -(lat[6] * stress (0, 2) + lat[7] * stress (1, 2) + lat[8] * stress (2, 2));
+        }
     else
-    {
-        // Zero out gradient for fixed lattice vector c
-        grad[6] = 0.0;
-        grad[7] = 0.0;
-        grad[8] = 0.0;
-    }
+        {
+            // Zero out gradient for fixed lattice vector c
+            grad[6] = 0.0;
+            grad[7] = 0.0;
+            grad[8] = 0.0;
+        }
 
     // grad[0] = -stress(0,0);   grad[1] = -stress(0,1);  grad[2] = -stress(0,2);
     // grad[3] = -stress(1,0);   grad[4] = -stress(1,1);  grad[5] = -stress(1,2);
@@ -107,77 +108,96 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
+void
+    Lattice_Change_Basic::change_lattice (UnitCell& ucell, double* move, double* lat)
 {
-    ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
+    ModuleBase::TITLE ("Lattice_Change_Basic", "change_lattice");
 
-    assert(move != nullptr);
-    assert(lat != nullptr);
+    assert (move != nullptr);
+    assert (lat != nullptr);
 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
-    {
-        ModuleBase::matrix move_mat_t(3, 3);
-		for (int i = 0;i < 3;++i) 
-		{
-			for (int j = 0;j < 3;++j) 
-			{
-				move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
-			}
-		}
-		ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
-        ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
-        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
+        {
+            ModuleBase::matrix move_mat_t (3, 3);
+            for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                        {
+                            move_mat_t (j, i) = move[i * 3 + j] / ucell.lat0; // transpose
+                        }
+                }
+            ModuleBase::matrix symm_move_mat_t
+                = (move_mat_t * ucell.G.to_matrix ()); // symmetrize (latvec^{-1} * move_mat)^T
+            ucell.symm.symmetrize_mat3 (symm_move_mat_t, ucell.lat);
+            move_mat_t = symm_move_mat_t * ucell.latvec.Transpose ().to_matrix (); // G^{-1}=latvec^T
 
-		for (int i = 0;i < 3;++i) 
-		{
-			for (int j = 0;j < 3;++j) 
-			{
-				move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
-			}
-		}
-    }
+            for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                        {
+                            move[i * 3 + j] = move_mat_t (j, i) * ucell.lat0; // transpose back
+                        }
+                }
+        }
 
     if (ucell.lc[0] != 0)
-    {
-        ucell.latvec.e11 = (move[0] + lat[0]) / ucell.lat0;
-        ucell.latvec.e12 = (move[1] + lat[1]) / ucell.lat0;
-        ucell.latvec.e13 = (move[2] + lat[2]) / ucell.lat0;
-    }
+        {
+            ucell.latvec.e11 = (move[0] + lat[0]) / ucell.lat0;
+            ucell.latvec.e12 = (move[1] + lat[1]) / ucell.lat0;
+            ucell.latvec.e13 = (move[2] + lat[2]) / ucell.lat0;
+        }
     if (ucell.lc[1] != 0)
-    {
-        ucell.latvec.e21 = (move[3] + lat[3]) / ucell.lat0;
-        ucell.latvec.e22 = (move[4] + lat[4]) / ucell.lat0;
-        ucell.latvec.e23 = (move[5] + lat[5]) / ucell.lat0;
-    }
+        {
+            ucell.latvec.e21 = (move[3] + lat[3]) / ucell.lat0;
+            ucell.latvec.e22 = (move[4] + lat[4]) / ucell.lat0;
+            ucell.latvec.e23 = (move[5] + lat[5]) / ucell.lat0;
+        }
     if (ucell.lc[2] != 0)
-    {
-        ucell.latvec.e31 = (move[6] + lat[6]) / ucell.lat0;
-        ucell.latvec.e32 = (move[7] + lat[7]) / ucell.lat0;
-        ucell.latvec.e33 = (move[8] + lat[8]) / ucell.lat0;
-    }
+        {
+            ucell.latvec.e31 = (move[6] + lat[6]) / ucell.lat0;
+            ucell.latvec.e32 = (move[7] + lat[7]) / ucell.lat0;
+            ucell.latvec.e33 = (move[8] + lat[8]) / ucell.lat0;
+        }
 
     // Apply post-update constraints
     // Order matters: fixed_ibrav first, then volume rescaling
 
     // 1. Enforce Bravais lattice symmetry if fixed_ibrav is set
     if (PARAM.inp.fixed_ibrav)
-    {
-        unitcell::remake_cell(ucell.lat);
-    }
+        {
+            unitcell::remake_cell (ucell.lat);
+        }
 
     // 2. Enforce volume constraint by rescaling lattice
     if (Lattice_Change_Basic::fixed_axes == "volume")
-    {
-        double omega_old = ucell.omega; // Volume before this update
-        double omega_new = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
-
-        // Rescale lattice to maintain constant volume
-        if (omega_new > 1e-10) // Avoid division by zero
         {
-            double scale = std::pow(omega_old / omega_new, 1.0 / 3.0);
-            ucell.latvec *= scale;
+            double omega_old = ucell.omega; // Volume before this update
+            double omega_new = std::abs (ucell.latvec.Det ()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
-            // Update a1, a2, a3 vectors
+            // Rescale lattice to maintain constant volume
+            if (omega_new > 1e-10) // Avoid division by zero
+                {
+                    double scale = std::pow (omega_old / omega_new, 1.0 / 3.0);
+                    ucell.latvec *= scale;
+
+                    // Update a1, a2, a3 vectors
+                    ucell.a1.x = ucell.latvec.e11;
+                    ucell.a1.y = ucell.latvec.e12;
+                    ucell.a1.z = ucell.latvec.e13;
+                    ucell.a2.x = ucell.latvec.e21;
+                    ucell.a2.y = ucell.latvec.e22;
+                    ucell.a2.z = ucell.latvec.e23;
+                    ucell.a3.x = ucell.latvec.e31;
+                    ucell.a3.y = ucell.latvec.e32;
+                    ucell.a3.z = ucell.latvec.e33;
+
+                    // Recalculate omega (should be equal to omega_old now)
+                    ucell.omega = std::abs (ucell.latvec.Det ()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+                }
+        }
+    else
+        {
+            // Update a1, a2, a3 vectors for non-volume-constrained cases
             ucell.a1.x = ucell.latvec.e11;
             ucell.a1.y = ucell.latvec.e12;
             ucell.a1.z = ucell.latvec.e13;
@@ -188,204 +208,190 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
             ucell.a3.y = ucell.latvec.e32;
             ucell.a3.z = ucell.latvec.e33;
 
-            // Recalculate omega (should be equal to omega_old now)
-            ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+            ucell.omega = std::abs (ucell.latvec.Det ()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
         }
-    }
-    else
-    {
-        // Update a1, a2, a3 vectors for non-volume-constrained cases
-        ucell.a1.x = ucell.latvec.e11;
-        ucell.a1.y = ucell.latvec.e12;
-        ucell.a1.z = ucell.latvec.e13;
-        ucell.a2.x = ucell.latvec.e21;
-        ucell.a2.y = ucell.latvec.e22;
-        ucell.a2.z = ucell.latvec.e23;
-        ucell.a3.x = ucell.latvec.e31;
-        ucell.a3.y = ucell.latvec.e32;
-        ucell.a3.z = ucell.latvec.e33;
 
-        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
-    }
-
-    ucell.GT = ucell.latvec.Inverse();
-    ucell.G = ucell.GT.Transpose();
+    ucell.GT = ucell.latvec.Inverse ();
+    ucell.G = ucell.GT.Transpose ();
     ucell.GGT = ucell.G * ucell.GT;
-    ucell.invGGT = ucell.GGT.Inverse();
+    ucell.invGGT = ucell.GGT.Inverse ();
 
 #ifdef __MPI
     // distribute lattice vectors.
-    Parallel_Common::bcast_double(ucell.latvec.e11);
-    Parallel_Common::bcast_double(ucell.latvec.e12);
-    Parallel_Common::bcast_double(ucell.latvec.e13);
-    Parallel_Common::bcast_double(ucell.latvec.e21);
-    Parallel_Common::bcast_double(ucell.latvec.e22);
-    Parallel_Common::bcast_double(ucell.latvec.e23);
-    Parallel_Common::bcast_double(ucell.latvec.e31);
-    Parallel_Common::bcast_double(ucell.latvec.e32);
-    Parallel_Common::bcast_double(ucell.latvec.e33);
+    Parallel_Common::bcast_double (ucell.latvec.e11);
+    Parallel_Common::bcast_double (ucell.latvec.e12);
+    Parallel_Common::bcast_double (ucell.latvec.e13);
+    Parallel_Common::bcast_double (ucell.latvec.e21);
+    Parallel_Common::bcast_double (ucell.latvec.e22);
+    Parallel_Common::bcast_double (ucell.latvec.e23);
+    Parallel_Common::bcast_double (ucell.latvec.e31);
+    Parallel_Common::bcast_double (ucell.latvec.e32);
+    Parallel_Common::bcast_double (ucell.latvec.e33);
 
     // distribute lattice vectors.
-    Parallel_Common::bcast_double(ucell.a1.x);
-    Parallel_Common::bcast_double(ucell.a1.y);
-    Parallel_Common::bcast_double(ucell.a1.z);
-    Parallel_Common::bcast_double(ucell.a2.x);
-    Parallel_Common::bcast_double(ucell.a2.y);
-    Parallel_Common::bcast_double(ucell.a2.z);
-    Parallel_Common::bcast_double(ucell.a3.x);
-    Parallel_Common::bcast_double(ucell.a3.y);
-    Parallel_Common::bcast_double(ucell.a3.z);
+    Parallel_Common::bcast_double (ucell.a1.x);
+    Parallel_Common::bcast_double (ucell.a1.y);
+    Parallel_Common::bcast_double (ucell.a1.z);
+    Parallel_Common::bcast_double (ucell.a2.x);
+    Parallel_Common::bcast_double (ucell.a2.y);
+    Parallel_Common::bcast_double (ucell.a2.z);
+    Parallel_Common::bcast_double (ucell.a3.x);
+    Parallel_Common::bcast_double (ucell.a3.y);
+    Parallel_Common::bcast_double (ucell.a3.z);
 #endif
 
     return;
 }
 
-void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad)
+void
+    Lattice_Change_Basic::check_converged (const UnitCell& ucell, ModuleBase::matrix& stress, double* grad)
 {
-    ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
+    ModuleBase::TITLE ("Lattice_Change_Basic", "check_converged");
 
     Lattice_Change_Basic::largest_grad = 0.0;
     double stress_ii_max = 0.0;
 
     if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
-    {
-        for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i))) 
-			{
-				stress_ii_max = std::abs(stress(i, i));
-			}
-            for (int j = 0; j < 3; j++)
-            {
-                if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))
+            for (int i = 0; i < 3; i++)
                 {
-                    Lattice_Change_Basic::largest_grad = std::abs(stress(i, j));
+                    if (stress_ii_max < std::abs (stress (i, i)))
+                        {
+                            stress_ii_max = std::abs (stress (i, i));
+                        }
+                    for (int j = 0; j < 3; j++)
+                        {
+                            if (Lattice_Change_Basic::largest_grad < std::abs (stress (i, j)))
+                                {
+                                    Lattice_Change_Basic::largest_grad = std::abs (stress (i, j));
+                                }
+                        }
                 }
-            }
         }
-    }
     else
-    {
-        for (int i = 0; i < 9; i++)
         {
-            if (Lattice_Change_Basic::largest_grad < std::abs(grad[i]))
-            {
-                Lattice_Change_Basic::largest_grad = std::abs(grad[i]);
-            }
+            for (int i = 0; i < 9; i++)
+                {
+                    if (Lattice_Change_Basic::largest_grad < std::abs (grad[i]))
+                        {
+                            Lattice_Change_Basic::largest_grad = std::abs (grad[i]);
+                        }
+                }
         }
-    }
 
     double unit_transform = 0.0;
-    unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    unit_transform = ModuleBase::RYDBERG_SI / pow (ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     Lattice_Change_Basic::largest_grad = Lattice_Change_Basic::largest_grad * unit_transform;
     stress_ii_max = stress_ii_max * unit_transform;
 
     if (Lattice_Change_Basic::largest_grad == 0.0)
-    {
-        GlobalV::ofs_running << " Largest stress is 0, movement is impossible." << std::endl;
-        Lattice_Change_Basic::converged = true;
-    }
+        {
+            GlobalV::ofs_running << " Largest stress is 0, movement is impossible." << std::endl;
+            Lattice_Change_Basic::converged = true;
+        }
     else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
-    {
-        if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = true;
-            ++Lattice_Change_Basic::update_iter;
+            if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
+                {
+                    GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
+                    GlobalV::ofs_running << "\n Largest stress is " << largest_grad << " kbar while threshold is "
+                                         << PARAM.inp.stress_thr << " kbar" << std::endl;
+                    Lattice_Change_Basic::converged = true;
+                    ++Lattice_Change_Basic::update_iter;
+                }
+            else
+                {
+                    GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is "
+                                         << PARAM.inp.stress_thr << " kbar" << std::endl;
+                    Lattice_Change_Basic::converged = false;
+                }
         }
-        else
-        {
-            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
-                                 << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = false;
-        }
-    }
     else
-    {
-        // the code is almost the same as previous codes
-        if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = true;
-            ++Lattice_Change_Basic::update_iter;
+            // the code is almost the same as previous codes
+            if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
+                {
+                    GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
+                    GlobalV::ofs_running << "\n Largest stress is " << largest_grad << " kbar while threshold is "
+                                         << PARAM.inp.stress_thr << " kbar" << std::endl;
+                    Lattice_Change_Basic::converged = true;
+                    ++Lattice_Change_Basic::update_iter;
+                }
+            else
+                {
+                    GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is "
+                                         << PARAM.inp.stress_thr << " kbar" << std::endl;
+                    Lattice_Change_Basic::converged = false;
+                }
         }
-        else
-        {
-            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
-                                 << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = false;
-        }
-    }
 
     return;
 }
 
-void Lattice_Change_Basic::terminate()
+void
+    Lattice_Change_Basic::terminate ()
 {
-    ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
+    ModuleBase::TITLE ("Lattice_Change_Basic", "terminate");
     if (Lattice_Change_Basic::converged)
-    {
-        GlobalV::ofs_running << " end of lattice optimization" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "stress_step", Lattice_Change_Basic::stress_step);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Lattice_Change_Basic::update_iter);
-        /*
-        GlobalV::ofs_running<<"Saving the approximate inverse hessian"<<std::endl;
-        std::ofstream hess("hess.out");
-        for(int i=0;i<dim;i++)
         {
-            for(int j=0;j<dim;j++)
+            GlobalV::ofs_running << " end of lattice optimization" << std::endl;
+            ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "stress_step", Lattice_Change_Basic::stress_step);
+            ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "update iteration", Lattice_Change_Basic::update_iter);
+            /*
+            GlobalV::ofs_running<<"Saving the approximate inverse hessian"<<std::endl;
+            std::ofstream hess("hess.out");
+            for(int i=0;i<dim;i++)
             {
-                hess << inv_hess(i,j);
+                for(int j=0;j<dim;j++)
+                {
+                    hess << inv_hess(i,j);
+                }
             }
+            hess.close();
+            */
         }
-        hess.close();
-        */
-    }
     else
-    {
-        GlobalV::ofs_running << " the maximum number of steps has been reached." << std::endl;
-        GlobalV::ofs_running << " end of lattice optimization." << std::endl;
-    }
+        {
+            GlobalV::ofs_running << " the maximum number of steps has been reached." << std::endl;
+            GlobalV::ofs_running << " end of lattice optimization." << std::endl;
+        }
 
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement)
+void
+    Lattice_Change_Basic::setup_etot (const double& energy_in, const bool judgement)
 {
     if (Lattice_Change_Basic::stress_step == 1)
-    {
-        // p == previous
-        Lattice_Change_Basic::etot_p = energy_in;
-        Lattice_Change_Basic::etot = energy_in;
-        ediff = etot - etot_p;
-    }
-    else
-    {
-        if (judgement)
         {
-            Lattice_Change_Basic::etot = energy_in;
-            if (Lattice_Change_Basic::etot_p > etot)
-            {
-                ediff = etot - etot_p;
-                Lattice_Change_Basic::etot_p = etot;
-            }
-            else
-            {
-                // this step will not be accepted
-                ediff = 0.0;
-            }
-        }
-        else // for bfgs
-        {
-            Lattice_Change_Basic::etot_p = etot;
+            // p == previous
+            Lattice_Change_Basic::etot_p = energy_in;
             Lattice_Change_Basic::etot = energy_in;
             ediff = etot - etot_p;
         }
-    }
+    else
+        {
+            if (judgement)
+                {
+                    Lattice_Change_Basic::etot = energy_in;
+                    if (Lattice_Change_Basic::etot_p > etot)
+                        {
+                            ediff = etot - etot_p;
+                            Lattice_Change_Basic::etot_p = etot;
+                        }
+                    else
+                        {
+                            // this step will not be accepted
+                            ediff = 0.0;
+                        }
+                }
+            else // for bfgs
+                {
+                    Lattice_Change_Basic::etot_p = etot;
+                    Lattice_Change_Basic::etot = energy_in;
+                    ediff = etot - etot_p;
+                }
+        }
 
     return;
 }

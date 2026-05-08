@@ -10,38 +10,42 @@ extern int myprow, nprow, ictxt, mypcol, npcol;
 class TDDFTTEST : public testing::Test
 {
   public:
-    static void SetUpTestCase()
+    static void
+        SetUpTestCase ()
     {
         std::cout << "\033[32m"
-             << "============================"
-             << "\033[0m" << std::endl;
+                  << "============================"
+                  << "\033[0m" << std::endl;
         std::cout << "\033[32m"
-             << "=    TDDFT MODULE TEST START  ="
-             << "\033[0m" << std::endl;
+                  << "=    TDDFT MODULE TEST START  ="
+                  << "\033[0m" << std::endl;
         std::cout << "\033[32m"
-             << "============================"
-             << "\033[0m" << std::endl;
+                  << "============================"
+                  << "\033[0m" << std::endl;
     }
-    static void TearDownTestCase()
+    static void
+        TearDownTestCase ()
     {
         std::cout << "\033[32m"
-             << "============================"
-             << "\033[0m" << std::endl;
+                  << "============================"
+                  << "\033[0m" << std::endl;
         std::cout << "\033[32m"
-             << "=     TDDFT MODULE TEST END   ="
-             << "\033[0m" << std::endl;
+                  << "=     TDDFT MODULE TEST END   ="
+                  << "\033[0m" << std::endl;
         std::cout << "\033[32m"
-             << "============================"
-             << "\033[0m" << std::endl;
+                  << "============================"
+                  << "\033[0m" << std::endl;
     }
-    void SetUp()
+    void
+        SetUp ()
     {
         std::cout << "\033[32m"
-             << "[    CASE  ]"
-             << "\033[0m"
-             << " ";
+                  << "[    CASE  ]"
+                  << "\033[0m"
+                  << " ";
     }
-    void TearDown()
+    void
+        TearDown ()
     {
     }
 };

@@ -28,7 +28,7 @@ namespace ModuleIO
  *  # followed by the number of non-zero elements.           #
  *  # Next are three blocks of data.                         #
  *  #--------------------------------------------------------#
- * 
+ *
  *  -1 0 0 507
  *  # CSR values
  *  6.73361941e-04 -3.97537783e-05 7.92408228e-04 ...
@@ -48,28 +48,28 @@ class csrFileReader : public FileReader
 {
   public:
     // Constructor
-    csrFileReader(const std::string& filename);
+    csrFileReader (const std::string& filename);
 
     // read all matrices of all R coordinates
-    void parseFile();
+    void parseFile ();
 
     // get number of R
-    int getNumberOfR() const;
+    int getNumberOfR () const;
 
     // get sparse matrix of a specific R coordinate
-    SparseMatrix<T> getMatrix(int Rx, int Ry, int Rz) const;
+    SparseMatrix<T> getMatrix (int Rx, int Ry, int Rz) const;
 
     // get matrix by using index
-    SparseMatrix<T> getMatrix(int index) const;
+    SparseMatrix<T> getMatrix (int index) const;
 
     // get R coordinate using index
-    std::vector<int> getRCoordinate(int index) const;
+    std::vector<int> getRCoordinate (int index) const;
 
     // get step
-    int getStep() const;
+    int getStep () const;
 
     // get matrix dimension
-    int getMatrixDimension() const;
+    int getMatrixDimension () const;
 
   private:
     std::vector<std::vector<int>> RCoordinates;

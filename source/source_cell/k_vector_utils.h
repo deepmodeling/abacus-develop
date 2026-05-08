@@ -12,9 +12,9 @@ class K_Vectors;
 
 namespace KVectorUtils
 {
-void kvec_d2c(K_Vectors& kv, const ModuleBase::Matrix3& reciprocal_vec);
+void kvec_d2c (K_Vectors& kv, const ModuleBase::Matrix3& reciprocal_vec);
 
-void kvec_c2d(K_Vectors& kv, const ModuleBase::Matrix3& latvec);
+void kvec_c2d (K_Vectors& kv, const ModuleBase::Matrix3& latvec);
 
 /**
  * @brief Sets both the direct and Cartesian k-vectors.
@@ -36,7 +36,7 @@ void kvec_c2d(K_Vectors& kv, const ModuleBase::Matrix3& latvec);
  * @note If the function is called by the master process (MY_RANK == 0), the k-point table is also stored in the
  * string skpt.
  */
-void set_both_kvec(K_Vectors& kv, const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt);
+void set_both_kvec (K_Vectors& kv, const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt);
 
 /**
  * @brief Sets up the k-points after a volume change.
@@ -58,7 +58,7 @@ void set_both_kvec(K_Vectors& kv, const ModuleBase::Matrix3& G, const ModuleBase
  * @note The function calls the print_klists function to print the k-points in both Cartesian and direct
  * coordinates.
  */
-void set_after_vc(K_Vectors& kv, const int& nspin, const ModuleBase::Matrix3& G);
+void set_after_vc (K_Vectors& kv, const int& nspin, const ModuleBase::Matrix3& G);
 
 /**
  * @brief Prints the k-points in both Cartesian and direct coordinates.
@@ -76,7 +76,7 @@ void set_after_vc(K_Vectors& kv, const int& nspin, const ModuleBase::Matrix3& G)
  * coordinates.
  * @note The function uses the FmtCore::format function to format the output.
  */
-void print_klists(const K_Vectors& kv, std::ofstream& ofs);
+void print_klists (const K_Vectors& kv, std::ofstream& ofs);
 
 // step 3 : mpi kpoints information.
 
@@ -100,7 +100,7 @@ void print_klists(const K_Vectors& kv, std::ofstream& ofs);
  * @note If a process has no k-points to work on, the function will quit with an error message.
  */
 #ifdef __MPI
-void kvec_mpi_k(K_Vectors& kv);
+void kvec_mpi_k (K_Vectors& kv);
 #endif // __MPI
 
 /**
@@ -116,12 +116,12 @@ void kvec_mpi_k(K_Vectors& kv);
  * @param ucell The unit cell of the crystal.
  * @param match A boolean flag that indicates if the results matches the real condition.
  */
-void kvec_ibz_kpoint(K_Vectors& kv,
-                     const ModuleSymmetry::Symmetry& symm,
-                     bool use_symm,
-                     std::string& skpt,
-                     const UnitCell& ucell,
-                     bool& match);
+void kvec_ibz_kpoint (K_Vectors& kv,
+                      const ModuleSymmetry::Symmetry& symm,
+                      bool use_symm,
+                      std::string& skpt,
+                      const UnitCell& ucell,
+                      bool& match);
 } // namespace KVectorUtils
 
 #endif // K_VECTOR_UTILS_H

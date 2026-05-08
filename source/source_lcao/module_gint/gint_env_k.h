@@ -10,22 +10,21 @@ namespace ModuleGint
 
 class Gint_env_k : public Gint
 {
-    public:
-    Gint_env_k(
-        const std::complex<double>* psid,
-        const Parallel_Orbitals* pv,
-        const std::vector<Vec3d>& kvec_c,
-        const std::vector<Vec3d>& kvec_d,
-        const int nbands,
-        const int nlocal,
-        const int ik,
-        const int nspin,
-        const int npol,
-        double* rho);
+  public:
+    Gint_env_k (const std::complex<double>* psid,
+                const Parallel_Orbitals* pv,
+                const std::vector<Vec3d>& kvec_c,
+                const std::vector<Vec3d>& kvec_d,
+                const int nbands,
+                const int nlocal,
+                const int ik,
+                const int nspin,
+                const int npol,
+                double* rho);
 
-    void cal_env_band(const int iband);
+    void cal_env_band (const int iband);
 
-    private:
+  private:
     // input
     const std::vector<Vec3d>& kvec_c_;
     const std::vector<Vec3d>& kvec_d_;
@@ -40,4 +39,4 @@ class Gint_env_k : public Gint
     std::vector<std::complex<double>> wfc_gint_;
 };
 
-}
+} // namespace ModuleGint

@@ -23,10 +23,10 @@ class PotSep : public PotBase
     //     this->fixed_mode = true;
     //     this->dynamic_mode = false;
     // }
-    PotSep(const ModuleBase::ComplexMatrix* sf_in, const ModulePW::PW_Basis* rho_basis_in, const VSep* vsep_cell_in)
-        : sf_(sf_in), vsep_cell(vsep_cell_in)
+    PotSep (const ModuleBase::ComplexMatrix* sf_in, const ModulePW::PW_Basis* rho_basis_in, const VSep* vsep_cell_in)
+        : sf_ (sf_in), vsep_cell (vsep_cell_in)
     {
-        assert(vsep_cell->vsep_form.nr == this->sf_->nr);
+        assert (vsep_cell->vsep_form.nr == this->sf_->nr);
         // assert(this->vsep_->vsep_form.nr == this->sf_->nr);
         this->rho_basis_ = rho_basis_in;
         // this->ntype_ = this->vsep_->vsep_form.nr;
@@ -34,7 +34,7 @@ class PotSep : public PotBase
         this->dynamic_mode = false;
     }
 
-    void cal_fixed_v(double* vl_pseudo) override;
+    void cal_fixed_v (double* vl_pseudo) override;
 
     const VSep* vsep_cell = nullptr;
     const ModuleBase::ComplexMatrix* sf_ = nullptr;

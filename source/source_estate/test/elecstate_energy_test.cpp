@@ -13,44 +13,51 @@ int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-void Potential::get_vnew(Charge const*, ModuleBase::matrix&)
+void
+    Potential::get_vnew (Charge const*, ModuleBase::matrix&)
 {
     return;
 }
-double ElecState::get_hartree_energy()
+double
+    ElecState::get_hartree_energy ()
 {
     return 0.1;
 }
-double ElecState::get_etot_efield()
+double
+    ElecState::get_etot_efield ()
 {
     return 0.2;
 }
-double ElecState::get_etot_gatefield()
+double
+    ElecState::get_etot_gatefield ()
 {
     return 0.3;
 }
-double ElecState::get_solvent_model_Ael()
+double
+    ElecState::get_solvent_model_Ael ()
 {
     return 0.4;
 }
-double ElecState::get_solvent_model_Acav()
+double
+    ElecState::get_solvent_model_Acav ()
 {
     return 0.5;
 }
 #ifdef __LCAO
-double ElecState::get_dftu_energy()
+double
+    ElecState::get_dftu_energy ()
 {
     return 0.6;
 }
 #endif
-double ElecState::get_local_pp_energy()
+double
+    ElecState::get_local_pp_energy ()
 {
     return 0.7;
 }
 } // namespace elecstate
 
 #include "source_cell/klist.h"
-
 
 /***************************************************************
  *  unit test of functions in elecstate_energy.cpp
@@ -65,14 +72,15 @@ namespace elecstate
 class MockElecState : public ElecState
 {
   public:
-    void Set_GlobalV_Default()
+    void
+        Set_GlobalV_Default ()
     {
         PARAM.input.imp_sol = false;
         PARAM.input.dft_plus_u = 0;
         // base class
         PARAM.input.nspin = 1;
         PARAM.input.nelec = 10.0;
-        PARAM.input.nupdown  = 0.0;
+        PARAM.input.nupdown = 0.0;
         PARAM.sys.two_fermi = false;
         PARAM.input.nbands = 6;
         PARAM.sys.nlocal = 6;
@@ -84,7 +92,8 @@ class MockElecState : public ElecState
         PARAM.input.sc_mag_switch = true;
     }
 };
-const double* ElecState::getRho(int spin) const
+const double*
+    ElecState::getRho (int spin) const
 {
     return &(this->eferm.ef);
 } // just for mock
@@ -94,195 +103,197 @@ class ElecStateEnergyTest : public ::testing::Test
 {
   protected:
     elecstate::MockElecState* elecstate;
-    void SetUp() override
+    void
+        SetUp () override
     {
         elecstate = new elecstate::MockElecState;
-        elecstate->Set_GlobalV_Default();
+        elecstate->Set_GlobalV_Default ();
     }
-    void TearDown() override
+    void
+        TearDown () override
     {
         delete elecstate;
     }
 };
 
-TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
+TEST_F (ElecStateEnergyTest, CalEnergiesHarris)
 {
     elecstate->f_en.deband_harris = 0.1;
-    elecstate->cal_energies(1);
+    elecstate->cal_energies (1);
     // deband_harris + hatree + efiled + gatefield + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot_harris, 0.7);
 }
 
-TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
+TEST_F (ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 {
     elecstate->f_en.deband_harris = 0.1;
     PARAM.input.imp_sol = true;
-    elecstate->cal_energies(1);
+    elecstate->cal_energies (1);
     // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot_harris, 1.6);
 }
 
-TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
+TEST_F (ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 {
     elecstate->f_en.deband_harris = 0.1;
     PARAM.input.dft_plus_u = 1;
-    elecstate->cal_energies(1);
+    elecstate->cal_energies (1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot_harris, 1.3);
 #else
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot_harris, 0.7);
 #endif
 }
 
-TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
+TEST_F (ElecStateEnergyTest, CalEnergiesEtot)
 {
     elecstate->f_en.deband = 0.1;
-    elecstate->cal_energies(2);
+    elecstate->cal_energies (2);
     // deband + hatree + efiled + gatefield + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot, 0.7);
 }
 
-TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
+TEST_F (ElecStateEnergyTest, CalEnergiesEtotImpSol)
 {
     elecstate->f_en.deband = 0.1;
     PARAM.input.imp_sol = true;
-    elecstate->cal_energies(2);
+    elecstate->cal_energies (2);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot, 1.6);
 }
 
-TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
+TEST_F (ElecStateEnergyTest, CalEnergiesEtotDFTU)
 {
     elecstate->f_en.deband = 0.1;
     PARAM.input.dft_plus_u = 1;
-    elecstate->cal_energies(2);
+    elecstate->cal_energies (2);
     // deband + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot, 1.3);
 #else
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.etot, 0.7);
 #endif
 }
 
-TEST_F(ElecStateEnergyTest, CalConverged)
+TEST_F (ElecStateEnergyTest, CalConverged)
 {
-    elecstate->cal_converged();
-    EXPECT_TRUE(elecstate->vnew_exist);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.descf, 0.0);
+    elecstate->cal_converged ();
+    EXPECT_TRUE (elecstate->vnew_exist);
+    EXPECT_DOUBLE_EQ (elecstate->f_en.descf, 0.0);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgapTrivial)
+TEST_F (ElecStateEnergyTest, CalBandgapTrivial)
 {
-    elecstate->cal_bandgap();
-    EXPECT_DOUBLE_EQ(elecstate->bandgap, 0.0);
+    elecstate->cal_bandgap ();
+    EXPECT_DOUBLE_EQ (elecstate->bandgap, 0.0);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgap)
+TEST_F (ElecStateEnergyTest, CalBandgap)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->set_nks(5);
+    klist->set_nks (5);
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
-    for (int ik = 0; ik < klist->get_nks(); ik++)
-    {
-        for (int ib = 0; ib < PARAM.input.nbands; ib++)
+    elecstate->ekb.create (klist->get_nks (), PARAM.input.nbands);
+    for (int ik = 0; ik < klist->get_nks (); ik++)
         {
-            elecstate->ekb(ik, ib) = ib;
+            for (int ib = 0; ib < PARAM.input.nbands; ib++)
+                {
+                    elecstate->ekb (ik, ib) = ib;
+                }
         }
-    }
     elecstate->eferm.ef = 2.5;
-    elecstate->cal_bandgap();
-    EXPECT_DOUBLE_EQ(elecstate->bandgap, 1.0);
+    elecstate->cal_bandgap ();
+    EXPECT_DOUBLE_EQ (elecstate->bandgap, 1.0);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgapUpDwTrivial)
+TEST_F (ElecStateEnergyTest, CalBandgapUpDwTrivial)
 {
-    elecstate->cal_bandgap_updw();
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 0.0);
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 0.0);
+    elecstate->cal_bandgap_updw ();
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_up, 0.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_dw, 0.0);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
+TEST_F (ElecStateEnergyTest, CalBandgapUpDw)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->set_nks(6);
-    klist->isk.resize(6);
-    for (int ik = 0; ik < klist->get_nks(); ik++)
-    {
-        if (ik < 3)
-        {
-            klist->isk[ik] = 0;
-        }
-        else
-        {
-            klist->isk[ik] = 1;
-        } 
-    }
-    elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
-    for (int ik = 0; ik < klist->get_nks(); ik++)
-    {
-        for (int ib = 0; ib < PARAM.input.nbands; ib++)
+    klist->set_nks (6);
+    klist->isk.resize (6);
+    for (int ik = 0; ik < klist->get_nks (); ik++)
         {
             if (ik < 3)
-            {
-                elecstate->ekb(ik, ib) = ib;
-            }
+                {
+                    klist->isk[ik] = 0;
+                }
             else
-            {
-                elecstate->ekb(ik, ib) = 0.5*ib;
-            }
+                {
+                    klist->isk[ik] = 1;
+                }
         }
-    }
+    elecstate->klist = klist;
+    elecstate->ekb.create (klist->get_nks (), PARAM.input.nbands);
+    for (int ik = 0; ik < klist->get_nks (); ik++)
+        {
+            for (int ib = 0; ib < PARAM.input.nbands; ib++)
+                {
+                    if (ik < 3)
+                        {
+                            elecstate->ekb (ik, ib) = ib;
+                        }
+                    else
+                        {
+                            elecstate->ekb (ik, ib) = 0.5 * ib;
+                        }
+                }
+        }
     elecstate->eferm.ef_up = 0.5;
     elecstate->eferm.ef_dw = 2.1;
-    elecstate->cal_bandgap_updw();
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 1.0);
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 0.5);
+    elecstate->cal_bandgap_updw ();
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_up, 1.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_dw, 0.5);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgapBoundaryConditions)
+TEST_F (ElecStateEnergyTest, CalBandgapBoundaryConditions)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->set_nks(1);
+    klist->set_nks (1);
     elecstate->klist = klist;
-    elecstate->ekb.create(1, 1);
+    elecstate->ekb.create (1, 1);
 
     // Case 1: Only VBM found (all bands below Fermi level)
-    elecstate->ekb(0, 0) = -5.0;
+    elecstate->ekb (0, 0) = -5.0;
     elecstate->eferm.ef = 0.0;
-    elecstate->cal_bandgap();
+    elecstate->cal_bandgap ();
     // Only VBM found, CBM is set to eferm.ef, so bandgap should be eferm.ef - vbm
-    EXPECT_DOUBLE_EQ(elecstate->bandgap, 5.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap, 5.0);
 
     // Case 2: Only CBM found (all bands above Fermi level)
-    elecstate->ekb(0, 0) = 5.0;
+    elecstate->ekb (0, 0) = 5.0;
     elecstate->eferm.ef = 0.0;
-    elecstate->cal_bandgap();
+    elecstate->cal_bandgap ();
     // Only CBM found, VBM is set to eferm.ef, so bandgap should be cbm - eferm.ef
-    EXPECT_DOUBLE_EQ(elecstate->bandgap, 5.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap, 5.0);
 }
 
-TEST_F(ElecStateEnergyTest, CalBandgapUpDwBoundaryConditions)
+TEST_F (ElecStateEnergyTest, CalBandgapUpDwBoundaryConditions)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->set_nks(2);
-    klist->isk.resize(2);
+    klist->set_nks (2);
+    klist->isk.resize (2);
     klist->isk[0] = 0; // spin up
     klist->isk[1] = 1; // spin down
     elecstate->klist = klist;
-    elecstate->ekb.create(2, 1); // 2 k-points, 1 band
+    elecstate->ekb.create (2, 1); // 2 k-points, 1 band
 
     // Spin UP: Only VBM (band < ef)
-    elecstate->ekb(0, 0) = -5.0; 
+    elecstate->ekb (0, 0) = -5.0;
     elecstate->eferm.ef_up = 0.0;
     // Spin DW: Only CBM (band > ef)
-    elecstate->ekb(1, 0) = 5.0;
+    elecstate->ekb (1, 0) = 5.0;
     elecstate->eferm.ef_dw = 0.0;
-    elecstate->cal_bandgap_updw();
+    elecstate->cal_bandgap_updw ();
     // up: Only VBM found, CBM is set to eferm.ef_up, so gap should be eferm.ef_up - vbm_up
     // dw: Only CBM found, VBM is set to eferm.ef_dw, so gap should be cbm_dw - eferm.ef_dw
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 5.0);
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 5.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_up, 5.0);
+    EXPECT_DOUBLE_EQ (elecstate->bandgap_dw, 5.0);
 }

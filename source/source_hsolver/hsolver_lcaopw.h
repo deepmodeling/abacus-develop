@@ -18,7 +18,7 @@ class HSolverLIP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in) {};
+    HSolverLIP (ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis (wfc_basis_in) {};
 
     /// @brief solve function for lcao_in_pw
     /// @param pHamilt interface to hamilt
@@ -26,13 +26,13 @@ class HSolverLIP
     /// @param pes interface to elecstate
     /// @param transform transformation matrix between lcao and pw
     /// @param skip_charge
-    void solve(hamilt::Hamilt<T>* pHamilt,
-               psi::Psi<T>& psi,
-               elecstate::ElecState* pes,
-               psi::Psi<T>& transform,
-               const bool skip_charge,
-               const double tpiba,
-               const int nat);
+    void solve (hamilt::Hamilt<T>* pHamilt,
+                psi::Psi<T>& psi,
+                elecstate::ElecState* pes,
+                psi::Psi<T>& transform,
+                const bool skip_charge,
+                const double tpiba,
+                const int nat);
 
   private:
     ModulePW::PW_Basis_K* wfc_basis = nullptr;

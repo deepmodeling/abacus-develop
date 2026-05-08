@@ -8,27 +8,27 @@
 
 namespace elecstate
 {
-void print_local_matrix(std::ostream& os,
-                        const std::complex<double>* matrix_data,
-                        int local_rows, // pv.nrow
-                        int local_cols, // pv.ncol
-                        const std::string& matrix_name = "",
-                        int rank = -1);
+void print_local_matrix (std::ostream& os,
+                         const std::complex<double>* matrix_data,
+                         int local_rows, // pv.nrow
+                         int local_cols, // pv.ncol
+                         const std::string& matrix_name = "",
+                         int rank = -1);
 
-void cal_edm_tddft(Parallel_Orbitals& pv,
-                   LCAO_domain::Setup_DM<std::complex<double>>& dmat,
-                   K_Vectors& kv,
-                   hamilt::Hamilt<std::complex<double>>* p_hamilt);
+void cal_edm_tddft (Parallel_Orbitals& pv,
+                    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+                    K_Vectors& kv,
+                    hamilt::Hamilt<std::complex<double>>* p_hamilt);
 
-void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
-                          LCAO_domain::Setup_DM<std::complex<double>>& dmat,
-                          K_Vectors& kv,
-                          hamilt::Hamilt<std::complex<double>>* p_hamilt);
+void cal_edm_tddft_tensor (Parallel_Orbitals& pv,
+                           LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+                           K_Vectors& kv,
+                           hamilt::Hamilt<std::complex<double>>* p_hamilt);
 
 template <typename Device>
-void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
-                                 LCAO_domain::Setup_DM<std::complex<double>>& dmat,
-                                 K_Vectors& kv,
-                                 hamilt::Hamilt<std::complex<double>>* p_hamilt);
+void cal_edm_tddft_tensor_lapack (Parallel_Orbitals& pv,
+                                  LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+                                  K_Vectors& kv,
+                                  hamilt::Hamilt<std::complex<double>>* p_hamilt);
 } // namespace elecstate
 #endif // CAL_EDM_TDDFT_H

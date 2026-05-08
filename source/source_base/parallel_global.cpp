@@ -27,24 +27,26 @@ int mpi_number = 0;
 int omp_number = 0;
 } // namespace Parallel_Global
 
-void Parallel_Global::myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr)
+void
+    Parallel_Global::myProd (std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr)
 {
     for (int i = 0; i < *len; i++)
-    {
-        //		(*inout).real()=(*inout).real()+(*in).real();
-        //		(*inout).imag()=(*inout).imag()+(*in).imag();
+        {
+            //		(*inout).real()=(*inout).real()+(*in).real();
+            //		(*inout).imag()=(*inout).imag()+(*in).imag();
 
-        // mohan updat 2011-09-21
-        (*inout) = std::complex<double>((*inout).real() + (*in).real(), (*inout).imag() + (*in).imag());
+            // mohan updat 2011-09-21
+            (*inout) = std::complex<double> ((*inout).real () + (*in).real (), (*inout).imag () + (*in).imag ());
 
-        in++;
-        inout++;
-    }
+            in++;
+            inout++;
+        }
     return;
 }
 #endif
 
-void Parallel_Global::split_diag_world(const int& diag_np,
+void
+    Parallel_Global::split_diag_world (const int& diag_np,
                                        const int& nproc,
                                        const int& my_rank,
                                        int& drank,
@@ -52,14 +54,14 @@ void Parallel_Global::split_diag_world(const int& diag_np,
                                        int& dcolor)
 {
 #ifdef __MPI
-    assert(diag_np > 0);
+    assert (diag_np > 0);
     int group_grid_np = -1;
     int color = -1;
     int key = -1;
-    divide_mpi_groups(nproc, diag_np, my_rank, group_grid_np, key, color);
-    MPI_Comm_split(MPI_COMM_WORLD, color, key, &DIAG_WORLD);
-    MPI_Comm_rank(DIAG_WORLD, &drank);
-    MPI_Comm_size(DIAG_WORLD, &dsize);
+    divide_mpi_groups (nproc, diag_np, my_rank, group_grid_np, key, color);
+    MPI_Comm_split (MPI_COMM_WORLD, color, key, &DIAG_WORLD);
+    MPI_Comm_rank (DIAG_WORLD, &drank);
+    MPI_Comm_size (DIAG_WORLD, &dsize);
     dcolor = color;
 #else
     dcolor = 0; // mohan fix bug 2012-02-04
@@ -69,17 +71,18 @@ void Parallel_Global::split_diag_world(const int& diag_np,
     return;
 }
 
-void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, const int& my_rank, int& grank, int& gsize)
+void
+    Parallel_Global::split_grid_world (const int diag_np, const int& nproc, const int& my_rank, int& grank, int& gsize)
 {
 #ifdef __MPI
-    assert(diag_np > 0);
+    assert (diag_np > 0);
     int group_grid_np = -1;
     int color = -1;
     int key = -1;
-    divide_mpi_groups(nproc, diag_np, my_rank, group_grid_np, color, key);
-    MPI_Comm_split(MPI_COMM_WORLD, color, key, &GRID_WORLD);
-    MPI_Comm_rank(GRID_WORLD, &grank);
-    MPI_Comm_size(GRID_WORLD, &gsize);
+    divide_mpi_groups (nproc, diag_np, my_rank, group_grid_np, color, key);
+    MPI_Comm_split (MPI_COMM_WORLD, color, key, &GRID_WORLD);
+    MPI_Comm_rank (GRID_WORLD, &grank);
+    MPI_Comm_size (GRID_WORLD, &gsize);
 #else
     grank = 0; // mohan fix bug 2012-02-04
     gsize = 1;
@@ -88,40 +91,37 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
 }
 
 // changed from read_mpi_parameters in 2024-1018
-void Parallel_Global::read_pal_param(int argc,
-                                          char** argv,
-                                          int& NPROC,
-                                          int& NTHREAD_PER_PROC,
-                                          int& MY_RANK)
+void
+    Parallel_Global::read_pal_param (int argc, char** argv, int& NPROC, int& NTHREAD_PER_PROC, int& MY_RANK)
 {
 #ifdef __MPI
 #ifdef _OPENMP
     int provided = 0;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    MPI_Init_thread (&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     if (provided != MPI_THREAD_MULTIPLE)
-    {
-        std::cerr << "MPI_Init_thread request " << MPI_THREAD_MULTIPLE << " but provide " << provided << std::endl;
-    }
-    // Peize Lin change 2022.08.08
-    // MPI_THREAD_FUNNELED is enough for ABACUS. Using MPI_THREAD_SERIALIZED for elpa, using MPI_THREAD_MULTIPLE for
-    // libRI.
+        {
+            std::cerr << "MPI_Init_thread request " << MPI_THREAD_MULTIPLE << " but provide " << provided << std::endl;
+        }
+        // Peize Lin change 2022.08.08
+        // MPI_THREAD_FUNNELED is enough for ABACUS. Using MPI_THREAD_SERIALIZED for elpa, using MPI_THREAD_MULTIPLE for
+        // libRI.
 #else
-    MPI_Init(&argc, &argv); // Peize Lin change 2018-07-12
+    MPI_Init (&argc, &argv); // Peize Lin change 2018-07-12
 #endif //_OPENMP
 
     //  KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
 
     // get world size --> NPROC
     // get global rank --> MY_RANK
-    MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &MY_RANK);
+    MPI_Comm_size (MPI_COMM_WORLD, &NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &MY_RANK);
     int process_num = 0; // number of processes in the current node
     int local_rank = 0;  // rank of the process in the current node
     MPI_Comm shmcomm;
-    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shmcomm);
-    MPI_Comm_size(shmcomm, &process_num);
-    MPI_Comm_rank(shmcomm, &local_rank);
-    MPI_Comm_free(&shmcomm);
+    MPI_Comm_split_type (MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shmcomm);
+    MPI_Comm_size (shmcomm, &process_num);
+    MPI_Comm_rank (shmcomm, &local_rank);
+    MPI_Comm_free (&shmcomm);
 
     // Determining appropriate thread number for OpenMP:
     // 1. If the number of threads is set by the user by `OMP_NUM_THREADS`, use it.
@@ -132,82 +132,85 @@ void Parallel_Global::read_pal_param(int argc,
     // CAVEAT: The user should set the number of threads properly to avoid oversubscribing.
     // This mechanism only handles the worst case for the default setting (not setting number of threads at all, causing
     // oversubscribing and extremely slow performance), not guaranteed to be optimal.
-    const int max_thread_num = std::thread::hardware_concurrency(); // Consider Hyperthreading disabled.
+    const int max_thread_num = std::thread::hardware_concurrency (); // Consider Hyperthreading disabled.
 #ifdef _OPENMP
-    int current_thread_num = omp_get_max_threads(); // Get the number of threads set by the user.
+    int current_thread_num = omp_get_max_threads (); // Get the number of threads set by the user.
     if (current_thread_num == max_thread_num
         && process_num >= 1) // Avoid oversubscribing on the number of threads not set.
-    {
-        current_thread_num = max_thread_num / process_num;
-        omp_set_num_threads(current_thread_num);
-    }
+        {
+            current_thread_num = max_thread_num / process_num;
+            omp_set_num_threads (current_thread_num);
+        }
 #else
     int current_thread_num = 1;
 #endif
     mpi_number = process_num;
     omp_number = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank == 0)
-    {
-        std::stringstream mess;
-        mess << "WARNING: Total thread number(" << current_thread_num * process_num << ") "
-             << "is larger than hardware availability(" << max_thread_num << ")." << std::endl
-             << "The results may be INCORRECT. Please set the environment variable OMP_NUM_THREADS to a proper value."
-             << std::endl;
-        std::cerr << mess.str() << std::endl;
-        // the user may take their own risk by set the OMP_NUM_THREADS env var.
-        if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
-            // usage of WARNING_QUIT need source_base/tool_quit.cpp
-            // lead to undefined error in unit_test building
-            // ModuleBase::WARNING_QUIT( "Parallel_Global::read_pal_param","OMP_NUM_THREADS setting is invalid. Please set it to a proper value.");
-            std::cerr << "ERROR: OMP_NUM_THREADS setting is invalid. Please set it to a proper value." << std::endl;
-            exit(1);
+            std::stringstream mess;
+            mess << "WARNING: Total thread number(" << current_thread_num * process_num << ") "
+                 << "is larger than hardware availability(" << max_thread_num << ")." << std::endl
+                 << "The results may be INCORRECT. Please set the environment variable OMP_NUM_THREADS to a proper "
+                    "value."
+                 << std::endl;
+            std::cerr << mess.str () << std::endl;
+            // the user may take their own risk by set the OMP_NUM_THREADS env var.
+            if (std::getenv ("OMP_NUM_THREADS") == nullptr)
+                {
+                    // usage of WARNING_QUIT need source_base/tool_quit.cpp
+                    // lead to undefined error in unit_test building
+                    // ModuleBase::WARNING_QUIT( "Parallel_Global::read_pal_param","OMP_NUM_THREADS setting is invalid.
+                    // Please set it to a proper value.");
+                    std::cerr << "ERROR: OMP_NUM_THREADS setting is invalid. Please set it to a proper value."
+                              << std::endl;
+                    exit (1);
+                }
         }
-    }
     else if (current_thread_num * process_num < max_thread_num && local_rank == 0)
-    {
-        // only output info in local rank 0
-        std::cerr << "Info: Local MPI proc number: " << process_num << ","
-                  << "OpenMP thread number: " << current_thread_num << ","
-                  << "Total thread number: " << current_thread_num * process_num << ","
-                  << "Local thread limit: " << max_thread_num << std::endl;
-    }
+        {
+            // only output info in local rank 0
+            std::cerr << "Info: Local MPI proc number: " << process_num << ","
+                      << "OpenMP thread number: " << current_thread_num << ","
+                      << "Total thread number: " << current_thread_num * process_num << ","
+                      << "Local thread limit: " << max_thread_num << std::endl;
+        }
 
     NTHREAD_PER_PROC = current_thread_num;
 
     if (MY_RANK == 0)
-    {
+        {
 #ifdef VERSION
-        const char* version = VERSION;
+            const char* version = VERSION;
 #else
-        const char* version = "unknown";
+            const char* version = "unknown";
 #endif
 #ifdef COMMIT_INFO
 #include "commit.h"
-        const char* commit = COMMIT;
+            const char* commit = COMMIT;
 #else
-        const char* commit = "unknown";
+            const char* commit = "unknown";
 #endif
-        std::cout << "                                                                                     "
-                  << std::endl
-                  << "                              ABACUS " << version << std::endl
-                  << std::endl
-                  << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
-                  << std::endl
-                  << std::endl
-                  << "                     Website: http://abacus.ustc.edu.cn/                             "
-                  << std::endl
-                  << "               Documentation: https://abacus.deepmodeling.com/                       "
-                  << std::endl
-                  << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
-                  << std::endl
-                  << "                              https://github.com/deepmodeling/abacus-develop         "
-                  << std::endl
-                  << "                      Commit: " << commit << std::endl
-                  << std::endl;
-        time_t time_now = time(nullptr);
-        std::cout << " " << ctime(&time_now);
-    }
+            std::cout << "                                                                                     "
+                      << std::endl
+                      << "                              ABACUS " << version << std::endl
+                      << std::endl
+                      << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
+                      << std::endl
+                      << std::endl
+                      << "                     Website: http://abacus.ustc.edu.cn/                             "
+                      << std::endl
+                      << "               Documentation: https://abacus.deepmodeling.com/                       "
+                      << std::endl
+                      << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
+                      << std::endl
+                      << "                              https://github.com/deepmodeling/abacus-develop         "
+                      << std::endl
+                      << "                      Commit: " << commit << std::endl
+                      << std::endl;
+            time_t time_now = time (nullptr);
+            std::cout << " " << ctime (&time_now);
+        }
 
     // for test
     /*
@@ -224,32 +227,34 @@ void Parallel_Global::read_pal_param(int argc,
     // This section can be chosen !!
     // mohan 2011-03-15
     if (MY_RANK != 0)
-    {
-        // std::cout.rdbuf(NULL);
-        std::cout.setstate(std::ios::failbit); // qianrui modify 2020-10-14
-    }
-    // end test
+        {
+            // std::cout.rdbuf(NULL);
+            std::cout.setstate (std::ios::failbit); // qianrui modify 2020-10-14
+        }
+        // end test
 #endif //__MPI
     return;
 }
 
 #ifdef __MPI
-void Parallel_Global::finalize_mpi()
+void
+    Parallel_Global::finalize_mpi ()
 {
-    MPI_Comm_free(&POOL_WORLD);
+    MPI_Comm_free (&POOL_WORLD);
     if (KP_WORLD != MPI_COMM_NULL)
-    {
-        MPI_Comm_free(&KP_WORLD);
-    }
-    MPI_Comm_free(&INT_BGROUP);
-    MPI_Comm_free(&BP_WORLD);
-    MPI_Comm_free(&GRID_WORLD);
-    MPI_Comm_free(&DIAG_WORLD);
-    MPI_Finalize();
+        {
+            MPI_Comm_free (&KP_WORLD);
+        }
+    MPI_Comm_free (&INT_BGROUP);
+    MPI_Comm_free (&BP_WORLD);
+    MPI_Comm_free (&GRID_WORLD);
+    MPI_Comm_free (&DIAG_WORLD);
+    MPI_Finalize ();
 }
 #endif
 
-void Parallel_Global::init_pools(const int& NPROC,
+void
+    Parallel_Global::init_pools (const int& NPROC,
                                  const int& MY_RANK,
                                  const int& BNDPAR,
                                  const int& KPAR,
@@ -264,16 +269,16 @@ void Parallel_Global::init_pools(const int& NPROC,
     //----------------------------------------------------------
     // CALL Function : divide_pools
     //----------------------------------------------------------
-    Parallel_Global::divide_pools(NPROC,
-                                  MY_RANK,
-                                  BNDPAR,
-                                  KPAR,
-                                  NPROC_IN_BNDGROUP,
-                                  RANK_IN_BPGROUP,
-                                  MY_BNDGROUP,
-                                  NPROC_IN_POOL,
-                                  RANK_IN_POOL,
-                                  MY_POOL);
+    Parallel_Global::divide_pools (NPROC,
+                                   MY_RANK,
+                                   BNDPAR,
+                                   KPAR,
+                                   NPROC_IN_BNDGROUP,
+                                   RANK_IN_BPGROUP,
+                                   MY_BNDGROUP,
+                                   NPROC_IN_POOL,
+                                   RANK_IN_POOL,
+                                   MY_POOL);
 
     // for test
     // turn on when you want to check the index of pools.
@@ -312,7 +317,8 @@ void Parallel_Global::init_pools(const int& NPROC,
 }
 
 #ifdef __MPI
-void Parallel_Global::divide_pools(const int& NPROC,
+void
+    Parallel_Global::divide_pools (const int& NPROC,
                                    const int& MY_RANK,
                                    const int& BNDPAR,
                                    const int& KPAR,
@@ -326,20 +332,21 @@ void Parallel_Global::divide_pools(const int& NPROC,
     // note: the order of k-point parallelization and band parallelization is important
     //       The order will not change the behavior of KP_WORLD or BP_WORLD, and MY_POOL
     //       and MY_BNDGROUP will be the same as well.
-    if(BNDPAR > 1 && NPROC %(BNDPAR * KPAR) != 0)
-    {
-        std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC
-            << ") must be divisible by the number of groups (" << BNDPAR * KPAR << ")." << std::endl;
-        ModuleBase::WARNING_QUIT("ParallelGlobal::divide_pools",
-            "When BNDPAR > 1, number of processes NPROC must be divisible by the number of groups BNDPAR * KPAR.");
-    }
+    if (BNDPAR > 1 && NPROC % (BNDPAR * KPAR) != 0)
+        {
+            std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC
+                      << ") must be divisible by the number of groups (" << BNDPAR * KPAR << ")." << std::endl;
+            ModuleBase::WARNING_QUIT (
+                "ParallelGlobal::divide_pools",
+                "When BNDPAR > 1, number of processes NPROC must be divisible by the number of groups BNDPAR * KPAR.");
+        }
     // k-point parallelization
-    MPICommGroup kpar_group(MPI_COMM_WORLD);
-    kpar_group.divide_group_comm(KPAR, false);
+    MPICommGroup kpar_group (MPI_COMM_WORLD);
+    kpar_group.divide_group_comm (KPAR, false);
 
     // band parallelization
-    MPICommGroup bndpar_group(kpar_group.group_comm);
-    bndpar_group.divide_group_comm(BNDPAR, true);
+    MPICommGroup bndpar_group (kpar_group.group_comm);
+    bndpar_group.divide_group_comm (BNDPAR, true);
 
     // Set parallel index.
     // In previous versions, the order of k-point parallelization and band parallelization is reversed.
@@ -347,36 +354,37 @@ void Parallel_Global::divide_pools(const int& NPROC,
     NPROC_IN_POOL = bndpar_group.nprocs_in_group;
     RANK_IN_POOL = bndpar_group.rank_in_group;
     MY_POOL = kpar_group.my_group;
-    MPI_Comm_dup(bndpar_group.group_comm, &POOL_WORLD);
-    if(kpar_group.inter_comm != MPI_COMM_NULL)
-    {
-        MPI_Comm_dup(kpar_group.inter_comm, &KP_WORLD);
-    }
+    MPI_Comm_dup (bndpar_group.group_comm, &POOL_WORLD);
+    if (kpar_group.inter_comm != MPI_COMM_NULL)
+        {
+            MPI_Comm_dup (kpar_group.inter_comm, &KP_WORLD);
+        }
     else
-    {
-        KP_WORLD = MPI_COMM_NULL;
-    }
+        {
+            KP_WORLD = MPI_COMM_NULL;
+        }
 
-    if(BNDPAR > 1)
-    {
-        NPROC_IN_BNDGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
-        RANK_IN_BPGROUP = kpar_group.my_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
-        MY_BNDGROUP = bndpar_group.my_group;
-        MPI_Comm_split(MPI_COMM_WORLD, MY_BNDGROUP, RANK_IN_BPGROUP, &INT_BGROUP);
-        MPI_Comm_dup(bndpar_group.inter_comm, &BP_WORLD);
-    }
+    if (BNDPAR > 1)
+        {
+            NPROC_IN_BNDGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
+            RANK_IN_BPGROUP = kpar_group.my_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
+            MY_BNDGROUP = bndpar_group.my_group;
+            MPI_Comm_split (MPI_COMM_WORLD, MY_BNDGROUP, RANK_IN_BPGROUP, &INT_BGROUP);
+            MPI_Comm_dup (bndpar_group.inter_comm, &BP_WORLD);
+        }
     else
-    {
-        NPROC_IN_BNDGROUP = NPROC;
-        RANK_IN_BPGROUP = MY_RANK;
-        MY_BNDGROUP = 0;
-        MPI_Comm_dup(MPI_COMM_WORLD, &INT_BGROUP);
-        MPI_Comm_split(MPI_COMM_WORLD, MY_RANK, 0, &BP_WORLD);
-    }
+        {
+            NPROC_IN_BNDGROUP = NPROC;
+            RANK_IN_BPGROUP = MY_RANK;
+            MY_BNDGROUP = 0;
+            MPI_Comm_dup (MPI_COMM_WORLD, &INT_BGROUP);
+            MPI_Comm_split (MPI_COMM_WORLD, MY_RANK, 0, &BP_WORLD);
+        }
     return;
 }
 
-void Parallel_Global::divide_mpi_groups(const int& procs,
+void
+    Parallel_Global::divide_mpi_groups (const int& procs,
                                         const int& num_groups,
                                         const int& rank,
                                         int& procs_in_group,
@@ -385,45 +393,41 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
                                         const bool even)
 {
     if (num_groups == 0)
-    {
-        ModuleBase::WARNING_QUIT(
-            "Parallel_Global::divide_mpi_groups",
-            "Number of groups must be greater than 0."
-        );
-    }
+        {
+            ModuleBase::WARNING_QUIT ("Parallel_Global::divide_mpi_groups", "Number of groups must be greater than 0.");
+        }
     if (procs < num_groups)
-    {
-        std::cout << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
-                  << num_groups << ")." << std::endl;
-        ModuleBase::WARNING_QUIT(
-            "Parallel_Global::divide_mpi_groups",
-            "Number of processes must be greater than the number of groups."
-        );
-    }
+        {
+            std::cout << "Error: Number of processes (" << procs << ") must be greater than the number of groups ("
+                      << num_groups << ")." << std::endl;
+            ModuleBase::WARNING_QUIT ("Parallel_Global::divide_mpi_groups",
+                                      "Number of processes must be greater than the number of groups.");
+        }
     // Calculate the distribution of processes among pools.
     procs_in_group = procs / num_groups;
     int extra_procs = procs % num_groups;
 
     if (even && extra_procs != 0)
-    {
-        std::cout << "Error: Number of processes (" << procs << ") must be evenly divisible by the number of groups ("
-                  << num_groups << " in the even partition case)." << std::endl;
-        exit(1);
-    }
+        {
+            std::cout << "Error: Number of processes (" << procs
+                      << ") must be evenly divisible by the number of groups (" << num_groups
+                      << " in the even partition case)." << std::endl;
+            exit (1);
+        }
 
-    if(rank < extra_procs * (procs_in_group + 1))
-    {
-        // The first extra_procs groups have procs_in_group + 1 processes.
-        procs_in_group++;
-        my_group = rank / procs_in_group;
-        rank_in_group = rank % procs_in_group;
-    }
+    if (rank < extra_procs * (procs_in_group + 1))
+        {
+            // The first extra_procs groups have procs_in_group + 1 processes.
+            procs_in_group++;
+            my_group = rank / procs_in_group;
+            rank_in_group = rank % procs_in_group;
+        }
     else
-    {
-        // The remaining groups have procs_in_group processes.
-        my_group = (rank - extra_procs) / procs_in_group;
-        rank_in_group = (rank - extra_procs) % procs_in_group;
-    }
+        {
+            // The remaining groups have procs_in_group processes.
+            my_group = (rank - extra_procs) / procs_in_group;
+            rank_in_group = (rank - extra_procs) % procs_in_group;
+        }
 }
 
 #endif

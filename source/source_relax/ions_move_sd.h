@@ -6,18 +6,18 @@
 class Ions_Move_SD
 {
   public:
-    Ions_Move_SD();
-    ~Ions_Move_SD();
+    Ions_Move_SD ();
+    ~Ions_Move_SD ();
 
-    void allocate(void);
-    void start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot);
+    void allocate ();
+    void start (UnitCell& ucell, const ModuleBase::matrix& force, const double& etot);
 
   private:
     double energy_saved;
     double* pos_saved = nullptr;
     double* grad_saved = nullptr;
 
-    void cal_tradius_sd(void) const;
+    void cal_tradius_sd () const;
 };
 
 #endif

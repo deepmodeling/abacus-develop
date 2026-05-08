@@ -10,8 +10,8 @@
 class TD_info
 {
   public:
-    TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    ~TD_info();
+    TD_info (const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    ~TD_info ();
 
     /// @brief switch to control the output of HR
     static bool out_mat_R;
@@ -41,36 +41,41 @@ class TD_info
     static ModuleBase::Vector3<double> cart_At;
 
     /// @brief calculate the At in cartesian coordinate
-    void cal_cart_At(const ModuleBase::Vector3<double>& At);
+    void cal_cart_At (const ModuleBase::Vector3<double>& At);
 
     /// @brief output RT-TDDFT info for restart
-    void out_restart_info(const int nstep, 
-                          const ModuleBase::Vector3<double>& At_current, 
-                          const ModuleBase::Vector3<double>& At_laststep);
+    void out_restart_info (const int nstep,
+                           const ModuleBase::Vector3<double>& At_current,
+                           const ModuleBase::Vector3<double>& At_laststep);
 
     // allocate memory for current term.
-    void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
+    void initialize_current_term (const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
+    hamilt::HContainer<std::complex<double>>*
+        get_current_term_pointer (const int& i) const
     {
         return this->current_term[i];
     }
     // set velocity HR.
-    void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR)
+    void
+        set_velocity_HR (hamilt::HContainer<std::complex<double>>* HR)
     {
         this->velocity_HR = HR;
     }
-    hamilt::HContainer<std::complex<double>>* get_velocity_HR_pointer() const
+    hamilt::HContainer<std::complex<double>>*
+        get_velocity_HR_pointer () const
     {
         return this->velocity_HR;
     }
 
-    int get_istep()
+    int
+        get_istep ()
     {
-      return istep;
+        return istep;
     }
 
-    const UnitCell* get_ucell()
+    const UnitCell*
+        get_ucell ()
     {
         return this->ucell;
     }
@@ -78,7 +83,7 @@ class TD_info
     // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
-    //r_calculator
+    // r_calculator
     cal_r_overlap_R r_calculator;
 
   private:
@@ -86,10 +91,10 @@ class TD_info
     const UnitCell* ucell = nullptr;
 
     /// @brief read At from output file
-    void read_cart_At();
+    void read_cart_At ();
 
     /// @brief output cart_At to output file
-    void output_cart_At(const std::string& out_dir);
+    void output_cart_At (const std::string& out_dir);
 
     /// @brief store isteps now
     static int istep;
@@ -101,7 +106,7 @@ class TD_info
     static std::vector<ModuleBase::Vector3<double>> At_from_file;
 
     /// @brief destory HSR data stored
-    void destroy_HS_R_td_sparse();
+    void destroy_HS_R_td_sparse ();
 
     /// @brief part of Momentum operator, -i∇ - i[r,Vnl]. Used to calculate current.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};

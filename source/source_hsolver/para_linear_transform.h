@@ -23,7 +23,7 @@ class PLinearTransform
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;
     using setmem_dev_op = base_device::memory::set_memory_op<T, Device>;
     using delmem_dev_op = base_device::memory::delete_memory_op<T, Device>;
-    ~PLinearTransform();
+    ~PLinearTransform ();
     int nproc_col = 1;
     int rank_col = 0;
     int nrowA = 0;
@@ -46,14 +46,14 @@ class PLinearTransform
      *        A: LDA * nrow, U_global: ncolA_global * ncolB_global, U_local: ncolA_global * ncolB
      *        B: LDA * ncolB
      */
-    void set_dimension(const int nrowA,
-                       const int ncolA,
-                       const int ncolB,
-                       const int LDA,
+    void set_dimension (const int nrowA,
+                        const int ncolA,
+                        const int ncolB,
+                        const int LDA,
 #ifdef __MPI
-                       MPI_Comm col_world,
+                        MPI_Comm col_world,
 #endif
-                       const bool localU);
+                        const bool localU);
 
     /**
      * @brief B =  alpha * A * U + beta * B
@@ -70,7 +70,7 @@ class PLinearTransform
      * @param B : input/output matrix
      *
      */
-    void act(const T alpha, const T* A, const T* U_global, const T beta, T* B);
+    void act (const T alpha, const T* A, const T* U_global, const T beta, T* B);
 
 #ifdef __MPI
   private:

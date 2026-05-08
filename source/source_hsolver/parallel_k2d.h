@@ -15,44 +15,58 @@
  */
 
 template <typename TK>
-class Parallel_K2D {
+class Parallel_K2D
+{
   public:
-      /// private constructor
-    Parallel_K2D() {}
+    /// private constructor
+    Parallel_K2D () {}
     /// private destructor
-    ~Parallel_K2D() {}
+    ~Parallel_K2D () {}
     /**
      * Public member functions
      */
     /// this function sets the parallel environment for k-points parallelism
     /// including the glabal and pool 2D parallel distribution
-    void set_para_env(int nks,
-                    const int& nw,
-                    const int& nb2d,
-                    const int& nproc,
-                    const int& my_rank,
-                    const int& nspin);
+    void set_para_env (int nks, const int& nw, const int& nb2d, const int& nproc, const int& my_rank, const int& nspin);
 
     /// this function distributes the Hk and Sk matrices to hk_pool and sk_pool
-    void distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
-                        const std::vector<int>& ik_kpar,
-                        const int& nw);
+    void distribute_hsk (hamilt::Hamilt<TK>* pHamilt, const std::vector<int>& ik_kpar, const int& nw);
 
     /// this function unsets the parallel environment for k-points parallelism
     /// including the glabal and pool 2D parallel distribution
-    void unset_para_env();
+    void unset_para_env ();
     /// set the number of k-points
-    void set_kpar(int kpar);
+    void set_kpar (int kpar);
     /// get the number of k-points
-    int get_kpar() const { return this->kpar_; }
+    int
+        get_kpar () const
+    {
+        return this->kpar_;
+    }
     /// get my pool
-    int get_my_pool() const { return this->MY_POOL; }
+    int
+        get_my_pool () const
+    {
+        return this->MY_POOL;
+    }
     /// get pKpoints
-    Parallel_Kpoints* get_pKpoints() const { return this->Pkpoints; }
+    Parallel_Kpoints*
+        get_pKpoints () const
+    {
+        return this->Pkpoints;
+    }
     /// get p2D_global
-    Parallel_2D* get_p2D_global() const { return this->P2D_global; }
+    Parallel_2D*
+        get_p2D_global () const
+    {
+        return this->P2D_global;
+    }
     /// get p2D_pool
-    Parallel_2D* get_p2D_pool() const { return this->P2D_pool; }
+    Parallel_2D*
+        get_p2D_pool () const
+    {
+        return this->P2D_pool;
+    }
 
     /**
      * the local Hk, Sk matrices in POOL_WORLD_K2D

@@ -10,54 +10,63 @@ class DistCCSMatrix
 {
 
   public:
-    DistCCSMatrix();
-    DistCCSMatrix(MPI_Comm comm);
-    DistCCSMatrix(int size, int nnzLocal);
-    DistCCSMatrix(MPI_Comm comm, int size, int nnzLocal);
-    DistCCSMatrix(MPI_Comm comm, int size, int nnzLocal, double* valLocal, int* index);
+    DistCCSMatrix ();
+    DistCCSMatrix (MPI_Comm comm);
+    DistCCSMatrix (int size, int nnzLocal);
+    DistCCSMatrix (MPI_Comm comm, int size, int nnzLocal);
+    DistCCSMatrix (MPI_Comm comm, int size, int nnzLocal, double* valLocal, int* index);
 
-    int globalCol(int localCol);
-    int localCol(int globalCol, int& mypcol);
-    void setnnz(int nnzLocal);
+    int globalCol (int localCol);
+    int localCol (int globalCol, int& mypcol);
+    void setnnz (int nnzLocal);
 
-    const MPI_Comm get_comm() const
+    const MPI_Comm
+        get_comm () const
     {
         return comm;
     };
-    const MPI_Group get_group() const
+    const MPI_Group
+        get_group () const
     {
         return group;
     };
-    const MPI_Group get_group_data() const
+    const MPI_Group
+        get_group_data () const
     {
         return group_data;
     };
-    const int get_size() const
+    const int
+        get_size () const
     {
         return size;
     };
-    const int get_nnz() const
+    const int
+        get_nnz () const
     {
         return nnz;
     };
-    const int get_nnzlocal() const
+    const int
+        get_nnzlocal () const
     {
         return nnzLocal;
     };
-    const int get_numcol_local() const
+    const int
+        get_numcol_local () const
     {
         return numColLocal;
     };
-    int* get_colptr_local() const
+    int*
+        get_colptr_local () const
     {
         return colptrLocal;
     };
-    int* get_rowind_local() const
+    int*
+        get_rowind_local () const
     {
         return rowindLocal;
     };
 
-    ~DistCCSMatrix();
+    ~DistCCSMatrix ();
 
   private:
     // MPI communicator
@@ -66,7 +75,7 @@ class DistCCSMatrix
 
     // total number of processes and the processes with data in
     int nprocs = 0;
-    int nproc_data =0;
+    int nproc_data = 0;
     MPI_Group group_data;
     MPI_Comm comm_data;
 
@@ -83,7 +92,7 @@ class DistCCSMatrix
     int numColLocal;
 
     // the first column index in current process
-    int firstCol=0;
+    int firstCol = 0;
 
     // Array stores the indices to the nonzero row indices in rowptrLocal and nzvalLocal
     int* colptrLocal = nullptr;

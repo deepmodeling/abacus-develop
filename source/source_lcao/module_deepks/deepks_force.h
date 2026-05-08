@@ -25,19 +25,19 @@ namespace DeePKS_domain
 // 1. cal_f_delta, which is used for F_delta calculation
 
 template <typename TK>
-void cal_f_delta(const hamilt::HContainer<double>* dmr,
-                 const UnitCell& ucell,
-                 const LCAO_Orbitals& orb,
-                 const Grid_Driver& GridD,
-                 const Parallel_Orbitals& pv,
-                 const int nks,
-                 const DeePKS_Param& deepks_param,
-                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                 std::vector<hamilt::HContainer<double>*> phialpha,
-                 double** gedm,
-                 ModuleBase::matrix& f_delta,
-                 const bool isstress,
-                 ModuleBase::matrix& svnl_dalpha);
+void cal_f_delta (const hamilt::HContainer<double>* dmr,
+                  const UnitCell& ucell,
+                  const LCAO_Orbitals& orb,
+                  const Grid_Driver& GridD,
+                  const Parallel_Orbitals& pv,
+                  const int nks,
+                  const DeePKS_Param& deepks_param,
+                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                  std::vector<hamilt::HContainer<double>*> phialpha,
+                  double** gedm,
+                  ModuleBase::matrix& f_delta,
+                  const bool isstress,
+                  ModuleBase::matrix& svnl_dalpha);
 } // namespace DeePKS_domain
 
 #endif

@@ -24,7 +24,7 @@ namespace ModuleESolver
  * @param nrxx Number of real space grid points
  */
 template <typename TK>
-void init_dftu_lcao(const int istep,
+void init_dftu_lcao (const int istep,
                      const int iter,
                      const Input_para& inp,
                      void* dftu,
@@ -50,7 +50,7 @@ void init_dftu_lcao(const int istep,
  * @param hamilt_lcao Hamiltonian LCAO object
  */
 template <typename TK>
-void finish_dftu_lcao(const int iter,
+void finish_dftu_lcao (const int iter,
                        const bool conv_esolver,
                        const Input_para& inp,
                        void* dftu,

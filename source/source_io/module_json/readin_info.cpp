@@ -2,7 +2,7 @@
 #include "para_json.h"
 #include "abacusjson.h"
 
-//Add json objects to init
+// Add json objects to init
 namespace Json
 {
 

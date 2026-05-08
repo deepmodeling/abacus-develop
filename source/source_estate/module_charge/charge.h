@@ -9,7 +9,7 @@
 // #include "source_estate/fp_energy.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
-//a forward declaration of UnitCell
+// a forward declaration of UnitCell
 class UnitCell;
 
 // Electron Charge Density
@@ -17,9 +17,8 @@ class Charge
 {
 
   public:
-
-    Charge();
-    ~Charge();
+    Charge ();
+    ~Charge ();
 
     //==========================================================
     // MEMBER VARIABLES :
@@ -33,38 +32,36 @@ class Charge
     // NAME : rhog_core [ngm], the core charge in reciprocal space
     //==========================================================
 
-    double **rho = nullptr;
-    double **rho_save = nullptr;
+    double** rho = nullptr;
+    double** rho_save = nullptr;
 
-    std::complex<double> **rhog = nullptr;
-    std::complex<double> **rhog_save = nullptr;
+    std::complex<double>** rhog = nullptr;
+    std::complex<double>** rhog_save = nullptr;
 
-    double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
-    double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
+    double** kin_r = nullptr;      // kinetic energy density in real space, for meta-GGA
+    double** kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
     const Parallel_Grid* pgrid = nullptr;
 
   private:
-
-    //temporary
-    double *_space_rho = nullptr; 
-    double *_space_rho_save = nullptr;
-    std::complex<double> *_space_rhog = nullptr;
-    std::complex<double> *_space_rhog_save = nullptr;
-    double *_space_kin_r = nullptr;
-    double *_space_kin_r_save = nullptr;
+    // temporary
+    double* _space_rho = nullptr;
+    double* _space_rho_save = nullptr;
+    std::complex<double>* _space_rhog = nullptr;
+    std::complex<double>* _space_rhog_save = nullptr;
+    double* _space_kin_r = nullptr;
+    double* _space_kin_r_save = nullptr;
 
   public:
+    double** nhat = nullptr;      // compensation charge for PAW
+    double** nhat_save = nullptr; // compensation charge for PAW
+                                  //  wenfei 2023-09-05
 
-    double **nhat = nullptr; //compensation charge for PAW
-    double **nhat_save = nullptr; //compensation charge for PAW
-                                 // wenfei 2023-09-05
-
-    double *rho_core = nullptr;
-    std::complex<double> *rhog_core = nullptr;
+    double* rho_core = nullptr;
+    std::complex<double>* rhog_core = nullptr;
 
     int prenspin = 1;
 
-    void set_rhopw(ModulePW::PW_Basis* rhopw_in);
+    void set_rhopw (ModulePW::PW_Basis* rhopw_in);
 
     /**
      * @brief Init charge density from file or atomic pseudo-wave-functions
@@ -76,93 +73,91 @@ class Charge
      * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
-    void init_rho(const UnitCell& ucell,
-                  const Parallel_Grid& pgrid,
-                  const ModuleBase::ComplexMatrix& strucFac,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* klist = nullptr,
-                  const void* wfcpw = nullptr);
+    void init_rho (const UnitCell& ucell,
+                   const Parallel_Grid& pgrid,
+                   const ModuleBase::ComplexMatrix& strucFac,
+                   ModuleSymmetry::Symmetry& symm,
+                   const void* klist = nullptr,
+                   const void* wfcpw = nullptr);
 
     // mohan add 2025-12-02
-    bool kin_density();
+    bool kin_density ();
 
-    void allocate(const int &nspin_in, const bool kin_den);
+    void allocate (const int& nspin_in, const bool kin_den);
 
-    void atomic_rho(const int spin_number_need,
-                    const double& omega,
-                    double** rho_in,
-                    const ModuleBase::ComplexMatrix& strucFac,
-                    const UnitCell& ucell) const;
+    void atomic_rho (const int spin_number_need,
+                     const double& omega,
+                     double** rho_in,
+                     const ModuleBase::ComplexMatrix& strucFac,
+                     const UnitCell& ucell) const;
 
-    void set_rho_core(const UnitCell& ucell,
-                      const ModuleBase::ComplexMatrix& structure_factor, 
-                      const bool* numeric);
+    void set_rho_core (const UnitCell& ucell, const ModuleBase::ComplexMatrix& structure_factor, const bool* numeric);
 
-    void renormalize_rho();
+    void renormalize_rho ();
 
-    double sum_rho() const;
+    double sum_rho () const;
 
-    void save_rho_before_sum_band();
+    void save_rho_before_sum_band ();
 
-	// for non-linear core correction
-    void non_linear_core_correction
-    (
-        const bool &numeric,
-        const double omega,
-        const double tpiba2,
-        const int mesh,
-        const double *r,
-        const double *rab,
-        const double *rhoc,
-        double *rhocg
-    ) const;
+    // for non-linear core correction
+    void non_linear_core_correction (const bool& numeric,
+                                     const double omega,
+                                     const double tpiba2,
+                                     const int mesh,
+                                     const double* r,
+                                     const double* rab,
+                                     const double* rhoc,
+                                     double* rhocg) const;
 
-	double cal_rho2ne(const double *rho_in) const;
+    double cal_rho2ne (const double* rho_in) const;
 
-    void check_rho(); // to check whether the charge density is normal
+    void check_rho (); // to check whether the charge density is normal
 
-    void init_final_scf(); //LiuXh add 20180619
+    void init_final_scf (); // LiuXh add 20180619
 
-	public:
+  public:
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
      */
-    void init_chgmpi();
+    void init_chgmpi ();
 
     /**
      * @brief Sum rho at different pools (k-point parallelism).
      *        Only used when GlobalV::KPAR > 1
      */
-    void rho_mpi();
+    void rho_mpi ();
 
     /**
      * @brief Sum kin_r at different pools (k-point/band parallelism).
      *        Only used when GlobalV::KPAR * bndpar > 1
      */
-    void kin_r_mpi();
+    void kin_r_mpi ();
 
-	/**
-	 * @brief 	Reduce among different pools 
+    /**
+     * @brief 	Reduce among different pools
      *          If NPROC_IN_POOLs are all the same, use GlobalV::KP_WORLD
      *          else, gather rho in a POOL, and then reduce among different POOLs
-	 * 
-	 * @param array_rho f(rho): an array [nrxx]
-	 */
-	void reduce_diff_pools(double* array_rho) const;
+     *
+     * @param array_rho f(rho): an array [nrxx]
+     */
+    void reduce_diff_pools (double* array_rho) const;
 
-    void set_omega(double* omega_in){this->omega_ = omega_in;};
+    void
+        set_omega (double* omega_in)
+    {
+        this->omega_ = omega_in;
+    };
 
     // mohan add 2021-02-20
-    int nrxx=0; // number of r vectors in this processor
-    int nxyz = 0; // total number of r vectors
-    int ngmc=0; // number of g vectors in this processor
-    int nspin=0; // number of spins
-    ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
-    bool cal_elf = false; // whether to calculate electron localization function (ELF)
+    int nrxx = 0;                        // number of r vectors in this processor
+    int nxyz = 0;                        // total number of r vectors
+    int ngmc = 0;                        // number of g vectors in this processor
+    int nspin = 0;                       // number of spins
+    ModulePW::PW_Basis* rhopw = nullptr; // When double_grid is used, rhopw = rhodpw (dense grid)
+    bool cal_elf = false;                // whether to calculate electron localization function (ELF)
 
   private:
-
-    void destroy();    // free arrays  liuyu 2023-03-12
+    void destroy (); // free arrays  liuyu 2023-03-12
 
     double* omega_ = nullptr; // omega for non-linear core correction
 
@@ -171,10 +166,9 @@ class Charge
     bool allocate_rho_final_scf; // LiuXh add 20180606
 
 #ifdef __MPI
-    int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
-    int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
+    int* rec = nullptr; // The number of elements each process should receive into the receive buffer.
+    int* dis = nullptr; // The displacement (relative to recvbuf) for each process in the receive buffer.
 #endif
-    
 };
 
 #endif // charge

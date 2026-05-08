@@ -18,15 +18,17 @@
 
 // mock for module_sdft
 template <typename REAL>
-Sto_Func<REAL>::Sto_Func()
+Sto_Func<REAL>::Sto_Func ()
 {
 }
 template class Sto_Func<double>;
 
 // mock diago_hs_para
-namespace hsolver {
+namespace hsolver
+{
 template <typename T>
-void diago_hs_para(T* h,
+void
+    diago_hs_para (T* h,
                    T* s,
                    const int lda,
                    const int nband,
@@ -35,66 +37,67 @@ void diago_hs_para(T* h,
                    const MPI_Comm& comm,
                    const int diag_subspace,
                    const int block_size = 0)
-{}
-template void diago_hs_para<double>(double* h,
-                                    double* s,
+{
+}
+template void diago_hs_para<double> (double* h,
+                                     double* s,
+                                     const int lda,
+                                     const int nband,
+                                     typename GetTypeReal<double>::type* const ekb,
+                                     double* const wfc,
+                                     const MPI_Comm& comm,
+                                     const int diag_subspace,
+                                     const int block_size);
+template void diago_hs_para<std::complex<double>> (std::complex<double>* h,
+                                                   std::complex<double>* s,
+                                                   const int lda,
+                                                   const int nband,
+                                                   typename GetTypeReal<std::complex<double>>::type* const ekb,
+                                                   std::complex<double>* const wfc,
+                                                   const MPI_Comm& comm,
+                                                   const int diag_subspace,
+                                                   const int block_size);
+template void diago_hs_para<float> (float* h,
+                                    float* s,
                                     const int lda,
                                     const int nband,
-                                    typename GetTypeReal<double>::type* const ekb,
-                                    double* const wfc,
+                                    typename GetTypeReal<float>::type* const ekb,
+                                    float* const wfc,
                                     const MPI_Comm& comm,
                                     const int diag_subspace,
                                     const int block_size);
-template void diago_hs_para<std::complex<double>>(std::complex<double>* h,
-                                                  std::complex<double>* s,
+template void diago_hs_para<std::complex<float>> (std::complex<float>* h,
+                                                  std::complex<float>* s,
                                                   const int lda,
                                                   const int nband,
-                                                  typename GetTypeReal<std::complex<double>>::type* const ekb,
-                                                  std::complex<double>* const wfc,
+                                                  typename GetTypeReal<std::complex<float>>::type* const ekb,
+                                                  std::complex<float>* const wfc,
                                                   const MPI_Comm& comm,
                                                   const int diag_subspace,
                                                   const int block_size);
-template void diago_hs_para<float>(float* h,
-                                   float* s,
-                                   const int lda,
-                                   const int nband,
-                                   typename GetTypeReal<float>::type* const ekb,
-                                   float* const wfc,
-                                   const MPI_Comm& comm,
-                                   const int diag_subspace,
-                                   const int block_size);          
-template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
-                                                 std::complex<float>* s,
-                                                 const int lda,
-                                                 const int nband,
-                                                 typename GetTypeReal<std::complex<float>>::type* const ekb,
-                                                 std::complex<float>* const wfc,
-                                                 const MPI_Comm& comm,
-                                                 const int diag_subspace,
-                                                 const int block_size);
 
-}
+} // namespace hsolver
 
-
-template<>
-void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
+template <>
+void
+    elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data ()
 {
 }
 
 template <typename REAL, typename Device>
-StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+StoChe<REAL, Device>::StoChe (const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
 {
     this->nche = nche;
 }
 template <typename REAL, typename Device>
-StoChe<REAL, Device>::~StoChe()
+StoChe<REAL, Device>::~StoChe ()
 {
 }
 
 template class StoChe<double>;
 
 template <typename T, typename Device>
-Stochastic_Iter<T, Device>::Stochastic_Iter()
+Stochastic_Iter<T, Device>::Stochastic_Iter ()
 {
     change = false;
     mu0 = 0;
@@ -102,10 +105,11 @@ Stochastic_Iter<T, Device>::Stochastic_Iter()
 }
 
 template <typename T, typename Device>
-Stochastic_Iter<T, Device>::~Stochastic_Iter(){};
+Stochastic_Iter<T, Device>::~Stochastic_Iter () {};
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
+void
+    Stochastic_Iter<T, Device>::init (K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
@@ -118,18 +122,20 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf)
+void
+    Stochastic_Iter<T, Device>::orthog (const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf)
 {
     // do something to verify this function has been called
-    for (int i = 0; i < psi.size(); i++)
-    {
-        psi.get_pointer()[i] += 1.1;
-    }
+    for (int i = 0; i < psi.size (); i++)
+        {
+            psi.get_pointer ()[i] += 1.1;
+        }
     return;
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::checkemm(const int& ik,
+void
+    Stochastic_Iter<T, Device>::checkemm (const int& ik,
                                           const int istep,
                                           const int iter,
                                           Stochastic_WF<T, Device>& stowf)
@@ -140,7 +146,8 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& stowf)
+void
+    Stochastic_Iter<T, Device>::calPn (const int& ik, Stochastic_WF<T, Device>& stowf)
 {
     // do something to verify this function has been called
     stowf.nbands_diag++;
@@ -148,7 +155,8 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::itermu(int iter, elecstate::ElecState* pes)
+void
+    Stochastic_Iter<T, Device>::itermu (int iter, elecstate::ElecState* pes)
 {
     // do something to verify this function has been called
     pes->f_en.eband += 1.2;
@@ -156,7 +164,8 @@ void Stochastic_Iter<T, Device>::itermu(int iter, elecstate::ElecState* pes)
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
+void
+    Stochastic_Iter<T, Device>::calHsqrtchi (Stochastic_WF<T, Device>& stowf)
 {
     // do something to verify this function has been called
     stowf.nchip_max++;
@@ -164,10 +173,11 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecStatePW<T, Device>* pes,
-                                             hamilt::Hamilt<T, Device>* pHamilt,
-                                             ModulePW::PW_Basis_K* wfc_basis)
+void
+    Stochastic_Iter<T, Device>::sum_stoeband (Stochastic_WF<T, Device>& stowf,
+                                              elecstate::ElecStatePW<T, Device>* pes,
+                                              hamilt::Hamilt<T, Device>* pHamilt,
+                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     // do something to verify this function has been called
     stowf.nbands_total++;
@@ -175,77 +185,77 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
-                                             Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecStatePW<T, Device>* pes,
-                                             ModulePW::PW_Basis_K* wfc_basis)
+void
+    Stochastic_Iter<T, Device>::cal_storho (const UnitCell& ucell,
+                                            Stochastic_WF<T, Device>& stowf,
+                                            elecstate::ElecStatePW<T, Device>* pes,
+                                            ModulePW::PW_Basis_K* wfc_basis)
 {
 }
 template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
 
-Charge::Charge(){};
-Charge::~Charge(){};
+Charge::Charge () {};
+Charge::~Charge () {};
 
 // Mock implementations for the template functions causing linking errors
-namespace ModulePW {
-    // Mock implementation for recip_to_real
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::recip_to_real(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-        // In a real test, you might want to implement behavior that simulates the actual function
-    }
-
-    // Mock implementation for real_to_recip
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::real_to_recip(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-    }
-
-    // Explicit template instantiations
-    template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
-
-    template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
+namespace ModulePW
+{
+// Mock implementation for recip_to_real
+template <typename FPTYPE, typename Device>
+void
+    PW_Basis_K::recip_to_real (const Device* ctx,
+                               const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+    // In a real test, you might want to implement behavior that simulates the actual function
 }
+
+// Mock implementation for real_to_recip
+template <typename FPTYPE, typename Device>
+void
+    PW_Basis_K::real_to_recip (const Device* ctx,
+                               const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+}
+
+// Explicit template instantiations
+template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU> (const base_device::DEVICE_CPU* ctx,
+                                                                         const std::complex<float>* in,
+                                                                         std::complex<float>* out,
+                                                                         const int ik,
+                                                                         const bool add,
+                                                                         const float factor) const;
+
+template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU> (const base_device::DEVICE_CPU* ctx,
+                                                                          const std::complex<double>* in,
+                                                                          std::complex<double>* out,
+                                                                          const int ik,
+                                                                          const bool add,
+                                                                          const double factor) const;
+
+template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU> (const base_device::DEVICE_CPU* ctx,
+                                                                         const std::complex<float>* in,
+                                                                         std::complex<float>* out,
+                                                                         const int ik,
+                                                                         const bool add,
+                                                                         const float factor) const;
+
+template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU> (const base_device::DEVICE_CPU* ctx,
+                                                                          const std::complex<double>* in,
+                                                                          std::complex<double>* out,
+                                                                          const int ik,
+                                                                          const bool add,
+                                                                          const double factor) const;
+} // namespace ModulePW
 /************************************************
  *  unit test of HSolverPW_SDFT class
  ***********************************************/
@@ -262,7 +272,8 @@ namespace ModulePW {
 class TestHSolverPW_SDFT : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0), elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    TestHSolverPW_SDFT ()
+        : stoche (8, 1, 0, 0), elecstate_test (nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
     }
     ModulePW::PW_Basis_K pwbk;
@@ -271,7 +282,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     StoChe<double> stoche;
     hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
     hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>(
+        = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> (
             &kv,
             &pwbk,
             stowf,
@@ -390,19 +401,20 @@ class TestHSolverPW_SDFT : public ::testing::Test
 #ifdef __MPI
 #include "source_base/timer.h"
 #include "mpi.h"
-int main(int argc, char** argv)
+int
+    main (int argc, char** argv)
 {
-    ModuleBase::timer::disable();
-    MPI_Init(&argc, &argv);
-    testing::InitGoogleTest(&argc, argv);
+    ModuleBase::timer::disable ();
+    MPI_Init (&argc, &argv);
+    testing::InitGoogleTest (&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &BP_WORLD);
-    int result = RUN_ALL_TESTS();
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split (MPI_COMM_WORLD, 0, 1, &BP_WORLD);
+    int result = RUN_ALL_TESTS ();
 
-    MPI_Comm_free(&BP_WORLD);
-    MPI_Finalize();
+    MPI_Comm_free (&BP_WORLD);
+    MPI_Finalize ();
 
     return result;
 }

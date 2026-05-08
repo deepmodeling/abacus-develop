@@ -29,35 +29,35 @@ namespace DeePKS_domain
 // for deepks_v_delta = -1
 // calculates v_delta_r_precalc
 
-void prepare_phialpha_iRmat(const int nlocal,
-                            const int R_size,
-                            const DeePKS_Param& deepks_param,
-                            const std::vector<hamilt::HContainer<double>*> phialpha,
-                            const UnitCell& ucell,
-                            const LCAO_Orbitals& orb,
-                            const Grid_Driver& GridD,
-                            torch::Tensor& overlap,
-                            torch::Tensor& iRmat);
+void prepare_phialpha_iRmat (const int nlocal,
+                             const int R_size,
+                             const DeePKS_Param& deepks_param,
+                             const std::vector<hamilt::HContainer<double>*> phialpha,
+                             const UnitCell& ucell,
+                             const LCAO_Orbitals& orb,
+                             const Grid_Driver& GridD,
+                             torch::Tensor& overlap,
+                             torch::Tensor& iRmat);
 
-void cal_vdr_precalc(const int nlocal,
-                     const int nat,
-                     const int nks,
-                     const int R_size,
-                     const DeePKS_Param& deepks_param,
-                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                     const std::vector<hamilt::HContainer<double>*> phialpha,
-                     const std::vector<torch::Tensor> gevdm,
-                     const UnitCell& ucell,
-                     const LCAO_Orbitals& orb,
-                     const Parallel_Orbitals& pv,
-                     const Grid_Driver& GridD,
-                     torch::Tensor& vdr_precalc);
+void cal_vdr_precalc (const int nlocal,
+                      const int nat,
+                      const int nks,
+                      const int R_size,
+                      const DeePKS_Param& deepks_param,
+                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                      const std::vector<hamilt::HContainer<double>*> phialpha,
+                      const std::vector<torch::Tensor> gevdm,
+                      const UnitCell& ucell,
+                      const LCAO_Orbitals& orb,
+                      const Parallel_Orbitals& pv,
+                      const Grid_Driver& GridD,
+                      torch::Tensor& vdr_precalc);
 
-int mapping_R(int R);
-torch::Tensor mapping_R(const torch::Tensor& R_tensor);
+int mapping_R (int R);
+torch::Tensor mapping_R (const torch::Tensor& R_tensor);
 
 template <typename T>
-int get_R_size(const hamilt::HContainer<T>& hcontainer);
+int get_R_size (const hamilt::HContainer<T>& hcontainer);
 } // namespace DeePKS_domain
 #endif
 #endif

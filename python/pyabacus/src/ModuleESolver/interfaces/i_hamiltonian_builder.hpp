@@ -17,8 +17,10 @@
 
 namespace py = pybind11;
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief Abstract interface for Hamiltonian builder
@@ -32,8 +34,8 @@ namespace esolver {
 template <typename TK, typename TR = double>
 class IHamiltonianBuilder
 {
-public:
-    virtual ~IHamiltonianBuilder() = default;
+  public:
+    virtual ~IHamiltonianBuilder () = default;
 
     // ==================== Build/Update ====================
 
@@ -41,18 +43,18 @@ public:
      * @brief Build Hamiltonian from charge density
      * @param rho Charge density array with shape (nspin, nrxx)
      */
-    virtual void build_from_rho(const py::array_t<double>& rho) = 0;
+    virtual void build_from_rho (const py::array_t<double>& rho) = 0;
 
     /**
      * @brief Update H(k) for a specific k-point
      * @param ik K-point index
      */
-    virtual void update_Hk(int ik) = 0;
+    virtual void update_Hk (int ik) = 0;
 
     /**
      * @brief Invalidate cached matrices (force rebuild)
      */
-    virtual void invalidate() = 0;
+    virtual void invalidate () = 0;
 
     // ==================== K-space Matrix Access ====================
 
@@ -61,14 +63,14 @@ public:
      * @param ik K-point index
      * @return Hamiltonian matrix as numpy array
      */
-    virtual py::array_t<TK> get_Hk(int ik) const = 0;
+    virtual py::array_t<TK> get_Hk (int ik) const = 0;
 
     /**
      * @brief Get S(k) overlap matrix for specific k-point
      * @param ik K-point index
      * @return Overlap matrix as numpy array
      */
-    virtual py::array_t<TK> get_Sk(int ik) const = 0;
+    virtual py::array_t<TK> get_Sk (int ik) const = 0;
 
     // ==================== Real-space Matrix Access ====================
 
@@ -76,13 +78,13 @@ public:
      * @brief Get H(R) in sparse format
      * @return Dictionary mapping (iat1, iat2, R) -> matrix
      */
-    virtual py::dict get_HR() const = 0;
+    virtual py::dict get_HR () const = 0;
 
     /**
      * @brief Get S(R) in sparse format
      * @return Dictionary mapping (iat1, iat2, R) -> matrix
      */
-    virtual py::dict get_SR() const = 0;
+    virtual py::dict get_SR () const = 0;
 
     // ==================== Matrix-Vector Products ====================
 
@@ -92,7 +94,7 @@ public:
      * @param psi_in Input wave function
      * @return H * psi_in
      */
-    virtual py::array_t<TK> apply_H(int ik, const py::array_t<TK>& psi_in) const = 0;
+    virtual py::array_t<TK> apply_H (int ik, const py::array_t<TK>& psi_in) const = 0;
 
     /**
      * @brief Apply overlap matrix to wave function: S|psi>
@@ -100,7 +102,7 @@ public:
      * @param psi_in Input wave function
      * @return S * psi_in
      */
-    virtual py::array_t<TK> apply_S(int ik, const py::array_t<TK>& psi_in) const = 0;
+    virtual py::array_t<TK> apply_S (int ik, const py::array_t<TK>& psi_in) const = 0;
 
     // ==================== Dimension Queries ====================
 
@@ -108,25 +110,25 @@ public:
      * @brief Get number of basis functions
      * @return Number of basis functions
      */
-    virtual int get_nbasis() const = 0;
+    virtual int get_nbasis () const = 0;
 
     /**
      * @brief Get number of k-points
      * @return Number of k-points
      */
-    virtual int get_nks() const = 0;
+    virtual int get_nks () const = 0;
 
     /**
      * @brief Get local matrix dimensions (for 2D distribution)
      * @return Pair of (nrow, ncol)
      */
-    virtual std::pair<int, int> get_local_dims() const = 0;
+    virtual std::pair<int, int> get_local_dims () const = 0;
 
     /**
      * @brief Check if Hamiltonian data is valid
      * @return true if valid
      */
-    virtual bool is_valid() const = 0;
+    virtual bool is_valid () const = 0;
 };
 
 // Type aliases for common use cases

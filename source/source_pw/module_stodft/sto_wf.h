@@ -12,11 +12,11 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class Stochastic_WF
 {
   public:
-    Stochastic_WF();
+    Stochastic_WF ();
 
-    ~Stochastic_WF();
+    ~Stochastic_WF ();
 
-    void init(K_Vectors* p_kv, const int npwx_in);
+    void init (K_Vectors* p_kv, const int npwx_in);
 
     // origin stochastic wavefunctions in CPU
     psi::Psi<T, base_device::DEVICE_CPU>* chi0_cpu = nullptr;
@@ -33,32 +33,32 @@ class Stochastic_WF
     int npwx = 0;         ///< max ngk[ik] in all processors
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
-    std::vector<int> ngk;   ///< ngk in klist
+    std::vector<int> ngk; ///< ngk in klist
   public:
     // Tn(H)|chi>
     psi::Psi<T, Device>* chiallorder = nullptr;
     // allocate chiallorder
-    void allocate_chiallorder(const int& norder);
+    void allocate_chiallorder (const int& norder);
     // chiallorder cost too much memories and should be cleaned after scf.
-    void clean_chiallorder();
+    void clean_chiallorder ();
 
   public:
     // init stochastic orbitals
-    void init_sto_orbitals(const int seed_in);
+    void init_sto_orbitals (const int seed_in);
     // init stochastic orbitals from a large Ecut
     // It can test the convergence of SDFT with respect to Ecut
-    void init_sto_orbitals_Ecut(const int seed_in,
-                                const K_Vectors& kv,
-                                const ModulePW::PW_Basis_K& wfcpw,
-                                const int max_ecut);
+    void init_sto_orbitals_Ecut (const int seed_in,
+                                 const K_Vectors& kv,
+                                 const ModulePW::PW_Basis_K& wfcpw,
+                                 const int max_ecut);
     // allocate chi0
-    void allocate_chi0();
+    void allocate_chi0 ();
     // update stochastic orbitals
-    void update_sto_orbitals(const int seed_in);
+    void update_sto_orbitals (const int seed_in);
     // init complete orbitals
-    void init_com_orbitals();
+    void init_com_orbitals ();
     // sync chi0 from CPU to GPU
-    void sync_chi0();
+    void sync_chi0 ();
 
   protected:
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;

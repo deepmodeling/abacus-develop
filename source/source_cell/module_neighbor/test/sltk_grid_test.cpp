@@ -8,29 +8,18 @@
 #undef private
 #include "source_cell/read_stru.h"
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal () {}
+InfoNonlocal::~InfoNonlocal () {}
+LCAO_Orbitals::LCAO_Orbitals () {}
+LCAO_Orbitals::~LCAO_Orbitals () {}
 #endif
-Magnetism::Magnetism()
+Magnetism::Magnetism ()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism () { delete[] this->start_mag; }
 
 /************************************************
  *  unit test of sltk_grid
@@ -45,7 +34,8 @@ Magnetism::~Magnetism()
  *       member Cell as a 3D array of CellSet
  */
 
-void SetGlobalV()
+void
+    SetGlobalV ()
 {
     PARAM.input.test_grid = 0;
 }
@@ -61,12 +51,14 @@ class SltkGridTest : public testing::Test
     double radius = ((8 + 5.01) * 2.0 + 0.01) / 10.2;
     int test_atom_in = 0;
     std::string output;
-    void SetUp()
+    void
+        SetUp ()
     {
-        SetGlobalV();
-        ucell = utp.SetUcellInfo();
+        SetGlobalV ();
+        ucell = utp.SetUcellInfo ();
     }
-    void TearDown()
+    void
+        TearDown ()
     {
         delete ucell;
     }
@@ -74,40 +66,40 @@ class SltkGridTest : public testing::Test
 
 using SltkGridDeathTest = SltkGridTest;
 
-TEST_F(SltkGridTest, Init)
+TEST_F (SltkGridTest, Init)
 {
-    ofs.open("test.out");
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+    ofs.open ("test.out");
+    unitcell::check_dtau (ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
-    Grid LatGrid(PARAM.input.test_grid);
-    LatGrid.init(ofs, *ucell, radius, pbc);
-    EXPECT_EQ(LatGrid.getGlayerX(), 6);
-    EXPECT_EQ(LatGrid.getGlayerY(), 6);
-    EXPECT_EQ(LatGrid.getGlayerZ(), 6);
-    EXPECT_EQ(LatGrid.getGlayerX_minus(), 5);
-    EXPECT_EQ(LatGrid.getGlayerY_minus(), 5);
-    EXPECT_EQ(LatGrid.getGlayerZ_minus(), 5);
-    ofs.close();
-    remove("test.out");
+    Grid LatGrid (PARAM.input.test_grid);
+    LatGrid.init (ofs, *ucell, radius, pbc);
+    EXPECT_EQ (LatGrid.getGlayerX (), 6);
+    EXPECT_EQ (LatGrid.getGlayerY (), 6);
+    EXPECT_EQ (LatGrid.getGlayerZ (), 6);
+    EXPECT_EQ (LatGrid.getGlayerX_minus (), 5);
+    EXPECT_EQ (LatGrid.getGlayerY_minus (), 5);
+    EXPECT_EQ (LatGrid.getGlayerZ_minus (), 5);
+    ofs.close ();
+    remove ("test.out");
 }
 
-TEST_F(SltkGridTest, InitSmall)
+TEST_F (SltkGridTest, InitSmall)
 {
-    ofs.open("test.out");
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+    ofs.open ("test.out");
+    unitcell::check_dtau (ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     radius = 0.5;
-    Grid LatGrid(PARAM.input.test_grid);
-    LatGrid.init(ofs, *ucell, radius, pbc);
-    LatGrid.setMemberVariables(ofs,  *ucell);
-    EXPECT_EQ(LatGrid.pbc, true);
-    EXPECT_TRUE(LatGrid.pbc);
-    EXPECT_DOUBLE_EQ(LatGrid.sradius2, radius * radius);
-    EXPECT_DOUBLE_EQ(LatGrid.sradius2, 0.5 * 0.5);
-    EXPECT_DOUBLE_EQ(LatGrid.sradius, radius);
-    EXPECT_DOUBLE_EQ(LatGrid.sradius, 0.5);
+    Grid LatGrid (PARAM.input.test_grid);
+    LatGrid.init (ofs, *ucell, radius, pbc);
+    LatGrid.setMemberVariables (ofs, *ucell);
+    EXPECT_EQ (LatGrid.pbc, true);
+    EXPECT_TRUE (LatGrid.pbc);
+    EXPECT_DOUBLE_EQ (LatGrid.sradius2, radius * radius);
+    EXPECT_DOUBLE_EQ (LatGrid.sradius2, 0.5 * 0.5);
+    EXPECT_DOUBLE_EQ (LatGrid.sradius, radius);
+    EXPECT_DOUBLE_EQ (LatGrid.sradius, 0.5);
     /*
     // minimal value of x, y, z
     EXPECT_DOUBLE_EQ(LatGrid.true_cell_x, 1);
@@ -118,8 +110,8 @@ TEST_F(SltkGridTest, InitSmall)
     EXPECT_EQ(LatGrid.cell_ny, 3);
     EXPECT_EQ(LatGrid.cell_nz, 3);
     */
-    ofs.close();
-    remove("test.out");
+    ofs.close ();
+    remove ("test.out");
 }
 
 /*

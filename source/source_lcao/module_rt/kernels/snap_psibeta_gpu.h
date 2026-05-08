@@ -25,7 +25,7 @@ namespace gpu
  * @brief Initialize GPU resources for snap_psibeta module (copy grids to constant memory)
  *        Should be called at the start of each calculate_HR
  */
-void init_snap_psibeta_gpu();
+void init_snap_psibeta_gpu ();
 
 /**
  * @brief Atom-level GPU batch processing interface
@@ -45,7 +45,7 @@ void init_snap_psibeta_gpu();
  * @param nlm_dim 1 for no current, 4 for current calculation
  * @param nlm_tot Output: nlm_tot[ad][dir][iw_index] = nlm_vector
  */
-void snap_psibeta_atom_batch_gpu(
+void snap_psibeta_atom_batch_gpu (
     const LCAO_Orbitals& orb,
     const InfoNonlocal& infoNL_,
     const int T0,

@@ -3,8 +3,10 @@
 
 #include <vector>
 
-namespace Grid {
-namespace Batch {
+namespace Grid
+{
+namespace Batch
+{
 
 /**
  * @brief Divide a set of points into batches by the "MaxMin" algorithm.
@@ -46,7 +48,7 @@ namespace Batch {
  * {0, 1, 4, 5}, {8, 9, 12, 13}, {2, 3, 6, 7}, {10, 11, 14, 15}.
  *
  */
-std::vector<int> maxmin(const double* grid, int* idx, int m, int m_thr);
+std::vector<int> maxmin (const double* grid, int* idx, int m, int m_thr);
 
 } // end of namespace Batch
 } // end of namespace Grid

@@ -1,12 +1,14 @@
 #include "source_pw/module_pwdft/kernels/wf_op.h"
 #include "source_base/libm/libm.h"
 
-namespace hamilt{
+namespace hamilt
+{
 
 template <typename FPTYPE>
 struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* ctx,
+    void
+        operator() (const base_device::DEVICE_CPU* ctx,
                     const int& ik,
                     const int& ntype,
                     const int& nx,
@@ -34,46 +36,56 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
     {
 #ifdef _OPENMP
 #pragma omp parallel
-{
+        {
 #endif
-        int iat = 0;
-        for (int it = 0; it < ntype; it++) {
-            for (int ia = 0; ia < atom_na[it]; ia++) {
-                FPTYPE arg = 0.0;
-                for (int ii = 0; ii < 3; ii++) {
-                    arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
-                }
-                arg *= TWO_PI;
-                FPTYPE sinp, cosp;
-                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                const std::complex<FPTYPE> kphase = std::complex<FPTYPE>(cosp, -sinp);
+            int iat = 0;
+            for (int it = 0; it < ntype; it++)
+                {
+                    for (int ia = 0; ia < atom_na[it]; ia++)
+                        {
+                            FPTYPE arg = 0.0;
+                            for (int ii = 0; ii < 3; ii++)
+                                {
+                                    arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
+                                }
+                            arg *= TWO_PI;
+                            FPTYPE sinp, cosp;
+                            ModuleBase::libm::sincos (arg, &sinp, &cosp);
+                            const std::complex<FPTYPE> kphase = std::complex<FPTYPE> (cosp, -sinp);
 #ifdef _OPENMP
 #pragma omp for
 #endif
-                for (int igl = 0; igl < npw; ++igl) {
-                    const int isz = igl2isz[ik * npwx + igl];
-                    int iz = isz % nz;
-                    const int is = isz / nz;
-                    const int ixy = is2fftixy[is];
-                    int ix = ixy / fftny;
-                    int iy = ixy % fftny;
-                    if (ix >= int(nx / 2) + 1)
-                        ix -= nx;
-                    if (iy >= int(ny / 2) + 1)
-                        iy -= ny;
-                    if (iz >= int(nz / 2) + 1)
-                        iz -= nz;
-                    ix += rho_nx;
-                    iy += rho_ny;
-                    iz += rho_nz;
-                    sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
-                                          * eigts3[iat * eigts3_nc + iz];
+                            for (int igl = 0; igl < npw; ++igl)
+                                {
+                                    const int isz = igl2isz[ik * npwx + igl];
+                                    int iz = isz % nz;
+                                    const int is = isz / nz;
+                                    const int ixy = is2fftixy[is];
+                                    int ix = ixy / fftny;
+                                    int iy = ixy % fftny;
+                                    if (ix >= int (nx / 2) + 1)
+                                        {
+                                            ix -= nx;
+                                        }
+                                    if (iy >= int (ny / 2) + 1)
+                                        {
+                                            iy -= ny;
+                                        }
+                                    if (iz >= int (nz / 2) + 1)
+                                        {
+                                            iz -= nz;
+                                        }
+                                    ix += rho_nx;
+                                    iy += rho_ny;
+                                    iz += rho_nz;
+                                    sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix]
+                                                          * eigts2[iat * eigts2_nc + iy] * eigts3[iat * eigts3_nc + iz];
+                                }
+                            iat++;
+                        }
                 }
-                iat++;
-            }
-        }
 #ifdef _OPENMP
-}
+        }
 #endif
     }
 };
@@ -81,5 +93,4 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
 template struct cal_sk_op<float, base_device::DEVICE_CPU>;
 template struct cal_sk_op<double, base_device::DEVICE_CPU>;
 
-}  // namespace hamilt
-
+} // namespace hamilt

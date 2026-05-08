@@ -31,40 +31,40 @@ namespace DeePKS_domain
 // for deepks_v_delta = 1
 // calculates v_delta_precalc
 template <typename TK>
-void cal_v_delta_precalc(const int nlocal,
-                         const int nat,
-                         const int nks,
-                         const DeePKS_Param& deepks_param,
-                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                         const std::vector<hamilt::HContainer<double>*> phialpha,
-                         const std::vector<torch::Tensor> gevdm,
-                         const UnitCell& ucell,
-                         const LCAO_Orbitals& orb,
-                         const Parallel_Orbitals& pv,
-                         const Grid_Driver& GridD,
-                         torch::Tensor& v_delta_precalc);
+void cal_v_delta_precalc (const int nlocal,
+                          const int nat,
+                          const int nks,
+                          const DeePKS_Param& deepks_param,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                          const std::vector<hamilt::HContainer<double>*> phialpha,
+                          const std::vector<torch::Tensor> gevdm,
+                          const UnitCell& ucell,
+                          const LCAO_Orbitals& orb,
+                          const Parallel_Orbitals& pv,
+                          const Grid_Driver& GridD,
+                          torch::Tensor& v_delta_precalc);
 
 // for deepks_v_delta = 2
 // prepare phialpha for outputting npy file
 template <typename TK>
-void prepare_phialpha(const int nlocal,
-                      const int nat,
-                      const int nks,
-                      const DeePKS_Param& deepks_param,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                      const std::vector<hamilt::HContainer<double>*> phialpha,
-                      const UnitCell& ucell,
-                      const LCAO_Orbitals& orb,
-                      const Parallel_Orbitals& pv,
-                      const Grid_Driver& GridD,
-                      torch::Tensor& phialpha_out);
+void prepare_phialpha (const int nlocal,
+                       const int nat,
+                       const int nks,
+                       const DeePKS_Param& deepks_param,
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                       const std::vector<hamilt::HContainer<double>*> phialpha,
+                       const UnitCell& ucell,
+                       const LCAO_Orbitals& orb,
+                       const Parallel_Orbitals& pv,
+                       const Grid_Driver& GridD,
+                       torch::Tensor& phialpha_out);
 
 // prepare gevdm for outputting npy file
-void prepare_gevdm(const int nat,
-                   const DeePKS_Param& deepks_param,
-                   const LCAO_Orbitals& orb,
-                   const std::vector<torch::Tensor>& gevdm_in,
-                   torch::Tensor& gevdm_out);
+void prepare_gevdm (const int nat,
+                    const DeePKS_Param& deepks_param,
+                    const LCAO_Orbitals& orb,
+                    const std::vector<torch::Tensor>& gevdm_in,
+                    torch::Tensor& gevdm_out);
 } // namespace DeePKS_domain
 #endif
 #endif

@@ -20,33 +20,33 @@
 class CellIndex
 {
   public:
-    CellIndex() = default;
-    CellIndex(const std::vector<std::string>& atomLabels_in,
-              const std::vector<int>& atomCounts_in,
-              const std::vector<std::vector<int>>& lnchiCounts_in,
-              const int& nspin);
+    CellIndex () = default;
+    CellIndex (const std::vector<std::string>& atomLabels_in,
+               const std::vector<int>& atomCounts_in,
+               const std::vector<std::vector<int>>& lnchiCounts_in,
+               const int& nspin);
 
   public:
     /// @brief the total number of atoms
-    int get_nat() const;
+    int get_nat () const;
     /// @brief the total number of atoms of a given type
-    int get_nat(int it) const;
+    int get_nat (int it) const;
     /// @brief get ntype
-    int get_ntype() const;
+    int get_ntype () const;
     /// @brief get nw
-    int get_nw() const;
+    int get_nw () const;
     /// @brief get nw of a given type
-    int get_nw(int iat) const;
+    int get_nw (int iat) const;
     /// @brief get iwt
-    int get_iwt(int iat, int orbital_index) const;
+    int get_iwt (int iat, int orbital_index) const;
     /// @brief get maximum L of a given atom
-    int get_maxL(int iat) const;
+    int get_maxL (int iat) const;
     /// @brief  get nchi of a given atom and a give L
-    int get_nchi(int iat, int L) const;
+    int get_nchi (int iat, int L) const;
     /// @brief get atom label of a given atom
-    std::string get_atom_label(int iat, bool order = false) const;
+    std::string get_atom_label (int iat, bool order = false) const;
     /// @brief write orbital info into file
-    void write_orb_info(const std::string& out_dir) const;
+    void write_orb_info (const std::string& out_dir) const;
 
   private:
     /// atomCounts is a vector used to store the number of atoms for each type
@@ -60,21 +60,21 @@ class CellIndex
     /// npol is determined by nspin and used in get_iwt and get_nw
     int npol_ = 1;
     /// calculate orbitalCounts from lnchiCounts
-    void cal_orbitalCounts();
+    void cal_orbitalCounts ();
     /// check nspin
-    bool check_nspin(int nspin);
+    bool check_nspin (int nspin);
     /// check if atomCounts is set ok
-    void check_atomCounts();
+    void check_atomCounts ();
     /// get type of atom from total order
-    int iat2it(int iat) const;
+    int iat2it (int iat) const;
     /// get index of atom in the same type
-    int iat2ia(int iat) const;
+    int iat2ia (int iat) const;
     /// get L from iw
-    int iw2l(int iat, int iw) const;
+    int iw2l (int iat, int iw) const;
     /// get Z from iw
-    int iw2z(int iat, int iw) const;
+    int iw2z (int iat, int iw) const;
     /// get m from iw
-    int iw2m(int iat, int iw) const;
+    int iw2m (int iat, int iw) const;
 };
 
 #endif // CELL_INDEX_H

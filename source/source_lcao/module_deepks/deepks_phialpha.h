@@ -22,28 +22,28 @@ namespace DeePKS_domain
 // for checking
 
 // calculates <chi|alpha>
-void allocate_phialpha(const bool& cal_deri,
-                       const UnitCell& ucell,
-                       const LCAO_Orbitals& orb,
-                       const Grid_Driver& GridD,
-                       const Parallel_Orbitals* pv,
-                       std::vector<hamilt::HContainer<double>*>& phialpha);
+void allocate_phialpha (const bool& cal_deri,
+                        const UnitCell& ucell,
+                        const LCAO_Orbitals& orb,
+                        const Grid_Driver& GridD,
+                        const Parallel_Orbitals* pv,
+                        std::vector<hamilt::HContainer<double>*>& phialpha);
 
-void build_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                    const UnitCell& ucell,
-                    const LCAO_Orbitals& orb,
-                    const Grid_Driver& GridD,
-                    const Parallel_Orbitals* pv,
-                    const TwoCenterIntegrator& overlap_orb_alpha,
-                    std::vector<hamilt::HContainer<double>*>& phialpha);
+void build_phialpha (const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
+                     const UnitCell& ucell,
+                     const LCAO_Orbitals& orb,
+                     const Grid_Driver& GridD,
+                     const Parallel_Orbitals* pv,
+                     const TwoCenterIntegrator& overlap_orb_alpha,
+                     std::vector<hamilt::HContainer<double>*>& phialpha);
 
-void check_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                    const UnitCell& ucell,
-                    const LCAO_Orbitals& orb,
-                    const Grid_Driver& GridD,
-                    const Parallel_Orbitals* pv,
-                    std::vector<hamilt::HContainer<double>*>& phialpha,
-                    const int rank);
+void check_phialpha (const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
+                     const UnitCell& ucell,
+                     const LCAO_Orbitals& orb,
+                     const Grid_Driver& GridD,
+                     const Parallel_Orbitals* pv,
+                     std::vector<hamilt::HContainer<double>*>& phialpha,
+                     const int rank);
 } // namespace DeePKS_domain
 
 #endif

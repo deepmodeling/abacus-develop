@@ -11,11 +11,11 @@ struct Input_para;
 namespace pw
 {
 
-void update_cell_pw(const UnitCell& ucell,
-                    pseudopot_cell_vnl& ppcell,
-                    const K_Vectors& kv,
-                    ModulePW::PW_Basis_K* pw_wfc,
-                    const Input_para& inp);
+void update_cell_pw (const UnitCell& ucell,
+                     pseudopot_cell_vnl& ppcell,
+                     const K_Vectors& kv,
+                     ModulePW::PW_Basis_K* pw_wfc,
+                     const Input_para& inp);
 
 }
 #endif

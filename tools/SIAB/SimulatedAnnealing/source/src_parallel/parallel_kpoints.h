@@ -5,35 +5,31 @@
 
 class Parallel_Kpoints
 {
-	public:
-	
-	Parallel_Kpoints();
-	~Parallel_Kpoints();	
+  public:
+    Parallel_Kpoints ();
+    ~Parallel_Kpoints ();
 
-	void init();
-	void kinfo(int &nkstot);
-	
-	void pool_collection(double &value, const double *wk, const int &ik);
-	void pool_collection(double *value, const realArray& overlap, const int &ik);
+    void init ();
+    void kinfo (int& nkstot);
 
-	// information about pool
-	int *nproc_pool;
-	int *startpro_pool;
+    void pool_collection (double& value, const double* wk, const int& ik);
+    void pool_collection (double* value, const realArray& overlap, const int& ik);
 
-	// inforamation about kpoints
-	int* nks_pool;
-	int* startk_pool;
-	int* whichpool;
+    // information about pool
+    int* nproc_pool;
+    int* startpro_pool;
 
-	private:
+    // inforamation about kpoints
+    int* nks_pool;
+    int* startk_pool;
+    int* whichpool;
 
-	void divide_pools();
+  private:
+    void divide_pools ();
 
-	void get_nks_pool(const int &nkstot);
-	void get_startk_pool(const int &nkstot);
-	void get_whichpool(const int &nkstot);
-
-
+    void get_nks_pool (const int& nkstot);
+    void get_startk_pool (const int& nkstot);
+    void get_whichpool (const int& nkstot);
 };
 
 #endif

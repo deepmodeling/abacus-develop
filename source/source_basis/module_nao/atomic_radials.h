@@ -23,35 +23,42 @@
 class AtomicRadials : public RadialSet
 {
   public:
-    AtomicRadials() {}
-    AtomicRadials(const AtomicRadials& other) : RadialSet(other), orb_ecut_(other.orb_ecut_) {}
+    AtomicRadials () {}
+    AtomicRadials (const AtomicRadials& other) : RadialSet (other), orb_ecut_ (other.orb_ecut_) {}
 
-    AtomicRadials& operator=(const AtomicRadials& rhs);
-    AtomicRadials* clone() const { return new AtomicRadials(*this); } // covariant return type
+    AtomicRadials& operator= (const AtomicRadials& rhs);
+    AtomicRadials*
+        clone () const
+    {
+        return new AtomicRadials (*this);
+    } // covariant return type
 
-    ~AtomicRadials() {} // ~RadialSet() is called automatically
+    ~AtomicRadials () {} // ~RadialSet() is called automatically
 
     //! Build the class from an orbital file
-    void build(const std::string& file,          //!< orbital file name
-               const int itype = 0,              //!< element index in calculation
-               std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-               const int rank = 0                //!< MPI rank
+    void build (const std::string& file,          //!< orbital file name
+                const int itype = 0,              //!< element index in calculation
+                std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+                const int rank = 0                //!< MPI rank
     );
 
-    void build(RadialSet* const other, const int itype, const double rcut);
+    void build (RadialSet* const other, const int itype, const double rcut);
 
     //! Get the energy cutoff as given by the orbital file
-    double orb_ecut() const { return orb_ecut_; }
+    double
+        orb_ecut () const
+    {
+        return orb_ecut_;
+    }
 
   private:
     double orb_ecut_; //!< energy cutoff as given by the orbital file
 
     //! Read the orbital file in the ABACUS format
-    void read_abacus_orb(std::ifstream& ifs,               //!< input file stream from orbital file
-                         std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-                         const int rank = 0                //!< MPI rank
+    void read_abacus_orb (std::ifstream& ifs,               //!< input file stream from orbital file
+                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+                          const int rank = 0                //!< MPI rank
     );
-
 };
 
 #endif

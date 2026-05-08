@@ -11,22 +11,21 @@ namespace ModuleGint
 
 class Gint_vl_gpu : public Gint
 {
-    public:
-    Gint_vl_gpu(
-        const double* vr_eff,
-        HContainer<double>* hR)
-        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
-    
-    void cal_gint();
+  public:
+    Gint_vl_gpu (const double* vr_eff, HContainer<double>* hR)
+        : vr_eff_ (vr_eff), hR_ (hR), dr3_ (gint_info_->get_mgrid_volume ())
+    {
+    }
 
-    private:
-    template<typename Real>
-    void cal_gint_impl_();
+    void cal_gint ();
+
+  private:
+    template <typename Real>
+    void cal_gint_impl_ ();
 
     // input
     const double* vr_eff_ = nullptr;
 
-        
     // output
     HContainer<double>* hR_;
 
@@ -34,4 +33,4 @@ class Gint_vl_gpu : public Gint
     double dr3_;
 };
 
-}
+} // namespace ModuleGint

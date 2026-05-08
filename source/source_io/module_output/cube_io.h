@@ -8,59 +8,59 @@ class Parallel_Grid;
 namespace ModuleIO
 {
 /// read volumetric data from .cube file into the parallel distributed grid.
-bool read_vdata_palgrid(const Parallel_Grid& pgrid,
-                        const int my_rank,
-                        std::ofstream& ofs_running,
-                        const std::string& fn,
-                        double* const data,
-                        const int nat);
+bool read_vdata_palgrid (const Parallel_Grid& pgrid,
+                         const int my_rank,
+                         std::ofstream& ofs_running,
+                         const std::string& fn,
+                         double* const data,
+                         const int nat);
 
 /// write volumetric data on the parallized grid into a .cube file
-void write_vdata_palgrid(const Parallel_Grid& pgrid,
-                         const double* const data,
-                         const int is,
-                         const int nspin,
-                         const int iter,
-                         const std::string& fn,
-                         const double ef,
-                         const UnitCell* const ucell,
-                         const int precision = 11,
-                         const int out_fermi = 1,
-                         const bool reduce_all_pool = false); // only reduce in the main pool as default
+void write_vdata_palgrid (const Parallel_Grid& pgrid,
+                          const double* const data,
+                          const int is,
+                          const int nspin,
+                          const int iter,
+                          const std::string& fn,
+                          const double ef,
+                          const UnitCell* const ucell,
+                          const int precision = 11,
+                          const int out_fermi = 1,
+                          const bool reduce_all_pool = false); // only reduce in the main pool as default
 
 /// read the full data from a cube file
-bool read_cube(const std::string& file,
-               std::vector<std::string>& comment,
-               int& natom,
-               std::vector<double>& origin,
-               int& nx,
-               int& ny,
-               int& nz,
-               std::vector<double>& dx,
-               std::vector<double>& dy,
-               std::vector<double>& dz,
-               std::vector<int>& atom_type,
-               std::vector<double>& atom_charge,
-               std::vector<std::vector<double>>& atom_pos,
-               std::vector<double>& data);
+bool read_cube (const std::string& file,
+                std::vector<std::string>& comment,
+                int& natom,
+                std::vector<double>& origin,
+                int& nx,
+                int& ny,
+                int& nz,
+                std::vector<double>& dx,
+                std::vector<double>& dy,
+                std::vector<double>& dz,
+                std::vector<int>& atom_type,
+                std::vector<double>& atom_charge,
+                std::vector<std::vector<double>>& atom_pos,
+                std::vector<double>& data);
 
 /// write a cube file
-void write_cube(const std::string& file,
-                const std::vector<std::string>& comment,
-                const int& natom,
-                const std::vector<double>& origin,
-                const int& nx,
-                const int& ny,
-                const int& nz,
-                const std::vector<double>& dx,
-                const std::vector<double>& dy,
-                const std::vector<double>& dz,
-                const std::vector<int>& atom_type,
-                const std::vector<double>& atom_charge,
-                const std::vector<std::vector<double>>& atom_pos,
-                const std::vector<double>& data,
-                const int precision,
-                const int ndata_line = 6);
+void write_cube (const std::string& file,
+                 const std::vector<std::string>& comment,
+                 const int& natom,
+                 const std::vector<double>& origin,
+                 const int& nx,
+                 const int& ny,
+                 const int& nz,
+                 const std::vector<double>& dx,
+                 const std::vector<double>& dy,
+                 const std::vector<double>& dz,
+                 const std::vector<int>& atom_type,
+                 const std::vector<double>& atom_charge,
+                 const std::vector<std::vector<double>>& atom_pos,
+                 const std::vector<double>& data,
+                 const int precision,
+                 const int ndata_line = 6);
 
 /**
  * @brief The trilinear interpolation method
@@ -92,14 +92,14 @@ void write_cube(const std::string& file,
  * @param nz the dimension of grids along z
  * @param data_out the interpolated results of size nxyz
  */
-void trilinear_interpolate(const double* const data_in,
-                           const int& nx_read,
-                           const int& ny_read,
-                           const int& nz_read,
-                           const int& nx,
-                           const int& ny,
-                           const int& nz,
-                           double* data_out);
+void trilinear_interpolate (const double* const data_in,
+                            const int& nx_read,
+                            const int& ny_read,
+                            const int& nz_read,
+                            const int& nx,
+                            const int& ny,
+                            const int& nz,
+                            double* data_out);
 } // namespace ModuleIO
 
 #endif

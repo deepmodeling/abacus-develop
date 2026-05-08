@@ -21,19 +21,19 @@ class HamiltSdftPW : public HamiltPW<T, Device>
      * @param emin_in Emin of the Hamiltonian
      * @param emax_in Emax of the Hamiltonian
      */
-    HamiltSdftPW(elecstate::Potential* pot_in,
-                 ModulePW::PW_Basis_K* wfc_basis,
-                 K_Vectors* p_kv,
-                 pseudopot_cell_vnl* nlpp,
-                 const UnitCell* ucell,
-				 const int& npol,
-                 Real* emin_in,
-                 Real* emax_in);
+    HamiltSdftPW (elecstate::Potential* pot_in,
+                  ModulePW::PW_Basis_K* wfc_basis,
+                  K_Vectors* p_kv,
+                  pseudopot_cell_vnl* nlpp,
+                  const UnitCell* ucell,
+                  const int& npol,
+                  Real* emin_in,
+                  Real* emax_in);
     /**
      * @brief Destroy the HamiltSdftPW object
      *
      */
-    ~HamiltSdftPW(){};
+    ~HamiltSdftPW () {};
 
     /**
      * @brief Calculate \hat{H}|psi>
@@ -42,7 +42,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
      * @param hpsi output wave function
      * @param nbands number of bands
      */
-    void hPsi(const T* psi_in, T* hpsi, const int& nbands = 1);
+    void hPsi (const T* psi_in, T* hpsi, const int& nbands = 1);
 
     /**
      * @brief Calculate \hat{H}|psi> and normalize it
@@ -51,7 +51,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
      * @param hpsi output wave function
      * @param nbands number of bands
      */
-    void hPsi_norm(const T* psi_in, T* hpsi, const int& nbands = 1);
+    void hPsi_norm (const T* psi_in, T* hpsi, const int& nbands = 1);
 
     Real* emin = nullptr; ///< Emin of the Hamiltonian
     Real* emax = nullptr; ///< Emax of the Hamiltonian

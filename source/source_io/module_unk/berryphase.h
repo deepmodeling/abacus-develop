@@ -13,11 +13,11 @@ class berryphase
 {
 
   public:
-    berryphase(); // for pw-line
+    berryphase (); // for pw-line
 #ifdef __LCAO
-    berryphase(const Parallel_Orbitals* paraV_in); // for lcao-line
+    berryphase (const Parallel_Orbitals* paraV_in); // for lcao-line
 #endif
-    ~berryphase();
+    ~berryphase ();
 
     // mohan add 2021-02-16
     static bool berry_phase_flag;
@@ -27,58 +27,57 @@ class berryphase
     const Parallel_Orbitals* paraV = nullptr;
 #endif
 
-    int total_string=0;
+    int total_string = 0;
     std::vector<std::vector<int>> k_index;
-    int nppstr=0;
-    int direction=0;
-    int occ_nbands=0;
+    int nppstr = 0;
+    int direction = 0;
+    int occ_nbands = 0;
     int GDIR;
 
-    void get_occupation_bands();
+    void get_occupation_bands ();
 #ifdef __LCAO
-    void lcao_init(const UnitCell& ucell,
-                   const Grid_Driver& gd,
-                   const K_Vectors& kv,
-                   const LCAO_Orbitals& orb);
+    void lcao_init (const UnitCell& ucell, const Grid_Driver& gd, const K_Vectors& kv, const LCAO_Orbitals& orb);
 #endif
-    void set_kpoints(const K_Vectors& kv, const int direction);
+    void set_kpoints (const K_Vectors& kv, const int direction);
 
-    double stringPhase(const UnitCell& ucell,
-                       int index_str,
-                       int nbands,
-                       const int npwx,
-                       const psi::Psi<std::complex<double>>* psi_in,
-                       const ModulePW::PW_Basis* rhopw,
-                       const ModulePW::PW_Basis_K* wfcpw,
-                       const K_Vectors& kv);
+    double stringPhase (const UnitCell& ucell,
+                        int index_str,
+                        int nbands,
+                        const int npwx,
+                        const psi::Psi<std::complex<double>>* psi_in,
+                        const ModulePW::PW_Basis* rhopw,
+                        const ModulePW::PW_Basis_K* wfcpw,
+                        const K_Vectors& kv);
 
-    void Berry_Phase(const UnitCell& ucell,
-                     int nbands,
-                     double& pdl_elec_tot,
-                     int& mod_elec_tot,
-                     const int npwx,
-                     const psi::Psi<std::complex<double>>* psi_in,
-                     const ModulePW::PW_Basis* rhopw,
-                     const ModulePW::PW_Basis_K* wfcpw,
-                     const K_Vectors& kv);
+    void Berry_Phase (const UnitCell& ucell,
+                      int nbands,
+                      double& pdl_elec_tot,
+                      int& mod_elec_tot,
+                      const int npwx,
+                      const psi::Psi<std::complex<double>>* psi_in,
+                      const ModulePW::PW_Basis* rhopw,
+                      const ModulePW::PW_Basis_K* wfcpw,
+                      const K_Vectors& kv);
 
-    void Macroscopic_polarization(const UnitCell& ucell,
+    void
+        Macroscopic_polarization (const UnitCell& ucell,
                                   const int npwx,
                                   const psi::Psi<double>* psi_in,
                                   const ModulePW::PW_Basis* rhopw,
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv)
     {
-        throw std::logic_error("berry phase supports only multi-k");
+        throw std::logic_error ("berry phase supports only multi-k");
     };
-    void Macroscopic_polarization(const UnitCell& ucell,
-                                  const int npwx,
-                                  const psi::Psi<std::complex<double>>* psi_in,
-                                  const ModulePW::PW_Basis* rhopw,
-                                  const ModulePW::PW_Basis_K* wfcpw,
-                                  const K_Vectors& kv);
+    void Macroscopic_polarization (const UnitCell& ucell,
+                                   const int npwx,
+                                   const psi::Psi<std::complex<double>>* psi_in,
+                                   const ModulePW::PW_Basis* rhopw,
+                                   const ModulePW::PW_Basis_K* wfcpw,
+                                   const K_Vectors& kv);
 
-    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
+    std::string
+        outFormat (const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
 };
 
 #endif

@@ -7,12 +7,11 @@
 
 namespace ModuleIO
 {
-void nscf_fermi_surface(const std::string& out_band_dir,
-                        const int& nband,
-                        const double& ef,
-                        const K_Vectors& kv,
-                        const UnitCell& ucell,
-                        const ModuleBase::matrix& ekb);
+void nscf_fermi_surface (const std::string& out_band_dir,
+                         const int& nband,
+                         const double& ef,
+                         const K_Vectors& kv,
+                         const UnitCell& ucell,
+                         const ModuleBase::matrix& ekb);
 }
 #endif
-

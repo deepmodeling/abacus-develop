@@ -25,13 +25,13 @@ namespace Input_Conv
  * @brief template bridge codes for converting string to other types
  *
  */
-void tmp_convert();
+void tmp_convert ();
 
 /**
  * @brief Pass the data members from the INPUT instance(defined in
  * source_io/input.cpp) to GlobalV and GlobalC.
  */
-void Convert();
+void Convert ();
 
 /**
  * @brief To parse input parameters as expressions into vectors
@@ -43,89 +43,90 @@ void Convert();
  *            [1, 1, 1, 0, 0.5, 0.5, 1.5]
  */
 template <typename T>
-void parse_expression(const std::string& fn, std::vector<T>& vec)
+void
+    parse_expression (const std::string& fn, std::vector<T>& vec)
 {
-    ModuleBase::TITLE("Input_Conv", "parse_expression");
+    ModuleBase::TITLE ("Input_Conv", "parse_expression");
     int count = 0;
 
     // Update the regex pattern to handle scientific notation
-    std::string pattern("([-+]?[0-9]+\\*[-+]?[0-9.eE+-]+|[-+]?[0-9,.eE+-]+)");
+    std::string pattern ("([-+]?[0-9]+\\*[-+]?[0-9.eE+-]+|[-+]?[0-9,.eE+-]+)");
 
     std::vector<std::string> str;
-    std::stringstream ss(fn);
+    std::stringstream ss (fn);
     std::string section;
 
     // Split the input string into substrings by spaces
     while (ss >> section)
-    {
-        int index = 0;
-        if (str.empty())
         {
-            while (index < section.size() && std::isspace(section[index]))
-            {
-                index++;
-            }
+            int index = 0;
+            if (str.empty ())
+                {
+                    while (index < section.size () && std::isspace (section[index]))
+                        {
+                            index++;
+                        }
+                }
+            section.erase (0, index);
+            str.push_back (section);
         }
-        section.erase(0, index);
-        str.push_back(section);
-    }
 
     // Compile the regular expression
     regex_t reg;
-    regcomp(&reg, pattern.c_str(), REG_EXTENDED);
+    regcomp (&reg, pattern.c_str (), REG_EXTENDED);
     regmatch_t pmatch[1];
     const size_t nmatch = 1;
 
     // Loop over each section and apply regex to extract numbers
-    for (size_t i = 0; i < str.size(); ++i)
-    {
-        if (str[i] == "")
+    for (size_t i = 0; i < str.size (); ++i)
         {
-            continue;
+            if (str[i] == "")
+                {
+                    continue;
+                }
+            int status = regexec (&reg, str[i].c_str (), nmatch, pmatch, 0);
+            std::string sub_str = "";
+
+            // Extract the matched substring
+            for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
+                {
+                    sub_str += str[i][j];
+                }
+
+            // Check if the substring contains multiplication (e.g., "2*3.14")
+            std::string sub_pattern ("\\*");
+            regex_t sub_reg;
+            regcomp (&sub_reg, sub_pattern.c_str (), REG_EXTENDED);
+            regmatch_t sub_pmatch[1];
+            const size_t sub_nmatch = 1;
+
+            if (regexec (&sub_reg, sub_str.c_str (), sub_nmatch, sub_pmatch, 0) == 0)
+                {
+                    size_t pos = sub_str.find ("*");
+                    int num = stoi (sub_str.substr (0, pos));
+                    assert (num >= 0);
+                    T occ = stof (sub_str.substr (pos + 1, sub_str.size ()));
+
+                    // Add the value to the vector `num` times
+                    for (size_t k = 0; k != num; k++)
+                        {
+                            vec.emplace_back (occ);
+                        }
+                }
+            else
+                {
+                    // Handle scientific notation and convert to T
+                    std::stringstream convert;
+                    convert << sub_str;
+                    T occ;
+                    convert >> occ;
+                    vec.emplace_back (occ);
+                }
+
+            regfree (&sub_reg);
         }
-        int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
-        std::string sub_str = "";
 
-        // Extract the matched substring
-        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
-        {
-            sub_str += str[i][j];
-        }
-
-        // Check if the substring contains multiplication (e.g., "2*3.14")
-        std::string sub_pattern("\\*");
-        regex_t sub_reg;
-        regcomp(&sub_reg, sub_pattern.c_str(), REG_EXTENDED);
-        regmatch_t sub_pmatch[1];
-        const size_t sub_nmatch = 1;
-
-        if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
-        {
-            size_t pos = sub_str.find("*");
-            int num = stoi(sub_str.substr(0, pos));
-            assert(num >= 0);
-            T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
-            
-            // Add the value to the vector `num` times
-            for (size_t k = 0; k != num; k++)
-            {
-                vec.emplace_back(occ);
-            }
-        }
-        else
-        {
-            // Handle scientific notation and convert to T
-            std::stringstream convert;
-            convert << sub_str;
-            T occ;
-            convert >> occ;
-            vec.emplace_back(occ);
-        }
-
-        regfree(&sub_reg);
-    }
-
-    regfree(&reg);
+    regfree (&reg);
 }
 
 #ifdef __LCAO
@@ -136,12 +137,12 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
  * @param c coefficients of unit conversion
  * @return parame*c : parameter after unit vonversion
  */
-std::vector<double> convert_units(std::string params, double c);
+std::vector<double> convert_units (std::string params, double c);
 
 /**
  * @brief read paramers of electric field for tddft and convert units
  */
-void read_td_efield();
+void read_td_efield ();
 #endif
 
 } // namespace Input_Conv

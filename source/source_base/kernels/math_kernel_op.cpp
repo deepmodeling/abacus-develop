@@ -10,7 +10,8 @@ namespace ModuleBase
 template <typename T>
 struct gemv_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const char& trans,
+    void
+        operator() (const char& trans,
                     const int& m,
                     const int& n,
                     const T* alpha,
@@ -22,14 +23,15 @@ struct gemv_op<T, base_device::DEVICE_CPU>
                     T* Y,
                     const int& incy)
     {
-        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
+        BlasConnector::gemv (trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
     }
 };
 
 template <typename T>
 struct gemm_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const char& transa,
+    void
+        operator() (const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,
@@ -43,7 +45,7 @@ struct gemm_op<T, base_device::DEVICE_CPU>
                     T* c,
                     const int& ldc)
     {
-        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
+        BlasConnector::gemm (transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
     }
 };
 
@@ -51,7 +53,8 @@ struct gemm_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemv_op_mt<T, base_device::DEVICE_CPU>
 {
-    void operator()(const char& trans,
+    void
+        operator() (const char& trans,
                     const int& m,
                     const int& n,
                     const T* alpha,
@@ -63,14 +66,26 @@ struct gemv_op_mt<T, base_device::DEVICE_CPU>
                     T* Y,
                     const int& incy)
     {
-        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy, base_device::AbacusDevice_t::DspDevice);
+        BlasConnector::gemv (trans,
+                             m,
+                             n,
+                             *alpha,
+                             A,
+                             lda,
+                             X,
+                             incx,
+                             *beta,
+                             Y,
+                             incy,
+                             base_device::AbacusDevice_t::DspDevice);
     }
 };
 
 template <typename T>
 struct gemm_op_mt<T, base_device::DEVICE_CPU>
 {
-    void operator()(const char& transa,
+    void
+        operator() (const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,
@@ -84,7 +99,20 @@ struct gemm_op_mt<T, base_device::DEVICE_CPU>
                     T* c,
                     const int& ldc)
     {
-        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc, base_device::AbacusDevice_t::DspDevice);
+        BlasConnector::gemm (transb,
+                             transa,
+                             n,
+                             m,
+                             k,
+                             *alpha,
+                             b,
+                             ldb,
+                             a,
+                             lda,
+                             *beta,
+                             c,
+                             ldc,
+                             base_device::AbacusDevice_t::DspDevice);
     }
 };
 #endif
@@ -92,71 +120,75 @@ struct gemm_op_mt<T, base_device::DEVICE_CPU>
 template <typename T>
 struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const int& row,
-                    const int& col,
-                    const T* input_matrix,
-                    T* output_matrix)
+    void
+        operator() (const int& row, const int& col, const T* input_matrix, T* output_matrix)
     {
         T* temp = nullptr;
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(temp, row * col, "MTransOp");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU> () (temp, row * col, "MTransOp");
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int j = 0; j < col; j++)
-        {
-            for (int i = 0; i < row; i++)
             {
-                temp[j * row + i] = input_matrix[i * col + j];
+                for (int i = 0; i < row; i++)
+                    {
+                        temp[j * row + i] = input_matrix[i * col + j];
+                    }
             }
-        }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < row * col; i++)
-        {
-            output_matrix[i] = temp[i];
-        }
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(temp);
+            {
+                output_matrix[i] = temp[i];
+            }
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU> () (temp);
     }
 };
 
 template <typename T>
 struct matrixCopy<T, base_device::DEVICE_CPU>
 {
-    void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
+    void
+        operator() (const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
         for (int i = 0; i < n1; i++)
-        {
-            for (int j = 0; j < n2; j++)
             {
-                B[i * LDB + j] = A[i * LDA + j];
+                for (int j = 0; j < n2; j++)
+                    {
+                        B[i * LDB + j] = A[i * LDA + j];
+                    }
             }
-        }
     }
 };
 
 template <typename T>
-struct matrix_mul_vector_op<T, base_device::DEVICE_CPU> {
+struct matrix_mul_vector_op<T, base_device::DEVICE_CPU>
+{
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& m, const int &n,
-                  T *a,
-                  const int &lda,
-                  const Real *b,
-                  const Real alpha,
-                  T *c,
-                  const int &ldc){
+    void
+        operator() (const int& m,
+                    const int& n,
+                    T* a,
+                    const int& lda,
+                    const Real* b,
+                    const Real alpha,
+                    T* c,
+                    const int& ldc)
+    {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
-        for (int j = 0; j < n; j++){
-            for (int i = 0; i < m; i++){
-                c[j * ldc + i] = a[j * lda + i] * b[j] * alpha;
+        for (int j = 0; j < n; j++)
+            {
+                for (int i = 0; i < m; i++)
+                    {
+                        c[j * ldc + i] = a[j * lda + i] * b[j] * alpha;
+                    }
             }
-        }
-
     }
 };
 

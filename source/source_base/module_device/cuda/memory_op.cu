@@ -16,218 +16,254 @@ namespace memory
 {
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-__global__ void cast_memory(FPTYPE_out* out, const FPTYPE_in* in, const int size)
+__global__ void
+    cast_memory (FPTYPE_out* out, const FPTYPE_in* in, const int size)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= size)
-    {
-        return;
-    }
-    out[idx] = static_cast<FPTYPE_out>(in[idx]);
+        {
+            return;
+        }
+    out[idx] = static_cast<FPTYPE_out> (in[idx]);
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-__global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FPTYPE_in>* in, const int size)
+__global__ void
+    cast_memory (std::complex<FPTYPE_out>* out, const std::complex<FPTYPE_in>* in, const int size)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= size)
-    {
-        return;
-    }
-    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
-    const auto* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*>(in);
-    _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(_in[idx]);
+        {
+            return;
+        }
+    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*> (out);
+    const auto* _in = reinterpret_cast<const thrust::complex<FPTYPE_in>*> (in);
+    _out[idx] = static_cast<thrust::complex<FPTYPE_out>> (_in[idx]);
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-__global__ void cast_memory(std::complex<FPTYPE_out>* out, const FPTYPE_in* in, const int size)
+__global__ void
+    cast_memory (std::complex<FPTYPE_out>* out, const FPTYPE_in* in, const int size)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= size)
-    {
-        return;
-    }
-    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
-    _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(in[idx]);
+        {
+            return;
+        }
+    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*> (out);
+    _out[idx] = static_cast<thrust::complex<FPTYPE_out>> (in[idx]);
 }
 
 template <typename FPTYPE>
-void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE*& arr,
+void
+    resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator() (FPTYPE*& arr,
                                                                    const size_t size,
                                                                    const char* record_in)
 {
     if (arr != nullptr)
-    {
-        delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr);
-    }
-    CHECK_CUDA(cudaMalloc((void**)&arr, sizeof(FPTYPE) * size));
+        {
+            delete_memory_op<FPTYPE, base_device::DEVICE_GPU> () (arr);
+        }
+    CHECK_CUDA (cudaMalloc ((void**)&arr, sizeof (FPTYPE) * size));
     std::string record_string;
     if (record_in != nullptr)
-    {
-        record_string = record_in;
-    }
+        {
+            record_string = record_in;
+        }
     else
-    {
-        record_string = "no_record";
-    }
+        {
+            record_string = "no_record";
+        }
 
     if (record_string != "no_record")
-    {
-        ModuleBase::Memory::record_gpu(record_string, sizeof(FPTYPE) * size);
-    }
+        {
+            ModuleBase::Memory::record_gpu (record_string, sizeof (FPTYPE) * size);
+        }
 }
 
 template <typename FPTYPE>
-void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr,
-                                                                const int var,
-                                                                const size_t size)
+void
+    set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator() (FPTYPE* arr, const int var, const size_t size)
 {
-    CHECK_CUDA(cudaMemset(arr, var, sizeof(FPTYPE) * size));
+    CHECK_CUDA (cudaMemset (arr, var, sizeof (FPTYPE) * size));
 }
 
 template <typename FPTYPE>
-void set_memory_2d_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr,
+void
+    set_memory_2d_op<FPTYPE, base_device::DEVICE_GPU>::operator() (FPTYPE* arr,
                                                                    const size_t pitch,
                                                                    const int var,
                                                                    const size_t width,
                                                                    const size_t height)
 {
-    CHECK_CUDA(cudaMemset2D(arr, sizeof(FPTYPE) * pitch , var, sizeof(FPTYPE) * width, height));
+    CHECK_CUDA (cudaMemset2D (arr, sizeof (FPTYPE) * pitch, var, sizeof (FPTYPE) * width, height));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator()(
-    FPTYPE* arr_out,
-    const FPTYPE* arr_in,
-    const size_t size)
+void
+    synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator() (FPTYPE* arr_out,
+                                                                                                 const FPTYPE* arr_in,
+                                                                                                 const size_t size)
 {
-    CHECK_CUDA(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToHost));
+    CHECK_CUDA (cudaMemcpy (arr_out, arr_in, sizeof (FPTYPE) * size, cudaMemcpyDeviceToHost));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator()(
-    FPTYPE* arr_out,
-    const FPTYPE* arr_in,
-    const size_t size)
+void
+    synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator() (FPTYPE* arr_out,
+                                                                                                 const FPTYPE* arr_in,
+                                                                                                 const size_t size)
 {
-    CHECK_CUDA(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice));
+    CHECK_CUDA (cudaMemcpy (arr_out, arr_in, sizeof (FPTYPE) * size, cudaMemcpyHostToDevice));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator()(
-    FPTYPE* arr_out,
-    const FPTYPE* arr_in,
-    const size_t size)
+void
+    synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator() (FPTYPE* arr_out,
+                                                                                                 const FPTYPE* arr_in,
+                                                                                                 const size_t size)
 {
-    CHECK_CUDA(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice));
+    CHECK_CUDA (cudaMemcpy (arr_out, arr_in, sizeof (FPTYPE) * size, cudaMemcpyDeviceToDevice));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator()(
-    FPTYPE* arr_out,
-    const size_t dpitch,
-    const FPTYPE* arr_in,
-    const size_t spitch,
-    const size_t width,
-    const size_t height)
+void
+    synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator() (
+        FPTYPE* arr_out,
+        const size_t dpitch,
+        const FPTYPE* arr_in,
+        const size_t spitch,
+        const size_t width,
+        const size_t height)
 {
-    CHECK_CUDA(cudaMemcpy2D(arr_out, dpitch * sizeof(FPTYPE), arr_in, spitch * sizeof(FPTYPE), width * sizeof(FPTYPE), height, cudaMemcpyDeviceToHost));
+    CHECK_CUDA (cudaMemcpy2D (arr_out,
+                              dpitch * sizeof (FPTYPE),
+                              arr_in,
+                              spitch * sizeof (FPTYPE),
+                              width * sizeof (FPTYPE),
+                              height,
+                              cudaMemcpyDeviceToHost));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator()(
-    FPTYPE* arr_out,
-    const size_t dpitch,
-    const FPTYPE* arr_in,
-    const size_t spitch,
-    const size_t width,
-    const size_t height)
+void
+    synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator() (
+        FPTYPE* arr_out,
+        const size_t dpitch,
+        const FPTYPE* arr_in,
+        const size_t spitch,
+        const size_t width,
+        const size_t height)
 {
-    CHECK_CUDA(cudaMemcpy2D(arr_out, dpitch * sizeof(FPTYPE), arr_in, spitch * sizeof(FPTYPE), width * sizeof(FPTYPE), height, cudaMemcpyHostToDevice));
+    CHECK_CUDA (cudaMemcpy2D (arr_out,
+                              dpitch * sizeof (FPTYPE),
+                              arr_in,
+                              spitch * sizeof (FPTYPE),
+                              width * sizeof (FPTYPE),
+                              height,
+                              cudaMemcpyHostToDevice));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator()(
-    FPTYPE* arr_out,
-    const size_t dpitch,
-    const FPTYPE* arr_in,
-    const size_t spitch,
-    const size_t width,
-    const size_t height)
+void
+    synchronize_memory_2d_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator() (
+        FPTYPE* arr_out,
+        const size_t dpitch,
+        const FPTYPE* arr_in,
+        const size_t spitch,
+        const size_t width,
+        const size_t height)
 {
-    CHECK_CUDA(cudaMemcpy2D(arr_out, dpitch * sizeof(FPTYPE), arr_in, spitch * sizeof(FPTYPE), width * sizeof(FPTYPE), height, cudaMemcpyDeviceToDevice));
+    CHECK_CUDA (cudaMemcpy2D (arr_out,
+                              dpitch * sizeof (FPTYPE),
+                              arr_in,
+                              spitch * sizeof (FPTYPE),
+                              width * sizeof (FPTYPE),
+                              height,
+                              cudaMemcpyDeviceToDevice));
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
 {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size)
+    void
+        operator() (FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size)
     {
         if (size == 0)
-        {
-            return;
-        }
+            {
+                return;
+            }
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
+        cast_memory<<<block, THREADS_PER_BLOCK>>> (arr_out, arr_in, size);
 
-        CHECK_CUDA_SYNC();
+        CHECK_CUDA_SYNC ();
     }
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU> {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size) {
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
+{
+    void
+        operator() (FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size)
+    {
 
-        if (size == 0) {return;}
+        if (size == 0)
+            {
+                return;
+            }
         // No need to cast the memory if the data types are the same.
         if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
-        {
-            synchronize_memory_op<FPTYPE_out, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(arr_out,
-                                                                                                  reinterpret_cast<const FPTYPE_out*>(arr_in),
-                                                                                                  size);
-            return;
-        }
-        FPTYPE_in * arr = nullptr;
-        CHECK_CUDA(cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
-        CHECK_CUDA(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice));
+            {
+                synchronize_memory_op<FPTYPE_out, base_device::DEVICE_GPU, base_device::DEVICE_CPU> () (
+                    arr_out,
+                    reinterpret_cast<const FPTYPE_out*> (arr_in),
+                    size);
+                return;
+            }
+        FPTYPE_in* arr = nullptr;
+        CHECK_CUDA (cudaMalloc ((void**)&arr, sizeof (FPTYPE_in) * size));
+        CHECK_CUDA (cudaMemcpy (arr, arr_in, sizeof (FPTYPE_in) * size, cudaMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        CHECK_CUDA_SYNC();
-        CHECK_CUDA(cudaFree(arr));
+        cast_memory<<<block, THREADS_PER_BLOCK>>> (arr_out, arr, size);
+        CHECK_CUDA_SYNC ();
+        CHECK_CUDA (cudaFree (arr));
     }
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU> {
-    void operator()(FPTYPE_out* arr_out,
-                    const FPTYPE_in* arr_in,
-                    const size_t size) {
-        if (size == 0) {return;}
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
+{
+    void
+        operator() (FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size)
+    {
+        if (size == 0)
+            {
+                return;
+            }
         // No need to cast the memory if the data types are the same.
         if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
-        {
-            synchronize_memory_op<FPTYPE_out, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(arr_out,
-                                                                                                  reinterpret_cast<const FPTYPE_out*>(arr_in),
-                                                                                                  size);
-            return;
-        }
-        auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
-        CHECK_CUDA(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyDeviceToHost));
-        for (int ii = 0; ii < size; ii++) {
-            arr_out[ii] = static_cast<FPTYPE_out>(arr[ii]);
-        }
-        free(arr);
+            {
+                synchronize_memory_op<FPTYPE_out, base_device::DEVICE_CPU, base_device::DEVICE_GPU> () (
+                    arr_out,
+                    reinterpret_cast<const FPTYPE_out*> (arr_in),
+                    size);
+                return;
+            }
+        auto* arr = (FPTYPE_in*)malloc (sizeof (FPTYPE_in) * size);
+        CHECK_CUDA (cudaMemcpy (arr, arr_in, sizeof (FPTYPE_in) * size, cudaMemcpyDeviceToHost));
+        for (int ii = 0; ii < size; ii++)
+            {
+                arr_out[ii] = static_cast<FPTYPE_out> (arr[ii]);
+            }
+        free (arr);
     }
 };
 
 template <typename FPTYPE>
-void delete_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr)
+void
+    delete_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator() (FPTYPE* arr)
 {
-    CHECK_CUDA(cudaFree(arr));
+    CHECK_CUDA (cudaFree (arr));
 }
 
 template struct resize_memory_op<int, base_device::DEVICE_GPU>;

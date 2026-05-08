@@ -13,31 +13,24 @@
 #include <nccl.h>
 #endif
 
-template<typename inputT>
+template <typename inputT>
 class Diag_CusolverMP_gvd
 {
   private:
     using outputT = typename GetTypeReal<inputT>::type;
 
   public:
-    Diag_CusolverMP_gvd(const MPI_Comm comm,
-                          const int narows,
-                          const int nacols,
-                          const int* desc);
-
+    Diag_CusolverMP_gvd (const MPI_Comm comm, const int narows, const int nacols, const int* desc);
 
     // 20240530 zhanghaochong
     // Here eigen is the output rather than the input. Don't be confused by inputT.
     // Here inputT is the data type, the data type of EigenVector should be the same as
     // the data type of the input matrix.
-    int generalized_eigenvector(inputT* A,
-                                inputT* B,
-                                outputT* EigenValue,
-                                inputT* EigenVector);
-    ~Diag_CusolverMP_gvd();
-    void outputParameters();
-  private:
+    int generalized_eigenvector (inputT* A, inputT* B, outputT* EigenValue, inputT* EigenVector);
+    ~Diag_CusolverMP_gvd ();
+    void outputParameters ();
 
+  private:
     int nFull;
     int cblacs_ctxt;
     int lda;

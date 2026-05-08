@@ -14,23 +14,23 @@
 class MSST : public MD_base
 {
   public:
-    MSST(const Parameter& param_in, UnitCell& unit_in);
-    ~MSST();
+    MSST (const Parameter& param_in, UnitCell& unit_in);
+    ~MSST ();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
-    void first_half(std::ofstream& ofs);
-    void second_half();
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
-    void write_restart(const std::string& global_out_dir);
-    void restart(const std::string& global_readin_dir);
+    void setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void first_half (std::ofstream& ofs);
+    void second_half ();
+    void print_md (std::ofstream& ofs, const bool& cal_stress);
+    void write_restart (const std::string& global_out_dir);
+    void restart (const std::string& global_readin_dir);
 
     /**
      * @brief get the sum of square of velocities
      *
      * @return the sum of square of velocities
      */
-    double vel_sum() const;
+    double vel_sum () const;
 
     /**
      * @brief rescale the lattice and velocities
@@ -38,19 +38,19 @@ class MSST : public MD_base
      * @param ofs determine the output files
      * @param volume the current cell volume
      */
-    void rescale(std::ofstream& ofs, const double& volume);
+    void rescale (std::ofstream& ofs, const double& volume);
 
     /**
      * @brief propagate atomic velocities
      *
      */
-    void propagate_vel(void);
+    void propagate_vel ();
 
     /**
      * @brief propagate the volume change rate
      *
      */
-    void propagate_voldot(void);
+    void propagate_voldot ();
 
     ModuleBase::Vector3<double>* old_v;   ///< old atomic velocities
     ModuleBase::Vector3<double> dilation; ///< dilation scale

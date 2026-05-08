@@ -21,28 +21,28 @@ struct hpsi_norm_op
     /// \param psi_in : input psi
     /// Output Parameters
     /// \param tmhpsi : output array
-    void operator()(const Device* dev,
-                    const int& nbands,
-                    const int& npwk_max,
-                    const int& npwk,
-                    const FPTYPE& Ebar,
-                    const FPTYPE& DeltaE,
-                    std::complex<FPTYPE>* hpsi_norm,
-                    const std::complex<FPTYPE>* psi_in);
+    void operator() (const Device* dev,
+                     const int& nbands,
+                     const int& npwk_max,
+                     const int& npwk,
+                     const FPTYPE& Ebar,
+                     const FPTYPE& DeltaE,
+                     std::complex<FPTYPE>* hpsi_norm,
+                     const std::complex<FPTYPE>* psi_in);
 };
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
 struct hpsi_norm_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int& nbands,
-                    const int& npwk_max,
-                    const int& npwk,
-                    const FPTYPE& Ebar,
-                    const FPTYPE& DeltaE,
-                    std::complex<FPTYPE>* hpsi_norm,
-                    const std::complex<FPTYPE>* psi_in);
+    void operator() (const base_device::DEVICE_GPU* dev,
+                     const int& nbands,
+                     const int& npwk_max,
+                     const int& npwk,
+                     const FPTYPE& Ebar,
+                     const FPTYPE& DeltaE,
+                     std::complex<FPTYPE>* hpsi_norm,
+                     const std::complex<FPTYPE>* psi_in);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

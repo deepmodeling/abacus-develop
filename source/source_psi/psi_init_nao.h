@@ -16,77 +16,86 @@ class psi_init_nao : public psi_initializer<T>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_nao()
-    {
-        this->method_ = "nao";
-    };
-    ~psi_init_nao(){};
+    psi_init_nao () { this->method_ = "nao"; };
+    ~psi_init_nao () {};
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig (T* psig, const int& ik) override;
 
     /// @brief initialize the psi_initializer with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+    virtual void initialize (const Structure_Factor*,             //< structure factor
+                             const ModulePW::PW_Basis_K*,         //< planewave basis
+                             const UnitCell*,                     //< unit cell
+                             const K_Vectors*,                    //< kpoints
+                             const int& = 1,                      //< random seed
+                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
+                             const int& = 0) override;            //< MPI rank
 
-    void read_external_orbs(const std::string* orbital_files, const int& rank);
-    virtual void tabulate() override;
-    std::vector<std::string> external_orbs() const
+    void read_external_orbs (const std::string* orbital_files, const int& rank);
+    virtual void tabulate () override;
+    std::vector<std::string>
+        external_orbs () const
     {
         return orbital_files_;
     }
-    std::vector<std::vector<int>> nr() const
+    std::vector<std::vector<int>>
+        nr () const
     {
         return nr_;
     }
-    std::vector<int> nr(const int& itype) const
+    std::vector<int>
+        nr (const int& itype) const
     {
         return nr_[itype];
     }
-    int nr(const int& itype, const int& ichi) const
+    int
+        nr (const int& itype, const int& ichi) const
     {
         return nr_[itype][ichi];
     }
-    std::vector<std::vector<std::vector<double>>> chi() const
+    std::vector<std::vector<std::vector<double>>>
+        chi () const
     {
         return chi_;
     }
-    std::vector<std::vector<double>> chi(const int& itype) const
+    std::vector<std::vector<double>>
+        chi (const int& itype) const
     {
         return chi_[itype];
     }
-    std::vector<double> chi(const int& itype, const int& ichi) const
+    std::vector<double>
+        chi (const int& itype, const int& ichi) const
     {
         return chi_[itype][ichi];
     }
-    double chi(const int& itype, const int& ichi, const int& ir) const
+    double
+        chi (const int& itype, const int& ichi, const int& ir) const
     {
         return chi_[itype][ichi][ir];
     }
-    std::vector<std::vector<std::vector<double>>> rgrid() const
+    std::vector<std::vector<std::vector<double>>>
+        rgrid () const
     {
         return rgrid_;
     }
-    std::vector<std::vector<double>> rgrid(const int& itype) const
+    std::vector<std::vector<double>>
+        rgrid (const int& itype) const
     {
         return rgrid_[itype];
     }
-    std::vector<double> rgrid(const int& itype, const int& ichi) const
+    std::vector<double>
+        rgrid (const int& itype, const int& ichi) const
     {
         return rgrid_[itype][ichi];
     }
-    double rgrid(const int& itype, const int& ichi, const int& ir) const
+    double
+        rgrid (const int& itype, const int& ichi, const int& ir) const
     {
         return rgrid_[itype][ichi][ir];
     }
 
   protected:
     /// @brief allocate memory for overlap table
-    void allocate_ao_table();
+    void allocate_ao_table ();
     std::vector<std::string> orbital_files_;
     /// @brief cubic spline for interpolation
     std::unique_ptr<ModuleBase::CubicSpline> cubspl_;

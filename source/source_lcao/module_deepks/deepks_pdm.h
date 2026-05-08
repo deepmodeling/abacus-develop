@@ -29,22 +29,22 @@ namespace DeePKS_domain
 // 3. check_pdm, which prints pdm to descriptor.dat
 
 // read pdm from file, do it only once in whole calculation
-void read_pdm(bool read_pdm_file,
-              bool is_equiv,
-              bool& init_pdm,
-              const int nat,
-              const DeePKS_Param& deepks_param,
-              const Numerical_Orbital& alpha,
-              std::vector<torch::Tensor>& pdm);
+void read_pdm (bool read_pdm_file,
+               bool is_equiv,
+               bool& init_pdm,
+               const int nat,
+               const DeePKS_Param& deepks_param,
+               const Numerical_Orbital& alpha,
+               std::vector<torch::Tensor>& pdm);
 
 template <typename TK>
-void update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                const std::vector<std::vector<TK>>& dmk,
-                const UnitCell& ucell,
-                const LCAO_Orbitals& orb,
-                const Parallel_Orbitals& pv,
-                const Grid_Driver& GridD,
-                hamilt::HContainer<double>* dmr_deepks);
+void update_dmr (const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                 const std::vector<std::vector<TK>>& dmk,
+                 const UnitCell& ucell,
+                 const LCAO_Orbitals& orb,
+                 const Parallel_Orbitals& pv,
+                 const Grid_Driver& GridD,
+                 hamilt::HContainer<double>* dmr_deepks);
 
 // calculate projected density matrix: pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
 // 3 cases to skip calculation of pdm:
@@ -52,18 +52,18 @@ void update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
 //   - SCF calculation of DeePKS with init_chg = file and pdm has been read for restarting SCF
 //   - Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial pdm
 template <typename TK>
-void cal_pdm(bool& init_pdm,
-             const DeePKS_Param& deepks_param,
-             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-             const hamilt::HContainer<double>* dmr,
-             const std::vector<hamilt::HContainer<double>*> phialpha,
-             const UnitCell& ucell,
-             const LCAO_Orbitals& orb,
-             const Grid_Driver& GridD,
-             const Parallel_Orbitals& pv,
-             std::vector<torch::Tensor>& pdm);
+void cal_pdm (bool& init_pdm,
+              const DeePKS_Param& deepks_param,
+              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+              const hamilt::HContainer<double>* dmr,
+              const std::vector<hamilt::HContainer<double>*> phialpha,
+              const UnitCell& ucell,
+              const LCAO_Orbitals& orb,
+              const Grid_Driver& GridD,
+              const Parallel_Orbitals& pv,
+              std::vector<torch::Tensor>& pdm);
 
-void check_pdm(const DeePKS_Param& deepks_param, const std::vector<torch::Tensor>& pdm);
+void check_pdm (const DeePKS_Param& deepks_param, const std::vector<torch::Tensor>& pdm);
 } // namespace DeePKS_domain
 
 #endif

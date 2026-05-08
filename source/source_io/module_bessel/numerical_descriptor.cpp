@@ -5,169 +5,172 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
-Numerical_Descriptor::Numerical_Descriptor() 
+Numerical_Descriptor::Numerical_Descriptor ()
 {
-	this->init_label = false;
-	this->lmax = -1;
-	this->nmax = -1;
+    this->init_label = false;
+    this->lmax = -1;
+    this->nmax = -1;
     this->nlocal = 0;
     this->mu_index = nullptr;
 }
 
-Numerical_Descriptor::~Numerical_Descriptor() 
+Numerical_Descriptor::~Numerical_Descriptor ()
 {
-	if(init_label==true)
-	{
-		delete[] mu_index;
-	}
-	return;
+    if (init_label == true)
+        {
+            delete[] mu_index;
+        }
+    return;
 }
 
-
-void Numerical_Descriptor::output_descriptor(const UnitCell& ucell, const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in, const int nks_in)
+void
+    Numerical_Descriptor::output_descriptor (const UnitCell& ucell,
+                                             const psi::Psi<std::complex<double>>& psi,
+                                             const int& lmax_in,
+                                             const double& rcut_in,
+                                             const double& tol_in,
+                                             const int nks_in)
 {
-	ModuleBase::TITLE("Numerical_Descriptor","output_descriptor");
-	ModuleBase::GlobalFunc::NEW_PART("DeepKS descriptor: D_{Inl}");
+    ModuleBase::TITLE ("Numerical_Descriptor", "output_descriptor");
+    ModuleBase::GlobalFunc::NEW_PART ("DeepKS descriptor: D_{Inl}");
 
-	//-----------------------------------
-	// 1. Initialize parameters
-	//-----------------------------------
+    //-----------------------------------
+    // 1. Initialize parameters
+    //-----------------------------------
 
-	//GlobalV::ofs_running << "D_{Inl}_m_m'=sum_{i}<J_Inl_m|Psi_i><Psi_i|J_Inl_m'>" << std::endl;
-	GlobalV::ofs_running << "input lmax = " << lmax_in << std::endl;
-	GlobalV::ofs_running << "input rcut = " << rcut_in << std::endl;
-	GlobalV::ofs_running << "input tolerence = " << tol_in << std::endl;
-	this->lmax = lmax_in;
-	assert(lmax>=0);
+    // GlobalV::ofs_running << "D_{Inl}_m_m'=sum_{i}<J_Inl_m|Psi_i><Psi_i|J_Inl_m'>" << std::endl;
+    GlobalV::ofs_running << "input lmax = " << lmax_in << std::endl;
+    GlobalV::ofs_running << "input rcut = " << rcut_in << std::endl;
+    GlobalV::ofs_running << "input tolerence = " << tol_in << std::endl;
+    this->lmax = lmax_in;
+    assert (lmax >= 0);
 
     const int nks = nks_in;
-    int ne = 0; 
-	
-	// Peize Lin change 2022.12.15
+    int ne = 0;
+
+    // Peize Lin change 2022.12.15
     // 0 stands for : 'Faln' is not used.
-    this->bessel_basis.init(
-		false,
-		std::stod(PARAM.inp.bessel_descriptor_ecut),
-		ucell.ntype,
-		this->lmax,
-		PARAM.inp.bessel_descriptor_smooth,
-		PARAM.inp.bessel_descriptor_sigma,
-		rcut_in,
-		tol_in,
-        ucell
-        );
-	this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number();
-    this->init_mu_index(ucell);
+    this->bessel_basis.init (false,
+                             std::stod (PARAM.inp.bessel_descriptor_ecut),
+                             ucell.ntype,
+                             this->lmax,
+                             PARAM.inp.bessel_descriptor_smooth,
+                             PARAM.inp.bessel_descriptor_sigma,
+                             rcut_in,
+                             tol_in,
+                             ucell);
+    this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number ();
+    this->init_mu_index (ucell);
     this->init_label = true;
 
-	assert(nmax>0);
+    assert (nmax > 0);
 
-	// Currently we are not considering doing DeePKS in PW basis
-	// hence this subroutine is used only for generating projectors and save to jle.orb
-	// As a result, I will return here and the rest of the code is saved for future use
-	return;
-
-/*
-	//-----------------------------------
-	// 2. Open the file
-	//-----------------------------------
-    std::ofstream ofs;
-    std::stringstream ss;
-    ss << PARAM.inp.spillage_outdir << "/" << "descriptor.dat";
-    if (GlobalV::MY_RANK==0)
-    {
-        ofs.open(ss.str().c_str());
-    }
-
-
-	//-------------------------------------
-	// 3. Initialize overlap_Q1 and Q2 
-	//-------------------------------------
-	// OVERLAP : < J_mu | Psi >
-    ModuleBase::realArray overlap_Q1(nks, PARAM.inp.nbands, this->nlocal );
-    ModuleBase::realArray overlap_Q2(nks, PARAM.inp.nbands, this->nlocal );
-
-    ModuleBase::GlobalFunc::ZEROS(overlap_Q1.ptr, overlap_Q1.getSize() );
-    ModuleBase::GlobalFunc::ZEROS(overlap_Q2.ptr, overlap_Q2.getSize() );
-
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of k points",overlap_Q1.getBound1());
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands",overlap_Q1.getBound2());
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of local orbitals",overlap_Q1.getBound3());
-
-
-	//-------------------------------------
-	// 4. Compute overlap_Q1 and Q2 
-	//-------------------------------------
-    // nks now is the reduced k-points.
-    for (int ik=0; ik<nks; ik++)
-    {
-        const int npw= p_kv->ngk[ik];
-		GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
-		GlobalV::ofs_running << " Print the overlap matrixs Q and S for this kpoint";
-        GlobalV::ofs_running << "\n " << std::setw(8) << "ik" << std::setw(8) << "npw";
-        GlobalV::ofs_running << "\n " << std::setw(8) << ik+1 << std::setw(8) << npw << std::endl;
-		GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
-        // search for all k-points.
-		psi.fix_k(ik);
-        this->jlq3d_overlap(overlap_Q1, overlap_Q2, ik, ik, npw, psi);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"jlq3d_overlap");
-	}
-
-#ifdef __MPI
-    Parallel_Reduce::reduce_double_pool( overlap_Q1.ptr, overlap_Q1.getSize() );
-    Parallel_Reduce::reduce_double_pool( overlap_Q2.ptr, overlap_Q2.getSize() );
-#endif
-
-	// do not need to output <J|psi> here
-    //this->output_overlap_Q( ofs, overlap_Q1, overlap_Q2 );
-
-
-	
-	//-------------------------------------
-	// 5. Generate descriptors for each atom 
-	//-------------------------------------
-	
-	for (int it=0; it<ucell.ntype; it++)
-	{
-		GlobalV::ofs_running << ucell.atoms[it].label << " label" << std::endl;
-		for (int ia=0; ia<ucell.atoms[it].na; ia++)
-		{
-			//--------------------------------------------------
-			// compute the number of descriptors for each atom
-			// this is a fixed number for all of the atoms
-			//--------------------------------------------------
-			int l_mu = mu_index[it](ia, 0, 0, 0); //min mu_index for each atom
-			int r_mu = mu_index[it](ia, lmax, nmax-1, 2*lmax);//max mu_index for each atom
-			const int nd =r_mu - l_mu + 1;
-			
-			GlobalV::ofs_running << " atom_index: " << ia+1 << " dimension of descritpor: " << nd << std::endl;
-
-			double* d = new double[nd]; //descriptor for each atom
-				
-			// (it, ia) we know the index 'I' for descriptor
-			// each atom has channel up to 'lmax',
-			// for each 'lmax' we have 'n' up to 'ecut_number'
-			this->generate_descriptor(overlap_Q1, overlap_Q2, it ,ia, d, nd);
-
-			ofs << ucell.atoms[it].label << " atom_index " << ia+1 << " n_descriptor " << nd << std::endl;
-			for(int id=0; id<nd; ++id)
-			{
-				if(id>0 && id%8==0) ofs << std::endl;
-			//	if(std::abs(d[id]>1.0e-9)) ofs << d[id] << " ";
-			//	else ofs << "0 ";
-				ofs << d[id] << " ";
-			}
-			ofs << std::endl;
-
-			delete[] d;
-		}
-	}
-
-
-
-    if (GlobalV::MY_RANK==0) ofs.close();
+    // Currently we are not considering doing DeePKS in PW basis
+    // hence this subroutine is used only for generating projectors and save to jle.orb
+    // As a result, I will return here and the rest of the code is saved for future use
     return;
-*/
+
+    /*
+        //-----------------------------------
+        // 2. Open the file
+        //-----------------------------------
+        std::ofstream ofs;
+        std::stringstream ss;
+        ss << PARAM.inp.spillage_outdir << "/" << "descriptor.dat";
+        if (GlobalV::MY_RANK==0)
+        {
+            ofs.open(ss.str().c_str());
+        }
+
+
+        //-------------------------------------
+        // 3. Initialize overlap_Q1 and Q2
+        //-------------------------------------
+        // OVERLAP : < J_mu | Psi >
+        ModuleBase::realArray overlap_Q1(nks, PARAM.inp.nbands, this->nlocal );
+        ModuleBase::realArray overlap_Q2(nks, PARAM.inp.nbands, this->nlocal );
+
+        ModuleBase::GlobalFunc::ZEROS(overlap_Q1.ptr, overlap_Q1.getSize() );
+        ModuleBase::GlobalFunc::ZEROS(overlap_Q2.ptr, overlap_Q2.getSize() );
+
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of k points",overlap_Q1.getBound1());
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands",overlap_Q1.getBound2());
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of local orbitals",overlap_Q1.getBound3());
+
+
+        //-------------------------------------
+        // 4. Compute overlap_Q1 and Q2
+        //-------------------------------------
+        // nks now is the reduced k-points.
+        for (int ik=0; ik<nks; ik++)
+        {
+            const int npw= p_kv->ngk[ik];
+            GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
+            GlobalV::ofs_running << " Print the overlap matrixs Q and S for this kpoint";
+            GlobalV::ofs_running << "\n " << std::setw(8) << "ik" << std::setw(8) << "npw";
+            GlobalV::ofs_running << "\n " << std::setw(8) << ik+1 << std::setw(8) << npw << std::endl;
+            GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
+            // search for all k-points.
+            psi.fix_k(ik);
+            this->jlq3d_overlap(overlap_Q1, overlap_Q2, ik, ik, npw, psi);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"jlq3d_overlap");
+        }
+
+    #ifdef __MPI
+        Parallel_Reduce::reduce_double_pool( overlap_Q1.ptr, overlap_Q1.getSize() );
+        Parallel_Reduce::reduce_double_pool( overlap_Q2.ptr, overlap_Q2.getSize() );
+    #endif
+
+        // do not need to output <J|psi> here
+        //this->output_overlap_Q( ofs, overlap_Q1, overlap_Q2 );
+
+
+
+        //-------------------------------------
+        // 5. Generate descriptors for each atom
+        //-------------------------------------
+
+        for (int it=0; it<ucell.ntype; it++)
+        {
+            GlobalV::ofs_running << ucell.atoms[it].label << " label" << std::endl;
+            for (int ia=0; ia<ucell.atoms[it].na; ia++)
+            {
+                //--------------------------------------------------
+                // compute the number of descriptors for each atom
+                // this is a fixed number for all of the atoms
+                //--------------------------------------------------
+                int l_mu = mu_index[it](ia, 0, 0, 0); //min mu_index for each atom
+                int r_mu = mu_index[it](ia, lmax, nmax-1, 2*lmax);//max mu_index for each atom
+                const int nd =r_mu - l_mu + 1;
+
+                GlobalV::ofs_running << " atom_index: " << ia+1 << " dimension of descritpor: " << nd << std::endl;
+
+                double* d = new double[nd]; //descriptor for each atom
+
+                // (it, ia) we know the index 'I' for descriptor
+                // each atom has channel up to 'lmax',
+                // for each 'lmax' we have 'n' up to 'ecut_number'
+                this->generate_descriptor(overlap_Q1, overlap_Q2, it ,ia, d, nd);
+
+                ofs << ucell.atoms[it].label << " atom_index " << ia+1 << " n_descriptor " << nd << std::endl;
+                for(int id=0; id<nd; ++id)
+                {
+                    if(id>0 && id%8==0) ofs << std::endl;
+                //	if(std::abs(d[id]>1.0e-9)) ofs << d[id] << " ";
+                //	else ofs << "0 ";
+                    ofs << d[id] << " ";
+                }
+                ofs << std::endl;
+
+                delete[] d;
+            }
+        }
+
+
+
+        if (GlobalV::MY_RANK==0) ofs.close();
+        return;
+    */
 }
 
 /*
@@ -334,50 +337,46 @@ normalization 2015-12-29 for (int ie=0; ie < nmax; ie++)
 }
 */
 
-void Numerical_Descriptor::init_mu_index(const UnitCell& ucell)
+void
+    Numerical_Descriptor::init_mu_index (const UnitCell& ucell)
 {
-	GlobalV::ofs_running << " Initialize the mu index for deepks" << std::endl;
-	GlobalV::ofs_running << " lmax = " << this->lmax << std::endl;
-	GlobalV::ofs_running << " nmax = " << this->nmax << std::endl;
+    GlobalV::ofs_running << " Initialize the mu index for deepks" << std::endl;
+    GlobalV::ofs_running << " lmax = " << this->lmax << std::endl;
+    GlobalV::ofs_running << " nmax = " << this->nmax << std::endl;
     Numerical_Descriptor::mu_index = new ModuleBase::IntArray[ucell.ntype];
 
-	assert(lmax>=0);
-	assert(nmax>0);
-	
-	int mu=0;
-	for (int it=0; it<ucell.ntype; ++it)
-	{
-		this->mu_index[it].create(
-			ucell.atoms[it].na,
-			lmax+1, // l starts from 0
-			nmax,
-			2*lmax+1); // m ==> 2*l+1
+    assert (lmax >= 0);
+    assert (nmax > 0);
 
-		GlobalV::ofs_running << "Type " << it+1 
-		<< " number_of_atoms " << ucell.atoms[it].na
-		<< " number_of_L " << lmax+1
-		<< " number_of_n " << nmax
-		<< " number_of_m " << 2*lmax+1 << std::endl;
+    int mu = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+        {
+            this->mu_index[it].create (ucell.atoms[it].na,
+                                       lmax + 1, // l starts from 0
+                                       nmax,
+                                       2 * lmax + 1); // m ==> 2*l+1
 
-        for (int ia=0; ia<ucell.atoms[it].na; ia++)
-		{
-				for (int l=0; l<lmax+1; l++)
-				{
-						for (int n=0; n<nmax; n++)
-						{
-								for (int m=0; m<2*l+1; m++)
-								{
-										this->mu_index[it](ia,l,n,m) = mu;
-										mu++;
-								}
-						}
-				}
-		}
+            GlobalV::ofs_running << "Type " << it + 1 << " number_of_atoms " << ucell.atoms[it].na << " number_of_L "
+                                 << lmax + 1 << " number_of_n " << nmax << " number_of_m " << 2 * lmax + 1 << std::endl;
 
-	}
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+                {
+                    for (int l = 0; l < lmax + 1; l++)
+                        {
+                            for (int n = 0; n < nmax; n++)
+                                {
+                                    for (int m = 0; m < 2 * l + 1; m++)
+                                        {
+                                            this->mu_index[it](ia, l, n, m) = mu;
+                                            mu++;
+                                        }
+                                }
+                        }
+                }
+        }
 
-	this->nlocal = mu;
-	GlobalV::ofs_running << " total number of atomic orbitals " << nlocal << std::endl;
+    this->nlocal = mu;
+    GlobalV::ofs_running << " total number of atomic orbitals " << nlocal << std::endl;
 
-	return;
+    return;
 }

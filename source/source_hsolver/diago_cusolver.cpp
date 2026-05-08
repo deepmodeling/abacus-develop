@@ -22,34 +22,34 @@ template <typename T>
 int DiagoCusolver<T>::DecomposedState = 0;
 
 template <typename T>
-DiagoCusolver<T>::DiagoCusolver()
+DiagoCusolver<T>::DiagoCusolver ()
 {
 }
 
 template <typename T>
-DiagoCusolver<T>::~DiagoCusolver()
+DiagoCusolver<T>::~DiagoCusolver ()
 {
 }
 
 // Diagonalization function
 template <typename T>
-void DiagoCusolver<T>::diag(
-    hamilt::MatrixBlock<T>& h_mat,
-    hamilt::MatrixBlock<T>& s_mat,
-    psi::Psi<T>& psi,
-    Real* eigenvalue_in)
+void
+    DiagoCusolver<T>::diag (hamilt::MatrixBlock<T>& h_mat,
+                            hamilt::MatrixBlock<T>& s_mat,
+                            psi::Psi<T>& psi,
+                            Real* eigenvalue_in)
 {
-    ModuleBase::TITLE("DiagoCusolver", "diag");
-    ModuleBase::timer::start("DiagoCusolver", "cusolver");
+    ModuleBase::TITLE ("DiagoCusolver", "diag");
+    ModuleBase::timer::start ("DiagoCusolver", "cusolver");
     // Allocate memory for eigenvalues
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
-    std::vector<T> eigenvectors(h_mat.row * h_mat.col);
-    this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
-    const int size = psi.get_nbands() * psi.get_nbasis();
-    BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
+    std::vector<double> eigen (PARAM.globalv.nlocal, 0.0);
+    std::vector<T> eigenvectors (h_mat.row * h_mat.col);
+    this->dc.Dngvd (h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data (), eigenvectors.data ());
+    const int size = psi.get_nbands () * psi.get_nbasis ();
+    BlasConnector::copy (size, eigenvectors.data (), 1, psi.get_pointer (), 1);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::timer::end("DiagoCusolver", "cusolver");
+    BlasConnector::copy (PARAM.inp.nbands, eigen.data (), inc, eigenvalue_in, inc);
+    ModuleBase::timer::end ("DiagoCusolver", "cusolver");
 }
 
 // Explicit instantiation of the DiagoCusolver class for real and complex numbers

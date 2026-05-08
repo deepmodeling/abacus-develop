@@ -31,19 +31,21 @@ class IstateInfoTest : public ::testing::Test
     K_Vectors* kv = nullptr;
     ModuleBase::matrix ekb;
     ModuleBase::matrix wg;
-    void SetUp()
+    void
+        SetUp ()
     {
         kv = new K_Vectors;
     }
-    void TearDown()
+    void
+        TearDown ()
     {
         delete kv;
     }
 };
 
-TEST_F(IstateInfoTest, OutIstateInfoS1)
+TEST_F (IstateInfoTest, OutIstateInfoS1)
 {
-    // Global variables 
+    // Global variables
     GlobalV::KPAR = 1;
     PARAM.input.nbands = 4;
     PARAM.sys.nbands_l = 4;
@@ -51,78 +53,84 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     PARAM.sys.global_out_dir = "./";
 
     // MPI setting
-    Parallel_Global::init_pools(GlobalV::NPROC,
-                                GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
-                                GlobalV::KPAR,
-                                GlobalV::NPROC_IN_BNDGROUP,
-                                GlobalV::RANK_IN_BPGROUP,
-                                GlobalV::MY_BNDGROUP,
-                                GlobalV::NPROC_IN_POOL,
-                                GlobalV::RANK_IN_POOL,
-                                GlobalV::MY_POOL);
+    Parallel_Global::init_pools (GlobalV::NPROC,
+                                 GlobalV::MY_RANK,
+                                 PARAM.input.bndpar,
+                                 GlobalV::KPAR,
+                                 GlobalV::NPROC_IN_BNDGROUP,
+                                 GlobalV::RANK_IN_BPGROUP,
+                                 GlobalV::MY_BNDGROUP,
+                                 GlobalV::NPROC_IN_POOL,
+                                 GlobalV::RANK_IN_POOL,
+                                 GlobalV::MY_POOL);
 
     const int nkstot_init = 10;
-    kv->set_nkstot(nkstot_init);
-    int nkstot = kv->get_nkstot();
-    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, 
-    GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
-    kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
+    kv->set_nkstot (nkstot_init);
+    int nkstot = kv->get_nkstot ();
+    kv->para_k.kinfo (nkstot,
+                      GlobalV::KPAR,
+                      GlobalV::MY_POOL,
+                      GlobalV::RANK_IN_POOL,
+                      GlobalV::NPROC_IN_POOL,
+                      PARAM.input.nspin);
+    kv->set_nks (kv->para_k.nks_pool[GlobalV::MY_POOL]);
 
     // The number of plane waves for each k point
-    kv->ngk.resize(nkstot);
-    kv->ik2iktot.resize(nkstot);
-    for(int i=0; i<nkstot; ++i)
-    {
-        kv->ngk[i]=299;
-        kv->ik2iktot[i]=i;
-    }
+    kv->ngk.resize (nkstot);
+    kv->ik2iktot.resize (nkstot);
+    for (int i = 0; i < nkstot; ++i)
+        {
+            kv->ngk[i] = 299;
+            kv->ik2iktot[i] = i;
+        }
 
     // Initialize the number of bands
-    ekb.create(kv->get_nks(), PARAM.input.nbands);
-    wg.create(kv->get_nks(), PARAM.input.nbands);
+    ekb.create (kv->get_nks (), PARAM.input.nbands);
+    wg.create (kv->get_nks (), PARAM.input.nbands);
 
     // fill the eigenvalues
-    ekb.fill_out(0.15);
-    
+    ekb.fill_out (0.15);
+
     // fill the weights
-    wg.fill_out(0.0);
+    wg.fill_out (0.0);
 
     // setup coordinates of k-points
-    kv->kvec_c.resize(kv->get_nkstot());
+    kv->kvec_c.resize (kv->get_nkstot ());
     int i = 0;
     for (auto& kd: kv->kvec_c)
-    {
-        kd.set(0.01 * i, 0.01 * i, 0.01 * i);
-        ++i;
-    }
-   
+        {
+            kd.set (0.01 * i, 0.01 * i, 0.01 * i);
+            ++i;
+        }
+
     // write eigenvalues and occupations
     const int istep_in = -1;
-    ModuleIO::write_eig_file(ekb, wg, *kv, istep_in);
+    ModuleIO::write_eig_file (ekb, wg, *kv, istep_in);
 
     // check the output files
     std::ifstream ifs;
-    ifs.open("eig_occ.txt");
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electronic state energy (eV) and occupations"));
-    EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
-    EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
-    ifs.close();
-    remove("eig_occ.txt");
+    ifs.open ("eig_occ.txt");
+    std::string str ((std::istreambuf_iterator<char> (ifs)), std::istreambuf_iterator<char> ());
+    EXPECT_THAT (str, testing::HasSubstr ("Electronic state energy (eV) and occupations"));
+    EXPECT_THAT (str,
+                 testing::HasSubstr ("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
+    EXPECT_THAT (str, testing::HasSubstr ("1 2.040854700000000 0.000000000000000"));
+    ifs.close ();
+    remove ("eig_occ.txt");
 }
 
 #ifdef __MPI
-int main(int argc, char** argv)
+int
+    main (int argc, char** argv)
 {
-    MPI_Init(&argc, &argv);
+    MPI_Init (&argc, &argv);
 
-    testing::InitGoogleTest(&argc, argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    int result = RUN_ALL_TESTS();
+    testing::InitGoogleTest (&argc, argv);
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    int result = RUN_ALL_TESTS ();
 
-    MPI_Finalize();
+    MPI_Finalize ();
 
     return result;
 }

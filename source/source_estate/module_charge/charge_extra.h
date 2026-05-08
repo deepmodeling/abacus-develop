@@ -31,10 +31,9 @@
 
 class Charge_Extra
 {
-    public:
-
-    Charge_Extra();
-    ~Charge_Extra();
+  public:
+    Charge_Extra ();
+    ~Charge_Extra ();
 
     /**
      * @brief Initialization of viriables used in charge extrapolation methods
@@ -50,7 +49,7 @@ class Charge_Extra
      * @param nrxx the number of grids
      * @param chg_extrap the charge extrapolation method
      */
-    void Init_CE(const int& nspin, const int& natom, const int& nrxx, const std::string chg_extrap);
+    void Init_CE (const int& nspin, const int& natom, const int& nrxx, const std::string chg_extrap);
 
     /**
      * @brief charge extrapolation method
@@ -62,13 +61,12 @@ class Charge_Extra
      * @param ofs_running the output stream
      * @param ofs_warning the output stream
      */
-    void extrapolate_charge(
-        Parallel_Grid* Pgrid,
-        UnitCell& ucell,
-        Charge* chr,
-        Structure_Factor* sf,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning);
+    void extrapolate_charge (Parallel_Grid* Pgrid,
+                             UnitCell& ucell,
+                             Charge* chr,
+                             Structure_Factor* sf,
+                             std::ofstream& ofs_running,
+                             std::ofstream& ofs_warning);
 
     /**
      * @brief update displacements
@@ -78,7 +76,7 @@ class Charge_Extra
      *
      * @param ucell the cell information
      */
-    void update_all_dis(const UnitCell& ucell);
+    void update_all_dis (const UnitCell& ucell);
 
     /**
      * @brief update the difference of charge density
@@ -87,13 +85,13 @@ class Charge_Extra
      * @param chr the charge density
      * @param sf the structure factor
      */
-    void update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf);
+    void update_delta_rho (const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf);
 
   private:
     int istep = 0; ///< the current step
     int pot_order; ///< the specified charge extrapolation method
     int rho_extr;  ///< the actually used method
-    int nspin;        ///< the number of spins
+    int nspin;     ///< the number of spins
 
     ModuleBase::Vector3<double>* dis_old1 = nullptr; ///< dis_old2 = pos_old1 - pos_old2
     ModuleBase::Vector3<double>* dis_old2 = nullptr; ///< dis_old1 = pos_now - pos_old1
@@ -113,7 +111,7 @@ class Charge_Extra
      * @param ofs_running the output stream
      * @param ofs_warning the output stream
      */
-    void find_alpha_and_beta(const int& natom, std::ofstream& ofs_running, std::ofstream& ofs_warning);
+    void find_alpha_and_beta (const int& natom, std::ofstream& ofs_running, std::ofstream& ofs_warning);
 };
 
 #endif

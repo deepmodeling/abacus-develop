@@ -5,8 +5,10 @@
 
 #include <ATen/ops/einsum_op.h>
 
-namespace container {
-namespace op {
+namespace container
+{
+namespace op
+{
 
 /**
  * @brief A functor to perform add operation on a Tensor.
@@ -14,7 +16,8 @@ namespace op {
  * This functor adds two Tensors element-wise, resulting in a new Tensor with the same
  * shape as the input Tensors.
  */
-struct add_op {
+struct add_op
+{
     /**
      * @brief Perform add operation on the input Tensors.
      *
@@ -26,45 +29,31 @@ struct add_op {
      * @param z The output Tensor that will hold the result of the add operation.
      *          It must have the same shape as the input Tensors.
      */
-    void operator()(
-        const Tensor& x,
-        const Tensor& y,
-        Tensor& z);
+    void operator() (const Tensor& x, const Tensor& y, Tensor& z);
 
     template <typename T>
-    void operator()(
-        const T& alpha,
-        const Tensor& x,
-        const T& beta,
-        const Tensor& y,
-        Tensor& z);
+    void operator() (const T& alpha, const Tensor& x, const T& beta, const Tensor& y, Tensor& z);
 };
 
-struct mul_op {
+struct mul_op
+{
     // z = x * y
-    void operator()(
-        const Tensor& x,
-        const Tensor& y,
-        Tensor& z);
+    void operator() (const Tensor& x, const Tensor& y, Tensor& z);
 
     // y = alpha * x
     template <typename T>
-    void operator()(
-        const T& alpha,
-        const Tensor& x,
-        Tensor& y);
+    void operator() (const T& alpha, const Tensor& x, Tensor& y);
 };
 
-struct div_op {
+struct div_op
+{
     // z = x / y
-    void operator()(
-        const Tensor& x,
-        const Tensor& y,
-        Tensor& z);
+    void operator() (const Tensor& x, const Tensor& y, Tensor& z);
 };
 
 template <bool Conjugate = false>
-struct transpose_op {
+struct transpose_op
+{
     /**
      * @brief Perform the transpose operation on the input tensor.
      *
@@ -84,10 +73,7 @@ struct transpose_op {
      *       the output tensor is not pre-allocated with the correct shape, the
      *       function will return false.
      */
-    void operator()(
-        const Tensor& input,
-        const std::vector<int>& permutation,
-        Tensor& output);
+    void operator() (const Tensor& input, const std::vector<int>& permutation, Tensor& output);
 };
 
 /**
@@ -100,7 +86,8 @@ struct transpose_op {
  * @tparam T The data type of the Tensor.
  * @tparam Device The execution device (e.g., CPU or GPU).
  */
-struct stride_op {
+struct stride_op
+{
     /**
      * @brief Perform stride operation on the input Tensor.
      *
@@ -114,10 +101,7 @@ struct stride_op {
      * @param output The output Tensor that will hold the result of the stride operation.
      *               It must have the appropriate size to store the selected elements.
      */
-    void operator()(
-        const Tensor& input,
-        const std::vector<int64_t>& stride,
-        Tensor& output);
+    void operator() (const Tensor& input, const std::vector<int64_t>& stride, Tensor& output);
 };
 
 /**
@@ -125,7 +109,8 @@ struct stride_op {
  *
  * This struct defines a functor that can be used to inflate a tensor using the specified stride.
  */
-struct inflate_op {
+struct inflate_op
+{
     /**
      * @brief Inflate the input tensor.
      *
@@ -135,30 +120,24 @@ struct inflate_op {
      * @param stride The stride to use for inflation.
      * @param output The output tensor where the inflated data will be stored.
      */
-    void operator()(
-        const Tensor& input,
-        const std::vector<int64_t>& stride,
-        Tensor& output);
+    void operator() (const Tensor& input, const std::vector<int64_t>& stride, Tensor& output);
 };
 
-
-struct reduce_op {
-    void operator()(
-        const Tensor& input,
-        const int64_t& inner_most_dim,
-        Tensor& output);
+struct reduce_op
+{
+    void operator() (const Tensor& input, const int64_t& inner_most_dim, Tensor& output);
 };
 
 } // namespace op
 } // namespace container
 
-ct::Tensor   operator+(const ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor   operator-(const ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor   operator*(const ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor   operator/(const ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor& operator+=(ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor& operator-=(ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor& operator*=(ct::Tensor& self, const ct::Tensor& other);
-ct::Tensor& operator/=(ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor operator+ (const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor operator- (const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor operator* (const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor operator/ (const ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator+= (ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator-= (ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator*= (ct::Tensor& self, const ct::Tensor& other);
+ct::Tensor& operator/= (ct::Tensor& self, const ct::Tensor& other);
 
 #endif // ATEN_OPS_LINALG_H_

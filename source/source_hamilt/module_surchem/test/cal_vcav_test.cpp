@@ -32,16 +32,16 @@ class cal_vcav_test : public testing::Test
     surchem solvent_model;
     UnitCell ucell;
 };
-TEST_F(cal_vcav_test, lapl_rho)
+TEST_F (cal_vcav_test, lapl_rho)
 {
-    Setcell::setupcell(ucell);
+    Setcell::setupcell (ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
-    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+    ModulePW::PW_Basis pwtest (device_flag, precision_flag);
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -54,26 +54,26 @@ TEST_F(cal_vcav_test, lapl_rho)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split (MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    pwtest.initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi (1, 0, POOL_WORLD);
 #endif
-    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids (ucell.lat0, ucell.latvec, wfcecut);
 
-    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    pwtest.setuptransform();
-    pwtest.collect_local_pw();
-    pwtest.collect_uniqgg();
+    pwtest.initparameters (gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform ();
+    pwtest.collect_local_pw ();
+    pwtest.collect_uniqgg ();
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
     std::complex<double>* gdrtmpg = new std::complex<double>[npw];
     double* lapn = new double[nrxx];
-    ModuleBase::GlobalFunc::ZEROS(lapn, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (lapn, nrxx);
 
     std::complex<double>* aux = new std::complex<double>[pwtest.nmaxgr];
 
@@ -82,73 +82,73 @@ TEST_F(cal_vcav_test, lapl_rho)
     gdrtmpg[2] = {-5.418e-06, 2.577e-07};
 
     for (int ig = 3; ig < npw; ig++)
-    {
-        gdrtmpg[ig] = 0;
-    }
+        {
+            gdrtmpg[ig] = 0;
+        }
     for (int i = 0; i < 3; ++i)
-    {
-        for (int ig = 0; ig < npw; ig++)
         {
-            aux[ig] = gdrtmpg[ig] * pow(pwtest.gcar[ig][i], 2);
+            for (int ig = 0; ig < npw; ig++)
+                {
+                    aux[ig] = gdrtmpg[ig] * pow (pwtest.gcar[ig][i], 2);
+                }
+            pwtest.recip2real (aux, aux);
+            for (int ir = 0; ir < nrxx; ir++)
+                {
+                    lapn[ir] -= aux[ir].real () * ucell.tpiba2;
+                }
         }
-        pwtest.recip2real(aux, aux);
-        for (int ir = 0; ir < nrxx; ir++)
-        {
-            lapn[ir] -= aux[ir].real() * ucell.tpiba2;
-        }
-    }
 
-    EXPECT_NEAR(lapn[0], 0.0002940907, 1e-10);
-    EXPECT_NEAR(lapn[1], -0.000271296, 1e-10);
+    EXPECT_NEAR (lapn[0], 0.0002940907, 1e-10);
+    EXPECT_NEAR (lapn[1], -0.000271296, 1e-10);
 
     delete[] gdrtmpg;
     delete[] aux;
 }
 
-TEST_F(cal_vcav_test, shape_gradn)
+TEST_F (cal_vcav_test, shape_gradn)
 {
     int nrxx = 27000;
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
     double nc_k = 3.7e-04;
     double* PS_TOTN_real = new double[nrxx];
-    ModuleBase::GlobalFunc::ZEROS(PS_TOTN_real, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (PS_TOTN_real, nrxx);
 
     PS_TOTN_real[0] = 2.081e-03;
     PS_TOTN_real[1] = 1.818e-03;
     PS_TOTN_real[2] = 1.193e-03;
     for (int i = 3; i < nrxx; i++)
-    {
-        PS_TOTN_real[i] = 0.1;
-    }
+        {
+            PS_TOTN_real[i] = 0.1;
+        }
 
-    double epr_c = 1.0 / sqrt(TWO_PI) / sigma_k;
+    double epr_c = 1.0 / sqrt (TWO_PI) / sigma_k;
     double epr_z = 0;
     double min = 1e-10;
     double* eprime = new double[nrxx];
 
     for (int ir = 0; ir < nrxx; ir++)
-    {
-        epr_z = log(std::max(PS_TOTN_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
-        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
-    }
+        {
+            epr_z = log (std::max (PS_TOTN_real[ir], min) / nc_k) / sqrt (2) / sigma_k;
+            eprime[ir] = epr_c * exp (-pow (epr_z, 2)) / std::max (PS_TOTN_real[ir], min);
+        }
 
-    EXPECT_NEAR(eprime[0], 5.0729550913, 1e-10);
-    EXPECT_NEAR(eprime[1], 10.8252209597, 1e-10);
+    EXPECT_NEAR (eprime[0], 5.0729550913, 1e-10);
+    EXPECT_NEAR (eprime[1], 10.8252209597, 1e-10);
 
     delete[] PS_TOTN_real;
 }
 
-TEST_F(cal_vcav_test, createcavity)
+TEST_F (cal_vcav_test, createcavity)
 {
-    Setcell::setupcell(ucell);
+    Setcell::setupcell (ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
-    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+    ModulePW::PW_Basis pwtest (device_flag, precision_flag);
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -161,55 +161,55 @@ TEST_F(cal_vcav_test, createcavity)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split (MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    pwtest.initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi (1, 0, POOL_WORLD);
 #endif
-    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids (ucell.lat0, ucell.latvec, wfcecut);
 
-    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    pwtest.setuptransform();
-    pwtest.collect_local_pw();
-    pwtest.collect_uniqgg();
+    pwtest.initparameters (gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform ();
+    pwtest.collect_local_pw ();
+    pwtest.collect_uniqgg ();
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
     std::complex<double>* PS_TOTN = new std::complex<double>[npw];
     double* vwork = new double[nrxx];
-    ModuleBase::GlobalFunc::ZEROS(vwork, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (vwork, nrxx);
 
     PS_TOTN[0] = {2.432e-07, 4.862e-08};
     PS_TOTN[1] = {-7.649e-08, 9.806e-07};
     PS_TOTN[2] = {-5.407e-06, 2.549e-07};
 
     for (int ig = 3; ig < npw; ig++)
-    {
-        PS_TOTN[ig] = 1e-7;
-    }
+        {
+            PS_TOTN[ig] = 1e-7;
+        }
 
-    solvent_model.createcavity(ucell, &pwtest, PS_TOTN, vwork);
+    solvent_model.createcavity (ucell, &pwtest, PS_TOTN, vwork);
 
-    EXPECT_NEAR(vwork[0], 4.8556305312, 1e-10);
-    EXPECT_NEAR(vwork[1], -2.1006480538, 1e-10);
+    EXPECT_NEAR (vwork[0], 4.8556305312, 1e-10);
+    EXPECT_NEAR (vwork[1], -2.1006480538, 1e-10);
 
     delete[] PS_TOTN;
     delete[] vwork;
 }
 
-TEST_F(cal_vcav_test, cal_vcav)
+TEST_F (cal_vcav_test, cal_vcav)
 {
-    Setcell::setupcell(ucell);
+    Setcell::setupcell (ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
-    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+    ModulePW::PW_Basis pwtest (device_flag, precision_flag);
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz;
     double wfcecut;
@@ -222,20 +222,20 @@ TEST_F(cal_vcav_test, cal_vcav)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split (MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    pwtest.initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi (1, 0, POOL_WORLD);
 #endif
-    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids (ucell.lat0, ucell.latvec, wfcecut);
 
-    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    pwtest.setuptransform();
-    pwtest.collect_local_pw();
-    pwtest.collect_uniqgg();
+    pwtest.initparameters (gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform ();
+    pwtest.collect_local_pw ();
+    pwtest.collect_uniqgg ();
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
@@ -246,38 +246,39 @@ TEST_F(cal_vcav_test, cal_vcav)
     PS_TOTN[2] = {-5.407e-06, 2.549e-07};
 
     for (int ig = 3; ig < npw; ig++)
-    {
-        PS_TOTN[ig] = 1e-7;
-    }
+        {
+            PS_TOTN[ig] = 1e-7;
+        }
 
     int nspin = 2;
-    solvent_model.Vcav.create(nspin, nrxx);
+    solvent_model.Vcav.create (nspin, nrxx);
 
-    ModuleBase::matrix v_res(nspin, nrxx);
-    ModuleBase::GlobalFunc::ZEROS(v_res.c, nspin * nrxx);
-    solvent_model.cal_vcav(ucell, &pwtest, PS_TOTN, nspin, v_res);
+    ModuleBase::matrix v_res (nspin, nrxx);
+    ModuleBase::GlobalFunc::ZEROS (v_res.c, nspin * nrxx);
+    solvent_model.cal_vcav (ucell, &pwtest, PS_TOTN, nspin, v_res);
 
-    EXPECT_NEAR(v_res(0, 0), 4.8556305312, 1e-10);
-    EXPECT_NEAR(v_res(0, 1), -2.1006480538, 1e-10);
-    EXPECT_NEAR(v_res(1, 0), 4.8556305312, 1e-10);
-    EXPECT_NEAR(v_res(1, 1), -2.1006480538, 1e-10);
+    EXPECT_NEAR (v_res (0, 0), 4.8556305312, 1e-10);
+    EXPECT_NEAR (v_res (0, 1), -2.1006480538, 1e-10);
+    EXPECT_NEAR (v_res (1, 0), 4.8556305312, 1e-10);
+    EXPECT_NEAR (v_res (1, 1), -2.1006480538, 1e-10);
 
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
+int
+    main (int argc, char** argv)
 {
 #ifdef __MPI
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Init (&argc, &argv);
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    testing::InitGoogleTest (&argc, argv);
+    int result = RUN_ALL_TESTS ();
 
 #ifdef __MPI
-    MPI_Finalize();
+    MPI_Finalize ();
 #endif
 
     return result;

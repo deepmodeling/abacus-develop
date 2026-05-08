@@ -11,34 +11,39 @@
 class Ions_Move_Methods
 {
   public:
-    Ions_Move_Methods();
-    ~Ions_Move_Methods();
+    Ions_Move_Methods ();
+    ~Ions_Move_Methods ();
 
-    void allocate(const int &natom);
+    void allocate (const int& natom);
     // void cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot);
-    void cal_movement(const int &istep,
-                      const int &force_step,
-                      const ModuleBase::matrix &f,
-                      const double &etot,
-                      UnitCell &ucell);
+    void cal_movement (const int& istep,
+                       const int& force_step,
+                       const ModuleBase::matrix& f,
+                       const double& etot,
+                       UnitCell& ucell);
 
-    bool get_converged() const
+    bool
+        get_converged () const
     {
         return Ions_Move_Basic::converged;
     }
-    double get_ediff() const
+    double
+        get_ediff () const
     {
         return Ions_Move_Basic::ediff;
     }
-    double get_largest_grad() const
+    double
+        get_largest_grad () const
     {
         return Ions_Move_Basic::largest_grad;
     }
-    double get_trust_radius() const
+    double
+        get_trust_radius () const
     {
         return Ions_Move_Basic::trust_radius;
     }
-    double get_update_iter() const
+    double
+        get_update_iter () const
     {
         return Ions_Move_Basic::update_iter;
     }

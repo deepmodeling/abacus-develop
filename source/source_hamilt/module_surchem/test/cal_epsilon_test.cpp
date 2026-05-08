@@ -38,13 +38,13 @@ class cal_epsilon_test : public testing::Test
     surchem solvent_model;
 };
 
-TEST_F(cal_epsilon_test, cal_epsilon)
+TEST_F (cal_epsilon_test, cal_epsilon)
 {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
-    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
+    ModulePW::PW_Basis pwtest (device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -52,7 +52,7 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     bool gamma_only;
     //--------------------------------------------------
     lat0 = 1.0;
-    ModuleBase::Matrix3 la(1, 1, 0, 0, 1, 1, 0, 0, 2);
+    ModuleBase::Matrix3 la (1, 1, 0, 0, 1, 1, 0, 0, 2);
     latvec = la;
     wfcecut = 60;
     gamma_only = false;
@@ -62,46 +62,46 @@ TEST_F(cal_epsilon_test, cal_epsilon)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_split (MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
 #ifdef __MPI
-    pwtest.initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi (1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
-    pwtest.initgrids(lat0, latvec, wfcecut);
-    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    pwtest.setuptransform();
-    pwtest.collect_local_pw();
+    pwtest.initgrids (lat0, latvec, wfcecut);
+    pwtest.initparameters (gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform ();
+    pwtest.collect_local_pw ();
 
     pwtest.nrxx = 125000;
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
 
     std::ifstream fin;
-    fin.open("./support/PS_TOTN_real.in");
+    fin.open ("./support/PS_TOTN_real.in");
     if (!fin)
-    {
-        std::cerr << "input file does not exist" << std::endl;
-        return;
-    }
+        {
+            std::cerr << "input file does not exist" << std::endl;
+            return;
+        }
 
     double* PS_TOTN_real = new double[nrxx];
     for (int i = 0; i < nrxx; i++)
-    {
-        fin >> PS_TOTN_real[i];
-    }
+        {
+            fin >> PS_TOTN_real[i];
+        }
 
     double* epsilon = new double[nrxx];
     double* epsilon0 = new double[nrxx];
 
-    solvent_model.cal_epsilon(&pwtest, PS_TOTN_real, epsilon, epsilon0);
+    solvent_model.cal_epsilon (&pwtest, PS_TOTN_real, epsilon, epsilon0);
 
-    EXPECT_EQ(PS_TOTN_real[0], 0.274231);
-    EXPECT_EQ(epsilon[0], 1);
-    EXPECT_NEAR(epsilon[12], 1.00005, doublethreshold);
+    EXPECT_EQ (PS_TOTN_real[0], 0.274231);
+    EXPECT_EQ (epsilon[0], 1);
+    EXPECT_NEAR (epsilon[12], 1.00005, doublethreshold);
     // EXPECT_EQ(epsilon[19], 43.1009);
     // EXPECT_EQ(epsilon[26], 78.746);
     delete[] PS_TOTN_real;
@@ -109,19 +109,20 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     delete[] epsilon0;
 }
 
-int main(int argc, char** argv)
+int
+    main (int argc, char** argv)
 {
 #ifdef __MPI
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Init (&argc, &argv);
+    MPI_Comm_size (MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank (MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
-    testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    testing::InitGoogleTest (&argc, argv);
+    int result = RUN_ALL_TESTS ();
 
 #ifdef __MPI
-    MPI_Finalize();
+    MPI_Finalize ();
 #endif
 
     return result;

@@ -4,10 +4,12 @@
 #include "source_base/module_device/types.h"
 #include <complex>
 
-namespace ModuleBase {
+namespace ModuleBase
+{
 
 template <typename FPTYPE, typename Device>
-struct cal_ylm_real_op {
+struct cal_ylm_real_op
+{
     /// @brief YLM_REAL::Real spherical harmonics ylm(G) up to l=lmax
     /// Use Numerical recursive algorithm as given in Numerical Recipes
     ///
@@ -25,37 +27,36 @@ struct cal_ylm_real_op {
     ///
     /// Output Parameters
     /// @param ylm - output array
-    void operator() (
-        const Device *ctx,
-        const int &ng,
-        const int &lmax,
-        const FPTYPE &SQRT2,
-        const FPTYPE &PI,
-        const FPTYPE &PI_HALF,
-        const FPTYPE &FOUR_PI,
-        const FPTYPE &SQRT_INVERSE_FOUR_PI,
-        const FPTYPE *g,
-        FPTYPE * p,
-        FPTYPE * ylm);
+    void operator() (const Device* ctx,
+                     const int& ng,
+                     const int& lmax,
+                     const FPTYPE& SQRT2,
+                     const FPTYPE& PI,
+                     const FPTYPE& PI_HALF,
+                     const FPTYPE& FOUR_PI,
+                     const FPTYPE& SQRT_INVERSE_FOUR_PI,
+                     const FPTYPE* g,
+                     FPTYPE* p,
+                     FPTYPE* ylm);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* ctx,
-                    const int& ng,
-                    const int& lmax,
-                    const FPTYPE& SQRT2,
-                    const FPTYPE& PI,
-                    const FPTYPE& PI_HALF,
-                    const FPTYPE& FOUR_PI,
-                    const FPTYPE& SQRT_INVERSE_FOUR_PI,
-                    const FPTYPE* g,
-                    FPTYPE* p,
-                    FPTYPE* ylm);
+    void operator() (const base_device::DEVICE_GPU* ctx,
+                     const int& ng,
+                     const int& lmax,
+                     const FPTYPE& SQRT2,
+                     const FPTYPE& PI,
+                     const FPTYPE& PI_HALF,
+                     const FPTYPE& FOUR_PI,
+                     const FPTYPE& SQRT_INVERSE_FOUR_PI,
+                     const FPTYPE* g,
+                     FPTYPE* p,
+                     FPTYPE* ylm);
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-}  // namespace ModuleBase
-#endif //MODULE_BASE_MATH_MULTI_DEVICE_H
+} // namespace ModuleBase
+#endif // MODULE_BASE_MATH_MULTI_DEVICE_H

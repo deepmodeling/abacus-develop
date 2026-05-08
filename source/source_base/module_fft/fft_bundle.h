@@ -10,8 +10,8 @@ namespace ModuleBase
 class FFT_Bundle
 {
   public:
-    FFT_Bundle() {};
-    ~FFT_Bundle();
+    FFT_Bundle () {};
+    ~FFT_Bundle ();
     /**
      * @brief Constructor with device and precision.
      * @param device_in  device type, cpu or gpu.
@@ -20,7 +20,7 @@ class FFT_Bundle
      * the function will check the input device and precision,
      * and set the device and precision.
      */
-    FFT_Bundle(std::string device_in, std::string precision_in) : device(device_in), precision(precision_in) {};
+    FFT_Bundle (std::string device_in, std::string precision_in) : device (device_in), precision (precision_in) {};
 
     /**
      * @brief Set device and precision.
@@ -30,7 +30,7 @@ class FFT_Bundle
      * the function will check the input device and precision,
      * and set the device and precision.
      */
-    void setfft(std::string device_in, std::string precision_in);
+    void setfft (std::string device_in, std::string precision_in);
 
     /**
      * @brief Set the DSP cluster id for the FFT_DSP backend.
@@ -38,7 +38,11 @@ class FFT_Bundle
      *
      * Caller-injected DSP routing info; only used when device == "dsp".
      */
-    void set_dsp_cluster_id(int id) { this->dsp_cluster_id_ = id; }
+    void
+        set_dsp_cluster_id (int id)
+    {
+        this->dsp_cluster_id_ = id;
+    }
 
     /**
      * @brief Initialize the fft parameters.
@@ -59,17 +63,17 @@ class FFT_Bundle
      * the function will initialize the many-fft parameters
      * Wheatley in cpu or gpu device.
      */
-    void initfft(int nx_in,
-                 int ny_in,
-                 int nz_in,
-                 int lixy_in,
-                 int rixy_in,
-                 int ns_in,
-                 int nplane_in,
-                 int nproc_in,
-                 bool gamma_only_in,
-                 bool xprime_in = true,
-                 bool mpifft_in = false);
+    void initfft (int nx_in,
+                  int ny_in,
+                  int nz_in,
+                  int lixy_in,
+                  int rixy_in,
+                  int ns_in,
+                  int nplane_in,
+                  int nproc_in,
+                  bool gamma_only_in,
+                  bool xprime_in = true,
+                  bool mpifft_in = false);
 
     /**
      * @brief Initialize the fft mode.
@@ -78,18 +82,19 @@ class FFT_Bundle
      * the function will initialize the fft mode.
      */
 
-    void initfftmode(int fft_mode_in)
+    void
+        initfftmode (int fft_mode_in)
     {
         this->fft_mode = fft_mode_in;
     }
 
-    void setupFFT();
+    void setupFFT ();
 
-    void clearFFT();
+    void clearFFT ();
 
-    void clear();
+    void clear ();
 
-    void resource_handler(const int flag) const;
+    void resource_handler (const int flag) const;
     /**
      * @brief Get the real space data.
      * @return FPTYPE*  the real space data.
@@ -98,7 +103,7 @@ class FFT_Bundle
      * which is used in the cpu-like fft.
      */
     template <typename FPTYPE>
-    FPTYPE* get_rspace_data() const;
+    FPTYPE* get_rspace_data () const;
     /**
      * @brief Get the auxr data.
      * @return std::complex<FPTYPE>*  the auxr data.
@@ -107,7 +112,7 @@ class FFT_Bundle
      * which is used in the cpu-like fft.
      */
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_auxr_data() const;
+    std::complex<FPTYPE>* get_auxr_data () const;
     /**
      * @brief Get the auxg data.
      * @return std::complex<FPTYPE>*  the auxg data.
@@ -116,7 +121,7 @@ class FFT_Bundle
      * which is used in the cpu-like fft.
      */
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_auxg_data() const;
+    std::complex<FPTYPE>* get_auxg_data () const;
     /**
      * @brief Get the auxr 3d data.
      * @return std::complex<FPTYPE>*  the auxr 3d data.
@@ -125,7 +130,7 @@ class FFT_Bundle
      * which is used in the gpu-like fft.
      */
     template <typename FPTYPE>
-    std::complex<FPTYPE>* get_auxr_3d_data() const;
+    std::complex<FPTYPE>* get_auxr_3d_data () const;
 
     /**
      * @brief Forward fft in z direction.
@@ -138,7 +143,7 @@ class FFT_Bundle
      * which is used in the cpu-like fft.
      */
     template <typename FPTYPE>
-    void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fftzfor (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
     /**
      * @brief Forward fft in x-y direction.
      * @param in  input data.
@@ -149,7 +154,7 @@ class FFT_Bundle
      * the function will call the fftxyfor in the accurate fft class.
      */
     template <typename FPTYPE>
-    void fftxyfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fftxyfor (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
     /**
      * @brief Backward fft in z direction.
      * @param in  input data.
@@ -160,7 +165,7 @@ class FFT_Bundle
      * the function will call the fftzbac in the accurate fft class.
      */
     template <typename FPTYPE>
-    void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fftzbac (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
     /**
      * @brief Backward fft in x-y direction.
      * @param in  input data.
@@ -171,7 +176,7 @@ class FFT_Bundle
      * the function will call the fftxybac in the accurate fft class.
      */
     template <typename FPTYPE>
-    void fftxybac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fftxybac (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
     /**
      * @brief Real to complex fft in x-y direction.
@@ -183,7 +188,7 @@ class FFT_Bundle
      * the function will call the fftxyr2c in the accurate fft class.
      */
     template <typename FPTYPE>
-    void fftxyr2c(FPTYPE* in, std::complex<FPTYPE>* out) const;
+    void fftxyr2c (FPTYPE* in, std::complex<FPTYPE>* out) const;
     /**
      * @brief Complex to real fft in x-y direction.
      * @param in  input data.
@@ -194,12 +199,12 @@ class FFT_Bundle
      * the function will call the fftxyc2r in the accurate fft class.
      */
     template <typename FPTYPE>
-    void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out) const;
+    void fftxyc2r (std::complex<FPTYPE>* in, FPTYPE* out) const;
 
     template <typename FPTYPE>
-    void fft3D_forward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fft3D_forward (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
     template <typename FPTYPE>
-    void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    void fft3D_backward (std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
   private:
     int fft_mode = 0;
@@ -212,18 +217,14 @@ class FFT_Bundle
     std::string precision = "double";
     int dsp_cluster_id_ = 0;
 };
-// Use RAII (Resource Acquisition Is Initialization) to 
+// Use RAII (Resource Acquisition Is Initialization) to
 // control the resources used by hthread when setting the DSP
 struct FFT_Guard
-  {
-      const FFT_Bundle& fft_;
-      FFT_Guard(const FFT_Bundle& fft) : fft_(fft) 
-        {fft_.resource_handler(1);}
-      ~FFT_Guard()
-      {
-        fft_.resource_handler(0);
-      }
-  };
+{
+    const FFT_Bundle& fft_;
+    FFT_Guard (const FFT_Bundle& fft) : fft_ (fft) { fft_.resource_handler (1); }
+    ~FFT_Guard () { fft_.resource_handler (0); }
+};
 
 } // namespace ModuleBase
 #endif // FFT_H

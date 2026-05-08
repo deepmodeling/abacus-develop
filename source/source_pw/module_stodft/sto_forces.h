@@ -18,32 +18,32 @@ class Sto_Forces : public Forces<FPTYPE, Device>
      * (4) cal_nl: contribution due to the non-local pseudopotential.
      * (4) cal_scc: contributino due to incomplete SCF calculation.
      */
-    Sto_Forces(const int nat_in) : Forces<FPTYPE, Device>(nat_in){};
-    ~Sto_Forces(){};
+    Sto_Forces (const int nat_in) : Forces<FPTYPE, Device> (nat_in) {};
+    ~Sto_Forces () {};
 
-    void cal_stoforce(ModuleBase::matrix& force,
-                      const elecstate::ElecState& elec,
-                      ModulePW::PW_Basis* rho_basis,
-                      ModuleSymmetry::Symmetry* p_symm,
-                      const Structure_Factor* p_sf,
-                      K_Vectors* pkv,
-                      ModulePW::PW_Basis_K* wfc_basis,
-                      const pseudopot_cell_vl& locpp,
-                      const pseudopot_cell_vnl& nlpp,
-                      UnitCell& ucell,
-                      const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-                      const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
+    void cal_stoforce (ModuleBase::matrix& force,
+                       const elecstate::ElecState& elec,
+                       ModulePW::PW_Basis* rho_basis,
+                       ModuleSymmetry::Symmetry* p_symm,
+                       const Structure_Factor* p_sf,
+                       K_Vectors* pkv,
+                       ModulePW::PW_Basis_K* wfc_basis,
+                       const pseudopot_cell_vl& locpp,
+                       const pseudopot_cell_vnl& nlpp,
+                       UnitCell& ucell,
+                       const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                       const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
 
   private:
-    void cal_sto_force_nl(ModuleBase::matrix& forcenl,
-                          const ModuleBase::matrix& wg,
-                          K_Vectors* p_kv,
-                          ModulePW::PW_Basis_K* wfc_basis,
-                          const Structure_Factor* p_sf,
-                          const pseudopot_cell_vnl& nlpp,
-                          const UnitCell& ucell,
-                          const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-                          const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
+    void cal_sto_force_nl (ModuleBase::matrix& forcenl,
+                           const ModuleBase::matrix& wg,
+                           K_Vectors* p_kv,
+                           ModulePW::PW_Basis_K* wfc_basis,
+                           const Structure_Factor* p_sf,
+                           const pseudopot_cell_vnl& nlpp,
+                           const UnitCell& ucell,
+                           const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                           const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
 #ifdef __DSP
     using resmem_var_op = base_device::memory::resize_memory_op_mt<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op_mt<FPTYPE, Device>;

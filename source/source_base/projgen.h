@@ -24,20 +24,14 @@
  * @param[out]  alpha   new radial function of the projector
  *
  */
-void projgen(
-    const int l, 
-    const int nr, 
-    const double* r, 
-    const double* chi, 
-    const double rcut, 
-    const int nbes, 
-    std::vector<double>& alpha);
+void projgen (const int l,
+              const int nr,
+              const double* r,
+              const double* chi,
+              const double rcut,
+              const int nbes,
+              std::vector<double>& alpha);
 
-void smoothgen( 
-    const int nr, 
-    const double* r, 
-    const double* chi, 
-    const double rcut, 
-    std::vector<double>& alpha);
+void smoothgen (const int nr, const double* r, const double* chi, const double rcut, std::vector<double>& alpha);
 
 #endif

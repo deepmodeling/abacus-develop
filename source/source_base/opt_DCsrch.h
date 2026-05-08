@@ -15,12 +15,12 @@ namespace ModuleBase
 class Opt_DCsrch
 {
   public:
-    Opt_DCsrch()
+    Opt_DCsrch ()
     {
         this->isave_ = new int[3];
         this->dsave_ = new double[14];
     }
-    ~Opt_DCsrch()
+    ~Opt_DCsrch ()
     {
         delete[] this->isave_;
         delete[] this->dsave_;
@@ -43,7 +43,8 @@ class Opt_DCsrch
      * @param stpmin nonnegative lower bound for the step.
      * @param stpmax nonnegative upper bound for the step.
      */
-    void set_paras(double ftol = 1e-4,
+    void
+        set_paras (double ftol = 1e-4,
                    double gtol = 2e-1,
                    double xtol = 1e-12,
                    double stpmin = 0.,
@@ -73,7 +74,7 @@ class Opt_DCsrch
      *                 The exit value of stp contains the best point found during the search.
      *              If task(1:5) = 'ERROR' then there is an error in the input arguments.
      */
-    void dcSrch(double& f, double& g, double& rstp, char* rtask);
+    void dcSrch (double& f, double& g, double& rstp, char* rtask);
 
   private:
     double ftol_ = 1e-4;  // nonnegative tolerance for the sufficient decrease condition.

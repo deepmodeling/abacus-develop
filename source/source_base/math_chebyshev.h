@@ -85,20 +85,20 @@ class Chebyshev
 
   public:
     // constructor and deconstructor
-    Chebyshev(const int norder);
-    ~Chebyshev();
+    Chebyshev (const int norder);
+    ~Chebyshev ();
 
   public:
     // I.
     // Calculate coefficients C_n[f], where f is a function of real number
-    void calcoef_real(std::function<REAL(REAL)> fun);
+    void calcoef_real (std::function<REAL (REAL)> fun);
 
     // Calculate coefficients C_n[g], where g is a function of complex number
-    void calcoef_complex(std::function<std::complex<REAL>(std::complex<REAL>)> fun);
+    void calcoef_complex (std::function<std::complex<REAL> (std::complex<REAL>)> fun);
 
     // Calculate coefficients C_n[g], where g is a general complex function g(x)=(g1(x), g2(x))
     // e.g. exp(ix)=(cos(x),sin(x))
-    void calcoef_pair(std::function<REAL(REAL)> fun1, std::function<REAL(REAL)> fun2);
+    void calcoef_pair (std::function<REAL (REAL)> fun1, std::function<REAL (REAL)> fun2);
 
     // II.
     // Calculate the final vector f(A)v = \sum_{n=0}^{norder-1} C_n[f]*v_n
@@ -107,83 +107,83 @@ class Chebyshev
     // A[v1,...,vm] N is dimension of vector, and LDA is the distance between the first number of v_n and v_{n+1}. LDA
     // >= max(1, N). It is the same as the BLAS lib. calfinalvec_real uses C_n[f], where f is a function of real number
     // and A is a real Operator.
-    void calfinalvec_real(std::function<void(REAL*, REAL*, const int)> funA,
+    void calfinalvec_real (std::function<void (REAL*, REAL*, const int)> funA,
+                           REAL* wavein,
+                           REAL* waveout,
+                           const int N,
+                           const int LDA = 1,
+                           const int m = 1); // do not define yet
+
+    // calfinalvec_real uses C_n[f], where f is a function of real number and A is a complex Operator.
+    void calfinalvec_real (std::function<void (std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
+                           std::complex<REAL>* wavein,
+                           std::complex<REAL>* waveout,
+                           const int N,
+                           const int LDA = 1,
+                           const int m = 1);
+
+    // calfinalvec_complex uses C_n[g], where g is a function of complex number and A is a complex Operator.
+    void calfinalvec_complex (std::function<void (std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
+                              std::complex<REAL>* wavein,
+                              std::complex<REAL>* waveout,
+                              const int N,
+                              const int LDA = 1,
+                              const int m = 1);
+
+    // III.
+    // \sum_i v_i^+f(A)v_i = \sum_{i,n=0}^{norder-1} C_n[f]*v_i^+v_{i,n} = \sum_{n=0}^{norder-1} C_n[f] * w_n
+    // calculate the sum of diagonal elements (Trace) of T_n(A) in v-represent: w_n = \sum_i v_i^+ * T_n(A) * v_i
+    // i = 1,2,...m
+    void tracepolyA (std::function<void (std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
+                     std::complex<REAL>* wavein,
+                     const int N,
+                     const int LDA = 1,
+                     const int m = 1);
+
+    // get T_n(x)
+    void getpolyval (REAL x, REAL* polyval, const int N);
+
+    // get each order of vector: {T_0(A)v, T_1(A)v, ..., T_n(A)v}
+    // Note: use it carefully, it will cost a lot of memory!
+    // calpolyvec_real: f(x) = \sum_n C_n*T_n(x), f is a real function
+    void calpolyvec_real (std::function<void (REAL* in, REAL* out, const int)> funA,
                           REAL* wavein,
                           REAL* waveout,
                           const int N,
                           const int LDA = 1,
                           const int m = 1); // do not define yet
 
-    // calfinalvec_real uses C_n[f], where f is a function of real number and A is a complex Operator.
-    void calfinalvec_real(std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
-                          std::complex<REAL>* wavein,
-                          std::complex<REAL>* waveout,
-                          const int N,
-                          const int LDA = 1,
-                          const int m = 1);
-
-    // calfinalvec_complex uses C_n[g], where g is a function of complex number and A is a complex Operator.
-    void calfinalvec_complex(std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
+    // calpolyvec_complex: f(x) = \sum_n C_n*T_n(x), f is a complex function
+    void calpolyvec_complex (std::function<void (std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
                              std::complex<REAL>* wavein,
                              std::complex<REAL>* waveout,
                              const int N,
                              const int LDA = 1,
                              const int m = 1);
 
-    // III.
-    // \sum_i v_i^+f(A)v_i = \sum_{i,n=0}^{norder-1} C_n[f]*v_i^+v_{i,n} = \sum_{n=0}^{norder-1} C_n[f] * w_n
-    // calculate the sum of diagonal elements (Trace) of T_n(A) in v-represent: w_n = \sum_i v_i^+ * T_n(A) * v_i
-    // i = 1,2,...m
-    void tracepolyA(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
-                    std::complex<REAL>* wavein,
-                    const int N,
-                    const int LDA = 1,
-                    const int m = 1);
-
-    // get T_n(x)
-    void getpolyval(REAL x, REAL* polyval, const int N);
-
-    // get each order of vector: {T_0(A)v, T_1(A)v, ..., T_n(A)v}
-    // Note: use it carefully, it will cost a lot of memory!
-    // calpolyvec_real: f(x) = \sum_n C_n*T_n(x), f is a real function
-    void calpolyvec_real(std::function<void(REAL* in, REAL* out, const int)> funA,
-                         REAL* wavein,
-                         REAL* waveout,
-                         const int N,
-                         const int LDA = 1,
-                         const int m = 1); // do not define yet
-
-    // calpolyvec_complex: f(x) = \sum_n C_n*T_n(x), f is a complex function
-    void calpolyvec_complex(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
-                            std::complex<REAL>* wavein,
-                            std::complex<REAL>* waveout,
-                            const int N,
-                            const int LDA = 1,
-                            const int m = 1);
-
     // IV.
     // recurs fomula: v_{n+1} = 2Av_n - v_{n-1}
     // get v_{n+1} from v_n and v_{n-1}
     // recurs_complex: A is a real operator
-    void recurs_real(std::function<void(REAL* in, REAL* out, const int)> funA,
-                     REAL* arraynp1,
-                     REAL* arrayn,
-                     REAL* arrayn_1,
-                     const int N,
-                     const int LDA = 1,
-                     const int m = 1);
+    void recurs_real (std::function<void (REAL* in, REAL* out, const int)> funA,
+                      REAL* arraynp1,
+                      REAL* arrayn,
+                      REAL* arrayn_1,
+                      const int N,
+                      const int LDA = 1,
+                      const int m = 1);
 
     // recurs_complex: A is a complex operator
-    void recurs_complex(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
-                        std::complex<REAL>* arraynp1,
-                        std::complex<REAL>* arrayn,
-                        std::complex<REAL>* arrayn_1,
-                        const int N,
-                        const int LDA = 1,
-                        const int m = 1);
+    void recurs_complex (std::function<void (std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
+                         std::complex<REAL>* arraynp1,
+                         std::complex<REAL>* arrayn,
+                         std::complex<REAL>* arrayn_1,
+                         const int N,
+                         const int LDA = 1,
+                         const int m = 1);
 
     // return 2xTn-Tn_1
-    REAL recurs(const REAL x, const REAL Tn, const REAL Tn_1);
+    REAL recurs (const REAL x, const REAL Tn, const REAL Tn_1);
 
     // V.
     // auxiliary function
@@ -191,13 +191,13 @@ class Chebyshev
     // Thus \hat(a) = \frac{(A - (tmax+tmin)/2)}{(tmax-tmin)/2}
     // tmax >= all eigenvalues; tmin <= all eigenvalues
     // Here we check if the trial number tmax(tmin) is the upper(lower) bound of eigenvalues and return it.
-    bool checkconverge(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
-                       std::complex<REAL>* wavein,
-                       const int N,
-                       const int LDA,
-                       REAL& tmax,  // trial number for upper bound
-                       REAL& tmin,  // trial number for lower bound
-                       REAL stept); // tmax = max() + stept, tmin = min() - stept
+    bool checkconverge (std::function<void (std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
+                        std::complex<REAL>* wavein,
+                        const int N,
+                        const int LDA,
+                        REAL& tmax,  // trial number for upper bound
+                        REAL& tmin,  // trial number for lower bound
+                        REAL stept); // tmax = max() + stept, tmin = min() - stept
 
   public:
     // Members:
@@ -209,8 +209,8 @@ class Chebyshev
     REAL* coefr_cpu = nullptr;                  //[CPU] expansion coefficient of each order
     std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
 
-    FFTW<REAL> fftw;          // use for fftw
-    REAL* polytrace = nullptr;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
+    FFTW<REAL> fftw;           // use for fftw
+    REAL* polytrace = nullptr; //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated
@@ -218,24 +218,26 @@ class Chebyshev
   public:
     // SI.
     // calculate dot product <psi_L|psi_R>
-    REAL ddot_real(const std::complex<REAL>* psi_L,
-                   const std::complex<REAL>* psi_R,
-                   const int N,
-                   const int LDA = 1,
-                   const int m = 1);
-  
+    REAL ddot_real (const std::complex<REAL>* psi_L,
+                    const std::complex<REAL>* psi_R,
+                    const int N,
+                    const int LDA = 1,
+                    const int m = 1);
+
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
-    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<REAL>, Device>; 
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<REAL>, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<REAL, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<REAL>, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<REAL, Device>;
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<REAL, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>;
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op
+        = base_device::memory::synchronize_memory_op<std::complex<REAL>, base_device::DEVICE_CPU, Device>;
     using memcpy_var_op = base_device::memory::synchronize_memory_op<REAL, Device, Device>;
     using memcpy_complex_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<REAL>, Device>;
@@ -245,9 +247,9 @@ template <>
 class FFTW<double>
 {
   public:
-    FFTW(const int norder2_in);
-    ~FFTW();
-    void execute_fftw();
+    FFTW (const int norder2_in);
+    ~FFTW ();
+    void execute_fftw ();
     double* dcoef = nullptr; //[norder2]
     fftw_complex* ccoef = nullptr;
     fftw_plan coef_plan;
@@ -258,9 +260,9 @@ template <>
 class FFTW<float>
 {
   public:
-    FFTW(const int norder2_in);
-    ~FFTW();
-    void execute_fftw();
+    FFTW (const int norder2_in);
+    ~FFTW ();
+    void execute_fftw ();
     float* dcoef = nullptr; //[norder2]
     fftwf_complex* ccoef = nullptr;
     fftwf_plan coef_plan;

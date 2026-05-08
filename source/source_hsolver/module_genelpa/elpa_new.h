@@ -2,8 +2,6 @@
 
 #include <elpa/elpa_version.h>
 
-
-
 #if ELPA_API_VERSION >= 20221101
 #include <elpa/elpa.h>
 #else
@@ -12,10 +10,10 @@ extern "C"
 #include <limits.h>
 
     struct elpa_struct;
-    typedef struct elpa_struct *elpa_t;
+    typedef struct elpa_struct* elpa_t;
 
     struct elpa_autotune_struct;
-    typedef struct elpa_autotune_struct *elpa_autotune_t;
+    typedef struct elpa_autotune_struct* elpa_autotune_t;
 
 #include <elpa/elpa_constants.h>
 #include <elpa/elpa_generated_c_api.h>
@@ -28,7 +26,7 @@ extern "C"
     // #include <elpa/elpa_generic.h>
 #undef complex
 
-    const char *elpa_strerr(int elpa_error);
+    const char* elpa_strerr (int elpa_error);
 
 // This is a header file related to GPU support.
 // This header file was not available in the early ELPA.

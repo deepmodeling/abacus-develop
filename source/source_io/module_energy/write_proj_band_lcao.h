@@ -9,14 +9,13 @@
 
 namespace ModuleIO
 {
-    template <typename TK>
-    void write_proj_band_lcao(
-        const psi::Psi<TK>* psi,
-		const Parallel_Orbitals &pv,
-		const elecstate::ElecState* pelec,
-		const K_Vectors& kv,
-		const UnitCell &ucell, 
-        hamilt::Hamilt<TK>* p_ham);
+template <typename TK>
+void write_proj_band_lcao (const psi::Psi<TK>* psi,
+                           const Parallel_Orbitals& pv,
+                           const elecstate::ElecState* pelec,
+                           const K_Vectors& kv,
+                           const UnitCell& ucell,
+                           hamilt::Hamilt<TK>* p_ham);
 }
 
 #endif

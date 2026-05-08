@@ -13,17 +13,17 @@ struct Exx_Info
     {
         bool cal_exx = false;
 
-        std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+        std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
 
-		// Fock:
-		//		"alpha":		"0"
-		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer" / "massidda" / "carrier"
-		//		"lambda":		"0.3"
+        // Fock:
+        //		"alpha":		"0"
+        //		"singularity_correction":	"limits" / "spencer" / "revised_spencer" / "massidda" / "carrier"
+        //		"lambda":		"0.3"
         //      "Rcut"
-		// Erfc:
-		//		"alpha":		"0"
-		//		"omega":		"0.11"
-		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
+        // Erfc:
+        //		"alpha":		"0"
+        //		"omega":		"0.11"
+        //		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
         //      "Rcut"
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
@@ -42,15 +42,17 @@ struct Exx_Info
         const double& hse_omega;
         double lambda = 0.3;
 
-        Exx_Info_Lip(const Exx_Info::Exx_Info_Global& info_global)
-            :ccp_type(info_global.ccp_type),
-            hse_omega(info_global.hse_omega) {}
+        Exx_Info_Lip (const Exx_Info::Exx_Info_Global& info_global)
+            : ccp_type (info_global.ccp_type), hse_omega (info_global.hse_omega)
+        {
+        }
     };
     Exx_Info_Lip info_lip;
 
     struct Exx_Info_RI
     {
-        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
+        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&
+            coulomb_param;
 
         bool real_number = false;
         bool coul_moment = false;
@@ -78,10 +80,7 @@ struct Exx_Info
 
         int abfs_Lmax = 0; // tmp
 
-        Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : coulomb_param(info_global.coulomb_param)
-        {
-        }
+        Exx_Info_RI (const Exx_Info::Exx_Info_Global& info_global) : coulomb_param (info_global.coulomb_param) {}
     };
     Exx_Info_RI info_ri;
 
@@ -99,14 +98,12 @@ struct Exx_Info
     };
     Exx_Info_Opt_ABFs info_opt_abfs;
 
-    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
-    {
-    }
+    Exx_Info () : info_lip (this->info_global), info_ri (this->info_global) {}
 };
 
 namespace GlobalC
 {
-    extern Exx_Info exx_info;
+extern Exx_Info exx_info;
 }
 
 #endif

@@ -12,12 +12,11 @@
 #ifndef CUDA_COMPAT_H_
 #define CUDA_COMPAT_H_
 
-#include <iostream> // For std::ostream
+#include <iostream>  // For std::ostream
 #include <stdexcept> // For std::invalid_argument
-#include <cuda.h> // defines CUDA_VERSION
+#include <cuda.h>    // defines CUDA_VERSION
 #include <cuda_runtime.h>
 #include <cufft.h>
-
 
 // NVTX header for CUDA versions prior to 12.9 vs. 12.9+
 // This block ensures the correct NVTX header path is used based on CUDA_VERSION.
@@ -30,17 +29,19 @@
 // https://docs.nvidia.com/cuda/archive/12.9.0/cuda-toolkit-release-notes/index.html#id4
 #if defined(__CUDA) && defined(__USE_NVTX)
 #if CUDA_VERSION < 12090
-    #include "nvToolsExt.h"
+#include "nvToolsExt.h"
 #else
-    #include "nvtx3/nvToolsExt.h"
+#include "nvtx3/nvToolsExt.h"
 #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------
 // Compatibility Layer Declarations
 //-------------------------------------------------------------------------------------------------
-namespace ModuleBase {
-namespace cuda_compat {
+namespace ModuleBase
+{
+namespace cuda_compat
+{
 
 /**
  * @brief Prints device information that was deprecated or removed in CUDA 13.0.
@@ -51,7 +52,7 @@ namespace cuda_compat {
  * @param os The output stream (e.g., std::cout, std::ofstream).
  * @param prop The cudaDeviceProp structure containing device properties.
  */
-void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop);
+void printDeprecatedDeviceInfo (std::ostream& os, const cudaDeviceProp& prop);
 
 /**
  * @brief Prints the device's compute mode using a legacy string mapping.
@@ -62,7 +63,7 @@ void printDeprecatedDeviceInfo(std::ostream& os, const cudaDeviceProp& prop);
  * @param os The output stream (e.g., std::cout, std::ofstream).
  * @param prop The cudaDeviceProp structure containing device properties.
  */
-void printComputeModeInfo(std::ostream& os, const cudaDeviceProp& prop);
+void printComputeModeInfo (std::ostream& os, const cudaDeviceProp& prop);
 
 } // namespace cuda_compat
 } // namespace ModuleBase

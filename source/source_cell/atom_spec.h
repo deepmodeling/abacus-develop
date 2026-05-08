@@ -6,8 +6,8 @@ class Atom
 {
   public:
     // constructor and destructor
-    Atom();
-    ~Atom();
+    Atom ();
+    ~Atom ();
 
     Atom_pseudo ncpp;
     double mass = 0.0;                         // the mass of atom
@@ -21,7 +21,7 @@ class Atom
     std::vector<bool> iw2_new;
     int nw = 0; // number of local orbitals (l,n,m) of this type
 
-    void set_index();
+    void set_index ();
 
     int type = 0; // Index of atom type
     int na = 0;   // Number of atoms in this type.
@@ -33,12 +33,14 @@ class Atom
 
     std::string label = "\0";                     // atomic symbol
     std::vector<ModuleBase::Vector3<double>> tau; // Cartesian coordinates of each atom in this type.
-    std::vector<ModuleBase::Vector3<double>> dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
-    std::vector<ModuleBase::Vector3<double>> taud;  // Direct coordinates of each atom in this type.
-    std::vector<ModuleBase::Vector3<int>> boundary_shift;  // record for periodic boundary adjustment.
-    std::vector<ModuleBase::Vector3<double>> vel;   // velocities of each atom in this type.
-    std::vector<ModuleBase::Vector3<double>> force; // force acting on each atom in this type.
-    std::vector<ModuleBase::Vector3<double>> lambda; // Lagrange multiplier for each atom in this type. used in deltaspin
+    std::vector<ModuleBase::Vector3<double>>
+        dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
+    std::vector<ModuleBase::Vector3<double>> taud;        // Direct coordinates of each atom in this type.
+    std::vector<ModuleBase::Vector3<int>> boundary_shift; // record for periodic boundary adjustment.
+    std::vector<ModuleBase::Vector3<double>> vel;         // velocities of each atom in this type.
+    std::vector<ModuleBase::Vector3<double>> force;       // force acting on each atom in this type.
+    std::vector<ModuleBase::Vector3<double>>
+        lambda; // Lagrange multiplier for each atom in this type. used in deltaspin
     std::vector<ModuleBase::Vector3<int>> constrain; // constrain for each atom in this type. used in deltaspin
     std::string label_orb = "\0";                    // atomic Element symbol in the orbital file of lcao
 
@@ -49,11 +51,11 @@ class Atom
     // Coulomb potential v(r) = z/r
     // It is a local potentail, and has no non-local potential parts.
     bool coulomb_potential = false;
-    void print_Atom(std::ofstream& ofs);
-    void update_force(ModuleBase::matrix& fcs);
+    void print_Atom (std::ofstream& ofs);
+    void update_force (ModuleBase::matrix& fcs);
 #ifdef __MPI
-    void bcast_atom();
-    void bcast_atom2();
+    void bcast_atom ();
+    void bcast_atom2 ();
 #endif
 };
 

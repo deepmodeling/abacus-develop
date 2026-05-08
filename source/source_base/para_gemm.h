@@ -24,8 +24,8 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class PGemmCN
 {
   public:
-    PGemmCN();
-    ~PGemmCN();
+    PGemmCN ();
+    ~PGemmCN ();
 
     /**
      * @brief set the dimension of A, B, and C
@@ -38,7 +38,7 @@ class PGemmCN
      * @param LDC leading dimension of C. C can be C_local or C_global
      * @param mode 1: gather C_local to C_global, 2:C_local(nrow * ncol_loc), 3:C_global(nrow_loc * ncol)
      */
-    void set_dimension(
+    void set_dimension (
 #ifdef __MPI
         MPI_Comm comm_col,
         MPI_Comm comm_row,
@@ -55,7 +55,7 @@ class PGemmCN
      * @brief calculate C = alpha * A^H * B + beta * C
      *
      */
-    void multiply(const T alpha, const T* A, const T* B, const T beta, T* C);
+    void multiply (const T alpha, const T* A, const T* B, const T beta, T* C);
 #ifdef __MPI
     MPI_Comm col_world = MPI_COMM_NULL; ///< column communicator world
     MPI_Comm row_world = MPI_COMM_NULL; ///< row communicator world
@@ -86,12 +86,12 @@ class PGemmCN
     int LDC = 0;   ///< leading dimension of C, which can be C_local or C_global
   private:
     /// @brief for col_nproc == 1
-    void multiply_single(const T alpha, const T* A, const T* B, const T beta, T* C);
+    void multiply_single (const T alpha, const T* A, const T* B, const T beta, T* C);
 #ifdef __MPI
     /// @brief for mode = 1 or 2
-    void multiply_col(const T alpha, const T* A, const T* B, const T beta, T* C);
+    void multiply_col (const T alpha, const T* A, const T* B, const T beta, T* C);
     /// @brief for mode = 3
-    void multiply_row(const T alpha, const T* A, const T* B, const T beta, T* C);
+    void multiply_row (const T alpha, const T* A, const T* B, const T beta, T* C);
 #endif
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_dev_op = base_device::memory::delete_memory_op<T, Device>;
@@ -101,17 +101,15 @@ class PGemmCN
 
 #ifdef __MPI
   private:
-    std::vector<T> isend_tmp_; ///< temperory memory for sending data
-    std::vector<T> A_tmp_;     ///< temperory memory for A
-    std::vector<T> B_tmp_;     ///< temperory memory for B
-    std::vector<T> C_tmp_;     ///< temperory memory for C
+    std::vector<T> isend_tmp_;    ///< temperory memory for sending data
+    std::vector<T> A_tmp_;        ///< temperory memory for A
+    std::vector<T> B_tmp_;        ///< temperory memory for B
+    std::vector<T> C_tmp_;        ///< temperory memory for C
     std::vector<T> C_global_tmp_; ///< temperory memory for C_global
     T* C_local_tmp_ = nullptr;    ///< temperory memory for C_local
     T* A_tmp_device_ = nullptr;   ///< temperory memory for A
     T* B_tmp_device_ = nullptr;   ///< temperory memory for B
 #endif
-
-
 };
 } // namespace ModuleBase
 #endif

@@ -7,14 +7,9 @@
 // generate charge density from different basis or methods
 namespace LCAO_domain
 {
-	void dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
-			const int nspin,
-			Charge* chr, 
-			bool skip_normalize = false);
+void dm2rho (std::vector<hamilt::HContainer<double>*>& dmr, const int nspin, Charge* chr, bool skip_normalize = false);
 
-	void dm2tau(std::vector<hamilt::HContainer<double>*> &dmr,
-			const int nspin,
-			Charge* chr);
-}
+void dm2tau (std::vector<hamilt::HContainer<double>*>& dmr, const int nspin, Charge* chr);
+} // namespace LCAO_domain
 
 #endif

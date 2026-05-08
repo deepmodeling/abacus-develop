@@ -3,8 +3,10 @@
 
 #include <base/core/allocator.h>
 
-namespace base {
-namespace core {
+namespace base
+{
+namespace core
+{
 
 /**
  * @brief An Allocator subclass for CPU memory.
@@ -13,9 +15,9 @@ namespace core {
  * uses the standard library functions std::malloc, std::free, and std::aligned_alloc
  * to allocate and deallocate memory blocks.
  */
-class CPUAllocator : public Allocator {
-public:
-
+class CPUAllocator : public Allocator
+{
+  public:
     /**
      * @brief Allocate a block of CPU memory with the given size and default alignment.
      *
@@ -23,7 +25,7 @@ public:
      *
      * @return A pointer to the allocated memory block, or nullptr if the allocation fails.
      */
-    void *allocate(size_t size) override;
+    void* allocate (size_t size) override;
 
     /**
      * @brief Allocate a block of CPU memory with the given size and alignment.
@@ -33,22 +35,21 @@ public:
      *
      * @return A pointer to the allocated memory block, or nullptr if the allocation fails.
      */
-    void *allocate(size_t size, size_t alignment) override;
+    void* allocate (size_t size, size_t alignment) override;
 
     /**
      * @brief Free a block of CPU memory that was previously allocated by this allocator.
      *
      * @param ptr A pointer to the memory block to free.
      */
-    void free(void *ptr) override;
+    void free (void* ptr) override;
 
     /**
      * @brief Get the type of device used by the TensorBuffer.
      *
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
-    container::DeviceType GetDeviceType() override;
-
+    container::DeviceType GetDeviceType () override;
 };
 
 } // namespace core

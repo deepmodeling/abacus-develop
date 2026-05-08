@@ -13,33 +13,32 @@
 class FIRE : public MD_base
 {
   public:
-    FIRE(const Parameter& param_in, UnitCell& unit_in);
+    FIRE (const Parameter& param_in, UnitCell& unit_in);
 
-    ~FIRE();
+    ~FIRE ();
 
   private:
+    void setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
 
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void first_half (std::ofstream& ofs);
 
-    void first_half(std::ofstream& ofs);
+    void second_half ();
 
-    void second_half();
+    void print_md (std::ofstream& ofs, const bool& cal_stress);
 
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
+    void restart (const std::string& global_readin_dir);
 
-    void restart(const std::string& global_readin_dir);
-
-    void write_restart(const std::string& global_out_dir);
+    void write_restart (const std::string& global_out_dir);
 
     /**
      * @brief check the atomic forces converged or not
      */
-    void check_force(void);
+    void check_force ();
 
     /**
      * @brief update related parameters
      */
-    void check_fire(void);
+    void check_fire ();
 
     double max;         ///< max force
     double alpha_start; ///< alpha_start begin

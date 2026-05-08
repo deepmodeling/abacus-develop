@@ -12,8 +12,10 @@
 #include <functional>
 #include <string>
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief SCF convergence status
@@ -49,12 +51,14 @@ struct SCFConvergenceCriteria
  *
  * Return true to continue, false to stop SCF.
  */
-using SCFIterationCallback = std::function<bool(int iter, double drho, double energy)>;
+using SCFIterationCallback = std::function<bool (int iter, double drho, double energy)>;
 
 // Forward declarations for component interfaces
-template <typename TK, typename TR> class IHamiltonianBuilder;
+template <typename TK, typename TR>
+class IHamiltonianBuilder;
 class IChargeMixer;
-template <typename TK> class IDiagonalizer;
+template <typename TK>
+class IDiagonalizer;
 
 /**
  * @brief Abstract interface for SCF controller
@@ -65,8 +69,8 @@ template <typename TK> class IDiagonalizer;
  */
 class ISCFController
 {
-public:
-    virtual ~ISCFController() = default;
+  public:
+    virtual ~ISCFController () = default;
 
     // ==================== Lifecycle ====================
 
@@ -74,13 +78,13 @@ public:
      * @brief Initialize SCF calculation
      * @param istep Ion step index (for MD/relaxation)
      */
-    virtual void initialize(int istep = 0) = 0;
+    virtual void initialize (int istep = 0) = 0;
 
     /**
      * @brief Finalize SCF calculation
      * @param istep Ion step index
      */
-    virtual void finalize(int istep = 0) = 0;
+    virtual void finalize (int istep = 0) = 0;
 
     // ==================== Iteration Control ====================
 
@@ -89,7 +93,7 @@ public:
      * @param iter Iteration number (1-based)
      * @return Current SCF status
      */
-    virtual SCFStatus run_iteration(int iter) = 0;
+    virtual SCFStatus run_iteration (int iter) = 0;
 
     /**
      * @brief Run complete SCF loop
@@ -97,20 +101,19 @@ public:
      * @param callback Optional callback for each iteration
      * @return Final SCF status
      */
-    virtual SCFStatus run_scf(const SCFConvergenceCriteria& criteria,
-                              SCFIterationCallback callback = nullptr) = 0;
+    virtual SCFStatus run_scf (const SCFConvergenceCriteria& criteria, SCFIterationCallback callback = nullptr) = 0;
 
     /**
      * @brief Check if SCF is converged
      * @return true if converged
      */
-    virtual bool is_converged() const = 0;
+    virtual bool is_converged () const = 0;
 
     /**
      * @brief Get current SCF status
      * @return Current status
      */
-    virtual SCFStatus get_status() const = 0;
+    virtual SCFStatus get_status () const = 0;
 
     // ==================== State Queries ====================
 
@@ -118,19 +121,19 @@ public:
      * @brief Get current iteration number
      * @return Iteration number (0 if not started)
      */
-    virtual int get_iteration() const = 0;
+    virtual int get_iteration () const = 0;
 
     /**
      * @brief Get current charge density difference
      * @return drho value
      */
-    virtual double get_drho() const = 0;
+    virtual double get_drho () const = 0;
 
     /**
      * @brief Get current total energy
      * @return Total energy in Ry
      */
-    virtual double get_energy() const = 0;
+    virtual double get_energy () const = 0;
 
     // ==================== Component Access ====================
 
@@ -138,19 +141,19 @@ public:
      * @brief Get Hamiltonian builder component
      * @return Pointer to Hamiltonian builder (may be nullptr)
      */
-    virtual void* get_hamiltonian_builder() = 0;
+    virtual void* get_hamiltonian_builder () = 0;
 
     /**
      * @brief Get charge mixer component
      * @return Pointer to charge mixer (may be nullptr)
      */
-    virtual IChargeMixer* get_charge_mixer() = 0;
+    virtual IChargeMixer* get_charge_mixer () = 0;
 
     /**
      * @brief Get diagonalizer component
      * @return Pointer to diagonalizer (may be nullptr)
      */
-    virtual void* get_diagonalizer() = 0;
+    virtual void* get_diagonalizer () = 0;
 };
 
 } // namespace esolver

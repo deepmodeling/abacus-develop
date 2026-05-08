@@ -4,12 +4,11 @@
 
 class Memory
 {
-	public:
-	Memory();
-	~Memory();
-	
-	void calculation(void);	
+  public:
+    Memory ();
+    ~Memory ();
 
+    void calculation ();
 };
 
 #endif

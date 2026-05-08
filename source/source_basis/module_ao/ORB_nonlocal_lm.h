@@ -18,79 +18,135 @@
 class Numerical_Nonlocal_Lm
 {
 
-	public:
+  public:
+    double* beta_uniform = nullptr;
+    double* dbeta_uniform = nullptr;
+    int nr_uniform;
+    double dr_uniform;
 
-	double* beta_uniform = nullptr;
-	double* dbeta_uniform = nullptr;
-	int nr_uniform;
-	double dr_uniform;
+  public:
+    Numerical_Nonlocal_Lm ();
+    ~Numerical_Nonlocal_Lm ();
 
-	public:
+    const int&
+        getL () const
+    {
+        return this->angular_momentum_l;
+    }
+    const int&
+        getType () const
+    {
+        return this->index_atom_type;
+    }
+    const double&
+        getRcut () const
+    {
+        return this->rcut;
+    }
 
-	Numerical_Nonlocal_Lm();
-	~Numerical_Nonlocal_Lm();	
+    const int&
+        getNr () const
+    {
+        return this->nr;
+    }
+    const double*
+        getRadial () const
+    {
+        return this->r_radial;
+    }
+    const double&
+        getRadial (const int& ir) const
+    {
+        return this->r_radial[ir];
+    }
+    const double*
+        getBeta_r () const
+    {
+        return this->beta_r;
+    }
+    const double&
+        getBeta_r (const int& ir) const
+    {
+        return this->beta_r[ir];
+    }
 
-	const int& getL() const { return this->angular_momentum_l; }
-	const int& getType() const { return this->index_atom_type; }
-	const double& getRcut() const { return this->rcut; }
+    const double&
+        getDk () const
+    {
+        return this->dk;
+    }
+    const double*
+        getKpoint () const
+    {
+        return this->k_radial;
+    }
+    const double&
+        getKpoint (const int& ik) const
+    {
+        return this->k_radial[ik];
+    }
+    const double*
+        getBeta_k () const
+    {
+        return this->beta_k;
+    }
+    const double&
+        getBeta_k (const int& ik) const
+    {
+        return this->beta_k[ik];
+    }
 
-    const int& getNr() const { return this->nr; }
-	const double* getRadial() const { return this->r_radial; }
-	const double& getRadial(const int &ir) const { return this->r_radial[ir]; }
-	const double* getBeta_r() const { return this->beta_r; }
-	const double& getBeta_r(const int &ir) const { return this->beta_r[ir]; }
+    const int&
+        getNk () const
+    {
+        return nk;
+    }
+    const double&
+        getDruniform () const
+    {
+        return dr_uniform;
+    }
 
-	const double& getDk()const { return this->dk; }
-	const double* getKpoint()const { return this->k_radial; }
-	const double& getKpoint(const int &ik) const { return this->k_radial[ik]; }
-	const double* getBeta_k() const { return this->beta_k; }
-	const double& getBeta_k(const int &ik) const { return this->beta_k[ik]; }
-
-	const int& getNk() const { return nk; }
-	const double& getDruniform() const { return dr_uniform; }
-	
     // enables deep copy
-	Numerical_Nonlocal_Lm& operator= (const Numerical_Nonlocal_Lm& nol );
+    Numerical_Nonlocal_Lm& operator= (const Numerical_Nonlocal_Lm& nol);
 
-	void set_NL_proj(
- 		const std::string &label,
-    	const int &index_atom_type_in,
-    	const int &angular_momentum_l_in,
-    	const int &nr_in,
-    	const double *rab_in,
-    	const double *r_radial_in,
-    	const double *beta_r_in,
-    	const int &nk_in,
-    	const double &dk_in,
-		const double &dr_uniform_in);
+    void set_NL_proj (const std::string& label,
+                      const int& index_atom_type_in,
+                      const int& angular_momentum_l_in,
+                      const int& nr_in,
+                      const double* rab_in,
+                      const double* r_radial_in,
+                      const double* beta_r_in,
+                      const int& nk_in,
+                      const double& dk_in,
+                      const double& dr_uniform_in);
 
-	void plot(const int &my_rank)const;
+    void plot (const int& my_rank) const;
 
-	private:
+  private:
+    void freemem ();
+    void renew ();
+    // void extra_uniform(const double &dr_uniform);
+    void get_kradial ();
 
-	void freemem(void);
-	void renew(void);
-	//void extra_uniform(const double &dr_uniform);
-	void get_kradial(void);
+    std::string label;
+    int index_atom_type;
+    int angular_momentum_l;
+    int index_proj;
 
-	std::string label;
-	int index_atom_type;
-	int angular_momentum_l;
-	int index_proj;
+    int nr;
+    int nk;
 
-	int nr;
-	int nk;
+    double rcut;
+    double kcut;
+    double dk;
 
-	double rcut;
-	double kcut;
-	double dk;
+    double* r_radial = nullptr; // points of r
+    double* k_radial = nullptr;
 
-	double* r_radial = nullptr; //points of r
-	double* k_radial = nullptr;
-
-	double* rab = nullptr;
-	double* beta_r = nullptr; // |beta(r) * r>
-	double* beta_k = nullptr;
+    double* rab = nullptr;
+    double* beta_r = nullptr; // |beta(r) * r>
+    double* beta_k = nullptr;
 };
 
 #endif

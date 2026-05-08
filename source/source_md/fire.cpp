@@ -6,7 +6,7 @@
 #endif
 #include "source_base/timer.h"
 
-FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
+FIRE::FIRE (const Parameter& param_in, UnitCell& unit_in) : MD_base (param_in, unit_in)
 {
     force_thr = param_in.inp.force_thr;
     dt_max = -1.0;
@@ -22,162 +22,162 @@ FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     force_thr = 1e-3;
 }
 
-FIRE::~FIRE()
+FIRE::~FIRE () {}
+
+void
+    FIRE::setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
-}
+    ModuleBase::TITLE ("FIRE", "setup");
+    ModuleBase::timer::start ("FIRE", "setup");
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
-{
-    ModuleBase::TITLE("FIRE", "setup");
-    ModuleBase::timer::start("FIRE", "setup");
+    MD_base::setup (p_esolver, global_readin_dir);
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    check_force ();
 
-    check_force();
-
-    ModuleBase::timer::end("FIRE", "setup");
+    ModuleBase::timer::end ("FIRE", "setup");
 
     return;
 }
 
-void FIRE::first_half(std::ofstream& ofs)
+void
+    FIRE::first_half (std::ofstream& ofs)
 {
-    ModuleBase::TITLE("FIRE", "first_half");
-    ModuleBase::timer::start("FIRE", "first_half");
+    ModuleBase::TITLE ("FIRE", "first_half");
+    ModuleBase::timer::start ("FIRE", "first_half");
 
-    MD_base::update_vel(force);
+    MD_base::update_vel (force);
 
-    check_fire();
+    check_fire ();
 
-    MD_base::update_pos();
+    MD_base::update_pos ();
 
-    ModuleBase::timer::end("FIRE", "first_half");
+    ModuleBase::timer::end ("FIRE", "first_half");
 
     return;
 }
 
-
-void FIRE::second_half(void)
+void
+    FIRE::second_half ()
 {
-    ModuleBase::TITLE("FIRE", "second_half");
-    ModuleBase::timer::start("FIRE", "second_half");
+    ModuleBase::TITLE ("FIRE", "second_half");
+    ModuleBase::timer::start ("FIRE", "second_half");
 
-    MD_base::update_vel(force);
+    MD_base::update_vel (force);
 
-    check_force();
+    check_force ();
 
-    ModuleBase::timer::end("FIRE", "second_half");
+    ModuleBase::timer::end ("FIRE", "second_half");
 
     return;
 }
 
-
-void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
+void
+    FIRE::print_md (std::ofstream& ofs, const bool& cal_stress)
 {
-    MD_base::print_md(ofs, cal_stress);
+    MD_base::print_md (ofs, cal_stress);
 
     const double max_force = max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
 
-	ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
-	std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
+    ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
+    std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
 
     return;
 }
 
-
-void FIRE::write_restart(const std::string& global_out_dir)
+void
+    FIRE::write_restart (const std::string& global_out_dir)
 {
     if (!my_rank)
-    {
-        std::stringstream ssc;
-        ssc << global_out_dir << "Restart_md.txt";
-        std::ofstream file(ssc.str().c_str());
+        {
+            std::stringstream ssc;
+            ssc << global_out_dir << "Restart_md.txt";
+            std::ofstream file (ssc.str ().c_str ());
 
-        file << step_ + step_rst_ << std::endl;
-        file << md_tfirst << std::endl;
-        file << alpha << std::endl;
-        file << negative_count << std::endl;
-        file << dt_max << std::endl;
-        file << md_dt << std::endl;
-        file.close();
-    }
+            file << step_ + step_rst_ << std::endl;
+            file << md_tfirst << std::endl;
+            file << alpha << std::endl;
+            file << negative_count << std::endl;
+            file << dt_max << std::endl;
+            file << md_dt << std::endl;
+            file.close ();
+        }
 #ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier (MPI_COMM_WORLD);
 #endif
 
     return;
 }
 
-
-void FIRE::restart(const std::string& global_readin_dir)
+void
+    FIRE::restart (const std::string& global_readin_dir)
 {
     bool ok = true;
 
     if (!my_rank)
-    {
-        std::stringstream ssc;
-        ssc << global_readin_dir << "Restart_md.txt";
-        std::ifstream file(ssc.str().c_str());
-
-        if (!file)
         {
-            ok = false;
-        }
+            std::stringstream ssc;
+            ssc << global_readin_dir << "Restart_md.txt";
+            std::ifstream file (ssc.str ().c_str ());
 
-        if (ok)
-        {
-            file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
-            file.close();
+            if (!file)
+                {
+                    ok = false;
+                }
+
+            if (ok)
+                {
+                    file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
+                    file.close ();
+                }
         }
-    }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)
-    {
-        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.txt !");
-    }
+        {
+            ModuleBase::WARNING_QUIT ("mdrun", "no Restart_md.txt !");
+        }
 
 #ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&negative_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&dt_max, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&md_dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&negative_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&dt_max, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast (&md_dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
     return;
 }
 
-
-void FIRE::check_force(void)
+void
+    FIRE::check_force ()
 {
     max = 0;
 
     for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
         {
-            if (max < std::abs(force[i][j]))
-            {
-                max = std::abs(force[i][j]);
-            }
+            for (int j = 0; j < 3; ++j)
+                {
+                    if (max < std::abs (force[i][j]))
+                        {
+                            max = std::abs (force[i][j]);
+                        }
+                }
         }
-    }
 
     if (2.0 * max < force_thr)
-    {
-        stop = true;
-    }
+        {
+            stop = true;
+        }
 
     return;
 }
 
-
-void FIRE::check_fire(void)
+void
+    FIRE::check_fire ()
 {
     double P = 0.0;
     double sumforce = 0.0;
@@ -185,52 +185,52 @@ void FIRE::check_fire(void)
 
     /// initial dt_max
     if (dt_max < 0)
-    {
-        dt_max = 2.5 * md_dt;
-    }
+        {
+            dt_max = 2.5 * md_dt;
+        }
 
     for (int i = 0; i < ucell.nat; ++i)
-    {
-        P += vel[i].x * force[i].x + vel[i].y * force[i].y + vel[i].z * force[i].z;
-        sumforce += force[i].norm2();
-        normvel += vel[i].norm2();
-    }
+        {
+            P += vel[i].x * force[i].x + vel[i].y * force[i].y + vel[i].z * force[i].z;
+            sumforce += force[i].norm2 ();
+            normvel += vel[i].norm2 ();
+        }
 
-    sumforce = sqrt(sumforce);
-    normvel = sqrt(normvel);
+    sumforce = sqrt (sumforce);
+    normvel = sqrt (normvel);
 
     for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            vel[i][j] = (1.0 - alpha) * vel[i][j] + alpha * force[i][j] / sumforce * normvel;
-        }
-    }
-
-    if (P > 0)
-    {
-        negative_count++;
-        if (negative_count >= n_min)
-        {
-            md_dt = std::min(md_dt * finc, dt_max);
-            alpha *= f_alpha;
-        }
-    }
-    else
-    {
-        md_dt *= fdec;
-        negative_count = 0;
-
-        for (int i = 0; i < ucell.nat; ++i)
         {
             for (int j = 0; j < 3; ++j)
-            {
-                vel[i][j] = 0;
-            }
+                {
+                    vel[i][j] = (1.0 - alpha) * vel[i][j] + alpha * force[i][j] / sumforce * normvel;
+                }
         }
 
-        alpha = alpha_start;
-    }
-    
+    if (P > 0)
+        {
+            negative_count++;
+            if (negative_count >= n_min)
+                {
+                    md_dt = std::min (md_dt * finc, dt_max);
+                    alpha *= f_alpha;
+                }
+        }
+    else
+        {
+            md_dt *= fdec;
+            negative_count = 0;
+
+            for (int i = 0; i < ucell.nat; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                        {
+                            vel[i][j] = 0;
+                        }
+                }
+
+            alpha = alpha_start;
+        }
+
     return;
 }

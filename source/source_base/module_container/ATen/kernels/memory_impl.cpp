@@ -4,56 +4,68 @@
 
 #include <ATen/kernels/memory.h>
 
-namespace container {
-namespace kernels {
+namespace container
+{
+namespace kernels
+{
 
 template <typename T>
-struct resize_memory<T, DEVICE_CPU> {
-    void operator()(T*& arr, const size_t& size, const char* /*record_in*/) {
-        if (arr != nullptr) {
-            free(arr);
-        }
-        arr = (T*) malloc(sizeof(T) * size);
-    }
-};
-
-template <typename T>
-struct set_memory<T, DEVICE_CPU> {
-    void operator()(T* arr, const T& var, const size_t& size) {
-        for (size_t ii = 0; ii < size; ii++) {
-            arr[ii] = var;
-        }
-    }
-};
-
-template <typename T>
-struct synchronize_memory<T, DEVICE_CPU, DEVICE_CPU> {
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const size_t& size)
+struct resize_memory<T, DEVICE_CPU>
+{
+    void
+        operator() (T*& arr, const size_t& size, const char* /*record_in*/)
     {
-      memcpy(arr_out, arr_in, sizeof(T) * size);
+        if (arr != nullptr)
+            {
+                free (arr);
+            }
+        arr = (T*)malloc (sizeof (T) * size);
+    }
+};
+
+template <typename T>
+struct set_memory<T, DEVICE_CPU>
+{
+    void
+        operator() (T* arr, const T& var, const size_t& size)
+    {
+        for (size_t ii = 0; ii < size; ii++)
+            {
+                arr[ii] = var;
+            }
+    }
+};
+
+template <typename T>
+struct synchronize_memory<T, DEVICE_CPU, DEVICE_CPU>
+{
+    void
+        operator() (T* arr_out, const T* arr_in, const size_t& size)
+    {
+        memcpy (arr_out, arr_in, sizeof (T) * size);
     }
 };
 
 template <typename T_out, typename T_in>
-struct cast_memory<T_out, T_in, DEVICE_CPU, DEVICE_CPU> {
-    void operator()(
-        T_out* arr_out,
-        const T_in* arr_in,
-        const size_t& size)
-        {
-            for (int ii = 0; ii < size; ii++) {
-                arr_out[ii] = static_cast<T_out>(arr_in[ii]);
+struct cast_memory<T_out, T_in, DEVICE_CPU, DEVICE_CPU>
+{
+    void
+        operator() (T_out* arr_out, const T_in* arr_in, const size_t& size)
+    {
+        for (int ii = 0; ii < size; ii++)
+            {
+                arr_out[ii] = static_cast<T_out> (arr_in[ii]);
             }
-        }
+    }
 };
 
 template <typename T>
-struct delete_memory<T, DEVICE_CPU> {
-    void operator()(T* arr) {
-        free(arr);
+struct delete_memory<T, DEVICE_CPU>
+{
+    void
+        operator() (T* arr)
+    {
+        free (arr);
     }
 };
 
@@ -96,48 +108,84 @@ template struct delete_memory<std::complex<double>, DEVICE_CPU>;
 
 #if !(defined(__CUDA) || defined(__ROCM))
 template <typename T>
-struct resize_memory<T, DEVICE_GPU> {
-    void operator()(T*& arr, const size_t& size, const char* record_in = nullptr) {}
+struct resize_memory<T, DEVICE_GPU>
+{
+    void
+        operator() (T*& arr, const size_t& size, const char* record_in = nullptr)
+    {
+    }
 };
 
 template <typename T>
-struct set_memory<T, DEVICE_GPU> {
-    void operator()(T* arr, const int var, const size_t& size) {}
+struct set_memory<T, DEVICE_GPU>
+{
+    void
+        operator() (T* arr, const int var, const size_t& size)
+    {
+    }
 };
 
 template <typename T>
-struct synchronize_memory<T, DEVICE_GPU, DEVICE_GPU> {
-    void operator()(T* arr_out, const T* arr_in, const size_t& size) {}
+struct synchronize_memory<T, DEVICE_GPU, DEVICE_GPU>
+{
+    void
+        operator() (T* arr_out, const T* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T>
-struct synchronize_memory<T, DEVICE_GPU, DEVICE_CPU> {
-    void operator()(T* arr_out, const T* arr_in, const size_t& size) {}
+struct synchronize_memory<T, DEVICE_GPU, DEVICE_CPU>
+{
+    void
+        operator() (T* arr_out, const T* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T>
-struct synchronize_memory<T, DEVICE_CPU, DEVICE_GPU> {
-    void operator()(T* arr_out, const T* arr_in, const size_t& size) {}
+struct synchronize_memory<T, DEVICE_CPU, DEVICE_GPU>
+{
+    void
+        operator() (T* arr_out, const T* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T_out, typename T_in>
-struct cast_memory<T_out, T_in, DEVICE_GPU, DEVICE_GPU> {
-    void operator()(T_out* arr_out, const T_in* arr_in, const size_t& size) {}
+struct cast_memory<T_out, T_in, DEVICE_GPU, DEVICE_GPU>
+{
+    void
+        operator() (T_out* arr_out, const T_in* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T_out, typename T_in>
-struct cast_memory<T_out, T_in, DEVICE_GPU, DEVICE_CPU> {
-    void operator()(T_out* arr_out, const T_in* arr_in, const size_t& size) {}
+struct cast_memory<T_out, T_in, DEVICE_GPU, DEVICE_CPU>
+{
+    void
+        operator() (T_out* arr_out, const T_in* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T_out, typename T_in>
-struct cast_memory<T_out, T_in, DEVICE_CPU, DEVICE_GPU> {
-    void operator()(T_out* arr_out, const T_in* arr_in, const size_t& size) {}
+struct cast_memory<T_out, T_in, DEVICE_CPU, DEVICE_GPU>
+{
+    void
+        operator() (T_out* arr_out, const T_in* arr_in, const size_t& size)
+    {
+    }
 };
 
 template <typename T>
-struct delete_memory<T, DEVICE_GPU> {
-    void operator()(T* arr) {}
+struct delete_memory<T, DEVICE_GPU>
+{
+    void
+        operator() (T* arr)
+    {
+    }
 };
 
 template struct resize_memory<int, DEVICE_GPU>;

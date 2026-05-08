@@ -20,23 +20,22 @@ namespace ModuleIO
 {
 
 template <typename TR>
-void ctrl_output_td(const UnitCell& ucell,
-                    double** rho_save,
-                    const ModulePW::PW_Basis* rhopw,
-                    const int istep,
-                    const psi::Psi<std::complex<double>>* psi,
-                    const elecstate::ElecState* pelec,
-                    const K_Vectors& kv,
-                    const TwoCenterIntegrator* intor,
-                    const Parallel_Orbitals* pv,
-                    const LCAO_Orbitals& orb,
-                    const Velocity_op<TR>* velocity_mat,
-                    const Grid_Driver& grid,
-                    hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
-                    Record_adj& RA,
-                    TD_info* td_p,
-                    const Exx_NAO<std::complex<double>>& exx_nao
-                    );
+void ctrl_output_td (const UnitCell& ucell,
+                     double** rho_save,
+                     const ModulePW::PW_Basis* rhopw,
+                     const int istep,
+                     const psi::Psi<std::complex<double>>* psi,
+                     const elecstate::ElecState* pelec,
+                     const K_Vectors& kv,
+                     const TwoCenterIntegrator* intor,
+                     const Parallel_Orbitals* pv,
+                     const LCAO_Orbitals& orb,
+                     const Velocity_op<TR>* velocity_mat,
+                     const Grid_Driver& grid,
+                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
+                     Record_adj& RA,
+                     TD_info* td_p,
+                     const Exx_NAO<std::complex<double>>& exx_nao);
 
 } // namespace ModuleIO
 

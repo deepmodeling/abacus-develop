@@ -21,7 +21,7 @@ namespace ModuleIO
 /// @param v_eff_fixed
 /// @param solvent: for solvation model
 /// #param precision: output precision
-void write_elecstat_pot(
+void write_elecstat_pot (
 #ifdef __MPI
     const int& bz,
     const int& nbz,

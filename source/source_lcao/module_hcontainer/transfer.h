@@ -14,8 +14,8 @@ template <typename T>
 class HTransPara
 {
   public:
-    HTransPara(int n_processes, HContainer<T>* hr_in);
-    ~HTransPara();
+    HTransPara (int n_processes, HContainer<T>* hr_in);
+    ~HTransPara ();
 
     /**
      * @brief calculate Orbital indexes and will be send to irank
@@ -26,41 +26,41 @@ class HTransPara
      * @param irank
      * @param orb_indexes
      */
-    void cal_orb_indexes(int irank, std::vector<int>* orb_indexes = nullptr);
+    void cal_orb_indexes (int irank, std::vector<int>* orb_indexes = nullptr);
 
     /**
      * @brief receive AtomPair_indexes from the ith rank
      * save to this->ap_indexes[irank]
      * @param irank
      */
-    void receive_ap_indexes(int irank, const int* ap_indexes_in = nullptr, const long& size_ap_indexes_in = 0);
+    void receive_ap_indexes (int irank, const int* ap_indexes_in = nullptr, const long& size_ap_indexes_in = 0);
 
     /**
      * @brief pack data in this->hr, and send to ith rank
      * @param irank
      */
-    void send_orb_indexes(int irank, MPI_Request* request = nullptr);
+    void send_orb_indexes (int irank, MPI_Request* request = nullptr);
 
     /**
      * @brief pack data in this->hr, and send to ith rank
      * @param irank
      */
-    void send_data(int irank, MPI_Request* request = nullptr);
+    void send_data (int irank, MPI_Request* request = nullptr);
 
     /**
      * @brief receive data from ith rank, save them to this->hr
      * @param irank
      */
-    void receive_data(int irank, const T* values = nullptr);
+    void receive_data (int irank, const T* values = nullptr);
 
     /**
      * @brief pack BaseMatrix-values for ith rank
      * @param irank
      */
-    void pack_data(int irank, T* values = nullptr);
+    void pack_data (int irank, T* values = nullptr);
 
-    long get_max_size() const;
-    void get_value_size(int* out) const;
+    long get_max_size () const;
+    void get_value_size (int* out) const;
 
   private:
     std::vector<std::vector<int>> ap_indexes;
@@ -72,7 +72,7 @@ class HTransPara
     const Parallel_Orbitals* paraV = nullptr;
 
     // unpack BaseMatrix-values from ith rank
-    void unpack_data(int irank, const T* values);
+    void unpack_data (int irank, const T* values);
 
     // size of data of all BaseMatrixes
     std::vector<long> size_values;
@@ -82,48 +82,48 @@ template <typename T>
 class HTransSerial
 {
   public:
-    HTransSerial(int n_processes, HContainer<T>* hr_in);
-    ~HTransSerial();
+    HTransSerial (int n_processes, HContainer<T>* hr_in);
+    ~HTransSerial ();
 
     /**
      * @brief calculate AtomPair indexes and will be send to irank
      * called in plan_indexes
      * @param irank
      */
-    void cal_ap_indexes(int irank, std::vector<int>* ap_indexes = nullptr);
+    void cal_ap_indexes (int irank, std::vector<int>* ap_indexes = nullptr);
 
     /**
      * @brief calculate AtomPair_indexes of hr_in and send to the ith rank
      * @param irank
      */
-    void send_ap_indexes(int irank, MPI_Request* request = nullptr);
+    void send_ap_indexes (int irank, MPI_Request* request = nullptr);
 
     /**
      * @brief receive Orbital_indexes from the ith rank
      * save to this->orb_indexes[irank]
      */
-    void receive_orb_indexes(int irank, const int* orb_indexes_in = nullptr, const long& size_orb_indexes_in = 0);
+    void receive_orb_indexes (int irank, const int* orb_indexes_in = nullptr, const long& size_orb_indexes_in = 0);
 
     /**
      * @brief pack data in this->hr, and send to ith rank
      * @param irank
      */
-    void send_data(int irank, MPI_Request* request = nullptr);
+    void send_data (int irank, MPI_Request* request = nullptr);
 
     /**
      * @brief receive data from ith rank, save them to this->hr
      * @param irank
      */
-    void receive_data(int irank, const T* values = nullptr);
+    void receive_data (int irank, const T* values = nullptr);
 
     /**
      * @brief pack BaseMatrix-values for ith rank
      * @param irank
      */
-    void pack_data(int irank, T* values = nullptr);
+    void pack_data (int irank, T* values = nullptr);
 
-    long get_max_size() const;
-    void get_value_size(int* out) const;
+    long get_max_size () const;
+    void get_value_size (int* out) const;
 
   private:
     std::vector<std::vector<int>> orb_indexes;
@@ -133,7 +133,7 @@ class HTransSerial
      * @brief unpack BaseMatrix-values from ith rank
      * @param values
      */
-    void unpack_data(int irank, const T* values);
+    void unpack_data (int irank, const T* values);
 
     // temporary variables
     std::vector<std::unordered_map<int, int>> orb_col_indexes;
@@ -154,7 +154,8 @@ struct MPITraits;
 template <>
 struct MPITraits<int>
 {
-    static MPI_Datatype datatype()
+    static MPI_Datatype
+        datatype ()
     {
         return MPI_INT;
     }
@@ -163,7 +164,8 @@ struct MPITraits<int>
 template <>
 struct MPITraits<double>
 {
-    static MPI_Datatype datatype()
+    static MPI_Datatype
+        datatype ()
     {
         return MPI_DOUBLE;
     }
@@ -172,7 +174,8 @@ struct MPITraits<double>
 template <>
 struct MPITraits<std::complex<double>>
 {
-    static MPI_Datatype datatype()
+    static MPI_Datatype
+        datatype ()
     {
         return MPI_DOUBLE_COMPLEX;
     }

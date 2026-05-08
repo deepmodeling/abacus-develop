@@ -7,7 +7,8 @@
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 
-namespace unitcell {
+namespace unitcell
+{
 
 /**
  * @brief Validate coordinate system type
@@ -15,8 +16,7 @@ namespace unitcell {
  * @param ofs_warning Output stream for warnings
  * @return true if valid, false otherwise
  */
-bool validate_coordinate_system(const std::string& Coordinate,
-                                std::ofstream& ofs_warning);
+bool validate_coordinate_system (const std::string& Coordinate, std::ofstream& ofs_warning);
 
 /**
  * @brief Allocate and initialize atom property vectors
@@ -24,7 +24,7 @@ bool validate_coordinate_system(const std::string& Coordinate,
  * @param na Number of atoms
  * @param mass Atomic mass
  */
-void allocate_atom_properties(Atom& atom, int na, double mass);
+void allocate_atom_properties (Atom& atom, int na, double mass);
 
 /**
  * @brief Set atom movement constraints based on fixed_atoms parameter
@@ -32,8 +32,7 @@ void allocate_atom_properties(Atom& atom, int na, double mass);
  * @param ia Atom index
  * @param mv Movement vector (1=movable, 0=fixed)
  */
-void set_atom_movement_flags(Atom& atom, int ia,
-                            const ModuleBase::Vector3<int>& mv);
+void set_atom_movement_flags (Atom& atom, int ia, const ModuleBase::Vector3<int>& mv);
 
 /**
  * @brief Set default magnetization if not explicitly specified
@@ -41,8 +40,7 @@ void set_atom_movement_flags(Atom& atom, int ia,
  * @param nspin Number of spin components
  * @param ofs_running Output stream for running information
  */
-void autoset_magnetization(UnitCell& ucell, int nspin,
-                          std::ofstream& ofs_running);
+void autoset_magnetization (UnitCell& ucell, int nspin, std::ofstream& ofs_running);
 
 /**
  * @brief Perform final validation and output
@@ -51,9 +49,7 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
  * @param ofs_warning Output stream for warnings
  * @return true if validation passes, false otherwise
  */
-bool finalize_atom_positions(UnitCell& ucell,
-                            std::ofstream& ofs_running,
-                            std::ofstream& ofs_warning);
+bool finalize_atom_positions (UnitCell& ucell, std::ofstream& ofs_running, std::ofstream& ofs_warning);
 
 /**
  * @brief Calculate lattice center for different centering modes
@@ -61,9 +57,8 @@ bool finalize_atom_positions(UnitCell& ucell,
  * @param center_mode Centering mode: "xy", "xz", "yz", or "xyz"
  * @return Lattice center coordinates
  */
-ModuleBase::Vector3<double> calculate_lattice_center(
-    const ModuleBase::Matrix3& latvec,
-    const std::string& center_mode);
+ModuleBase::Vector3<double> calculate_lattice_center (const ModuleBase::Matrix3& latvec,
+                                                      const std::string& center_mode);
 
 /**
  * @brief Convert between different coordinate systems
@@ -75,12 +70,13 @@ ModuleBase::Vector3<double> calculate_lattice_center(
  * @param lat0 Lattice constant
  * @param latcenter Lattice center (output parameter)
  */
-void transform_atom_coordinates(Atom& atom, int ia,
-                               const std::string& Coordinate,
-                               const ModuleBase::Vector3<double>& v,
-                               const ModuleBase::Matrix3& latvec,
-                               double lat0,
-                               ModuleBase::Vector3<double>& latcenter);
+void transform_atom_coordinates (Atom& atom,
+                                 int ia,
+                                 const std::string& Coordinate,
+                                 const ModuleBase::Vector3<double>& v,
+                                 const ModuleBase::Matrix3& latvec,
+                                 double lat0,
+                                 ModuleBase::Vector3<double>& latcenter);
 
 /**
  * @brief Convert between magnetization representations and output
@@ -92,10 +88,13 @@ void transform_atom_coordinates(Atom& atom, int ia,
  * @param input_angle_mag Whether angle magnetization was input
  * @param ofs_running Output stream for running information
  */
-void process_magnetization(Atom& atom, int it, int ia,
-                          int nspin, bool input_vec_mag,
-                          bool input_angle_mag,
-                          std::ofstream& ofs_running);
+void process_magnetization (Atom& atom,
+                            int it,
+                            int ia,
+                            int nspin,
+                            bool input_vec_mag,
+                            bool input_angle_mag,
+                            std::ofstream& ofs_running);
 
 /**
  * @brief Parse optional atom properties (mag, angle1, angle2, lambda, sc, m, v)
@@ -108,12 +107,13 @@ void process_magnetization(Atom& atom, int it, int ia,
  * @param set_element_mag_zero Whether to reset element magnetization (output parameter)
  * @return true if parsing succeeds, false otherwise
  */
-bool parse_atom_properties(std::ifstream& ifpos,
-                          Atom& atom, int ia,
-                          ModuleBase::Vector3<int>& mv,
-                          bool& input_vec_mag,
-                          bool& input_angle_mag,
-                          bool& set_element_mag_zero);
+bool parse_atom_properties (std::ifstream& ifpos,
+                            Atom& atom,
+                            int ia,
+                            ModuleBase::Vector3<int>& mv,
+                            bool& input_vec_mag,
+                            bool& input_angle_mag,
+                            bool& set_element_mag_zero);
 
 /**
  * @brief Read atom type metadata (label, magnetization, orbital info, atom count)
@@ -125,11 +125,12 @@ bool parse_atom_properties(std::ifstream& ifpos,
  * @param set_element_mag_zero Whether to reset element magnetization (output parameter)
  * @return true if reading succeeds, false otherwise
  */
-bool read_atom_type_header(int it, UnitCell& ucell,
-                          std::ifstream& ifpos,
-                          std::ofstream& ofs_running,
-                          std::ofstream& ofs_warning,
-                          bool& set_element_mag_zero);
+bool read_atom_type_header (int it,
+                            UnitCell& ucell,
+                            std::ifstream& ifpos,
+                            std::ofstream& ofs_running,
+                            std::ofstream& ofs_warning,
+                            bool& set_element_mag_zero);
 
 } // namespace unitcell
 

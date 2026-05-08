@@ -20,16 +20,15 @@
 class Matrix_Orbs21
 {
   public:
-    void init(
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb, 
-        const double kmesh_times);       // extend Kcut, keep dK
+    void init (const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
+               const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
+               const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
+               const UnitCell& ucell,
+               const LCAO_Orbitals& orb,
+               const double kmesh_times); // extend Kcut, keep dK
 
-    void init_radial_table();
-    void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
+    void init_radial_table ();
+    void init_radial_table (const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
 
     enum class Matrix_Order
     {
@@ -42,32 +41,32 @@ class Matrix_Orbs21
     };
 
     template <typename Tdata>
-    RI::Tensor<Tdata> cal_overlap_matrix(const size_t TA,
-                                         const size_t TB,
-                                         const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
-                                         const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
-                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
-                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
-                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
-                                         const Matrix_Order& matrix_order) const;
+    RI::Tensor<Tdata> cal_overlap_matrix (const size_t TA,
+                                          const size_t TB,
+                                          const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
+                                          const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
+                                          const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
+                                          const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
+                                          const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+                                          const Matrix_Order& matrix_order) const;
     template <typename Tdata>
-    std::array<RI::Tensor<Tdata>, 3> cal_grad_overlap_matrix(
-        const size_t TA,
-        const size_t TB,
-        const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
-        const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
-        const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
-        const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
-        const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
-        const Matrix_Order& matrix_order) const;
+    std::array<RI::Tensor<Tdata>, 3>
+        cal_grad_overlap_matrix (const size_t TA,
+                                 const size_t TB,
+                                 const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
+                                 const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
+                                 const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
+                                 const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
+                                 const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+                                 const Matrix_Order& matrix_order) const;
 
     template <typename Tdata>
     std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<RI::Tensor<Tdata>>>>>>
-        cal_overlap_matrix_all(const UnitCell& ucell,
-                               const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
-                               const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
-                               const ModuleBase::Element_Basis_Index::IndexLNM& index_B) const;
-    
+        cal_overlap_matrix_all (const UnitCell& ucell,
+                                const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
+                                const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
+                                const ModuleBase::Element_Basis_Index::IndexLNM& index_B) const;
+
     std::shared_ptr<ORB_gaunt_table> MGT;
 
   private:

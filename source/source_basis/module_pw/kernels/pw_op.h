@@ -4,9 +4,11 @@
 #include "source_psi/psi.h"
 #include <complex>
 
-namespace ModulePW {
+namespace ModulePW
+{
 template <typename FPTYPE, typename Device>
-struct set_3d_fft_box_op {
+struct set_3d_fft_box_op
+{
     /// @brief Set the 3D fft box for fft transfrom between the recip and real space.
     /// To map the 1D psi(1D continuous array) to 3D box psi(fft box)
     ///
@@ -18,15 +20,12 @@ struct set_3d_fft_box_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
-    void operator() (
-        const int npwk,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator() (const int npwk, const int* box_index, const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE, typename Device>
-struct set_recip_to_real_output_op {
+struct set_recip_to_real_output_op
+{
     /// @brief Calculate the outputs after the FFT translation of recip_to_real
     ///
     /// Input Parameters
@@ -37,23 +36,18 @@ struct set_recip_to_real_output_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in real space)
-    void operator() (
-        const int nrxx,
-        const bool add,
-        const FPTYPE factor,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator() (const int nrxx,
+                     const bool add,
+                     const FPTYPE factor,
+                     const std::complex<FPTYPE>* in,
+                     std::complex<FPTYPE>* out);
 
-    void operator() (
-        const int nrxx,
-        const bool add,
-        const FPTYPE factor,
-        const std::complex<FPTYPE>* in,
-        FPTYPE* out);
+    void operator() (const int nrxx, const bool add, const FPTYPE factor, const std::complex<FPTYPE>* in, FPTYPE* out);
 };
 
 template <typename FPTYPE, typename Device>
-struct set_real_to_recip_output_op {
+struct set_real_to_recip_output_op
+{
     /// @brief Calculate the outputs after the FFT translation of real_to_recip
     ///
     /// Input Parameters
@@ -66,23 +60,21 @@ struct set_real_to_recip_output_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
-    void operator() (
-        const int npw_k,
-        const int nxyz,
-        const bool add,
-        const FPTYPE factor,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator() (const int npw_k,
+                     const int nxyz,
+                     const bool add,
+                     const FPTYPE factor,
+                     const int* box_index,
+                     const std::complex<FPTYPE>* in,
+                     std::complex<FPTYPE>* out);
 
-    void operator() (
-        const int npw_k,
-        const int nxyz,
-        const bool add,
-        const FPTYPE factor,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        FPTYPE* out);
+    void operator() (const int npw_k,
+                     const int nxyz,
+                     const bool add,
+                     const FPTYPE factor,
+                     const int* box_index,
+                     const std::complex<FPTYPE>* in,
+                     FPTYPE* out);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -90,47 +82,40 @@ struct set_real_to_recip_output_op {
 template <typename FPTYPE>
 struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const int npwk,
-                    const int* box_index,
-                    const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out);
+    void operator() (const int npwk, const int* box_index, const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE>
 struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const int nrxx,
-                    const bool add,
-                    const FPTYPE factor,
-                    const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out);
+    void operator() (const int nrxx,
+                     const bool add,
+                     const FPTYPE factor,
+                     const std::complex<FPTYPE>* in,
+                     std::complex<FPTYPE>* out);
 
-    void operator()(const int nrxx,
-                    const bool add,
-                    const FPTYPE factor,
-                    const std::complex<FPTYPE>* in,
-                    FPTYPE* out);
+    void operator() (const int nrxx, const bool add, const FPTYPE factor, const std::complex<FPTYPE>* in, FPTYPE* out);
 };
 
 template <typename FPTYPE>
 struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const int npw_k,
-                    const int nxyz,
-                    const bool add,
-                    const FPTYPE factor,
-                    const int* box_index,
-                    const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out);
-    void operator()(const int npw_k,
-                    const int nxyz,
-                    const bool add,
-                    const FPTYPE factor,
-                    const int* box_index,
-                    const std::complex<FPTYPE>* in,
-                    FPTYPE* out);
+    void operator() (const int npw_k,
+                     const int nxyz,
+                     const bool add,
+                     const FPTYPE factor,
+                     const int* box_index,
+                     const std::complex<FPTYPE>* in,
+                     std::complex<FPTYPE>* out);
+    void operator() (const int npw_k,
+                     const int nxyz,
+                     const bool add,
+                     const FPTYPE factor,
+                     const int* box_index,
+                     const std::complex<FPTYPE>* in,
+                     FPTYPE* out);
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace ModulePW
-#endif //MODULE_PW_MULTI_DEVICE_H
+#endif // MODULE_PW_MULTI_DEVICE_H

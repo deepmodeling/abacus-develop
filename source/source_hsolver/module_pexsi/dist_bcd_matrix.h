@@ -13,32 +13,37 @@ namespace pexsi
 class DistBCDMatrix
 {
   public:
-    DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol, char layout);
-    ~DistBCDMatrix();
+    DistBCDMatrix (MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol, char layout);
+    ~DistBCDMatrix ();
 
-    int globalRow(const int localRow);
-    int globalCol(const int localCol);
-    int localRow(const int globalRow, int& myprow);
-    int localCol(const int globalCol, int& mypcol);
-    int pnum(const int prow, const int pcol);
+    int globalRow (const int localRow);
+    int globalCol (const int localCol);
+    int localRow (const int globalRow, int& myprow);
+    int localCol (const int globalCol, int& mypcol);
+    int pnum (const int prow, const int pcol);
 
-    const MPI_Comm get_comm() const
+    const MPI_Comm
+        get_comm () const
     {
         return comm;
     };
-    const MPI_Group get_group() const
+    const MPI_Group
+        get_group () const
     {
         return group;
     };
-    const int get_nrow() const
+    const int
+        get_nrow () const
     {
         return nrow;
     };
-    const int get_ncol() const
+    const int
+        get_ncol () const
     {
         return ncol;
     };
-    const char get_layout() const
+    const char
+        get_layout () const
     {
         return layout;
     };

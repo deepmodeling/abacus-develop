@@ -5,7 +5,7 @@
 
 namespace unitcell
 {
-    void check_atomic_stru(UnitCell& ucell, const double& factor);
+void check_atomic_stru (UnitCell& ucell, const double& factor);
 };
 
 #endif

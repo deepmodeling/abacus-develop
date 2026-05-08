@@ -1,12 +1,11 @@
-#ifndef FORCESTRESS_ARRAYS_H 
+#ifndef FORCESTRESS_ARRAYS_H
 #define FORCESTRESS_ARRAYS_H
 
 class ForceStressArrays
 {
-    public:
-
-    ForceStressArrays(){};
-    ~ForceStressArrays(){};
+  public:
+    ForceStressArrays () {};
+    ~ForceStressArrays () {};
 
     //-----------------------------------------
     // force in LCAO
@@ -44,7 +43,7 @@ class ForceStressArrays
     // r_mu - r_nu
     //----------------------------------------
 
-    double* DH_r = nullptr;//zhengdy added 2017-07
+    double* DH_r = nullptr; // zhengdy added 2017-07
 
     double* stvnl11 = nullptr;
     double* stvnl12 = nullptr;
@@ -66,7 +65,6 @@ class ForceStressArrays
     double* DHloc_fixed_22 = nullptr;
     double* DHloc_fixed_23 = nullptr;
     double* DHloc_fixed_33 = nullptr;
-
 };
 
 #endif

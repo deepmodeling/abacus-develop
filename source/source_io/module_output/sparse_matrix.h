@@ -24,70 +24,74 @@ class SparseMatrix
 {
   public:
     // Default constructor
-    SparseMatrix() : _rows(0), _cols(0)
-    {
-    }
+    SparseMatrix () : _rows (0), _cols (0) {}
 
-    SparseMatrix(int rows, int cols) : _rows(rows), _cols(cols)
-    {
-    }
+    SparseMatrix (int rows, int cols) : _rows (rows), _cols (cols) {}
 
     // add value to the matrix with row and column indices
-    void insert(int row, int col, T value);
+    void insert (int row, int col, T value);
 
     // print data in CSR (Compressed Sparse Row) format
-    void printToCSR(std::ostream& ofs, int precision = 8);
+    void printToCSR (std::ostream& ofs, int precision = 8);
 
     // read CSR data from arrays
-    void readCSR(const std::vector<T>& values, const std::vector<int>& col_ind, const std::vector<int>& row_ptr);
+    void readCSR (const std::vector<T>& values, const std::vector<int>& col_ind, const std::vector<int>& row_ptr);
 
     // set number of rows
-    void setRows(int rows)
+    void
+        setRows (int rows)
     {
         _rows = rows;
     }
 
     // set number of columns
-    void setCols(int cols)
+    void
+        setCols (int cols)
     {
         _cols = cols;
     }
 
     // get number of rows
-    int getRows() const
+    int
+        getRows () const
     {
         return _rows;
     }
 
     // get number of columns
-    int getCols() const
+    int
+        getCols () const
     {
         return _cols;
     }
 
     // define the operator to index a matrix element
-    T operator()(int row, int col)const;
+    T operator() (int row, int col) const;
 
     // set the threshold
-    void setSparseThreshold(double sparse_threshold)
+    void
+        setSparseThreshold (double sparse_threshold)
     {
         _sparse_threshold = sparse_threshold;
     }
 
     // get the threshold
-    double getSparseThreshold() const
+    double
+        getSparseThreshold () const
     {
         return _sparse_threshold;
     }
 
     // get the number of non-zero elements
-    int getNNZ() const
+    int
+        getNNZ () const
     {
-        return elements.size();
+        return elements.size ();
     }
 
     // get elements
-    const std::map<std::pair<int, int>, T>& getElements() const
+    const std::map<std::pair<int, int>, T>&
+        getElements () const
     {
         return elements;
     }

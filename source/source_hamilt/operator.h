@@ -35,8 +35,8 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class Operator
 {
   public:
-    Operator();
-    virtual ~Operator();
+    Operator ();
+    virtual ~Operator ();
 
     // this is the core function for Operator
     //  do H|psi> from input |psi> ,
@@ -46,13 +46,14 @@ class Operator
     /// output of hpsi would be first member of the returned tuple
     typedef std::tuple<const psi::Psi<T, Device>*, const psi::Range, T*> hpsi_info;
 
-    virtual hpsi_info hPsi(hpsi_info& input) const;
+    virtual hpsi_info hPsi (hpsi_info& input) const;
 
-    virtual void init(const int ik_in);
+    virtual void init (const int ik_in);
 
-    virtual void add(Operator* next);
+    virtual void add (Operator* next);
 
-    virtual int get_ik() const
+    virtual int
+        get_ik () const
     {
         return this->ik;
     }
@@ -61,20 +62,18 @@ class Operator
     /// V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
     ///  interface type 1: pointer-only (default)
     ///  @note PW: nbasis = max_npw * npol, nbands = nband * npol, npol = npol. Strange but PAY ATTENTION!!!
-    virtual void act(const int nbands,
-                     const int nbasis,
-                     const int npol,
-                     const T* tmpsi_in,
-                     T* tmhpsi,
-                     const int ngk_ik = 0,
-                     const bool is_first_node = false) const {};
+    virtual void act (const int nbands,
+                      const int nbasis,
+                      const int npol,
+                      const T* tmpsi_in,
+                      T* tmhpsi,
+                      const int ngk_ik = 0,
+                      const bool is_first_node = false) const {};
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
-	// virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
-	virtual void act(const psi::Psi<T, Device>& psi_in, 
-			psi::Psi<T, Device>& psi_out, 
-			const int nbands) const {};
+    // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+    virtual void act (const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out, const int nbands) const {};
 
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };
@@ -85,12 +84,14 @@ class Operator
     ///         act(const T* psi_in, T* psi_out)
     /// type 2: use the `Psi`class
     ///         act(const Psi& psi_in, Psi& psi_out)
-    int get_act_type() const
+    int
+        get_act_type () const
     {
         return this->act_type;
     }
 
-    calculation_type get_cal_type() const
+    calculation_type
+        get_cal_type () const
     {
         return this->cal_type;
     }
@@ -117,7 +118,7 @@ class Operator
     memory
     2. hpsi_pointer != nullptr && psi_pointer != hpsi_pointer , this is the commonly case
     */
-    T* get_hpsi(const hpsi_info& info) const;
+    T* get_hpsi (const hpsi_info& info) const;
 
     Device* ctx = {};
     using set_memory_op = base_device::memory::set_memory_op<T, Device>;

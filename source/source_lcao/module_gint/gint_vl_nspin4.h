@@ -11,21 +11,20 @@ namespace ModuleGint
 
 class Gint_vl_nspin4 : public Gint
 {
-    public:
-    Gint_vl_nspin4(
-        std::vector<const double*> vr_eff,
-        HContainer<std::complex<double>>* hR)
-        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
-    
-    void cal_gint();
+  public:
+    Gint_vl_nspin4 (std::vector<const double*> vr_eff, HContainer<std::complex<double>>* hR)
+        : vr_eff_ (vr_eff), hR_ (hR), dr3_ (gint_info_->get_mgrid_volume ())
+    {
+    }
 
-    private:
+    void cal_gint ();
 
-    void init_hr_gint_();
-    
+  private:
+    void init_hr_gint_ ();
+
     // note that only the upper triangle matrix of hR is calculated
     // that's why we need compose_hr_gint() to fill the lower triangle matrix.
-    void cal_hr_gint_();
+    void cal_hr_gint_ ();
 
     // input
     std::vector<const double*> vr_eff_;

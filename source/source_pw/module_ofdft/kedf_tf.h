@@ -1,7 +1,7 @@
 #ifndef KEDF_TF_H
 #define KEDF_TF_H
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
@@ -16,21 +16,16 @@
 class KEDF_TF
 {
   public:
-    KEDF_TF()
-    {
-        this->stress.create(3, 3);
-    }
-    ~KEDF_TF()
-    {
-    }
+    KEDF_TF () { this->stress.create (3, 3); }
+    ~KEDF_TF () {}
 
-    void set_para(int nx, double dV, double tf_weight);
+    void set_para (int nx, double dV, double tf_weight);
 
-    double get_energy(const double* const* prho);
-    double get_energy_density(const double* const* prho, int is, int ir);
-    void tau_tf(const double* const* prho, double* rtau_tf);
-    void tf_potential(const double* const* prho, ModuleBase::matrix& rpotential);
-    void get_stress(double cell_vol);
+    double get_energy (const double* const* prho);
+    double get_energy_density (const double* const* prho, int is, int ir);
+    void tau_tf (const double* const* prho, double* rtau_tf);
+    void tf_potential (const double* const* prho, ModuleBase::matrix& rpotential);
+    void get_stress (double cell_vol);
 
     double tf_energy = 0.; // TF energy
     ModuleBase::matrix stress;
@@ -40,7 +35,7 @@ class KEDF_TF
     double dV_ = 0.;        // volume element = V/nxyz
     double tf_weight_ = 1.; // weight of TF KEDF
     const double c_tf_
-        = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
+        = 3.0 / 10.0 * std::pow (3 * std::pow (M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
 };
 #endif

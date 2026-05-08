@@ -16,37 +16,31 @@
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/module_unk/berryphase.h"
 
-bool berryphase::berry_phase_flag=0;
+bool berryphase::berry_phase_flag = false;
 
-pseudo::pseudo(){}
-pseudo::~pseudo(){}
-Atom::Atom(){}
-Atom::~Atom(){}
-Atom_pseudo::Atom_pseudo(){}
-Atom_pseudo::~Atom_pseudo(){}
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-UnitCell::UnitCell(){}
-UnitCell::~UnitCell(){}
-Magnetism::Magnetism(){}
-Magnetism::~Magnetism(){}
-ORB_gaunt_table::ORB_gaunt_table(){}
-ORB_gaunt_table::~ORB_gaunt_table(){}
-pseudopot_cell_vl::pseudopot_cell_vl(){}
-pseudopot_cell_vl::~pseudopot_cell_vl(){}
-pseudopot_cell_vnl::pseudopot_cell_vnl(){}
-pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
-
-
+pseudo::pseudo () {}
+pseudo::~pseudo () {}
+Atom::Atom () {}
+Atom::~Atom () {}
+Atom_pseudo::Atom_pseudo () {}
+Atom_pseudo::~Atom_pseudo () {}
+InfoNonlocal::InfoNonlocal () {}
+InfoNonlocal::~InfoNonlocal () {}
+UnitCell::UnitCell () {}
+UnitCell::~UnitCell () {}
+Magnetism::Magnetism () {}
+Magnetism::~Magnetism () {}
+ORB_gaunt_table::ORB_gaunt_table () {}
+ORB_gaunt_table::~ORB_gaunt_table () {}
+pseudopot_cell_vl::pseudopot_cell_vl () {}
+pseudopot_cell_vl::~pseudopot_cell_vl () {}
+pseudopot_cell_vnl::pseudopot_cell_vnl () {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl () {}
+Soc::~Soc () {}
+Fcoef::~Fcoef () {}
+SepPot::SepPot () {}
+SepPot::~SepPot () {}
+Sep_Cell::Sep_Cell () noexcept {}
+Sep_Cell::~Sep_Cell () noexcept {}
 
 #endif

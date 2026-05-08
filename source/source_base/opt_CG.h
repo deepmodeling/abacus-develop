@@ -1,7 +1,7 @@
 #ifndef OPT_CG_H
 #define OPT_CG_H
 
-#include <math.h>
+#include <cmath>
 
 #include <iostream>
 
@@ -24,32 +24,34 @@ namespace ModuleBase
 class Opt_CG
 {
   public:
-    Opt_CG();
-    ~Opt_CG();
+    Opt_CG ();
+    ~Opt_CG ();
 
-    void init_b(double* pinp_b // b in the linear equation Ax = b
+    void init_b (double* pinp_b // b in the linear equation Ax = b
     );
-    void allocate(int nx // length of the solution array x
+    void allocate (int nx // length of the solution array x
     );
-    void set_para(double dV);
-    void refresh(int nx_new = 0,          // length of new x, default 0 means the length doesn't change
-                 double* pinp_b = nullptr // new b in Ax = b, default nullptr means we are dealing with general case
-    );
-
-    void next_direct(double* pgradient, // Ad for linear equaiont Ax=b, and gradient for general case
-                     int label,         // 0 for solve Ax=b, 1 for PR form, 2 for HZ form
-                     double* rdirect    // next direct
-    );
-    double step_length(double* pAd,     // Ad for Ax=b
-                       double* pdirect, // direct
-                       int& ifPD        // if postive definit
+    void set_para (double dV);
+    void refresh (int nx_new = 0,          // length of new x, default 0 means the length doesn't change
+                  double* pinp_b = nullptr // new b in Ax = b, default nullptr means we are dealing with general case
     );
 
-    double get_residual() const
+    void next_direct (double* pgradient, // Ad for linear equaiont Ax=b, and gradient for general case
+                      int label,         // 0 for solve Ax=b, 1 for PR form, 2 for HZ form
+                      double* rdirect    // next direct
+    );
+    double step_length (double* pAd,     // Ad for Ax=b
+                        double* pdirect, // direct
+                        int& ifPD        // if postive definit
+    );
+
+    double
+        get_residual () const
     {
-        return sqrt(this->gg_);
+        return sqrt (this->gg_);
     };
-    int get_iter() const
+    int
+        get_iter () const
     {
         return this->iter_;
     }
@@ -73,16 +75,17 @@ class Opt_CG
     double alpha_ = 0.;    // step length in standard CG
     double* pb_ = nullptr; // b in Ax=b, only for standard CG
 
-    void stantard_CGdirect(double* pAd,    // Ad for Ax=b
-                           double* rdirect // next direct
+    void stantard_CGdirect (double* pAd,    // Ad for Ax=b
+                            double* rdirect // next direct
     );
-    void PR_beta(double* pgradient // df(x)/dx
+    void PR_beta (double* pgradient // df(x)/dx
     );
-    void HZ_beta(double* pgradient // df(x)/dx
+    void HZ_beta (double* pgradient // df(x)/dx
     );
-    double inner_product(double* pa, double* pb, int length)
+    double
+        inner_product (double* pa, double* pb, int length)
     {
-        double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
+        double innerproduct = BlasConnector::dot (length, pa, 1, pb, 1);
         innerproduct *= this->dV_;
         return innerproduct;
     }

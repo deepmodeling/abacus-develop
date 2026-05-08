@@ -20,148 +20,164 @@ namespace base_device
 {
 namespace information
 {
-std::string get_device_name(std::string device_flag) {
-  std::string device_info = "Unknown";
+std::string
+    get_device_name (std::string device_flag)
+{
+    std::string device_info = "Unknown";
 
 #if defined(__CUDA) || defined(__ROCM)
-  if (device_flag == "gpu") {
-    int dev = 0;
-    gpuDeviceProp_t deviceProp;
-    gpuErrcheck(gpuGetDeviceProperties(&deviceProp, dev));
-    device_info = deviceProp.name;
-  }
+    if (device_flag == "gpu")
+        {
+            int dev = 0;
+            gpuDeviceProp_t deviceProp;
+            gpuErrcheck (gpuGetDeviceProperties (&deviceProp, dev));
+            device_info = deviceProp.name;
+        }
 #endif
-  if (device_flag == "cpu") {
-    std::ifstream cpuinfo("/proc/cpuinfo");
-    std::string line = "", cpu_name = "";
+    if (device_flag == "cpu")
+        {
+            std::ifstream cpuinfo ("/proc/cpuinfo");
+            std::string line = "", cpu_name = "";
 
-    while (std::getline(cpuinfo, line)) {
-      if (line.find("model name") != std::string::npos) {
-        // Extract the CPU name from the line
-        size_t colonPos = line.find(":");
-        if (colonPos != std::string::npos) {
-          cpu_name = line.substr(colonPos + 2); // Skip the colon and space
-          break;                                // Stop after the first match
-        }
-      }
-    }
-    if (cpu_name != "") {
-      device_info = cpu_name;
-    }
-    cpuinfo.close();
-  }
-  return device_info;
-}
-
-int get_device_num(std::string device_flag)
-{
-  if (device_flag == "gpu") {
-    int count = 0;
-    #if defined(__CUDA) || defined(__ROCM)
-    gpuErrcheck(gpuGetDeviceCount(&count));
-    #endif
-    return count;
-  }
-  if(device_flag == "cpu")
-  {
-    std::ifstream file("/proc/cpuinfo");
-    if (!file.is_open()) {
-        return 1;  // fallback to 1 if cannot read
-    }
-
-    std::string line;
-    std::set<int> physical_ids;  // Use set to avoid duplicates
-
-    while (std::getline(file, line)) {
-        if (line.substr(0, 11) == "physical id") {
-            size_t pos = line.find(':');
-            if (pos != std::string::npos) {
-                std::string value = line.substr(pos + 1);
-                std::stringstream ss(value);
-                int socket_id;
-                if (ss >> socket_id) {
-                    physical_ids.insert(socket_id);
+            while (std::getline (cpuinfo, line))
+                {
+                    if (line.find ("model name") != std::string::npos)
+                        {
+                            // Extract the CPU name from the line
+                            size_t colonPos = line.find (":");
+                            if (colonPos != std::string::npos)
+                                {
+                                    cpu_name = line.substr (colonPos + 2); // Skip the colon and space
+                                    break;                                 // Stop after the first match
+                                }
+                        }
                 }
-            }
+            if (cpu_name != "")
+                {
+                    device_info = cpu_name;
+                }
+            cpuinfo.close ();
         }
-    }
-    file.close();
-    return (physical_ids.size() > 0) ? static_cast<int>(physical_ids.size()) : 1;
-  }
-  return 0;
+    return device_info;
 }
 
-void output_device_info(std::ostream &output, const std::string& device)
+int
+    get_device_num (std::string device_flag)
+{
+    if (device_flag == "gpu")
+        {
+            int count = 0;
+#if defined(__CUDA) || defined(__ROCM)
+            gpuErrcheck (gpuGetDeviceCount (&count));
+#endif
+            return count;
+        }
+    if (device_flag == "cpu")
+        {
+            std::ifstream file ("/proc/cpuinfo");
+            if (!file.is_open ())
+                {
+                    return 1; // fallback to 1 if cannot read
+                }
+
+            std::string line;
+            std::set<int> physical_ids; // Use set to avoid duplicates
+
+            while (std::getline (file, line))
+                {
+                    if (line.substr (0, 11) == "physical id")
+                        {
+                            size_t pos = line.find (':');
+                            if (pos != std::string::npos)
+                                {
+                                    std::string value = line.substr (pos + 1);
+                                    std::stringstream ss (value);
+                                    int socket_id;
+                                    if (ss >> socket_id)
+                                        {
+                                            physical_ids.insert (socket_id);
+                                        }
+                                }
+                        }
+                }
+            file.close ();
+            return (physical_ids.size () > 0) ? static_cast<int> (physical_ids.size ()) : 1;
+        }
+    return 0;
+}
+
+void
+    output_device_info (std::ostream& output, const std::string& device)
 {
 #ifdef __MPI
     int world_rank, world_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank (MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size (MPI_COMM_WORLD, &world_size);
 
     // rank in the node
-    int local_rank = get_node_rank_with_mpi_shared(MPI_COMM_WORLD);
+    int local_rank = get_node_rank_with_mpi_shared (MPI_COMM_WORLD);
 
     // Get local hardware info
     int local_gpu_count = 0;
-    #if defined(__CUDA) || defined(__ROCM)
-    if(device == "gpu" && local_rank == 0)
-    {
-        local_gpu_count = get_device_num("gpu");
-    }
-    #endif
-    int local_cpu_sockets = local_rank == 0 ? get_device_num("cpu") : 0;
+#if defined(__CUDA) || defined(__ROCM)
+    if (device == "gpu" && local_rank == 0)
+        {
+            local_gpu_count = get_device_num ("gpu");
+        }
+#endif
+    int local_cpu_sockets = local_rank == 0 ? get_device_num ("cpu") : 0;
 
     // Prepare vectors to gather data from all ranks
-    std::vector<int> all_gpu_counts(world_size);
-    std::vector<int> all_cpu_sockets(world_size);
+    std::vector<int> all_gpu_counts (world_size);
+    std::vector<int> all_cpu_sockets (world_size);
 
     // Gather GPU and CPU socket counts from all MPI ranks
-    MPI_Gather(&local_gpu_count, 1, MPI_INT, all_gpu_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&local_cpu_sockets, 1, MPI_INT, all_cpu_sockets.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather (&local_gpu_count, 1, MPI_INT, all_gpu_counts.data (), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather (&local_cpu_sockets, 1, MPI_INT, all_cpu_sockets.data (), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Only rank 0 prints the full summary
-    if (world_rank == 0) {
-        int total_gpus = std::accumulate(all_gpu_counts.begin(), all_gpu_counts.end(), 0);
-        int total_cpus = std::accumulate(all_cpu_sockets.begin(), all_cpu_sockets.end(), 0);
-
-        // Get device model names (from rank 0 node)
-        std::string cpu_name = get_device_name("cpu");
-        std::string gpu_name;
-        #if defined(__CUDA) || defined(__ROCM)
-        if(device == "gpu" && total_gpus > 0)
+    if (world_rank == 0)
         {
-            gpu_name = get_device_name("gpu");
-        }
-        #endif
+            int total_gpus = std::accumulate (all_gpu_counts.begin (), all_gpu_counts.end (), 0);
+            int total_cpus = std::accumulate (all_cpu_sockets.begin (), all_cpu_sockets.end (), 0);
 
-        // Output all collected information
-        output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
-                  << cpu_name << " (x" << total_cpus << ")" << std::endl;
-        #if defined(__CUDA) || defined(__ROCM)
-        if(device == "gpu" && total_gpus > 0)
-        {
-            output << "                        " << "GPU" << " / "
-                  << gpu_name << " (x" << total_gpus << ")" << std::endl;
+            // Get device model names (from rank 0 node)
+            std::string cpu_name = get_device_name ("cpu");
+            std::string gpu_name;
+#if defined(__CUDA) || defined(__ROCM)
+            if (device == "gpu" && total_gpus > 0)
+                {
+                    gpu_name = get_device_name ("gpu");
+                }
+#endif
+
+            // Output all collected information
+            output << " RUNNING WITH DEVICE  : " << "CPU" << " / " << cpu_name << " (x" << total_cpus << ")"
+                   << std::endl;
+#if defined(__CUDA) || defined(__ROCM)
+            if (device == "gpu" && total_gpus > 0)
+                {
+                    output << "                        " << "GPU" << " / " << gpu_name << " (x" << total_gpus << ")"
+                           << std::endl;
+                }
+#endif
         }
-        #endif
-    }
 #else
-        int cpu_sockets = get_device_num("cpu");
-        std::string cpu_name = get_device_name("cpu");
-        output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
-                   << cpu_name << " (x" << cpu_sockets << ")" << std::endl;
-        #if defined(__CUDA) || defined(__ROCM)
-        if(device == "gpu")
+    int cpu_sockets = get_device_num ("cpu");
+    std::string cpu_name = get_device_name ("cpu");
+    output << " RUNNING WITH DEVICE  : " << "CPU" << " / " << cpu_name << " (x" << cpu_sockets << ")" << std::endl;
+#if defined(__CUDA) || defined(__ROCM)
+    if (device == "gpu")
         {
-            int gpu_count = get_device_num("gpu");
-            if(gpu_count > 0)
-            {
-                std::string gpu_name = get_device_name("gpu");
-                output << "                        " << "GPU" << " / "
-                      << gpu_name << " (x" << gpu_count << ")" << std::endl;
-            }
+            int gpu_count = get_device_num ("gpu");
+            if (gpu_count > 0)
+                {
+                    std::string gpu_name = get_device_name ("gpu");
+                    output << "                        " << "GPU" << " / " << gpu_name << " (x" << gpu_count << ")"
+                           << std::endl;
+                }
         }
-        #endif
+#endif
 #endif
 }
 
@@ -170,273 +186,288 @@ void output_device_info(std::ostream &output, const std::string& device)
 static bool is_init = false;
 
 template <>
-void print_device_info<base_device::DEVICE_GPU>(
-    const base_device::DEVICE_GPU *ctx, std::ofstream &ofs_device) {
-  if (is_init) {
-    return;
-  }
-  int deviceCount = 0;
-  gpuError_t error_id = gpuGetDeviceCount(&deviceCount);
-  if (error_id != gpuSuccess) {
-    ofs_device << "gpuGetDeviceCount returned " << static_cast<int>(error_id)
-               << "\n-> " << gpuGetErrorString(error_id) << std::endl;
-    ModuleBase::WARNING_QUIT("device", "GPU returned is without gpuSuccess");
-  }
-  // This function call returns 0 if there are no GPU capable devices.
-  if (deviceCount == 0) {
-    ofs_device << "There are no available device(s) that support GPU\n";
-  } else {
-    ofs_device << "Detected " << deviceCount << " GPU Capable device(s)\n";
-  }
-  int dev = 0, driverVersion = 0, runtimeVersion = 0;
-  gpuErrcheck(gpuGetDevice(&dev));
-  gpuDeviceProp_t deviceProp;
-  gpuErrcheck(gpuGetDeviceProperties(&deviceProp, dev));
-  ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
-  // Console log
-  gpuErrcheck(gpuDriverGetVersion(&driverVersion));
-  gpuErrcheck(gpuRuntimeGetVersion(&runtimeVersion));
-  char msg[1024];
-  sprintf(msg,
-          "  GPU Driver Version / Runtime Version          %d.%d / %d.%d\n",
-          driverVersion / 1000, (driverVersion % 100) / 10,
-          runtimeVersion / 1000, (runtimeVersion % 100) / 10);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  GPU Capability Major/Minor version number:    %d.%d\n",
-          deviceProp.major, deviceProp.minor);
-  ofs_device << msg << std::endl;
-
-#if defined(__ROCM)
-  // ROCm-specific: clock rates
-  sprintf(msg,
-          "  GPU Max Clock rate:                            %.0f MHz (%0.2f "
-          "GHz)\n",
-          deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Memory Clock rate:                             %.0f Mhz\n",
-          deviceProp.memoryClockRate * 1e-3f);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Memory Bus Width:                              %d-bit\n",
-          deviceProp.memoryBusWidth);
-  ofs_device << msg << std::endl;
-#endif
-
-  // Common properties
-  sprintf(msg,
-          "  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
-          "%d), 3D=(%d, %d, %d)\n",
-          deviceProp.maxTexture1D, deviceProp.maxTexture2D[0],
-          deviceProp.maxTexture2D[1], deviceProp.maxTexture3D[0],
-          deviceProp.maxTexture3D[1], deviceProp.maxTexture3D[2]);
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  // CUDA-specific: layered textures
-  sprintf(
-      msg,
-      "  Maximum Layered 1D Texture Size, (num) layers  1D=(%d), %d layers\n",
-      deviceProp.maxTexture1DLayered[0], deviceProp.maxTexture1DLayered[1]);
-  ofs_device << msg << std::endl;
-  sprintf(msg,
-          "  Maximum Layered 2D Texture Size, (num) layers  2D=(%d, %d), %d "
-          "layers\n",
-          deviceProp.maxTexture2DLayered[0], deviceProp.maxTexture2DLayered[1],
-          deviceProp.maxTexture2DLayered[2]);
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Total amount of constant memory:               %zu bytes\n",
-          deviceProp.totalConstMem);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Total amount of shared memory per block:       %zu bytes\n",
-          deviceProp.sharedMemPerBlock);
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  sprintf(msg, "  Total shared memory per multiprocessor:        %zu bytes\n",
-          deviceProp.sharedMemPerMultiprocessor);
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Total number of registers available per block: %d\n",
-          deviceProp.regsPerBlock);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Warp size:                                     %d\n",
-          deviceProp.warpSize);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Maximum number of threads per multiprocessor:  %d\n",
-          deviceProp.maxThreadsPerMultiProcessor);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Maximum number of threads per block:           %d\n",
-          deviceProp.maxThreadsPerBlock);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Max dimension size of a thread block (x,y,z): (%d, %d, %d)\n",
-          deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1],
-          deviceProp.maxThreadsDim[2]);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Max dimension size of a grid size    (x,y,z): (%d, %d, %d)\n",
-          deviceProp.maxGridSize[0], deviceProp.maxGridSize[1],
-          deviceProp.maxGridSize[2]);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Maximum memory pitch:                          %zu bytes\n",
-          deviceProp.memPitch);
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Texture alignment:                             %zu bytes\n",
-          deviceProp.textureAlignment);
-  ofs_device << msg << std::endl;
-
-#if defined(__ROCM)
-  sprintf(msg, "  Run time limit on kernels:                     %s\n",
-          deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Integrated GPU sharing Host Memory:            %s\n",
-          deviceProp.integrated ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-  sprintf(msg, "  Support host page-locked memory mapping:       %s\n",
-          deviceProp.canMapHostMemory ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  sprintf(msg, "  Alignment requirement for Surfaces:            %s\n",
-          deviceProp.surfaceAlignment ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Device has ECC support:                        %s\n",
-          deviceProp.ECCEnabled ? "Enabled" : "Disabled");
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  sprintf(msg, "  Device supports Unified Addressing (UVA):      %s\n",
-          deviceProp.unifiedAddressing ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Device supports Managed Memory:                %s\n",
-          deviceProp.managedMemory ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  sprintf(msg, "  Device supports Compute Preemption:            %s\n",
-          deviceProp.computePreemptionSupported ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg, "  Supports Cooperative Kernel Launch:            %s\n",
-          deviceProp.cooperativeLaunch ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-
-#if defined(__ROCM)
-  sprintf(msg, "  Supports MultiDevice Co-op Kernel Launch:      %s\n",
-          deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
-  ofs_device << msg << std::endl;
-#endif
-
-  sprintf(msg,
-          "  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
-          deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
-  ofs_device << msg << std::endl;
-
-#if defined(__CUDA)
-  ModuleBase::cuda_compat::printDeprecatedDeviceInfo(ofs_device, deviceProp);
-  ModuleBase::cuda_compat::printComputeModeInfo(ofs_device, deviceProp);
-#elif defined(__ROCM)
-  const char *sComputeMode[] = {
-      "Default (multiple host threads can use ::gpuSetDevice() with device "
-      "simultaneously)",
-      "Exclusive (only one host thread in one process is able to use "
-      "::gpuSetDevice() with this device)",
-      "Prohibited (no host thread can use ::gpuSetDevice() with this "
-      "device)",
-      "Exclusive Process (many threads in one process is able to use "
-      "::gpuSetDevice() with this device)",
-      "Unknown",
-      NULL};
-  sprintf(msg, "  Compute Mode:\n");
-  ofs_device << msg << std::endl;
-  ofs_device << "  " << sComputeMode[deviceProp.computeMode] << std::endl
-             << std::endl;
-#endif
-
-  // If there are 2 or more GPUs, query to determine whether RDMA is supported
-  if (deviceCount >= 2) {
-    gpuDeviceProp_t prop[64];
-    int gpuid[64]; // we want to find the first two GPUs that can support P2P
-    int gpu_p2p_count = 0;
-
-    for (int i = 0; i < deviceCount; i++) {
-      gpuErrcheck(gpuGetDeviceProperties(&prop[i], i));
-
-      // Only boards based on Fermi or later can support P2P
-      if (prop[i].major >= 2) {
-        // This is an array of P2P capable GPUs
-        gpuid[gpu_p2p_count++] = i;
-      }
-    }
-
-    // Show all the combinations of support P2P GPUs
-    int can_access_peer;
-
-    if (gpu_p2p_count >= 2) {
-      for (int i = 0; i < gpu_p2p_count; i++) {
-        for (int j = 0; j < gpu_p2p_count; j++) {
-          if (gpuid[i] == gpuid[j]) {
-            continue;
-          }
-          gpuErrcheck(
-              gpuDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]));
-          sprintf(msg, "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
-                  prop[gpuid[i]].name, gpuid[i], prop[gpuid[j]].name, gpuid[j],
-                  can_access_peer ? "Yes" : "No");
-          ofs_device << msg << std::endl;
+void
+    print_device_info<base_device::DEVICE_GPU> (const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device)
+{
+    if (is_init)
+        {
+            return;
         }
-      }
-    }
-  }
+    int deviceCount = 0;
+    gpuError_t error_id = gpuGetDeviceCount (&deviceCount);
+    if (error_id != gpuSuccess)
+        {
+            ofs_device << "gpuGetDeviceCount returned " << static_cast<int> (error_id) << "\n-> "
+                       << gpuGetErrorString (error_id) << std::endl;
+            ModuleBase::WARNING_QUIT ("device", "GPU returned is without gpuSuccess");
+        }
+    // This function call returns 0 if there are no GPU capable devices.
+    if (deviceCount == 0)
+        {
+            ofs_device << "There are no available device(s) that support GPU\n";
+        }
+    else
+        {
+            ofs_device << "Detected " << deviceCount << " GPU Capable device(s)\n";
+        }
+    int dev = 0, driverVersion = 0, runtimeVersion = 0;
+    gpuErrcheck (gpuGetDevice (&dev));
+    gpuDeviceProp_t deviceProp;
+    gpuErrcheck (gpuGetDeviceProperties (&deviceProp, dev));
+    ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
+    // Console log
+    gpuErrcheck (gpuDriverGetVersion (&driverVersion));
+    gpuErrcheck (gpuRuntimeGetVersion (&runtimeVersion));
+    char msg[1024];
+    sprintf (msg,
+             "  GPU Driver Version / Runtime Version          %d.%d / %d.%d\n",
+             driverVersion / 1000,
+             (driverVersion % 100) / 10,
+             runtimeVersion / 1000,
+             (runtimeVersion % 100) / 10);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  GPU Capability Major/Minor version number:    %d.%d\n", deviceProp.major, deviceProp.minor);
+    ofs_device << msg << std::endl;
 
-  // csv masterlog info
-  // *****************************
-  // exe and GPU driver name
-  std::string sProfileString = "deviceQuery, GPU Driver = GPURT";
-  char cTemp[16];
+#if defined(__ROCM)
+    // ROCm-specific: clock rates
+    sprintf (msg,
+             "  GPU Max Clock rate:                            %.0f MHz (%0.2f "
+             "GHz)\n",
+             deviceProp.clockRate * 1e-3f,
+             deviceProp.clockRate * 1e-6f);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Memory Clock rate:                             %.0f Mhz\n", deviceProp.memoryClockRate * 1e-3f);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Memory Bus Width:                              %d-bit\n", deviceProp.memoryBusWidth);
+    ofs_device << msg << std::endl;
+#endif
 
-  // driver version
-  sProfileString += ", GPU Driver Version = ";
+    // Common properties
+    sprintf (msg,
+             "  Maximum Texture Dimension Size (x,y,z)         1D=(%d), 2D=(%d, "
+             "%d), 3D=(%d, %d, %d)\n",
+             deviceProp.maxTexture1D,
+             deviceProp.maxTexture2D[0],
+             deviceProp.maxTexture2D[1],
+             deviceProp.maxTexture3D[0],
+             deviceProp.maxTexture3D[1],
+             deviceProp.maxTexture3D[2]);
+    ofs_device << msg << std::endl;
 
-  snprintf(cTemp, sizeof(cTemp), "%d.%d", driverVersion / 1000,
-           (driverVersion % 100) / 10);
-  sProfileString += cTemp;
+#if defined(__CUDA)
+    // CUDA-specific: layered textures
+    sprintf (msg,
+             "  Maximum Layered 1D Texture Size, (num) layers  1D=(%d), %d layers\n",
+             deviceProp.maxTexture1DLayered[0],
+             deviceProp.maxTexture1DLayered[1]);
+    ofs_device << msg << std::endl;
+    sprintf (msg,
+             "  Maximum Layered 2D Texture Size, (num) layers  2D=(%d, %d), %d "
+             "layers\n",
+             deviceProp.maxTexture2DLayered[0],
+             deviceProp.maxTexture2DLayered[1],
+             deviceProp.maxTexture2DLayered[2]);
+    ofs_device << msg << std::endl;
+#endif
 
-  // Runtime version
-  sProfileString += ", GPU Runtime Version = ";
-  snprintf(cTemp, sizeof(cTemp), "%d.%d", runtimeVersion / 1000,
-           (runtimeVersion % 100) / 10);
-  sProfileString += cTemp;
+    sprintf (msg, "  Total amount of constant memory:               %zu bytes\n", deviceProp.totalConstMem);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Total amount of shared memory per block:       %zu bytes\n", deviceProp.sharedMemPerBlock);
+    ofs_device << msg << std::endl;
 
-  // Device count
-  sProfileString += ", NumDevs = ";
-  snprintf(cTemp, sizeof(cTemp), "%d", deviceCount);
-  sProfileString += cTemp;
-  sProfileString += "\n";
+#if defined(__CUDA)
+    sprintf (msg,
+             "  Total shared memory per multiprocessor:        %zu bytes\n",
+             deviceProp.sharedMemPerMultiprocessor);
+    ofs_device << msg << std::endl;
+#endif
 
-  ofs_device << sProfileString.c_str() << std::endl;
-  is_init = true;
-  ofs_device << "End of device informations." << std::endl << std::endl;
+    sprintf (msg, "  Total number of registers available per block: %d\n", deviceProp.regsPerBlock);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Warp size:                                     %d\n", deviceProp.warpSize);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Maximum number of threads per multiprocessor:  %d\n", deviceProp.maxThreadsPerMultiProcessor);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Maximum number of threads per block:           %d\n", deviceProp.maxThreadsPerBlock);
+    ofs_device << msg << std::endl;
+    sprintf (msg,
+             "  Max dimension size of a thread block (x,y,z): (%d, %d, %d)\n",
+             deviceProp.maxThreadsDim[0],
+             deviceProp.maxThreadsDim[1],
+             deviceProp.maxThreadsDim[2]);
+    ofs_device << msg << std::endl;
+    sprintf (msg,
+             "  Max dimension size of a grid size    (x,y,z): (%d, %d, %d)\n",
+             deviceProp.maxGridSize[0],
+             deviceProp.maxGridSize[1],
+             deviceProp.maxGridSize[2]);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Maximum memory pitch:                          %zu bytes\n", deviceProp.memPitch);
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Texture alignment:                             %zu bytes\n", deviceProp.textureAlignment);
+    ofs_device << msg << std::endl;
+
+#if defined(__ROCM)
+    sprintf (msg,
+             "  Run time limit on kernels:                     %s\n",
+             deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+#endif
+
+    sprintf (msg, "  Integrated GPU sharing Host Memory:            %s\n", deviceProp.integrated ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+    sprintf (msg, "  Support host page-locked memory mapping:       %s\n", deviceProp.canMapHostMemory ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+
+#if defined(__CUDA)
+    sprintf (msg, "  Alignment requirement for Surfaces:            %s\n", deviceProp.surfaceAlignment ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+#endif
+
+    sprintf (msg,
+             "  Device has ECC support:                        %s\n",
+             deviceProp.ECCEnabled ? "Enabled" : "Disabled");
+    ofs_device << msg << std::endl;
+
+#if defined(__CUDA)
+    sprintf (msg, "  Device supports Unified Addressing (UVA):      %s\n", deviceProp.unifiedAddressing ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+#endif
+
+    sprintf (msg, "  Device supports Managed Memory:                %s\n", deviceProp.managedMemory ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+
+#if defined(__CUDA)
+    sprintf (msg,
+             "  Device supports Compute Preemption:            %s\n",
+             deviceProp.computePreemptionSupported ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+#endif
+
+    sprintf (msg, "  Supports Cooperative Kernel Launch:            %s\n", deviceProp.cooperativeLaunch ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+
+#if defined(__ROCM)
+    sprintf (msg,
+             "  Supports MultiDevice Co-op Kernel Launch:      %s\n",
+             deviceProp.cooperativeMultiDeviceLaunch ? "Yes" : "No");
+    ofs_device << msg << std::endl;
+#endif
+
+    sprintf (msg,
+             "  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
+             deviceProp.pciDomainID,
+             deviceProp.pciBusID,
+             deviceProp.pciDeviceID);
+    ofs_device << msg << std::endl;
+
+#if defined(__CUDA)
+    ModuleBase::cuda_compat::printDeprecatedDeviceInfo (ofs_device, deviceProp);
+    ModuleBase::cuda_compat::printComputeModeInfo (ofs_device, deviceProp);
+#elif defined(__ROCM)
+    const char* sComputeMode[] = {"Default (multiple host threads can use ::gpuSetDevice() with device "
+                                  "simultaneously)",
+                                  "Exclusive (only one host thread in one process is able to use "
+                                  "::gpuSetDevice() with this device)",
+                                  "Prohibited (no host thread can use ::gpuSetDevice() with this "
+                                  "device)",
+                                  "Exclusive Process (many threads in one process is able to use "
+                                  "::gpuSetDevice() with this device)",
+                                  "Unknown",
+                                  NULL};
+    sprintf (msg, "  Compute Mode:\n");
+    ofs_device << msg << std::endl;
+    ofs_device << "  " << sComputeMode[deviceProp.computeMode] << std::endl << std::endl;
+#endif
+
+    // If there are 2 or more GPUs, query to determine whether RDMA is supported
+    if (deviceCount >= 2)
+        {
+            gpuDeviceProp_t prop[64];
+            int gpuid[64]; // we want to find the first two GPUs that can support P2P
+            int gpu_p2p_count = 0;
+
+            for (int i = 0; i < deviceCount; i++)
+                {
+                    gpuErrcheck (gpuGetDeviceProperties (&prop[i], i));
+
+                    // Only boards based on Fermi or later can support P2P
+                    if (prop[i].major >= 2)
+                        {
+                            // This is an array of P2P capable GPUs
+                            gpuid[gpu_p2p_count++] = i;
+                        }
+                }
+
+            // Show all the combinations of support P2P GPUs
+            int can_access_peer;
+
+            if (gpu_p2p_count >= 2)
+                {
+                    for (int i = 0; i < gpu_p2p_count; i++)
+                        {
+                            for (int j = 0; j < gpu_p2p_count; j++)
+                                {
+                                    if (gpuid[i] == gpuid[j])
+                                        {
+                                            continue;
+                                        }
+                                    gpuErrcheck (gpuDeviceCanAccessPeer (&can_access_peer, gpuid[i], gpuid[j]));
+                                    sprintf (msg,
+                                             "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
+                                             prop[gpuid[i]].name,
+                                             gpuid[i],
+                                             prop[gpuid[j]].name,
+                                             gpuid[j],
+                                             can_access_peer ? "Yes" : "No");
+                                    ofs_device << msg << std::endl;
+                                }
+                        }
+                }
+        }
+
+    // csv masterlog info
+    // *****************************
+    // exe and GPU driver name
+    std::string sProfileString = "deviceQuery, GPU Driver = GPURT";
+    char cTemp[16];
+
+    // driver version
+    sProfileString += ", GPU Driver Version = ";
+
+    snprintf (cTemp, sizeof (cTemp), "%d.%d", driverVersion / 1000, (driverVersion % 100) / 10);
+    sProfileString += cTemp;
+
+    // Runtime version
+    sProfileString += ", GPU Runtime Version = ";
+    snprintf (cTemp, sizeof (cTemp), "%d.%d", runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+    sProfileString += cTemp;
+
+    // Device count
+    sProfileString += ", NumDevs = ";
+    snprintf (cTemp, sizeof (cTemp), "%d", deviceCount);
+    sProfileString += cTemp;
+    sProfileString += "\n";
+
+    ofs_device << sProfileString.c_str () << std::endl;
+    is_init = true;
+    ofs_device << "End of device informations." << std::endl << std::endl;
 }
 
 template <>
-void record_device_memory<base_device::DEVICE_GPU>(
-    const base_device::DEVICE_GPU *ctx, std::ofstream &ofs_device,
-    std::string str, size_t size) {
-  ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024
-             << " \tMB device memory\t"
-             << "from " << str << std::endl
-             << std::endl;
+void
+    record_device_memory<base_device::DEVICE_GPU> (const base_device::DEVICE_GPU* ctx,
+                                                   std::ofstream& ofs_device,
+                                                   std::string str,
+                                                   size_t size)
+{
+    ofs_device << "Allocate " << static_cast<double> (size) / 8 / 1024 / 1024 << " \tMB device memory\t"
+               << "from " << str << std::endl
+               << std::endl;
 }
 
 #endif // defined(__CUDA) || defined(__ROCM)
 
-}
-}
+} // namespace information
+} // namespace base_device

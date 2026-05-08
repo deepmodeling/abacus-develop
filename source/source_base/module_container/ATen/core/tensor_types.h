@@ -26,19 +26,25 @@
 #include <base/macros/rocm.h>
 #endif // defined(__CUDACC__) || defined(__HIPCC__)
 
-namespace container {
+namespace container
+{
 
 template <typename T, int Accuracy>
-static inline bool element_compare(T& a, T& b) {
-    if (Accuracy <= 4) {
-        return (a == b) || (std::norm(a - b) < 1e-7);
-    } 
-    else if (Accuracy <= 8) {
-        return (a == b) || (std::norm(a - b) < 1e-15);
-    } 
-    else {
-        return (a == b);
-    }
+static inline bool
+    element_compare (T& a, T& b)
+{
+    if (Accuracy <= 4)
+        {
+            return (a == b) || (std::norm (a - b) < 1e-7);
+        }
+    else if (Accuracy <= 8)
+        {
+            return (a == b) || (std::norm (a - b) < 1e-15);
+        }
+    else
+        {
+            return (a == b);
+        }
 }
 
 /**
@@ -47,33 +53,39 @@ The DataType enum lists the supported data types for tensors. Each data type
 is identified by a unique value. The DT_INVALID value is reserved for invalid
 data types.
 */
-enum class DataType {
-    DT_INVALID = 0, ///< Invalid data type */
-    DT_FLOAT = 1, ///< Single-precision floating point */
-    DT_DOUBLE = 2, ///< Double-precision floating point */
-    DT_INT = 3, ///< 32-bit integer */
-    DT_INT64 = 4, ///< 64-bit integer */
-    DT_COMPLEX = 5, ///< 32-bit complex */
+enum class DataType
+{
+    DT_INVALID = 0,        ///< Invalid data type */
+    DT_FLOAT = 1,          ///< Single-precision floating point */
+    DT_DOUBLE = 2,         ///< Double-precision floating point */
+    DT_INT = 3,            ///< 32-bit integer */
+    DT_INT64 = 4,          ///< 64-bit integer */
+    DT_COMPLEX = 5,        ///< 32-bit complex */
     DT_COMPLEX_DOUBLE = 6, /**< 64-bit complex */
-// ... other data types
+    // ... other data types
 };
 
 /**
  *@struct DEVICE_CPU, DEVICE_GPU
  *@brief A tag type for identifying CPU and GPU devices.
-*/
+ */
 struct DEVICE_CPU;
 struct DEVICE_GPU;
 
-struct DEVICE_CPU {};
-struct DEVICE_GPU {};
+struct DEVICE_CPU
+{
+};
+struct DEVICE_GPU
+{
+};
 /**
  * @brief The type of memory used by an allocator.
  */
-enum class DeviceType {
-    UnKnown = 0,  ///< Memory type is unknown.
-    CpuDevice = 1,     ///< Memory type is CPU.
-    GpuDevice = 2,     ///< Memory type is GPU(CUDA or ROCm).
+enum class DeviceType
+{
+    UnKnown = 0,   ///< Memory type is unknown.
+    CpuDevice = 1, ///< Memory type is CPU.
+    GpuDevice = 2, ///< Memory type is GPU(CUDA or ROCm).
 };
 
 /**
@@ -85,7 +97,8 @@ enum class DeviceType {
  * @tparam T The input type for which the return type needs to be determined.
  */
 template <typename T>
-struct GetTypeReal {
+struct GetTypeReal
+{
     using type = T; /**< The return type based on the input type. */
 };
 
@@ -95,7 +108,8 @@ struct GetTypeReal {
  * This specialization sets the return type to be float when the input type is std::complex<float>.
  */
 template <>
-struct GetTypeReal<std::complex<float>> {
+struct GetTypeReal<std::complex<float>>
+{
     using type = float; /**< The return type specialization for std::complex<float>. */
 };
 
@@ -105,12 +119,14 @@ struct GetTypeReal<std::complex<float>> {
  * This specialization sets the return type to be double when the input type is std::complex<double>.
  */
 template <>
-struct GetTypeReal<std::complex<double>> {
+struct GetTypeReal<std::complex<double>>
+{
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
 
-template <typename T> 
-struct PsiToContainer {
+template <typename T>
+struct PsiToContainer
+{
     using type = T; /**< The return type based on the input type. */
 };
 
@@ -126,21 +142,23 @@ struct PsiToContainer<base_device::DEVICE_GPU>
     using type = container::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
 
-template <typename T> 
-struct ContainerToPsi {
+template <typename T>
+struct ContainerToPsi
+{
     using type = T; /**< The return type based on the input type. */
 };
 
 template <>
-struct ContainerToPsi<container::DEVICE_CPU> {
+struct ContainerToPsi<container::DEVICE_CPU>
+{
     using type = base_device::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
 };
 
 template <>
-struct ContainerToPsi<container::DEVICE_GPU> {
+struct ContainerToPsi<container::DEVICE_GPU>
+{
     using type = base_device::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
-
 
 /**
  * @brief Template struct for mapping a Device Type to its corresponding enum value.
@@ -155,16 +173,19 @@ struct ContainerToPsi<container::DEVICE_GPU> {
  *      DataTypeToEnum<float>::value; // Returns DataType::DT_FLOAT
  */
 template <typename T>
-struct DeviceTypeToEnum {
+struct DeviceTypeToEnum
+{
     static constexpr DeviceType value = {};
 };
 // Specializations of DeviceTypeToEnum for supported devices.
 template <>
-struct DeviceTypeToEnum<DEVICE_CPU> {
+struct DeviceTypeToEnum<DEVICE_CPU>
+{
     static constexpr DeviceType value = DeviceType::CpuDevice;
 };
 template <>
-struct DeviceTypeToEnum<DEVICE_GPU> {
+struct DeviceTypeToEnum<DEVICE_GPU>
+{
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 template <>
@@ -191,43 +212,52 @@ struct DeviceTypeToEnum<base_device::DEVICE_GPU>
  *      DataTypeToEnum<float>::value; // Returns DataType::DT_FLOAT
  */
 template <typename T>
-struct DataTypeToEnum {
+struct DataTypeToEnum
+{
     static constexpr DataType value = {};
 };
 // Specializations of DataTypeToEnum for supported types.
 template <>
-struct DataTypeToEnum<int> {
+struct DataTypeToEnum<int>
+{
     static constexpr DataType value = DataType::DT_INT;
 };
 template <>
-struct DataTypeToEnum<float> {
+struct DataTypeToEnum<float>
+{
     static constexpr DataType value = DataType::DT_FLOAT;
 };
 template <>
-struct DataTypeToEnum<double> {
+struct DataTypeToEnum<double>
+{
     static constexpr DataType value = DataType::DT_DOUBLE;
 };
 template <>
-struct DataTypeToEnum<int64_t> {
+struct DataTypeToEnum<int64_t>
+{
     static constexpr DataType value = DataType::DT_INT64;
 };
 template <>
-struct DataTypeToEnum<std::complex<float>> {
+struct DataTypeToEnum<std::complex<float>>
+{
     static constexpr DataType value = DataType::DT_COMPLEX;
 };
 template <>
-struct DataTypeToEnum<std::complex<double>> {
+struct DataTypeToEnum<std::complex<double>>
+{
     static constexpr DataType value = DataType::DT_COMPLEX_DOUBLE;
 };
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
 template <>
-struct DataTypeToEnum<thrust::complex<float>> {
+struct DataTypeToEnum<thrust::complex<float>>
+{
     static constexpr DataType value = DataType::DT_COMPLEX;
 };
 
 template <>
-struct DataTypeToEnum<thrust::complex<double>> {
+struct DataTypeToEnum<thrust::complex<double>>
+{
     static constexpr DataType value = DataType::DT_COMPLEX_DOUBLE;
 };
 #endif // defined(__CUDACC__) || defined(__HIPCC__)
@@ -242,7 +272,7 @@ struct DataTypeToEnum<thrust::complex<double>> {
  *
  * @return The output stream.
  */
-std::ostream& operator<<(std::ostream& os, const DataType& data_type);
+std::ostream& operator<< (std::ostream& os, const DataType& data_type);
 
 /**
  * @brief Overloaded operator<< for the Tensor class.
@@ -254,7 +284,7 @@ std::ostream& operator<<(std::ostream& os, const DataType& data_type);
  *
  * @return The output stream.
  */
-std::ostream& operator<<(std::ostream& os, const DeviceType& memory_type);
+std::ostream& operator<< (std::ostream& os, const DeviceType& memory_type);
 
 } // namespace container
 #endif // ATEN_CORE_TENSOR_TYPES_H_

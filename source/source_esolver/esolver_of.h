@@ -12,20 +12,20 @@ namespace ModuleESolver
 class ESolver_OF : public ESolver_FP
 {
   public:
-    ESolver_OF();
-    ~ESolver_OF();
+    ESolver_OF ();
+    ~ESolver_OF ();
 
-    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    virtual void before_all_runners (UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner (UnitCell& ucell, const int istep) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners (UnitCell& ucell) override;
 
-    virtual double cal_energy() override;
+    virtual double cal_energy () override;
 
-    virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    virtual void cal_force (UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    virtual void cal_stress (UnitCell& ucell, ModuleBase::matrix& stress) override;
 
   protected:
     // ======================= variables ==========================
@@ -74,42 +74,43 @@ class ESolver_OF : public ESolver_FP
     double normdLdphi_ = 100.;
 
     // ==================== main process of OFDFT ======================
-    void before_opt(const int istep, UnitCell& ucell);
-    void update_potential(UnitCell& ucell);
-    void optimize(UnitCell& ucell);
-    void update_rho();
-    bool check_exit(bool& conv_esolver);
-    void after_opt(const int istep, UnitCell& ucell, const bool conv_esolver);
+    void before_opt (const int istep, UnitCell& ucell);
+    void update_potential (UnitCell& ucell);
+    void optimize (UnitCell& ucell);
+    void update_rho ();
+    bool check_exit (bool& conv_esolver);
+    void after_opt (const int istep, UnitCell& ucell, const bool conv_esolver);
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
-    void init_elecstate(UnitCell& ucell);                                                                 
-    void allocate_array();
+    void init_elecstate (UnitCell& ucell);
+    void allocate_array ();
 
     // --------------------- calculate physical qualities ---------------
-    std::function<void(double*, double*)> bound_cal_potential_;
-    void cal_potential_wrapper(double* ptemp_phi, double* rdLdphi);
-    void cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
-    void cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
-    double cal_mu(double* pphi, double* pdEdphi, double nelec);
+    std::function<void (double*, double*)> bound_cal_potential_;
+    void cal_potential_wrapper (double* ptemp_phi, double* rdLdphi);
+    void cal_potential (double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
+    void cal_dEdtheta (double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
+    double cal_mu (double* pphi, double* pdEdphi, double nelec);
 
     // --------------------- determine the optimization direction -------
-    void adjust_direction();
-    void check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
-    void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void adjust_direction ();
+    void check_direction (double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void test_direction (double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 
     // --------------------- interface to blas --------------------------
-    double inner_product(double* pa, double* pb, int length, double dV = 1) const
+    double
+        inner_product (double* pa, double* pb, int length, double dV = 1) const
     {
-        double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
+        double innerproduct = BlasConnector::dot (length, pa, 1, pb, 1);
         innerproduct *= dV;
         return innerproduct;
     }
 
     // ---------------------- interfaces to optimization methods --------
-    void init_opt();
-    void get_direction(UnitCell& ucell);
-    void get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void init_opt ();
+    void get_direction (UnitCell& ucell);
+    void get_step_length (double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 };
 } // namespace ModuleESolver
 

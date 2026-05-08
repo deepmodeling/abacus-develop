@@ -20,13 +20,14 @@ namespace ModuleBase
  * @return FPTYPE The result of the exponential function.
  */
 template <typename FPTYPE>
-inline FPTYPE truncated_exp(FPTYPE x)
+inline FPTYPE
+    truncated_exp (FPTYPE x)
 {
-    if (std::real(x) < -230.0)
-    {
-        return static_cast<FPTYPE>(0.0);
-    }
-    return ModuleBase::libm::exp(x);
+    if (std::real (x) < -230.0)
+        {
+            return static_cast<FPTYPE> (0.0);
+        }
+    return ModuleBase::libm::exp (x);
 }
 
 /**
@@ -40,13 +41,14 @@ inline FPTYPE truncated_exp(FPTYPE x)
  * @return FPTYPE The result of the erfc function.
  */
 template <typename FPTYPE>
-inline FPTYPE truncated_erfc(FPTYPE x)
+inline FPTYPE
+    truncated_erfc (FPTYPE x)
 {
-    if (std::real(x) > 20.0)
-    {
-        return static_cast<FPTYPE>(0.0);
-    }
-    return std::erfc(x);
+    if (std::real (x) > 20.0)
+        {
+            return static_cast<FPTYPE> (0.0);
+        }
+    return std::erfc (x);
 }
 
 /**
@@ -68,48 +70,51 @@ inline FPTYPE truncated_erfc(FPTYPE x)
  * @param x The input value to be checked and possibly truncated.
  */
 template <typename FPTYPE>
-inline void truncated_underflow(FPTYPE& x)
+inline void
+    truncated_underflow (FPTYPE& x)
 {
-    if (std::abs(x) < 1.0e-30)
-    {
-        x = static_cast<FPTYPE>(0.0);
-    }
+    if (std::abs (x) < 1.0e-30)
+        {
+            x = static_cast<FPTYPE> (0.0);
+        }
 }
 
 template <>
-inline void truncated_underflow(double& x)
+inline void
+    truncated_underflow (double& x)
 {
-    const uint64_t u = *reinterpret_cast<const uint64_t*>(&x);
+    const uint64_t u = *reinterpret_cast<const uint64_t*> (&x);
     // The exponent bits are 52-62 (11 bits). The bias is 1023.
     // 1e-30 corresponds to -100 in base-2 exponent roughly.
     // 923 = 1023 - 100.
     if (((u >> 52) & 0x7FF) <= 923)
-    {
-        x = 0.0;
-    }
+        {
+            x = 0.0;
+        }
 }
 
 template <>
-inline void truncated_underflow(float& x)
+inline void
+    truncated_underflow (float& x)
 {
-    const uint32_t u = *reinterpret_cast<const uint32_t*>(&x);
+    const uint32_t u = *reinterpret_cast<const uint32_t*> (&x);
     // The exponent bits are 23-30 (8 bits). The bias is 127.
     // 1e-30 corresponds to -100 in base-2 exponent roughly.
     // 27 = 127 - 100.
     if (((u >> 23) & 0xFF) <= 27)
-    {
-        x = 0.0f;
-    }
+        {
+            x = 0.0f;
+        }
 }
 
 template <typename T>
-inline void truncated_underflow(std::complex<T>& x)
+inline void
+    truncated_underflow (std::complex<T>& x)
 {
-    T* ptr = reinterpret_cast<T*>(&x);
-    truncated_underflow(ptr[0]);
-    truncated_underflow(ptr[1]);
+    T* ptr = reinterpret_cast<T*> (&x);
+    truncated_underflow (ptr[0]);
+    truncated_underflow (ptr[1]);
 }
-
 
 } // namespace ModuleBase
 

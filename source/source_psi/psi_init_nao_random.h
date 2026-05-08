@@ -13,22 +13,22 @@ class psi_init_nao_random : public psi_init_nao<T>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_nao_random()
+    psi_init_nao_random ()
     {
         this->method_ = "nao+random";
         this->mixing_coef_ = 0.05;
     };
-    ~psi_init_nao_random(){};
+    ~psi_init_nao_random () {};
 
     /// @brief initialize the psi_init with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+    virtual void initialize (const Structure_Factor*,             //< structure factor
+                             const ModulePW::PW_Basis_K*,         //< planewave basis
+                             const UnitCell*,                     //< unit cell
+                             const K_Vectors*,                    //< kpoints
+                             const int& = 1,                      //< random seed
+                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
+                             const int& = 0) override;            //< MPI rank
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    virtual void init_psig (T* psig, const int& ik) override;
 };
 #endif

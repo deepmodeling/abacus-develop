@@ -13,8 +13,8 @@
 class pseudo
 {
   public:
-    pseudo();
-    ~pseudo();
+    pseudo ();
+    ~pseudo ();
 
     //<PP_HEADER>
     bool has_so = false;  // if .true. includes spin-orbit
@@ -24,7 +24,7 @@ class pseudo
     bool tvanp = false;   // .true. if Ultrasoft
     bool nlcc = false;    // Non linear core corrections(bool)
     std::string xc_func;  // Exch-Corr type
-    double zv = 0;           // z valence
+    double zv = 0;        // z valence
     double etotps = 0.0;  // total energy
     double ecutwfc = 0.0; // suggested cut-off for wfc
     double ecutrho = 0.0; // suggested cut-off for rho
@@ -81,12 +81,12 @@ class pseudo
      * Subsequent values following non-normal numbers will be reset to zero
      * to prevent potential computational issues arising from invalid data.
      */
-    void check_betar();
+    void check_betar ();
 
-    void print_pseudo_h(std::ofstream& ofs) const;
-    void print_pseudo_atom(std::ofstream& ofs) const;
-    void print_pseudo_vl(std::ofstream& ofs) const;
-    void print_pseudo(std::ofstream& ofs) const;
+    void print_pseudo_h (std::ofstream& ofs) const;
+    void print_pseudo_atom (std::ofstream& ofs) const;
+    void print_pseudo_vl (std::ofstream& ofs) const;
+    void print_pseudo (std::ofstream& ofs) const;
 };
 
 #endif // PSEUDO_H

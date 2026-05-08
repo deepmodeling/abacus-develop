@@ -1,9 +1,9 @@
 #ifndef DIAGO_NEW_DAV_H
 #define DIAGO_NEW_DAV_H
 
-#include "source_base/macros.h"   // GetRealType
-#include "source_base/module_device/device.h"   // base_device
-#include "source_base/module_device/memory_op.h"// base_device::memory"
+#include "source_base/macros.h"                  // GetRealType
+#include "source_base/module_device/device.h"    // base_device
+#include "source_base/module_device/memory_op.h" // base_device::memory"
 
 #include "source_base/module_container/ATen/kernels/lapack.h"
 
@@ -25,28 +25,28 @@ class Diago_DavSubspace
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const std::vector<Real>& precondition_in,
-                      const int& nband_in,
-                      const int& nbasis_in,
-                      const int& david_ndim_in,
-                      const double& diag_thr_in,
-                      const int& diag_nmax_in,
-                      const diag_comm_info& diag_comm_in,
-                      const int diago_dav_method_in,
-                      const int block_size_in);
+    Diago_DavSubspace (const std::vector<Real>& precondition_in,
+                       const int& nband_in,
+                       const int& nbasis_in,
+                       const int& david_ndim_in,
+                       const double& diag_thr_in,
+                       const int& diag_nmax_in,
+                       const diag_comm_info& diag_comm_in,
+                       const int diago_dav_method_in,
+                       const int block_size_in);
 
-    ~Diago_DavSubspace();
+    ~Diago_DavSubspace ();
 
     // See diago_david.h for information on the HPsiFunc function type
-    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    using HPsiFunc = std::function<void (T*, T*, const int, const int)>;
 
-    int diag(const HPsiFunc& hpsi_func,
-             const HPsiFunc& spsi_func,
-             T* psi_in,
-             const int psi_in_dmax,
-             Real* eigenvalue_in,
-             const std::vector<double>& ethr_band,
-             const bool& scf_type);
+    int diag (const HPsiFunc& hpsi_func,
+              const HPsiFunc& spsi_func,
+              T* psi_in,
+              const int psi_in_dmax,
+              Real* eigenvalue_in,
+              const std::vector<double>& ethr_band,
+              const bool& scf_type);
 
   private:
     /// for MPI communication
@@ -99,37 +99,37 @@ class Diago_DavSubspace
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(const HPsiFunc& hpsi_func,
-                  const HPsiFunc& spsi_func,
-                  const int& dim,
-                  const int& nbase,
-                  const int& notconv,
+    void cal_grad (const HPsiFunc& hpsi_func,
+                   const HPsiFunc& spsi_func,
+                   const int& dim,
+                   const int& nbase,
+                   const int& notconv,
+                   T* psi_iter,
+                   T* hpsi,
+                   T* spsi,
+                   T* vcc,
+                   const int* unconv,
+                   std::vector<Real>* eigenvalue_iter);
+
+    void cal_elem (const int& dim,
+                   int& nbase,
+                   const int& notconv,
+                   const T* psi_iter,
+                   const T* spsi,
+                   const T* hpsi,
+                   T* hcc,
+                   T* scc);
+
+    void refresh (const int& dim,
+                  const int& nband,
+                  int& nbase,
+                  const Real* eigenvalue,
                   T* psi_iter,
                   T* hpsi,
                   T* spsi,
-                  T* vcc,
-                  const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
-
-    void cal_elem(const int& dim,
-                  int& nbase,
-                  const int& notconv,
-                  const T* psi_iter,
-                  const T* spsi,
-                  const T* hpsi,
                   T* hcc,
-                  T* scc);
-
-    void refresh(const int& dim,
-                 const int& nband,
-                 int& nbase,
-                 const Real* eigenvalue,
-                 T* psi_iter,
-                 T* hpsi,
-                 T* spsi,
-                 T* hcc,
-                 T* scc,
-                 T* vcc);
+                  T* scc,
+                  T* vcc);
 
     // void diagH_LAPACK(const int nstart,
     //                   const int nbands,
@@ -139,24 +139,24 @@ class Diago_DavSubspace
     //                   Real* e,
     //                   T* vcc);
 
-    void diag_zhegvx(const int& nbase,
-                     const int& nband,
-                     T* hcc,
-                     T* scc,
-                     const int& nbase_x,
-                     std::vector<Real>* eigenvalue_iter,
-                     T* vcc);
+    void diag_zhegvx (const int& nbase,
+                      const int& nband,
+                      T* hcc,
+                      T* scc,
+                      const int& nbase_x,
+                      std::vector<Real>* eigenvalue_iter,
+                      T* vcc);
 
-    int diag_once(const HPsiFunc& hpsi_func,
-                  const HPsiFunc& spsi_func,
-                  T* psi_in,
-                  const int psi_in_dmax,
-                  Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band);
+    int diag_once (const HPsiFunc& hpsi_func,
+                   const HPsiFunc& spsi_func,
+                   T* psi_in,
+                   const int psi_in_dmax,
+                   Real* eigenvalue_in,
+                   const std::vector<double>& ethr_band);
 
-    bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
+    bool test_exit_cond (const int& ntry, const int& notconv, const bool& scf);
 
-    int diag_subspace; // 0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
+    int diag_subspace;         // 0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
     int diago_subspace_bs = 0; // the block size in 2d block cyclic distribution if use elpa or scalapack
 
 #ifdef __DSP
@@ -195,7 +195,7 @@ class Diago_DavSubspace
     // using hegvd_op = container::kernels::lapack_hegvd<T, ct_Device>;
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
-    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
+    const T one_ = static_cast<T> (1.0), zero_ = static_cast<T> (0.0), neg_one_ = static_cast<T> (-1.0);
 };
 
 } // namespace hsolver

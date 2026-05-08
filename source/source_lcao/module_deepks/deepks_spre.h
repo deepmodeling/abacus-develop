@@ -32,23 +32,23 @@ namespace DeePKS_domain
 // calculate the gradient of pdm with regard to atomic virial stress tensor
 // d/d\epsilon D_{Inl,mm'}
 template <typename TK>
-void cal_gdmepsl(const int nks,
-                 const DeePKS_Param& deepks_param,
-                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                 std::vector<hamilt::HContainer<double>*> phialpha,
-                 const hamilt::HContainer<double>* dmr,
-                 const UnitCell& ucell,
-                 const LCAO_Orbitals& orb,
-                 const Parallel_Orbitals& pv,
-                 const Grid_Driver& GridD,
-                 torch::Tensor& gdmepsl);
+void cal_gdmepsl (const int nks,
+                  const DeePKS_Param& deepks_param,
+                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                  std::vector<hamilt::HContainer<double>*> phialpha,
+                  const hamilt::HContainer<double>* dmr,
+                  const UnitCell& ucell,
+                  const LCAO_Orbitals& orb,
+                  const Parallel_Orbitals& pv,
+                  const Grid_Driver& GridD,
+                  torch::Tensor& gdmepsl);
 
-void cal_gvepsl(const int nat,
-                const DeePKS_Param& deepks_param,
-                const std::vector<torch::Tensor>& gevdm,
-                const torch::Tensor& gdmepsl,
-                torch::Tensor& gvepsl,
-                const int rank);
+void cal_gvepsl (const int nat,
+                 const DeePKS_Param& deepks_param,
+                 const std::vector<torch::Tensor>& gevdm,
+                 const torch::Tensor& gdmepsl,
+                 torch::Tensor& gvepsl,
+                 const int rank);
 } // namespace DeePKS_domain
 #endif
 #endif

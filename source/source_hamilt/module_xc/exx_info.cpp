@@ -5,5 +5,5 @@
 //----------------------------------------------------------
 namespace GlobalC
 {
-    Exx_Info exx_info;
+Exx_Info exx_info;
 }

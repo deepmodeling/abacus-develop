@@ -3,8 +3,10 @@
 
 #include <vector>
 
-namespace Grid {
-namespace Angular {
+namespace Grid
+{
+namespace Angular
+{
 
 /**
  * @brief Number of Delley's grid points for a certain order of accuracy.
@@ -18,8 +20,7 @@ namespace Angular {
  * lmax will be set to 23.
  *
  */
-int ngrid_delley(int& lmax);
-
+int ngrid_delley (int& lmax);
 
 /**
  * @brief Delley's quadrature grid and weights.
@@ -40,10 +41,10 @@ int ngrid_delley(int& lmax);
  * Delley, B. (1996). High order integration schemes on the unit sphere.
  * Journal of computational chemistry, 17(9), 1152-1155.
  */
-int delley(int& lmax, double* grid, double* weight);
+int delley (int& lmax, double* grid, double* weight);
 
 // a handy wrapper doing the same as above
-int delley(int& lmax, std::vector<double>& grid, std::vector<double>& weight);
+int delley (int& lmax, std::vector<double>& grid, std::vector<double>& weight);
 
 } // end of namespace Angular
 } // end of namespace Grid

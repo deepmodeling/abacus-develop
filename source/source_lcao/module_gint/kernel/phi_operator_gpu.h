@@ -9,70 +9,60 @@
 namespace ModuleGint
 {
 
-template<typename Real = double>
+template <typename Real = double>
 class PhiOperatorGpu
 {
 
-public:
-    PhiOperatorGpu(std::shared_ptr<const GintGpuVars> gint_gpu_vars, cudaStream_t stream = 0);
-    ~PhiOperatorGpu();
+  public:
+    PhiOperatorGpu (std::shared_ptr<const GintGpuVars> gint_gpu_vars, cudaStream_t stream = 0);
+    ~PhiOperatorGpu ();
 
-    void set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch);
+    void set_bgrid_batch (std::shared_ptr<BatchBigGrid> bgrid_batch);
 
-    void set_phi(Real* phi_d) const;
+    void set_phi (Real* phi_d) const;
 
     // These remain double-only (for force/stress paths)
-    void set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const;
+    void set_phi_dphi (double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const;
 
-    void set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
-                   double* ddphi_yy_d, double* ddphi_yz_d, double* ddphi_zz_d) const;
+    void set_ddphi (double* ddphi_xx_d,
+                    double* ddphi_xy_d,
+                    double* ddphi_xz_d,
+                    double* ddphi_yy_d,
+                    double* ddphi_yz_d,
+                    double* ddphi_zz_d) const;
 
-    void phi_mul_vldr3(
-        const Real* vl_d,
-        const Real dr3,
-        const Real* phi_d,
-        Real* result_d) const;
-    
-    void phi_mul_phi(
-        const Real* phi_d,
-        const Real* phi_vldr3_d,
-        HContainer<Real>& hRGint,
-        Real* hr_d) const;
-    
-    void phi_mul_dm(
-        const Real* phi_d,
-        const Real* dm_d,
-        const HContainer<Real>& dm,
-        const bool is_symm,
-        Real* phi_dm_d);
+    void phi_mul_vldr3 (const Real* vl_d, const Real dr3, const Real* phi_d, Real* result_d) const;
 
-    void phi_dot_phi(
-        const Real* phi_i_d,
-        const Real* phi_j_d,
-        Real* rho_d) const;
-    
+    void phi_mul_phi (const Real* phi_d, const Real* phi_vldr3_d, HContainer<Real>& hRGint, Real* hr_d) const;
+
+    void phi_mul_dm (const Real* phi_d,
+                     const Real* dm_d,
+                     const HContainer<Real>& dm,
+                     const bool is_symm,
+                     Real* phi_dm_d);
+
+    void phi_dot_phi (const Real* phi_i_d, const Real* phi_j_d, Real* rho_d) const;
+
     // These remain double-only (for force/stress paths)
-    void phi_dot_dphi(
-        const double* phi_d,
-        const double* dphi_x_d,
-        const double* dphi_y_d,
-        const double* dphi_z_d,
-        double* fvl_d) const;
-    
-    void phi_dot_dphi_r(
-        const double* phi_d,
-        const double* dphi_x_d,
-        const double* dphi_y_d,
-        const double* dphi_z_d,
-        double* svl_d) const;
+    void phi_dot_dphi (const double* phi_d,
+                       const double* dphi_x_d,
+                       const double* dphi_y_d,
+                       const double* dphi_z_d,
+                       double* fvl_d) const;
 
-private:
+    void phi_dot_dphi_r (const double* phi_d,
+                         const double* dphi_x_d,
+                         const double* dphi_y_d,
+                         const double* dphi_z_d,
+                         double* svl_d) const;
+
+  private:
     std::shared_ptr<BatchBigGrid> bgrid_batch_;
     std::shared_ptr<const GintGpuVars> gint_gpu_vars_;
 
     // the number of meshgrids on a biggrid
     int mgrids_num_;
-    
+
     int phi_len_;
 
     cudaStream_t stream_ = 0;
@@ -105,8 +95,8 @@ private:
     mutable CudaMemWrapper<int> gemm_ldc_;
     mutable CudaMemWrapper<const Real*> gemm_A_;
     mutable CudaMemWrapper<const Real*> gemm_B_;
-    mutable CudaMemWrapper<Real*> gemm_C_; 
+    mutable CudaMemWrapper<Real*> gemm_C_;
     mutable CudaMemWrapper<Real> gemm_alpha_;
 };
 
-}
+} // namespace ModuleGint

@@ -13,12 +13,10 @@ class Relax_Driver
 {
 
   public:
-    Relax_Driver(){};
-    ~Relax_Driver(){};
+    Relax_Driver () {};
+    ~Relax_Driver () {};
 
-	void relax_driver(ModuleESolver::ESolver* p_esolver, 
-			UnitCell& ucell, 
-			const Input_para& inp);
+    void relax_driver (ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
 
   private:
     // mohan add 2021-01-28
@@ -33,8 +31,6 @@ class Relax_Driver
     Relax_old rl_old;
 
     BFGS bfgs_trad;
-
-
 };
 
 #endif

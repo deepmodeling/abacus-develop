@@ -3,35 +3,34 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
 
-Record_adj::Record_adj()
-{
-}
-Record_adj::~Record_adj()
+Record_adj::Record_adj () {}
+Record_adj::~Record_adj ()
 {
     if (info_modified)
-    {
-        this->delete_grid();
-    }
+        {
+            this->delete_grid ();
+        }
 }
 
-void Record_adj::delete_grid()
+void
+    Record_adj::delete_grid ()
 {
     for (int i = 0; i < na_proc; i++)
-    {
-        // how many 'numerical orbital' adjacents
-        // for each atom in this process.
-        for (int j = 0; j < na_each[i]; j++)
         {
-            delete[] info[i][j];
+            // how many 'numerical orbital' adjacents
+            // for each atom in this process.
+            for (int j = 0; j < na_each[i]; j++)
+                {
+                    delete[] info[i][j];
+                }
+            delete[] info[i];
         }
-        delete[] info[i];
-    }
     delete[] info;
     delete[] na_each;
     if (iat2ca)
-    {
-        delete[] iat2ca;
-    }
+        {
+            delete[] iat2ca;
+        }
     info_modified = false;
 }
 
@@ -41,27 +40,28 @@ void Record_adj::delete_grid()
 // If multi-k, calculate nnr at the same time.
 // be called only once in an ion-step.
 //--------------------------------------------
-void Record_adj::for_2d(const UnitCell& ucell,
+void
+    Record_adj::for_2d (const UnitCell& ucell,
                         const Grid_Driver& grid_d,
                         Parallel_Orbitals& pv,
                         bool gamma_only,
                         const std::vector<double>& orb_cutoff)
 {
-    ModuleBase::TITLE("Record_adj", "for_2d");
-    ModuleBase::timer::start("Record_adj", "for_2d");
+    ModuleBase::TITLE ("Record_adj", "for_2d");
+    ModuleBase::timer::start ("Record_adj", "for_2d");
 
-    assert(ucell.nat > 0);
+    assert (ucell.nat > 0);
     if (!gamma_only)
-    {
-        // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
-        delete[] pv.nlocdim;
-        delete[] pv.nlocstart;
-        pv.nlocdim = new int[ucell.nat];
-        pv.nlocstart = new int[ucell.nat];
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocdim, ucell.nat);
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocstart, ucell.nat);
-        pv.nnr = 0;
-    }
+        {
+            // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
+            delete[] pv.nlocdim;
+            delete[] pv.nlocstart;
+            pv.nlocdim = new int[ucell.nat];
+            pv.nlocstart = new int[ucell.nat];
+            ModuleBase::GlobalFunc::ZEROS (pv.nlocdim, ucell.nat);
+            ModuleBase::GlobalFunc::ZEROS (pv.nlocstart, ucell.nat);
+            pv.nnr = 0;
+        }
     {
         // (1) find the adjacent atoms of atom[T1,I1];
         ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -71,109 +71,110 @@ void Record_adj::for_2d(const UnitCell& ucell,
 
         // number of adjacents for each atom.
         this->na_each = new int[na_proc];
-        ModuleBase::GlobalFunc::ZEROS(na_each, na_proc);
+        ModuleBase::GlobalFunc::ZEROS (na_each, na_proc);
         int iat = 0;
 
         for (int T1 = 0; T1 < ucell.ntype; ++T1)
-        {
-            Atom* atom1 = &ucell.atoms[T1];
-            for (int I1 = 0; I1 < atom1->na; ++I1)
             {
-                tau1 = atom1->tau[I1];
-                // grid_d.Find_atom( tau1 );
-                grid_d.Find_atom(ucell, tau1, T1, I1);
-                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-                if (!gamma_only)
-                {
-                    pv.nlocstart[iat] = pv.nnr;
-                }
-
-                // (2) search among all adjacent atoms.
-                for (int ad = 0; ad < grid_d.getAdjacentNum() + 1; ++ad)
-                {
-                    const int T2 = grid_d.getType(ad);
-                    const int I2 = grid_d.getNatom(ad);
-                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-                    tau2 = grid_d.getAdjacentTau(ad);
-                    dtau = tau2 - tau1;
-                    double distance = dtau.norm() * ucell.lat0;
-                    double rcut = orb_cutoff[T1] + orb_cutoff[T2];
-
-                    bool is_adj = false;
-                    if (distance < rcut)
+                Atom* atom1 = &ucell.atoms[T1];
+                for (int I1 = 0; I1 < atom1->na; ++I1)
                     {
-                        is_adj = true;
-                        // there is another possibility that i and j are adjacent atoms.
-                        // which is that <i|beta> are adjacents while <beta|j> are also
-                        // adjacents, these considerations are only considered in k-point
-                        // algorithm,
-                    }
-                    else if (distance >= rcut)
-                    {
-                        for (int ad0 = 0; ad0 < grid_d.getAdjacentNum() + 1; ++ad0)
-                        {
-                            const int T0 = grid_d.getType(ad0);
-                            // const int I0 = grid_d.getNatom(ad0);
-                            // const int iat0 = ucell.itia2iat(T0, I0);
-                            // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
-
-                            tau0 = grid_d.getAdjacentTau(ad0);
-                            dtau1 = tau0 - tau1;
-                            double distance1 = dtau1.norm() * ucell.lat0;
-                            double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-
-                            dtau2 = tau0 - tau2;
-                            double distance2 = dtau2.norm() * ucell.lat0;
-                            double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
-
-                            if (distance1 < rcut1 && distance2 < rcut2)
-                            {
-                                is_adj = true;
-                                break;
-                            } // dis1, dis2
-                        }
-                    }
-
-                    if (is_adj)
-                    {
-                        ++na_each[iat];
+                        tau1 = atom1->tau[I1];
+                        // grid_d.Find_atom( tau1 );
+                        grid_d.Find_atom (ucell, tau1, T1, I1);
+                        const int start1 = ucell.itiaiw2iwt (T1, I1, 0);
                         if (!gamma_only)
-                        {
-                            for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ++ii)
                             {
-                                // the index of orbitals in this processor
-                                const int iw1_all = start1 + ii;
-                                const int mu = pv.global2local_row(iw1_all);
-                                if (mu < 0)
-                                {
-                                    continue;
-                                }
+                                pv.nlocstart[iat] = pv.nnr;
+                            }
 
-                                for (int jj = 0; jj < ucell.atoms[T2].nw * PARAM.globalv.npol; ++jj)
-                                {
-                                    const int iw2_all = start2 + jj;
-                                    const int nu = pv.global2local_col(iw2_all);
-                                    if (nu < 0)
+                        // (2) search among all adjacent atoms.
+                        for (int ad = 0; ad < grid_d.getAdjacentNum () + 1; ++ad)
+                            {
+                                const int T2 = grid_d.getType (ad);
+                                const int I2 = grid_d.getNatom (ad);
+                                const int start2 = ucell.itiaiw2iwt (T2, I2, 0);
+                                tau2 = grid_d.getAdjacentTau (ad);
+                                dtau = tau2 - tau1;
+                                double distance = dtau.norm () * ucell.lat0;
+                                double rcut = orb_cutoff[T1] + orb_cutoff[T2];
+
+                                bool is_adj = false;
+                                if (distance < rcut)
                                     {
-                                        continue;
+                                        is_adj = true;
+                                        // there is another possibility that i and j are adjacent atoms.
+                                        // which is that <i|beta> are adjacents while <beta|j> are also
+                                        // adjacents, these considerations are only considered in k-point
+                                        // algorithm,
+                                    }
+                                else if (distance >= rcut)
+                                    {
+                                        for (int ad0 = 0; ad0 < grid_d.getAdjacentNum () + 1; ++ad0)
+                                            {
+                                                const int T0 = grid_d.getType (ad0);
+                                                // const int I0 = grid_d.getNatom(ad0);
+                                                // const int iat0 = ucell.itia2iat(T0, I0);
+                                                // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
+
+                                                tau0 = grid_d.getAdjacentTau (ad0);
+                                                dtau1 = tau0 - tau1;
+                                                double distance1 = dtau1.norm () * ucell.lat0;
+                                                double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max ();
+
+                                                dtau2 = tau0 - tau2;
+                                                double distance2 = dtau2.norm () * ucell.lat0;
+                                                double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max ();
+
+                                                if (distance1 < rcut1 && distance2 < rcut2)
+                                                    {
+                                                        is_adj = true;
+                                                        break;
+                                                    } // dis1, dis2
+                                            }
                                     }
 
-                                    pv.nlocdim[iat]++;
-                                    ++(pv.nnr);
-                                }
-                            }
-                        }
-                    } // end is_adj
-                } // end ad
-                ++iat;
-            } // end I1
-        } // end T1
+                                if (is_adj)
+                                    {
+                                        ++na_each[iat];
+                                        if (!gamma_only)
+                                            {
+                                                for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ++ii)
+                                                    {
+                                                        // the index of orbitals in this processor
+                                                        const int iw1_all = start1 + ii;
+                                                        const int mu = pv.global2local_row (iw1_all);
+                                                        if (mu < 0)
+                                                            {
+                                                                continue;
+                                                            }
+
+                                                        for (int jj = 0; jj < ucell.atoms[T2].nw * PARAM.globalv.npol;
+                                                             ++jj)
+                                                            {
+                                                                const int iw2_all = start2 + jj;
+                                                                const int nu = pv.global2local_col (iw2_all);
+                                                                if (nu < 0)
+                                                                    {
+                                                                        continue;
+                                                                    }
+
+                                                                pv.nlocdim[iat]++;
+                                                                ++(pv.nnr);
+                                                            }
+                                                    }
+                                            }
+                                    } // end is_adj
+                            } // end ad
+                        ++iat;
+                    } // end I1
+            } // end T1
     }
     // xiaohui add "OUT_LEVEL", 2015-09-16
     if (PARAM.inp.out_level != "m" && !gamma_only)
-    {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
-    }
+        {
+            ModuleBase::GlobalFunc::OUT (GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+        }
 
     //------------------------------------------------
     // info will identify each atom in each unitcell.
@@ -191,95 +192,94 @@ void Record_adj::for_2d(const UnitCell& ucell,
 #pragma omp for schedule(dynamic)
 #endif
         for (int i = 0; i < na_proc; i++)
-        {
-            //		GlobalV::ofs_running << " atom" << std::setw(5) << i << std::setw(10) << na_each[i] << std::endl;
-            if (na_each[i] > 0)
             {
-                info[i] = new int*[na_each[i]];
-                for (int j = 0; j < na_each[i]; j++)
-                {
-                    // (Rx, Ry, Rz, T, I)
-                    info[i][j] = new int[5];
-                    ModuleBase::GlobalFunc::ZEROS(info[i][j], 5);
-                }
+                //		GlobalV::ofs_running << " atom" << std::setw(5) << i << std::setw(10) << na_each[i] <<
+                // std::endl;
+                if (na_each[i] > 0)
+                    {
+                        info[i] = new int*[na_each[i]];
+                        for (int j = 0; j < na_each[i]; j++)
+                            {
+                                // (Rx, Ry, Rz, T, I)
+                                info[i][j] = new int[5];
+                                ModuleBase::GlobalFunc::ZEROS (info[i][j], 5);
+                            }
+                    }
             }
-        }
 
 #ifdef _OPENMP
 #pragma omp for schedule(dynamic)
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
-        {
-            const int T1 = ucell.iat2it[iat];
-            Atom* atom1 = &ucell.atoms[T1];
-            const int I1 = ucell.iat2ia[iat];
             {
-                tau1 = atom1->tau[I1];
-                // grid_d.Find_atom( tau1 );
-                AdjacentAtomInfo adjs;
-                grid_d.Find_atom(ucell, tau1, T1, I1, &adjs);
-
-                // (2) search among all adjacent atoms.
-                int cb = 0;
-                for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+                const int T1 = ucell.iat2it[iat];
+                Atom* atom1 = &ucell.atoms[T1];
+                const int I1 = ucell.iat2ia[iat];
                 {
-                    const int T2 = adjs.ntype[ad];
-                    const int I2 = adjs.natom[ad];
-                    tau2 = adjs.adjacent_tau[ad];
-                    dtau = tau2 - tau1;
-                    double distance = dtau.norm() * ucell.lat0;
-                    double rcut = orb_cutoff[T1] + orb_cutoff[T2];
+                    tau1 = atom1->tau[I1];
+                    // grid_d.Find_atom( tau1 );
+                    AdjacentAtomInfo adjs;
+                    grid_d.Find_atom (ucell, tau1, T1, I1, &adjs);
 
-                    bool is_adj = false;
-                    if (distance < rcut)
-                    {
-                        is_adj = true;
-                    }
-                    else if (distance >= rcut)
-                    {
-                        for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
+                    // (2) search among all adjacent atoms.
+                    int cb = 0;
+                    for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
                         {
-                            const int T0 = adjs.ntype[ad0];
-                            // const int I0 = grid_d.getNatom(ad0);
-                            // const int iat0 = ucell.itia2iat(T0, I0);
-                            // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
+                            const int T2 = adjs.ntype[ad];
+                            const int I2 = adjs.natom[ad];
+                            tau2 = adjs.adjacent_tau[ad];
+                            dtau = tau2 - tau1;
+                            double distance = dtau.norm () * ucell.lat0;
+                            double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
-                            tau0 = adjs.adjacent_tau[ad0];
-                            dtau1 = tau0 - tau1;
-                            double distance1 = dtau1.norm() * ucell.lat0;
-                            double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                            bool is_adj = false;
+                            if (distance < rcut)
+                                {
+                                    is_adj = true;
+                                }
+                            else if (distance >= rcut)
+                                {
+                                    for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
+                                        {
+                                            const int T0 = adjs.ntype[ad0];
+                                            // const int I0 = grid_d.getNatom(ad0);
+                                            // const int iat0 = ucell.itia2iat(T0, I0);
+                                            // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
 
-                            dtau2 = tau0 - tau2;
-                            double distance2 = dtau2.norm() * ucell.lat0;
-                            double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                                            tau0 = adjs.adjacent_tau[ad0];
+                                            dtau1 = tau0 - tau1;
+                                            double distance1 = dtau1.norm () * ucell.lat0;
+                                            double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max ();
 
-                            if (distance1 < rcut1 && distance2 < rcut2)
-                            {
-                                is_adj = true;
-                                break;
-                            } // dis1, dis2
-                        }
-                    }
+                                            dtau2 = tau0 - tau2;
+                                            double distance2 = dtau2.norm () * ucell.lat0;
+                                            double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max ();
 
-                    if (is_adj)
-                    {
-                        info[iat][cb][0] = adjs.box[ad].x;
-                        info[iat][cb][1] = adjs.box[ad].y;
-                        info[iat][cb][2] = adjs.box[ad].z;
-                        info[iat][cb][3] = T2;
-                        info[iat][cb][4] = I2;
-                        ++cb;
-                    }
-                } // end ad
-                //			GlobalV::ofs_running << " nadj = " << cb << std::endl;
-            } // end I1
-        } // end T1
+                                            if (distance1 < rcut1 && distance2 < rcut2)
+                                                {
+                                                    is_adj = true;
+                                                    break;
+                                                } // dis1, dis2
+                                        }
+                                }
+
+                            if (is_adj)
+                                {
+                                    info[iat][cb][0] = adjs.box[ad].x;
+                                    info[iat][cb][1] = adjs.box[ad].y;
+                                    info[iat][cb][2] = adjs.box[ad].z;
+                                    info[iat][cb][3] = T2;
+                                    info[iat][cb][4] = I2;
+                                    ++cb;
+                                }
+                        } // end ad
+                    //			GlobalV::ofs_running << " nadj = " << cb << std::endl;
+                } // end I1
+            } // end T1
 #ifdef _OPENMP
     }
 #endif
-    ModuleBase::timer::end("Record_adj", "for_2d");
+    ModuleBase::timer::end ("Record_adj", "for_2d");
     info_modified = true;
     return;
 }
-
-

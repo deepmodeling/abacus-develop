@@ -41,58 +41,57 @@ class Coordinate_3D
     double y = 0;
     double z = 0;
 
-    Coordinate_3D(double x = 0.0, double y = 0.0, double z = 0.0) : x(x), y(y), z(z)
-    {
-    }
+    Coordinate_3D (double x = 0.0, double y = 0.0, double z = 0.0) : x (x), y (y), z (z) {}
 
-    bool operator<(const Coordinate_3D& other) const
+    bool
+        operator< (const Coordinate_3D& other) const
     {
         const double threshold = 1e-8;
-        if (std::abs(x - other.x) >= threshold)
+        if (std::abs (x - other.x) >= threshold)
             return x < other.x;
-        if (std::abs(y - other.y) >= threshold)
+        if (std::abs (y - other.y) >= threshold)
             return y < other.y;
-        return std::abs(z - other.z) >= threshold && z < other.z;
+        return std::abs (z - other.z) >= threshold && z < other.z;
     }
 };
 
 class toWannier90_LCAO : public toWannier90
 {
   public:
-    toWannier90_LCAO(const bool& out_wannier_mmn,
-                     const bool& out_wannier_amn,
-                     const bool& out_wannier_unk,
-                     const bool& out_wannier_eig,
-                     const bool& out_wannier_wvfn_formatted,
-                     const std::string& nnkpfile,
-                     const std::string& wannier_spin,
-                     const LCAO_Orbitals& orb
-                     );
-    ~toWannier90_LCAO();
+    toWannier90_LCAO (const bool& out_wannier_mmn,
+                      const bool& out_wannier_amn,
+                      const bool& out_wannier_unk,
+                      const bool& out_wannier_eig,
+                      const bool& out_wannier_wvfn_formatted,
+                      const std::string& nnkpfile,
+                      const std::string& wannier_spin,
+                      const LCAO_Orbitals& orb);
+    ~toWannier90_LCAO ();
 
-    void calculate(const UnitCell& ucell,
-                   const Grid_Driver& gd,
-                   const ModuleBase::matrix& ekb,
-                   const K_Vectors& kv,
-                   const psi::Psi<std::complex<double>>& psi,
-                   const Parallel_Orbitals* pv);
+    void calculate (const UnitCell& ucell,
+                    const Grid_Driver& gd,
+                    const ModuleBase::matrix& ekb,
+                    const K_Vectors& kv,
+                    const psi::Psi<std::complex<double>>& psi,
+                    const Parallel_Orbitals* pv);
 
-    void calculate(const UnitCell& ucell,
+    void
+        calculate (const UnitCell& ucell,
                    const Grid_Driver& gd,
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<double>& psi,
                    const Parallel_Orbitals* pv)
     {
-        ModuleBase::WARNING_QUIT("toWannier90_LCAO::calculate", 
-                                 "The wave function is real (double type), indicating 'gamma_only = 1'. "
-                                 "The Wannier90 interface does not support Gamma-only calculations. "
-                                 "Please set 'gamma_only 0' in your INPUT file.");
+        ModuleBase::WARNING_QUIT ("toWannier90_LCAO::calculate",
+                                  "The wave function is real (double type), indicating 'gamma_only = 1'. "
+                                  "The Wannier90 interface does not support Gamma-only calculations. "
+                                  "Please set 'gamma_only 0' in your INPUT file.");
     }
 
-    void cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
-    void cal_Mmn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
-    void out_unk(const psi::Psi<std::complex<double>>& psi);
+    void cal_Amn (const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
+    void cal_Mmn (const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
+    void out_unk (const psi::Psi<std::complex<double>>& psi);
 
   protected:
     // Radial section of trial orbitals
@@ -125,30 +124,30 @@ class toWannier90_LCAO : public toWannier90
 
     const Parallel_Orbitals* ParaV = nullptr;
 
-    void initialize_orb_table(const UnitCell& ucell);
-    void produce_basis_orb();
-    void set_R_coor(const UnitCell& ucell, const Grid_Driver& gd);
-    void count_delta_k(const UnitCell& ucell, const K_Vectors& kv);
+    void initialize_orb_table (const UnitCell& ucell);
+    void produce_basis_orb ();
+    void set_R_coor (const UnitCell& ucell, const Grid_Driver& gd);
+    void count_delta_k (const UnitCell& ucell, const K_Vectors& kv);
 
     std::vector<Coordinate_3D> delta_k_all;
     std::map<Coordinate_3D, int> delta_k_all_index;
 
-    void unkdotkb(const UnitCell& ucell,
-                  const K_Vectors& kv,
+    void unkdotkb (const UnitCell& ucell,
+                   const K_Vectors& kv,
+                   const psi::Psi<std::complex<double>>& psi_in,
+                   const int& ik,
+                   const int& ikb,
+                   const ModuleBase::Vector3<double> G,
+                   ModuleBase::ComplexMatrix& Mmn);
+
+    void produce_trial_in_lcao ();
+    void construct_overlap_table_project ();
+    void cal_orbA_overlap_R (const UnitCell& ucell);
+
+    void unkdotA (const K_Vectors& kv,
                   const psi::Psi<std::complex<double>>& psi_in,
                   const int& ik,
-                  const int& ikb,
-                  const ModuleBase::Vector3<double> G,
-                  ModuleBase::ComplexMatrix& Mmn);
-
-    void produce_trial_in_lcao();
-    void construct_overlap_table_project();
-    void cal_orbA_overlap_R(const UnitCell& ucell);
-
-    void unkdotA(const K_Vectors& kv,
-                 const psi::Psi<std::complex<double>>& psi_in,
-                 const int& ik,
-                 ModuleBase::ComplexMatrix& Amn);
+                  ModuleBase::ComplexMatrix& Amn);
 
     std::vector<FR_overlap<std::complex<double>>> FR;
 };

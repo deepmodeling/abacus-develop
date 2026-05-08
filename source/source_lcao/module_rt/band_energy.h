@@ -25,31 +25,31 @@ namespace module_rt
  * @param[in] psi_k psi of this step
  * @param[out] ekb band energy
  */
-void compute_ekb(const Parallel_Orbitals* pv,
-                 const int nband,
-                 const int nlocal,
-                 const std::complex<double>* Htmp,
-                 const std::complex<double>* psi_k,
-                 double* ekb,
-                 std::ofstream& ofs_running);
+void compute_ekb (const Parallel_Orbitals* pv,
+                  const int nband,
+                  const int nlocal,
+                  const std::complex<double>* Htmp,
+                  const std::complex<double>* psi_k,
+                  double* ekb,
+                  std::ofstream& ofs_running);
 
-void compute_ekb_tensor(const Parallel_Orbitals* pv,
-                        const int nband,
-                        const int nlocal,
-                        const ct::Tensor& Htmp,
-                        const ct::Tensor& psi_k,
-                        ct::Tensor& ekb,
-                        std::ofstream& ofs_running,
-                        CublasMpResources& cublas_res);
+void compute_ekb_tensor (const Parallel_Orbitals* pv,
+                         const int nband,
+                         const int nlocal,
+                         const ct::Tensor& Htmp,
+                         const ct::Tensor& psi_k,
+                         ct::Tensor& ekb,
+                         std::ofstream& ofs_running,
+                         CublasMpResources& cublas_res);
 
 template <typename Device>
-void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
-                               const int nband,
-                               const int nlocal,
-                               const ct::Tensor& Htmp,
-                               const ct::Tensor& psi_k,
-                               ct::Tensor& ekb,
-                               std::ofstream& ofs_running);
+void compute_ekb_tensor_lapack (const Parallel_Orbitals* pv,
+                                const int nband,
+                                const int nlocal,
+                                const ct::Tensor& Htmp,
+                                const ct::Tensor& psi_k,
+                                ct::Tensor& ekb,
+                                std::ofstream& ofs_running);
 #endif // __MPI
 } // namespace module_rt
 #endif

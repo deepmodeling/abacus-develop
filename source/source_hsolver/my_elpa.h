@@ -12,11 +12,11 @@ extern "C"
 {
 #endif
 
-struct elpa_struct;
-typedef struct elpa_struct *elpa_t;
+    struct elpa_struct;
+    typedef struct elpa_struct* elpa_t;
 
-struct elpa_autotune_struct;
-typedef struct elpa_autotune_struct *elpa_autotune_t;
+    struct elpa_autotune_struct;
+    typedef struct elpa_autotune_struct* elpa_autotune_t;
 
 #include <elpa/elpa_constants.h>
 #include <elpa/elpa_generated_c_api.h>
@@ -33,14 +33,14 @@ typedef struct elpa_autotune_struct *elpa_autotune_t;
 #endif
 #include <elpa/elpa_generic.h>
 
-#define ELPA_2STAGE_REAL_GPU    ELPA_2STAGE_REAL_NVIDIA_GPU
+#define ELPA_2STAGE_REAL_GPU ELPA_2STAGE_REAL_NVIDIA_GPU
 #define ELPA_2STAGE_COMPLEX_GPU ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 
-const char *elpa_strerr(int elpa_error);
+    const char* elpa_strerr (int elpa_error);
 
 #if ELPA_API_VERSION < 20221101
-}//extern "C"
+} // extern "C"
 #endif
 
 #endif //__ELPA
-#endif //ELPA_H
+#endif // ELPA_H

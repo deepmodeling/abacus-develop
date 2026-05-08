@@ -24,7 +24,8 @@ class TestTO : public testing::Test
   protected:
     std::vector<double> xnew_arr;
 
-    void SetUp()
+    void
+        SetUp ()
     {
         Line_Search ls;
 
@@ -34,90 +35,90 @@ class TestTO : public testing::Test
         x = 0;
         y = 0;
         f = -2;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = 0;
         f = 2;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         // 3rd order, harmonic, dmove < 0
         x = 0;
         y = 0;
         f = 1;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = 2;
         f = 3;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         // 3rd order, harmonic, dmove > 4
         x = 0;
         y = 0;
         f = -20;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = -9;
         f = -18;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         // 3rd order, anharmonic, use dmove1 & dmove
         x = 0;
         y = 0;
         f = -1;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = 2;
         f = 3.5;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         // 3rd order, anharmonic, use dmove2 & dmoveh
         x = 0;
         y = 0;
         f = 4.5;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = 2;
         f = -1;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         // 3rd order, anharmonic, dmoveh > 4
         x = 0;
         y = 0;
         f = -20;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (true, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
 
         x = 1;
         y = -5;
         f = -18;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
-        xnew_arr.push_back(xnew);
+        ls.line_search (false, x, y, f, xnew, 1e-10);
+        xnew_arr.push_back (xnew);
     }
 };
 
-TEST_F(TestTO, LineSearch)
+TEST_F (TestTO, LineSearch)
 {
     std::vector<double> xnew_arr_ref = {1, 0.5, 1, 4, 1, 4, 1, 0.1180828963, 1, 0.8181818182, 1, 4};
 
-    for (int i = 0; i < xnew_arr.size(); i++)
-    {
-        EXPECT_NEAR(xnew_arr[i], xnew_arr_ref[i], 1e-8);
-    }
+    for (int i = 0; i < xnew_arr.size (); i++)
+        {
+            EXPECT_NEAR (xnew_arr[i], xnew_arr_ref[i], 1e-8);
+        }
 }
 
 class TestLS : public testing::Test
@@ -152,31 +153,33 @@ class TestLS : public testing::Test
            2.96173193,  0.8821268,   2.75896956,  18.05164767, 17.20957441, 8.86361389};
 };
 
-TEST_F(TestLS, LineSearch)
+TEST_F (TestLS, LineSearch)
 {
     int ind = 0;
     for (int i = 0; i < 4; i++)
-    {
-        bool restart = false;
-        if (i % 10 == 0)
-            restart = true;
+        {
+            bool restart = false;
+            if (i % 10 == 0)
+                {
+                    restart = true;
+                }
 
-        if (i < 3)
-        {
-            ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10);
-            ind = ind + 3;
-            xnew_arr.push_back(xnew);
+            if (i < 3)
+                {
+                    ls.line_search (restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10);
+                    ind = ind + 3;
+                    xnew_arr.push_back (xnew);
+                }
+            else
+                {
+                    testing::internal::CaptureStdout ();
+                    EXPECT_EXIT (ls.line_search (restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10),
+                                 ::testing::ExitedWithCode (1),
+                                 "");
+                    std::string output = testing::internal::GetCapturedStdout ();
+                    EXPECT_THAT (output, testing::HasSubstr ("something wrong with Brent line search!"));
+                }
         }
-        else
-        {
-            testing::internal::CaptureStdout();
-            EXPECT_EXIT(ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10),
-                        ::testing::ExitedWithCode(1),
-                        "");
-            std::string output = testing::internal::GetCapturedStdout();
-            EXPECT_THAT(output, testing::HasSubstr("something wrong with Brent line search!"));
-        }
-    }
     /*
     std::vector<double> xnew_arr_ref
         = {8.84824536,    11.84824536, 11.5220486,   1.94478562,   -4.61632212,   14.40861093,  -11.8788378,

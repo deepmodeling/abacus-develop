@@ -27,21 +27,21 @@ namespace DeePKS_domain
 
 /// Calculates descriptors
 /// which are eigenvalues of pdm in blocks of I_n_l
-void cal_descriptor(const int nat,
-                    const DeePKS_Param& deepks_param,
-                    const std::vector<torch::Tensor>& pdm,
-                    std::vector<torch::Tensor>& descriptor);
+void cal_descriptor (const int nat,
+                     const DeePKS_Param& deepks_param,
+                     const std::vector<torch::Tensor>& pdm,
+                     std::vector<torch::Tensor>& descriptor);
 /// print descriptors based on LCAO basis
-void check_descriptor(const DeePKS_Param& deepks_param,
-                      const UnitCell& ucell,
-                      const std::string& out_dir,
-                      const std::vector<torch::Tensor>& descriptor,
-                      const int rank);
+void check_descriptor (const DeePKS_Param& deepks_param,
+                       const UnitCell& ucell,
+                       const std::string& out_dir,
+                       const std::vector<torch::Tensor>& descriptor,
+                       const int rank);
 
-void cal_descriptor_equiv(const int nat,
-                          const DeePKS_Param& deepks_param,
-                          const std::vector<torch::Tensor>& pdm,
-                          std::vector<torch::Tensor>& descriptor);
+void cal_descriptor_equiv (const int nat,
+                           const DeePKS_Param& deepks_param,
+                           const std::vector<torch::Tensor>& pdm,
+                           std::vector<torch::Tensor>& descriptor);
 } // namespace DeePKS_domain
 #endif
 #endif

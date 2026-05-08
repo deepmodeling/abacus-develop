@@ -16,11 +16,9 @@ class DiagoCusolverMP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    DiagoCusolverMP()
-    {
-    }
+    DiagoCusolverMP () {}
     // the diag function for CUSOLVERMP diagonalization
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+    void diag (hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 };
 } // namespace hsolver
 #endif // __CUSOLVERMP

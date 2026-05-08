@@ -24,7 +24,7 @@ namespace ModuleESolver
  * @param pelec Pointer to electronic state
  */
 template <typename TK>
-void init_deltaspin_lcao(const UnitCell& ucell,
+void init_deltaspin_lcao (const UnitCell& ucell,
                           const Input_para& inp,
                           void* pv,
                           const K_Vectors& kv,
@@ -43,7 +43,7 @@ void init_deltaspin_lcao(const UnitCell& ucell,
  * @param inp Input parameters
  */
 template <typename TK>
-void cal_mi_lcao_wrapper(const int iter, const Input_para& inp);
+void cal_mi_lcao_wrapper (const int iter, const Input_para& inp);
 
 /**
  * @brief Run DeltaSpin lambda loop for LCAO method
@@ -58,9 +58,7 @@ void cal_mi_lcao_wrapper(const int iter, const Input_para& inp);
  * @return bool Whether to skip the Hamiltonian solve
  */
 template <typename TK>
-bool run_deltaspin_lambda_loop_lcao(const int iter,
-                                     const double drho,
-                                     const Input_para& inp);
+bool run_deltaspin_lambda_loop_lcao (const int iter, const double drho, const Input_para& inp);
 
 } // namespace ModuleESolver
 

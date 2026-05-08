@@ -7,17 +7,14 @@ namespace ModuleBase
 namespace GlobalFunc
 {
 
-template double ddot_real(const int& dim,
-                          const std::complex<double>* psi_L,
-                          const std::complex<double>* psi_R,
-                          const bool reduce);
-template float ddot_real(const int& dim,
-                         const std::complex<float>* psi_L,
-                         const std::complex<float>* psi_R,
-                         const bool reduce);
+template double
+    ddot_real (const int& dim, const std::complex<double>* psi_L, const std::complex<double>* psi_R, const bool reduce);
+template float
+    ddot_real (const int& dim, const std::complex<float>* psi_L, const std::complex<float>* psi_R, const bool reduce);
 
 template <typename T>
-T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>* psi_R, const bool reduce)
+T
+    ddot_real (const int& dim, const std::complex<T>* psi_L, const std::complex<T>* psi_R, const bool reduce)
 {
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui modify 2021-3-14
@@ -26,9 +23,11 @@ T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>*
     T *pL, *pR;
     pL = (T*)psi_L;
     pR = (T*)psi_R;
-    T result = BlasConnector::dot(dim2, pL, 1, pR, 1);
+    T result = BlasConnector::dot (dim2, pL, 1, pR, 1);
     if (reduce)
-        Parallel_Reduce::reduce_pool(result);
+        {
+            Parallel_Reduce::reduce_pool (result);
+        }
     return result;
     //======================================================================
     /*std::complex<double> result(0,0);

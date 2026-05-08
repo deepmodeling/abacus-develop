@@ -19,7 +19,8 @@ class Mix_Matrix
      *
      * @param mixing_in Mixing pointer
      */
-    void init(Base_Mixing::Mixing* mixing_in)
+    void
+        init (Base_Mixing::Mixing* mixing_in)
     {
         this->mixing = mixing_in;
         if (this->mixing == nullptr)
@@ -30,7 +31,8 @@ class Mix_Matrix
      *
      * @return const Tdata&
      */
-    const Tdata& get_data_out() const
+    const Tdata&
+        get_data_out () const
     {
         return this->data_out;
     }
@@ -40,7 +42,7 @@ class Mix_Matrix
      * @param data_in Input data to be mixed.
      * @param flag_restart Flag indicating whether restart mixing.
      */
-    void mix(const Tdata& data_in, const bool flag_restart);
+    void mix (const Tdata& data_in, const bool flag_restart);
 
     double mixing_beta = 1.0;
 

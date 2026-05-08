@@ -19,20 +19,20 @@
 class Center2_Orb::Orb11
 {
   public:
-    Orb11(const Numerical_Orbital_Lm& nA_in,
-          const Numerical_Orbital_Lm& nB_in,
-          const ModuleBase::Sph_Bessel_Recursive::D2* psb,
-          const ORB_gaunt_table& MGT_in);
+    Orb11 (const Numerical_Orbital_Lm& nA_in,
+           const Numerical_Orbital_Lm& nB_in,
+           const ModuleBase::Sph_Bessel_Recursive::D2* psb,
+           const ORB_gaunt_table& MGT_in);
 
-    void init_radial_table();
-    void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
+    void init_radial_table ();
+    void init_radial_table (const std::set<size_t>& radials); // unit: Bohr/MOT.dr
 
-    double cal_overlap(const ModuleBase::Vector3<double>& RA,
-                       const ModuleBase::Vector3<double>& RB, // unit: Bohr
-                       const int& mA,
-                       const int& mB) const;
+    double cal_overlap (const ModuleBase::Vector3<double>& RA,
+                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
+                        const int& mA,
+                        const int& mB) const;
 
-    ModuleBase::Vector3<double> cal_grad_overlap( // caoyu add 2021-11-19
+    ModuleBase::Vector3<double> cal_grad_overlap ( // caoyu add 2021-11-19
         const ModuleBase::Vector3<double>& RA,
         const ModuleBase::Vector3<double>& RB, // unit: Bohr
         const int& mA,

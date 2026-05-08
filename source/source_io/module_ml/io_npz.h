@@ -11,12 +11,12 @@
 namespace ModuleIO
 {
 
-void read_mat_npz(const Parallel_Orbitals* paraV,
-                  const UnitCell& ucell,
-                  std::string& zipname,
-                  hamilt::HContainer<double>& hR);
+void read_mat_npz (const Parallel_Orbitals* paraV,
+                   const UnitCell& ucell,
+                   std::string& zipname,
+                   hamilt::HContainer<double>& hR);
 
-void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR);
+void output_mat_npz (const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR);
 
 } // namespace ModuleIO
 

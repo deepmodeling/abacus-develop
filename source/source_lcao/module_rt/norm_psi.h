@@ -26,31 +26,31 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] psi_k psi of this step after normalization
  */
-void norm_psi(const Parallel_Orbitals* pv,
-              const int nband,
-              const int nlocal,
-              const std::complex<double>* Stmp,
-              std::complex<double>* psi_k,
-              std::ofstream& ofs_running,
-              const int print_matrix);
+void norm_psi (const Parallel_Orbitals* pv,
+               const int nband,
+               const int nlocal,
+               const std::complex<double>* Stmp,
+               std::complex<double>* psi_k,
+               std::ofstream& ofs_running,
+               const int print_matrix);
 
-void norm_psi_tensor(const Parallel_Orbitals* pv,
-                     const int nband,
-                     const int nlocal,
-                     const ct::Tensor& Stmp,
-                     ct::Tensor& psi_k,
-                     std::ofstream& ofs_running,
-                     const int print_matrix,
-                     CublasMpResources& cublas_res);
+void norm_psi_tensor (const Parallel_Orbitals* pv,
+                      const int nband,
+                      const int nlocal,
+                      const ct::Tensor& Stmp,
+                      ct::Tensor& psi_k,
+                      std::ofstream& ofs_running,
+                      const int print_matrix,
+                      CublasMpResources& cublas_res);
 
 template <typename Device>
-void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
-                            const int nband,
-                            const int nlocal,
-                            const ct::Tensor& Stmp,
-                            ct::Tensor& psi_k,
-                            std::ofstream& ofs_running,
-                            const int print_matrix);
+void norm_psi_tensor_lapack (const Parallel_Orbitals* pv,
+                             const int nband,
+                             const int nlocal,
+                             const ct::Tensor& Stmp,
+                             ct::Tensor& psi_k,
+                             std::ofstream& ofs_running,
+                             const int print_matrix);
 
 #endif // __MPI
 } // namespace module_rt

@@ -10,24 +10,26 @@ class TestModulePsiDevice : public ::testing::Test
     const base_device::DEVICE_CPU* cpu_ctx = {};
     const base_device::DEVICE_GPU* gpu_ctx = {};
 
-    void SetUp() override
+    void
+        SetUp () override
     {
     }
-    void TearDown() override
+    void
+        TearDown () override
     {
     }
 };
 
-TEST_F(TestModulePsiDevice, get_device_type_cpu)
+TEST_F (TestModulePsiDevice, get_device_type_cpu)
 {
-    base_device::AbacusDevice_t device = base_device::get_device_type(cpu_ctx);
-    EXPECT_EQ(device, base_device::CpuDevice);
+    base_device::AbacusDevice_t device = base_device::get_device_type (cpu_ctx);
+    EXPECT_EQ (device, base_device::CpuDevice);
 }
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
-TEST_F(TestModulePsiDevice, get_device_type_gpu)
+TEST_F (TestModulePsiDevice, get_device_type_gpu)
 {
-    base_device::AbacusDevice_t device = base_device::get_device_type(gpu_ctx);
-    EXPECT_EQ(device, base_device::GpuDevice);
+    base_device::AbacusDevice_t device = base_device::get_device_type (gpu_ctx);
+    EXPECT_EQ (device, base_device::GpuDevice);
 }
 #endif // __UT_USE_CUDA || __UT_USE_ROCM

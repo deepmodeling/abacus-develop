@@ -12,8 +12,8 @@ namespace ModuleBase
 class Clebsch_Gordan
 {
   public:
-    Clebsch_Gordan();
-    ~Clebsch_Gordan();
+    Clebsch_Gordan ();
+    ~Clebsch_Gordan ();
 
     /**
      * @brief computes Clebsch-Gordan coefficient
@@ -31,10 +31,10 @@ class Clebsch_Gordan
      * @param lpx [out] for each input limi,ljmj is the number of LM in the sum
      * @param lpl [out] for each input limi,ljmj points to the allowed LM
      */
-    static void clebsch_gordan(const int& lli,
-                               ModuleBase::realArray& ap,
-                               ModuleBase::IntArray& lpx,
-                               ModuleBase::IntArray& lpl);
+    static void clebsch_gordan (const int& lli,
+                                ModuleBase::realArray& ap,
+                                ModuleBase::IntArray& lpx,
+                                ModuleBase::IntArray& lpl);
 
   private:
     /**
@@ -43,7 +43,7 @@ class Clebsch_Gordan
      * @param llx [in] the number of vectors
      * @param r [out] an array of vectors
      */
-    static void gen_rndm_r(const int& llx, ModuleBase::Vector3<double>* r);
+    static void gen_rndm_r (const int& llx, ModuleBase::Vector3<double>* r);
 
     /**
      * @brief store the inverse of ylm(ir,lm) in mly(lm,ir)
@@ -56,12 +56,12 @@ class Clebsch_Gordan
      * @param mly [in] the inverse of ylm(ir,lm)
      * @return double the expansion coefficients
      */
-    static double compute_ap(const int& L,
-                             const int& li,
-                             const int& lj,
-                             const int& llx,
-                             const ModuleBase::matrix& ylm,
-                             const ModuleBase::matrix& mly);
+    static double compute_ap (const int& L,
+                              const int& li,
+                              const int& lj,
+                              const int& llx,
+                              const ModuleBase::matrix& ylm,
+                              const ModuleBase::matrix& mly);
 };
 
 } // namespace ModuleBase

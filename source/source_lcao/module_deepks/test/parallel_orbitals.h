@@ -10,12 +10,12 @@ namespace Test_Deepks
 class Parallel_Orbitals
 {
   public:
-    Parallel_Orbitals();
-    ~Parallel_Orbitals();
+    Parallel_Orbitals ();
+    ~Parallel_Orbitals ();
 
     int* global2local_row;
     int* global2local_col;
-    void set_global2local(void);
+    void set_global2local ();
 
     int ncol;
     int nrow;

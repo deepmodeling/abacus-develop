@@ -4,18 +4,19 @@
 namespace Json
 {
 
-    class jsonKeyNode{
-        public:
-            jsonKeyNode(int i): i(i) {};
-            jsonKeyNode(const std::string& s): key(s) {};
+class jsonKeyNode
+{
+  public:
+    jsonKeyNode (int i) : i (i) {};
+    jsonKeyNode (const std::string& s) : key (s) {};
 
-            template<size_t N>
-            jsonKeyNode(const char (&s)[N]): key(s) {};
-        
-            int i=0;
-            std::string key;
-    };
+    template <size_t N>
+    jsonKeyNode (const char (&s)[N]) : key (s) {};
 
-}
+    int i = 0;
+    std::string key;
+};
+
+} // namespace Json
 
 #endif

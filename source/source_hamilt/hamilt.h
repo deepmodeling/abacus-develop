@@ -16,57 +16,79 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class Hamilt : public HamiltBase
 {
   public:
-    virtual ~Hamilt(){};
+    virtual ~Hamilt () {};
 
     /// for target K point, update consequence of hPsi() and matrix()
-    void updateHk(const int ik) override { return; }
-
-    /// refresh status of Hamiltonian, for example, refresh H(R) and S(R) in LCAO case
-    void refresh(bool yes = true) override { return; }
-
-    /// get the class name
-    std::string get_classname() const override { return classname; }
-
-    /// get the operator chain
-    void* get_ops() override { return static_cast<void*>(ops); }
-
-    /// core function: for solving eigenvalues of Hamiltonian with iterative method
-	virtual void hPsi(
-			const T* psi_in, 
-			T* hpsi, 
-			const size_t size) const
-	{
-		return;
-	}
-
-    virtual void sPsi(const T* psi_in, // psi
-                      T* spsi,         // spsi
-                      const int nrow,  // dimension of spsi: nbands * nrow
-                      const int npw,   // number of plane waves
-                      const int nbands // number of bands
-    ) const
+    void
+        updateHk (const int ik) override
     {
-        syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
+        return;
     }
 
-	/// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
-	virtual void matrix(
-			MatrixBlock<std::complex<double>> &hk_in, 
-			MatrixBlock<std::complex<double>> &sk_in){return;}
+    /// refresh status of Hamiltonian, for example, refresh H(R) and S(R) in LCAO case
+    void
+        refresh (bool yes = true) override
+    {
+        return;
+    }
 
-	virtual void matrix(
-			MatrixBlock<double> &hk_in, 
-			MatrixBlock<double> &sk_in){return;}
+    /// get the class name
+    std::string
+        get_classname () const override
+    {
+        return classname;
+    }
 
-    virtual std::vector<T> matrix() { return std::vector<T>(); }
+    /// get the operator chain
+    void*
+        get_ops () override
+    {
+        return static_cast<void*> (ops);
+    }
+
+    /// core function: for solving eigenvalues of Hamiltonian with iterative method
+    virtual void
+        hPsi (const T* psi_in, T* hpsi, const size_t size) const
+    {
+        return;
+    }
+
+    virtual void
+        sPsi (const T* psi_in, // psi
+              T* spsi,         // spsi
+              const int nrow,  // dimension of spsi: nbands * nrow
+              const int npw,   // number of plane waves
+              const int nbands // number of bands
+        ) const
+    {
+        syncmem_op () (spsi, psi_in, static_cast<size_t> (nbands * nrow));
+    }
+
+    /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
+    virtual void
+        matrix (MatrixBlock<std::complex<double>>& hk_in, MatrixBlock<std::complex<double>>& sk_in)
+    {
+        return;
+    }
+
+    virtual void
+        matrix (MatrixBlock<double>& hk_in, MatrixBlock<double>& sk_in)
+    {
+        return;
+    }
+
+    virtual std::vector<T>
+        matrix ()
+    {
+        return std::vector<T> ();
+    }
 
     std::string classname = "none";
 
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;
 
-protected:
-
+  protected:
     Device* ctx = {};
     using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };

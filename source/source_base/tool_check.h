@@ -20,7 +20,7 @@ namespace ModuleBase
  * @param[in] name_in The name for checking
  * @param[in] quit Whether call WARNING_QUIT to quit or not
  */
-void CHECK_NAME(std::ifstream &ifs, const std::string &name_in, bool quit = true);
+void CHECK_NAME (std::ifstream& ifs, const std::string& name_in, bool quit = true);
 
 /**
  * @brief Check the next input from ifs is integer.
@@ -30,7 +30,7 @@ void CHECK_NAME(std::ifstream &ifs, const std::string &name_in, bool quit = true
  * @param[in] v The int variable for checking
  * @param[in] quit Whether call WARNING_QUIT to quit or not
  */
-void CHECK_INT(std::ifstream &ifs, const int &v, bool quit = true);
+void CHECK_INT (std::ifstream& ifs, const int& v, bool quit = true);
 
 /**
  * @brief Check the next input from ifs is double.
@@ -40,7 +40,7 @@ void CHECK_INT(std::ifstream &ifs, const int &v, bool quit = true);
  * @param[in] v The double variable for checking
  * @param[in] quit Whether call WARNING_QUIT to quit or not
  */
-void CHECK_DOUBLE(std::ifstream &ifs, const double &v, bool quit = true);
+void CHECK_DOUBLE (std::ifstream& ifs, const double& v, bool quit = true);
 
 /**
  * @brief Check the next input from ifs is std::string.
@@ -50,7 +50,7 @@ void CHECK_DOUBLE(std::ifstream &ifs, const double &v, bool quit = true);
  * @param[in] v The std::string variable for checking
  * @param[in] quit Whether call WARNING_QUIT to quit or not
  */
-void CHECK_STRING(std::ifstream &ifs, const std::string &v, bool quit = true);
+void CHECK_STRING (std::ifstream& ifs, const std::string& v, bool quit = true);
 } // namespace ModuleBase
 
 #endif

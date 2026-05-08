@@ -26,7 +26,7 @@ class DeviceContext;
  * @param ctx Pointer to DeviceContext
  * @return AbacusDevice_t enum value
  */
-inline AbacusDevice_t get_device_type(const DeviceContext* ctx);
+inline AbacusDevice_t get_device_type (const DeviceContext* ctx);
 
 /**
  * @brief Get the device type enum for a given device type (compile-time version).
@@ -35,12 +35,25 @@ inline AbacusDevice_t get_device_type(const DeviceContext* ctx);
  * @return AbacusDevice_t enum value
  */
 template <typename Device>
-AbacusDevice_t get_device_type(const Device* dev)
+AbacusDevice_t
+    get_device_type (const Device* dev)
 {
-    if (std::is_same<Device, DEVICE_CPU>::value) return CpuDevice;
-    else if (std::is_same<Device, DEVICE_GPU>::value) return GpuDevice;
-    else if (std::is_same<Device, DEVICE_DSP>::value) return DspDevice;
-    else return UnKnown;
+    if (std::is_same<Device, DEVICE_CPU>::value)
+        {
+            return CpuDevice;
+        }
+    else if (std::is_same<Device, DEVICE_GPU>::value)
+        {
+            return GpuDevice;
+        }
+    else if (std::is_same<Device, DEVICE_DSP>::value)
+        {
+            return DspDevice;
+        }
+    else
+        {
+            return UnKnown;
+        }
 }
 
 /**
@@ -50,20 +63,20 @@ AbacusDevice_t get_device_type(const Device* dev)
  * @return "single" or "double"
  */
 template <typename T>
-std::string get_current_precision(const T* var);
+std::string get_current_precision (const T* var);
 
 // Template specialization declarations
 template <>
-std::string get_current_precision<float>(const float* var);
+std::string get_current_precision<float> (const float* var);
 
 template <>
-std::string get_current_precision<double>(const double* var);
+std::string get_current_precision<double> (const double* var);
 
 template <>
-std::string get_current_precision<std::complex<float>>(const std::complex<float>* var);
+std::string get_current_precision<std::complex<float>> (const std::complex<float>* var);
 
 template <>
-std::string get_current_precision<std::complex<double>>(const std::complex<double>* var);
+std::string get_current_precision<std::complex<double>> (const std::complex<double>* var);
 
 } // end of namespace base_device
 

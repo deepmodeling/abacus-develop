@@ -7,15 +7,15 @@
 
 namespace ModuleIO
 {
-void write_dipole(const UnitCell& ucell,
-                  const double* rho_save,
-                  const ModulePW::PW_Basis* rhopw,
-                  const int& is,
-                  const int& istep,
-                  const std::string& fn,
-                  const int& precision = 11);
+void write_dipole (const UnitCell& ucell,
+                   const double* rho_save,
+                   const ModulePW::PW_Basis* rhopw,
+                   const int& is,
+                   const int& istep,
+                   const std::string& fn,
+                   const int& precision = 11);
 
-double prepare(const UnitCell& cell, int& dir);
+double prepare (const UnitCell& cell, int& dir);
 
 } // namespace ModuleIO
 

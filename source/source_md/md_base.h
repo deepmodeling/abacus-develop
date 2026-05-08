@@ -15,8 +15,8 @@
 class MD_base
 {
   public:
-    MD_base(const Parameter& param_in, UnitCell& unit_in);
-    virtual ~MD_base();
+    MD_base (const Parameter& param_in, UnitCell& unit_in);
+    virtual ~MD_base ();
 
     /**
      * @brief init before running md, calculate energy, force, and stress of the
@@ -24,50 +24,50 @@ class MD_base
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
-    virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    virtual void setup (ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
 
     /**
      * @brief the first half of equation of motion, update velocities and
      * positions
      * @param ofs determine the output files
      */
-    virtual void first_half(std::ofstream& ofs);
+    virtual void first_half (std::ofstream& ofs);
 
     /**
      * @brief the second half of equation of motion, update velocities
      */
-    virtual void second_half();
+    virtual void second_half ();
 
     /**
      * @brief output MD information such as energy, temperature, and pressure
      * @param ofs determine the output files
      * @param cal_stress whether calculate and output stress
      */
-    virtual void print_md(std::ofstream& ofs, const bool& cal_stress);
+    virtual void print_md (std::ofstream& ofs, const bool& cal_stress);
 
     /**
      * @brief write the information into files used for MD restarting
      * @param global_out_dir directory of output files
      */
-    virtual void write_restart(const std::string& global_out_dir);
+    virtual void write_restart (const std::string& global_out_dir);
 
   protected:
     /**
      * @brief restart MD when md_restart is true
      * @param global_readin_dir directory of files for reading
      */
-    virtual void restart(const std::string& global_readin_dir);
+    virtual void restart (const std::string& global_readin_dir);
 
     /**
      * @brief perform one step update of pos due to atomic velocity
      */
-    virtual void update_pos();
+    virtual void update_pos ();
 
     /**
      * @brief perform half-step update of vel due to atomic force
      * @param force atomic forces
      */
-    virtual void update_vel(const ModuleBase::Vector3<double>* force);
+    virtual void update_vel (const ModuleBase::Vector3<double>* force);
 
   public:
     bool stop;                          ///< MD stop or not
@@ -75,20 +75,20 @@ class MD_base
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
     int frozen_freedom_;                ///< the fixed freedom of the system
-    double* allmass = nullptr;                    ///< atom mass
+    double* allmass = nullptr;          ///< atom mass
     ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
     ModuleBase::Vector3<double>* vel;   ///< atom velocity
     ModuleBase::Vector3<int>* ionmbl;   ///< atom is frozen or not
     ModuleBase::Vector3<double>* force; ///< force of each atom
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
-    double potential=0.0;               ///< potential energy
+    double potential = 0.0;             ///< potential energy
     double kinetic;                     ///< kinetic energy
 
   protected:
-    const MD_para& mdp; ///< input parameters used in md
-    UnitCell& ucell;    ///< unitcell information
-    double energy_=0.0; ///< total energy of the system
+    const MD_para& mdp;   ///< input parameters used in md
+    UnitCell& ucell;      ///< unitcell information
+    double energy_ = 0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress
     int my_rank;      ///< MPI rank of the processor

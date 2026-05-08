@@ -7,7 +7,7 @@
  * \class Numerical_Nonlocal
  *CLASS  Numerical_Nonlocal
  *----------------------------
- * Note : contain nonlocal ps(:pseudopotential) information 
+ * Note : contain nonlocal ps(:pseudopotential) information
  * about atoms
  *
  * Feature : set and store information about ps infomation
@@ -19,47 +19,66 @@
  */
 class Numerical_Nonlocal
 {
-public:
+  public:
+    Numerical_Nonlocal ();
+    ~Numerical_Nonlocal ();
 
-	Numerical_Nonlocal();
-	~Numerical_Nonlocal();
+    const int&
+        getLmax () const
+    {
+        return this->lmax;
+    }
 
-	const int& getLmax() const { return this->lmax; }
+    const int&
+        getType () const
+    {
+        return this->type;
+    }
 
-   	const int& getType() const { return this->type; }
+    const std::string&
+        getLabel () const
+    {
+        return this->label;
+    }
 
-	const std::string& getLabel() const { return this->label; }
+    const std::string&
+        getType_ps () const
+    {
+        return this->type_ps;
+    }
 
-	const std::string& getType_ps() const { return this->type_ps; }
+    void set_type_info (const int& type_in,
+                        const std::string& label_in,
+                        const std::string& type_ps_in,
+                        const int& lmax_in,
+                        const int& nproj_in,
+                        const Numerical_Nonlocal_Lm* ps_orbital_in);
 
+    Numerical_Nonlocal_Lm* Proj = nullptr; ///< length: nproj(only store radial function )
 
-	void set_type_info(
-			const int& type_in,
-			const std::string& label_in,
-			const std::string& type_ps_in,
-			const int& lmax_in,
-			const int& nproj_in,
-			const Numerical_Nonlocal_Lm* ps_orbital_in);
+    const double&
+        get_rcut_max () const
+    {
+        return rcut_max;
+    }
+    const int&
+        get_nproj () const
+    {
+        return nproj;
+    }
 
-	Numerical_Nonlocal_Lm* Proj = nullptr; ///< length: nproj(only store radial function )
+  private:
+    std::string label = ""; /// <element label
 
-	const double& get_rcut_max() const { return rcut_max; }
-    const int& get_nproj() const { return nproj; }
+    int type; ///< element index
 
-	private:
-	
-	std::string label=""; /// <element label
+    int lmax; ///< max value of L angular momentum
 
-	int type; ///< element index
+    double rcut_max = 0.0;
 
-	int lmax; ///< max value of L angular momentum
+    std::string type_ps = ""; ///< local or nonlocal
 
-	double rcut_max=0.0;
-
-	std::string type_ps=""; ///<local or nonlocal
-
-	int nproj;
-
+    int nproj;
 };
 
 #endif

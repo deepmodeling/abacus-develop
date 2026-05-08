@@ -19,7 +19,8 @@
     {
         for (int ic = 0; ic < 3; ic++)
         {
-            lambda[ia][ic] = initial_lambda[ia][ic] + delta_lambda[ia][ic] / (spin2[ia][ic] - spin1[ia][ic]) * (target_spin[ia][ic] - spin1[ia][ic]);
+            lambda[ia][ic] = initial_lambda[ia][ic] + delta_lambda[ia][ic] / (spin2[ia][ic] - spin1[ia][ic]) *
+(target_spin[ia][ic] - spin1[ia][ic]);
         }
     }
 }
@@ -94,27 +95,25 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         }
         step++;
     } while (step < this->nsc_);
-    
+
 }*/
 
-
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
-        int outer_step,
-		bool rerun)
+void
+    spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop (int outer_step, bool rerun)
 {
     // init controlling parameters
-    int nat = this->get_nat();
-    int ntype = this->get_ntype();
-    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0);
-    std::vector<ModuleBase::Vector3<double>> delta_lambda(nat,0.0);
+    int nat = this->get_nat ();
+    int ntype = this->get_ntype ();
+    std::vector<ModuleBase::Vector3<double>> initial_lambda (nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> delta_lambda (nat, 0.0);
     // set nu, dnu and dnu_last_step
-    std::vector<ModuleBase::Vector3<double>> dnu(nat, 0.0), dnu_last_step(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> dnu (nat, 0.0), dnu_last_step (nat, 0.0);
     // two controlling temp variables
-    std::vector<ModuleBase::Vector3<double>> temp_1(nat, 0.0);
-    std::vector<ModuleBase::Vector3<double>> spin(nat, 0.0), delta_spin(nat, 0.0);
-    std::vector<ModuleBase::Vector3<double>> search(nat, 0.0), search_old(nat, 0.0);
-    std::vector<ModuleBase::Vector3<double>> new_spin(nat, 0.0), spin_plus(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> temp_1 (nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> spin (nat, 0.0), delta_spin (nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> search (nat, 0.0), search_old (nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> new_spin (nat, 0.0), spin_plus (nat, 0.0);
 
     double alpha_opt, alpha_plus;
     double beta = 0.0, g = 0.0, mean_error = 0.0, mean_error_old = 0.0, rms_error = 0.0;
@@ -125,158 +124,161 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
     const double one = 1.0;
 
 #ifdef __MPI
-	auto iterstart = MPI_Wtime();
+    auto iterstart = MPI_Wtime ();
 #else
-	auto iterstart = std::chrono::system_clock::now();
+    auto iterstart = std::chrono::system_clock::now ();
 #endif
 
     double inner_loop_duration = 0.0;
 
-    this->print_header();
+    this->print_header ();
     // lambda loop
     for (int i_step = -1; i_step < this->nsc_; i_step++)
-    {
-        double duration = 0.0;
-        if (i_step == -1)
         {
+            double duration = 0.0;
+            if (i_step == -1)
+                {
 
-            this->cal_mw_from_lambda(i_step);
-            spin = this->Mi_;
-            where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
-            print_2d("initial lambda (eV/uB): ", initial_lambda, this->nspin_, ModuleBase::Ry_to_eV);
-            print_2d("initial spin (uB): ", spin, this->nspin_);
-            print_2d("target spin (uB): ", this->target_mag_, this->nspin_);
-            i_step++;
-        }
-        else
-        {
-            where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
-            add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+                    this->cal_mw_from_lambda (i_step);
+                    spin = this->Mi_;
+                    where_fill_scalar_else_2d (this->constrain_, 0, zero, this->lambda_, initial_lambda);
+                    print_2d ("initial lambda (eV/uB): ", initial_lambda, this->nspin_, ModuleBase::Ry_to_eV);
+                    print_2d ("initial spin (uB): ", spin, this->nspin_);
+                    print_2d ("target spin (uB): ", this->target_mag_, this->nspin_);
+                    i_step++;
+                }
+            else
+                {
+                    where_fill_scalar_else_2d (this->constrain_, 0, zero, delta_lambda, delta_lambda);
+                    add_scalar_multiply_2d (initial_lambda, delta_lambda, one, this->lambda_);
 
-            this->cal_mw_from_lambda(i_step);
+                    this->cal_mw_from_lambda (i_step);
 
-            new_spin = this->Mi_;
-            bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
-            if (i_step >= this->nsc_min_ && GradLessThanBound)
-            {
-                add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->lambda_);
-                this->update_psi_charge(dnu_last_step.data());
+                    new_spin = this->Mi_;
+                    bool GradLessThanBound = this->check_gradient_decay (new_spin, spin, delta_lambda, dnu_last_step);
+                    if (i_step >= this->nsc_min_ && GradLessThanBound)
+                        {
+                            add_scalar_multiply_2d (initial_lambda, dnu_last_step, one, this->lambda_);
+                            this->update_psi_charge (dnu_last_step.data ());
 #ifdef __MPI
-		        duration = (double)(MPI_Wtime() - iterstart);
+                            duration = (double)(MPI_Wtime () - iterstart);
 #else
-			    duration =
-                    (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
-                    - iterstart)).count() / static_cast<double>(1e6);
+                            duration = (std::chrono::duration_cast<std::chrono::microseconds> (
+                                            std::chrono::system_clock::now () - iterstart))
+                                           .count ()
+                                       / static_cast<double> (1e6);
 #endif
-                inner_loop_duration += duration;
-                std::cout << "Total TIME(s) = " << inner_loop_duration << std::endl;
-                this->print_termination();
-                break;
-            }
-            spin = new_spin;
-        }
-        // continue the lambda loop
-        subtract_2d(spin, this->target_mag_, delta_spin);
-        where_fill_scalar_2d(this->constrain_, 0, zero, delta_spin);
-        search = delta_spin;
-        for (int ia = 0; ia < nat; ia++)
-        {
-            for (int ic = 0; ic < 3; ic++)
-            {
-                temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
-            }
-        }
-        mean_error = sum_2d(temp_1) / nat;
-        rms_error = std::sqrt(mean_error);
-        if(i_step == 0)
-        {
-            // set current_sc_thr_ to max(rms_error * sc_drop_thr, this->sc_thr_)
-            this->current_sc_thr_ = std::max(rms_error * this->sc_drop_thr_, this->sc_thr_);
-        }
-#ifdef __MPI
-			duration = (double)(MPI_Wtime() - iterstart);
-#else
-			duration =
-               (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
-                - iterstart)).count() / static_cast<double>(1e6);
-#endif
-        inner_loop_duration += duration;
-        if (this->check_rms_stop(outer_step, i_step, rms_error, duration, inner_loop_duration))
-        {
-            //add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
-            this->update_psi_charge(dnu_last_step.data(), rerun);
-            if(PARAM.inp.basis_type == "pw")
-            {
-                //double check Atomic spin moment
-                this->cal_mi_pw();
-                subtract_2d(this->Mi_, this->target_mag_, delta_spin);
-                where_fill_scalar_2d(this->constrain_, 0, zero, delta_spin);
-                search = delta_spin;
-                for (int ia = 0; ia < nat; ia++)
+                            inner_loop_duration += duration;
+                            std::cout << "Total TIME(s) = " << inner_loop_duration << std::endl;
+                            this->print_termination ();
+                            break;
+                        }
+                    spin = new_spin;
+                }
+            // continue the lambda loop
+            subtract_2d (spin, this->target_mag_, delta_spin);
+            where_fill_scalar_2d (this->constrain_, 0, zero, delta_spin);
+            search = delta_spin;
+            for (int ia = 0; ia < nat; ia++)
                 {
                     for (int ic = 0; ic < 3; ic++)
-                    {
-                        temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
-                    }
+                        {
+                            temp_1[ia][ic] = std::pow (delta_spin[ia][ic], 2);
+                        }
                 }
-                mean_error = sum_2d(temp_1) / nat;
-                rms_error = std::sqrt(mean_error);
-                std::cout<<"Current RMS: "<<rms_error<<std::endl;
-                if(rms_error > this->current_sc_thr_ * 10 && rerun == true && this->higher_mag_prec == true)
+            mean_error = sum_2d (temp_1) / nat;
+            rms_error = std::sqrt (mean_error);
+            if (i_step == 0)
                 {
-                    std::cout<<"Error: RMS error is too large, rerun the loop"<<std::endl;
-                    this->run_lambda_loop(outer_step, false);
+                    // set current_sc_thr_ to max(rms_error * sc_drop_thr, this->sc_thr_)
+                    this->current_sc_thr_ = std::max (rms_error * this->sc_drop_thr_, this->sc_thr_);
                 }
-            }
-            break;
-        }
 #ifdef __MPI
-		iterstart = MPI_Wtime();
+            duration = (double)(MPI_Wtime () - iterstart);
 #else
-		iterstart = std::chrono::system_clock::now();
+            duration = (std::chrono::duration_cast<std::chrono::microseconds> (std::chrono::system_clock::now ()
+                                                                               - iterstart))
+                           .count ()
+                       / static_cast<double> (1e6);
 #endif
-        if (i_step >= 2)
-        {
-            beta = mean_error / mean_error_old;
-            add_scalar_multiply_2d(search, search_old, beta, search);
+            inner_loop_duration += duration;
+            if (this->check_rms_stop (outer_step, i_step, rms_error, duration, inner_loop_duration))
+                {
+                    // add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
+                    this->update_psi_charge (dnu_last_step.data (), rerun);
+                    if (PARAM.inp.basis_type == "pw")
+                        {
+                            // double check Atomic spin moment
+                            this->cal_mi_pw ();
+                            subtract_2d (this->Mi_, this->target_mag_, delta_spin);
+                            where_fill_scalar_2d (this->constrain_, 0, zero, delta_spin);
+                            search = delta_spin;
+                            for (int ia = 0; ia < nat; ia++)
+                                {
+                                    for (int ic = 0; ic < 3; ic++)
+                                        {
+                                            temp_1[ia][ic] = std::pow (delta_spin[ia][ic], 2);
+                                        }
+                                }
+                            mean_error = sum_2d (temp_1) / nat;
+                            rms_error = std::sqrt (mean_error);
+                            std::cout << "Current RMS: " << rms_error << std::endl;
+                            if (rms_error > this->current_sc_thr_ * 10 && rerun == true
+                                && this->higher_mag_prec == true)
+                                {
+                                    std::cout << "Error: RMS error is too large, rerun the loop" << std::endl;
+                                    this->run_lambda_loop (outer_step, false);
+                                }
+                        }
+                    break;
+                }
+#ifdef __MPI
+            iterstart = MPI_Wtime ();
+#else
+            iterstart = std::chrono::system_clock::now ();
+#endif
+            if (i_step >= 2)
+                {
+                    beta = mean_error / mean_error_old;
+                    add_scalar_multiply_2d (search, search_old, beta, search);
+                }
+            /// check if restriction is needed
+            this->check_restriction (search, alpha_trial);
+
+            dnu_last_step = dnu;
+            add_scalar_multiply_2d (dnu, search, alpha_trial, dnu);
+            delta_lambda = dnu;
+
+            where_fill_scalar_else_2d (this->constrain_, 0, zero, delta_lambda, delta_lambda);
+            add_scalar_multiply_2d (initial_lambda, delta_lambda, one, this->lambda_);
+
+            this->cal_mw_from_lambda (i_step, delta_lambda.data ());
+
+            spin_plus = this->Mi_;
+
+            alpha_opt = this->cal_alpha_opt (spin, spin_plus, alpha_trial);
+            /// check if restriction is needed
+            this->check_restriction (search, alpha_opt);
+
+            alpha_plus = alpha_opt - alpha_trial;
+            scalar_multiply_2d (search, alpha_plus, temp_1);
+            add_scalar_multiply_2d (dnu, temp_1, one, dnu);
+            delta_lambda = dnu;
+
+            search_old = search;
+            mean_error_old = mean_error;
+
+            g = 1.5 * std::abs (alpha_opt) / alpha_trial;
+            if (g > 2.0)
+                {
+                    g = 2;
+                }
+            else if (g < 0.5)
+                {
+                    g = 0.5;
+                }
+            alpha_trial = alpha_trial * pow (g, 0.7);
         }
-        /// check if restriction is needed
-        this->check_restriction(search, alpha_trial);
-
-        dnu_last_step = dnu;
-        add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
-        delta_lambda = dnu;
-
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
-        add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
-
-        this->cal_mw_from_lambda(i_step, delta_lambda.data());
-
-        spin_plus = this->Mi_;
-
-        alpha_opt = this->cal_alpha_opt(spin, spin_plus, alpha_trial);
-        /// check if restriction is needed
-        this->check_restriction(search, alpha_opt);
-
-        alpha_plus = alpha_opt - alpha_trial;
-        scalar_multiply_2d(search, alpha_plus, temp_1);
-        add_scalar_multiply_2d(dnu, temp_1, one, dnu);
-        delta_lambda = dnu;
-
-        search_old = search;
-        mean_error_old = mean_error;
-
-        g = 1.5 * std::abs(alpha_opt) / alpha_trial;
-        if (g > 2.0)
-        {
-            g = 2;
-        }
-        else if (g < 0.5)
-        {
-            g = 0.5;
-        }
-        alpha_trial = alpha_trial * pow(g, 0.7);
-    }
 
     return;
 }

@@ -7,7 +7,7 @@
 
 namespace ModuleIO
 {
-void write_elf(
+void write_elf (
 #ifdef __MPI
     const int& bz,
     const int& nbz,
@@ -21,6 +21,6 @@ void write_elf(
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision);
-}
+} // namespace ModuleIO
 
 #endif

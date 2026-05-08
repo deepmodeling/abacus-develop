@@ -1,11 +1,13 @@
 #include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 // mock of TD_info
-class TD_info {
-public:
-    TD_info() {}
-    ~TD_info() {}
-    const UnitCell* get_ucell()
+class TD_info
+{
+  public:
+    TD_info () {}
+    ~TD_info () {}
+    const UnitCell*
+        get_ucell ()
     {
         return nullptr;
     }
@@ -14,4 +16,4 @@ public:
 };
 TD_info td_info;
 TD_info* TD_info::td_vel_op = &td_info;
-ModuleBase::Vector3<double> TD_info::cart_At(0.0, 0.0, 0.0);
+ModuleBase::Vector3<double> TD_info::cart_At (0.0, 0.0, 0.0);

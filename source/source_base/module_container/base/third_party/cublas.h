@@ -5,356 +5,811 @@
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
 
-namespace container {
-namespace cuBlasConnector {
+namespace container
+{
+namespace cuBlasConnector
+{
 
-static inline
-void copy(cublasHandle_t& handle, const int& n, const float *x, const int& incx, float *y, const int& incy)
+static inline void
+    copy (cublasHandle_t& handle, const int& n, const float* x, const int& incx, float* y, const int& incy)
 {
-    CHECK_CUBLAS(cublasScopy(handle, n, x, incx, y, incy));
+    CHECK_CUBLAS (cublasScopy (handle, n, x, incx, y, incy));
 }
-static inline
-void copy(cublasHandle_t& handle, const int& n, const double *x, const int& incx, double *y, const int& incy)
+static inline void
+    copy (cublasHandle_t& handle, const int& n, const double* x, const int& incx, double* y, const int& incy)
 {
-    CHECK_CUBLAS(cublasDcopy(handle, n, x, incx, y, incy));
+    CHECK_CUBLAS (cublasDcopy (handle, n, x, incx, y, incy));
 }
-static inline
-void copy(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, std::complex<float> *y, const int& incy)
+static inline void
+    copy (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<float>* x,
+          const int& incx,
+          std::complex<float>* y,
+          const int& incy)
 {
-    CHECK_CUBLAS(cublasCcopy(handle, n, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<cuComplex*>(y), incy));
+    CHECK_CUBLAS (
+        cublasCcopy (handle, n, reinterpret_cast<const cuComplex*> (x), incx, reinterpret_cast<cuComplex*> (y), incy));
 }
-static inline
-void copy(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, std::complex<double> *y, const int& incy)
+static inline void
+    copy (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<double>* x,
+          const int& incx,
+          std::complex<double>* y,
+          const int& incy)
 {
-    CHECK_CUBLAS(cublasZcopy(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<cuDoubleComplex*>(y), incy));
-}
-
-static inline
-void nrm2(cublasHandle_t& handle, const int& n, const float *x, const int& incx, float* result)
-{
-    CHECK_CUBLAS(cublasSnrm2(handle, n, x, incx, result));
-}
-static inline
-void nrm2(cublasHandle_t& handle, const int& n, const double *x, const int& incx, double* result)
-{
-    CHECK_CUBLAS(cublasDnrm2(handle, n, x, incx, result));
-}
-static inline
-void nrm2(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, float* result)
-{
-    CHECK_CUBLAS(cublasScnrm2(handle, n, reinterpret_cast<const cuComplex*>(x), incx, result));
-}
-static inline
-void nrm2(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, double* result)
-{
-    CHECK_CUBLAS(cublasDznrm2(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, result));
+    CHECK_CUBLAS (cublasZcopy (handle,
+                               n,
+                               reinterpret_cast<const cuDoubleComplex*> (x),
+                               incx,
+                               reinterpret_cast<cuDoubleComplex*> (y),
+                               incy));
 }
 
-static inline
-void dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy, float* result)
+static inline void
+    nrm2 (cublasHandle_t& handle, const int& n, const float* x, const int& incx, float* result)
 {
-    CHECK_CUBLAS(cublasSdot(handle, n, x, incx, y, incy, result));
+    CHECK_CUBLAS (cublasSnrm2 (handle, n, x, incx, result));
 }
-static inline
-void dot(cublasHandle_t& handle, const int& n, const double *x, const int& incx, const double *y, const int& incy, double* result)
+static inline void
+    nrm2 (cublasHandle_t& handle, const int& n, const double* x, const int& incx, double* result)
 {
-    CHECK_CUBLAS(cublasDdot(handle, n, x, incx, y, incy, result));
+    CHECK_CUBLAS (cublasDnrm2 (handle, n, x, incx, result));
 }
-static inline
-void dot(cublasHandle_t& handle, const int& n, const std::complex<float> *x, const int& incx, const std::complex<float> *y, const int& incy, std::complex<float>* result)
+static inline void
+    nrm2 (cublasHandle_t& handle, const int& n, const std::complex<float>* x, const int& incx, float* result)
 {
-    CHECK_CUBLAS(cublasCdotc(handle, n, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(y), incy, reinterpret_cast<cuComplex*>(result)));
+    CHECK_CUBLAS (cublasScnrm2 (handle, n, reinterpret_cast<const cuComplex*> (x), incx, result));
 }
-static inline
-void dot(cublasHandle_t& handle, const int& n, const std::complex<double> *x, const int& incx, const std::complex<double> *y, const int& incy, std::complex<double>* result)
+static inline void
+    nrm2 (cublasHandle_t& handle, const int& n, const std::complex<double>* x, const int& incx, double* result)
 {
-    CHECK_CUBLAS(cublasZdotc(handle, n, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(y), incy, reinterpret_cast<cuDoubleComplex*>(result)));
-}
-
-static inline
-void axpy(cublasHandle_t& handle, const int& n, const float& alpha, const float *x, const int& incx, float *y, const int& incy)
-{
-    CHECK_CUBLAS(cublasSaxpy(handle, n, &alpha, x, incx, y, incy));
-}
-static inline
-void axpy(cublasHandle_t& handle, const int& n, const double& alpha, const double *x, const int& incx, double *y, const int& incy)
-{
-    CHECK_CUBLAS(cublasDaxpy(handle, n, &alpha, x, incx, y, incy));
-}
-static inline
-void axpy(cublasHandle_t& handle, const int& n, const std::complex<float>& alpha, const std::complex<float> *x, const int& incx, std::complex<float> *y, const int& incy)
-{
-    CHECK_CUBLAS(cublasCaxpy(handle, n, reinterpret_cast<const cuComplex*>(&alpha), reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<cuComplex*>(y), incy));
-}
-static inline
-void axpy(cublasHandle_t& handle, const int& n, const std::complex<double>& alpha, const std::complex<double> *x, const int& incx, std::complex<double> *y, const int& incy)
-{
-    CHECK_CUBLAS(cublasZaxpy(handle, n, reinterpret_cast<const cuDoubleComplex*>(&alpha), reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<cuDoubleComplex*>(y), incy));
+    CHECK_CUBLAS (cublasDznrm2 (handle, n, reinterpret_cast<const cuDoubleComplex*> (x), incx, result));
 }
 
-static inline
-void scal(cublasHandle_t& handle, const int& n,  const float& alpha, float *x, const int& incx)
+static inline void
+    dot (cublasHandle_t& handle,
+         const int& n,
+         const float* x,
+         const int& incx,
+         const float* y,
+         const int& incy,
+         float* result)
 {
-    CHECK_CUBLAS(cublasSscal(handle, n, &alpha, x, incx));
+    CHECK_CUBLAS (cublasSdot (handle, n, x, incx, y, incy, result));
 }
-static inline
-void scal(cublasHandle_t& handle, const int& n, const double& alpha, double *x, const int& incx)
+static inline void
+    dot (cublasHandle_t& handle,
+         const int& n,
+         const double* x,
+         const int& incx,
+         const double* y,
+         const int& incy,
+         double* result)
 {
-    CHECK_CUBLAS(cublasDscal(handle, n, &alpha, x, incx));
+    CHECK_CUBLAS (cublasDdot (handle, n, x, incx, y, incy, result));
 }
-static inline
-void scal(cublasHandle_t& handle, const int& n, const std::complex<float>& alpha, std::complex<float> *x, const int& incx)
+static inline void
+    dot (cublasHandle_t& handle,
+         const int& n,
+         const std::complex<float>* x,
+         const int& incx,
+         const std::complex<float>* y,
+         const int& incy,
+         std::complex<float>* result)
 {
-    CHECK_CUBLAS(cublasCscal(handle, n, reinterpret_cast<const cuComplex*>(&alpha), reinterpret_cast<cuComplex*>(x), incx));
+    CHECK_CUBLAS (cublasCdotc (handle,
+                               n,
+                               reinterpret_cast<const cuComplex*> (x),
+                               incx,
+                               reinterpret_cast<const cuComplex*> (y),
+                               incy,
+                               reinterpret_cast<cuComplex*> (result)));
 }
-static inline
-void scal(cublasHandle_t& handle, const int& n, const std::complex<double>& alpha, std::complex<double> *x, const int& incx)
+static inline void
+    dot (cublasHandle_t& handle,
+         const int& n,
+         const std::complex<double>* x,
+         const int& incx,
+         const std::complex<double>* y,
+         const int& incy,
+         std::complex<double>* result)
 {
-    CHECK_CUBLAS(cublasZscal(handle, n, reinterpret_cast<const cuDoubleComplex*>(&alpha), reinterpret_cast<cuDoubleComplex*>(x), incx));
+    CHECK_CUBLAS (cublasZdotc (handle,
+                               n,
+                               reinterpret_cast<const cuDoubleComplex*> (x),
+                               incx,
+                               reinterpret_cast<const cuDoubleComplex*> (y),
+                               incy,
+                               reinterpret_cast<cuDoubleComplex*> (result)));
 }
 
-static inline
-void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
-          const float& alpha, const float *A, const int& lda, const float *x, const int& incx,
-          const float& beta, float *y, const int& incy)
+static inline void
+    axpy (cublasHandle_t& handle,
+          const int& n,
+          const float& alpha,
+          const float* x,
+          const int& incx,
+          float* y,
+          const int& incy)
 {
-   CHECK_CUBLAS(cublasSgemv(handle, GetCublasOperation(trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy));
+    CHECK_CUBLAS (cublasSaxpy (handle, n, &alpha, x, incx, y, incy));
 }
-static inline
-void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
-          const double& alpha, const double *A, const int& lda, const double *x, const int& incx,
-          const double& beta, double *y, const int& incy)
+static inline void
+    axpy (cublasHandle_t& handle,
+          const int& n,
+          const double& alpha,
+          const double* x,
+          const int& incx,
+          double* y,
+          const int& incy)
 {
-    CHECK_CUBLAS(cublasDgemv(handle, GetCublasOperation(trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy));
+    CHECK_CUBLAS (cublasDaxpy (handle, n, &alpha, x, incx, y, incy));
 }
-static inline
-void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
-          const std::complex<float>& alpha, const std::complex<float> *A, const int& lda, const std::complex<float> *x, const int& incx,
-          const std::complex<float>& beta, std::complex<float> *y, const int& incy)
+static inline void
+    axpy (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<float>& alpha,
+          const std::complex<float>* x,
+          const int& incx,
+          std::complex<float>* y,
+          const int& incy)
 {
-    CHECK_CUBLAS(cublasCgemv(handle, GetCublasOperation(trans), m, n, reinterpret_cast<const cuComplex*>(&alpha),
-        reinterpret_cast<const cuComplex*>(A), lda, reinterpret_cast<const cuComplex*>(x), incx, reinterpret_cast<const cuComplex*>(&beta), reinterpret_cast<cuComplex*>(y), incy));
+    CHECK_CUBLAS (cublasCaxpy (handle,
+                               n,
+                               reinterpret_cast<const cuComplex*> (&alpha),
+                               reinterpret_cast<const cuComplex*> (x),
+                               incx,
+                               reinterpret_cast<cuComplex*> (y),
+                               incy));
 }
-static inline
-void gemv(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
-          const std::complex<double>& alpha, const std::complex<double> *A, const int& lda, const std::complex<double> *x, const int& incx,
-          const std::complex<double>& beta, std::complex<double> *y, const int& incy)
+static inline void
+    axpy (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<double>& alpha,
+          const std::complex<double>* x,
+          const int& incx,
+          std::complex<double>* y,
+          const int& incy)
 {
-    CHECK_CUBLAS(cublasZgemv(handle, GetCublasOperation(trans), m, n, reinterpret_cast<const cuDoubleComplex*>(&alpha),
-        reinterpret_cast<const cuDoubleComplex*>(A), lda, reinterpret_cast<const cuDoubleComplex*>(x), incx, reinterpret_cast<const cuDoubleComplex*>(&beta), reinterpret_cast<cuDoubleComplex*>(y), incy));
+    CHECK_CUBLAS (cublasZaxpy (handle,
+                               n,
+                               reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                               reinterpret_cast<const cuDoubleComplex*> (x),
+                               incx,
+                               reinterpret_cast<cuDoubleComplex*> (y),
+                               incy));
+}
+
+static inline void
+    scal (cublasHandle_t& handle, const int& n, const float& alpha, float* x, const int& incx)
+{
+    CHECK_CUBLAS (cublasSscal (handle, n, &alpha, x, incx));
+}
+static inline void
+    scal (cublasHandle_t& handle, const int& n, const double& alpha, double* x, const int& incx)
+{
+    CHECK_CUBLAS (cublasDscal (handle, n, &alpha, x, incx));
+}
+static inline void
+    scal (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<float>& alpha,
+          std::complex<float>* x,
+          const int& incx)
+{
+    CHECK_CUBLAS (
+        cublasCscal (handle, n, reinterpret_cast<const cuComplex*> (&alpha), reinterpret_cast<cuComplex*> (x), incx));
+}
+static inline void
+    scal (cublasHandle_t& handle,
+          const int& n,
+          const std::complex<double>& alpha,
+          std::complex<double>* x,
+          const int& incx)
+{
+    CHECK_CUBLAS (cublasZscal (handle,
+                               n,
+                               reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                               reinterpret_cast<cuDoubleComplex*> (x),
+                               incx));
+}
+
+static inline void
+    gemv (cublasHandle_t& handle,
+          const char& trans,
+          const int& m,
+          const int& n,
+          const float& alpha,
+          const float* A,
+          const int& lda,
+          const float* x,
+          const int& incx,
+          const float& beta,
+          float* y,
+          const int& incy)
+{
+    CHECK_CUBLAS (cublasSgemv (handle, GetCublasOperation (trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy));
+}
+static inline void
+    gemv (cublasHandle_t& handle,
+          const char& trans,
+          const int& m,
+          const int& n,
+          const double& alpha,
+          const double* A,
+          const int& lda,
+          const double* x,
+          const int& incx,
+          const double& beta,
+          double* y,
+          const int& incy)
+{
+    CHECK_CUBLAS (cublasDgemv (handle, GetCublasOperation (trans), m, n, &alpha, A, lda, x, incx, &beta, y, incy));
+}
+static inline void
+    gemv (cublasHandle_t& handle,
+          const char& trans,
+          const int& m,
+          const int& n,
+          const std::complex<float>& alpha,
+          const std::complex<float>* A,
+          const int& lda,
+          const std::complex<float>* x,
+          const int& incx,
+          const std::complex<float>& beta,
+          std::complex<float>* y,
+          const int& incy)
+{
+    CHECK_CUBLAS (cublasCgemv (handle,
+                               GetCublasOperation (trans),
+                               m,
+                               n,
+                               reinterpret_cast<const cuComplex*> (&alpha),
+                               reinterpret_cast<const cuComplex*> (A),
+                               lda,
+                               reinterpret_cast<const cuComplex*> (x),
+                               incx,
+                               reinterpret_cast<const cuComplex*> (&beta),
+                               reinterpret_cast<cuComplex*> (y),
+                               incy));
+}
+static inline void
+    gemv (cublasHandle_t& handle,
+          const char& trans,
+          const int& m,
+          const int& n,
+          const std::complex<double>& alpha,
+          const std::complex<double>* A,
+          const int& lda,
+          const std::complex<double>* x,
+          const int& incx,
+          const std::complex<double>& beta,
+          std::complex<double>* y,
+          const int& incy)
+{
+    CHECK_CUBLAS (cublasZgemv (handle,
+                               GetCublasOperation (trans),
+                               m,
+                               n,
+                               reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                               reinterpret_cast<const cuDoubleComplex*> (A),
+                               lda,
+                               reinterpret_cast<const cuDoubleComplex*> (x),
+                               incx,
+                               reinterpret_cast<const cuDoubleComplex*> (&beta),
+                               reinterpret_cast<cuDoubleComplex*> (y),
+                               incy));
 }
 
 template <typename T>
-static inline
-void gemv_batched(cublasHandle_t& handle, const char& trans, const int& m, const int& n,
-          const T& alpha, T** A, const int& lda, T** x, const int& incx,
-          const T& beta, T** y, const int& incy, const int& batch_size)
+static inline void
+    gemv_batched (cublasHandle_t& handle,
+                  const char& trans,
+                  const int& m,
+                  const int& n,
+                  const T& alpha,
+                  T** A,
+                  const int& lda,
+                  T** x,
+                  const int& incx,
+                  const T& beta,
+                  T** y,
+                  const int& incy,
+                  const int& batch_size)
 {
-    for (int ii = 0; ii < batch_size; ++ii) {
-        // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-        cuBlasConnector::gemv(handle, trans, m, n, alpha, A[ii], lda, x[ii], incx, beta, y[ii], incy);
-    }
+    for (int ii = 0; ii < batch_size; ++ii)
+        {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            cuBlasConnector::gemv (handle, trans, m, n, alpha, A[ii], lda, x[ii], incx, beta, y[ii], incy);
+        }
 }
 
 template <typename T>
-static inline
-void gemv_batched_strided(cublasHandle_t& handle, const char& transa, const int& m, const int& n,
-          const T& alpha, const T* A, const int& lda, const int& stride_a, const T* x, const int& incx, const int& stride_x,
-          const T& beta, T* y, const int& incy, const int& stride_y, const int& batch_size)
+static inline void
+    gemv_batched_strided (cublasHandle_t& handle,
+                          const char& transa,
+                          const int& m,
+                          const int& n,
+                          const T& alpha,
+                          const T* A,
+                          const int& lda,
+                          const int& stride_a,
+                          const T* x,
+                          const int& incx,
+                          const int& stride_x,
+                          const T& beta,
+                          T* y,
+                          const int& incy,
+                          const int& stride_y,
+                          const int& batch_size)
 {
-    for (int ii = 0; ii < batch_size; ii++) {
-        // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
-        cuBlasConnector::gemv(handle, transa, m, n, alpha, A + ii * stride_a, lda, x + ii * stride_x, incx, beta, y + ii * stride_y, incy);
-    }
+    for (int ii = 0; ii < batch_size; ii++)
+        {
+            // Call the single GEMV for each pair of matrix A[ii] and vector x[ii]
+            cuBlasConnector::gemv (handle,
+                                   transa,
+                                   m,
+                                   n,
+                                   alpha,
+                                   A + ii * stride_a,
+                                   lda,
+                                   x + ii * stride_x,
+                                   incx,
+                                   beta,
+                                   y + ii * stride_y,
+                                   incy);
+        }
 }
 
-static inline
-void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const float& alpha, const float* A, const int& lda, const float* B, const int& ldb,
-          const float& beta, float* C, const int& ldc)
+static inline void
+    gemm (cublasHandle_t& handle,
+          const char& transa,
+          const char& transb,
+          const int& m,
+          const int& n,
+          const int& k,
+          const float& alpha,
+          const float* A,
+          const int& lda,
+          const float* B,
+          const int& ldb,
+          const float& beta,
+          float* C,
+          const int& ldc)
 {
-    CHECK_CUBLAS(cublasSgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc));
+    CHECK_CUBLAS (cublasSgemm (handle,
+                               GetCublasOperation (transa),
+                               GetCublasOperation (transb),
+                               m,
+                               n,
+                               k,
+                               &alpha,
+                               A,
+                               lda,
+                               B,
+                               ldb,
+                               &beta,
+                               C,
+                               ldc));
 }
-static inline
-void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const double& alpha, const double* A, const int& lda, const double* B, const int& ldb,
-          const double& beta, double* C, const int& ldc)
+static inline void
+    gemm (cublasHandle_t& handle,
+          const char& transa,
+          const char& transb,
+          const int& m,
+          const int& n,
+          const int& k,
+          const double& alpha,
+          const double* A,
+          const int& lda,
+          const double* B,
+          const int& ldb,
+          const double& beta,
+          double* C,
+          const int& ldc)
 {
-    CHECK_CUBLAS(cublasDgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc));
+    CHECK_CUBLAS (cublasDgemm (handle,
+                               GetCublasOperation (transa),
+                               GetCublasOperation (transb),
+                               m,
+                               n,
+                               k,
+                               &alpha,
+                               A,
+                               lda,
+                               B,
+                               ldb,
+                               &beta,
+                               C,
+                               ldc));
 }
-static inline
-void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<float>& alpha, const std::complex<float>* A, const int& lda, const std::complex<float>* B, const int& ldb,
-          const std::complex<float>& beta, std::complex<float>* C, const int& ldc)
+static inline void
+    gemm (cublasHandle_t& handle,
+          const char& transa,
+          const char& transb,
+          const int& m,
+          const int& n,
+          const int& k,
+          const std::complex<float>& alpha,
+          const std::complex<float>* A,
+          const int& lda,
+          const std::complex<float>* B,
+          const int& ldb,
+          const std::complex<float>& beta,
+          std::complex<float>* C,
+          const int& ldc)
 {
-    CHECK_CUBLAS(cublasCgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                m, n, k,
-                reinterpret_cast<const cuComplex*>(&alpha),
-                reinterpret_cast<const cuComplex*>(A), lda,
-                reinterpret_cast<const cuComplex*>(B), ldb,
-                reinterpret_cast<const cuComplex*>(&beta),
-                reinterpret_cast<cuComplex*>(C), ldc));
+    CHECK_CUBLAS (cublasCgemm (handle,
+                               GetCublasOperation (transa),
+                               GetCublasOperation (transb),
+                               m,
+                               n,
+                               k,
+                               reinterpret_cast<const cuComplex*> (&alpha),
+                               reinterpret_cast<const cuComplex*> (A),
+                               lda,
+                               reinterpret_cast<const cuComplex*> (B),
+                               ldb,
+                               reinterpret_cast<const cuComplex*> (&beta),
+                               reinterpret_cast<cuComplex*> (C),
+                               ldc));
 }
-static inline
-void gemm(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<double>& alpha, const std::complex<double>* A, const int& lda, const std::complex<double>* B, const int& ldb,
-          const std::complex<double>& beta, std::complex<double>* C, const int& ldc)
+static inline void
+    gemm (cublasHandle_t& handle,
+          const char& transa,
+          const char& transb,
+          const int& m,
+          const int& n,
+          const int& k,
+          const std::complex<double>& alpha,
+          const std::complex<double>* A,
+          const int& lda,
+          const std::complex<double>* B,
+          const int& ldb,
+          const std::complex<double>& beta,
+          std::complex<double>* C,
+          const int& ldc)
 {
-    CHECK_CUBLAS(cublasZgemm(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                m, n, k,
-                reinterpret_cast<const cuDoubleComplex*>(&alpha),
-                reinterpret_cast<const cuDoubleComplex*>(A), lda,
-                reinterpret_cast<const cuDoubleComplex*>(B), ldb,
-                reinterpret_cast<const cuDoubleComplex*>(&beta),
-                reinterpret_cast<cuDoubleComplex*>(C), ldc));
+    CHECK_CUBLAS (cublasZgemm (handle,
+                               GetCublasOperation (transa),
+                               GetCublasOperation (transb),
+                               m,
+                               n,
+                               k,
+                               reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                               reinterpret_cast<const cuDoubleComplex*> (A),
+                               lda,
+                               reinterpret_cast<const cuDoubleComplex*> (B),
+                               ldb,
+                               reinterpret_cast<const cuDoubleComplex*> (&beta),
+                               reinterpret_cast<cuDoubleComplex*> (C),
+                               ldc));
 }
 
 template <typename T>
-static inline
-T** allocate_(T** in, const int& batch_size)
+static inline T**
+    allocate_ (T** in, const int& batch_size)
 {
     T** out = nullptr;
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&out), sizeof(T*) * batch_size));
-    CHECK_CUDA(cudaMemcpy(out, in, sizeof(T*) * batch_size, cudaMemcpyHostToDevice));
+    CHECK_CUDA (cudaMalloc (reinterpret_cast<void**> (&out), sizeof (T*) * batch_size));
+    CHECK_CUDA (cudaMemcpy (out, in, sizeof (T*) * batch_size, cudaMemcpyHostToDevice));
     return out;
 }
 
-static inline
-void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const float& alpha, float** A, const int& lda, float** B, const int& ldb,
-          const float& beta, float** C, const int& ldc, const int& batch_size)
+static inline void
+    gemm_batched (cublasHandle_t& handle,
+                  const char& transa,
+                  const char& transb,
+                  const int& m,
+                  const int& n,
+                  const int& k,
+                  const float& alpha,
+                  float** A,
+                  const int& lda,
+                  float** B,
+                  const int& ldb,
+                  const float& beta,
+                  float** C,
+                  const int& ldc,
+                  const int& batch_size)
 {
-    float** d_A = allocate_(A, batch_size);
-    float** d_B = allocate_(B, batch_size);
-    float** d_C = allocate_(C, batch_size);
-    CHECK_CUBLAS(cublasSgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                       m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size));
-    CHECK_CUDA(cudaFree(d_A));
-    CHECK_CUDA(cudaFree(d_B));
-    CHECK_CUDA(cudaFree(d_C));
+    float** d_A = allocate_ (A, batch_size);
+    float** d_B = allocate_ (B, batch_size);
+    float** d_C = allocate_ (C, batch_size);
+    CHECK_CUBLAS (cublasSgemmBatched (handle,
+                                      GetCublasOperation (transa),
+                                      GetCublasOperation (transb),
+                                      m,
+                                      n,
+                                      k,
+                                      &alpha,
+                                      d_A,
+                                      lda,
+                                      d_B,
+                                      ldb,
+                                      &beta,
+                                      d_C,
+                                      ldc,
+                                      batch_size));
+    CHECK_CUDA (cudaFree (d_A));
+    CHECK_CUDA (cudaFree (d_B));
+    CHECK_CUDA (cudaFree (d_C));
 }
-static inline
-void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const double& alpha, double** A, const int& lda, double** B, const int& ldb,
-          const double& beta, double** C, const int& ldc, const int& batch_size)
+static inline void
+    gemm_batched (cublasHandle_t& handle,
+                  const char& transa,
+                  const char& transb,
+                  const int& m,
+                  const int& n,
+                  const int& k,
+                  const double& alpha,
+                  double** A,
+                  const int& lda,
+                  double** B,
+                  const int& ldb,
+                  const double& beta,
+                  double** C,
+                  const int& ldc,
+                  const int& batch_size)
 {
-    double** d_A = allocate_(A, batch_size);
-    double** d_B = allocate_(B, batch_size);
-    double** d_C = allocate_(C, batch_size);
-    CHECK_CUBLAS(cublasDgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                       m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc, batch_size));
-    CHECK_CUDA(cudaFree(d_A));
-    CHECK_CUDA(cudaFree(d_B));
-    CHECK_CUDA(cudaFree(d_C));
+    double** d_A = allocate_ (A, batch_size);
+    double** d_B = allocate_ (B, batch_size);
+    double** d_C = allocate_ (C, batch_size);
+    CHECK_CUBLAS (cublasDgemmBatched (handle,
+                                      GetCublasOperation (transa),
+                                      GetCublasOperation (transb),
+                                      m,
+                                      n,
+                                      k,
+                                      &alpha,
+                                      d_A,
+                                      lda,
+                                      d_B,
+                                      ldb,
+                                      &beta,
+                                      d_C,
+                                      ldc,
+                                      batch_size));
+    CHECK_CUDA (cudaFree (d_A));
+    CHECK_CUDA (cudaFree (d_B));
+    CHECK_CUDA (cudaFree (d_C));
 }
-static inline
-void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<float>& alpha, std::complex<float>** A, const int& lda, std::complex<float>** B, const int& ldb,
-          const std::complex<float>& beta, std::complex<float>** C, const int& ldc, const int& batch_size)
+static inline void
+    gemm_batched (cublasHandle_t& handle,
+                  const char& transa,
+                  const char& transb,
+                  const int& m,
+                  const int& n,
+                  const int& k,
+                  const std::complex<float>& alpha,
+                  std::complex<float>** A,
+                  const int& lda,
+                  std::complex<float>** B,
+                  const int& ldb,
+                  const std::complex<float>& beta,
+                  std::complex<float>** C,
+                  const int& ldc,
+                  const int& batch_size)
 {
-    std::complex<float>** d_A = allocate_(A, batch_size);
-    std::complex<float>** d_B = allocate_(B, batch_size);
-    std::complex<float>** d_C = allocate_(C, batch_size);
-    CHECK_CUBLAS(cublasCgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                       m, n, k,
-                       reinterpret_cast<const cuComplex*>(&alpha),
-                       reinterpret_cast<cuComplex**>(d_A), lda,
-                       reinterpret_cast<cuComplex**>(d_B), ldb,
-                       reinterpret_cast<const cuComplex*>(&beta),
-                       reinterpret_cast<cuComplex**>(d_C), ldc, batch_size));
-    CHECK_CUDA(cudaFree(d_A));
-    CHECK_CUDA(cudaFree(d_B));
-    CHECK_CUDA(cudaFree(d_C));
+    std::complex<float>** d_A = allocate_ (A, batch_size);
+    std::complex<float>** d_B = allocate_ (B, batch_size);
+    std::complex<float>** d_C = allocate_ (C, batch_size);
+    CHECK_CUBLAS (cublasCgemmBatched (handle,
+                                      GetCublasOperation (transa),
+                                      GetCublasOperation (transb),
+                                      m,
+                                      n,
+                                      k,
+                                      reinterpret_cast<const cuComplex*> (&alpha),
+                                      reinterpret_cast<cuComplex**> (d_A),
+                                      lda,
+                                      reinterpret_cast<cuComplex**> (d_B),
+                                      ldb,
+                                      reinterpret_cast<const cuComplex*> (&beta),
+                                      reinterpret_cast<cuComplex**> (d_C),
+                                      ldc,
+                                      batch_size));
+    CHECK_CUDA (cudaFree (d_A));
+    CHECK_CUDA (cudaFree (d_B));
+    CHECK_CUDA (cudaFree (d_C));
 }
-static inline
-void gemm_batched(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<double>& alpha, std::complex<double>** A, const int& lda, std::complex<double>** B, const int& ldb,
-          const std::complex<double>& beta, std::complex<double>** C, const int& ldc, const int& batch_size)
+static inline void
+    gemm_batched (cublasHandle_t& handle,
+                  const char& transa,
+                  const char& transb,
+                  const int& m,
+                  const int& n,
+                  const int& k,
+                  const std::complex<double>& alpha,
+                  std::complex<double>** A,
+                  const int& lda,
+                  std::complex<double>** B,
+                  const int& ldb,
+                  const std::complex<double>& beta,
+                  std::complex<double>** C,
+                  const int& ldc,
+                  const int& batch_size)
 {
-    std::complex<double>** d_A = allocate_(A, batch_size);
-    std::complex<double>** d_B = allocate_(B, batch_size);
-    std::complex<double>** d_C = allocate_(C, batch_size);
-    CHECK_CUBLAS(cublasZgemmBatched(handle, GetCublasOperation(transa), GetCublasOperation(transb),
-                       m, n, k,
-                       reinterpret_cast<const cuDoubleComplex*>(&alpha),
-                       reinterpret_cast<cuDoubleComplex**>(d_A), lda,
-                       reinterpret_cast<cuDoubleComplex**>(d_B), ldb,
-                       reinterpret_cast<const cuDoubleComplex*>(&beta),
-                       reinterpret_cast<cuDoubleComplex**>(d_C), ldc, batch_size));
-    CHECK_CUDA(cudaFree(d_A));
-    CHECK_CUDA(cudaFree(d_B));
-    CHECK_CUDA(cudaFree(d_C));
+    std::complex<double>** d_A = allocate_ (A, batch_size);
+    std::complex<double>** d_B = allocate_ (B, batch_size);
+    std::complex<double>** d_C = allocate_ (C, batch_size);
+    CHECK_CUBLAS (cublasZgemmBatched (handle,
+                                      GetCublasOperation (transa),
+                                      GetCublasOperation (transb),
+                                      m,
+                                      n,
+                                      k,
+                                      reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                                      reinterpret_cast<cuDoubleComplex**> (d_A),
+                                      lda,
+                                      reinterpret_cast<cuDoubleComplex**> (d_B),
+                                      ldb,
+                                      reinterpret_cast<const cuDoubleComplex*> (&beta),
+                                      reinterpret_cast<cuDoubleComplex**> (d_C),
+                                      ldc,
+                                      batch_size));
+    CHECK_CUDA (cudaFree (d_A));
+    CHECK_CUDA (cudaFree (d_B));
+    CHECK_CUDA (cudaFree (d_C));
 }
 
-static inline
-void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const float& alpha, const float* A, const int& lda, const int& stride_a, const float* B, const int& ldb, const int& stride_b,
-          const float& beta, float* C, const int& ldc, const int& stride_c, const int& batch_size)
+static inline void
+    gemm_batched_strided (cublasHandle_t& handle,
+                          const char& transa,
+                          const char& transb,
+                          const int& m,
+                          const int& n,
+                          const int& k,
+                          const float& alpha,
+                          const float* A,
+                          const int& lda,
+                          const int& stride_a,
+                          const float* B,
+                          const int& ldb,
+                          const int& stride_b,
+                          const float& beta,
+                          float* C,
+                          const int& ldc,
+                          const int& stride_c,
+                          const int& batch_size)
 {
-    CHECK_CUBLAS(cublasSgemmStridedBatched(
-            handle,
-            GetCublasOperation(transa),
-            GetCublasOperation(transb),
-            m, n, k,
-            &alpha,
-            A, lda, stride_a,
-            B, ldb, stride_b,
-            &beta,
-            C, ldc, stride_c,
-            batch_size));
+    CHECK_CUBLAS (cublasSgemmStridedBatched (handle,
+                                             GetCublasOperation (transa),
+                                             GetCublasOperation (transb),
+                                             m,
+                                             n,
+                                             k,
+                                             &alpha,
+                                             A,
+                                             lda,
+                                             stride_a,
+                                             B,
+                                             ldb,
+                                             stride_b,
+                                             &beta,
+                                             C,
+                                             ldc,
+                                             stride_c,
+                                             batch_size));
 }
-static inline
-void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const double& alpha, const double* A, const int& lda, const int& stride_a, const double* B, const int& ldb, const int& stride_b,
-          const double& beta, double* C, const int& ldc, const int& stride_c, const int& batch_size)
+static inline void
+    gemm_batched_strided (cublasHandle_t& handle,
+                          const char& transa,
+                          const char& transb,
+                          const int& m,
+                          const int& n,
+                          const int& k,
+                          const double& alpha,
+                          const double* A,
+                          const int& lda,
+                          const int& stride_a,
+                          const double* B,
+                          const int& ldb,
+                          const int& stride_b,
+                          const double& beta,
+                          double* C,
+                          const int& ldc,
+                          const int& stride_c,
+                          const int& batch_size)
 {
-    CHECK_CUBLAS(cublasDgemmStridedBatched(
-            handle,
-            GetCublasOperation(transa),
-            GetCublasOperation(transb),
-            m, n, k,
-            &alpha,
-            A, lda, stride_a,
-            B, ldb, stride_b,
-            &beta,
-            C, ldc, stride_c,
-            batch_size));
+    CHECK_CUBLAS (cublasDgemmStridedBatched (handle,
+                                             GetCublasOperation (transa),
+                                             GetCublasOperation (transb),
+                                             m,
+                                             n,
+                                             k,
+                                             &alpha,
+                                             A,
+                                             lda,
+                                             stride_a,
+                                             B,
+                                             ldb,
+                                             stride_b,
+                                             &beta,
+                                             C,
+                                             ldc,
+                                             stride_c,
+                                             batch_size));
 }
-static inline
-void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<float>& alpha, const std::complex<float>* A, const int& lda, const int& stride_a, const std::complex<float>* B, const int& ldb, const int& stride_b,
-          const std::complex<float>& beta, std::complex<float>* C, const int& ldc, const int& stride_c, const int& batch_size)
+static inline void
+    gemm_batched_strided (cublasHandle_t& handle,
+                          const char& transa,
+                          const char& transb,
+                          const int& m,
+                          const int& n,
+                          const int& k,
+                          const std::complex<float>& alpha,
+                          const std::complex<float>* A,
+                          const int& lda,
+                          const int& stride_a,
+                          const std::complex<float>* B,
+                          const int& ldb,
+                          const int& stride_b,
+                          const std::complex<float>& beta,
+                          std::complex<float>* C,
+                          const int& ldc,
+                          const int& stride_c,
+                          const int& batch_size)
 {
-    CHECK_CUBLAS(cublasCgemmStridedBatched(
-            handle,
-            GetCublasOperation(transa),
-            GetCublasOperation(transb),
-            m, n, k,
-            reinterpret_cast<const cuComplex*>(&alpha),
-            reinterpret_cast<const cuComplex*>(A), lda, stride_a,
-            reinterpret_cast<const cuComplex*>(B), ldb, stride_b,
-            reinterpret_cast<const cuComplex*>(&beta),
-            reinterpret_cast<cuComplex*>(C), ldc, stride_c,
-            batch_size));
+    CHECK_CUBLAS (cublasCgemmStridedBatched (handle,
+                                             GetCublasOperation (transa),
+                                             GetCublasOperation (transb),
+                                             m,
+                                             n,
+                                             k,
+                                             reinterpret_cast<const cuComplex*> (&alpha),
+                                             reinterpret_cast<const cuComplex*> (A),
+                                             lda,
+                                             stride_a,
+                                             reinterpret_cast<const cuComplex*> (B),
+                                             ldb,
+                                             stride_b,
+                                             reinterpret_cast<const cuComplex*> (&beta),
+                                             reinterpret_cast<cuComplex*> (C),
+                                             ldc,
+                                             stride_c,
+                                             batch_size));
 }
-static inline
-void gemm_batched_strided(cublasHandle_t& handle, const char& transa, const char& transb, const int& m, const int& n, const int& k,
-          const std::complex<double>& alpha, const std::complex<double>* A, const int& lda, const int& stride_a, const std::complex<double>* B, const int& ldb, const int& stride_b,
-          const std::complex<double>& beta, std::complex<double>* C, const int& ldc, const int& stride_c, const int& batch_size)
+static inline void
+    gemm_batched_strided (cublasHandle_t& handle,
+                          const char& transa,
+                          const char& transb,
+                          const int& m,
+                          const int& n,
+                          const int& k,
+                          const std::complex<double>& alpha,
+                          const std::complex<double>* A,
+                          const int& lda,
+                          const int& stride_a,
+                          const std::complex<double>* B,
+                          const int& ldb,
+                          const int& stride_b,
+                          const std::complex<double>& beta,
+                          std::complex<double>* C,
+                          const int& ldc,
+                          const int& stride_c,
+                          const int& batch_size)
 {
-    CHECK_CUBLAS(cublasZgemmStridedBatched(
-            handle,
-            GetCublasOperation(transa),
-            GetCublasOperation(transb),
-            m, n, k,
-            reinterpret_cast<const cuDoubleComplex*>(&alpha),
-            reinterpret_cast<const cuDoubleComplex*>(A), lda, stride_a,
-            reinterpret_cast<const cuDoubleComplex*>(B), ldb, stride_b,
-            reinterpret_cast<const cuDoubleComplex*>(&beta),
-            reinterpret_cast<cuDoubleComplex*>(C), ldc, stride_c,
-            batch_size));
+    CHECK_CUBLAS (cublasZgemmStridedBatched (handle,
+                                             GetCublasOperation (transa),
+                                             GetCublasOperation (transb),
+                                             m,
+                                             n,
+                                             k,
+                                             reinterpret_cast<const cuDoubleComplex*> (&alpha),
+                                             reinterpret_cast<const cuDoubleComplex*> (A),
+                                             lda,
+                                             stride_a,
+                                             reinterpret_cast<const cuDoubleComplex*> (B),
+                                             ldb,
+                                             stride_b,
+                                             reinterpret_cast<const cuDoubleComplex*> (&beta),
+                                             reinterpret_cast<cuDoubleComplex*> (C),
+                                             ldc,
+                                             stride_c,
+                                             batch_size));
 }
 
 } // namespace cuBlasConnector

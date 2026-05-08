@@ -15,4 +15,4 @@ class DFTU : public T
 
 #endif
 
-}
+} // namespace hamilt

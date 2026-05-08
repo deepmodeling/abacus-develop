@@ -10,25 +10,23 @@
  * - Tested functions of class atom_in:
  *   - map<string, int> atom_Z
  *     - get the atomic number
- * 
+ *
  *   - map<string, double> atom_RCS
  *     - get the atomic radius
- * 
+ *
  */
 
 class atom_in_test : public testing::Test
 {
-protected:
-
+  protected:
     atom_in Atomin;
     int a = Atomin.atom_Z["H"];
-    
 };
 
-TEST_F(atom_in_test, atomin)
-{   
-    EXPECT_EQ(atom_in_test::a, 1);
-    EXPECT_EQ(Atomin.atom_RCS["H"],0.603774);
-    EXPECT_EQ(Atomin.atom_symbol["H"],"Hydrogen");
-    EXPECT_EQ(Atomin.symbol_Z["Hydrogen"],1);
+TEST_F (atom_in_test, atomin)
+{
+    EXPECT_EQ (atom_in_test::a, 1);
+    EXPECT_EQ (Atomin.atom_RCS["H"], 0.603774);
+    EXPECT_EQ (Atomin.atom_symbol["H"], "Hydrogen");
+    EXPECT_EQ (Atomin.symbol_Z["Hydrogen"], 1);
 }

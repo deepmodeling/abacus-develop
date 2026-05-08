@@ -11,14 +11,15 @@
 
 #include <base/macros/macros.h>
 
-// TODO: 
+// TODO:
 // 1. add log system
 // 2. add exception system
 // 3. refact cmake system, use cmake parant scope to construct the libraries
 
 namespace ct = container;
 
-namespace container {
+namespace container
+{
 
 /**
  * @brief A multi-dimensional array of elements of a single data type.
@@ -29,27 +30,27 @@ namespace container {
  * This class is not thread-safe and should not be accessed by multiple threads
  * concurrently.
  */
-class Tensor {
+class Tensor
+{
   public:
-    
     /**
      * @brief Creates a 1-dimentional, 0-element float tensor.
-     * 
+     *
      * This constructor creates a new Tensor object. It can be used to initialize a tensor with
      * default values or to create an empty tensor.
      */
-    Tensor();
+    Tensor ();
 
     /**
      * @brief Explicit constructor for the Tensor class.
-     * 
+     *
      * This constructor creates a new Tensor object with the specified data type.
      * The constructor is marked as explicit, which means it requires an explicit
      * call and cannot be used for implicit type conversions.
-     * 
+     *
      * @param data_type The data type of the tensor elements.
      */
-    explicit Tensor(DataType data_type);
+    explicit Tensor (DataType data_type);
 
     /**
      * @brief Constructor that creates a tensor with the given data type and shape using the default allocator.
@@ -57,7 +58,7 @@ class Tensor {
      * @param data_type The data type of the tensor.
      * @param shape The shape of the tensor.
      */
-    Tensor(DataType data_type, const TensorShape& shape);
+    Tensor (DataType data_type, const TensorShape& shape);
 
     /**
      * @brief Construct a new Tensor object with the given data type, shape and device type.
@@ -68,9 +69,9 @@ class Tensor {
      * @param shape The shape of the tensor.
      * @param device The data type of the tensor.
      */
-    Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
+    Tensor (DataType data_type, DeviceType device, const TensorShape& shape);
 
-    Tensor(base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
+    Tensor (base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
 
     /**
      * @brief Construct a new Tensor object by copying another Tensor.
@@ -79,7 +80,7 @@ class Tensor {
      *
      * @param other The tensor to copy from.
      */
-    Tensor(const Tensor& other);
+    Tensor (const Tensor& other);
 
     /**
      * @brief Move constructor for the Tensor class.
@@ -90,9 +91,9 @@ class Tensor {
      *
      * @param other The rvalue reference to the source Tensor object to be moved.
      */
-    Tensor(Tensor&& other) noexcept;
-    
-    ~Tensor();
+    Tensor (Tensor&& other) noexcept;
+
+    ~Tensor ();
     /**
      * @brief Constructor for the Tensor class using an initializer list of values.
      *
@@ -104,48 +105,49 @@ class Tensor {
      * @param values The initializer list containing the values to populate the Tensor with.
      * @param device The device type where the Tensor will be allocated (default is CPU).
      */
-    template <typename T> 
-    Tensor(std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice) :
-        Tensor(DataTypeToEnum<T>::value, device, TensorShape({static_cast<int64_t>(values.size())})) {
-        TEMPLATE_ALL_2(this->data_type_, this->device_,
-            kernels::synchronize_memory<T, DEVICE_, DEVICE_CPU>()(
-                this->data<T>(), values.begin(), this->NumElements()))
-    }
+    template <typename T>
+    Tensor (std::initializer_list<T> values, DeviceType device = DeviceType::CpuDevice)
+        : Tensor (DataTypeToEnum<T>::value, device, TensorShape ({static_cast<int64_t> (values.size ())})){
+              TEMPLATE_ALL_2 (this->data_type_,
+                              this->device_,
+                              kernels::synchronize_memory<T, DEVICE_, DEVICE_CPU> () (this->data<T> (),
+                                                                                      values.begin (),
+                                                                                      this->NumElements ()))}
+
+          /**
+           * @brief Get the data type of the tensor.
+           *
+           * @return The data type of the tensor.
+           */
+          DataType data_type () const;
 
     /**
      * @brief Get the data type of the tensor.
      *
      * @return The data type of the tensor.
      */
-    DataType data_type() const;
-
-    /**
-     * @brief Get the data type of the tensor.
-     *
-     * @return The data type of the tensor.
-     */
-    DeviceType device_type() const;
+    DeviceType device_type () const;
 
     /**
      * @brief Get the shape of the tensor.
      *
      * @return The shape of the tensor.
      */
-    const TensorShape& shape() const;
+    const TensorShape& shape () const;
 
     /**
      * @brief Get the total number of elements in the tensor.
      *
      * @return The total number of elements in the tensor.
      */
-    int64_t NumElements() const;
+    int64_t NumElements () const;
 
     /**
      * @brief Get a pointer to the data buffer of the tensor.
      *
      * @return A void pointer to the data buffer of the tensor.
      */
-    void* data() const;
+    void* data () const;
 
     /**
      * @brief Get a typed pointer to the data buffer of the tensor.
@@ -161,18 +163,20 @@ class Tensor {
      * of the tensor. If the tensor is empty, the behavior is undefined.
      */
     template <typename T>
-    T* data() const {
-        if ((std::is_same<T, float>::value && data_type_ != DataType::DT_FLOAT) ||
-            (std::is_same<T, int>::value && data_type_ != DataType::DT_INT) ||
-            (std::is_same<T, int64_t>::value && data_type_ != DataType::DT_INT64) ||
-            (std::is_same<T, double>::value && data_type_ != DataType::DT_DOUBLE) ||
-            (std::is_same<T, std::complex<float>>::value && data_type_ != DataType::DT_COMPLEX) ||
-            (std::is_same<T, std::complex<double>>::value && data_type_ != DataType::DT_COMPLEX_DOUBLE))
-        {
-            std::cerr << "Tensor data type does not match requested type." << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        return buffer_->base<T>();
+    T*
+        data () const
+    {
+        if ((std::is_same<T, float>::value && data_type_ != DataType::DT_FLOAT)
+            || (std::is_same<T, int>::value && data_type_ != DataType::DT_INT)
+            || (std::is_same<T, int64_t>::value && data_type_ != DataType::DT_INT64)
+            || (std::is_same<T, double>::value && data_type_ != DataType::DT_DOUBLE)
+            || (std::is_same<T, std::complex<float>>::value && data_type_ != DataType::DT_COMPLEX)
+            || (std::is_same<T, std::complex<double>>::value && data_type_ != DataType::DT_COMPLEX_DOUBLE))
+            {
+                std::cerr << "Tensor data type does not match requested type." << std::endl;
+                exit (EXIT_FAILURE);
+            }
+        return buffer_->base<T> ();
     }
 
     /**
@@ -193,24 +197,27 @@ class Tensor {
      * DT_COMPLEX: 8 bytes (2 floats)
      * DT_COMPLEX_DOUBLE: 16 bytes (2 doubles)
      */
-    static size_t SizeOfType(DataType data_type) {
-        switch (data_type) {
+    static size_t
+        SizeOfType (DataType data_type)
+    {
+        switch (data_type)
+            {
             case DataType::DT_FLOAT:
-                return sizeof(float);
+                return sizeof (float);
             case DataType::DT_INT:
-                return sizeof(int32_t);
+                return sizeof (int32_t);
             case DataType::DT_INT64:
-                return sizeof(int64_t);
+                return sizeof (int64_t);
             case DataType::DT_DOUBLE:
-                return sizeof(double);
+                return sizeof (double);
             case DataType::DT_COMPLEX:
-                return sizeof(std::complex<float>);
+                return sizeof (std::complex<float>);
             case DataType::DT_COMPLEX_DOUBLE:
-                return sizeof(std::complex<double>);
+                return sizeof (std::complex<double>);
             default:
                 std::cerr << "Unsupported data type!" << std::endl;
-                exit(EXIT_FAILURE);
-        }
+                exit (EXIT_FAILURE);
+            }
     }
 
     /**
@@ -218,7 +225,7 @@ class Tensor {
      *
      * @return The TensorBuffer object that holds the data of the tensor.
      */
-    const TensorBuffer& buffer() const;
+    const TensorBuffer& buffer () const;
 
     /**
      * @brief Method to transform data from a given tensor object to the output tensor with a given device type
@@ -228,54 +235,62 @@ class Tensor {
      * @return Tensor A tensor object with data transformed to the output tensor
      */
     template <typename DEVICE>
-    Tensor to_device() const {
-        if (this->device_ == DeviceTypeToEnum<DEVICE>::value) {
-            return *this;
-        }
+    Tensor
+        to_device () const
+    {
+        if (this->device_ == DeviceTypeToEnum<DEVICE>::value)
+            {
+                return *this;
+            }
         // Create output tensor on device
-        Tensor output(this->data_type_, DeviceTypeToEnum<DEVICE>::value, this->shape_);
+        Tensor output (this->data_type_, DeviceTypeToEnum<DEVICE>::value, this->shape_);
 
         // Copy data to a specified device
         // TODO: move the memory operator into the tensor_buff class.
-        TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   kernels::synchronize_memory<T_, DEVICE, DEVICE_>()(
-                           output.data<T_>(), this->data<T_>(), this->NumElements()))
+        TEMPLATE_ALL_2 (this->data_type_,
+                        this->device_,
+                        kernels::synchronize_memory<T_, DEVICE, DEVICE_> () (output.data<T_> (),
+                                                                             this->data<T_> (),
+                                                                             this->NumElements ()))
 
         return output;
     }
 
     /**
      * @brief Copies data from a given device to the current tensor object.
-     * 
+     *
      * This function is designed to copy a given number of elements from a device-specific memory location
      * to the memory associated with this object. It ensures that the size of the data being copied does not exceed
      * the size of the destination tensor.
      *
      * @tparam DEVICE The device type from which the data will be copied.
      * @tparam T The data type of the elements being copied.
-     * 
+     *
      * @param data Pointer to the data array in the device memory that needs to be copied.
      * @param num_elements The number of elements to copy.
-     * 
-     * @pre The number of elements to copy (`num_elements`) must be less than or equal to the number of elements 
+     *
+     * @pre The number of elements to copy (`num_elements`) must be less than or equal to the number of elements
      *      in the destination tensor (`this->shape_.num_elements()`). If this condition is not met, the function
      *      will trigger an error through `REQUIRES_OK`.
-     * 
+     *
      * @note The function uses a template specialization `TEMPLATE_CZ_2` to handle the copying of memory
      *       based on the data type `T` and the device type `DEVICE`. It utilizes the `kernels::cast_memory`
      *       method to perform the actual memory copy operation.
      */
     template <typename DEVICE, typename T>
-    void copy_from_device(const T* data, int64_t num_elements = -1) {
-        if (num_elements == -1) {
-            num_elements = this->NumElements();
-        }
-        REQUIRES_OK(this->shape_.NumElements() >= num_elements,
-                    "The number of elements of the input data must match the number of elements of the tensor.")
+    void
+        copy_from_device (const T* data, int64_t num_elements = -1)
+    {
+        if (num_elements == -1)
+            {
+                num_elements = this->NumElements ();
+            }
+        REQUIRES_OK (this->shape_.NumElements () >= num_elements,
+                     "The number of elements of the input data must match the number of elements of the tensor.")
 
-        TEMPLATE_CZ_2(this->data_type_, this->device_,
-                   kernels::cast_memory<T_, T, DEVICE_, DEVICE>()(
-                           this->data<T_>(), data, num_elements))
+        TEMPLATE_CZ_2 (this->data_type_,
+                       this->device_,
+                       kernels::cast_memory<T_, T, DEVICE_, DEVICE> () (this->data<T_> (), data, num_elements))
     }
 
     /**
@@ -286,16 +301,20 @@ class Tensor {
      * @return Tensor A tensor object with data transformed to the output tensor
      */
     template <typename T>
-    Tensor cast() const {
+    Tensor
+        cast () const
+    {
         // Create output tensor on device
-        Tensor output(DataTypeToEnum<T>::value, this->device_, this->shape_);
+        Tensor output (DataTypeToEnum<T>::value, this->device_, this->shape_);
 
         // TODO: error handle of cast memory
         // TODO: move the memory operator into the tensor_buff class.
         // Copy data to a specified device
-        TEMPLATE_CZ_2(this->data_type_, this->device_,
-                   kernels::cast_memory<T, T_, DEVICE_, DEVICE_>()(
-                           output.data<T>(), this->data<T_>(), this->NumElements()))
+        TEMPLATE_CZ_2 (this->data_type_,
+                       this->device_,
+                       kernels::cast_memory<T, T_, DEVICE_, DEVICE_> () (output.data<T> (),
+                                                                         this->data<T_> (),
+                                                                         this->NumElements ()))
 
         return output;
     }
@@ -303,7 +322,7 @@ class Tensor {
     /**
      * @brief Set all elements in current tensor object to zero.
      */
-    void zero();
+    void zero ();
 
     /**
      * @brief Set all elements in current tensor object to zero.
@@ -312,7 +331,7 @@ class Tensor {
      *
      * @note There can be one -1 dimension in the input shape, indicates the auto reshape.
      */
-    void reshape(TensorShape shape);
+    void reshape (TensorShape shape);
 
     /**
      * @brief Set all elements in current tensor object to zero.
@@ -321,7 +340,7 @@ class Tensor {
      *
      * @note There can be one -1 dimension in the input shape, indicates the auto reshape.
      */
-    Tensor shaped(const TensorShape& shape) const;
+    Tensor shaped (const TensorShape& shape) const;
 
     /**
      * @brief Return a new Tensor slice starting at the specified indices with the given size.
@@ -333,7 +352,7 @@ class Tensor {
      *
      * @note Currently, this method only supports tensors with a ndim of less than or equal to 3.
      */
-    Tensor slice(const std::vector<int>& start, const std::vector<int>& size) const;
+    Tensor slice (const std::vector<int>& start, const std::vector<int>& size) const;
 
     /**
      * @brief Resize the tensor to the new shape.
@@ -348,7 +367,7 @@ class Tensor {
      *
      * @note This method will automatically zero the resized tensor object.
      */
-    void resize(const TensorShape& new_shape);
+    void resize (const TensorShape& new_shape);
 
     /**
      * @brief Get the Allocator object according to the given device type.
@@ -358,7 +377,7 @@ class Tensor {
      * @return The related Allocator class pointer.
      */
     // TODO: Delete this function, and use a singleton allocator class.
-    static base::core::Allocator* GetAllocator(DeviceType device);
+    static base::core::Allocator* GetAllocator (DeviceType device);
 
     /**
      * @brief Get the element at the specified indices.
@@ -371,16 +390,19 @@ class Tensor {
      * If the indices are out of bounds, the behavior is undefined.
      */
     template <typename T, typename... Indices>
-    T& get_value(Indices... indices) const {
-        if (sizeof...(Indices) != shape_.ndim()) {
-            throw std::invalid_argument("Incorrect number of indices.");
-        }
+    T&
+        get_value (Indices... indices) const
+    {
+        if (sizeof...(Indices) != shape_.ndim ())
+            {
+                throw std::invalid_argument ("Incorrect number of indices.");
+            }
 
         // Calculate the linear index corresponding to the given indices
-        size_t linearIndex = calculateLinearIndex(indices...);
+        size_t linearIndex = calculateLinearIndex (indices...);
 
         // Access the element at the calculated linear index
-        return *reinterpret_cast<T*>(data<T>() + linearIndex);
+        return *reinterpret_cast<T*> (data<T> () + linearIndex);
     }
 
     /**
@@ -395,19 +417,24 @@ class Tensor {
      * If the row index is out of bounds, the behavior is undefined.
      */
     template <typename T>
-    T* inner_most_ptr(const int &index) const {
-        if (shape_.ndim() > 2) {
-            throw std::invalid_argument("Invalid call, inner_most_ptr only support tensor rank <= 2!");
-        }
-        if (index > shape_.dim_size(static_cast<int>(shape_.ndim() - 2))) {
-            throw std::invalid_argument("Invalid index, index of the inner-most must less than the inner-most shape size!");
-        }
-        if (shape_.ndim() == 1) {
-            return data<T>() + index;
-        }
-        return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
+    T*
+        inner_most_ptr (const int& index) const
+    {
+        if (shape_.ndim () > 2)
+            {
+                throw std::invalid_argument ("Invalid call, inner_most_ptr only support tensor rank <= 2!");
+            }
+        if (index > shape_.dim_size (static_cast<int> (shape_.ndim () - 2)))
+            {
+                throw std::invalid_argument (
+                    "Invalid index, index of the inner-most must less than the inner-most shape size!");
+            }
+        if (shape_.ndim () == 1)
+            {
+                return data<T> () + index;
+            }
+        return data<T> () + index * shape_.dim_size (static_cast<int> (shape_.ndim ()) - 1);
     }
-
 
     /**
      * @brief Equality comparison operator for tensors.
@@ -418,7 +445,7 @@ class Tensor {
      * @param other The tensor to compare with.
      * @return True if the tensors are equal, otherwise false.
      */
-    bool operator==(const Tensor& other) const;
+    bool operator== (const Tensor& other) const;
 
     /**
      * @brief Assignment operator overload for the Tensor class.
@@ -429,7 +456,7 @@ class Tensor {
      * @param other The source Tensor object whose values will be assigned.
      * @return A reference to the current Tensor object after the assignment.
      */
-    Tensor& operator=(const Tensor& other);
+    Tensor& operator= (const Tensor& other);
 
     /**
      * @brief Move assignment operator overload for the Tensor class.
@@ -442,7 +469,7 @@ class Tensor {
      * @return A reference to the current Tensor object after the move assignment.
      * @note This function is declared as noexcept, indicating that it does not throw exceptions.
      */
-    Tensor& operator=(Tensor&& other) noexcept;
+    Tensor& operator= (Tensor&& other) noexcept;
 
     /**
      * @brief Copy the data from another tensor into this tensor.
@@ -454,7 +481,7 @@ class Tensor {
      * @return Returns true if the copy was successful, false otherwise.
      * @note The current tensor will share the same underlying storage as the source tensor.
      */
-    bool CopyFrom(const Tensor& other);
+    bool CopyFrom (const Tensor& other);
 
     /**
      * @brief Copy the data from another tensor into this tensor while reshaping it.
@@ -470,7 +497,7 @@ class Tensor {
      * @note The function returns true if the number of elements in `other.shape()` matches the
      *       number of elements in the given `shape`.
      */
-    bool CopyFrom(const Tensor& other, const TensorShape& shape);
+    bool CopyFrom (const Tensor& other, const TensorShape& shape);
 
     /**
      * @brief Copies data from another Tensor with memory allocation and specified shape.
@@ -483,32 +510,35 @@ class Tensor {
      * @param shape The TensorShape specifying the shape of the newly allocated memory.
      * @return Returns true if the copy and allocation were successful, false otherwise.
      */
-    bool AllocateFrom(const Tensor& other, const TensorShape& shape);
+    bool AllocateFrom (const Tensor& other, const TensorShape& shape);
 
     /**
      * @brief Accessor function for a multi-dimensional tensor.
-     * 
+     *
      * This function provides read-only access to the data of a tensor with a specific rank.
      * It performs checks to ensure that the rank of the tensor matches the rank of the accessor.
-     * 
+     *
      * @tparam T The data type of the elements.
      * @tparam N The number of dimensions.
-     * 
+     *
      * @return A TensorAccessor object for accessing the tensor's data.
      */
     template <typename T, size_t N, typename index_t = int64_t>
-    TensorAccessor<T, N, index_t> accessor() const& {
+    TensorAccessor<T, N, index_t>
+        accessor () const&
+    {
         // Check if the tensor's rank is greater than 0
-        static_assert(N > 0, 
-            "Accessor is used to access the data of a tensor with rank > 0, for scalars use *data<T>()");
+        static_assert (N > 0,
+                       "Accessor is used to access the data of a tensor with rank > 0, for scalars use *data<T>()");
         // Check if the rank of the tensor matches the rank of the accessor
-        REQUIRES_OK(this->shape_.ndim() == N, 
-            "The rank of the tensor must match the rank of the accessor.")
+        REQUIRES_OK (this->shape_.ndim () == N, "The rank of the tensor must match the rank of the accessor.")
         // Create and return a TensorAccessor object
-        return TensorAccessor<T, N, index_t>(this->data<T>(), this->shape_.dims().data(), this->shape_.strides().data());
+        return TensorAccessor<T, N, index_t> (this->data<T> (),
+                                              this->shape_.dims ().data (),
+                                              this->shape_.strides ().data ());
     }
-    template<typename T, size_t N, typename index_t = int>
-    TensorAccessor<T, N, index_t> accessor() && = delete;
+    template <typename T, size_t N, typename index_t = int>
+    TensorAccessor<T, N, index_t> accessor () && = delete;
 
     /**
      * @brief Synchronize the current Tensor with another Tensor.
@@ -517,7 +547,7 @@ class Tensor {
      *
      * @param rhs The Tensor to synchronize with.
      */
-    void sync(const Tensor& rhs);
+    void sync (const Tensor& rhs);
 
     /**
      * @brief Access a sub-Tensor based on an index.
@@ -529,18 +559,22 @@ class Tensor {
      */
     Tensor operator[] (const int& index) const;
 
-    explicit operator bool() const {
-        return this->NumElements() > 0;
+    explicit
+        operator bool () const
+    {
+        return this->NumElements () > 0;
     }
 
-    template<typename T>
-    void set_value(T value) {
-        TEMPLATE_ALL_2(this->data_type_, this->device_,
-            kernels::set_memory<T, DEVICE_>()(this->data<T>(), value, this->NumElements()))
+    template <typename T>
+    void
+        set_value (T value)
+    {
+        TEMPLATE_ALL_2 (this->data_type_,
+                        this->device_,
+                        kernels::set_memory<T, DEVICE_> () (this->data<T> (), value, this->NumElements ()))
     }
 
-protected:
-
+  protected:
     /**
      * @brief The data type of the tensor.
      */
@@ -574,38 +608,45 @@ protected:
      * multiplying each index by the corresponding stride.
      */
     template <typename... Indices>
-    size_t calculateLinearIndex(Indices... indices) const {
+    size_t
+        calculateLinearIndex (Indices... indices) const
+    {
         size_t stride = 1;
         size_t linearIndex = 0;
-        size_t indexArray[] = { static_cast<size_t>(indices)... };
+        size_t indexArray[] = {static_cast<size_t> (indices)...};
 
-        for (int ii = static_cast<int>(shape_.ndim()) - 1; ii >= 0; --ii) {
-            linearIndex += indexArray[ii] * stride;
-            stride *= shape_.dim_size(ii);
-        }
+        for (int ii = static_cast<int> (shape_.ndim ()) - 1; ii >= 0; --ii)
+            {
+                linearIndex += indexArray[ii] * stride;
+                stride *= shape_.dim_size (ii);
+            }
         return linearIndex;
     }
 
-    // This function is used to copy data and properties from another Tensor instance, 'other', into the current Tensor instance.
-    // The 'shape' parameter specifies the new shape for the current Tensor.
-    inline void CopyFromInternal(const Tensor& other, const TensorShape& shape) {
+    // This function is used to copy data and properties from another Tensor instance, 'other', into the current Tensor
+    // instance. The 'shape' parameter specifies the new shape for the current Tensor.
+    inline void
+        CopyFromInternal (const Tensor& other, const TensorShape& shape)
+    {
         // Copy the data type and device from the 'other' Tensor.
         data_type_ = other.data_type_;
         device_ = other.device_;
         // Set the shape of the current Tensor to the provided 'shape'.
         shape_ = shape;
         // Check if the buffer of the current Tensor is different from the buffer of the 'other' Tensor.
-        if (buffer_ != other.buffer_) {
-            // If the current Tensor has a buffer, decrease its reference count.
-            // Note this could indicate a deleted of current buffer_
-            if (buffer_) buffer_->unref();
-            // Assign the buffer of the 'other' Tensor to the current Tensor's buffer.
-            buffer_ = other.buffer_;
-            // Increase the reference count of the buffer to indicate shared ownership.
-            if (buffer_) buffer_->ref();
-        }
+        if (buffer_ != other.buffer_)
+            {
+                // If the current Tensor has a buffer, decrease its reference count.
+                // Note this could indicate a deleted of current buffer_
+                if (buffer_)
+                    buffer_->unref ();
+                // Assign the buffer of the 'other' Tensor to the current Tensor's buffer.
+                buffer_ = other.buffer_;
+                // Increase the reference count of the buffer to indicate shared ownership.
+                if (buffer_)
+                    buffer_->ref ();
+            }
     }
-
 };
 
 /**
@@ -618,7 +659,7 @@ protected:
  *
  * @return The output stream.
  */
-std::ostream& operator<<(std::ostream& os, const Tensor& tensor);
+std::ostream& operator<< (std::ostream& os, const Tensor& tensor);
 
 } // namespace container
 

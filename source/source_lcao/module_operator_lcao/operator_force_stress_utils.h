@@ -5,7 +5,8 @@
 #include "source_cell/unitcell.h"
 #include <vector>
 
-namespace OperatorForceStress {
+namespace OperatorForceStress
+{
 
 /**
  * @brief Setup step_trace array for handling npol (spin polarization)
@@ -17,15 +18,16 @@ namespace OperatorForceStress {
  * @param col_size Number of columns in the density matrix block
  * @param step_trace Output vector to store step trace values
  */
-inline void setup_step_trace(int npol, int col_size, std::vector<int>& step_trace)
+inline void
+    setup_step_trace (int npol, int col_size, std::vector<int>& step_trace)
 {
-    step_trace.resize(npol * npol, 0);
+    step_trace.resize (npol * npol, 0);
     if (npol == 2)
-    {
-        step_trace[1] = 1;
-        step_trace[2] = col_size;
-        step_trace[3] = col_size + 1;
-    }
+        {
+            step_trace[1] = 1;
+            step_trace[2] = col_size;
+            step_trace[3] = col_size + 1;
+        }
 }
 
 /**
@@ -33,10 +35,10 @@ inline void setup_step_trace(int npol, int col_size, std::vector<int>& step_trac
  */
 struct OrbitalQuantumNumbers
 {
-    int L;  ///< Angular momentum quantum number
-    int N;  ///< Principal quantum number
-    int m;  ///< Magnetic quantum number (internal indexing)
-    int M;  ///< Magnetic quantum number (standard convention)
+    int L; ///< Angular momentum quantum number
+    int N; ///< Principal quantum number
+    int m; ///< Magnetic quantum number (internal indexing)
+    int M; ///< Magnetic quantum number (standard convention)
 };
 
 /**
@@ -46,7 +48,8 @@ struct OrbitalQuantumNumbers
  * @param iw Orbital index within the atom
  * @return OrbitalQuantumNumbers structure with L, N, m, M values
  */
-inline OrbitalQuantumNumbers get_orbital_qn(const Atom& atom, int iw)
+inline OrbitalQuantumNumbers
+    get_orbital_qn (const Atom& atom, int iw)
 {
     OrbitalQuantumNumbers qn;
     qn.L = atom.iw2l[iw];
@@ -62,13 +65,15 @@ inline OrbitalQuantumNumbers get_orbital_qn(const Atom& atom, int iw)
  * Template specialization handles both std::complex<T> and double types
  */
 template <typename T>
-inline double get_real_part(const T& val)
+inline double
+    get_real_part (const T& val)
 {
-    return val.real();
+    return val.real ();
 }
 
 template <>
-inline double get_real_part<double>(const double& val)
+inline double
+    get_real_part<double> (const double& val)
 {
     return val;
 }
@@ -81,7 +86,8 @@ inline double get_real_part<double>(const double& val)
  *
  * @param stress Matrix to rearrange (must be at least 3x3)
  */
-inline void rearrange_stress_matrix(ModuleBase::matrix& stress)
+inline void
+    rearrange_stress_matrix (ModuleBase::matrix& stress)
 {
     stress.c[8] = stress.c[5]; // stress(2,2)
     stress.c[7] = stress.c[4]; // stress(2,1)
@@ -109,15 +115,14 @@ inline void rearrange_stress_matrix(ModuleBase::matrix& stress)
  * @param force_factor Multiplicative factor for force (default: 2.0 for Hermitian)
  * @param stress_factor Multiplicative factor for stress (default: 2.0 for Hermitian)
  */
-void finalize_force_stress(
-    bool cal_force,
-    bool cal_stress,
-    const UnitCell* ucell,
-    const std::vector<double>& stress_tmp,
-    ModuleBase::matrix& force,
-    ModuleBase::matrix& stress,
-    double force_factor = 2.0,
-    double stress_factor = 2.0);
+void finalize_force_stress (bool cal_force,
+                            bool cal_stress,
+                            const UnitCell* ucell,
+                            const std::vector<double>& stress_tmp,
+                            ModuleBase::matrix& force,
+                            ModuleBase::matrix& stress,
+                            double force_factor = 2.0,
+                            double stress_factor = 2.0);
 
 } // namespace OperatorForceStress
 

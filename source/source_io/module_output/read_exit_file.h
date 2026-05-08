@@ -16,7 +16,7 @@ namespace ModuleIO
  * @return 1 if the file is found and contains "stop_ion", the current execution stops at the next ionic step
  * @return 2 if the file is found and contains "stop_elec", the current execution stops at the next electronic step
  */
-int read_exit_file(const int& my_rank, const std::string& filename, std::ofstream& ofs_running);
+int read_exit_file (const int& my_rank, const std::string& filename, std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif

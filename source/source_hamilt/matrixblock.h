@@ -5,7 +5,8 @@
 namespace hamilt
 {
 
-template <typename T> struct MatrixBlock
+template <typename T>
+struct MatrixBlock
 {
     /* this is a simple template block of a matrix
        would change to Eigen in the future */

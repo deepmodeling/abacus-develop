@@ -26,7 +26,7 @@ namespace ModuleBase
  * @param file The file where warning happens
  * @param description The warning information
  */
-void WARNING(const std::string &file, const std::string &description);
+void WARNING (const std::string& file, const std::string& description);
 
 /**
  * @brief Inject the global output directory used by QUIT/WARNING_QUIT/CHECK_WARNING_QUIT
@@ -35,19 +35,19 @@ void WARNING(const std::string &file, const std::string &description);
  * Caller-injected (typically once after input parameters are read).
  * If never set, paths fall back to CWD.
  */
-void set_quit_out_dir(const std::string& dir);
+void set_quit_out_dir (const std::string& dir);
 
 /**
  * @brief Close .log files and exit
  *
  */
-[[noreturn]] void QUIT(void);
+[[noreturn]] void QUIT ();
 
 /**
  * @brief Close .log files and exit
  *
  */
-[[noreturn]] void QUIT(int ret);
+[[noreturn]] void QUIT (int ret);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -55,7 +55,7 @@ void set_quit_out_dir(const std::string& dir);
  * @param file The file where warning happens
  * @param description The warning information
  */
-[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description);
+[[noreturn]] void WARNING_QUIT (const std::string& file, const std::string& description);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -63,7 +63,7 @@ void set_quit_out_dir(const std::string& dir);
  * @param file The file where warning happens
  * @param description The warning information
  */
-[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description, int ret);
+[[noreturn]] void WARNING_QUIT (const std::string& file, const std::string& description, int ret);
 
 /**
  * @brief Check, if true, WARNING_QUIT
@@ -71,7 +71,10 @@ void set_quit_out_dir(const std::string& dir);
  * @param file The file where warning happens
  * @param description The warning information
  */
-void CHECK_WARNING_QUIT(const bool error, const std::string &file,const std::string &calculation,const std::string &description);
+void CHECK_WARNING_QUIT (const bool error,
+                         const std::string& file,
+                         const std::string& calculation,
+                         const std::string& description);
 
 } // namespace ModuleBase
 

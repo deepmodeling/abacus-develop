@@ -10,42 +10,43 @@
 namespace elecstate
 {
 
-const double* ElecState::getRho(int spin) const
+const double*
+    ElecState::getRho (int spin) const
 {
     return &(this->charge->rho[spin][0]);
 }
 
-
-
-void ElecState::init_nelec_spin()
+void
+    ElecState::init_nelec_spin ()
 {
-    this->nelec_spin.resize(PARAM.inp.nspin);
+    this->nelec_spin.resize (PARAM.inp.nspin);
     if (PARAM.inp.nspin == 2)
-    {
-        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
-        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
-    }
+        {
+            this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
+            this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
+        }
 }
 
-void ElecState::init_scf(const UnitCell& ucell,
+void
+    ElecState::init_scf (const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac, 
+                         const ModuleBase::ComplexMatrix& strucfac,
                          const bool* numeric,
-                         ModuleSymmetry::Symmetry& symm, 
+                         ModuleSymmetry::Symmetry& symm,
                          const void* wfcpw)
 {
     //! core correction potential.
-    this->charge->set_rho_core(ucell,strucfac, numeric);
+    this->charge->set_rho_core (ucell, strucfac, numeric);
 
     //! renormalize the charge density
-    this->charge->renormalize_rho();
+    this->charge->renormalize_rho ();
 
     //! initialize the potential
-    this->pot->init_pot(this->charge);
+    this->pot->init_pot (this->charge);
 }
 
-
-void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
+void
+    ElecState::init_ks (Charge* chr_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
@@ -54,10 +55,10 @@ void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
     this->klist = klist_in;
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
-    this->init_nelec_spin();
+    this->init_nelec_spin ();
     // initialize ekb and wg
-    this->ekb.create(nk_in, PARAM.globalv.nbands_l);
-    this->wg.create(nk_in, PARAM.globalv.nbands_l);
+    this->ekb.create (nk_in, PARAM.globalv.nbands_l);
+    this->wg.create (nk_in, PARAM.globalv.nbands_l);
 }
 
 } // namespace elecstate

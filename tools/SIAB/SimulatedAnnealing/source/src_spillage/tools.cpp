@@ -1,6 +1,6 @@
 #include "tools.h"
 
-//plane wave , mohan add 2010-06-14
+// plane wave , mohan add 2010-06-14
 PW_Basis PW;
 MultiZeta mz;
 Read_INPUT input;
@@ -25,11 +25,11 @@ int NE = -1;
 // global information
 int STRNUM = -1;
 int NTYPE = -1;
-string *LABEL;
-int *NA;
-double **CARPOSX;
-double **CARPOSY;
-double **CARPOSZ;
+string* LABEL;
+int* NA;
+double** CARPOSX;
+double** CARPOSY;
+double** CARPOSZ;
 Matrix3 LATVEC;
 
 // plane wave information
@@ -37,15 +37,15 @@ bool USEPW = true;
 double LAT0 = -1.0;
 
 // k points
-double *CARKX;
-double *CARKY;
-double *CARKZ;
+double* CARKX;
+double* CARKY;
+double* CARKZ;
 
 // orbital + energy cutoff
 double ECUT = -1.0;
 double ECUT_JLQ = -1.0;
 double RCUT = -1.0;
-bool SMOOTH = false;  
+bool SMOOTH = false;
 double SIGMA = -0.1;
 double TOLERENCE = 1.0e-12;
 int LMAXALL = -1;
@@ -54,9 +54,9 @@ int NMAXUSED = -1;
 int NCHIUSED = -1;
 
 // band information
-bool BANDS_CONTROL=false; // mohan add 2010-05-02
-int BANDS_START=0;
-int BANDS_END=0; // needed to be checked carefully if not read in. 
+bool BANDS_CONTROL = false; // mohan add 2010-05-02
+int BANDS_START = 0;
+int BANDS_END = 0; // needed to be checked carefully if not read in.
 
 // other global information
 int CALSPI = 0; // mohan 2010-06-17
@@ -71,45 +71,43 @@ double ACCEPTANCE_HIGH = 0.6;
 double ACCEPTANCE_LOW = 0.3;
 
 double KINETIC_MAX = 30.0; // (unit?????)
-double KINETIC_DR = 0.01; //
-int OPTIMIZE_METHOD = 1; // 1: Kin 2: Ecut
+double KINETIC_DR = 0.01;  //
+int OPTIMIZE_METHOD = 1;   // 1: Kin 2: Ecut
 
 // constant
 const double PI = 3.1415926535897;
 const double TWO_PI = 2.0 * PI;
 const double FOUR_PI = 4.0 * PI;
-const double SQRT_INVERSE_FOUR_PI = sqrt(1.0/FOUR_PI);
-const std::complex<double> IMAG_UNIT = std::complex<double>(0, 1.0);
-const std::complex<double> NEG_IMAG_UNIT = std::complex<double>(0,-1.0);
+const double SQRT_INVERSE_FOUR_PI = sqrt (1.0 / FOUR_PI);
+const std::complex<double> IMAG_UNIT = std::complex<double> (0, 1.0);
+const std::complex<double> NEG_IMAG_UNIT = std::complex<double> (0, -1.0);
 const double PI_HALF = PI / 2.0;
 const double SQRT2 = 1.41421356237309504880;
 
 // read wavefunction
 string WFC_FILE = "WAVEFUNC.dat";
 
-void DESTROY(void)
+void
+    DESTROY ()
 {
-	if(NTYPE>0)
-	{
-		delete[] LABEL;
-		delete[] NA;
-		for(int i=0; i<NTYPE; i++)
-		{
-			delete[] CARPOSX[i];
-			delete[] CARPOSY[i];
-			delete[] CARPOSZ[i];
-		}
-		delete[] CARPOSX;
-		delete[] CARPOSY;
-		delete[] CARPOSZ;
-	}
-	if(NKS>0)
-	{
-		delete[] CARKX;
-		delete[] CARKY;
-		delete[] CARKZ;
-	}
+    if (NTYPE > 0)
+        {
+            delete[] LABEL;
+            delete[] NA;
+            for (int i = 0; i < NTYPE; i++)
+                {
+                    delete[] CARPOSX[i];
+                    delete[] CARPOSY[i];
+                    delete[] CARPOSZ[i];
+                }
+            delete[] CARPOSX;
+            delete[] CARPOSY;
+            delete[] CARPOSZ;
+        }
+    if (NKS > 0)
+        {
+            delete[] CARKX;
+            delete[] CARKY;
+            delete[] CARKZ;
+        }
 }
-
-
-

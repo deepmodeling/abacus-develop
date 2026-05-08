@@ -57,26 +57,31 @@ struct CalculationResult
     bool has_stress = false;
 
     // Electronic structure info
-    double fermi_energy = 0.0;  // in eV
-    double bandgap = 0.0;       // in eV
+    double fermi_energy = 0.0; // in eV
+    double bandgap = 0.0;      // in eV
     int nat = 0;
     int ntype = 0;
     int nbands = 0;
     int nks = 0;
 
     // Output file tracking
-    std::string output_dir = "";   // Path to OUT.$suffix folder
-    std::string log_file = "";     // Path to the main log file
-    std::map<std::string, std::string> output_files;  // filename -> full path
+    std::string output_dir = "";                     // Path to OUT.$suffix folder
+    std::string log_file = "";                       // Path to the main log file
+    std::map<std::string, std::string> output_files; // filename -> full path
 
     // Unit conversion constants
     static constexpr double Ry_to_eV = 13.605693122994;
     static constexpr double Bohr_to_Ang = 0.529177249;
 
     // Convenience methods
-    double etot_eV() const { return etot * Ry_to_eV; }
+    double
+        etot_eV () const
+    {
+        return etot * Ry_to_eV;
+    }
 
-    py::dict get_energies() const
+    py::dict
+        get_energies () const
     {
         py::dict result;
         result["etot"] = etot;
@@ -91,27 +96,29 @@ struct CalculationResult
         return result;
     }
 
-    py::array_t<double> get_forces_eV_Ang() const
+    py::array_t<double>
+        get_forces_eV_Ang () const
     {
         if (!has_forces)
-        {
-            throw std::runtime_error("Forces not available. Set calculate_force=True.");
-        }
+            {
+                throw std::runtime_error ("Forces not available. Set calculate_force=True.");
+            }
         // Convert from Ry/Bohr to eV/Ang
-        auto buf = forces.request();
-        auto result = py::array_t<double>(buf.shape);
-        auto result_buf = result.request();
-        double* src = static_cast<double*>(buf.ptr);
-        double* dst = static_cast<double*>(result_buf.ptr);
+        auto buf = forces.request ();
+        auto result = py::array_t<double> (buf.shape);
+        auto result_buf = result.request ();
+        double* src = static_cast<double*> (buf.ptr);
+        double* dst = static_cast<double*> (result_buf.ptr);
         double factor = Ry_to_eV / Bohr_to_Ang;
         for (ssize_t i = 0; i < buf.size; ++i)
-        {
-            dst[i] = src[i] * factor;
-        }
+            {
+                dst[i] = src[i] * factor;
+            }
         return result;
     }
 
-    std::string summary() const
+    std::string
+        summary () const
     {
         std::ostringstream ss;
         ss << "=== ABACUS Calculation Result ===\n";
@@ -119,49 +126,49 @@ struct CalculationResult
         ss << "SCF iterations: " << niter << "\n";
         ss << "Final drho: " << std::scientific << drho << "\n";
         ss << "\nEnergies:\n";
-        ss << std::fixed << std::setprecision(8);
+        ss << std::fixed << std::setprecision (8);
         ss << "  Total energy: " << etot << " Ry (" << etot * Ry_to_eV << " eV)\n";
         ss << "  Band energy:  " << eband << " Ry\n";
         ss << "  Hartree:      " << hartree_energy << " Ry\n";
         ss << "  XC energy:    " << etxc << " Ry\n";
         ss << "  Ewald:        " << ewald_energy << " Ry\n";
         if (has_forces)
-        {
-            ss << "\nForces: calculated (" << nat << " atoms)\n";
-        }
+            {
+                ss << "\nForces: calculated (" << nat << " atoms)\n";
+            }
         if (has_stress)
-        {
-            ss << "Stress: calculated\n";
-        }
+            {
+                ss << "Stress: calculated\n";
+            }
         ss << "\nSystem info:\n";
         ss << "  Atoms: " << nat << ", Types: " << ntype << "\n";
         ss << "  Bands: " << nbands << ", K-points: " << nks << "\n";
         if (fermi_energy != 0.0)
-        {
-            ss << "  Fermi energy: " << fermi_energy << " eV\n";
-        }
+            {
+                ss << "  Fermi energy: " << fermi_energy << " eV\n";
+            }
         if (bandgap > 0.0)
-        {
-            ss << "  Band gap: " << bandgap << " eV\n";
-        }
+            {
+                ss << "  Band gap: " << bandgap << " eV\n";
+            }
         // Output file tracking
-        if (!output_dir.empty())
-        {
-            ss << "\nOutput:\n";
-            ss << "  Directory: " << output_dir << "\n";
-            if (!log_file.empty())
+        if (!output_dir.empty ())
             {
-                // Extract just the filename from the path
-                size_t pos = log_file.find_last_of("/\\");
-                std::string log_filename = (pos != std::string::npos) ? log_file.substr(pos + 1) : log_file;
-                ss << "  Log file: " << log_filename << "\n";
+                ss << "\nOutput:\n";
+                ss << "  Directory: " << output_dir << "\n";
+                if (!log_file.empty ())
+                    {
+                        // Extract just the filename from the path
+                        size_t pos = log_file.find_last_of ("/\\");
+                        std::string log_filename = (pos != std::string::npos) ? log_file.substr (pos + 1) : log_file;
+                        ss << "  Log file: " << log_filename << "\n";
+                    }
+                if (!output_files.empty ())
+                    {
+                        ss << "  Files: " << output_files.size () << " output files\n";
+                    }
             }
-            if (!output_files.empty())
-            {
-                ss << "  Files: " << output_files.size() << " output files\n";
-            }
-        }
-        return ss.str();
+        return ss.str ();
     }
 };
 
@@ -177,13 +184,13 @@ struct CalculationResult
  */
 class PyDriver
 {
-public:
-    PyDriver();
-    ~PyDriver();
+  public:
+    PyDriver ();
+    ~PyDriver ();
 
     // Disable copy
-    PyDriver(const PyDriver&) = delete;
-    PyDriver& operator=(const PyDriver&) = delete;
+    PyDriver (const PyDriver&) = delete;
+    PyDriver& operator= (const PyDriver&) = delete;
 
     /**
      * @brief Run a complete DFT calculation
@@ -200,30 +207,36 @@ public:
      * @param verbosity Output verbosity level (0=silent, 1=normal, 2=verbose)
      * @return CalculationResult containing all results
      */
-    CalculationResult run(
-        const std::string& input_dir = ".",
-        const std::string& input_file = "",
-        const std::string& stru_file = "",
-        const std::string& kpt_file = "",
-        const std::string& pseudo_dir = "",
-        const std::string& orbital_dir = "",
-        const std::string& output_dir = "",
-        bool calculate_force = true,
-        bool calculate_stress = false,
-        int verbosity = 1
-    );
+    CalculationResult run (const std::string& input_dir = ".",
+                           const std::string& input_file = "",
+                           const std::string& stru_file = "",
+                           const std::string& kpt_file = "",
+                           const std::string& pseudo_dir = "",
+                           const std::string& orbital_dir = "",
+                           const std::string& output_dir = "",
+                           bool calculate_force = true,
+                           bool calculate_stress = false,
+                           int verbosity = 1);
 
     /**
      * @brief Check if the driver is ready for calculation
      */
-    bool is_ready() const { return initialized_; }
+    bool
+        is_ready () const
+    {
+        return initialized_;
+    }
 
     /**
      * @brief Get the last calculation result
      */
-    const CalculationResult& get_last_result() const { return last_result_; }
+    const CalculationResult&
+        get_last_result () const
+    {
+        return last_result_;
+    }
 
-private:
+  private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 
@@ -231,17 +244,17 @@ private:
     CalculationResult last_result_;
 
     // Internal methods
-    void initialize_context();
-    void cleanup_context();
-    void read_input(const std::string& input_dir,
-                    const std::string& input_file,
-                    const std::string& stru_file,
-                    const std::string& kpt_file,
-                    const std::string& pseudo_dir,
-                    const std::string& orbital_dir,
-                    const std::string& output_dir);
-    void setup_output(const std::string& output_dir, int verbosity);
-    CalculationResult collect_results(bool calculate_force, bool calculate_stress);
+    void initialize_context ();
+    void cleanup_context ();
+    void read_input (const std::string& input_dir,
+                     const std::string& input_file,
+                     const std::string& stru_file,
+                     const std::string& kpt_file,
+                     const std::string& pseudo_dir,
+                     const std::string& orbital_dir,
+                     const std::string& output_dir);
+    void setup_output (const std::string& output_dir, int verbosity);
+    CalculationResult collect_results (bool calculate_force, bool calculate_stress);
 };
 
 } // namespace py_driver

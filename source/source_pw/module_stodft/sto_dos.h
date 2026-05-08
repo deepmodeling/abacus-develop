@@ -10,14 +10,14 @@ template <typename FPTYPE, typename Device>
 class Sto_DOS
 {
   public:
-    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-            K_Vectors* p_kv_in,
-            elecstate::ElecState* p_elec_in,
-            psi::Psi<std::complex<double>>* p_psi_in,
-            hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-            StoChe<FPTYPE, Device>& stoche,
-            Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
-    ~Sto_DOS();
+    Sto_DOS (ModulePW::PW_Basis_K* p_wfcpw_in,
+             K_Vectors* p_kv_in,
+             elecstate::ElecState* p_elec_in,
+             psi::Psi<std::complex<double>>* p_psi_in,
+             hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+             StoChe<FPTYPE, Device>& stoche,
+             Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
+    ~Sto_DOS ();
 
     /**
      * @brief decide the parameters for the DOS calculation
@@ -31,14 +31,14 @@ class Sto_DOS
      * @param dos_emax_ev Emax input for DOS
      * @param dos_scale dos_scale input for DOS
      */
-    void decide_param(const int& dos_nche,
-                      const double& emin_sto,
-                      const double& emax_sto,
-                      const bool& dos_setemin,
-                      const bool& dos_setemax,
-                      const double& dos_emin_ev,
-                      const double& dos_emax_ev,
-                      const double& dos_scale);
+    void decide_param (const int& dos_nche,
+                       const double& emin_sto,
+                       const double& emax_sto,
+                       const bool& dos_setemin,
+                       const bool& dos_setemax,
+                       const double& dos_emin_ev,
+                       const double& dos_emax_ev,
+                       const double& dos_scale);
     /**
      * @brief Calculate DOS using stochastic wavefunctions
      *
@@ -46,7 +46,7 @@ class Sto_DOS
      * @param de       energy step
      * @param npart    number of parts to reduce the memory usage
      */
-    void caldos(const double sigmain, const double de, const int npart);
+    void caldos (const double sigmain, const double de, const int npart);
 
   protected:
     int nbands_ks = 0;                               ///< number of KS bands

@@ -24,21 +24,21 @@ class HSolverPW
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-              const std::string calculation_type_in,
-              const std::string basis_type_in,
-              const std::string method_in,
-              const bool use_uspp_in,
-              const int nspin_in,
-              const int scf_iter_in,
-              const int diag_iter_max_in,
-              const double diag_thr_in,
-              const bool need_subspace_in,
-              const bool use_k_continuity_in = false)
-        : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
-          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
-          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
-          use_k_continuity(use_k_continuity_in) {};
+    HSolverPW (ModulePW::PW_Basis_K* wfc_basis_in,
+               const std::string calculation_type_in,
+               const std::string basis_type_in,
+               const std::string method_in,
+               const bool use_uspp_in,
+               const int nspin_in,
+               const int scf_iter_in,
+               const int diag_iter_max_in,
+               const double diag_thr_in,
+               const bool need_subspace_in,
+               const bool use_k_continuity_in = false)
+        : wfc_basis (wfc_basis_in), calculation_type (calculation_type_in), basis_type (basis_type_in),
+          method (method_in), use_uspp (use_uspp_in), nspin (nspin_in), scf_iter (scf_iter_in),
+          diag_iter_max (diag_iter_max_in), diag_thr (diag_thr_in), need_subspace (need_subspace_in),
+          use_k_continuity (use_k_continuity_in) {};
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -46,29 +46,28 @@ class HSolverPW
     /// @param pes interface to elecstate
     /// @param method_in dav or cg
     /// @param skip_charge
-    void solve(hamilt::Hamilt<T, Device>* pHamilt,
-               psi::Psi<T, Device>& psi,
-               elecstate::ElecState* pes,
-               double* out_eigenvalues,
-               const int rank_in_pool_in,
-               const int nproc_in_pool_in,
-               const bool skip_charge,
-               const double tpiba,
-               const int nat);
-
+    void solve (hamilt::Hamilt<T, Device>* pHamilt,
+                psi::Psi<T, Device>& psi,
+                elecstate::ElecState* pes,
+                double* out_eigenvalues,
+                const int rank_in_pool_in,
+                const int nproc_in_pool_in,
+                const bool skip_charge,
+                const double tpiba,
+                const int nat);
 
   protected:
     // diago caller
-    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
-                         psi::Psi<T, Device>& psi,
-                         std::vector<Real>& pre_condition,
-                         Real* eigenvalue,
-                         const int& nk_nums);
+    void hamiltSolvePsiK (hamilt::Hamilt<T, Device>* hm,
+                          psi::Psi<T, Device>& psi,
+                          std::vector<Real>& pre_condition,
+                          Real* eigenvalue,
+                          const int& nk_nums);
 
     // calculate the precondition array for diagonalization in PW base
-    void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
+    void update_precondition (std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
 
-    void output_iterInfo();
+    void output_iterInfo ();
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
@@ -96,17 +95,15 @@ class HSolverPW
 
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
-    void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
-
-
+    void cal_smooth_ethr (const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
     // K-point continuity related members
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    
-    void build_k_neighbors();
-    void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
+
+    void build_k_neighbors ();
+    void propagate_psi (psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
 };
 
 } // namespace hsolver

@@ -3,16 +3,17 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 
-void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
+void
+    Charge_Mixing::Kerker_screen_recip (std::complex<double>* drhog)
 {
-    ModuleBase::TITLE("Charge_Mixing", "Kerker_screen_recip");
+    ModuleBase::TITLE ("Charge_Mixing", "Kerker_screen_recip");
 
-	if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) 
-	{
-		return;
-	}
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+        {
+            return;
+        }
 
-    ModuleBase::timer::start("Charge_Mixing", "Kerker_screen_recip");
+    ModuleBase::timer::start ("Charge_Mixing", "Kerker_screen_recip");
 
     const int nspin = PARAM.inp.nspin;
 
@@ -21,156 +22,160 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
     double amin = 0.0;
 
     /// consider a resize for mixing_angle
-	int resize_tmp = 1;
-    if (nspin == 4 && this->mixing_angle > 0) 
-    { 
-    	resize_tmp = 2;
-    }
+    int resize_tmp = 1;
+    if (nspin == 4 && this->mixing_angle > 0)
+        {
+            resize_tmp = 2;
+        }
 
     /// implement Kerker for density and magnetization separately
     for (int is = 0; is < nspin / resize_tmp; ++is)
-    {
-        const int is_idx = is * this->rhopw->npw;
-        /// new mixing method only support nspin=2 not nspin=4
-        if (is >= 1)
         {
-            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
-            {
+            const int is_idx = is * this->rhopw->npw;
+            /// new mixing method only support nspin=2 not nspin=4
+            if (is >= 1)
+                {
+                    if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
+                        {
 #ifdef __DEBUG
-                assert(is == 1); // make sure break works
+                            assert (is == 1); // make sure break works
 #endif
-                double is_mag = nspin - 1;
-                //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
-                //{
-                //    drhog[is_idx + ig] *= 1;
-                //}
-                break;
-            }
-            fac = this->mixing_gg0_mag;
-            amin = this->mixing_beta_mag;
-        }
-        else
-        {
-            fac = this->mixing_gg0;
-            amin = this->mixing_beta;
-        }
+                            double is_mag = nspin - 1;
+                            // for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                            //{
+                            //     drhog[is_idx + ig] *= 1;
+                            // }
+                            break;
+                        }
+                    fac = this->mixing_gg0_mag;
+                    amin = this->mixing_beta_mag;
+                }
+            else
+                {
+                    fac = this->mixing_gg0;
+                    amin = this->mixing_beta;
+                }
 
-        gg0 = std::pow(fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
+            gg0 = std::pow (fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
 
-        const double gg0_amin = this->mixing_gg0_min / amin;
+            const double gg0_amin = this->mixing_gg0_min / amin;
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
-            drhog[is_idx + ig] *= filter_g;
+            for (int ig = 0; ig < this->rhopw->npw; ++ig)
+                {
+                    double gg = this->rhopw->gg[ig];
+                    double filter_g = std::max (gg / (gg + gg0), gg0_amin);
+                    drhog[is_idx + ig] *= filter_g;
+                }
         }
-    }
 
-    ModuleBase::timer::end("Charge_Mixing", "Kerker_screen_recip");
+    ModuleBase::timer::end ("Charge_Mixing", "Kerker_screen_recip");
     return;
 }
 
-void Charge_Mixing::Kerker_screen_real(double* drhor)
+void
+    Charge_Mixing::Kerker_screen_real (double* drhor)
 {
-    ModuleBase::TITLE("Charge_Mixing", "Kerker_screen_real");
+    ModuleBase::TITLE ("Charge_Mixing", "Kerker_screen_real");
 
-	if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) 
-	{
-		return;
-	}
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
+        {
+            return;
+        }
 
-    ModuleBase::timer::start("Charge_Mixing", "Kerker_screen_real");
+    ModuleBase::timer::start ("Charge_Mixing", "Kerker_screen_real");
 
     const int nspin = PARAM.inp.nspin;
-    assert(nspin==1 || nspin==2 || nspin==4);
+    assert (nspin == 1 || nspin == 2 || nspin == 4);
 
-	/// consider a resize for mixing_angle
+    /// consider a resize for mixing_angle
     int resize_tmp = 1;
-	if (nspin == 4 && this->mixing_angle > 0) 
-	{ 
-		resize_tmp = 2;
-	}
-    
-    std::vector<std::complex<double>> drhog(this->rhopw->npw * nspin / resize_tmp);
-    std::vector<double> drhor_filter(this->rhopw->nrxx * nspin / resize_tmp);
+    if (nspin == 4 && this->mixing_angle > 0)
+        {
+            resize_tmp = 2;
+        }
+
+    std::vector<std::complex<double>> drhog (this->rhopw->npw * nspin / resize_tmp);
+    std::vector<double> drhor_filter (this->rhopw->nrxx * nspin / resize_tmp);
 
     for (int is = 0; is < nspin / resize_tmp; ++is)
-    {
-        // Note after this process some G which is higher than Gmax will be filtered.
-        // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
-        this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
-    }
+        {
+            // Note after this process some G which is higher than Gmax will be filtered.
+            // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
+            this->rhopw->real2recip (drhor + is * this->rhopw->nrxx, drhog.data () + is * this->rhopw->npw);
+        }
     /// implement Kerker for density and magnetization separately
     double fac = 0.0;
     double gg0 = 0.0;
     double amin = 0.0;
 
     for (int is = 0; is < nspin / resize_tmp; is++)
-    {
-
-        if (is >= 1)
         {
-            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
-            {
-#ifdef __DEBUG
-                assert(is == 1); /// make sure break works
-#endif
-                double is_mag = nspin - 1;
-                if (nspin == 4 && this->mixing_angle > 0) { is_mag = 1;
-}
-                for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+
+            if (is >= 1)
                 {
-                    drhog[is * this->rhopw->npw + ig] = 0;
+                    if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
+                        {
+#ifdef __DEBUG
+                            assert (is == 1); /// make sure break works
+#endif
+                            double is_mag = nspin - 1;
+                            if (nspin == 4 && this->mixing_angle > 0)
+                                {
+                                    is_mag = 1;
+                                }
+                            for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                                {
+                                    drhog[is * this->rhopw->npw + ig] = 0;
+                                }
+                            break;
+                        }
+                    fac = this->mixing_gg0_mag;
+                    amin = this->mixing_beta_mag;
                 }
-                break;
-            }
-            fac = this->mixing_gg0_mag;
-            amin = this->mixing_beta_mag;
-        }
-        else
-        {
-            fac = this->mixing_gg0;
-            amin = this->mixing_beta;
-        }
-        
-        gg0 = std::pow(fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
+            else
+                {
+                    fac = this->mixing_gg0;
+                    amin = this->mixing_beta;
+                }
 
-        const int is_idx = is * this->rhopw->npw;
-        const double gg0_amin = this->mixing_gg0_min / amin;
+            gg0 = std::pow (fac * ModuleBase::BOHR_TO_A / *this->tpiba, 2);
+
+            const int is_idx = is * this->rhopw->npw;
+            const double gg0_amin = this->mixing_gg0_min / amin;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ig = 0; ig < this->rhopw->npw; ig++)
-        {
-            double gg = this->rhopw->gg[ig];
-            // I have not decided how to handle gg=0 part, will be changed in future
-            //if (gg == 0)
-            //{
-            //    drhog[is_idx + ig] *= 0;
-            //    continue;
-            //}
-            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
-            drhog[is_idx + ig] *= (1 - filter_g);
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+                {
+                    double gg = this->rhopw->gg[ig];
+                    // I have not decided how to handle gg=0 part, will be changed in future
+                    // if (gg == 0)
+                    //{
+                    //    drhog[is_idx + ig] *= 0;
+                    //    continue;
+                    //}
+                    double filter_g = std::max (gg / (gg + gg0), gg0_amin);
+                    drhog[is_idx + ig] *= (1 - filter_g);
+                }
         }
-    }
     /// inverse FT
     for (int is = 0; is < nspin / resize_tmp; ++is)
-    {
-        this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
-    }
+        {
+            this->rhopw->recip2real (drhog.data () + is * this->rhopw->npw,
+                                     drhor_filter.data () + is * this->rhopw->nrxx);
+        }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
     for (int ir = 0; ir < this->rhopw->nrxx * nspin / resize_tmp; ir++)
-    {
-        drhor[ir] -= drhor_filter[ir];
-    }
+        {
+            drhor[ir] -= drhor_filter[ir];
+        }
 
-    ModuleBase::timer::end("Charge_Mixing", "Kerker_screen_real");
+    ModuleBase::timer::end ("Charge_Mixing", "Kerker_screen_real");
     return;
 }

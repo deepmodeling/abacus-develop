@@ -7,36 +7,45 @@
 
 #include <regex>
 
-void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofstream* const ptr_log)
+void
+    BetaRadials::build (const Numerical_Nonlocal& nl, const int itype, std::ofstream* const ptr_log)
 {
-    cleanup();
+    cleanup ();
 
     itype_ = itype;
 #ifdef __DEBUG
-    assert(itype_ == nl.getType());
+    assert (itype_ == nl.getType ());
 #endif
 
-    symbol_ = nl.getLabel();
-    lmax_ = nl.getLmax();
-    nchi_ = nl.get_nproj();
+    symbol_ = nl.getLabel ();
+    lmax_ = nl.getLmax ();
+    nchi_ = nl.get_nproj ();
 
     chi_ = new NumericalRadial[nchi_];
     nzeta_ = new int[lmax_ + 1];
-    std::fill(nzeta_, nzeta_ + lmax_ + 1, 0);
+    std::fill (nzeta_, nzeta_ + lmax_ + 1, 0);
 
     for (int ichi = 0; ichi != nchi_; ++ichi)
-    {
-        Numerical_Nonlocal_Lm& beta = nl.Proj[ichi];
-        int l = beta.getL();
-        // skip the initialization of sbt_ in this stage
-        chi_[ichi]
-            .build(l, true, beta.getNr(), beta.getRadial(), beta.getBeta_r(), 1, nzeta_[l], symbol_, itype_, false);
-        nzeta_[l] += 1;
-    }
-    nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
+        {
+            Numerical_Nonlocal_Lm& beta = nl.Proj[ichi];
+            int l = beta.getL ();
+            // skip the initialization of sbt_ in this stage
+            chi_[ichi].build (l,
+                              true,
+                              beta.getNr (),
+                              beta.getRadial (),
+                              beta.getBeta_r (),
+                              1,
+                              nzeta_[l],
+                              symbol_,
+                              itype_,
+                              false);
+            nzeta_[l] += 1;
+        }
+    nzeta_max_ = *std::max_element (nzeta_, nzeta_ + lmax_ + 1);
 
-    indexing();
-    set_rcut_max();
+    indexing ();
+    set_rcut_max ();
 }
 
 // void BetaRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
@@ -57,9 +66,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //         is_open = ifs.is_open();
 //     }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //     Parallel_Common::bcast_bool(is_open);
-//#endif
+// #endif
 //
 //     if (!is_open)
 //     {
@@ -95,9 +104,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //         }
 //     }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //     Parallel_Common::bcast_int(upf_version);
-//#endif
+// #endif
 //
 //     switch (upf_version)
 //     {
@@ -179,13 +188,13 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //         }
 //     }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //     Parallel_Common::bcast_bool(is_good);
 //     Parallel_Common::bcast_string(symbol_);
 //     Parallel_Common::bcast_int(lmax_);
 //     Parallel_Common::bcast_int(nchi_);
 //     Parallel_Common::bcast_int(ngrid_max);
-//#endif
+// #endif
 //
 //     if (!is_good)
 //     {
@@ -222,9 +231,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //         assert(tmp == "</PP_R>");
 //     }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //     Parallel_Common::bcast_double(rgrid, ngrid_max);
-//#endif
+// #endif
 //
 //     assert(lmax_ >= 0);
 //     nzeta_ = new int[lmax_ + 1];
@@ -288,18 +297,18 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //             assert(tmp == "</PP_BETA>");
 //         } // rank == 0
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //         Parallel_Common::bcast_int(l);
 //         Parallel_Common::bcast_int(ngrid);
 //         Parallel_Common::bcast_int(izeta);
 //         Parallel_Common::bcast_double(rbeta, ngrid);
-//#endif
+// #endif
 //         chi_[i].build(l, true, ngrid, rgrid, rbeta, 1, izeta, symbol_, itype_);
 //     }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //     Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
-//#endif
+// #endif
 //
 //     indexing();
 //
@@ -386,21 +395,21 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //                symbol_.c_str(), lmax_, ngrid_max, nbeta, has_so, is_good);
 //    }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_bool(is_good);
-//#endif
+// #endif
 //    if (!is_good)
 //    {
 //        ModuleBase::WARNING_QUIT("BetaRadials::read_beta_upf201", "PP_HEADER error");
 //    }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_string(symbol_);
 //    Parallel_Common::bcast_int(lmax_);
 //    Parallel_Common::bcast_int(ngrid_max);
 //    Parallel_Common::bcast_int(nbeta);
 //    Parallel_Common::bcast_bool(has_so);
-//#endif
+// #endif
 //
 //    // It is an error if lspinorb is set to true but the pseudopotential file does not contain spin-orbit information
 //    if (!has_so && PARAM.inp.lspinorb)
@@ -444,9 +453,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //        assert(tmpword == "</PP_R>");
 //    }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_double(rgrid, ngrid_max);
-//#endif
+// #endif
 //
 //    /*===========================================================
 //     *
@@ -531,9 +540,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //        } // for loop over beta functions
 //    }// rank == 0
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_bool(is_good);
-//#endif
+// #endif
 //    if (!is_good)
 //    {
 //        ModuleBase::WARNING_QUIT("BetaRadials::read_beta_upf201", "PP_BETA error");
@@ -676,9 +685,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //            rbeta_final = rbeta;
 //        }
 //    }
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_bool(is_good);
-//#endif
+// #endif
 //    if (!is_good)
 //    {
 //        ModuleBase::WARNING_QUIT("BetaRadials::read_beta_upf201", "PP_BETA error");
@@ -689,9 +698,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //     *          Broadcast final beta functions
 //     *
 //     *===========================================================*/
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_int(nbeta_final);
-//#endif
+// #endif
 //
 //    if (rank != 0)
 //    {
@@ -700,11 +709,11 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
 //        ngrid_final = new int[nbeta_final];
 //    }
 //
-//#ifdef __MPI
+// #ifdef __MPI
 //    Parallel_Common::bcast_int(l_final, nbeta_final);
 //    Parallel_Common::bcast_int(ngrid_final, nbeta_final);
 //    Parallel_Common::bcast_double(rbeta_final, nbeta_final * ngrid_max);
-//#endif
+// #endif
 //
 //    /*===========================================================
 //     *

@@ -50,10 +50,10 @@ struct fenergy
     double ekinetic = 0.0;   /// kinetic energy, used in OFDFT
     double e_local_pp = 0.0; /// ion-electron interaction energy contributed by local pp, used in OFDFT
 
-    double calculate_etot();
-    double calculate_harris();
-    void clear_all();
-    void print_all() const;
+    double calculate_etot ();
+    double calculate_harris ();
+    void clear_all ();
+    void print_all () const;
 };
 
 /**
@@ -62,13 +62,13 @@ struct fenergy
  */
 struct Efermi
 {
-    double ef = 0.0;         ///< Fermi energy
-    double ef_up = 0.0;      ///< spin up Fermi energy
-    double ef_dw = 0.0;      ///< spin down Fermi energy
-    bool two_efermi = false; 
-    void set_efval(const int& is, const double& ef_in);
-    double get_efval(const int& is) const;
-    std::vector<double> get_all_ef() const;
+    double ef = 0.0;    ///< Fermi energy
+    double ef_up = 0.0; ///< spin up Fermi energy
+    double ef_dw = 0.0; ///< spin down Fermi energy
+    bool two_efermi = false;
+    void set_efval (const int& is, const double& ef_in);
+    double get_efval (const int& is) const;
+    std::vector<double> get_all_ef () const;
 };
 
 } // namespace elecstate

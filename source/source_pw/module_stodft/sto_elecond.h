@@ -24,21 +24,21 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     using delmem_lcomplex_op = base_device::memory::delete_memory_op<std::complex<lowTYPE>, Device>;
 #endif
     using cpymem_lcomplex_op = base_device::memory::synchronize_memory_op<std::complex<lowTYPE>, Device, Device>;
-    using castmem_lcomplex_op = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
+    using castmem_lcomplex_op
+        = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
     using cpymem_complex_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
+
   public:
-    Sto_EleCond(UnitCell* p_ucell_in,
-                K_Vectors* p_kv_in,
-                elecstate::ElecState* p_elec_in,
-                ModulePW::PW_Basis_K* p_wfcpw_in,
-                psi::Psi<std::complex<FPTYPE>, Device>* p_psi_in,
-                pseudopot_cell_vnl* p_ppcell_in,
-                hamilt::Hamilt<std::complex<FPTYPE>, Device>* p_hamilt_in,
-                StoChe<FPTYPE, Device>& stoche,
-                Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf_in);
-    ~Sto_EleCond(){
-        delete hamilt_sto_;
-    };
+    Sto_EleCond (UnitCell* p_ucell_in,
+                 K_Vectors* p_kv_in,
+                 elecstate::ElecState* p_elec_in,
+                 ModulePW::PW_Basis_K* p_wfcpw_in,
+                 psi::Psi<std::complex<FPTYPE>, Device>* p_psi_in,
+                 pseudopot_cell_vnl* p_ppcell_in,
+                 hamilt::Hamilt<std::complex<FPTYPE>, Device>* p_hamilt_in,
+                 StoChe<FPTYPE, Device>& stoche,
+                 Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf_in);
+    ~Sto_EleCond () { delete hamilt_sto_; };
     /**
      * @brief Set the N order of Chebyshev expansion for conductivities
      *        It will change class member : fd_nche, cond_nche
@@ -51,7 +51,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
      * @param try_emax trial Emax
      *
      */
-    void decide_nche(const FPTYPE dt, const FPTYPE cond_thr, const int& fd_nche, FPTYPE try_emin, FPTYPE try_emax);
+    void decide_nche (const FPTYPE dt, const FPTYPE cond_thr, const int& fd_nche, FPTYPE try_emin, FPTYPE try_emax);
     /**
      * @brief calculate Stochastic Kubo-Greenwood
      *
@@ -64,13 +64,13 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
      * @param nbatch t step batch
      * @param npart_sto number stochastic wavefunctions parts to evalution simultaneously
      */
-    void sKG(const int& smear_type,
-             const double& fwhmin,
-             const double& wcut,
-             const double& dw_in,
-             const double& dt_in,
-             const bool& nonlocal,
-             const int& npart_sto);
+    void sKG (const int& smear_type,
+              const double& fwhmin,
+              const double& wcut,
+              const double& dw_in,
+              const double& dt_in,
+              const bool& nonlocal,
+              const int& npart_sto);
 
   protected:
     int nbands_ks = 0;    ///< number of KS bands
@@ -91,32 +91,32 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
      * @brief calculate Jmatrix  <leftv|J|rightv>
      *
      */
-    void cal_jmatrix(hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt,
-                     const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
-                     const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
-                     const double* en,
-                     const double* en_all,
-                     std::complex<FPTYPE>* leftfact,
-                     std::complex<FPTYPE>* rightfact,
-                     psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
-                     psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
-                     psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
-                     psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
-                     psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
-                     psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
+    void cal_jmatrix (hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt,
+                      const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
+                      const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
+                      const double* en,
+                      const double* en_all,
+                      std::complex<FPTYPE>* leftfact,
+                      std::complex<FPTYPE>* rightfact,
+                      psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
+                      psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
+                      psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
+                      psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
+                      psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
+                      psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
 #ifdef __MPI
-                     psi::Psi<std::complex<lowTYPE>, Device>& chi_all,
-                     psi::Psi<std::complex<lowTYPE>, Device>& hchi_all,
-                     void* gatherinfo_ks,
-                     void* gatherinfo_sto,
+                      psi::Psi<std::complex<lowTYPE>, Device>& chi_all,
+                      psi::Psi<std::complex<lowTYPE>, Device>& hchi_all,
+                      void* gatherinfo_ks,
+                      void* gatherinfo_sto,
 #endif
-                     const int& bsize_psi,
-                     std::complex<lowTYPE>* j1,
-                     std::complex<lowTYPE>* j2,
-                     std::complex<lowTYPE>* tmpj,
-                     hamilt::Velocity<lowTYPE, Device>& velop,
-                     const int& ik,
-                     const std::complex<lowTYPE>& factor,
-                     const int bandinfo[6]);
+                      const int& bsize_psi,
+                      std::complex<lowTYPE>* j1,
+                      std::complex<lowTYPE>* j2,
+                      std::complex<lowTYPE>* tmpj,
+                      hamilt::Velocity<lowTYPE, Device>& velop,
+                      const int& ik,
+                      const std::complex<lowTYPE>& factor,
+                      const int bandinfo[6]);
 };
 #endif // STOELECOND_H

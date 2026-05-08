@@ -13,7 +13,7 @@ namespace Base_Mixing
 class Mixing_Data
 {
   public:
-    Mixing_Data() = default;
+    Mixing_Data () = default;
     /**
      * @brief Construct a new Mixing_Data object
      *
@@ -22,13 +22,13 @@ class Mixing_Data
      * @param type_size size of type
      *
      */
-    Mixing_Data(const int& ndim, const std::size_t& length, const size_t& type_size);
+    Mixing_Data (const int& ndim, const std::size_t& length, const size_t& type_size);
 
     /**
      * @brief Destroy the Mixing_Data object
      *
      */
-    ~Mixing_Data();
+    ~Mixing_Data ();
 
     /**
      * @brief resize the data
@@ -38,33 +38,35 @@ class Mixing_Data
      * @param type_size size of type
      *
      */
-    void resize(const int& ndim, const std::size_t& length, const size_t& type_size);
+    void resize (const int& ndim, const std::size_t& length, const size_t& type_size);
 
     /**
      * @brief push data to the tensor
      *
      */
     template <typename FPTYPE>
-    void push(const FPTYPE* data_in)
+    void
+        push (const FPTYPE* data_in)
     {
         this->start = (this->start + 1) % this->ndim_tot;
-        this->ndim_use = std::min(this->ndim_use + 1, this->ndim_tot);
+        this->ndim_use = std::min (this->ndim_use + 1, this->ndim_tot);
         ++this->ndim_history;
-        FPTYPE* FP_startdata = static_cast<FPTYPE*>(this->data) + this->start * this->length;
+        FPTYPE* FP_startdata = static_cast<FPTYPE*> (this->data) + this->start * this->length;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
-        {
-            FP_startdata[i] = data_in[i];
-        }
+            {
+                FP_startdata[i] = data_in[i];
+            }
     }
 
     /**
      * @brief reset mixing
      *
      */
-    void reset()
+    void
+        reset ()
     {
         this->ndim_use = 0;
         this->ndim_history = 0;
@@ -75,7 +77,8 @@ class Mixing_Data
      * @brief get the index of i-th vector
      *
      */
-    int index_move(const int& n) const
+    int
+        index_move (const int& n) const
     {
         return (n + this->start + ndim_tot) % ndim_tot;
     }

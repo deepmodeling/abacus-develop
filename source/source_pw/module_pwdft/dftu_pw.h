@@ -10,13 +10,13 @@ class Plus_U;
 namespace pw
 {
 
-void iter_init_dftu_pw(const int iter,
-                       const int istep,
-                       Plus_U& dftu,
-                       const void* psi,
-                       const ModuleBase::matrix& wg,
-                       const UnitCell& ucell,
-                       const Input_para& inp);
+void iter_init_dftu_pw (const int iter,
+                        const int istep,
+                        Plus_U& dftu,
+                        const void* psi,
+                        const ModuleBase::matrix& wg,
+                        const UnitCell& ucell,
+                        const Input_para& inp);
 
 }
 

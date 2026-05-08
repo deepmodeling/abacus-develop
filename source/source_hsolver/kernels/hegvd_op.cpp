@@ -13,7 +13,8 @@ template <typename T>
 struct hegvd_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
+    void
+        operator() (const base_device::DEVICE_CPU* d,
                     const int nstart,
                     const int ldh,
                     const T* hcc,
@@ -22,26 +23,26 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
                     T* vcc)
     {
         for (int i = 0; i < nstart * ldh; i++)
-        {
-            vcc[i] = hcc[i];
-        }
+            {
+                vcc[i] = hcc[i];
+            }
         int info = 0;
         int lwork = 2 * nstart + nstart * nstart;
         T* work = new T[lwork];
-        Parallel_Reduce::ZEROS(work, lwork);
+        Parallel_Reduce::ZEROS (work, lwork);
 
         int lrwork = 1 + 5 * nstart + 2 * nstart * nstart;
         Real* rwork = new Real[lrwork];
-        Parallel_Reduce::ZEROS(rwork, lrwork);
+        Parallel_Reduce::ZEROS (rwork, lrwork);
 
         int liwork = 3 + 5 * nstart;
         int* iwork = new int[liwork];
-        Parallel_Reduce::ZEROS(iwork, liwork);
+        Parallel_Reduce::ZEROS (iwork, liwork);
 
         //===========================
         // calculate all eigenvalues
         //===========================
-        lapackConnector::hegvd(1,
+        lapackConnector::hegvd (1,
                                 'V',
                                 'U',
                                 nstart,
@@ -59,24 +60,24 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
                                 info);
 
         if (info != 0)
-        {
-            std::cout << "Error: hegvd failed, linear dependent basis functions\n"
-                      << ", wrong initialization of wavefunction, or wavefunction information loss\n"
-                      << ", output overlap matrix scc.txt to check\n"
-                      << std::endl;
-            // print scc to file scc.txt
-            std::ofstream ofs("scc.txt");
-            for (int i = 0; i < nstart; i++)
             {
-                for (int j = 0; j < nstart; j++)
-                {
-                    ofs << scc[i * ldh + j] << " ";
-                }
-                ofs << std::endl;
+                std::cout << "Error: hegvd failed, linear dependent basis functions\n"
+                          << ", wrong initialization of wavefunction, or wavefunction information loss\n"
+                          << ", output overlap matrix scc.txt to check\n"
+                          << std::endl;
+                // print scc to file scc.txt
+                std::ofstream ofs ("scc.txt");
+                for (int i = 0; i < nstart; i++)
+                    {
+                        for (int j = 0; j < nstart; j++)
+                            {
+                                ofs << scc[i * ldh + j] << " ";
+                            }
+                        ofs << std::endl;
+                    }
+                ofs.close ();
             }
-            ofs.close();
-        }
-        assert(0 == info);
+        assert (0 == info);
 
         delete[] work;
         delete[] rwork;
@@ -153,7 +154,8 @@ template <typename T>
 struct heevx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
+    void
+        operator() (const base_device::DEVICE_CPU* /*ctx*/,
                     const int nstart,
                     const int ldh,
                     const T* hcc,     // hcc
@@ -163,9 +165,9 @@ struct heevx_op<T, base_device::DEVICE_CPU>
     {
         T* aux = new T[nstart * ldh];
         for (int ii = 0; ii < nstart * ldh; ii++)
-        {
-            aux[ii] = hcc[ii];
-        }
+            {
+                aux[ii] = hcc[ii];
+            }
 
         int info = 0;
         int lwork = -1;
@@ -176,7 +178,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
 
         // When lwork = -1, the demension of work will be assumed
         // Assume the denmension of work by output work[0]
-        lapackConnector::heevx(
+        lapackConnector::heevx (
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.
@@ -199,7 +201,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
             ifail,
             info);
 
-        lwork = int(get_real(work[0]));
+        lwork = int (get_real (work[0]));
         delete[] work;
         work = new T[lwork];
 
@@ -209,7 +211,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         // V is the output of the function, the storage space is also (nstart * ldh), and the data size of valid V
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
-        lapackConnector::heevx(
+        lapackConnector::heevx (
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.
@@ -238,7 +240,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         delete[] iwork;
         delete[] ifail;
 
-        assert(0 == info);
+        assert (0 == info);
     }
 };
 
@@ -246,7 +248,8 @@ template <typename T>
 struct hegvx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
+    void
+        operator() (const base_device::DEVICE_CPU* d,
                     const int nbase,
                     const int ldh,
                     T* hcc,
@@ -267,7 +270,7 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
         int* iwork = new int[5 * nbase];
         int* ifail = new int[nbase];
 
-        lapackConnector::hegvx(
+        lapackConnector::hegvx (
             1,     // ITYPE = 1:  A*x = (lambda)*B*x
             'V',   // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',   // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
@@ -293,11 +296,11 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
             ifail,
             info);
 
-        lwork = int(get_real(work[0]));
+        lwork = int (get_real (work[0]));
         delete[] work;
         work = new T[lwork];
 
-        lapackConnector::hegvx(1,
+        lapackConnector::hegvx (1,
                                 'V',
                                 'I',
                                 'U',

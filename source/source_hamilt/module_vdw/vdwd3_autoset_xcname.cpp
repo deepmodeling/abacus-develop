@@ -2,38 +2,38 @@
  * Intro
  * -----
  * This file stores the mapping from LibXC xcname to the "conventional"
- * 
+ *
  * XCNotSupportedError
  * -------------------
  * GGA_X_REVSSB_D
  * GGA_X_SSB_D
- * 
+ *
  * in J. Chem. Phys. 131, 094103 2009, a simplified version of PBC (the
  * correlation part of PBE XC) is used as the correlation part, but libXC
  * does not directly support one named as
  * GGA_C_SPBEC.
- * 
+ *
  * Certainly, those XC with dispersion correction in form of non-local
  * correlation are not supported. Such as:
- * 
+ *
  * vdw-DF family nonlocal dispersion correction included are not supported:
  * GGA_X_OPTB86B_VDW
- * GGA_X_OPTB88_VDW 
- * GGA_X_OPTPBE_VDW 
+ * GGA_X_OPTB88_VDW
+ * GGA_X_OPTPBE_VDW
  * GGA_X_PBEK1_VDW
- * 
+ *
  * VV09, VV10 and rVV10 nonlocal correlation included are not supported:
- * GGA_XC_VV10 
- * HYB_GGA_XC_LC_VV10 
- * HYB_MGGA_XC_WB97M_V 
- * HYB_GGA_XC_WB97X_V 
- * MGGA_X_VCML 
- * MGGA_C_REVSCAN_VV10 
- * MGGA_C_SCAN_VV10 
- * MGGA_C_SCANL_VV10 
- * MGGA_XC_B97M_V 
+ * GGA_XC_VV10
+ * HYB_GGA_XC_LC_VV10
+ * HYB_MGGA_XC_WB97M_V
+ * HYB_GGA_XC_WB97X_V
+ * MGGA_X_VCML
+ * MGGA_C_REVSCAN_VV10
+ * MGGA_C_SCAN_VV10
+ * MGGA_C_SCANL_VV10
+ * MGGA_XC_B97M_V
  * MGGA_XC_VCML_RVV10
- * 
+ *
  * There is also one quite special, the wB97X-D3BJ functional uses the
  * wB97X-V functionals excluding the VV10 part, then use its own DFT-D3(BJ)
  * parameters. This seems not recorded in simple-dftd3, so it is not supported
@@ -53,10 +53,10 @@
 const std::map<std::string, std::string> xcname_libxc_xc_ = {
     {"XC_LDA_XC_TETER93", "teter93"},
     {"XC_LDA_XC_ZLP", "zlp"},
-    {"XC_MGGA_XC_OTPSS_D", "otpss_d"}, // DFT-D2
-    {"XC_GGA_XC_OPBE_D", "opbe_d"}, // DFT-D2
+    {"XC_MGGA_XC_OTPSS_D", "otpss_d"},  // DFT-D2
+    {"XC_GGA_XC_OPBE_D", "opbe_d"},     // DFT-D2
     {"XC_GGA_XC_OPWLYP_D", "opwlyp_d"}, // DFT-D2
-    {"XC_GGA_XC_OBLYP_D", "oblyp_d"}, // DFT-D2
+    {"XC_GGA_XC_OBLYP_D", "oblyp_d"},   // DFT-D2
     {"XC_GGA_XC_HCTH_407P", "hcth_407p"},
     {"XC_GGA_XC_HCTH_P76", "hcth_p76"},
     {"XC_GGA_XC_HCTH_P14", "hcth_p14"},
@@ -242,152 +242,166 @@ const std::map<std::string, std::string> xcname_libxc_xc_ = {
     {"XC_HYB_MGGA_XC_EDMGGAH", "edmggah"},
     {"XC_HYB_MGGA_XC_LC_TMLYP", "lc_tmlyp"},
 };
-const std::map<std::string, std::string> xcname_libxc_xplusc_ = {
-    {"XC_GGA_X_GAM+XC_GGA_C_GAM", "gam"},
-    {"XC_GGA_X_HCTH_A+XC_GGA_C_HCTH_A", "hcth_a"},
-    {"XC_HYB_MGGA_X_DLDF+XC_MGGA_C_DLDF", "dldf"},
-    {"XC_GGA_X_Q2D+XC_GGA_C_Q2D", "q2d"},
-    {"XC_GGA_X_PBE_MOL+XC_GGA_C_PBE_MOL", "pbe_mol"},
-    {"XC_GGA_X_PBEINT+XC_GGA_C_PBEINT", "pbeint"},
-    {"XC_HYB_GGA_X_N12_SX+XC_GGA_C_N12_SX", "n12_sx"},
-    {"XC_GGA_X_N12+XC_GGA_C_N12", "n12"},
-    {"XC_GGA_X_PBE+XC_GGA_C_PBE", "pbe"},
-    {"XC_GGA_X_B88+XC_MGGA_C_B88", "b88"},
-    {"XC_GGA_X_PW91+XC_GGA_C_PW91", "pw91"},
-    {"XC_GGA_X_PBE_SOL+XC_GGA_C_PBE_SOL", "pbe_sol"},
-    {"XC_GGA_X_AM05+XC_GGA_C_AM05", "am05"},
-    {"XC_GGA_X_XPBE+XC_GGA_C_XPBE", "xpbe"},
-    {"XC_GGA_X_RGE2+XC_GGA_C_RGE2", "rge2"},
-    {"XC_GGA_X_SOGGA11+XC_GGA_C_SOGGA11", "sogga11"},
-    {"XC_GGA_X_APBE+XC_GGA_C_APBE", "apbe"},
-    {"XC_MGGA_X_TPSS+XC_MGGA_C_TPSS", "tpss"},
-    {"XC_MGGA_X_M06_L+XC_MGGA_C_M06_L", "m06_l"},
-    {"XC_HYB_MGGA_X_TAU_HCTH+XC_GGA_C_TAU_HCTH", "tau_hcth"},
-    {"XC_MGGA_X_REVTPSS+XC_MGGA_C_REVTPSS", "revtpss"},
-    {"XC_MGGA_X_PKZB+XC_MGGA_C_PKZB", "pkzb"},
-    {"XC_MGGA_X_M11_L+XC_MGGA_C_M11_L", "m11_l"},
-    {"XC_MGGA_X_MN12_L+XC_MGGA_C_MN12_L", "mn12_l"},
-    {"XC_HYB_MGGA_X_MN12_SX+XC_MGGA_C_MN12_SX", "mn12_sx"},
-    {"XC_MGGA_X_MN15_L+XC_MGGA_C_MN15_L", "mn15_l"},
-    {"XC_MGGA_X_SCAN+XC_MGGA_C_SCAN", "scan"},
-    {"XC_GGA_X_PBEFE+XC_GGA_C_PBEFE", "pbefe"},
-    {"XC_HYB_MGGA_X_MN15+XC_MGGA_C_MN15", "mn15"},
-    {"XC_HYB_MGGA_X_BMK+XC_GGA_C_BMK", "bmk"},
-    {"XC_MGGA_X_REVM06_L+XC_MGGA_C_REVM06_L", "revm06_l"},
-    {"XC_HYB_MGGA_X_M08_HX+XC_MGGA_C_M08_HX", "m08_hx"},
-    {"XC_HYB_MGGA_X_M08_SO+XC_MGGA_C_M08_SO", "m08_so"},
-    {"XC_HYB_MGGA_X_M11+XC_MGGA_C_M11", "m11"},
-    {"XC_GGA_X_CHACHIYO+XC_GGA_C_CHACHIYO", "chachiyo"},
-    {"XC_HYB_MGGA_X_REVM11+XC_MGGA_C_REVM11", "revm11"},
-    {"XC_HYB_MGGA_X_REVM06+XC_MGGA_C_REVM06", "revm06"},
-    {"XC_HYB_MGGA_X_M06_SX+XC_MGGA_C_M06_SX", "m06_sx"},
-    {"XC_GGA_X_PBE_GAUSSIAN+XC_GGA_C_PBE_GAUSSIAN", "pbe_gaussian"},
-    {"XC_HYB_GGA_X_SOGGA11_X+XC_GGA_C_SOGGA11_X", "sogga11_x"},
-    {"XC_HYB_MGGA_X_M05+XC_MGGA_C_M05", "m05"},
-    {"XC_HYB_MGGA_X_M05_2X+XC_MGGA_C_M05_2X", "m05_2x"},
-    {"XC_HYB_MGGA_X_M06_HF+XC_MGGA_C_M06_HF", "m06_hf"},
-    {"XC_HYB_MGGA_X_M06+XC_MGGA_C_M06", "m06"},
-    {"XC_HYB_MGGA_X_M06_2X+XC_MGGA_C_M06_2X", "m06_2x"},
-    {"XC_MGGA_X_RSCAN+XC_MGGA_C_RSCAN", "rscan"},
-    {"XC_MGGA_X_R2SCAN+XC_MGGA_C_R2SCAN", "r2scan"},
-    {"XC_GGA_X_SG4+XC_GGA_C_SG4", "sg4"},
-    {"XC_MGGA_X_TM+XC_MGGA_C_TM", "tm"},
-    {"XC_MGGA_X_REVSCAN+XC_MGGA_C_REVSCAN", "revscan"},
-    {"XC_MGGA_X_REGTPSS+XC_GGA_C_REGTPSS", "regtpss"},
-    {"XC_MGGA_X_R2SCAN01+XC_MGGA_C_R2SCAN01", "r2scan01"},
-    {"XC_MGGA_X_RPPSCAN+XC_MGGA_C_RPPSCAN", "rppscan"},
-    {"XC_MGGA_X_REVTM+XC_MGGA_C_REVTM", "revtm"},
-    {"XC_MGGA_X_SCANL+XC_MGGA_C_SCANL", "scanl"},
-    {"XC_MGGA_X_MGGAC+XC_GGA_C_MGGAC", "mggac"},
-    {"XC_MGGA_X_R2SCANL+XC_MGGA_C_R2SCANL", "r2scanl"},
-    {"XC_GGA_X_B88+XC_GGA_C_LYP", "blyp"},
-    {"XC_GGA_X_B88+XC_GGA_C_P86", "bp86"},
-    {"XC_GGA_X_PW91+XC_GGA_C_PW91", "pw91"},
-    {"XC_GGA_X_PBE+XC_GGA_C_PBE", "pbe"},
-    {"XC_GGA_X_PBE_SOL+XC_GGA_C_PBE_SOL", "pbesol"},
-    {"XC_MGGA_X_PKZB+XC_MGGA_C_PKZB", "pkzb"},
-    {"XC_MGGA_X_TPSS+XC_MGGA_C_TPSS", "tpss"},
-    {"XC_MGGA_X_REVTPSS+XC_MGGA_C_REVTPSS", "revtpss"},
-    {"XC_MGGA_X_SCAN+XC_MGGA_C_SCAN", "scan"},
-    {"XC_GGA_X_SOGGA+XC_GGA_C_PBE", "sogga"},
-    {"XC_MGGA_X_BLOC+XC_MGGA_C_TPSSLOC", "bloc"},
-    {"XC_GGA_X_OPTX+XC_GGA_C_LYP", "olyp"},
-    {"XC_GGA_X_RPBE+XC_GGA_C_PBE", "rpbe"},
-    {"XC_GGA_X_B88+XC_GGA_C_PBE", "bpbe"},
-    {"XC_GGA_X_MPW91+XC_GGA_C_PW91", "mpw91"},
-    {"XC_MGGA_X_MS0+XC_GGA_C_REGTPSS", "ms0"},
-    {"XC_MGGA_X_MS1+XC_GGA_C_REGTPSS", "ms1"},
-    {"XC_MGGA_X_MS2+XC_GGA_C_REGTPSS", "ms2"},
-    {"XC_HYB_MGGA_X_MS2H+XC_GGA_C_REGTPSS", "ms2h"},
-    {"XC_MGGA_X_MVS+XC_GGA_C_REGTPSS", "mvs"},
-    {"XC_HYB_MGGA_X_MVSH+XC_GGA_C_REGTPSS", "mvsh"},
-    {"XC_GGA_X_SOGGA11+XC_GGA_C_SOGGA11", "sogga11"},
-    {"XC_HYB_GGA_X_SOGGA11_X+XC_GGA_C_SOGGA11_X", "sogga11-x"},
-    {"XC_HYB_MGGA_X_DLDF+XC_MGGA_C_DLDF", "dldf"},
-    {"XC_GGA_X_GAM+XC_GGA_C_GAM", "gam"},
-    {"XC_MGGA_X_M06_L+XC_MGGA_C_M06_L", "m06-l"},
-    {"XC_MGGA_X_M11_L+XC_MGGA_C_M11_L", "m11-l"},
-    {"XC_MGGA_X_MN12_L+XC_MGGA_C_MN12_L", "mn12-l"},
-    {"XC_MGGA_X_MN15_L+XC_MGGA_C_MN15_L", "mn15-l"},
-    {"XC_GGA_X_N12+XC_GGA_C_N12", "n12"},
-    {"XC_HYB_GGA_X_N12_SX+XC_GGA_C_N12_SX", "n12-sx"},
-    {"XC_HYB_MGGA_X_MN12_SX+XC_MGGA_C_MN12_SX", "mn12-sx"},
-    {"XC_HYB_MGGA_X_MN15+XC_MGGA_C_MN15", "mn15"},
-    {"XC_MGGA_X_MBEEF+XC_GGA_C_PBE_SOL", "mbeef"},
-    {"XC_HYB_MGGA_X_SCAN0+XC_MGGA_C_SCAN", "scan0"},
-    {"XC_GGA_X_PBE+XC_GGA_C_OP_PBE", "pbeop"},
-    {"XC_GGA_X_B88+XC_GGA_C_OP_B88", "bop"}
-};
+const std::map<std::string, std::string> xcname_libxc_xplusc_
+    = {{"XC_GGA_X_GAM+XC_GGA_C_GAM", "gam"},
+       {"XC_GGA_X_HCTH_A+XC_GGA_C_HCTH_A", "hcth_a"},
+       {"XC_HYB_MGGA_X_DLDF+XC_MGGA_C_DLDF", "dldf"},
+       {"XC_GGA_X_Q2D+XC_GGA_C_Q2D", "q2d"},
+       {"XC_GGA_X_PBE_MOL+XC_GGA_C_PBE_MOL", "pbe_mol"},
+       {"XC_GGA_X_PBEINT+XC_GGA_C_PBEINT", "pbeint"},
+       {"XC_HYB_GGA_X_N12_SX+XC_GGA_C_N12_SX", "n12_sx"},
+       {"XC_GGA_X_N12+XC_GGA_C_N12", "n12"},
+       {"XC_GGA_X_PBE+XC_GGA_C_PBE", "pbe"},
+       {"XC_GGA_X_B88+XC_MGGA_C_B88", "b88"},
+       {"XC_GGA_X_PW91+XC_GGA_C_PW91", "pw91"},
+       {"XC_GGA_X_PBE_SOL+XC_GGA_C_PBE_SOL", "pbe_sol"},
+       {"XC_GGA_X_AM05+XC_GGA_C_AM05", "am05"},
+       {"XC_GGA_X_XPBE+XC_GGA_C_XPBE", "xpbe"},
+       {"XC_GGA_X_RGE2+XC_GGA_C_RGE2", "rge2"},
+       {"XC_GGA_X_SOGGA11+XC_GGA_C_SOGGA11", "sogga11"},
+       {"XC_GGA_X_APBE+XC_GGA_C_APBE", "apbe"},
+       {"XC_MGGA_X_TPSS+XC_MGGA_C_TPSS", "tpss"},
+       {"XC_MGGA_X_M06_L+XC_MGGA_C_M06_L", "m06_l"},
+       {"XC_HYB_MGGA_X_TAU_HCTH+XC_GGA_C_TAU_HCTH", "tau_hcth"},
+       {"XC_MGGA_X_REVTPSS+XC_MGGA_C_REVTPSS", "revtpss"},
+       {"XC_MGGA_X_PKZB+XC_MGGA_C_PKZB", "pkzb"},
+       {"XC_MGGA_X_M11_L+XC_MGGA_C_M11_L", "m11_l"},
+       {"XC_MGGA_X_MN12_L+XC_MGGA_C_MN12_L", "mn12_l"},
+       {"XC_HYB_MGGA_X_MN12_SX+XC_MGGA_C_MN12_SX", "mn12_sx"},
+       {"XC_MGGA_X_MN15_L+XC_MGGA_C_MN15_L", "mn15_l"},
+       {"XC_MGGA_X_SCAN+XC_MGGA_C_SCAN", "scan"},
+       {"XC_GGA_X_PBEFE+XC_GGA_C_PBEFE", "pbefe"},
+       {"XC_HYB_MGGA_X_MN15+XC_MGGA_C_MN15", "mn15"},
+       {"XC_HYB_MGGA_X_BMK+XC_GGA_C_BMK", "bmk"},
+       {"XC_MGGA_X_REVM06_L+XC_MGGA_C_REVM06_L", "revm06_l"},
+       {"XC_HYB_MGGA_X_M08_HX+XC_MGGA_C_M08_HX", "m08_hx"},
+       {"XC_HYB_MGGA_X_M08_SO+XC_MGGA_C_M08_SO", "m08_so"},
+       {"XC_HYB_MGGA_X_M11+XC_MGGA_C_M11", "m11"},
+       {"XC_GGA_X_CHACHIYO+XC_GGA_C_CHACHIYO", "chachiyo"},
+       {"XC_HYB_MGGA_X_REVM11+XC_MGGA_C_REVM11", "revm11"},
+       {"XC_HYB_MGGA_X_REVM06+XC_MGGA_C_REVM06", "revm06"},
+       {"XC_HYB_MGGA_X_M06_SX+XC_MGGA_C_M06_SX", "m06_sx"},
+       {"XC_GGA_X_PBE_GAUSSIAN+XC_GGA_C_PBE_GAUSSIAN", "pbe_gaussian"},
+       {"XC_HYB_GGA_X_SOGGA11_X+XC_GGA_C_SOGGA11_X", "sogga11_x"},
+       {"XC_HYB_MGGA_X_M05+XC_MGGA_C_M05", "m05"},
+       {"XC_HYB_MGGA_X_M05_2X+XC_MGGA_C_M05_2X", "m05_2x"},
+       {"XC_HYB_MGGA_X_M06_HF+XC_MGGA_C_M06_HF", "m06_hf"},
+       {"XC_HYB_MGGA_X_M06+XC_MGGA_C_M06", "m06"},
+       {"XC_HYB_MGGA_X_M06_2X+XC_MGGA_C_M06_2X", "m06_2x"},
+       {"XC_MGGA_X_RSCAN+XC_MGGA_C_RSCAN", "rscan"},
+       {"XC_MGGA_X_R2SCAN+XC_MGGA_C_R2SCAN", "r2scan"},
+       {"XC_GGA_X_SG4+XC_GGA_C_SG4", "sg4"},
+       {"XC_MGGA_X_TM+XC_MGGA_C_TM", "tm"},
+       {"XC_MGGA_X_REVSCAN+XC_MGGA_C_REVSCAN", "revscan"},
+       {"XC_MGGA_X_REGTPSS+XC_GGA_C_REGTPSS", "regtpss"},
+       {"XC_MGGA_X_R2SCAN01+XC_MGGA_C_R2SCAN01", "r2scan01"},
+       {"XC_MGGA_X_RPPSCAN+XC_MGGA_C_RPPSCAN", "rppscan"},
+       {"XC_MGGA_X_REVTM+XC_MGGA_C_REVTM", "revtm"},
+       {"XC_MGGA_X_SCANL+XC_MGGA_C_SCANL", "scanl"},
+       {"XC_MGGA_X_MGGAC+XC_GGA_C_MGGAC", "mggac"},
+       {"XC_MGGA_X_R2SCANL+XC_MGGA_C_R2SCANL", "r2scanl"},
+       {"XC_GGA_X_B88+XC_GGA_C_LYP", "blyp"},
+       {"XC_GGA_X_B88+XC_GGA_C_P86", "bp86"},
+       {"XC_GGA_X_PW91+XC_GGA_C_PW91", "pw91"},
+       {"XC_GGA_X_PBE+XC_GGA_C_PBE", "pbe"},
+       {"XC_GGA_X_PBE_SOL+XC_GGA_C_PBE_SOL", "pbesol"},
+       {"XC_MGGA_X_PKZB+XC_MGGA_C_PKZB", "pkzb"},
+       {"XC_MGGA_X_TPSS+XC_MGGA_C_TPSS", "tpss"},
+       {"XC_MGGA_X_REVTPSS+XC_MGGA_C_REVTPSS", "revtpss"},
+       {"XC_MGGA_X_SCAN+XC_MGGA_C_SCAN", "scan"},
+       {"XC_GGA_X_SOGGA+XC_GGA_C_PBE", "sogga"},
+       {"XC_MGGA_X_BLOC+XC_MGGA_C_TPSSLOC", "bloc"},
+       {"XC_GGA_X_OPTX+XC_GGA_C_LYP", "olyp"},
+       {"XC_GGA_X_RPBE+XC_GGA_C_PBE", "rpbe"},
+       {"XC_GGA_X_B88+XC_GGA_C_PBE", "bpbe"},
+       {"XC_GGA_X_MPW91+XC_GGA_C_PW91", "mpw91"},
+       {"XC_MGGA_X_MS0+XC_GGA_C_REGTPSS", "ms0"},
+       {"XC_MGGA_X_MS1+XC_GGA_C_REGTPSS", "ms1"},
+       {"XC_MGGA_X_MS2+XC_GGA_C_REGTPSS", "ms2"},
+       {"XC_HYB_MGGA_X_MS2H+XC_GGA_C_REGTPSS", "ms2h"},
+       {"XC_MGGA_X_MVS+XC_GGA_C_REGTPSS", "mvs"},
+       {"XC_HYB_MGGA_X_MVSH+XC_GGA_C_REGTPSS", "mvsh"},
+       {"XC_GGA_X_SOGGA11+XC_GGA_C_SOGGA11", "sogga11"},
+       {"XC_HYB_GGA_X_SOGGA11_X+XC_GGA_C_SOGGA11_X", "sogga11-x"},
+       {"XC_HYB_MGGA_X_DLDF+XC_MGGA_C_DLDF", "dldf"},
+       {"XC_GGA_X_GAM+XC_GGA_C_GAM", "gam"},
+       {"XC_MGGA_X_M06_L+XC_MGGA_C_M06_L", "m06-l"},
+       {"XC_MGGA_X_M11_L+XC_MGGA_C_M11_L", "m11-l"},
+       {"XC_MGGA_X_MN12_L+XC_MGGA_C_MN12_L", "mn12-l"},
+       {"XC_MGGA_X_MN15_L+XC_MGGA_C_MN15_L", "mn15-l"},
+       {"XC_GGA_X_N12+XC_GGA_C_N12", "n12"},
+       {"XC_HYB_GGA_X_N12_SX+XC_GGA_C_N12_SX", "n12-sx"},
+       {"XC_HYB_MGGA_X_MN12_SX+XC_MGGA_C_MN12_SX", "mn12-sx"},
+       {"XC_HYB_MGGA_X_MN15+XC_MGGA_C_MN15", "mn15"},
+       {"XC_MGGA_X_MBEEF+XC_GGA_C_PBE_SOL", "mbeef"},
+       {"XC_HYB_MGGA_X_SCAN0+XC_MGGA_C_SCAN", "scan0"},
+       {"XC_GGA_X_PBE+XC_GGA_C_OP_PBE", "pbeop"},
+       {"XC_GGA_X_B88+XC_GGA_C_OP_B88", "bop"}};
 
-void _xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname)
+void
+    _xcname_libxc_xplusc (const std::string& xcpattern, std::string& xname)
 {
-    std::vector<std::string> xc_words = FmtCore::split(xcpattern, "+");
-    std::for_each(xc_words.begin(), xc_words.end(), [](std::string& s) {
-            s = (FmtCore::startswith(s, "XC_")? s: "XC_" + s); }); // add XC_ if not present
-    assert(xc_words.size() == 2);
+    std::vector<std::string> xc_words = FmtCore::split (xcpattern, "+");
+    std::for_each (xc_words.begin (),
+                   xc_words.end (),
+                   [] (std::string& s)
+                       { s = (FmtCore::startswith (s, "XC_") ? s : "XC_" + s); }); // add XC_ if not present
+    assert (xc_words.size () == 2);
 
-    std::vector<std::string> words = FmtCore::split(xc_words[0], "_");
-    const std::string key = (words[2] == "X")? 
-        xc_words[0] + "+" + xc_words[1]: xc_words[1] + "+" + xc_words[0];
+    std::vector<std::string> words = FmtCore::split (xc_words[0], "_");
+    const std::string key = (words[2] == "X") ? xc_words[0] + "+" + xc_words[1] : xc_words[1] + "+" + xc_words[0];
 
-    if (xcname_libxc_xplusc_.find(key) != xcname_libxc_xplusc_.end()) {
-        xname = xcname_libxc_xplusc_.at(key);
-    } else {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xplusc",
-                                    "XC's LibXC-notation on `" + xcpattern + "` not recognized");
-    }
+    if (xcname_libxc_xplusc_.find (key) != xcname_libxc_xplusc_.end ())
+        {
+            xname = xcname_libxc_xplusc_.at (key);
+        }
+    else
+        {
+            ModuleBase::WARNING_QUIT ("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xplusc",
+                                      "XC's LibXC-notation on `" + xcpattern + "` not recognized");
+        }
 }
 
-void _xcname_libxc_xc(const std::string& xcpattern, std::string& xname)
+void
+    _xcname_libxc_xc (const std::string& xcpattern, std::string& xname)
 {
     // add XC_ if not present
-    const std::string key = FmtCore::startswith(xcpattern, "XC_")? xcpattern: "XC_" + xcpattern;
+    const std::string key = FmtCore::startswith (xcpattern, "XC_") ? xcpattern : "XC_" + xcpattern;
 
-    if (xcname_libxc_xc_.find(key) != xcname_libxc_xc_.end()) {
-        xname = xcname_libxc_xc_.at(key);
-    } else {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xc",
-                                    "XC's LibXC-notation on `" + xcpattern + "` not recognized");
-    }
+    if (xcname_libxc_xc_.find (key) != xcname_libxc_xc_.end ())
+        {
+            xname = xcname_libxc_xc_.at (key);
+        }
+    else
+        {
+            ModuleBase::WARNING_QUIT ("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xc",
+                                      "XC's LibXC-notation on `" + xcpattern + "` not recognized");
+        }
 }
 
-void _xcname_libxc(const std::string& xcpattern, std::string& xname)
+void
+    _xcname_libxc (const std::string& xcpattern, std::string& xname)
 {
-    if (xcpattern.find("+") != std::string::npos) {
-        _xcname_libxc_xplusc(xcpattern, xname);
-    } else {
-        _xcname_libxc_xc(xcpattern, xname);
-    }
+    if (xcpattern.find ("+") != std::string::npos)
+        {
+            _xcname_libxc_xplusc (xcpattern, xname);
+        }
+    else
+        {
+            _xcname_libxc_xc (xcpattern, xname);
+        }
 }
 
-std::string vdw::Vdwd3Parameters::_vdwd3_xcname(const std::string& xcpattern)
+std::string
+    vdw::Vdwd3Parameters::_vdwd3_xcname (const std::string& xcpattern)
 {
     std::string xcname = xcpattern;
-    const std::regex pattern("(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
+    const std::regex pattern ("(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
     // as long as there is piece in xcpattern that can match, we can search for the corresponding name
-    if (std::regex_search(xcpattern, pattern)) {
-        _xcname_libxc(xcpattern, xcname);
-    }
+    if (std::regex_search (xcpattern, pattern))
+        {
+            _xcname_libxc (xcpattern, xcname);
+        }
     return xcname;
 }
 
@@ -407,12 +421,12 @@ def read_xc_func_h(fn):
 
 def sort_xc(xc_data):
     '''Sort the xc functionals into x, c, xc, k functionals.
-    
+
     Parameters
     ----------
     xc_data : dict
         from function read_xc_func_h
-    
+
     Returns
     -------
     dict, dict, dict, dict
@@ -437,16 +451,16 @@ def sort_xc(xc_data):
 def pair_xc(x, c):
     '''
     Pair the x and c functionals.
-    
+
     Parameters
     ----------
     x : dict
         The dictionary of x functionals, whose keys are the conventional
         xc name, values include approx, annos, id, full.
-    
+
     c : dict
         the same as x
-    
+
     Returns
     -------
     dict, dict
@@ -463,7 +477,7 @@ def pair_xc(x, c):
 
 def xc_to_stdmap(xc, conventional_lower=True):
     '''print the xc in the way of c++ std::map<std::string, std::string>.
-    
+
     Parameters
     ----------
     xc : dict
@@ -471,7 +485,7 @@ def xc_to_stdmap(xc, conventional_lower=True):
         xc name, values include approx, annos, id, full.
     conventional_lower : bool
         Whether to convert the conventional name to lower case.
-    
+
     Returns
     -------
     str
@@ -484,10 +498,10 @@ def xc_to_stdmap(xc, conventional_lower=True):
         out += '    {"%s", "%s"},\n' % (data['full'], name)
     out += '};\n'
     return out
-    
+
 def paired_xc_to_stdmap(pairs, conventional_lower=True):
     '''print the xc in the way of c++ std::map<std::string, std::string>.
-    
+
     Parameters
     ----------
     pairs : dict
@@ -495,7 +509,7 @@ def paired_xc_to_stdmap(pairs, conventional_lower=True):
         xc name, values include approx, annos, id, full.
     conventional_lower : bool
         Whether to convert the conventional name to lower case.
-    
+
     Returns
     -------
     str
@@ -513,21 +527,21 @@ def paired_xc_to_stdmap(pairs, conventional_lower=True):
     return out
 
 def special_x_and_c(x, c):
-    '''Special pairings of x and c functionals. The following data sheet is 
-    from Pyscf: 
+    '''Special pairings of x and c functionals. The following data sheet is
+    from Pyscf:
     https://github.com/pyscf/pyscf/blob/master/pyscf/dft/xcfun.py
     Thanks for pointing out the bug by @QuantumMiska and the help from wsr (@hebrewsnabla)
-    
-    
+
+
     Parameters
     ----------
     x : dict
         The dictionary of x functionals, whose keys are the conventional
         xc name, values include approx, annos, id, full.
-    
+
     c : dict
         the same as x
-    
+
     Returns
     -------
     dict

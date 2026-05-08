@@ -4,18 +4,19 @@
 namespace hamilt
 {
 template <typename FPTYPE>
-static inline FPTYPE _polynomial_interpolation(const FPTYPE* table,
-                                               const int& dim1,
-                                               const int& dim2,
-                                               const int& tab_2,
-                                               const int& tab_3,
-                                               const FPTYPE& table_interval,
-                                               const FPTYPE& x)
+static inline FPTYPE
+    _polynomial_interpolation (const FPTYPE* table,
+                               const int& dim1,
+                               const int& dim2,
+                               const int& tab_2,
+                               const int& tab_3,
+                               const FPTYPE& table_interval,
+                               const FPTYPE& x)
 {
     const FPTYPE position = x / table_interval;
-    const int iq = static_cast<int>(position);
+    const int iq = static_cast<int> (position);
 
-    const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+    const FPTYPE x0 = position - static_cast<FPTYPE> (iq);
     const FPTYPE x1 = 1.0 - x0;
     const FPTYPE x2 = 2.0 - x0;
     const FPTYPE x3 = 3.0 - x0;
@@ -29,18 +30,19 @@ static inline FPTYPE _polynomial_interpolation(const FPTYPE* table,
 }
 
 template <typename FPTYPE>
-static inline FPTYPE _polynomial_interpolation_nl(const FPTYPE* table,
-                                                  const int& dim1,
-                                                  const int& dim2,
-                                                  const int& tab_2,
-                                                  const int& tab_3,
-                                                  const FPTYPE& table_interval,
-                                                  const FPTYPE& x)
+static inline FPTYPE
+    _polynomial_interpolation_nl (const FPTYPE* table,
+                                  const int& dim1,
+                                  const int& dim2,
+                                  const int& tab_2,
+                                  const int& tab_3,
+                                  const FPTYPE& table_interval,
+                                  const FPTYPE& x)
 {
     const FPTYPE position = x / table_interval;
-    const int iq = static_cast<int>(position);
+    const int iq = static_cast<int> (position);
 
-    const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+    const FPTYPE x0 = position - static_cast<FPTYPE> (iq);
     const FPTYPE x1 = 1.0 - x0;
     const FPTYPE x2 = 2.0 - x0;
     const FPTYPE x3 = 3.0 - x0;

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "source_estate/module_pot/pot_base.h"
 
-ModuleBase::matrix::~matrix(){}
+ModuleBase::matrix::~matrix () {}
 
 /***************************************************************
  *  unit test of functions in pot_base.h
@@ -18,12 +18,14 @@ namespace elecstate
 class MockPot : public PotBase
 {
   public:
-    bool get_fixed_mode() const
+    bool
+        get_fixed_mode () const
     {
         return fixed_mode;
     }
 
-    bool get_dynamic_mode() const
+    bool
+        get_dynamic_mode () const
     {
         return dynamic_mode;
     }
@@ -34,12 +36,14 @@ class MockPot : public PotBase
 class PotBaseTest : public ::testing::Test
 {
   protected:
-    void SetUp() override
+    void
+        SetUp () override
     {
         pot_base_ = new elecstate::MockPot;
     }
 
-    void TearDown() override
+    void
+        TearDown () override
     {
         delete pot_base_;
     }
@@ -47,21 +51,21 @@ class PotBaseTest : public ::testing::Test
     elecstate::MockPot* pot_base_;
 };
 
-TEST_F(PotBaseTest, CalVeff)
+TEST_F (PotBaseTest, CalVeff)
 {
     ModuleBase::matrix v_eff;
     pot_base_->fixed_mode = true;
-    if (pot_base_->get_fixed_mode())
-    {
-        EXPECT_NO_THROW(pot_base_->cal_v_eff(nullptr, nullptr, v_eff));
-    }
+    if (pot_base_->get_fixed_mode ())
+        {
+            EXPECT_NO_THROW (pot_base_->cal_v_eff (nullptr, nullptr, v_eff));
+        }
 }
 
-TEST_F(PotBaseTest, CalFixedV)
+TEST_F (PotBaseTest, CalFixedV)
 {
     pot_base_->dynamic_mode = true;
-    if (pot_base_->get_dynamic_mode())
-    {
-        EXPECT_NO_THROW(pot_base_->cal_fixed_v(nullptr));
-    }
+    if (pot_base_->get_dynamic_mode ())
+        {
+            EXPECT_NO_THROW (pot_base_->cal_fixed_v (nullptr));
+        }
 }
