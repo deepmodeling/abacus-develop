@@ -40,7 +40,8 @@ jobs:
           cd toolchain
           ./build_abacus_gnu.sh
           cd ..
-          ./bin/abacus --version || true
+          . ./toolchain/abacus_env.sh
+          ./bin/abacus --version
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
