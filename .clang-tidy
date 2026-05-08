@@ -43,4 +43,7 @@ Checks: '
     # -google-build-using-namespace,
     # -bugprone-narrowing-conversions,
 '
+
+ExcludeHeaderFilterRegex: '^(/usr|/opt|/lib|/include)'
+SystemHeaders: false
 ...
