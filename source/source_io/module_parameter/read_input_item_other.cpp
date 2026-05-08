@@ -118,25 +118,6 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("sc_scf_nmin");
-        item.annotation = "Minimum number of outer scf loop before "
-                          "initializing lambda loop";
-        item.category = "Spin-Constrained DFT";
-        item.type = "Integer";
-        item.description = "Minimum number of outer scf loop before initializing lambda loop";
-        item.default_value = "2";
-        item.unit = "";
-        item.availability = "sc_mag_switch is true";
-        read_sync_int(input.sc_scf_nmin);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_nmin < 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_nmin must >= 2");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("alpha_trial");
         item.annotation = "Initial trial step size for lambda in eV/uB^2";
         item.category = "Spin-Constrained DFT";

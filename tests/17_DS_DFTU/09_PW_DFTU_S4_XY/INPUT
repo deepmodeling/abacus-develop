@@ -23,7 +23,7 @@ orbital_corr    2
 hubbard_u    5.0
 onsite_radius   3.0
 
-kpar    2
+kpar    1
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB
 pw_seed 1

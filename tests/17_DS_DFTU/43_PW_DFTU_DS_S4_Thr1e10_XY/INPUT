@@ -28,7 +28,6 @@ sc_mag_switch    1
 sc_thr    1e-4
 nsc    100
 nsc_min    2
-sc_scf_nmin    2
 alpha_trial    0.01
 sccut    3.0
 sc_scf_thr    1e-10
