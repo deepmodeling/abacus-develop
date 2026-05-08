@@ -4,6 +4,7 @@ BasedOnStyle: GNU
 
 AlwaysBreakTemplateDeclarations: Yes
 
+ColumnLimit: 120
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
