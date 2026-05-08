@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-BasedOnStyle: Microsoft
+BasedOnStyle: GNU
 
 AlwaysBreakTemplateDeclarations: Yes
 
@@ -18,7 +18,7 @@ FixNamespaceComments: true
 # InsertBraces: true # only for clang-format version15.0.0 or later
 
 # About include
-IncludeBlocks: Regroup
+IncludeBlocks: Preserve
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IncludeIsMainSourceRegex: ''
 
@@ -30,7 +30,7 @@ DerivePointerAlignment: false
 PointerAlignment: Left
 
 ReflowComments: true
-SortIncludes: true
+SortIncludes: false
 SortUsingDeclarations: true
 
 # About space
