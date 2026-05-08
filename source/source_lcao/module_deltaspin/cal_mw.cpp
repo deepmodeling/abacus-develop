@@ -107,7 +107,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
     }
 #endif
     // reduce mag from all k-pools
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, PARAM.globalv.nproc_in_pool, &(this->Mi_[0][0]), 3 * this->Mi_.size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }

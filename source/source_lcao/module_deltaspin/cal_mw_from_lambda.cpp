@@ -452,9 +452,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     &this->pelec->wg(ik, 0), nh_iat);
             }
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar,
-                                                   PARAM.globalv.nproc_in_pool,
-                                                   &(this->Mi_[0][0]),
-                                                   3 * this->Mi_.size());
+                                                    GlobalV::NPROC_IN_POOL,
+                                                    &(this->Mi_[0][0]),
+                                                    3 * this->Mi_.size());
         }
     }
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
