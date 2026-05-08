@@ -37,7 +37,6 @@ int XC_Functional::get_func_type()
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 {
-    ModuleBase::TITLE("XC_Functional", "set_xc_first_loop");
     /** In the special "two-level" calculation case,
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
