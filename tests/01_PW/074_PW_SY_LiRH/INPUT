@@ -16,7 +16,6 @@ scf_thr           1e-10
 scf_nmax          128
 
 cal_force         1
-cal_stress        1
 
 #Parameters (3.Basis)
 basis_type        pw
