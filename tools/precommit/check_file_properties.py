@@ -49,6 +49,7 @@ TEXT_EXTENSIONS = C_EXTENSIONS + (
     ".yaml",
     ".json",
 )
+WINDOWS_SCRIPT_EXTENSIONS = (".bat", ".cmd")
 
 # Keep this list intentionally broad. Project-specific additions should be made
 # here rather than suppressing warnings at call sites.
@@ -123,7 +124,7 @@ def check_file(path: pathlib.Path) -> List[str]:
     """Check one file for ABACUS source-tree convention violations."""
     warnings: List[str] = []
 
-    fn_ext = path.suffix
+    fn_ext = path.suffix.lower()
     abspath = path.resolve()
     basefn = path.name
     is_executable = os.access(abspath, os.X_OK)
@@ -145,7 +146,7 @@ def check_file(path: pathlib.Path) -> List[str]:
             warnings += [f"{path}: is not valid UTF-8"]
         return warnings
 
-    if "\r\n" in content:
+    if "\r\n" in content and fn_ext.lower() not in WINDOWS_SCRIPT_EXTENSIONS:
         warnings += [f"{path}: contains DOS linebreaks"]
 
     if (
