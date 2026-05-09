@@ -33,7 +33,7 @@ jobs:
       - name: Wait for precommit server
         run: |
           for i in {1..300}; do
-            if curl -fsS http://127.0.0.1:8080/ >/dev/null; then
+            if curl -fs -o /dev/null http://127.0.0.1:8080/ 2>/dev/null; then
               echo "precommit server is ready"
               exit 0
             fi
@@ -49,5 +49,14 @@ jobs:
         env:
           ABACUS_PRECOMMIT_SERVER: "http://127.0.0.1:8080"
         run: |
-          ./tools/precommit/precommit.py --no-cache
-
+          if ! ./tools/precommit/precommit.py --no-cache; then
+            echo ""
+            echo "********************************************"
+            echo "*                                          *"
+            echo "*  O/     Try running ./make_pretty.sh     *"
+            echo "* /|                                       *"
+            echo "* / \\                                      *"
+            echo "********************************************"
+            echo ""
+            exit 1
+          fi
