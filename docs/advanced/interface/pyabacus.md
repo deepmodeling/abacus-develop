@@ -23,6 +23,9 @@ cmake --build build -j8
 pip install -e python/pyabacus
 ```
 
+If you want to build C++ driver component used by PyABACUS, pass `-DBUILD_PYABACUS_DRIVER=ON` to
+CMake.
+
 **Note:** The `pyabacus` package on PyPI is a different project and is NOT related to ABACUS. Please
 install from source as shown above.
 

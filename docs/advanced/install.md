@@ -28,12 +28,20 @@ steps are needed:
 
 - C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
 - CMake >= 3.18
+- Pass `-DENABLE_MLALGO=ON` to CMake.
 - [LibTorch](https://pytorch.org/) with cxx11 ABI supporting CPU or GPU
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
 cmake -B build -DENABLE_MLALGO=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
+
+The following feature switches can be used together with `ENABLE_MLALGO`:
+
+- `ENABLE_DEEPKS=OFF`: Enable DeePKS support.
+- `ENABLE_MLKEDF=OFF`: Enable machine-learning kinetic energy density functional support for OFDFT.
+
+For DeePKS calculations, see also the [DeePKS interface guide](interface/deepks.md).
 
 > CMake will try to download Libnpy if it cannot be found locally.
 
@@ -97,7 +105,8 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the
 [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set
-`-DENABLE_LIBRI=ON` to build with these two libraries.
+`-DENABLE_LIBRI=ON` to build with these two libraries. If LibComm support is needed separately, set
+`-DENABLE_LIBCOMM=ON`.
 
 If you prefer using manually downloaded libraries, provide
 `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
@@ -132,9 +141,9 @@ Google Benchmark requires Google Test to build and run the tests. When setting `
 to ON, `BUILD_TESTING` is automatically enabled. After building and installing, performance tests
 can be executed with `ctest`.
 
-## Build with CUDA support
+## Build with accelerator support
 
-### Extra prerequisites
+### CUDA
 
 - [CUDA-Toolkit](https://developer.nvidia.com/cuda-toolkit)
 
@@ -149,6 +158,22 @@ If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_
 case, the program will directly communicate data with the CUDA hardware, rather than transferring it
 to the CPU first before communication. But note that if CUDA Aware is not supported, adding
 `-DUSE_CUDA_MPI=ON` will cause the program to throw an error.
+
+### Others
+
+In addition to `USE_CUDA`, several accelerator-related CMake options are available for specific
+platforms or optional GPU libraries:
+
+- `USE_ROCM=OFF`: Enable ROCm/HIP support for supported AMD GPU platforms.
+- `USE_CUDA_ON_DCU=OFF`: Build the CUDA-compatible accelerator code path on DCU platforms when the
+  corresponding toolchain is available.
+- `USE_DSP=OFF`: Enable DSP-related support when building with a supported platform toolchain.
+- `USE_SW=OFF`: Enable SW platform support when building with a supported platform toolchain.
+- `ENABLE_CUSOLVERMP=OFF`: Enable cuSOLVERMp support for GPU-accelerated distributed eigensolvers.
+- `ENABLE_NCCL_PARALLEL_DEVICE=OFF`: Enable NCCL-based parallel GPU communication support.
+
+These options require the corresponding vendor toolchains and libraries. They are disabled by
+default and should only be enabled on supported platforms.
 
 ## Build math library from source
 

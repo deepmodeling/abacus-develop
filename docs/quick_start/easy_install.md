@@ -247,18 +247,33 @@ CMake indicating optional components or requirement positions.
   - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety
     of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` is defined, `ENABLE_LIBRI` will set to 'ON'.
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
+  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS
+    will be compiled. It now supports both PW and LCAO.
+  - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be
+    compiled without ELPA library.
+  - `ENABLE_FLOAT_FFTW=OFF`: Enable single-precision FFTW support when the corresponding FFTW
+    library is available.
+  - `ENABLE_FFT_TWO_CENTER=OFF`: Enable the two-center FFT implementation.
+  - `ENABLE_CNPY=OFF`: Enable CNPY support for reading and writing NumPy `.npy` data.
+
+- Other features:
+
+  - `DEBUG_INFO=OFF`: Build with additional debug information.
+  - `COMMIT_INFO=ON`: Embed Git commit information into the executable when the source tree is
+    available.
+  - `GIT_SUBMODULE=ON`: Allow CMake to initialize or update required Git submodules during
+    configuration.
+  - `ENABLE_NATIVE_OPTIMIZATION=OFF`: Enable compiler optimizations targeting the native CPU
+    architecture. This may improve performance on the build machine, but the resulting binary may be
+    less portable.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_GOOGLEBENCH=OFF`:
     [Build performance tests](../advanced/install.md#build-performance-tests)
-  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS
-    will be compiled. It now supports both PW and LCAO.
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting
     [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a
     drastic impact on performance.
   - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory
     problems.
-  - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be
-    compiled without ELPA library.
 
 Here is an example:
 
