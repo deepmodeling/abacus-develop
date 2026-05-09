@@ -43,191 +43,228 @@ jobs:
           cmake --build build -j8
           cmake --install build
 
+      - name: Prepare ctest wrapper
+        run: |
+          cat > "$RUNNER_TEMP/run_ctest.sh" <<'EOF'
+          #!/usr/bin/env bash
+          set +e
+
+          name="$1"
+          shift
+
+          echo "::group::$name"
+          ctest --test-dir build -V --timeout 1700 "$@"
+          status=$?
+          echo "::endgroup::"
+
+          if [ "$status" -ne 0 ]; then
+            echo "$name" >> "$RUNNER_TEMP/failed-tests.txt"
+            echo "::error title=$name failed::ctest exited with status $status"
+          fi
+
+          exit 0
+          EOF
+
+          chmod +x "$RUNNER_TEMP/run_ctest.sh"
+
       - name: Integrated Tests Preparation
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R integrated_test
+          "$RUNNER_TEMP/run_ctest.sh" "Integrated Tests Preparation" -R integrated_test
           
       - name: Module_Base Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_BASE
+          "$RUNNER_TEMP/run_ctest.sh" "Module_Base Unittests" -R MODULE_BASE
           
       - name: Module_IO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_IO
+          "$RUNNER_TEMP/run_ctest.sh" "Module_IO Unittests" -R MODULE_IO
           
       - name: Module_HSolver Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
+          "$RUNNER_TEMP/run_ctest.sh" "Module_HSolver Unittests" -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
           
       - name: Module_Cell Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_CELL
+          "$RUNNER_TEMP/run_ctest.sh" "Module_Cell Unittests" -R MODULE_CELL
           
       - name: Module_MD Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_MD
+          "$RUNNER_TEMP/run_ctest.sh" "Module_MD Unittests" -R MODULE_MD
           
       - name: Module_Psi Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_PSI
+          "$RUNNER_TEMP/run_ctest.sh" "Module_Psi Unittests" -R MODULE_PSI
           
       - name: Module_RI Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_RI
+          "$RUNNER_TEMP/run_ctest.sh" "Module_RI Unittests" -R MODULE_RI
       
       - name: Module_Estate Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_ESTATE
+          "$RUNNER_TEMP/run_ctest.sh" "Module_Estate Unittests" -R MODULE_ESTATE
       
       - name: Module_Hamilt Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HAMILT
+          "$RUNNER_TEMP/run_ctest.sh" "Module_Hamilt Unittests" -R MODULE_HAMILT
       
       - name: Module_PW Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_PW
+          "$RUNNER_TEMP/run_ctest.sh" "Module_PW Unittests" -R MODULE_PW
       
       - name: Module_LCAO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_LCAO
+          "$RUNNER_TEMP/run_ctest.sh" "Module_LCAO Unittests" -R MODULE_LCAO
       
       - name: Module_AO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_AO
+          "$RUNNER_TEMP/run_ctest.sh" "Module_AO Unittests" -R MODULE_AO
       
       - name: Module_NAO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_NAO
+          "$RUNNER_TEMP/run_ctest.sh" "Module_NAO Unittests" -R MODULE_NAO
       
       - name: Module_RELAX Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_RELAX
+          "$RUNNER_TEMP/run_ctest.sh" "Module_RELAX Unittests" -R MODULE_RELAX
       
       - name: Module_LR Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_LR
+          "$RUNNER_TEMP/run_ctest.sh" "Module_LR Unittests" -R MODULE_LR
           
       - name: 01_PW Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 01_PW
+          "$RUNNER_TEMP/run_ctest.sh" "01_PW Test" -R 01_PW
           
       - name: 02_NAO_Gamma Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 02_NAO_Gamma
+          "$RUNNER_TEMP/run_ctest.sh" "02_NAO_Gamma Test" -R 02_NAO_Gamma
           
       - name: 03_NAO_multik Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 03_NAO_multik
+          "$RUNNER_TEMP/run_ctest.sh" "03_NAO_multik Test" -R 03_NAO_multik
           
       - name: 04_FF Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 04_FF
+          "$RUNNER_TEMP/run_ctest.sh" "04_FF Test" -R 04_FF
           
       - name: 05_rtTDDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 05_rtTDDFT
+          "$RUNNER_TEMP/run_ctest.sh" "05_rtTDDFT Test" -R 05_rtTDDFT
           
       - name: 06_SDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 06_SDFT
+          "$RUNNER_TEMP/run_ctest.sh" "06_SDFT Test" -R 06_SDFT
           
       - name: 07_OFDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 07_OFDFT
+          "$RUNNER_TEMP/run_ctest.sh" "07_OFDFT Test" -R 07_OFDFT
           
       - name: 08_EXX Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 08_EXX
+          "$RUNNER_TEMP/run_ctest.sh" "08_EXX Test" -R 08_EXX
           
       - name: 09_DeePKS Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 09_DeePKS
+          "$RUNNER_TEMP/run_ctest.sh" "09_DeePKS Test" -R 09_DeePKS
           
       - name: 10_others Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 10_others
+          "$RUNNER_TEMP/run_ctest.sh" "10_others Test" -R 10_others
           
       - name: Other Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          "$RUNNER_TEMP/run_ctest.sh" "Other Unittests" -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+
+      - name: Fail if any test group failed
+        if: always()
+        run: |
+          if [ -s "$RUNNER_TEMP/failed-tests.txt" ]; then
+            echo ""
+            echo "The following test groups failed:"
+            cat "$RUNNER_TEMP/failed-tests.txt"
+            echo ""
+            exit 1
+          fi
+
+          echo "All test groups passed."
