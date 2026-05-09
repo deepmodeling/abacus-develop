@@ -114,7 +114,7 @@ TEST_F(NCPPTest, PrintNC) {
     EXPECT_THAT(str, testing::HasSubstr("nchi 3"));
     EXPECT_THAT(str, testing::HasSubstr("nbeta    6"));
     EXPECT_THAT(str, testing::HasSubstr("dion :  nr=6 nc=6"));
-    EXPECT_THAT(str, testing::HasSubstr("msh\t1247"));
+    EXPECT_THAT(str, testing::HasSubstr("msh    1247"));
     ifs.close();
     remove("./tmp_log");
 }
