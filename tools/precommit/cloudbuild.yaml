@@ -1,0 +1,31 @@
+# Based on CP2K's tools/precommit/cloudbuild.yaml, adapted for ABACUS.
+# Adjust image name, service name, and region before enabling in production.
+
+substitutions:
+  _IMAGE_NAME: "us-central1-docker.pkg.dev/${PROJECT_ID}/misc/img_abacus_precommit"
+  _REGION: "us-central1"
+  _SERVICE: "abacus-precommit"
+
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["build", "--build-arg", "REVISION=${SHORT_SHA}", "-t", "${_IMAGE_NAME}:${SHORT_SHA}", "./tools/precommit/"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["push", "${_IMAGE_NAME}:${SHORT_SHA}"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["tag", "${_IMAGE_NAME}:${SHORT_SHA}", "${_IMAGE_NAME}:latest"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["push", "${_IMAGE_NAME}:latest"]
+
+- name: "gcr.io/cloud-builders/gcloud"
+  args:
+   - "run"
+   - "deploy"
+   - "${_SERVICE}"
+   - "--platform=managed"
+   - "--region=${_REGION}"
+   - "--image=${_IMAGE_NAME}:${SHORT_SHA}"
+
+# EOF

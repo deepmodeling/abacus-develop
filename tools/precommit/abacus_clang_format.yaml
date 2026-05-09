@@ -1,39 +1,39 @@
 ---
 Language: Cpp
-BasedOnStyle: Microsoft
+BasedOnStyle: LLVM
 
 AlwaysBreakTemplateDeclarations: Yes
 
+ColumnLimit: 120
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
 BinPackParameters: false
 
-BreakBeforeBinaryOperators: All
 BreakBeforeTernaryOperators: true
 
 Cpp11BracedListStyle: true
 FixNamespaceComments: true
 
-# InsertBraces: true # only for clang-format version15.0.0 or later
-
-# About include
-IncludeBlocks: Regroup
+IncludeBlocks: Preserve
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IncludeIsMainSourceRegex: ''
 
 IndentWidth: 4
-IndentWrappedFunctionNames: true
 
-# About Point
 DerivePointerAlignment: false
 PointerAlignment: Left
 
 ReflowComments: true
-SortIncludes: true
+SortIncludes: false
 SortUsingDeclarations: true
 
-# About space
+# ABACUS follows the usual C/C++ convention: control statements use a space
+# before parentheses (`if (...)`), but function calls/declarations do not
+# (`foo(...)`).  GNU style defaults to `Always`, which would rewrite calls as
+# `foo (...)` and produce noisy, unidiomatic diffs.
+SpaceBeforeParens: ControlStatements
+
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
 SpaceBeforeRangeBasedForLoopColon: false
@@ -44,7 +44,6 @@ SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 
-Standard: c++11
-TabWidth: 4
+Standard: c++17
 UseTab: Never
 ...
